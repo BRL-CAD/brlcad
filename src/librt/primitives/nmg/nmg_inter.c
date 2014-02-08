@@ -87,8 +87,6 @@ static int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
 
 static struct nmg_inter_struct *nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
 
-/*
- */
 struct vertexuse *
 nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 {
@@ -170,8 +168,6 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ E N L I S T _ V U
- *
  * Given a vu which represents a point of intersection between shells
  * s1 and s2, insert it and its dual into lists l1 and l2.
  * First, determine whether the vu came from s1 or s2, and insert in
@@ -377,8 +373,6 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 
 
 /**
- * N M G _ G E T _ 2 D _ V E R T E X
- *
  * A "lazy evaluator" to obtain the 2D projection of a vertex.
  * The lazy approach is not a luxury, since new (3D) vertices are created
  * as the edge/edge intersection proceeds, and their 2D coordinates may
@@ -511,8 +505,6 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 
 
 /**
- * N M G _ I S E C T 2 D _ P R E P
- *
  * To intersect two co-planar faces, project all vertices from those
  * faces into 2D.
  * At the moment, use a memory intensive strategy which allocates a
@@ -647,8 +639,6 @@ nmg_isect2d_cleanup(struct nmg_inter_struct *is)
 
 
 /**
- * N M G _ I S E C T 2 D _ F I N A L _ C L E A N U P
- *
  * XXX Hack routine used for storage reclamation by G-JACK for
  * XXX calculation of the reportcard without gobbling lots of memory
  * XXX on bu_bomb() longjmp()s.
@@ -665,8 +655,6 @@ nmg_isect2d_final_cleanup(void)
 
 
 /**
- * N M G _ I S E C T _ V E R T 2 P _ F A C E 2 P
- *
  * Handle the complete intersection of a vertex which lies on the
  * plane of a face.  *every* intersection is performed.
  *
@@ -755,8 +743,6 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 
 
 /**
- * N M G _ I S E C T _ 3 V E R T E X _ 3 F A C E
- *
  * intersect a vertex with a face (primarily for intersecting
  * loops of a single vertex with a face).
  *
@@ -811,8 +797,6 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
 
 
 /**
- * N M G _ B R E A K _ 3 E D G E _ A T _ P L A N E
- *
  * Having decided that an edge(use) crosses a plane of intersection,
  * stick a vertex at the point of intersection along the edge.
  *
@@ -997,8 +981,6 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 
 
 /**
- * N M G _ B R E A K _ E U _ O N _ V
- *
  * The vertex 'v2' is known to lie in the plane of eu1's face.
  * If v2 lies between the two endpoints of eu1, break eu1 and
  * return the new edgeuse pointer.
@@ -1088,8 +1070,6 @@ out:
 
 
 /**
- * N M G _ B R E A K _ E G _ O N _ V
- *
  * Given a vertex 'v' which is already known to have geometry that lies
  * on the line defined by 'eg', break all the edgeuses along 'eg'
  * which cross 'v'.
@@ -1159,8 +1139,6 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 
 
 /**
- * N M G _ I S E C T _ 2 C O L I N E A R _ E D G E 2 P
- *
  * Perform edge mutual breaking only on two collinear edgeuses.
  * This can result in 2 new edgeuses showing up in either loop (case A & D).
  * The vertexuse lists are updated to have all participating vu's and
@@ -1280,8 +1258,6 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
 
 
 /**
- * N M G _ I S E C T _ E D G E 2 P _ E D G E 2 P
- *
  * Actual 2d edge/edge intersector
  *
  * One or both of the edges may be wire edges, i.e.
@@ -1654,8 +1630,6 @@ out:
 
 
 /**
- * N M G _ I S E C T _ W I R E E D G E 3 P _ F A C E 3 P
- *
  * Intersect an edge eu1 with a faceuse fu2.
  * eu1 may belong to fu1, or it may be a wire edge.
  *
@@ -1958,8 +1932,6 @@ out:
 
 
 /**
- * N M G _ I S E C T _ W I R E L O O P 3 P _ F A C E 3 P
- *
  * Intersect a single loop with another face.
  * Note that it may be a wire loop.
  *
@@ -2032,8 +2004,6 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
 
 
 /**
- * N M G _ I S E C T _ C O N S T R U C T _ N I C E _ R A Y
- *
  * Construct a nice ray for is->pt, is->dir
  * which contains the line of intersection, is->on_eg.
  *
@@ -2108,8 +2078,6 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
 
 
 /**
- * N M G _ I S E C T _ E D G E 2 P _ F A C E 2 P
- *
  * Given one (2D) edge (eu1) lying in the plane of another face (fu2),
  * intersect with all the other edges of that face.
  * The line of intersection is defined by the geometry of this edgeuse.
@@ -2296,8 +2264,6 @@ do_ret:
 }
 
 
-/*
- */
 void
 nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf_t dist)
 
@@ -2875,8 +2841,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 
 /**
- * N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
- *
  * A parallel to nmg_isect_edge2p_edge2p().
  *
  * Intersect the line with eu1, from fu1.
@@ -3045,8 +3009,6 @@ out:
 
 
 /**
- * N M G _ I S E C T _ L I N E 2 _ V E R T E X 2
- *
  * If this lone vertex lies along the intersect line, then add it to
  * the lists.
  *
@@ -3157,8 +3119,6 @@ enlist:
 
 
 /**
- * N M G _ F I N D _ E G _ O N _ L I N E
- *
  * Do a geometric search to find an edge_g_lseg on the given line.
  * If the fuser did its job, there should be only one.
  */
@@ -3206,8 +3166,6 @@ nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *d
 
 
 /**
- * N M G _ K 0 E U
- *
  * Kill all 0-length edgeuses that start and end on this vertex.
  *
  * Returns -
@@ -3245,8 +3203,6 @@ top:
 
 
 /**
- * N M G _ R E P A I R _ V _ N E A R _ V
- *
  * Attempt to join two vertices which both claim to be the intersection
  * of two lines.  If they are close enough, repair the damage.
  *
@@ -3407,8 +3363,6 @@ nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *
 
 
 /**
- * N M G _ C O M M O N _ V _ 2 E G
- *
  * Perform a topology search for a common vertex between two edge geometry
  * lines.
  */
@@ -4053,8 +4007,6 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 
 
 /**
- * N M G _ I S E C T _ L I N E 2 _ F A C E 2 P
- *
  * HEART
  *
  * For each distinct edge_g_lseg LINE on the face (composed of potentially many
@@ -4696,9 +4648,6 @@ re_tabulate:
 
 
 /* XXX move to nmg_info.c */
-/*
- * N M G _ I S _ E U _ O N _ L I N E 3
- */
 int
 nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fastf_t *dir, const struct bn_tol *tol)
 {
@@ -4731,8 +4680,6 @@ nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fa
 
 /* XXX Move to nmg_info.c */
 /**
- * N M G _ F I N D _ E G _ B E T W E E N _ 2 F G
- *
  * Perform a topology search to determine if two face geometries (specified
  * by their faceuses) share an edge geometry in common.
  * The edge_g is returned, even if there are no existing uses of it
@@ -4880,8 +4827,6 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 
 /* XXX Move to nmg_info.c */
 /**
- * N M G _ D O E S _ F U _ U S E _ E G
- *
  * See if any edgeuse in the given faceuse
  * lies on the indicated edge geometry (edge_g).
  * This is a topology check only.
@@ -4923,8 +4868,6 @@ out:
 
 /* XXX move to plane.c */
 /**
- * R T _ L I N E _ O N _ P L A N E
- *
  * Returns -
  * 1 line is on plane, within tol
  * 0 line does not lie on the plane
@@ -4953,8 +4896,6 @@ rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, co
 
 
 /**
- * N M G _ I S E C T _ T W O _ F A C E 3 P
- *
  * Handle the complete mutual intersection of
  * two 3-D non-coplanar planar faces,
  * including cutjoin and meshing.
@@ -5797,8 +5738,6 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
 
 /**
- * N M G _ N O _ I S E C T _ F U _ P L
- *
  * Test if the face of faceuse fu2 is above, below, or intersects
  * the plane of faceuse fu1. If fu2 is completely above or below
  * the plane then fu2 do not intersect fu1. If fu2 intersects the
@@ -5855,8 +5794,6 @@ out:
 
 
 /**
- * N M G _ I S E C T _ T W O _ G E N E R I C _ F A C E S
- *
  * Intersect a pair of faces
  */
 void
@@ -6014,8 +5951,6 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 
 
 /**
- * N M G _ I S E C T _ E D G E 3 P _ E D G E 3 P
- *
  * Intersect one edge with another.  At least one is a wire edge;
  * thus there is no face context or intersection line.
  * If the edges are non-collinear, there will be at most one point of isect.
@@ -6155,8 +6090,6 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
 
 /**
- * N M G _ I S E C T _ V E R T E X 3 _ E D G E 3 P
- *
  * Intersect a lone vertex from s1 with a single edge from s2.
  */
 static void
@@ -6199,8 +6132,6 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
 
 
 /**
- * N M G _ I S E C T _ E D G E 3 P _ S H E L L
- *
  * Intersect one edge with all of another shell.
  * There is no face context for this edge, because
  *
@@ -6352,8 +6283,6 @@ out:
 
 
 /**
- * N M G _ C R A C K S H E L L S
- *
  * Split the components of two shells wherever they may intersect,
  * in preparation for performing boolean operations on the shells.
  */
@@ -6571,9 +6500,6 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 }
 
 
-/**
- * N M G _ F U _ T O U C H I N G L O O P S
- */
 int
 nmg_fu_touchingloops(const struct faceuse *fu)
 {
@@ -6606,7 +6532,6 @@ nmg_fu_touchingloops(const struct faceuse *fu)
 
 
 /**
- * B N _ I S E C T _ 2 F A C E U S E
  *@brief
  * Given two faceuse, find the line of intersection between them, if
  * one exists.  The line of intersection is returned in parametric

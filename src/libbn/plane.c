@@ -77,8 +77,6 @@ bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 
 
 /**
- * B N _ P T 2 _ P T 2 _ E Q U A L
- *
  * @return 1	if the two points are equal, within the tolerance
  * @return 0	if the two points are not "the same"
  */

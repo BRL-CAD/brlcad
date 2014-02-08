@@ -45,8 +45,6 @@ enum etypes {
 
 
 /**
- * C O M B M E M _ M A T _ A E T
- *
  * Given the azimuth, elevation and twist angles, calculate the
  * rotation part of a 4x4 matrix.
  */
@@ -89,8 +87,6 @@ combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ R M A T
- *
  * Disassemble the given rotation matrix into az, el, tw.
  */
 HIDDEN void
@@ -143,8 +139,6 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ M A T
- *
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
 HIDDEN int
@@ -208,8 +202,6 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 
 
 /**
- * C O M B M E M _ A S S E M B L E _ M A T
- *
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
 HIDDEN void

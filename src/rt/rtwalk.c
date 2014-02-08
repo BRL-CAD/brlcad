@@ -89,9 +89,6 @@ FILE		*outfp = NULL;
 void		proj_goal(struct application *ap);
 void		write_matrix(int frame);
 
-/*
- *			G E T _ A R G S
- */
 int
 get_args(int argc, const char *argv[])
 {
@@ -123,9 +120,6 @@ get_args(int argc, const char *argv[])
     return 1;			/* OK */
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -403,8 +397,6 @@ miss(register struct application *UNUSED(ap))
 }
 
 /*
- *			P R O J _ G O A L
- *
  *  When progress towards the goal is blocked by an object,
  *  head off "towards the side" to try to get around.
  *  Project the goal point onto the plane tangent to the object
@@ -438,9 +430,6 @@ proj_goal(struct application *ap)
     VMOVE(ap->a_ray.r_dir, newdir);
 }
 
-/*
- *			W R I T E _ M A T R I X
- */
 void
 write_matrix(int frame)
 {

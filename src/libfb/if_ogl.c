@@ -273,9 +273,6 @@ HIDDEN struct modeflags {
 };
 
 
-/*
- * S I G K I D
- */
 HIDDEN void
 sigkid(int UNUSED(pid))
 {
@@ -483,9 +480,6 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 }
 
 
-/**
- * O G L _ C M I N I T
- */
 HIDDEN void
 ogl_cminit(register FBIO *ifp)
 {
@@ -504,8 +498,6 @@ ogl_cminit(register FBIO *ifp)
 /************************************************************************/
 
 /**
- * O G L _ G E T M E M
- *
  * not changed from sgi_getmem.
  *
  * Because there is no hardware zoom or pan, we need to repaint the
@@ -620,9 +612,6 @@ fail:
 }
 
 
-/**
- * O G L _ Z A P M E M
- */
 void
 ogl_zapmem(void)
 {
@@ -644,8 +633,6 @@ ogl_zapmem(void)
 
 
 /**
- * O G L _ C L I P P E R
- *
  * Given:- the size of the viewport in pixels (vp_width, vp_height)
  *	 - the size of the framebuffer image (if_width, if_height)
  *	 - the current view center (if_xcenter, if_ycenter)
@@ -950,8 +937,6 @@ ogl_do_event(FBIO *ifp)
 
 
 /**
- * O G L _ C H O O S E _ V I S U A L
- *
  * Select an appropriate visual, and set flags.
  *
  * The user requires support for:
@@ -1083,8 +1068,6 @@ fb_ogl_choose_visual(FBIO *ifp)
 
 
 /**
- * I S _ L I N E A R _ C M A P
- *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
@@ -1638,8 +1621,6 @@ ogl_close_existing(FBIO *ifp)
 
 
 /*
- * O G L _ P O L L
- *
  * Handle any pending input events
  */
 HIDDEN int
@@ -1655,8 +1636,6 @@ ogl_poll(FBIO *ifp)
 
 
 /*
- * O G L _ F R E E
- *
  * Free shared memory resources, and close.
  */
 HIDDEN int
@@ -1750,9 +1729,6 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-/*
- * O G L _ V I E W
- */
 HIDDEN int
 ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
@@ -1825,9 +1801,6 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-/*
- * O G L _ G E T V I E W
- */
 HIDDEN int
 ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
@@ -2019,8 +1992,6 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 
 /*
- * O G L _ W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
@@ -2085,8 +2056,6 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * O G L _ B W W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
@@ -2167,9 +2136,6 @@ ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 }
 
 
-/*
- * O G L _ W M A P
- */
 HIDDEN int
 ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 {
@@ -2230,9 +2196,6 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 }
 
 
-/*
- * O G L _ H E L P
- */
 HIDDEN int
 ogl_help(FBIO *ifp)
 {

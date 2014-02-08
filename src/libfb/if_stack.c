@@ -168,8 +168,6 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 /*
- * S T K _ R E A D R E C T
- *
  * Read only from the first source on the stack.
  */
 HIDDEN int
@@ -186,8 +184,6 @@ stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 
 
 /*
- * S T K _ W R I T E R E C T
- *
  * Write to all destinations on the stack
  */
 HIDDEN int
@@ -205,8 +201,6 @@ stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * S T K _ B W R E A D R E C T
- *
  * Read only from the first source on the stack.
  */
 HIDDEN int
@@ -223,8 +217,6 @@ stk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 
 
 /*
- * S T K _ B W W R I T E R E C T
- *
  * Write to all destinations on the stack
  */
 HIDDEN int

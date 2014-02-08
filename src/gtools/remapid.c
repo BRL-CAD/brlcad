@@ -347,10 +347,6 @@ static int debug = 0;
  *									*
  ************************************************************************/
 
-/*
- * M K _ C U R R _ I D
- *
- */
 struct curr_id *
 mk_curr_id(int region_id)
 {
@@ -367,10 +363,6 @@ mk_curr_id(int region_id)
 }
 
 
-/*
- * P R I N T _ C U R R _ I D
- *
- */
 void
 print_curr_id(void *v, int UNUSED(depth))
 {
@@ -389,10 +381,6 @@ print_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * P R I N T _ N O N E M P T Y _ C U R R _ I D
- *
- */
 void
 print_nonempty_curr_id(void *v, int UNUSED(depth))
 {
@@ -413,10 +401,6 @@ print_nonempty_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * F R E E _ C U R R _ I D
- *
- */
 void
 free_curr_id(struct curr_id *cip)
 {
@@ -426,8 +410,6 @@ free_curr_id(struct curr_id *cip)
 
 
 /*
- * L O O K U P _ C U R R _ I D
- *
  * Scrounge for a particular region in the red-black tree.
  * If it's not found there, add it to the tree.  In either
  * event, return a pointer to it.
@@ -466,10 +448,6 @@ lookup_curr_id(int region_id)
 }
 
 
-/*
- * M K _ R E M A P _ R E G
- *
- */
 struct remap_reg *
 mk_remap_reg(char *region_name)
 {
@@ -489,10 +467,6 @@ mk_remap_reg(char *region_name)
 }
 
 
-/*
- * F R E E _ R E M A P _ R E G
- *
- */
 void
 free_remap_reg(struct remap_reg *rp)
 {
@@ -509,9 +483,6 @@ free_remap_reg(struct remap_reg *rp)
  *									*
  ************************************************************************/
 
-/*
- * C O M P A R E _ C U R R _ I D S
- */
 int
 compare_curr_ids(void *v1, void *v2)
 {
@@ -532,8 +503,6 @@ compare_curr_ids(void *v1, void *v2)
  ************************************************************************/
 
 /*
- * R E A D _ I N T
- *
  * ch is the result
  */
 int
@@ -566,9 +535,6 @@ read_int(REMAPID_FILE *sfp, int *ch, int *n)
 }
 
 
-/*
- * R E A D _ B L O C K
- */
 int
 read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 {
@@ -602,9 +568,6 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 }
 
 
-/*
- * R E A D _ S P E C
- */
 int
 read_spec(REMAPID_FILE *sfp, char *sf_name)
 {
@@ -727,10 +690,6 @@ db_init(char *db_name)
 }
 
 
-/*
- * W R I T E _ A S S I G N M E N T
- *
- */
 void
 write_assignment(void *v, int UNUSED(depth))
 {
@@ -819,9 +778,6 @@ tankill_reassign(char *db_name)
  *									*
  ************************************************************************/
 
-/*
- * P R I N T _ U S A G E
- */
 void
 print_usage(void)
 {
@@ -831,9 +787,6 @@ print_usage(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

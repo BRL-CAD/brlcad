@@ -216,9 +216,6 @@ rt_fwrite_internal(
 }
 
 
-/**
- *
- */
 void
 rt_db_free_internal(struct rt_db_internal *ip)
 {

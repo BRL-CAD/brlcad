@@ -94,8 +94,6 @@ static struct bn_tol extr_tol = {
 #define LOOPB		2
 
 /**
- * R T _ E X T R U D E _ B B O X
- *
  * Calculate a bounding RPP for an extruded sketch
  */
 int
@@ -328,8 +326,6 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 
 
 /**
- * R T _ E X T R U D E _ V O L U M E
- *
  * Calculate the volume of an extruded object
  */
 void
@@ -361,8 +357,6 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ E X T R U D E _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EXTRUDE, and if so, precompute
  * various terms of the formula.
@@ -608,9 +602,6 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 }
 
 
-/**
- * R T _ E X T R U D E _ P R I N T
- */
 void
 rt_extrude_print(const struct soltab *stp)
 {
@@ -836,8 +827,6 @@ isect_line_earc(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, con
 
 
 /**
- * R T _ E X T R U D E _ S H O T
- *
  * Intersect a ray with a extrude.  If an intersection occurs, a
  * struct seg will be acquired and filled in.
  *
@@ -1258,8 +1247,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
 
 /**
- * R T _ E X T R U D E _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1318,8 +1305,6 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E X T R U D E _ C U R V E
- *
  * Return the curvature of the extrude.
  */
 void
@@ -1376,9 +1361,6 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ E X T R U D E _ F R E E
- */
 void
 rt_extrude_free(struct soltab *stp)
 {
@@ -1392,9 +1374,6 @@ rt_extrude_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ E X T R U D E _ P L O T
- */
 int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -2034,8 +2013,6 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
 
 
 /*
- * R T _ E X T R U D E _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -2341,8 +2318,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 
 /**
- * R T _ E X T R U D E _ I M P O R T
- *
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2415,8 +2390,6 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
 
 /**
- * R T _ E X T R U D E _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2465,8 +2438,6 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- * R T _ E X T R U D E _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2515,8 +2486,6 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- * R T _ E X T R U D E _ I M P O R T 5
- *
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2578,8 +2547,6 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
 
 /**
- * R T _ E X T R U D E _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2618,8 +2585,6 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 
 
 /**
- * R T _ E X T R U D E _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -2830,10 +2795,6 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 }
 
 
-/**
- * R T _ E X T R U D E _ P A R A M S
- *
- */
 int
 rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {

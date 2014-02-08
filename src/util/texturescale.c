@@ -61,8 +61,6 @@ Usage: texturescale [-T 'r1 r2' | -S]\n\
 		 [file.pix]\n";
 
 /*
- * R E A D _ R A D I I ()
- *
  * Read in the radii for a torus
  */
 static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
@@ -79,9 +77,6 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
 }
 
 
-/*
- * R E A D _ R O W ()
- */
 static int read_row(char *rp, size_t width, FILE *fp)
 {
     size_t ret = fread(rp + 3, 3, width, fp);
@@ -95,9 +90,6 @@ static int read_row(char *rp, size_t width, FILE *fp)
 }
 
 
-/*
- * G E T _ A R G S ()
- */
 static int
 get_args (int argc, char **argv)
 {
@@ -167,9 +159,6 @@ get_args (int argc, char **argv)
 }
 
 
-/*
- * M A I N ()
- */
 int
 main (int argc, char **argv)
 {

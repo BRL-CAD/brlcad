@@ -36,8 +36,6 @@
 
 
 /**
- * R T _ G E N E R I C _ X F O R M
- *
  * Apply a 4x4 transformation matrix to the internal form of a solid.
  *
  * If "free" flag is non-zero, storage for the original solid is
@@ -133,8 +131,6 @@ rt_generic_xform(
 
 
 /**
- * R T _ G E N E R I C _ G E T
- *
  * This is the generic routine to be listed in OBJ[].ft_get
  * for those solid types which are fully described by their
  * ft_parsetab entry.
@@ -198,8 +194,6 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 /**
- * R T _ G E N E R I C _ M A K E
- *
  * This one assumes that making all the parameters null is fine.
  */
 void
@@ -216,8 +210,6 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
 
 /**
- * R T _ G E N E R I C _ A D J U S T
- *
  * For those solids entirely defined by their parsetab.  Invoked via
  * OBJ[].ft_adjust()
  */
@@ -240,8 +232,6 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 
 /**
- * R T _ G E N E R I C _ C L A S S
- *
  * Invoked via OBJ[].ft_form() on solid types which are
  * fully described by their bu_structparse table in ft_parsetab.
  */
@@ -252,8 +242,6 @@ rt_generic_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const 
 }
 
 /**
- * R T _ G E N E R I C _ F O R M
- *
  * Invoked via OBJ[].ft_form() on solid types which are
  * fully described by their bu_structparse table in ft_parsetab.
  */

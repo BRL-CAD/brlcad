@@ -141,9 +141,6 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 }
 
 
-/**
- * R T _ R E V O L V E _ B R E P
- */
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

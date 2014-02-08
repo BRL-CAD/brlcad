@@ -67,9 +67,6 @@ const struct bu_structparse rt_hlf_parse[] = {
 };
 
 
-/**
- * R T _ H L F _ P R E P
- */
 int
 rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
@@ -109,9 +106,6 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H L F _ P R I N T
- */
 void
 rt_hlf_print(register const struct soltab *stp)
 {
@@ -130,8 +124,6 @@ rt_hlf_print(register const struct soltab *stp)
 
 
 /**
- * R T _ H L F _ S H O T
- *
  * Function -
  * Shoot a ray at a HALFSPACE
  *
@@ -200,8 +192,6 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 #define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /**
- * R T _ H L F _ V S H O T
- *
  * This is the Becker vector version
  */
 void
@@ -259,8 +249,6 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ H L F _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
@@ -294,8 +282,6 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ H L F _ C U R V E
- *
  * Return the "curvature" of the halfspace.  Pick a principle
  * direction orthogonal to normal, and indicate no curvature.
  */
@@ -312,8 +298,6 @@ rt_hlf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ H L F _ U V
- *
  * For a hit on a face of an HALF, return the (u, v) coordinates of
  * the hit point.  0 <= u, v <= 1.  u extends along the Xbase
  * direction.  v extends along the "Ybase" direction.  Note that a
@@ -386,9 +370,6 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ H L F _ F R E E
- */
 void
 rt_hlf_free(struct soltab *stp)
 {
@@ -400,8 +381,6 @@ rt_hlf_free(struct soltab *stp)
 
 
 /**
- * R T _ H L F _ C L A S S
- *
  * Classify this halfspace against a bounding RPP.  Since this is an
  * infinite solid, it is very important that this function properly.
  *
@@ -419,8 +398,6 @@ rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 
 
 /**
- * R T _ H L F _ P L O T
- *
  * The representation of a halfspace is an OUTWARD pointing normal
  * vector, and the distance of the plane from the origin.
  *
@@ -479,8 +456,6 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * H A L F _ X F O R M
- *
  * Returns -
  * -1 failure
  * 0 success
@@ -560,8 +535,6 @@ rt_hlf_xform(
 
 
 /**
- * H A L F _ I M P O R T
- *
  * Returns -
  * -1 failure
  * 0 success
@@ -626,9 +599,6 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ H L F _ E X P O R T
- */
 int
 rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -656,9 +626,6 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-/**
- * R T _ H L F _ I M P O R T 5
- */
 int
 rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -718,9 +685,6 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ H A L F _ E X P O R T 5
- */
 int
 rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -759,8 +723,6 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ H L F _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -788,8 +750,6 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ H L F _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -803,9 +763,6 @@ rt_hlf_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H L F _ T E S S
- */
 int
 rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
@@ -823,10 +780,6 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/**
- * R T _ H L F _ P A R A M S
- *
- */
 int
 rt_hlf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

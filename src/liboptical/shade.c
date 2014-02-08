@@ -47,8 +47,6 @@
 
 
 /**
- * P R _ S H A D E W O R K
- *
  * Pretty print a shadework structure.
  */
 void
@@ -108,8 +106,6 @@ pr_shadework(const char *str, const struct shadework *swp)
 
 
 /**
- * S H A D E _ I N P U T S
- *
  * Compute the necessary fields in the shadework structure.
  *
  * Note that only hit_dist is valid in pp_inhit.  Must calculate it if
@@ -250,8 +246,6 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 
 
 /**
- * V I E W S H A D E
- *
  * Call the material-specific shading function, after making certain
  * that all shadework fields desired have been provided.
  *

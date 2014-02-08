@@ -216,8 +216,6 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 
 
 /**
- * P T 2 D _ P N
- *
  * Return Prev/Next 2D pt about loop from given 2D pt.
  * if vertex is child of loopuse, return parameter 2D pt.
  */
@@ -267,8 +265,6 @@ pt2d_pn(struct bu_list *tbl, struct pt2d *pt, int dir)
 
 
 /**
- * M A P _ V U _ T O _ 2 D
- *
  * Add a vertex to the 2D table if it isn't already there.
  */
 static void
@@ -364,8 +360,6 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 
 
 /**
- * N M G _ F L A T T E N _ F A C E
- *
  * Create the 2D coordinate table for the vertexuses of a face.
  *
  *	---------	-----------------------------------
@@ -1646,8 +1640,6 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 
 
 /**
- * N M G _ I S E C T _ P O T C U T _ F U
- *
  * Given the faceuse 'fu' test if the potential cut, defined by an
  * edgeuse from 'eu1->vu_p' to 'eu2->vu_p', intersects any edgeuse of
  * the faceuse.
@@ -2352,8 +2344,6 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
 
 
 /**
- * C U T _ U N I M O N O T O N E
- *
  * Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
 HIDDEN void

@@ -112,8 +112,6 @@ img_source_hook(const struct bu_structparse *UNUSED(sdp),
 
 
 /**
- * i m g _ l o a d _ d a t a s o u r c e
- *
  * This is a helper routine used in prj_setup() to load a projection image
  * either from a file or from a db object.
  */
@@ -574,9 +572,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/**
- * P R J _ P R I N T
- */
 HIDDEN void
 prj_print(register struct region *rp, genptr_t dp)
 {
@@ -589,9 +584,6 @@ prj_print(register struct region *rp, genptr_t dp)
 }
 
 
-/**
- * P R J _ F R E E
- */
 HIDDEN void
 prj_free(genptr_t cp)
 {
@@ -691,8 +683,6 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 
 
 /**
- * P R J _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

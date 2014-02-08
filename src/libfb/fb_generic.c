@@ -80,8 +80,6 @@ int _fb_disk_enable = 1;
 
 
 /**
- * f b _ n u l l
- *
  * Filler for FBIO function slots not used by a particular device
  */
 int fb_null(FBIO *ifp)
@@ -95,8 +93,6 @@ int fb_null(FBIO *ifp)
 
 
 /**
- * F B _ N U L L _ S E T C U R S O R
- *
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
 int fb_null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
@@ -137,9 +133,6 @@ FBIO *_if_list[] = {
 };
 
 
-/**
- * F B _ O P E N
- */
 FBIO *
 fb_open(const char *file, int width, int height)
 {
@@ -388,8 +381,6 @@ fb_genhelp(void)
 
 
 /**
- * F B _ I S _ L I N E A R _ C M A P
- *
  * Check for a color map being linear in the upper 8 bits of R, G, and
  * B.  Returns 1 for linear map, 0 for non-linear map (i.e.,
  * non-identity map).
@@ -408,9 +399,6 @@ fb_is_linear_cmap(register const ColorMap *cmap)
 }
 
 
-/**
- * F B _ M A K E _ L I N E A R _ C M A P
- */
 void
 fb_make_linear_cmap(register ColorMap *cmap)
 {

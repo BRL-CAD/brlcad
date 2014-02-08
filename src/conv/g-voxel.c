@@ -54,9 +54,6 @@ printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t f
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

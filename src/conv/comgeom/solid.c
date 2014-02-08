@@ -67,8 +67,6 @@ void trim_trail_spaces(char *cp);
 void eat(int count);
 
 /*
- * G E T S O L D A T A
- *
  * Obtain 'num' data items from input card(s).
  * The first input card is already in global 'scard'.
  *
@@ -118,8 +116,6 @@ getsoldata(fastf_t *dp, int num, int solid_num)
 
 
 /*
- * G E T X S O L D A T A
- *
  * Obtain 'num' data items from input card(s).
  * All input cards must be freshly read.
  *
@@ -168,9 +164,6 @@ getxsoldata(fastf_t *dp, int num, int solid_num)
 }
 
 
-/*
- * T R I M _ T R A I L _ S P A C E S
- */
 void
 trim_trail_spaces(char *cp)
 {
@@ -185,8 +178,6 @@ trim_trail_spaces(char *cp)
 
 
 /*
- * G E T S O L I D
- *
  * Returns -
  * -1 error
  * 0 conversion OK
@@ -1071,8 +1062,6 @@ read_arbn(char *name)
 
 
 /*
- * E A T
- *
  * Eat the indicated number of input lines
  */
 void

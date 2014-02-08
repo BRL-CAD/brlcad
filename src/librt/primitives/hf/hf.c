@@ -110,8 +110,6 @@ struct hf_specific {
 
 
 /**
- * R T _ H F _ T O _ D S P
- *
  * Convert in-memory form of a height-field (HF) to a displacement-map
  * solid (DSP) in internal representation.  There is no record in the
  * V5 database for an HF.
@@ -192,8 +190,6 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 }
 
 /**
- * R T _ H F _ B B O X
- *
  * Calculate the bounding RPP for an hf
  */
 int
@@ -271,8 +267,6 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 
 
 /**
- * R T _ H F _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid HF, and if so, precompute
  * various terms of the formula.
@@ -424,9 +418,6 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H F _ P R I N T
- */
 void
 rt_hf_print(const struct soltab *stp)
 {
@@ -783,8 +774,6 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 
 
 /**
- * R T _ H T F _ S H O T
- *
  * Intersect a ray with a height field.  If an intersection occurs, a
  * struct seg will be acquired and filled in.
  *
@@ -1542,8 +1531,6 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 
 
 /**
- * R T _ H F _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1587,8 +1574,6 @@ rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ H F _ C U R V E
- *
  * Return the curvature of the hf.
  */
 void
@@ -1607,8 +1592,6 @@ rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ H F _ U V
- *
  * For a hit on the surface of an hf, return the (u, v) coordinates of
  * the hit point, 0 <= u, v <= 1.
  *
@@ -1644,9 +1627,6 @@ rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 }
 
 
-/**
- * R T _ H F _ F R E E
- */
 void
 rt_hf_free(struct soltab *stp)
 {
@@ -1661,9 +1641,6 @@ rt_hf_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ H F _ P L O T
- */
 int
 rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1913,8 +1890,6 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
 
 /**
- * R T _ H F _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1936,8 +1911,6 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 
 /**
- * R T _ H F _ I M P O R T
- *
  * Import an HF from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2101,8 +2074,6 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 /**
- * R T _ H F _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  *
  * The meaning of the export here is slightly different than that of
@@ -2185,8 +2156,6 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
 
 
 /**
- * R T _ H F _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2213,8 +2182,6 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 
 
 /**
- * R T _ H F _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -2236,10 +2203,6 @@ rt_hf_ifree(struct rt_db_internal *ip)
     bu_free((char *)xip, "hf ifree");
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
-/**
- * R T _ H F _ P A R A M S
- *
- */
 int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

@@ -105,8 +105,6 @@ static int radmiss(struct application *ap);
 
 
 /*
- * V I E W _ I N I T
- *
  * Called at the start of a run.
  * Returns 1 if framebuffer should be opened, else 0.
  */

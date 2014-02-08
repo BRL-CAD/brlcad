@@ -42,8 +42,6 @@
 
 
 /**
- * r t _ n u r b _ s _ b o u n d
- *
  * Calculates the bounding Right Parallel Piped (RPP) of the NURB
  * surface, and returns the minimum and maximum points of the surface.
  */

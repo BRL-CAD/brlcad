@@ -556,9 +556,6 @@ Convert_input()
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

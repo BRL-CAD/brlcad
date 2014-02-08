@@ -233,9 +233,6 @@ found:
 }
 
 
-/*
- * G R A V E L _ P R I N T
- */
 HIDDEN void
 noise_print(register struct region *rp, genptr_t dp)
 {
@@ -243,9 +240,6 @@ noise_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * G R A V E L _ F R E E
- */
 HIDDEN void
 noise_free(genptr_t cp)
 {
@@ -254,8 +248,6 @@ noise_free(genptr_t cp)
 #define RESCALE_NOISE(n) n += 1.0
 
 /*
- * N O R M _ N O I S E
- *
  * Apply a noise function to the surface normal
  */
 static void
@@ -324,8 +316,6 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 
 
 /*
- * F R A C T A L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

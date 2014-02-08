@@ -82,8 +82,6 @@ int	raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It initializes the entire run, i.e.,
  *  it does things such as opening files, etc., which must be done before
  *  any other computations take place.  It is called only once per run.
@@ -105,8 +103,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  A null-function.
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  This routine is called once per frame.  Static
@@ -160,8 +156,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
 
 /*
- *			R A Y M I S S
- *
  *  This function is called by rt_shootray(), which is called by
  *  do_frame(). Records coordinates where a miss is detected.
  */
@@ -188,8 +182,6 @@ raymiss(register struct application *ap)
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 
@@ -204,8 +196,6 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the distance traveled by the
  *  ray, and the direction vector.
@@ -252,8 +242,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().
  *  This routine is called by worker.c whenever there is a full scanline.
  *  worker.c figures out what is a full scanline.  Whenever there
@@ -302,8 +290,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().
  */
 

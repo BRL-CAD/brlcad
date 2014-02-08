@@ -417,18 +417,12 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
     return 1;
 }
 
-/*
- * O S L _ P R I N T
- */
 HIDDEN void osl_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, osl_print_tab, (char *)dp);
 }
 
 
-/*
- * O S L _ F R E E
- */
 HIDDEN void osl_free(genptr_t cp)
 {
     register struct osl_specific *osl_sp =
@@ -509,8 +503,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 
 
 /*
- * O S L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

@@ -77,7 +77,6 @@
 
 
 /**
- * D M _ O B J
  *@brief
  * A display manager object is used for interacting with a display manager.
  */
@@ -2967,8 +2966,6 @@ dmo_deleteProc(ClientData clientData)
 
 
 /*
- * D M _ C M D
- *
  * Generic interface for display manager object routines.
  * Usage:
  * objname cmd ?args?

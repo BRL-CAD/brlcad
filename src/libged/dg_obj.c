@@ -128,8 +128,6 @@ dgo_count_tops(const struct solid *headsp)
 
 
 /*
- * D G O _ B U I L D _ T O P S
- *
  * Build a command line vector of the tops of all objects in view.
  */
 int
@@ -373,8 +371,6 @@ dgo_label_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * E R A S E O B J A L L
- *
  * This routine goes through the solid table and deletes all solids
  * from the solid list which contain the specified object anywhere in their 'path'
  */
@@ -445,8 +441,6 @@ dgo_eraseobjall_callback(struct db_i *dbip,
 
 
 /*
- * E R A S E O B J
- *
  * This routine goes through the solid table and deletes all solids
  * from the solid list which contain the specified object at the
  * beginning of their 'path'
@@ -584,8 +578,6 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 
 
 /*
- * C O L O R _ S O L T A B
- *
  * Pass through the solid table and set pointer to appropriate
  * mater structure.
  */
@@ -1071,9 +1063,6 @@ dgo_who_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-/*
- * C V T _ V L B L O C K _ T O _ S O L I D S
- */
 void
 dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, struct bn_vlblock *vbp, const char *name, int copy)
 {
@@ -1481,8 +1470,6 @@ dgo_get_eyemodel_cmd(struct dg_obj *dgop,
 
 
 /*
- * D G O _ R T _ W R I T E
- *
  * Write out the information that RT's -M option needs to show current view.
  * Note that the model-space location of the eye is a parameter,
  * as it can be computed in different ways.
@@ -1736,9 +1723,6 @@ dgo_get_eyemodel_tcl(void *clientData,
 }
 
 
-/*
- * D G O _ R U N _ R T
- */
 static int
 dgo_run_rt(struct dg_obj *dgop,
 	   struct view_obj *vop)
@@ -2156,8 +2140,6 @@ struct rtcheck_output {
 
 
 /*
- * D G O _ W A I T _ S T A T U S
- *
  * Interpret the status return of a wait() system call,
  * for the edification of the watching luser.
  * Warning:  This may be somewhat system specific, most especially
@@ -2774,8 +2756,6 @@ dgo_observer_tcl(void *clientData,
 
 
 /*
- * D G O _ P R _ S C H A I N
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the information
  * about each solid structure.
@@ -2868,8 +2848,6 @@ dgo_print_schain(struct dg_obj *dgop, int lvl)
 
 
 /*
- * D G O _ P R _ S C H A I N _ V L C M D S
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the vlist cmds
  * for each structure.
@@ -3385,8 +3363,6 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 
 
 /*
- * D M O _ D R A W h _ P A R T 2
- *
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
  *
@@ -3469,8 +3445,6 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
 
 
 /*
- * D G O _ W I R E F R A M E _ L E A F
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -3543,8 +3517,6 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
 
 /*
- * D G O _ N M G _ R E G I O N _ S T A R T
- *
  * When performing "ev" on a region, consider whether to process
  * the whole subtree recursively.
  * Normally, say "yes" to all regions by returning 0.
@@ -3709,8 +3681,6 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 
 /*
- * D G O _ N M G _ R E G I O N _ E N D
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -3928,8 +3898,6 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 
 
 /*
- * D G O _ D R A W T R E E S
- *
  * This routine is the drawable geometry object's analog of rt_gettrees().
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
@@ -4198,8 +4166,6 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 
 
 /*
- * I N V E N T _ S O L I D
- *
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
  * the given vector list.
@@ -4321,10 +4287,6 @@ dgo_zapall(struct rt_wdb *wdbp)
 }
 
 
-/**
- *
- *
- */
 int
 dgo_tree_cmd(struct dg_obj *dgop,
 	     int argc,
@@ -4446,8 +4408,6 @@ dgo_tree_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * D G O _ C M D
- *
  * Generic interface for drawable geometry objects.
  * Usage:
  * procname cmd ?args?

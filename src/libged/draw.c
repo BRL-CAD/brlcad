@@ -371,8 +371,6 @@ solid_set_color_info(
 
 
 /**
- * G E D _ D R A W H _ P A R T 2
- *
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
  *
@@ -803,8 +801,6 @@ redraw_solid(struct ged *gedp, struct solid *sp)
 
 
 /**
- * G E D _ N M G _ R E G I O N _ S T A R T
- *
  * When performing "ev" on a region, consider whether to process the
  * whole subtree recursively.
  *
@@ -984,8 +980,6 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 
 /**
- * G E D _ N M G _ R E G I O N _ E N D
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -1085,9 +1079,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 }
 
 
-/**
- * C V T _ V L B L O C K _ T O _ S O L I D S
- */
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
 {
@@ -1108,8 +1099,6 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name,
 
 
 /*
- * G E D _ D R A W T R E E S
- *
  * This routine is the drawable geometry object's analog of rt_gettrees().
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
@@ -1470,8 +1459,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 
 /*
- * I N V E N T _ S O L I D
- *
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
  * the given vector list.
@@ -1557,8 +1544,6 @@ _ged_invent_solid(struct ged *gedp,
 
 
 /*
- * C O L O R _ S O L T A B
- *
  * Pass through the solid table and set pointer to appropriate
  * mater structure.
  */
@@ -1845,9 +1830,7 @@ ged_addToDisplay(struct ged *gedp,
 	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
-	/*
-	 */
-	if (found_namepath) {
+		if (found_namepath) {
 	    struct db_full_path gdlpath;
 
 	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {

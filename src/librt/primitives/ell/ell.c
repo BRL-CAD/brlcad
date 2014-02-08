@@ -166,8 +166,6 @@ struct ell_specific {
 #define ELL_NULL ((struct ell_specific *)0)
 
 /**
- * R T _ E L L _ B B O X
- *
  * Compute the bounding RPP for an ellipsoid
  */
 int
@@ -243,8 +241,6 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ E L L _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid ellipsoid, and if so,
  * precompute various terms of the formula.
@@ -368,9 +364,6 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ E L L _ P R I N T
- */
 void
 rt_ell_print(register const struct soltab *stp)
 {
@@ -384,8 +377,6 @@ rt_ell_print(register const struct soltab *stp)
 
 
 /**
- * R T _ E L L _ S H O T
- *
  * Intersect a ray with an ellipsoid, where all constant terms have
  * been precomputed by rt_ell_prep().  If an intersection occurs, a
  * struct seg will be acquired and filled in.
@@ -440,8 +431,6 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 /**
- * R T _ E L L _ V S H O T
- *
  * This is the Becker vector version.
  */
 void
@@ -501,8 +490,6 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ E L L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -525,8 +512,6 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ E L L _ C U R V E
- *
  * Return the curvature of the ellipsoid.
  */
 void
@@ -563,8 +548,6 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ E L L _ U V
- *
  * For a hit on the surface of an ELL, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -605,9 +588,6 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ E L L _ F R E E
- */
 void
 rt_ell_free(register struct soltab *stp)
 {
@@ -619,8 +599,6 @@ rt_ell_free(register struct soltab *stp)
 
 
 /**
- * R T _ E L L _ 1 6 P T S
- *
  * Also used by the TGC code
  */
 #define ELLOUT(n) ov+(n-1)*3
@@ -811,9 +789,6 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ E L L _ P L O T
- */
 int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -889,8 +864,6 @@ struct ell_vert_strip {
 
 
 /**
- * R T _ E L L _ T E S S
- *
  * Tessellate an ellipsoid.
  *
  * The strategy is based upon the approach of Jon Leech 3/24/89, from
@@ -1261,8 +1234,6 @@ fail:
 
 
 /**
- * R T _ E L L _ I M P O R T
- *
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
@@ -1306,9 +1277,6 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ E L L _ E X P O R T
- */
 int
 rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1341,8 +1309,6 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E L L _ I M P O R T 5
- *
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
@@ -1383,8 +1349,6 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- * R T _ E L L _ E X P O R T 5
- *
  * The external format is:
  * V point
  * A vector
@@ -1424,8 +1388,6 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E L L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1493,8 +1455,6 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E L L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1520,9 +1480,6 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 
 
-/**
- * R T _ E L L _ T N U R B
- */
 int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -1809,8 +1766,6 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 
 
 /**
- * R T _ E L L _ P A R A M S
- *
  * @brief Method for declaration of parameters so that it can be used
  * by Parametrics and Constraints library.
  *
@@ -1866,8 +1821,6 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 
 
 /**
- * R T _ E L L _ V O L U M E
- *
  * Computes volume of a ellipsoid.
  */
 void
@@ -1885,8 +1838,6 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ E L L _ C E N T R O I D
- *
  * Computes centroid of an ellipsoid
  */
 void
@@ -1899,8 +1850,6 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ E L L _ S U R F A C E _ A R E A
- *
  * Computes the surface area of an ellipsoid.
  * logs error if triaxial ellipsoid (cannot find surface area).
  */

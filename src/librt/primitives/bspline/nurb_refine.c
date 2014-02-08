@@ -40,8 +40,6 @@
 
 
 /**
- * R T _ N U R B _ S _ R E F I N E
- *
  * Returns a refined surface.  The original surface is unmodified.
  */
 struct face_g_snurb *

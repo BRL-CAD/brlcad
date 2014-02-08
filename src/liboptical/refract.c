@@ -57,9 +57,6 @@ extern struct bn_tabdata *background;
 extern vect_t background;
 #endif
 
-/*
- * R R _ M I S S
- */
 HIDDEN int
 rr_miss(struct application *ap)
 {
@@ -69,8 +66,6 @@ rr_miss(struct application *ap)
 
 
 /*
- * R R _ H I T
- *
  * This routine is called when an internal reflection ray hits something
  * (which is ordinarily the case).
  *
@@ -285,8 +280,6 @@ out:
 
 
 /*
- * R E F R A C T
- *
  * Compute the refracted ray 'v_2' from the incident ray 'v_1' with
  * the refractive indices 'ri_2' and 'ri_1' respectively.
  * Using Schnell's Law:
@@ -357,9 +350,6 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 }
 
 
-/*
- * R R _ R E N D E R
- */
 int
 rr_render(register struct application *ap,
 	  const struct partition *pp,

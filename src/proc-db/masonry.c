@@ -100,8 +100,6 @@ struct boardseg {
 
 
 /**
- * U S A G E
- *
  * tell user how to invoke this program, then exit
  */
 void usage(char *s)
@@ -138,8 +136,6 @@ set_translate(char *s)
 
 
 /*
- * B U I L D H R O T
- *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation.
  *
@@ -972,8 +968,6 @@ brick(struct rt_wdb *fd)
 
 
 /**
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

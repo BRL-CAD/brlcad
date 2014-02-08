@@ -103,8 +103,6 @@ txt_source_hook(const struct bu_structparse *UNUSED(sdp),
 
 
 /*
- * T X T _ T R A N S P _ H O O K
- *
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
@@ -126,8 +124,6 @@ txt_transp_hook(const struct bu_structparse *sdp,
 
 
 /*
- * t x t _ l o a d _ d a t a s o u r c e
- *
  * This is a helper routine used in txt_setup() to load a texture either from
  * a file or from a db object.  The resources are released in txt_free()
  * (there is no specific unload_datasource function).
@@ -214,8 +210,6 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 
 
 /*
- * T X T _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  *
@@ -437,8 +431,6 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 
 
 /*
- * B W T X T _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return the filtered intensity.
  *
@@ -562,9 +554,6 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
 }
 
 
-/*
- * T X T _ S E T U P
- */
 HIDDEN int
 txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
@@ -619,9 +608,6 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * T X T _ P R I N T
- */
 HIDDEN void
 txt_print(register struct region *rp, genptr_t UNUSED(dp))
 {
@@ -629,9 +615,6 @@ txt_print(register struct region *rp, genptr_t UNUSED(dp))
 }
 
 
-/*
- * T X T _ F R E E
- */
 HIDDEN void
 txt_free(genptr_t cp)
 {
@@ -662,9 +645,6 @@ struct bu_structparse ckr_parse[] = {
 };
 
 
-/*
- * C K R _ R E N D E R
- */
 HIDDEN int
 ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, genptr_t dp)
 {
@@ -694,9 +674,6 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
 }
 
 
-/*
- * C K R _ S E T U P
- */
 HIDDEN int
 ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
@@ -723,9 +700,6 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
 }
 
 
-/*
- * C K R _ P R I N T
- */
 HIDDEN void
 ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 {
@@ -733,9 +707,6 @@ ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 }
 
 
-/*
- * C K R _ F R E E
- */
 HIDDEN void
 ckr_free(genptr_t cp)
 {
@@ -744,8 +715,6 @@ ckr_free(genptr_t cp)
 
 
 /*
- * T S T M _ R E N D E R
- *
  * Render a map which varies red with U and blue with V values.
  * Mostly useful for debugging ft_uv() routines.
  */
@@ -774,9 +743,6 @@ static vect_t star_colors[] = {
 };
 
 
-/*
- * S T A R _ R E N D E R
- */
 HIDDEN int
 star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t UNUSED(dp))
 {
@@ -804,8 +770,6 @@ star_render(register struct application *ap, const struct partition *pp, struct 
 
 
 /*
- * B M P _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * compute a new surface normal.
  * For now we come up with a local coordinate system, and
@@ -891,9 +855,6 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
 }
 
 
-/*
- * E N V M A P _ S E T U P
- */
 HIDDEN int
 envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
@@ -930,8 +891,6 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
 
 
 /*
- * M L I B _ Z E R O
- *
  * Regardless of arguments, always return zero.
  * Useful mostly as a stub print, and/or free routine.
  */
@@ -944,8 +903,6 @@ mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), stru
 
 
 /*
- * M L I B _ O N E
- *
  * Regardless of arguments, always return one.
  * Useful mostly as a stub setup routine.
  */
@@ -957,9 +914,6 @@ mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), genptr_t *UNUSED(c)
 }
 
 
-/*
- * M L I B _ V O I D
- */
 /* VARARGS */
 void
 mlib_void(struct region *UNUSED(a), genptr_t UNUSED(b))

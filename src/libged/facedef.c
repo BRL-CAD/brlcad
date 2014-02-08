@@ -68,8 +68,6 @@ char *p_nupnt[] = {
 
 
 /*
- * G E T _ P L E Q N
- *
  * Gets the planar equation from the array argv[] and puts the result
  * into 'plane'.
  */
@@ -87,8 +85,6 @@ get_pleqn(struct ged *gedp, fastf_t *plane, const char *argv[])
 
 
 /*
- * G E T _ 3 P T S
- *
  * Gets three definite points from the array argv[] and finds the
  * planar equation from these points.  The resulting plane equation is
  * stored in 'plane'.
@@ -119,8 +115,6 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
 
 
 /*
- * G E T _ R O T F B
- *
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
  * stored in 'plane'. The vertices pointed to by 's_recp' are used if
@@ -156,8 +150,6 @@ get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_
 
 
 /*
- * G E T _ N U P N T
- *
  * Gets a point from the three strings in the 'argv' array.  The value
  * of D of 'plane' is changed such that the plane passes through the
  * input point.

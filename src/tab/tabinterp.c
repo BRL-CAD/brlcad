@@ -104,9 +104,6 @@ chan_not_loaded_or_specified(int ch)
 }
 
 
-/*
- * C R E A T E _ C H A N
- */
 HIDDEN int
 create_chan(const char *num, int len, const char *itag)
 {
@@ -152,9 +149,6 @@ create_chan(const char *num, int len, const char *itag)
 }
 
 
-/*
- * C M _ F I L E
- */
 HIDDEN int
 cm_file(const int argc, const char **argv)
 {
@@ -282,8 +276,6 @@ cm_file(const int argc, const char **argv)
 
 
 /*
- * P R _ I C H A N S
- *
  * Print input channel values.
  */
 HIDDEN void
@@ -307,8 +299,6 @@ pr_ichan(int ch)
 
 
 /*
- * C M _ I D U M P
- *
  * Dump the indicated input channels, or all, if none specified.
  */
 HIDDEN int
@@ -330,9 +320,6 @@ cm_idump(const int argc, const char **argv)
 }
 
 
-/*
- * O U T P U T
- */
 HIDDEN void
 output()
 {
@@ -361,9 +348,6 @@ output()
 }
 
 
-/*
- * C M _ T I M E S
- */
 HIDDEN int
 cm_times(const int argc, const char **argv)
 {
@@ -400,9 +384,6 @@ cm_times(const int argc, const char **argv)
 }
 
 
-/*
- * C M _ I N T E R P
- */
 HIDDEN int
 cm_interp(const int argc, const char **argv)
 {
@@ -459,9 +440,6 @@ cm_interp(const int argc, const char **argv)
 }
 
 
-/*
- * N E X T _ I N T E R P O L A T E
- */
 HIDDEN void
 next_interpolate(struct chan *chp)
 {
@@ -487,8 +465,6 @@ next_interpolate(struct chan *chp)
 
 
 /*
- * S T E P _ I N T E R P O L A T E
- *
  * Simply select the value at the beginning of the interval.  This
  * allows parameters to take instantaneous jumps in value at specified
  * times.
@@ -530,8 +506,6 @@ step_interpolate(struct chan *chp, fastf_t *times)
 }
 
 /*
- * L I N E A R _ I N T E R P O L A T E
- *
  * This routine takes advantage of (and depends on) the fact that the
  * input and output arrays are sorted in increasing time values.
  */
@@ -577,8 +551,6 @@ linear_interpolate(struct chan *chp, fastf_t *times)
 }
 
 /*
- * R A T E _ I N T E R P O L A T E
- *
  * The one (and only) input value is interpreted as rate, in
  * unspecified units per second.  This is really just a hack to allow
  * multiplying the time by a constant.
@@ -602,10 +574,6 @@ rate_interpolate(struct chan *chp, fastf_t *UNUSED(times))
     }
 }
 
-/*
- * A C C E L _ I N T E R P O L A T E
- *
- */
 HIDDEN void
 accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
@@ -631,8 +599,6 @@ accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 
 
 /*
- * Q U A T _ I N T E R P O L A T E
- *
  * Do linear interpolation for first and last span.  Use Bezier
  * interpolation for all the rest.
  *
@@ -764,8 +730,6 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 
 
 /*
- * S P L I N E
- *
  * Fit an interpolating spline to the data points given.  Time in the
  * independent (x) variable, and the single channel of data values is
  * the dependent (y) variable.
@@ -925,8 +889,6 @@ spline(struct chan *chp, fastf_t *times)
 
 
 /*
- * G O
- *
  * Perform the requested interpolation on each channel
  */
 HIDDEN void
@@ -1033,8 +995,6 @@ go()
 
 
 /*
- * C M _ R A T E
- *
  * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
@@ -1059,8 +1019,6 @@ cm_rate(const int argc, const char **argv)
 
 
 /*
- * C M _ A C C E L
- *
  * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
@@ -1184,9 +1142,6 @@ cm_help(const int argc, const char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {

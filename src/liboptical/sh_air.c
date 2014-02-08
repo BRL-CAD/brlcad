@@ -153,9 +153,6 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * A I R _ P R I N T
- */
 HIDDEN void
 air_print(register struct region *rp, genptr_t dp)
 {
@@ -163,9 +160,6 @@ air_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * A I R _ F R E E
- */
 HIDDEN void
 air_free(genptr_t cp)
 {
@@ -176,8 +170,6 @@ air_free(genptr_t cp)
 
 
 /*
- * A I R T E S T _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
@@ -202,8 +194,6 @@ airtest_render(struct application *ap, const struct partition *pp, struct shadew
     return 1;
 }
 /*
- * A I R _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  *
@@ -289,8 +279,6 @@ tmist_miss(register struct application *UNUSED(ap))
 
 
 /*
- * T M I S T _ R E N D E R
- *
  * Use height above named terrain object
  *
  *
@@ -370,11 +358,6 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     return 1;
 }
 /*
- * E M I S T _ R E N D E R
- *
- *
- *
- *
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end
@@ -441,11 +424,6 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
     return 1;
 }
 /*
- * F B M _ E M I S T _ R E N D E R
- *
- *
- *
- *
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end

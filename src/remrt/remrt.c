@@ -222,8 +222,6 @@ struct timeval last_server_check_time;
 /* -- */
 
 /*
- * L I S T
- *
  * Macros to manage lists of pixel spans.
  * The span is inclusive, from start up to and including stop.
  */

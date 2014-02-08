@@ -171,8 +171,6 @@ struct superell_specific {
 #define SUPERELL_NULL ((struct superell_specific *)0)
 
 /**
- * R T _ S U P E R E L L _ B B O X
- *
  * Calculate a bounding RPP for a superell
  */
 int
@@ -241,8 +239,6 @@ rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const st
 
 
 /**
- * R T _ S U P E R E L L _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid superellipsoid, and if so,
  * precompute various terms of the formula.
@@ -372,9 +368,6 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 
-/**
- * R T _ S U P E R E L L _ P R I N T
- */
 void
 rt_superell_print(const struct soltab *stp)
 {
@@ -391,8 +384,6 @@ rt_superell_print(const struct soltab *stp)
  */
 
 /**
- * R T _ S U P E R E L L _ S H O T
- *
  * Intersect a ray with an superellipsoid, where all constant terms
  * have been precomputed by rt_superell_prep().  If an intersection
  * occurs, a struct seg will be acquired and filled in.
@@ -569,8 +560,6 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
- * R T _ S U P E R E L L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -593,8 +582,6 @@ rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ S U P E R E L L _ C U R V E
- *
  * Return the curvature of the superellipsoid.
  */
 void
@@ -611,8 +598,6 @@ rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ S U P E R E L L _ U V
- *
  * For a hit on the surface of an SUPERELL, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -632,9 +617,6 @@ rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-/**
- * R T _ S U P E R E L L _ F R E E
- */
 void
 rt_superell_free(struct soltab *stp)
 {
@@ -646,8 +628,6 @@ rt_superell_free(struct soltab *stp)
 
 
 /**
- * R T _ S U P E R E L L _ 1 6 P T S
- *
  * Also used by the TGC code
  */
 #define SUPERELLOUT(n) ov+(n-1)*3
@@ -690,9 +670,6 @@ rt_superell_16pts(fastf_t *ov,
 }
 
 
-/**
- * R T _ S U P E R E L L _ P L O T
- */
 int
 rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -749,8 +726,6 @@ struct superell_vert_strip {
 
 
 /**
- * R T _ S U P E R E L L _ T E S S
- *
  * Tesssuperellate an superellipsoid.
  *
  * The strategy is based upon the approach of Jon Leech 3/24/89, from
@@ -792,8 +767,6 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 
 /**
- * R T _ S U P E R E L L _ I M P O R T
- *
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
@@ -845,9 +818,6 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 }
 
 
-/**
- * R T _ S U P E R E L L _ E X P O R T
- */
 int
 rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -885,8 +855,6 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ S U P E R E L L _ I M P O R T 5
- *
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
@@ -930,8 +898,6 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
 
 /**
- * R T _ S U P E R E L L _ E X P O R T 5
- *
  * The external format is:
  * V point
  * A vector
@@ -974,8 +940,6 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ S U P E R E L L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1046,8 +1010,6 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
 
 /**
- * R T _ S U P E R E L L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1074,10 +1036,6 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 */
 
-/**
- * R T _ S U P E R E L L _ P A R A M S
- *
- */
 int
 rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1088,8 +1046,6 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
 
 
 /**
- * R T _ S U P E R E L L _ V O L U M E
- *
  * Computes the volume of a superellipsoid
  *
  * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf

@@ -267,9 +267,6 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * F I R E _ P R I N T
- */
 HIDDEN void
 fire_print(register struct region *rp, genptr_t dp)
 {
@@ -277,9 +274,6 @@ fire_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * F I R E _ F R E E
- */
 HIDDEN void
 fire_free(genptr_t cp)
 {
@@ -288,8 +282,6 @@ fire_free(genptr_t cp)
 
 
 /*
- * F I R E _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

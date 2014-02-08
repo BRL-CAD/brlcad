@@ -113,8 +113,6 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
 /**
- * R T _ V O L _ S H O T
- *
  * Transform the ray into local coordinates of the volume ("ideal space").
  * Step through the 3-D array, in local coordinates.
  * Return intersection segments.
@@ -397,8 +395,6 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ V O L _ I M P O R T
- *
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
@@ -501,8 +497,6 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ V O L _ E X P O R T
- *
  * The name will be added by the caller.
  */
 int
@@ -541,8 +535,6 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ V O L _ I M P O R T 5
- *
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
@@ -639,8 +631,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ V O L _ E X P O R T 5
- *
  * The name will be added by the caller.
  */
 int
@@ -675,8 +665,6 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ V O L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -721,8 +709,6 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ V O L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -747,8 +733,6 @@ rt_vol_ifree(struct rt_db_internal *ip)
 
 
 /**
- * R T _ V O L _ B B O X
- *
  * Calculate bounding RPP for vol
  */
 int
@@ -770,8 +754,6 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ V O L _ P R E P
- *
  * Returns -
  * 0 OK
  * !0 Failure
@@ -831,9 +813,6 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ V O L _ P R I N T
- */
 void
 rt_vol_print(register const struct soltab *stp)
 {
@@ -850,8 +829,6 @@ rt_vol_print(register const struct soltab *stp)
 
 
 /**
- * R T _ V O L _ N O R M
- *
  * Given one ray distance, return the normal and
  * entry/exit point.
  * This is mostly a matter of translating the stored
@@ -897,8 +874,6 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ V O L _ C U R V E
- *
  * Everything has sharp edges.  This makes things easy.
  */
 void
@@ -915,8 +890,6 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ V O L _ U V
- *
  * Map the hit point in 2-D into the range 0..1
  * untransformed X becomes U, and Y becomes V.
  */
@@ -933,9 +906,6 @@ rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ V O L _ F R E E
- */
 void
 rt_vol_free(struct soltab *stp)
 {
@@ -951,9 +921,6 @@ rt_vol_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ V O L _ P L O T
- */
 int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1049,9 +1016,6 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ V O L _ P L A T E
- */
 void
 rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
@@ -1080,9 +1044,6 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 }
 
 
-/**
- * R T _ V O L _ T E S S
- */
 int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -1328,10 +1289,6 @@ fail:
 }
 
 
-/**
- * R T _ V O L _ P A R A M S
- *
- */
 int
 rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1379,8 +1336,6 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /*
- * R T _ V O L _ S U R F _ A R E A
- *
  * Computes the surface area of a volume by transforming each of the vertices by
  * the matrix and then summing the area of the faces of each cell necessary.
  * The vertices are numbered from left to right, front to back, bottom to top.
@@ -1479,8 +1434,6 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
 
 /*
- * R T _ V O L _ V O L U M E
- *
  * A paper at http://www.osti.gov/scitech/servlets/purl/632793 gives a method
  * for calculating the volume of hexahedrens from the eight vertices.
  *

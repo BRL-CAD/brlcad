@@ -1618,8 +1618,6 @@ X_help(FBIO *ifp)
 
 
 /*
- * c o n v R G B
- *
  * convert a single RGBpixel to its corresponding entry in the Sun
  * colormap.
  */
@@ -1652,8 +1650,6 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 
 
 /*
- * G E N M A P
- *
  * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)

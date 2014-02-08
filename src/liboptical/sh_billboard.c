@@ -289,9 +289,6 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct
 }
 
 
-/*
- * B I L L B O A R D _ P R I N T
- */
 HIDDEN void
 bbd_print(struct region *rp, genptr_t dp)
 {
@@ -299,9 +296,6 @@ bbd_print(struct region *rp, genptr_t dp)
 }
 
 
-/*
- * B I L L B O A R D _ F R E E
- */
 HIDDEN void
 bbd_free(genptr_t cp)
 {
@@ -358,8 +352,6 @@ plot_ray_img(struct application *ap,
 
 
 /*
- * d o _ r a y _ i m a g e
- *
  * Handle ray interaction with 1 image
  */
 static void
@@ -506,8 +498,6 @@ imgdist_compare(const void *a, const void *b, void *UNUSED(arg))
 
 
 /*
- * B I L L B O A R D _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

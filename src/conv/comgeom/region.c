@@ -58,8 +58,6 @@ void group_add(int val, char *name);
 void group_write(void);
 
 /*
- * G E T R E G I O N
- *
  * Use wmp[region_number] as head for each region.
  *
  * Returns -
@@ -206,8 +204,6 @@ top:
 
 
 /*
- * G E T I D
- *
  * Load the region ID information into the structures
  */
 void
@@ -252,9 +248,6 @@ getid(void)
 }
 
 
-/*
- * R E G I O N _ R E G I S T E R
- */
 void
 region_register(int reg_num, int id, int air, int mat, int los)
 {

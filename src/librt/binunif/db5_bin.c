@@ -105,8 +105,6 @@ rt_bin_mime_import5(struct rt_db_internal * UNUSED(ip),
 }
 
 /**
- * R T _ B I N U N I F _ I M P O R T 5
- *
  * Import a uniform-array binary object from the database format to
  * the internal structure.
  */
@@ -224,8 +222,6 @@ rt_binunif_dump(struct rt_binunif_internal *bip) {
 
 
 /**
- * R T _ B I N U N I F _ E X P O R T 5
- *
  * Create the "body" portion of external form
  */
 int
@@ -319,8 +315,6 @@ rt_binunif_export5(struct bu_external		*ep,
 }
 
 /**
- * R T _ B I N U N I F _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this object.  First
  * line describes type of object.  Additional lines are indented one
  * tab, and give parameter values.
@@ -389,8 +383,6 @@ rt_binunif_free(struct rt_binunif_internal *bip) {
 
 
 /**
- * R T _ B I N U N I F _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * thing.
  */

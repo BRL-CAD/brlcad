@@ -218,10 +218,6 @@ __BEGIN_DECLS
 #endif
 
 
-/*
- * I N T E R F A C E H E A D E R S
- */
-
 /* system interface headers */
 #include <setjmp.h> /* for bu_setjmp */
 #include <stddef.h> /* for size_t */
@@ -803,8 +799,6 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  */
 
 /**
- * B U _ C K M A G
- *
  * Macros to check and validate a structure pointer, given that the
  * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
@@ -821,16 +815,12 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 
 /**
- * b u _ b a d m a g i c
- *
  *  Support routine for BU_CKMAG macro.
  */
 BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 
 /**
- * b u _ i d e n t i f y _ m a g i c
- *
  * Given a number which has been found in the magic number field of a
  * structure (which is typically the first entry), determine what kind
  * of structure this magic number pertains to.  This is called by the
@@ -2067,9 +2057,6 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * on parallel systems.
  */
 
-/**
- *
- */
 struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
@@ -3530,8 +3517,6 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 /* hist.c */
 /* These are a set of data histogramming routines. */
 
-/**
- */
 BU_EXPORT extern void bu_hist_free(struct bu_hist *histp);
 
 /**
@@ -3541,8 +3526,6 @@ BU_EXPORT extern void bu_hist_free(struct bu_hist *histp);
  */
 BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, size_t nbins);
 
-/**
- */
 BU_EXPORT extern void bu_hist_range(struct bu_hist *hp, fastf_t low, fastf_t high);
 
 /**
@@ -3884,8 +3867,6 @@ BU_EXPORT extern genptr_t bu_calloc(size_t nelem,
 				    size_t elsize,
 				    const char *str);
 
-/**
- */
 BU_EXPORT extern void bu_free(genptr_t ptr,
 			      const char *str);
 
@@ -4109,8 +4090,6 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file(const char *name,
  */
 BU_EXPORT extern void bu_close_mapped_file(struct bu_mapped_file *mp);
 
-/**
- */
 BU_EXPORT extern void bu_pr_mapped_file(const char *title,
 					const struct bu_mapped_file *mp);
 
@@ -4333,8 +4312,6 @@ BU_EXPORT extern void bu_parse_mm(const struct bu_structparse *sdp,
 				  char *base,
 				  const char *value);
 
-/**
- */
 BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
 					  const char **next,
 					  struct bu_vls *vls);
@@ -4358,9 +4335,6 @@ BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
  */
 BU_EXPORT extern int bu_shader_to_list(const char *in, struct bu_vls *vls);
 
-/**
- *
- */
 BU_EXPORT extern int bu_shader_to_key_eq(const char *in, struct bu_vls *vls);
 
 /**
@@ -4375,17 +4349,11 @@ BU_EXPORT extern int bu_shader_to_key_eq(const char *in, struct bu_vls *vls);
 BU_EXPORT extern int bu_fwrite_external(FILE *fp,
 					const struct bu_external *ep);
 
-/**
- */
 BU_EXPORT extern void bu_hexdump_external(FILE *fp, const struct bu_external *ep,
 					  const char *str);
 
-/**
- */
 BU_EXPORT extern void bu_free_external(struct bu_external *ep);
 
-/**
- */
 BU_EXPORT extern void bu_copy_external(struct bu_external *op,
 				       const struct bu_external *ip);
 
@@ -4395,9 +4363,6 @@ BU_EXPORT extern void bu_copy_external(struct bu_external *op,
  */
 BU_EXPORT extern char *bu_next_token(char *str);
 
-/**
- *
- */
 BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
 						    const struct bu_structparse *sp);
 
@@ -5015,12 +4980,8 @@ BU_EXPORT extern void bu_semaphore_free(void);
  */
 BU_EXPORT extern void bu_semaphore_reinit(unsigned int nsemaphores);
 
-/**
- */
 BU_EXPORT extern void bu_semaphore_acquire(unsigned int i);
 
-/**
- */
 BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 
 /** @} */
@@ -5893,8 +5854,6 @@ struct bu_lex_key {
 #define BU_LEX_NEED_MORE 0
 
 
-/**
- */
 BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 			    struct bu_vls *rtstr,
 			    struct bu_lex_key *keywords,

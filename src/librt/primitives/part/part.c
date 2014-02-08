@@ -221,8 +221,6 @@ const struct bu_structparse rt_part_parse[] = {
 };
 
 /**
- * R T _ P A R T _ B B O X
- *
  * Compute the bounding RPP for a particle
  */
 int
@@ -260,8 +258,6 @@ rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
 
 /**
- * R T _ P A R T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid particle, and if so, precompute various
  * terms of the formula.
@@ -408,9 +404,6 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ P A R T _ P R I N T
- */
 void
 rt_part_print(register const struct soltab *stp)
 {
@@ -444,8 +437,6 @@ rt_part_print(register const struct soltab *stp)
 
 
 /**
- * R T _ P A R T _ S H O T
- *
  * Intersect a ray with a part.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -743,8 +734,6 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ P A R T _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -793,8 +782,6 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ P A R T _ C U R V E
- *
  * Return the curvature of the particle.
  * There are two cases:  hitting a hemisphere, and hitting the cylinder.
  */
@@ -833,8 +820,6 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ P A R T _ U V
- *
  * For a hit on the surface of a particle, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -885,9 +870,6 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ P A R T _ F R E E
- */
 void
 rt_part_free(register struct soltab *stp)
 {
@@ -900,8 +882,6 @@ rt_part_free(register struct soltab *stp)
 
 
 /**
- * R T _ P A R T _ H E M I S P H E R E 8
- *
  * Produce a crude approximation to a hemisphere,
  * 8 points around the rim [0]..[7],
  * 4 points around a midway latitude [8]..[11], and
@@ -937,9 +917,6 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 }
 
 
-/**
- * R T _ P A R T _ P L O T
- */
 int
 rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1067,8 +1044,6 @@ struct part_vert_strip {
 
 
 /**
- * R T _ P A R T _ T E S S
- *
  * Based upon the tesselator for the ellipsoid.
  *
  * Break the particle into three parts:
@@ -1434,9 +1409,6 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-/**
- * R T _ P A R T _ I M P O R T
- */
 int
 rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1526,9 +1498,6 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ P A R T _ E X P O R T
- */
 int
 rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1570,9 +1539,6 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ P A R T _ I M P O R T 5
- */
 int
 rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1651,9 +1617,6 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ P A R T _ E X P O R T 5
- */
 int
 rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1689,8 +1652,6 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 /**
- * R T _ P A R T _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1767,8 +1728,6 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
 
 /**
- * R T _ P A R T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1781,10 +1740,6 @@ rt_part_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P A R T _ P A R A M S
- *
- */
 int
 rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1794,9 +1749,6 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P A R T _ V O L U M E
- */
 void
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1820,9 +1772,6 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P A R T _ S U R F _ A R E A
- */
 void
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {

@@ -67,8 +67,6 @@ extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, struct bn_vlblock *vb
 
 
 /*
- * P R _ W A I T _ S T A T U S
- *
  * Interpret the status return of a wait() system call,
  * for the edification of the watching luser.
  * Warning:  This may be somewhat system specific, most especially
@@ -104,8 +102,6 @@ pr_wait_status(Tcl_Interp *interp,
 
 
 /*
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int

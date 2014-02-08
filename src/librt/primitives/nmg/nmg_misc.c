@@ -43,9 +43,6 @@
 #include "db.h"		/* for debugging stuff at bottom */
 
 
-/**
- * N M G _ S N U R B _ C A L C _ L U _ U V _ O R I E N T
- */
 int
 nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 {
@@ -289,8 +286,6 @@ nmg_find_zero_length_edges(const struct model *m)
 
 
 /**
- * N M G _ F I N D _ T O P _ F A C E _ I N _ D I R
- *
  * Finds the topmost face in a shell (in given direction).  Expects to
  * have a translation table (variable "flags") for the model, and will
  * ignore face structures that have their flag set in the table.
@@ -525,8 +520,6 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 
 
 /**
- * N M G _ F I N D _ T O P _ F A C E
- *
  * Finds the topmost face in a shell (in some direction).  Expects to
  * have a translation table (variable "flags") for the model, and will
  * ignore face structures that have their flag set in the table.
@@ -553,8 +546,6 @@ nmg_find_top_face(const struct shell *s, int *dir, long int *flags)
 
 
 /**
- * N M G _ A S S O C _ V O I D _ S H E L L S
- *
  * Passed an bu_ptbl structure containing one shell, this routine
  * examines the other shells in the region to determine if any are
  * void shells within the shell on the bu_ptbl list. Any such void
@@ -759,8 +750,6 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 
 
 /**
- * N M G _ F I N D _ O U T E R _ A N D _ V O I D _ S H E L L S
- *
  * This routine takes a region and constructs an array of bu_ptbl
  * lists.  A list is created for each outer shell, and that shell is
  * the first item on the list. Additional shells on any list are void
@@ -856,8 +845,6 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
 
 
 /**
- * N M G _ M A R K _ E D G E S _ R E A L
- *
  * Sets the "is_real" flag on all edges at or below the pointer
  * passed. Returns the number of flags set.
  */
@@ -886,8 +873,6 @@ nmg_mark_edges_real(const uint32_t *magic_p)
 
 
 /**
- * N M G _ T A B U L A T E _ F A C E _ G _ V E R T S
- *
  * Tabulates all vertices in faces that use fg
  */
 void
@@ -950,8 +935,6 @@ nmg_tabulate_face_g_verts(struct bu_ptbl *tab, const struct face_g_plane *fg)
 
 
 /**
- * N M G _ I S E C T _ S H E L L _ S E L F
- *
  * Intersects all faces in a shell with all other faces in the same
  * shell Intended for use after extrusion
  */
@@ -1050,8 +1033,6 @@ nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ N E X T _ R A D I A L _ E D G E U S E
- *
  * Traverse radial edgeuse around specified edgeuse looking for one
  * that meets optional restrictions. If a shell is specified only
  * edgeuse from that shell will be considered. If wires is non-zero,
@@ -1089,8 +1070,6 @@ nmg_next_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
 
 
 /**
- * N M G _ P R E V _ R A D I A L _ E D G E U S E
- *
  * Traverse radial edgeuse around specified edgeuse in opposite
  * direction from nmg_next_radial_eu, looking for one that meets
  * optional restrictions. If a shell is specified only edgeuse from
@@ -1125,8 +1104,6 @@ nmg_prev_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
 
 
 /**
- * N M G _ R A D I A L _ F A C E _ C O U N T
- *
  * Counts the number of faces (actually, the number of radial edgeuse/mate pairs)
  * around eu. If s is specified, only edgeuses in shell s are counted. Wire
  * edgeuses are not counted.
@@ -1159,8 +1136,6 @@ nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
 
 
 /**
- * N M G _ C H E C K _ C L O S E D _ S H E L L
- *
  * Looks at every eu in OT_SAME fu's. If any eu has no radials, then
  * it must be the edge of a dangling face and therefore the edge of an
  * opening.
@@ -1208,8 +1183,6 @@ nmg_check_closed_shell(const struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ M O V E _ L U _ B E T W E E N _ F U S
- *
  * Moves lu from src faceuse to dest faceuse
  *
  * returns:
@@ -1273,8 +1246,6 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
 
 
 /**
- * N M G _ L O O P _ P L A N E _ N E W E L L
- *
  * Calculate the plane equation of a loop using Newell's Method (See
  * "Graphics Gems III", David Kirk editor, Academic Press, Inc. 1992)
  *
@@ -1343,8 +1314,6 @@ nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
 
 
 /**
- * N M G _ L O O P _ P L A N E _ A R E A
- *
  * Calculates a plane equation and the area of a loop
  *
  * returns:
@@ -1439,8 +1408,6 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 
 
 /**
- * N M G _ L O O P _ P L A N E _ A R E A 2
- *
  * Calculates a plane equation and the area of a loop
  *
  * This function only works correctly when the loop represents a
@@ -1578,8 +1545,6 @@ out:
 
 
 /**
- * N M G _ C A L C _ F A C E _ P L A N E
- *
  * Calculate face geometry using a least squares fit or Newell's
  * method.
  *
@@ -1822,8 +1787,6 @@ out:
 
 
 /**
- * N M G _ C A L C _ F A C E _ G
- *
  * interface to nmg_calc_face_plane(), calls nmg_face_g with the
  * resulting plane
  */
@@ -1843,8 +1806,6 @@ nmg_calc_face_g(struct faceuse *fu)
 
 
 /**
- * N M G _ F A C E U S E _ A R E A
- *
  * The following routines calculate surface area of NMG objects. Note
  * that this includes all surfaces, not just external surfaces, i.e.,
  * an NMG object consisting of two adjacent cubes with a coincident
@@ -1938,8 +1899,6 @@ nmg_model_area(const struct model *m)
 
 
 /**
- * N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
- *
  * Make sure that the list of intersection points doesn't contain any
  * vertexuses from loops whose bounding boxes don;t overlap the
  * bounding box of a loop in the given faceuse.
@@ -2084,8 +2043,6 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 
 
 /**
- * N M G _ I N _ O R _ R E F
- *
  * if the given vertexuse "vu" is in the table given by "b" or if "vu"
  * references a vertex which is referenced by a vertexuse in the table,
  * then we return 1.  Otherwise, we return 0.
@@ -2110,8 +2067,6 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 
 
 /**
- * N M G _ R E B O U N D
- *
  * Re-compute all the bounding boxes in the NMG model.
  * Bounding boxes are presently found in these structures:
  *	loop_g
@@ -2190,9 +2145,6 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
 }
 
 
-/**
- * N M G _ C O U N T _ S H E L L _ K I D S
- */
 void
 nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_wires, size_t *total_points)
 {
@@ -2236,8 +2188,6 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
 
 
 /**
- * O R D E R _ T B L
- *
  * private support routine for nmg_close_shell creates an array of
  * indices into a table of edgeuses, ordered end-to-end. This may or
  * may not create an actual loop.
@@ -2302,8 +2252,6 @@ order_tbl(struct bu_ptbl *tbl, int start_idx, int **idx, int tbl_size, int *loop
 
 
 /**
- * N M G _ C L O S E _ S H E L L
- *
  * Examines the passed shell and, if there are holes, closes them
  * note that not much care is taken as to how the holes are closed
  * so the results are not entirely predictable.
@@ -2715,8 +2663,6 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ D U P _ S H E L L
- *
  * Duplicate a shell and return the new copy. New shell is in the same
  * region.
  *
@@ -2966,8 +2912,6 @@ nmg_reverse_radials(struct faceuse *fu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
- *
  * This routine calls "nmg_reverse_face" and also makes the radial
  * pointers connect faces of like orientation (i.e., OT_SAME to
  * OT_SAME and OT_OPPOSITE to OT_OPPOSITE).
@@ -3023,8 +2967,6 @@ nmg_reverse_face_and_radials(struct faceuse *fu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S H E L L _ I S _ V O I D
- *
  * determines if the shell is a void shell or an exterior shell by
  * finding the topmost face (in some direction) and looking at the
  * component of the OT_SAME faceuse normal in that direction.
@@ -3083,8 +3025,6 @@ nmg_shell_is_void(const struct shell *s)
 
 
 /**
- * N M G _ P R O P A G A T E _ N O R M A L S
- *
  * This routine expects "fu_in" to have a correctly oriented normal.
  * It then checks all faceuses in the same shell it can reach via
  * radial structures, and reverses faces and modifies radial
@@ -3208,8 +3148,6 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
 
 
 /**
- * N M G _ D I S C O N N E C T _ S H E L L S
- *
  * looks for edges that have uses in more than one shell in region.
  * creates new edges so that there is no sharing of edges among shells
  */
@@ -3321,8 +3259,6 @@ nmg_disconnect_shells(struct nmgregion *r)
 
 
 /**
- * N M G _ C O N N E C T _ S A M E _ F U _ O R I E N T S
- *
  * looks for radially connected faceuses that have disagreeing
  * orientations.  if such a condition is found, the radial pointers
  * are rearranged to make the radial faces agree in orientation.
@@ -3476,8 +3412,6 @@ missed:
 
 
 /*
- * N M G _ M K _ M O D E L _ F R O M _ R E G I O N
- *
  * Creates a new model from an existing nmgregion.  Will refuse to
  * create new model if the passed nmgregion has children with uses in
  * another nmgregion.
@@ -3566,8 +3500,6 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
 
 
 /**
- * N M G _ F I X _ N O R M A L S
- *
  * Routine to set faceuse normals to correct direction.
  *
  * Method:
@@ -3751,8 +3683,6 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 
 
 /**
- * N M G _ B R E A K _ L O N G _ E D G E S
- *
  * This codes looks for situations as illustrated:
  *
  *   *------->*-------->*--------->*
@@ -3857,8 +3787,6 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ M K _ N E W _ F A C E _ F R O M _ L O O P
- *
  * Remove a loopuse from an existing face and construct a new face
  * from that loop
  *
@@ -4103,8 +4031,6 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 
 
 /**
- * N M G _ S P L I T _ L O O P S _ I N T O _ F A C E S
- *
  * Visits each faceuse and splits disjoint loops into separate faces.
  *
  * Returns the number of faces modified.
@@ -4147,8 +4073,6 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
 
 
 /**
- * N M G _ D E C O M P O S E _ S H E L L
- *
  * Accepts one shell and breaks it to the minimum number of disjoint
  * shells.
  *
@@ -4571,8 +4495,6 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S T A S H _ M O D E L _ T O _ F I L E
- *
  * Store an NMG model as a separate .g file, for later examination.
  * Don't free the model, as the caller may still have uses for it.
  *
@@ -4644,8 +4566,6 @@ struct nmg_unbreak_state
 
 
 /**
- * N M G _ U N B R E A K _ H A N D L E R
- *
  * edgeuse visit routine for nmg_unbreak_region_edges.
  *
  * checks if edgeuse "eu" and its successor are candidates to be
@@ -4725,8 +4645,6 @@ nmg_unbreak_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
 
 
 /**
- * N M G _ U N B R E A K _ R E G I O N _ E D G E S
- *
  * Uses the visit handler to call nmg_unbreak_handler for each edgeuse
  * below the region (or any other NMG element).
  *
@@ -4765,8 +4683,6 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
 
 
 /**
- * N M G _ M V _ S H E L L _ T O _ R E G I O N
- *
  * Move a shell from one nmgregion to another.  Will bomb if shell and
  * region aren't in the same model.
  *
@@ -4808,8 +4724,6 @@ nmg_mv_shell_to_region(struct shell *s, struct nmgregion *r)
 
 
 /**
- * N M G _ F I N D _ I S E C T _ F A C E S
- *
  * Find all faces that contain vertex "new_v" Put them in a bu_ptbl
  * "faces"
  *
@@ -4882,8 +4796,6 @@ nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *fre
 
 
 /**
- * N M G _ S I M P L E _ V E R T E X _ S O L V E
- *
  * given a vertex and a list of faces (not more than three) that
  * should intersect at the vertex, calculate a new location for the
  * vertex.
@@ -5009,8 +4921,6 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 
 
 /**
- * N M G _ C K _ V E R T _ O N _ F U S
- *
  * Check all uses of a vertex to see if it lies within tolerance of
  * all faces where it is used
  *
@@ -5084,8 +4994,6 @@ struct intersect_fus
 
 
 /**
- * N M G _ P R _ I N T E R
- *
  * debug printing of the table of intersect_fus structs used by
  * extruder
  */
@@ -5173,8 +5081,6 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
 
 
 /**
- * N M G _ G E T _ E D G E _ L I N E S
- *
  * Fill in the intersect_fus structures for edges around new_v. Does
  * not fill in "pt" or "vp".
  *
@@ -5407,8 +5313,6 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 
 
 /**
- * N M G _ G E T _ M A X _ E D G E _ I N T E R S
- *
  * Fill in the "pt" portion of the "intersect_fus" structure for edges
  * around new_v by calculating the intersection with neighboring edges
  * and selecting the furthest one from new_v.
@@ -5575,8 +5479,6 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 
 
 /**
- * N M G _ F U S E _ I N T E R S
- *
  * eliminate "j_fus" from the table "int_faces" and adjust the info in
  * "i_fus".  This is done when the "vp" vertices of the two structures
  * have been joined.
@@ -5640,8 +5542,6 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
 
 
 /**
- * N M G _ S P L I T _ E D G E S _ A T _ P T S
- *
  * Using the info in the table of intersect_fus structs, split the
  * edgeuse (eu) in each struct at the point (pt) store the new
  * vertices in the structure (vp) and assign the geometry.
@@ -5749,8 +5649,6 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 
 
 /**
- * N M G _ R E M O V E _ S H O R T _ E U S _ I N T E R
- *
  * kill all zero length edgeuses in faces around new_v
  */
 HIDDEN void
@@ -5892,8 +5790,6 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 
 
 /**
- * N M G _ S I M P L I F Y _ I N T E R
- *
  * Eliminates adjacent intersect_fus structs with collinear edges
  */
 HIDDEN void
@@ -6026,8 +5922,6 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 
 
 /**
- * N M G _ M A K E _ F A C E S _ A T _ V E R T
- *
  * Make new faces around vertex new_v using info in the table of
  * intersect_fu structures. Each structure contains a vertex on an
  * edge departing new_v.  Vertices from two consecutive edges are
@@ -6246,8 +6140,6 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 
 
 /**
- * N M G _ K I L L _ C R A C K S _ A T _ V E R T E X
- *
  * Look at all faces around vertex new_v and kill any two consecutive
  * eu's that go from a vertex to a second then back to the original
  * vertex
@@ -6347,8 +6239,6 @@ nmg_kill_cracks_at_vertex(const struct vertex *vp)
 
 
 /**
- * N M G _ D I S T _ T O _ C R O S S
- *
  * Used by nmg_fix_crossed edges to calculate the point where two
  * edges cross
  *
@@ -6510,8 +6400,6 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 
 
 /**
- * N M G _ F I X _ C R O S S E D _ L O O P S
- *
  * Detect situations where edges have been split, but new vertices are
  * in wrong order. This typically happens as shown:
  @code
@@ -6693,8 +6581,6 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 
 
 /*
- * N M G _ C A L C _ N E W _ V
- *
  * Calculates a new geometry for new_v
  */
 HIDDEN int
@@ -6801,8 +6687,6 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 
 
 /**
- * N M G _ C O M P L E X _ V E R T E X _ S O L V E
- *
  * This is intended to handle the cases the "nmg_simple_vertex_solve"
  * can't do (more than three faces intersecting at a vertex)
  *
@@ -6987,8 +6871,6 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 
 
 /**
- * N M G _ B A D _ F A C E _ N O R M A L S
- *
  * Look for faceuses in the shell with normals that do not agree with
  * the geometry (i.e., in the wrong direction)
  *
@@ -7043,8 +6925,6 @@ nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
 
 /**
  *
- * N M G _ F A C E S _ A R E _ R A D I A L
- *
  * checks if two faceuses are radial to each other
  *
  * returns
@@ -7090,8 +6970,6 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
 
 
 /**
- * N M G _ M O V E _ E D G E _ T H R U _ P T
- *
  * moves indicated edgeuse (mv_eu) so that it passes thru the given
  * point (pt). The direction of the edgeuse is not changed, so new
  * edgeuse is parallel to the original.
@@ -7422,8 +7300,6 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
 
 
 /**
- * N M G _ V L I S T _ T O _ W I R E _ E D G E S
- *
  * Convert a vlist to NMG wire edges
  */
 void
@@ -7944,8 +7820,6 @@ struct dangle
 
 
 /**
- * N M G _ O P E N _ S H E L L S _ C O N N E C T
- *
  * Two open shells are connected along their free edges by building
  * new faces.  The resulting closed shell is in "dst", and "src" shell
  * is destroyed.  The "copy_tbl" is a translation table that provides
@@ -8197,8 +8071,6 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 
 
 /**
- * N M G _ I N _ V E R T
- *
  * Move vertex so it is at the intersection of the newly created faces
  *
  * This routine is used by "nmg_extrude_shell" to move vertices. Each
@@ -8254,8 +8126,6 @@ nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *to
 
 
 /**
- * N M G _ M I R R O R _ M O D E L
- *
  * mirror model across the y-axis this does not copy the model, it
  * changes the model passed to it
  */
@@ -8585,8 +8455,6 @@ nmg_kill_zero_length_edgeuses(struct model *m)
 
 
 /**
- * N M G _ M A K E _ F A C E S _ W I T H I N _ T O L
- *
  * Check all vertices on faces of specified shell. Any face containing
  * vertices more than tol->dist off the plane of the face will be
  * triangulated and broken into separate faces
@@ -8922,8 +8790,6 @@ rt_join_cnurbs(struct bu_list *crv_head)
 
 
 /**
- * R T _ A R C 2 D _ T O _ C N U R B
- *
  * Convert a 2D arc to a NURB curve.
  *
  * point_type indicates what type of CNURB is requested.  The arc
@@ -9124,8 +8990,6 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 
 
 /**
- * n m g _ b r e a k _ e d g e _ a t _ v e r t s
- *
  * split an edge into multiple edges at specified vertices if they
  * are within tolerance distance.
  *
@@ -9405,8 +9269,6 @@ not_arb:
 
 
 /**
- * N M G _ T O _ A R B
- *
  * Converts an NMG to an ARB, if possible.
  *
  * NMG must have been coplanar face merged and simplified
@@ -9644,8 +9506,6 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
 
 
 /**
- * N M G _ T O _ T G C
- *
  * Converts an NMG to a TGC, if possible.
  *
  *
@@ -9901,8 +9761,6 @@ nmg_to_tgc(
 
 
 /**
- * N M G _ L U _ I S _ C O N V E X
- *
  * Checks if lu is convex
  *
  * Returns:
@@ -9961,8 +9819,6 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ T O _ P O L Y
- *
  * XXX This routine is deprecated in favor of BoTs
  */
 int
@@ -10332,8 +10188,6 @@ nmg_select_collapse(const fastf_t max_dist1, const fastf_t max_dot1, const int f
 
 
 /**
- * N M G _ E D G E _ C O L L A P S E
- *
  * Routine to decimate an NMG model through edge collapse to obtain a
  * model with less faces at a greater tolerance
  *
@@ -10967,8 +10821,6 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 
 
 /**
- * N M G _ B O T
- *
  * Convert an NMG to a BOT solid
  */
 struct rt_bot_internal *
@@ -11111,8 +10963,6 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ V L I S T _ T O _ E U
- *
  * create wire edges corresponding to the lines in the vlist. The wire
  * edges are created in the specified shell
  */

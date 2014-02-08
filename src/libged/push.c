@@ -89,8 +89,6 @@ identitize(struct directory *dp,
 
 
 /**
- * P U S H _ L E A F
- *
  * This routine must be prepared to run in parallel.
  *
  * @brief

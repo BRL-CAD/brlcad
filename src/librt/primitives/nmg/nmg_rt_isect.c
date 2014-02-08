@@ -90,8 +90,6 @@ nmg_rt_state_str(int code)
 
 
 /**
- * N M G _ C K _ H I T M I S S _ L I S T
- *
  * Ensure that the ray makes a valid set of state transitions.
  */
 void
@@ -247,8 +245,6 @@ nmg_rt_print_hitlist(struct bu_list *hd)
 
 
 /**
- * H I T _ I N S
- *
  * insert the new hit point in the correct place in the list of hits
  * so that the list is always in sorted order
  */
@@ -1019,8 +1015,6 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 
 
 /**
- * I S E C T _ R A Y _ V E R T E X U S E
- *
  * Called in one of the following situations:
  * 1) Zero length edge
  * 2) Vertexuse child of Loopuse
@@ -1532,8 +1526,6 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 
 
 /**
- * I S E C T _ R A Y _ E D G E U S E
- *
  * Intersect ray with edgeuse.  If they pass within tolerance, a hit
  * is generated.
  */
@@ -1605,9 +1597,6 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 }
 
 
-/**
- * I S E C T _ R A Y _ L O O P U S E
- */
 HIDDEN void
 isect_ray_loopuse(struct ray_data *rd, struct loopuse *lu_p)
 {
@@ -2205,8 +2194,6 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 
 
 /**
- * I S E C T _ R A Y _ F A C E U S E
- *
  * check to see if ray hits face.
  */
 HIDDEN void
@@ -2371,9 +2358,6 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
 }
 
 
-/**
- * N M G _ I S E C T _ R A Y _ M O D E L
- */
 void
 nmg_isect_ray_model(struct ray_data *rd)
 {
@@ -2425,9 +2409,6 @@ nmg_isect_ray_model(struct ray_data *rd)
 }
 
 
-/**
- * N M G _ P L _ H I T M I S S _ L I S T
- */
 void
 nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const struct xray *rp)
 {
@@ -2651,8 +2632,6 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 
 /**
- * N M G _ R A Y _ I S E C T _ S H E L L
- *
  * Intended as a support routine for nmg_class_pt_s() in nmg_class.c
  *
  * Intersect a ray with a shell, and return whether the ray start

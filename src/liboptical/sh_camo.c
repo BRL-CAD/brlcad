@@ -273,9 +273,6 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * C A M O _ P R I N T
- */
 HIDDEN void
 camo_print(register struct region *rp, genptr_t dp)
 {
@@ -283,9 +280,6 @@ camo_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * C A M O _ F R E E
- */
 HIDDEN void
 camo_free(genptr_t cp)
 {
@@ -294,8 +288,6 @@ camo_free(genptr_t cp)
 
 
 /*
- * C A M O _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
@@ -365,8 +357,6 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
 
 /*
- * M A R B L E 2 _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */

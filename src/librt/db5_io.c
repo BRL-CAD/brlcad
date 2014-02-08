@@ -140,8 +140,6 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 
 
 /**
- * D B 5 _ E N C O D E _ L E N G T H
- *
  * Given a value and a variable-width format spec, store it in network
  * order.
  *
@@ -174,8 +172,6 @@ db5_encode_length(
 
 
 /**
- * D B 5 _ C R A C K _ D I S K _ H E A D E R
- *
  * Returns -
  * 0 on success
  * -1 on error
@@ -239,8 +235,6 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 
 
 /**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ P T R
- *
  * Returns -
  * on success, pointer to first unused byte
  * NULL, on error
@@ -847,8 +841,6 @@ fail:
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
 /**
- * R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
- *
  * Given an object in external form, convert it to internal form.  The
  * caller is responsible for freeing the external form.
  *
@@ -990,9 +982,6 @@ rt_db_get_internal5(
 }
 
 
-/**
- *
- */
 void
 db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
 {

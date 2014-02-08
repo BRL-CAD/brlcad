@@ -135,8 +135,6 @@ describe_tree(union tree *tree,
 
 
 /**
- *      R E G I O N _ S T A R T
- *
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
@@ -183,9 +181,6 @@ region_start(struct db_tree_state *tsp,
 
 
 /**
- *      R E G I O N _ E N D
- *
- *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
  *      @param tsp

@@ -69,9 +69,6 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
 		file.ssamp\n";
 
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
@@ -115,9 +112,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * F I N D _ M I N M A X
- */
 void
 find_minmax(void)
 {
@@ -138,9 +132,6 @@ find_minmax(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

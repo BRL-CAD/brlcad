@@ -109,8 +109,6 @@ extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
 
 
 /**
- * R T _ E B M _ C E N T R O I D
- *
  * Computes centroid of an extruded bitmap
  */
 void
@@ -149,8 +147,6 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ S E G _ P L A N E C L I P
- *
  * Take a segment chain, in sorted order (ascending hit_dist), and
  * clip to the range (in, out) along the normal "out_norm".  For the
  * particular ray "rp", find the parametric distances:
@@ -244,8 +240,6 @@ static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
 /**
- * R T _ E B M _ D D A
- *
  * Step through the 2-D array, in local coordinates ("ideal space").
  */
 int
@@ -529,8 +523,6 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 
 
 /**
- * R T _ E B M _ I M P O R T
- *
  * Read in the information from the string solid record.  Then, as a
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
@@ -641,8 +633,6 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E B M _ E X P O R T
- *
  * The name will be added by the caller.
  */
 int
@@ -681,8 +671,6 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E B M _ I M P O R T 5
- *
  * Read in the information from the string solid record.  Then, as a
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
@@ -787,8 +775,6 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E B M _ E X P O R T 5
- *
  * The name will be added by the caller.
  */
 int
@@ -824,8 +810,6 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E B M _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -864,8 +848,6 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E B M _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -893,8 +875,6 @@ rt_ebm_ifree(struct rt_db_internal *ip)
 
 
 /**
- * R T _ E B M _ B B O X
- *
  * Calculate bounding RPP for ebm
  */
 int
@@ -916,8 +896,6 @@ rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ E B M _ P R E P
- *
  * Returns -
  * 0 OK
  * !0 Failure
@@ -979,9 +957,6 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ E B M _ P R I N T
- */
 void
 rt_ebm_print(register const struct soltab *stp)
 {
@@ -998,8 +973,6 @@ rt_ebm_print(register const struct soltab *stp)
 
 
 /**
- * R T _ E B M _ S H O T
- *
  * Intersect a ray with an extruded bitmap.  If intersection occurs, a
  * pointer to a sorted linked list of "struct seg"s will be returned.
  *
@@ -1034,8 +1007,6 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ E B M _ N O R M
- *
  * Given one ray distance, return the normal and entry/exit point.
  * This is mostly a matter of translating the stored code into the
  * proper normal.
@@ -1080,8 +1051,6 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ E B M _ C U R V E
- *
  * Everything has sharp edges.  This makes things easy.
  */
 void
@@ -1096,8 +1065,6 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ E B M _ U V
- *
  * Map the hit point in 2-D into the range 0..1 untransformed X
  * becomes U, and Y becomes V.
  */
@@ -1116,9 +1083,6 @@ rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ E B M _ F R E E
- */
 void
 rt_ebm_free(struct soltab *stp)
 {
@@ -1160,9 +1124,6 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
 }
 
 
-/**
- * R T _ E B M _ P L O T
- */
 int
 rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1394,9 +1355,6 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 }
 
 
-/**
- * R T _ E B M _ T E S S
- */
 int
 rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
@@ -1594,8 +1552,6 @@ fail:
 
 
 /**
- * R T _ E B M _ G E T
- *
  * Routine to format the parameters of an EBM for "db get"
  *
  * Legal requested parameters are:
@@ -1644,8 +1600,6 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 
 /**
- * R T _ E B M _ A D J U S T
- *
  * Routine to adjust the parameters of an EBM
  *
  * Legal parameters are:
@@ -1715,8 +1669,6 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 /**
- * R T _ E B M _ M A K E
- *
  * Routine to make a new EBM solid. The only purpose of this routine
  * is to initialize the matrix and height to legal values.
  */
@@ -1739,10 +1691,6 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-/**
- * R T _ E B M _ P A R A M S
- *
- */
 int
 rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -1754,8 +1702,6 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 
 
 /*
- * R T _ E B M _ S U R F _ A R E A
- *
  * Computes the surface area of the ebm.
  *
  * The vertices are numbered from left to right, front to back.

@@ -45,8 +45,6 @@
  ************************************************************************/
 
 /**
- * N M G _ V V G
- *
  * Verify vertex geometry
  */
 void
@@ -57,8 +55,6 @@ nmg_vvg(const struct vertex_g *vg)
 
 
 /**
- * N M G _ V V E R T E X
- *
  * Verify a vertex
  */
 void
@@ -91,8 +87,6 @@ nmg_vvua(const uint32_t *vua)
 
 
 /**
- * N M G _ V V U
- *
  * Verify vertexuse
  */
 void
@@ -158,8 +152,6 @@ nmg_veg(const uint32_t *eg)
 
 
 /**
- * N M G _ V E D G E
- *
  * Verify edge
  */
 void
@@ -225,8 +217,6 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 
 
 /**
- * N M G _ V E U
- *
  * Verify edgeuse list.
  */
 void
@@ -355,8 +345,6 @@ nmg_veu(const struct bu_list *hp, const uint32_t *up_magic_p)
 
 
 /**
- * N M G _ V L G
- *
  * Verify loop geometry
  */
 void
@@ -373,8 +361,6 @@ nmg_vlg(const struct loop_g *lg)
 
 
 /**
- * N M G _ V L O O P
- *
  * Verify loop
  */
 void
@@ -391,8 +377,6 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 
 
 /**
- * N M G _ V L U
- *
  * Verify loopuse
  */
 void
@@ -452,8 +436,6 @@ nmg_vlu(const struct bu_list *hp, const uint32_t *up)
 
 
 /**
- * N M G _ V F G
- *
  * Verify face geometry
  */
 void
@@ -475,8 +457,6 @@ nmg_vfg(const struct face_g_plane *fg)
 
 
 /**
- * N M G _ V F A C E
- *
  * Verify face
  */
 void
@@ -503,8 +483,6 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
 
 
 /**
- * N M G _ V F U
- *
  * Validate a list of faceuses
  */
 void
@@ -558,8 +536,6 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 
 
 /**
- * N M G _ V S S H E L L
- *
  * validate a single shell and all elements under it
  */
 void
@@ -610,8 +586,6 @@ nmg_vsshell(const struct shell *s, const struct nmgregion *r)
 
 
 /**
- * N M G _ V S H E L L
- *
  * Validate a list of shells and all elements under them.
  */
 void
@@ -628,8 +602,6 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 
 
 /**
- * N M G _ V R E G I O N
- *
  * validate a list of nmgregions and all elements under them
  */
 void
@@ -658,8 +630,6 @@ nmg_vregion(const struct bu_list *hp, const struct model *m)
 
 
 /**
- * N M G _ V M O D E L
- *
  * validate an NMG model and all elements in it.
  */
 void
@@ -676,9 +646,6 @@ nmg_vmodel(const struct model *m)
  *									*
  ************************************************************************/
 
-/**
- * N M G _ C K _ E
- */
 void
 nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 {
@@ -711,9 +678,6 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 }
 
 
-/**
- * N M G _ C K _ V U
- */
 void
 nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
 {
@@ -732,9 +696,6 @@ nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
 }
 
 
-/**
- * N M G _ C K _ E U
- */
 void
 nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
 {
@@ -813,9 +774,6 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
 }
 
 
-/**
- * N M G _ C K _ L G
- */
 void
 nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
 {
@@ -832,9 +790,6 @@ nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
 }
 
 
-/**
- * N M G _ C K _ L
- */
 void
 nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 {
@@ -858,9 +813,6 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 }
 
 
-/**
- * N M G _ C K _ L U
- */
 void
 nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
 {
@@ -929,9 +881,6 @@ nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
 }
 
 
-/**
- * N M G _ C K _ F G
- */
 void
 nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 {
@@ -953,9 +902,6 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 }
 
 
-/**
- * N M G _ C K _ F
- */
 void
 nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 {
@@ -979,9 +925,6 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 }
 
 
-/**
- * N M G _ C K _ F U
- */
 void
 nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 {
@@ -1152,8 +1095,6 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
 
 /**
- * N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
- *
  * Search for null ("worthless") edges in a face.
  * Such edges are legitimate to have, but can be troublesome
  * for the boolean routines.
@@ -1193,8 +1134,6 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
 
 
 /**
- * N M G _ C K _ L U E U
- *
  * check all the edgeuses of a loopuse to make sure these children
  * know who their parent really is.
  */
@@ -1257,8 +1196,6 @@ nmg_ck_lueu(const struct loopuse *cklu, const char *s)
 
 
 /**
- * N M G _ C H E C K _ R A D I A L
- *
  * check to see if all radial uses of an edge (within a shell) are
  * properly oriented with respect to each other.
  * NOTE that ONLY edgeuses belonging to the shell of eu are checked.
@@ -1384,8 +1321,6 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ E U _ 2 S _ O R I E N T _ B A D
- *
  * Given an edgeuse, check that the proper orientation "parity" of
  * same/opposite/opposite/same is preserved, for all non-wire edgeuses
  * within shell s1.
@@ -1504,8 +1439,6 @@ nmg_eu_2s_orient_bad(const struct edgeuse *eu, const struct shell *s1, const str
 
 
 /**
- * N M G _ C K _ C L O S E D _ S U R F
- *
  * Verify that shell is closed.
  * Do this by verifying that it is not possible to get from outside
  * to inside the solid by crossing any face edge.
@@ -1553,8 +1486,6 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ C K _ C L O S E D _ R E G I O N
- *
  * Check all the shells in a region for being closed.
  *
  * Returns -

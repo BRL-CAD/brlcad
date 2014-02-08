@@ -79,8 +79,6 @@ db_traverse_subtree(union tree *tp,
 
 
 /*
- * D B _ P R E O R D E R _ T R A V E R S E
- *
  * This subroutine is called for a no-frills tree-walk,
  * with the provided subroutines being called when entering and
  * exiting combinations and at leaf (solid) nodes.

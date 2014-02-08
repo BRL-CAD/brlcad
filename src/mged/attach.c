@@ -651,8 +651,6 @@ get_attached(void)
 
 
 /*
- * F _ D M
- *
  * Run a display manager specific command(s).
  */
 int
@@ -727,8 +725,6 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 
 
 /**
- * I S _ D M _ N U L L
- *
  * Returns -
  *  0  If the display manager goes to a real screen.
  * !0  If the null display manager is attached.

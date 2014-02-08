@@ -2338,9 +2338,6 @@ X24_updstate(FBIO *ifp)
 }
 
 
-/*
- * X 2 4 _ Z A P M E M
- */
 HIDDEN void
 X24_zapmem(void)
 {
@@ -2417,9 +2414,6 @@ X24_destroy(struct xinfo *xi)
 }
 
 
-/*
- * X 2 4 _ O P E N
- */
 HIDDEN int
 X24_open(FBIO *ifp, const char *file, int width, int height)
 {

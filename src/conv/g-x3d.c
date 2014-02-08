@@ -349,9 +349,6 @@ writeX3dEnd(FILE *fp_out) {
     fprintf(fp_out, "</X3D>\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -931,8 +928,6 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 }
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.

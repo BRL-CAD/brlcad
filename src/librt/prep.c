@@ -465,9 +465,6 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 }
 
 
-/**
- *
- */
 void
 rt_plot_all_solids(
     FILE *fp,

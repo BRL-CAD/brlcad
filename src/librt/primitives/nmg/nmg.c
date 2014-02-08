@@ -63,8 +63,6 @@ struct tmp_v {
 
 
 /**
- * R T _ N M G _ B B O X
- *
  * Calculate the bounding box for an N-Manifold Geometry
  */
 int
@@ -81,8 +79,6 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct
 
 
 /**
- * R T _ N M G _ P R E P
- *
  * Given a pointer to a ged database record, and a transformation
  * matrix, determine if this is a valid nmg, and if so, precompute
  * various terms of the formula.
@@ -125,9 +121,6 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N M G _ P R I N T
- */
 void
 rt_nmg_print(const struct soltab *stp)
 {
@@ -140,8 +133,6 @@ rt_nmg_print(const struct soltab *stp)
 
 
 /**
- * R T _ N M G _ S H O T
- *
  * Intersect a ray with a nmg.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -231,8 +222,6 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ N M G _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -250,8 +239,6 @@ rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ N M G _ C U R V E
- *
  * Return the curvature of the nmg.
  */
 void
@@ -271,8 +258,6 @@ rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ N M G _ U V
- *
  * For a hit on the surface of an nmg, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -289,9 +274,6 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ N M G _ F R E E
- */
 void
 rt_nmg_free(struct soltab *stp)
 {
@@ -304,9 +286,6 @@ rt_nmg_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ N M G _ P L O T
- */
 int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -324,8 +303,6 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ N M G _ T E S S
- *
  * XXX This routine "destroys" the internal nmg solid.  This means
  * that once you tessellate an NMG solid, your in-memory copy becomes
  * invalid, and you can't do anything else with it until you get a new
@@ -726,8 +703,6 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 
 
 /**
- * R T _ N M G _ M A G I C _ T O _ K I N D
- *
  * Given the magic number for an NMG structure, return the
  * manifest constant which identifies that structure kind.
  */
@@ -802,8 +777,6 @@ static unsigned int rt_nmg_cur_fastf_subscript;
 
 
 /**
- * R T _ N M G _ E X P O R T _ F A S T F
- *
  * Format a variable sized array of fastf_t's into external format
  * (IEEE big endian double precision) with a 2 element header.
  *
@@ -881,9 +854,6 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 }
 
 
-/**
- * R T _ N M G _ I M P O R T _ F A S T F
- */
 fastf_t *
 rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
 {
@@ -967,8 +937,6 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
 
 /**
- * R E I N D E X
- *
  * Depends on ecnt[0].byte_offset having been set to maxindex.
  *
  * There are some special values for the disk index returned here:
@@ -1024,8 +992,6 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 
 
 /**
- * R T _ N M G _ E D I S K
- *
  * Export a given structure from memory to disk format
  *
  * Scale geometry by 'local2mm'
@@ -1431,8 +1397,6 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 
 
 /**
- * R T _ N M G _ I D I S K
- *
  * Import a given structure from disk to memory format.
  *
  * Transform geometry by given matrix.
@@ -1862,8 +1826,6 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 
 
 /**
- * R T _ N M G _ I A L L O C
- *
  * Allocate storage for all the in-memory NMG structures, in
  * preparation for the importation operation, using the GET_xxx()
  * macros, so that m->maxindex, etc., are all appropriately handled.
@@ -2058,8 +2020,6 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 
 
 /**
- * R T _ N M G _ I 2 A L L O C
- *
  * Find the locations of all the variable-sized fastf_t arrays in the
  * input record.  Record that position as a byte offset from the very
  * front of the input record in ecnt[], indexed by subscript number.
@@ -2106,8 +2066,6 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 
 
 /**
- * R T _ N M G _ I M P O R T _ I N T E R N A L
- *
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  *
@@ -2216,8 +2174,6 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 
 
 /**
- * R T _ N M G _ E X P O R T _ I N T E R N A L
- *
  * The name is added by the caller, in the usual place.
  *
  * When the "compact" flag is set, bounding boxes from (at present)
@@ -2434,8 +2390,6 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
 
 /**
- * R T _ N M G _ I M P O R T
- *
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2480,9 +2434,6 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ N M G _ I M P O R T 5
- */
 int
 rt_nmg_import5(struct rt_db_internal *ip,
 	       struct bu_external *ep,
@@ -2578,8 +2529,6 @@ rt_nmg_import5(struct rt_db_internal *ip,
 
 
 /**
- * R T _ N M G _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2602,9 +2551,6 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-/**
- * R T _ N M G _ E X P O R T 5
- */
 int
 rt_nmg_export5(
     struct bu_external *ep,
@@ -2778,8 +2724,6 @@ rt_nmg_export5(
 
 
 /**
- * R T _ N M G _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2801,8 +2745,6 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ N M G _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -3095,9 +3037,6 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-/**
- * R T _ N M G _ P A R A M S
- */
 int
 rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

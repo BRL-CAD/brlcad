@@ -64,8 +64,6 @@ aexists(const char *name)
 
 
 /*
- * F _ M A K E
- *
  * Create a new solid of a given type
  * (Generic, or explicit)
  */
@@ -289,8 +287,6 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * F _ T R _ O B J
- *
  * Bound to command "translate"
  *
  * Allow precise changes to object translation
@@ -356,8 +352,6 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 /*
- * F _ Q O R O T
- *
  * Usage: qorot x y z dx dy dz theta
  *
  * rotate an object through a specified angle

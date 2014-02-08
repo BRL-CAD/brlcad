@@ -70,8 +70,6 @@ _brlcad_data(void)
 
 
 /**
- * b u _ r o o t _ m i s s i n g
- *
  *print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
@@ -100,8 +98,6 @@ for sh/bash users:\n\
 
 
 /**
- * b u _ d a t a _ m i s s i n g
- *
  * print out an error/warning message if we cannot find the specified
  * BRLCAD_DATA (compile-time install path)
  */

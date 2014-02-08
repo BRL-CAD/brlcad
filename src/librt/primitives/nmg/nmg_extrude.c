@@ -41,8 +41,6 @@
 
 
 /**
- * v e r t s _ i n _ n m g _ l o o p
- *
  * Count number of vertices in an NMG loop.
  */
 static int
@@ -74,8 +72,6 @@ verts_in_nmg_loop(struct loopuse *lu)
 
 
 /**
- * v e r t s _ i n _ n m g _ f a c e
- *
  * Count number of vertices in an NMG face.
  */
 static int
@@ -92,8 +88,6 @@ verts_in_nmg_face(struct faceuse *fu)
 
 
 /**
- * n m g _ t r a n s l a t e _ f a c e
- *
  * Translate a face using a vector's magnitude and direction.
  */
 void
@@ -179,8 +173,6 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 
 
 /**
- * n m g _ e x t r u d e _ f a c e
- *
  * Duplicate a given NMG face, move it by specified vector, and create
  * a solid bounded by these faces.
  */
@@ -269,8 +261,6 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 
 
 /**
- * n m g _ f i n d _ v e r t e x _ i n _ l u
- *
  * find a use of vertex v in loopuse lu
  */
 struct vertexuse *
@@ -303,8 +293,6 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 
 
 /**
- * n m g _ s t a r t _ n e w _ l o o p
- *
  * recursive routine to build tables of edgeuse that may be used to
  * create new loopuses. lu1 and lu2 are overlapping edgeuses from the
  * same faceuse. This is a support routine for nmg_fix_overlapping
@@ -405,8 +393,6 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 
 
 /**
- * n m g _ f i x _ o v e r l a p p i n g _ l o o p s
- *
  * Looks at each faceuse in the shell and checks if loopuses in that
  * faceuse overlap each other. This code can only handle faceuses that
  * have at most one OT_SAME loopuse and one OT_OPPOSITE loopuse, so
@@ -707,8 +693,6 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * n m g _ b r e a k _ c r o s s e d _ l o o p s
- *
  * Extrusion may create crossed loops within a face.  This routine
  * intersects each edge within a loop with every other edge in the
  * loop
@@ -810,8 +794,6 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 
 
 /**
- * n m g _ e x t r u d e _ c l e a n u p
- *
  * Clean up after nmg_extrude_shell.  intersects each face with every
  * other face in the shell and makes new face boundaries at the
  * intersections.  decomposes the result into separate shells.  where
@@ -985,8 +967,6 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 
 
 /**
- * n m g _ h o l l o w _ s h e l l
- *
  * Hollows out a shell producing a wall thickness of thickness "thick"
  * by creating a new "inner" shell and combining the two shells.
  *
@@ -1185,8 +1165,6 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 
 
 /**
- * n m g _ e x t r u d e _ s h e l l
- *
  * Extrudes a shell (s) by a distance (dist) in the direction of the
  * face normals if normal_ward, or the opposite direction if
  * !normal_ward.  The shell (s) is modified by adjusting the plane

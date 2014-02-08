@@ -408,8 +408,6 @@ wlt_reconstruct_2d(void)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

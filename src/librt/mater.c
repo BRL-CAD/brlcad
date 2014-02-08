@@ -48,9 +48,6 @@
 static struct mater *material_head = MATER_NULL;
 
 
-/**
- *
- */
 void
 rt_pr_mater(register const struct mater *mp)
 {
@@ -221,9 +218,6 @@ rt_region_color_map(register struct region *regp)
 }
 
 
-/**
- *
- */
 void
 rt_vls_color_map(struct bu_vls *str)
 {

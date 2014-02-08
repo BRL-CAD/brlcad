@@ -57,10 +57,6 @@ void print_usage(void)
 }
 
 
-/*
- * M K _ P I X E L ()
- *
- */
 struct pixel *
 mk_pixel(unsigned char *color)
 {
@@ -81,10 +77,6 @@ mk_pixel(unsigned char *color)
 }
 
 
-/*
- * F R E E _ P I X E L ()
- *
- */
 void
 free_pixel(struct pixel *pp)
 {
@@ -93,10 +85,6 @@ free_pixel(struct pixel *pp)
 }
 
 
-/*
- * P R I N T _ P I X E L ()
- *
- */
 void
 print_pixel(void *p, int UNUSED(depth))
 {
@@ -112,8 +100,6 @@ print_pixel(void *p, int UNUSED(depth))
 
 
 /*
- * C O M P A R E _ P I X E L S ()
- *
  * The comparison callback for the red-black tree
  */
 int
@@ -136,9 +122,6 @@ compare_pixels(void *v1, void *v2)
 }
 
 
-/*
- * L O O K U P _ P I X E L ()
- */
 struct pixel *
 lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
 {

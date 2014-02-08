@@ -104,8 +104,6 @@ rpt_miss(struct application *ap)
 
 
 /*
- * G E D _ S K E W E R _ S O L I D S
- *
  * Fire a ray at some geometry and obtain a list of the solids
  * encountered, sorted by first intersection.
  *

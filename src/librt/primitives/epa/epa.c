@@ -185,8 +185,6 @@ const struct bu_structparse rt_epa_parse[] = {
 };
 
 /**
- * R T _ E P A _ B B O X
- *
  * Create a bounding RPP for an epa
  */
 int
@@ -239,8 +237,6 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ E P A _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EPA, and if so, precompute
  * various terms of the formula.
@@ -333,9 +329,6 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ E P A _ P R I N T
- */
 void
 rt_epa_print(const struct soltab *stp)
 {
@@ -357,8 +350,6 @@ rt_epa_print(const struct soltab *stp)
 
 
 /**
- * R T _ E P A _ S H O T
- *
  * Intersect a ray with a epa.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -481,8 +472,6 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ E P A _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -518,8 +507,6 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E P A _ C U R V E
- *
  * Return the curvature of the epa.
  */
 void
@@ -571,8 +558,6 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E P A _ U V
- *
  * For a hit on the surface of an epa, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -625,9 +610,6 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ E P A _ F R E E
- */
 void
 rt_epa_free(struct soltab *stp)
 {
@@ -892,9 +874,6 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ E P A _ P L O T
- */
 int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1156,8 +1135,6 @@ rt_ell_norms(fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int
 
 
 /**
- * R T _ E L L
- *
  * Generate an ellipsoid with the specified number of sides approximating it.
  */
 void
@@ -1179,8 +1156,6 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 
 
 /**
- * R T _ E P A _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1606,8 +1581,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ E P A _ I M P O R T
- *
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1678,8 +1651,6 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E P A _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1740,8 +1711,6 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E P A _ I M P O R T 5
- *
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1790,8 +1759,6 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E P A _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1853,8 +1820,6 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E P A _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1895,8 +1860,6 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E P A _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1916,10 +1879,6 @@ rt_epa_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E P A _ P A R A M S
- *
- */
 int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -1930,9 +1889,6 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E P A _ V O L U M E
- */
 void
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1945,9 +1901,6 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E P A _ C E N T R O I D
- */
 void
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1957,9 +1910,6 @@ rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E P A _ S U R F _ A R E A
- */
 void
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {

@@ -40,9 +40,6 @@ extern char name_it[16];		/* argv[3] */
 
 void namecvt(int n, char **cp, int c);
 
-/*
- * G E T L I N E
- */
 int
 get_line(char *cp, int buflen, char *title)
 {
@@ -69,9 +66,6 @@ get_line(char *cp, int buflen, char *title)
 }
 
 
-/*
- * G E T I N T
- */
 int
 getint(char *cp, int start, size_t len)
 {
@@ -86,9 +80,6 @@ getint(char *cp, int start, size_t len)
 }
 
 
-/*
- * G E T D O U B L E
- */
 double
 getdouble(char *cp, int start, size_t len)
 {

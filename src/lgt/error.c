@@ -40,8 +40,6 @@
 #include "./extern.h"
 #include "./screen.h"
 /*
- *  		B U _ B O M B
- *
  *  Abort the LIBRT library
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */

@@ -102,8 +102,6 @@ struct mfuncs cook_mfuncs[] = {
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
 /*
- * C O O K _ S E T U P
- *
  * Note:  I can see two ways to set this up.  One is for a (nearly)
  * colorless object with a given index(s) of refraction.  Compute
  * the reflect/transmit etc. from that.  The other is for a colored
@@ -151,9 +149,6 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * M I R R O R _ S E T U P
- */
 HIDDEN int
 cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -192,9 +187,6 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp,
 }
 
 
-/*
- * G L A S S _ S E T U P
- */
 HIDDEN int
 cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -233,9 +225,6 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * C O O K _ P R I N T
- */
 HIDDEN void
 cook_print(register struct region *rp, genptr_t dp)
 {
@@ -243,9 +232,6 @@ cook_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * C O O K _ F R E E
- */
 HIDDEN void
 cook_free(genptr_t cp)
 {
@@ -254,8 +240,6 @@ cook_free(genptr_t cp)
 
 
 /*
- * C O O K _ R E N D E R
- *
  * El = Il (N.L) dw	Energy from a light (w is solid angle)
  *
  * I = Sum (r * El)

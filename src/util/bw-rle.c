@@ -66,9 +66,6 @@ Usage: bw-rle [-s squarefilesize]  [-C bg]\n\
 If omitted, the .bw file is taken from stdin\n\
 and the .rle file is written to stdout\n";
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

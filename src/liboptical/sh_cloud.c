@@ -62,8 +62,6 @@ struct mfuncs cloud_mfuncs[] = {
 
 
 /*
- * C L O U D _ T E X T U R E
- *
  * Returns the texture value for a plane point
  */
 double
@@ -135,9 +133,6 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 }
 
 
-/*
- * C L O U D _ S E T U P
- */
 HIDDEN int
 cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
@@ -156,9 +151,6 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t
 }
 
 
-/*
- * C L O U D _ P R I N T
- */
 HIDDEN void
 cloud_print(register struct region *rp, genptr_t dp)
 {
@@ -166,9 +158,6 @@ cloud_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * C L O U D _ F R E E
- */
 HIDDEN void
 cloud_free(genptr_t cp)
 {
@@ -177,8 +166,6 @@ cloud_free(genptr_t cp)
 
 
 /*
- * C L O U D _ R E N D E R
- *
  * Return a sky color with translucency control.
  * Threshold is the intensity below which it is completely translucent.
  * Range in the range on intensities over which translucence varies

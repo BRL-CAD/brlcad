@@ -30,8 +30,6 @@
 
 
 /**
- * P R E W A L K N O D E S
- *
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
@@ -59,8 +57,6 @@ prewalknodes(struct bu_rb_node *root,
 
 
 /**
- * I N W A L K N O D E S
- *
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
@@ -88,8 +84,6 @@ inwalknodes(struct bu_rb_node *root,
 
 
 /**
- * P O S T W A L K N O D E S
- *
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void
@@ -117,8 +111,6 @@ postwalknodes(struct bu_rb_node *root,
 
 
 /**
- * P R E W A L K D A T A
- *
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
@@ -146,8 +138,6 @@ prewalkdata(struct bu_rb_node *root,
 
 
 /**
- * I N W A L K D A T A
- *
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
@@ -175,8 +165,6 @@ inwalkdata(struct bu_rb_node *root,
 
 
 /**
- * P O S T W A L K D A T A
- *
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void

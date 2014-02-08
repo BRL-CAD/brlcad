@@ -78,9 +78,6 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -556,8 +553,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.

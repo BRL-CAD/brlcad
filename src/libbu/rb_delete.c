@@ -29,8 +29,6 @@
 
 
 /**
- * _ R B _ F I X U P ()
- *
  * Restore the red-black properties of a red-black tree after the
  * splicing out of a node
  *

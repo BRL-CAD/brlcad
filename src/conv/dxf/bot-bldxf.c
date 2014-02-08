@@ -511,8 +511,6 @@ l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, str
 
 
 /*
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */

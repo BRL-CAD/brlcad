@@ -171,8 +171,6 @@ curve_attach(struct application *app)
 
 
 /*
- * B A C K G R O U N D _ R A D I A T I O N
- *
  * Concoct _some_ kind of background radiation when the ray misses the
  * model and there is no environment map defined.  XXX For now this is
  * a gross hack.
@@ -197,8 +195,6 @@ background_radiation(struct application *app)
 
 
 /*
- * V I E W _ P I X E L
- *
  * Arrange to have the pixel "output".  For RTTHERM this is a
  * misnomer, as the pixel's spectral samples have been living in the
  * scanline buffer the whole time.  When a scaline is completed
@@ -298,8 +294,6 @@ view_pixel(struct application *app)
 
 
 /*
- * V I E W _ E O L
- *
  * This routine is not used;  view_pixel() determines when the last
  * pixel of a scanline is really done, for parallel considerations.
  */
@@ -311,9 +305,6 @@ view_eol(struct application *app)
 }
 
 
-/*
- * V I E W _ E N D
- */
 void
 view_end(struct application *app)
 {
@@ -323,8 +314,6 @@ view_end(struct application *app)
 
 
 /*
- * V I E W _ S E T U P
- *
  * Called before rt_prep() in do.c
  */
 void
@@ -374,8 +363,6 @@ view_setup(struct rt_i *rtip)
 
 
 /*
- * V I E W _ C L E A N U P
- *
  * Called before rt_clean() in do.c
  */
 void
@@ -399,8 +386,6 @@ view_cleanup(struct rt_i *rtip)
 
 
 /*
- * H I T _ N O T H I N G
- *
  * a_miss() routine called when no part of the model is hit.
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
@@ -479,8 +464,6 @@ hit_nothing(struct application *app)
 
 
 /*
- * C O L O R V I E W
- *
  * Manage the coloring of whatever it was we just hit.  This can be a
  * recursive procedure.
  */
@@ -669,8 +652,6 @@ free_scanlines(void)
 
 
 /*
- * V I E W _ I N I T
- *
  * Called once, early on in RT setup, before view size is set.
  */
 int
@@ -697,8 +678,6 @@ view_init(struct application *UNUSED(app), char *UNUSED(file), char *UNUSED(obj)
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * Called each time a new image is about to be done.
  */
 void
@@ -768,8 +747,6 @@ view_2init(struct application *app, char *framename)
 
 
 /*
- * A P P L I C A T I O N _ I N I T
- *
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */

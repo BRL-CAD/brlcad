@@ -266,8 +266,6 @@ HIDDEN struct modeflags {
 /************************************************************************/
 
 /*
- * W G L _ G E T M E M
- *
  * Because there is no hardware zoom or pan, we need to repaint the
  * screen (with big pixels) to implement these operations.  This means
  * that the actual "contents" of the frame buffer need to be stored
@@ -339,18 +337,12 @@ fail:
 }
 
 
-/*
- * W G L _ Z A P M E M
- */
 void
 wgl_zapmem(void)
 {
 }
 
 
-/*
- * S I G K I D
- */
 HIDDEN void
 sigkid(int UNUSED(pid))
 {
@@ -1010,8 +1002,6 @@ wgl_close_existing(FBIO *ifp)
 
 
 /*
- * W G L _ P O L L
- *
  * Handle any pending input events
  */
 HIDDEN int
@@ -1027,8 +1017,6 @@ wgl_poll(FBIO *ifp)
 
 
 /*
- * W G L _ F R E E
- *
  * Free shared memory resources, and close.
  */
 HIDDEN int
@@ -1123,9 +1111,6 @@ wgl_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-/*
- * W G L _ V I E W
- */
 HIDDEN int
 wgl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
@@ -1197,9 +1182,6 @@ wgl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-/*
- * W G L _ G E T V I E W
- */
 HIDDEN int
 wgl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
@@ -1394,8 +1376,6 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 
 /*
- * W G L _ W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
@@ -1465,8 +1445,6 @@ wgl_writerect(FBIO *ifp,
 
 
 /*
- * W G L _ B W W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
@@ -1553,8 +1531,6 @@ wgl_rmap(FBIO *ifp, ColorMap *cmp)
 
 
 /*
- * I S _ L I N E A R _ C M A P
- *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
@@ -1572,9 +1548,6 @@ is_linear_cmap(FBIO *ifp)
 }
 
 
-/*
- * W G L _ C M I N I T
- */
 HIDDEN void
 wgl_cminit(FBIO *ifp)
 {
@@ -1588,9 +1561,6 @@ wgl_cminit(FBIO *ifp)
 }
 
 
-/*
- * W G L _ W M A P
- */
 HIDDEN int
 wgl_wmap(FBIO *ifp, const ColorMap *cmp)
 {
@@ -1641,9 +1611,6 @@ wgl_wmap(FBIO *ifp, const ColorMap *cmp)
 }
 
 
-/*
- * W G L _ H E L P
- */
 HIDDEN int
 wgl_help(FBIO *ifp)
 {
@@ -1691,8 +1658,6 @@ wgl_cursor(FBIO *ifp, int mode, int x, int y)
 
 
 /*
- * W G L _ C L I P P E R ()
- *
  * Given:
  * - the size of the viewport in pixels (vp_width, vp_height)
  * - the size of the framebuffer image (if_width, if_height)

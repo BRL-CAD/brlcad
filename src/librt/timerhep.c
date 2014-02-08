@@ -28,9 +28,6 @@ extern long time(time_t *);
 static long time0;
 
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {
@@ -39,9 +36,6 @@ rt_prep_timer(void)
 }
 
 
-/**
- *
- */
 double
 rt_read_timer(char *str, int len)
 {

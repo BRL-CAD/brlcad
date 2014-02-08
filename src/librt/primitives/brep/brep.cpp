@@ -360,8 +360,6 @@ brep_build_bvh(struct brep_specific* bs)
  ********************************************************************************/
 
 /**
- * R T _ B R E P _ B B O X
- *
  * Calculate a bounding RPP around a BREP.  Unlike the prep
  * routine, which makes use of the full bounding volume hierarchy,
  * this routine just calls the openNURBS function.
@@ -385,8 +383,6 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
 
 /**
- * R T _ B R E P _ P R E P
- *
  * Given a pointer of a GED database record, and a transformation
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
@@ -443,9 +439,6 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 }
 
 
-/**
- * R T _ B R E P _ P R I N T
- */
 void
 rt_brep_print(const struct soltab *stp)
 {
@@ -1115,8 +1108,6 @@ containsNearHit(HitList *hits)
 
 
 /**
- * R T _ B R E P _ S H O T
- *
  * Intersect a ray with a brep.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -1572,8 +1563,6 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ B R E P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1593,8 +1582,6 @@ rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ B R E P _ C U R V E
- *
  * Return the curvature of the nurb.
  */
 void
@@ -1626,8 +1613,6 @@ rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, 
 
 
 /**
- * R T _ B R E P _ U V
- *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1
  * u = azimuth
@@ -1651,9 +1636,6 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ B R E P _ F R E E
- */
 void
 rt_brep_free(register struct soltab *stp)
 {
@@ -3182,8 +3164,6 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 
 
 /**
- * R T _ B R E P _ P L O T
- *
  * There are several ways to visualize NURBS surfaces, depending on
  * the purpose.  For "normal" wireframe viewing, the ideal approach is
  * to do a tessellation of the NURBS surface and show that wireframe.
@@ -3300,9 +3280,6 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     return 0;
 }
 
-/**
- * R T _ B R E P _ P L O T _ P O L Y
- */
 int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
 		const struct rt_tess_tol *ttol, const struct bn_tol *tol,
 		const struct rt_view_info *info) {
@@ -3398,9 +3375,6 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	return 0;
 }
 
-/**
- * R T _ B R E P _ T E S S
- */
 int
 rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -3563,9 +3537,6 @@ RT_MemoryArchive::Flush()
 }
 
 
-/**
- * R T _ B R E P _ E X P O R T 5
- */
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -3614,9 +3585,6 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ B R E P _ I M P O R T 5
- */
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
@@ -3660,9 +3628,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 }
 
 
-/**
- * R T _ B R E P _ I F R E E
- */
 void
 rt_brep_ifree(struct rt_db_internal *ip)
 {
@@ -3680,9 +3645,6 @@ rt_brep_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ B R E P _ D E S C R I B E
- */
 int
 rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
@@ -3718,9 +3680,6 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 }
 
 
-/**
- * R T _ B R E P _ T C L G E T
- */
 int
 rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
 {
@@ -3728,9 +3687,6 @@ rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
 }
 
 
-/**
- * R T _ B R E P _ T C L A D J U S T
- */
 int
 rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
 {
@@ -3738,9 +3694,6 @@ rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
 }
 
 
-/**
- * R T _ B R E P _ P A R A M S
- */
 int
 rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 {
@@ -3748,9 +3701,6 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 
-/**
- * R T _ B R E P _ B O O L E A N
- */
 int
 rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
 {

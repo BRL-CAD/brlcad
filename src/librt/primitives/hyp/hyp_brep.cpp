@@ -30,9 +30,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ H Y P _ B R E P
- */
 extern "C" void
 rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {

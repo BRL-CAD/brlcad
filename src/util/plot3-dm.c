@@ -86,8 +86,6 @@ int dm_type = DM_TYPE_X;
 
 
 /*
- * O U T P U T _ C A T C H
- *
  * Gets the output from bu_log and appends it to clientdata vls.
  */
 static int
@@ -106,8 +104,6 @@ output_catch(genptr_t clientdata, genptr_t str)
 
 
 /*
- * S T A R T _ C A T C H I N G _ O U T P U T
- *
  * Sets up hooks to bu_log so that all output is caught in the given vls.
  *
  */
@@ -119,8 +115,6 @@ start_catching_output(struct bu_vls *vp)
 
 
 /*
- * S T O P _ C A T C H I N G _ O U T P U T
- *
  * Turns off the output catch hook.
  */
 void
@@ -195,8 +189,6 @@ refresh() {
 
 
 /*
- * B U I L D H R O T
- *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation.
  *
@@ -256,8 +248,6 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
 
 
 /*
- * S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -333,8 +323,6 @@ vrot(double x, double y, double z)
 
 
 /*
- * N E W _ M A T S
- *
  * Derive the inverse and editing matrices, as required.
  * Centralized here to simplify things.
  */
@@ -491,8 +479,6 @@ X_dm(int argc, char *argv[])
 
 
 /*
- * S I Z E _ R E S E T
- *
  * Reset view size and view center so that everything in the vlist
  * is in view.
  * Caller is responsible for calling new_mats().
@@ -861,8 +847,6 @@ cmd_list(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UNU
 
 
 /*
- * F _ Z O O M
- *
  * A scale factor of 2 will increase the view size by a factor of 2,
  * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
@@ -902,8 +886,6 @@ cmd_reset(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 /*
- * S L E W V I E W
- *
  * Given a position in view space,
  * make that point the new view center.
  */

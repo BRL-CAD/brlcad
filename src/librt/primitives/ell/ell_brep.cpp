@@ -29,9 +29,6 @@
 #include "rtgeom.h"
 #include "brep.h"
 
-/**
- * R T _ E L L _ B R E P
- */
 extern "C" void
 rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

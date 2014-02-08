@@ -88,8 +88,6 @@ mv_edge(struct ged *gedp,
 
 
 /*
- * E D I T A R B
- *
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is
  * found by intersecting the new line location with the bounding

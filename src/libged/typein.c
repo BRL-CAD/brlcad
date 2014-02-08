@@ -939,9 +939,6 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/*
- * B O T _ I N
- */
 static int
 bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1051,9 +1048,6 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 }
 
 
-/*
- * A R B N _ I N
- */
 static int
 arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1095,9 +1089,6 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 }
 
 
-/*
- * P I P E _ I N
- */
 static int
 pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1156,9 +1147,6 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 }
 
 
-/*
- * A R S _ I N
- */
 static int
 ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1840,8 +1828,6 @@ rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
 
 /*
- * O R P P _ I N ()
- *
  * Reads origin-min rpp (box) parameters from keyboard
  * returns 0 if successful read
  * 1 if unsuccessful read
@@ -2346,8 +2332,6 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
 
 
 /*
- * M E T A B A L L _ I N
- *
  * This is very much not reentrant, and probably a good deal uglier than it
  * should be.
  */

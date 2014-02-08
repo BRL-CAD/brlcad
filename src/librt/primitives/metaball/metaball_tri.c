@@ -60,8 +60,6 @@
 #include "metaball.h"
 
 /**
- * R T _ M E T A B A L L _ T E S S
- *
  * Tessellate a metaball.
  */
 int

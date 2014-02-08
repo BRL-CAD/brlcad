@@ -469,9 +469,6 @@ _ged_run_rt(struct ged *gedp)
 }
 
 
-/**
- *
- */
 size_t
 ged_count_tops(struct ged *gedp)
 {
@@ -485,8 +482,6 @@ ged_count_tops(struct ged *gedp)
 
 
 /**
- * G E D _ B U I L D _ T O P S
- *
  * Build a command line vector of the tops of all objects in view.
  */
 int

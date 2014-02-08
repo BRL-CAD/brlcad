@@ -107,9 +107,6 @@ db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resou
 }
 
 
-/**
- *
- */
 struct combined_tree_state *
 db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
@@ -128,9 +125,6 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
 }
 
 
-/**
- *
- */
 struct combined_tree_state *
 db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
 {
@@ -146,9 +140,6 @@ db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
 }
 
 
-/**
- *
- */
 void
 db_free_combined_tree_state(struct combined_tree_state *ctsp)
 {
@@ -160,9 +151,6 @@ db_free_combined_tree_state(struct combined_tree_state *ctsp)
 }
 
 
-/**
- *
- */
 void
 db_pr_tree_state(const struct db_tree_state *tsp)
 {
@@ -194,9 +182,6 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 }
 
 
-/**
- *
- */
 void
 db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
 {
@@ -476,9 +461,6 @@ db_find_named_leafs_parent(int *side, union tree *tp, const char *cp)
 }
 
 
-/**
- *
- */
 void
 db_tree_del_lhs(union tree *tp, struct resource *resp)
 {
@@ -525,9 +507,6 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 }
 
 
-/**
- *
- */
 void
 db_tree_del_rhs(union tree *tp, struct resource *resp)
 {
@@ -1203,9 +1182,6 @@ out:
 }
 
 
-/**
- *
- */
 union tree *
 db_dup_subtree(const union tree *tp, struct resource *resp)
 {
@@ -1271,9 +1247,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 }
 
 
-/**
- *
- */
 void
 db_ck_tree(const union tree *tp)
 {
@@ -1719,9 +1692,6 @@ db_is_tree_all_unions(const union tree *tp)
 }
 
 
-/**
- *
- */
 int
 db_count_subtree_regions(const union tree *tp)
 {
@@ -1758,9 +1728,6 @@ db_count_subtree_regions(const union tree *tp)
 }
 
 
-/**
- *
- */
 int
 db_tally_subtree_regions(
     union tree *tp,
@@ -1870,9 +1837,6 @@ struct db_walk_parallel_state {
 #define DB_CK_WPS(_p) BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
 
 
-/**
- *
- */
 HIDDEN void
 _db_walk_subtree(
     union tree *tp,

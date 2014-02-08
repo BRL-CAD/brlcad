@@ -280,8 +280,6 @@ static int plot_file_num = 0;
 
 
 /**
- * P L O T _ R P P
- *
  * Plot an RPP to a file in the given color
  */
 HIDDEN void
@@ -304,8 +302,6 @@ plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 
 
 /**
- * P L O T _ D S P _ B B
- *
  * Plot a dsp_bb structure
  */
 HIDDEN void
@@ -366,8 +362,6 @@ draw_dsp_bb(int *plotnum,
 
 
 /**
- * P L O T _ L A Y E R S
- *
  * Plot the bounding box layers for a dsp
  */
 HIDDEN void
@@ -424,8 +418,6 @@ plot_layers(struct dsp_specific *dsp_sp)
 
 
 /**
- * P L O T _ C E L L _ T O P
- *
  * Plot the results of intersecting a ray with the top of a cell
  */
 HIDDEN void
@@ -516,9 +508,6 @@ plot_cell_top(struct isect_stuff *isect,
 }
 
 
-/**
- * D S P _ P R I N T _ V 4
- */
 HIDDEN void
 dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
@@ -554,9 +543,6 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 }
 
 
-/**
- * D S P _ P R I N T _ V 5
- */
 HIDDEN void
 dsp_print_v5(struct bu_vls *vls,
 	     const struct rt_dsp_internal *dsp_ip)
@@ -620,9 +606,6 @@ dsp_print_v5(struct bu_vls *vls,
 }
 
 
-/**
- * R T _ D S P _ P R I N T
- */
 void
 rt_dsp_print(register const struct soltab *stp)
 {
@@ -869,8 +852,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 }
 
 /**
- * R T _ D S P _ B B O X
- *
  * Calculate the bounding box for a dsp.
  */
 int
@@ -978,8 +959,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 /**
- * R T _ D S P _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid DSP, and if so, precompute
  * various terms of the formula.
@@ -1156,8 +1135,6 @@ plot_seg(struct isect_stuff *isect,
 
 
 /**
- * A D D _ S E G
- *
  * Add a segment to the list of intersections in DSP space
  *
  * Return:
@@ -1338,8 +1315,6 @@ add_seg(struct isect_stuff *isect,
 
 
 /**
- * I S E C T _ R A Y _ T R I A N G L E
- *
  * Side Effects:
  * dist and P may be set
  *
@@ -1539,8 +1514,6 @@ isect_ray_triangle(struct isect_stuff *isect,
 
 
 /**
- * P E R M U T E _ C E L L
- *
  * For adaptive diagonal selection or for Upper-Left to lower right
  * cell cut, we must permute the vertices of the cell before handing
  * them to the intersection algorithm.  That's what this function
@@ -1688,8 +1661,6 @@ permute_cell(point_t A,
 
 
 /**
- * C H E C K _ B B _ E L E V A T I O N
- *
  * determine if a point P is above/below the slope line on the
  * bounding box.  e.g.:
  *
@@ -1802,8 +1773,6 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 
 
 /*
- * I S E C T _ R A Y _ C E L L _ T O P
- *
  * Return
  * 0 continue intersection calculations
  * 1 Terminate intersection computation
@@ -2069,8 +2038,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 
 /**
- * D S P _ I N _ R P P
- *
  * Compute the intersections of a ray with a rectangular parallelepiped
  * (RPP) that has faces parallel to the coordinate planes
  *
@@ -2218,8 +2185,6 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
 
 /**
- * R E C U R S E _ D S P _ B B
- *
  * Return
  * 0 continue intersection calculations
  * 1 Terminate intersection computation
@@ -2382,8 +2347,6 @@ recurse_dsp_bb(struct isect_stuff *isect,
 #endif
 
 /**
- * I S E C T _ R A Y _ D S P _ B B
- *
  * Intersect a ray with a DSP bounding box.  This is the primary child
  * of rt_dsp_shot()
  *
@@ -2589,8 +2552,6 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 
 /**
- * R T _ D S P _ S H O T
- *
  * Intersect a ray with a dsp.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -2846,8 +2807,6 @@ compute_normal_at_gridpoint(vect_t N,
 
 
 /**
- * R T _ D S P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -3033,8 +2992,6 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ D S P _ C U R V E
- *
  * Return the curvature of the dsp.
  */
 void
@@ -3053,8 +3010,6 @@ rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ D S P _ U V
- *
  * For a hit on the surface of a dsp, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -3150,9 +3105,6 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ D S P _ F R E E
- */
 void
 rt_dsp_free(register struct soltab *stp)
 {
@@ -3181,9 +3133,6 @@ rt_dsp_free(register struct soltab *stp)
 
 
 /* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'? */
-/**
- * R T _ D S P _ C L A S S
- */
 int
 rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
 {
@@ -3194,9 +3143,6 @@ rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect
 }
 
 
-/**
- * R T _ D S P _ P L O T
- */
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -3461,8 +3407,6 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /*
- * G E T _ C U T _ D I R
- *
  * Determine the cut direction for a DSP cell. This routine is used by
  * rt_dsp_tess(). It somewhat duplicates code from permute_cell(),
  * which is a bad thing, but permute_cell() had other side effects not
@@ -3566,8 +3510,6 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
      ((*_v[1] != *_v[2]) || (*_v[1] == NULL))
 
 /**
- * R T _ D S P _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -4072,8 +4014,6 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * G E T _ F I L E _ D A T A
- *
  * Retrieve data for DSP from external file.
  * Returns:
  * 0 Success
@@ -4131,8 +4071,6 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 
 /**
- * G E T _ O B J _ D A T A
- *
  * Retrieve data for DSP from a database object.
  */
 HIDDEN int
@@ -4187,8 +4125,6 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 
 /**
- * D S P _ G E T _ D A T A
- *
  * Handle things common to both the v4 and v5 database.
  *
  * This includes applying the modelling transform, and fetching the
@@ -4257,8 +4193,6 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
 
 
 /**
- * R T _ D S P _ I M P O R T
- *
  * Import an DSP from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -4339,8 +4273,6 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- * R T _ D S P _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -4388,8 +4320,6 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ D S P _ I M P O R T 5
- *
  * Import an DSP from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -4502,8 +4432,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- * R T _ D S P _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -4605,8 +4533,6 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ D S P _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -4649,8 +4575,6 @@ rt_dsp_describe(struct bu_vls *str,
 
 
 /**
- * R T _ D S P _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -4751,8 +4675,6 @@ const struct bu_structparse fake_dsp_printab[] = {
 
 
 /**
- * R T _ D S P _ G E T
- *
  * This is the generic routine to be listed in OBJ[].ft_get for
  * those solid types which are fully described by their ft_parsetab
  * entry.
@@ -4822,8 +4744,6 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 
 /**
- * R T _ P A R S E T A B _ T C L A D J U S T
- *
  * For those solids entirely defined by their parsetab.  Invoked via
  * OBJ[].ft_adjust()
  */
@@ -4879,10 +4799,6 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-/**
- * R T _ D S P _ P A R A M S
- *
- */
 int
 rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -4893,10 +4809,6 @@ rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-/**
- * S W A P _ C E L L _ P T S
- *
- */
 HIDDEN int
 swap_cell_pts(int A[3],
 	      int B[3],
@@ -5069,8 +4981,6 @@ project_pt(point_t out,
 
 
 /**
- * D S P _ P O S
- *
  * Given an arbitrary point return the projection of that point onto
  * the surface of the DSP.  If the point is outside the bounds of the
  * DSP then it will be projected to the nearest edge of the DSP.

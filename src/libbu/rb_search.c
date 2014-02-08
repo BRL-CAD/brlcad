@@ -30,8 +30,6 @@
 
 
 /**
- * _ R B _ S E A R C H ()
- *
  * Search for a node in a red-black tree
  *
  * This function has four parameters: the root and order of the tree

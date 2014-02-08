@@ -55,10 +55,6 @@ int	str2chan_index(char *s);
 int	multi_words(char *words[], int	nwords);
 
 
-/*
- *			M A I N
- *
- */
 int
 main(int argc, char **argv)
 {
@@ -484,8 +480,6 @@ multi_words(char *words[], int	word_count)
 }
 
 /*
- *			S T R 2 C H A N _ I N D E X
- *
  *  Convert an ascii string to a channel index.
  *  Specifying channel 0 selects column (and thus subscript) 1,
  *  because column 0 contains the current time.

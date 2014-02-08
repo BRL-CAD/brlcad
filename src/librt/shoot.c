@@ -167,9 +167,6 @@ again:
 }
 
 
-/**
- *
- */
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
@@ -754,9 +751,6 @@ rt_3move_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 {
@@ -767,9 +761,6 @@ rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {

@@ -53,8 +53,6 @@
 
 
 /*
- * M A T _ Z E R O
- *
  * Fill in the matrix "m" with zeros.
  */
 void
@@ -69,8 +67,6 @@ mat_zero(matp_t m)
 
 
 /*
- * M A T _ I D N
- *
  * Fill in the matrix "m" with an identity matrix.
  */
 void
@@ -85,8 +81,6 @@ mat_idn(matp_t m)
 
 
 /*
- * M A T _ C O P Y
- *
  * Copy the matrix "im" into the matrix "om".
  */
 void
@@ -101,8 +95,6 @@ mat_copy(matp_t om, matp_t im)
 
 
 /*
- * M A T _ M U L
- *
  * Multiply matrix "im1" by "im2" and store the result in "om".
  * NOTE:  This is different from multiplying "im2" by "im1" (most
  * of the time!)
@@ -133,8 +125,6 @@ mat_mul(matp_t om, matp_t im1, matp_t im2)
 
 
 /*
- * V E C X M A T
- *
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
  */
@@ -160,8 +150,6 @@ vecXmat(vectp_t ov, vectp_t iv, matp_t im)
 
 
 /*
- * M A T X V E C
- *
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
  */
@@ -184,8 +172,6 @@ matXvec(vectp_t ov, matp_t im, vectp_t iv)
 
 
 /*
- * M A T _ P R I N T
- *
  * Print out the 4x4 matrix addressed by "m".
  */
 void
@@ -200,8 +186,6 @@ mat_print(matp_t m)
 
 
 /*
- * M A T _ H S C A L E
- *
  * The matrix pointed at by "m" is homogeneously scaled by the
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
@@ -216,8 +200,6 @@ mat_hscale(matp_t m, float hscale)
 
 
 /*
- * M A T _ I N V
- *
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
@@ -313,8 +295,6 @@ mat_inv(matp_t output, matp_t input)
 
 
 /*
- * H T O V _ M O V E
- *
  * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.

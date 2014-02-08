@@ -56,8 +56,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 /* Time functions are copied almost verbatim from timer42.c */
 
 /**
- * P R E P _ P I X E L _ T I M E R
- *
  * Prep the timer for each pixel
  */
 void prep_pixel_timer(void)
@@ -66,10 +64,6 @@ void prep_pixel_timer(void)
     getrusage(RUSAGE_SELF, &ruA);
     getrusage(RUSAGE_CHILDREN, &ruAc);
 }
-
-/**
- * T V S U B
- */
 
 static void
 tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
@@ -82,8 +76,6 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 }
 
 /**
- * G E T _ P I X E L _ T I M E R
- *
  * Get the length of time the pixel
  * was being made.
  */
@@ -121,8 +113,6 @@ get_pixel_timer(double *total)
 
 
 /**
- * T I M E T A B L E _ I N I T
- *
  * This function creates the table of values that will store the
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
@@ -165,8 +155,6 @@ timeTable_init(int x, int y)
 
 
 /**
- * T I M E T A B L E _ F R E E
- *
  * Frees up the time table array.
  */
 void
@@ -183,8 +171,6 @@ timeTable_free(fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ I N P U T
- *
  * This function inputs the time taken to complete a pixel during a
  * raytrace and places it into the timeTable for use in creating a
  * heat graph light model.
@@ -207,8 +193,6 @@ timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ S I N G L E P R O C E S S
- *
  * This function processes the time table 1 pixel at a time, as
  * opposed to all at once like timeTable_process. Heat values are
  * bracketed to certain values, instead of normalized.
@@ -257,8 +241,6 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 
 
 /**
- * T I M E T A B L E _ P R O C E S S
- *
  * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
  */

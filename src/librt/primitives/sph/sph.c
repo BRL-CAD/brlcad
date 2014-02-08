@@ -68,8 +68,6 @@ struct sph_specific {
 };
 
 /**
- * R T _ S P H _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid sphere, and if so, precompute various
  * terms of the formula.
@@ -173,9 +171,6 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ S P H _ P R I N T
- */
 void
 rt_sph_print(register const struct soltab *stp)
 {
@@ -191,8 +186,6 @@ rt_sph_print(register const struct soltab *stp)
 
 
 /**
- * R T _ S P H _ S H O T
- *
  * Intersect a ray with a sphere.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -258,8 +251,6 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_SPH_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * R T _ S P H _ V S H O T
- *
  * This is the Becker vectorized version
  */
 void
@@ -319,8 +310,6 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ S P H _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -336,8 +325,6 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ S P H _ C U R V E
- *
  * Return the curvature of the sphere.
  */
 void
@@ -354,8 +341,6 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ S P H _ U V
- *
  * For a hit on the surface of an SPH, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -397,9 +382,6 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ S P H _ F R E E
- */
 void
 rt_sph_free(register struct soltab *stp)
 {
@@ -410,10 +392,6 @@ rt_sph_free(register struct soltab *stp)
 }
 
 
-/**
- * R T _ S P H _ P A R A M S
- *
- */
 int
 rt_sph_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

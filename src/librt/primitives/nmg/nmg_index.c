@@ -39,8 +39,6 @@
 #include "raytrace.h"
 
 /**
- * N M G _ I N D E X _ O F _ S T R U C T
- *
  * Return the structure index number of an arbitrary NMG structure.
  *
  * Returns -
@@ -116,8 +114,6 @@ nmg_index_of_struct(register const uint32_t *p)
 		(_p)->index = newindex++; }
 
 /**
- * N M G _ M A R K _ E D G E _ G
- *
  * Helper routine
  */
 static void
@@ -141,8 +137,6 @@ nmg_mark_edge_g(uint32_t *magic_p)
 
 
 /**
- * N M G _ M _ S E T _ H I G H _ B I T
- *
  * First pass:  just set the high bit on all index words
  *
  * This is a separate function largely for the benefit of global optimizers,
@@ -294,8 +288,6 @@ nmg_m_set_high_bit(struct model *m)
 
 
 /**
- * N M G _ M _ R E I N D E X
- *
  * Reassign index numbers to all the data structures in a model.
  * The model structure will get index 0, all others will be sequentially
  * assigned after that.
@@ -469,10 +461,6 @@ nmg_m_reindex(struct model *m, register long int newindex)
 }
 
 
-/**
- * N M G _ V L S _ S T R U C T _ C O U N T S
- *
- */
 void
 nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
 {
@@ -513,9 +501,6 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
 }
 
 
-/**
- * N M G _ P R _ S T R U C T _ C O U N T S
- */
 void
 nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
 {
@@ -530,8 +515,6 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
 
 
 /**
- * N M G _ M _ S T R U C T _ C O U N T
- *
  * Returns -
  * Pointer to magic-number/structure-base pointer array,
  * indexed by nmg structure index.
@@ -823,9 +806,6 @@ nmg_merge_models(struct model *m1, struct model *m2)
 		if (v->vg_p) CHECK_INDEX(v->vg_p); \
 	}
 
-/**
- * N M G _ F I N D _ M A X _ I N D E X
- */
 long
 nmg_find_max_index(const struct model *m)
 {

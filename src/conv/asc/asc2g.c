@@ -134,8 +134,6 @@ incr_ars_pt(void)
 
 
 /**
- * Z A P _ N L
- *
  * This routine removes newline and carriage return characters from
  * the buffer and substitutes in NULL.
  */
@@ -156,8 +154,6 @@ zap_nl(void)
 
 
 /**
- * S T R S O L B L D
- *
  * Input format is:
  *	s type name args...\n
  *
@@ -442,8 +438,6 @@ extrbld(void)
 
 
 /**
- * N M G B L D
- *
  * For the time being, what we read in from the ascii form is a hex
  * dump of the on-disk form of NMG.  This is the same between v4 and
  * v5.  Reassemble it in v5 binary form here, then import it, then
@@ -527,8 +521,6 @@ nmgbld(void)
 
 
 /**
- * S O L B L D
- *
  * This routine parses a solid record and determines which libwdb
  * routine to call to replicate this solid.  Simple primitives are
  * expected.
@@ -710,8 +702,6 @@ solbld(void)
 
 
 /**
- * M E M B B L D
- *
  * This routine invokes libwdb to build a member of a combination.
  * Called only from combbld()
  */
@@ -750,8 +740,6 @@ membbld(struct bu_list *headp)
 
 
 /**
- * C O M B B L D
- *
  * This routine builds combinations.  It does so by processing the "C"
  * combination input line, (which may be followed by optional material
  * properties lines), and it then slurps up any following "M" member
@@ -888,8 +876,6 @@ combbld(void)
 
 
 /**
- * A R S B L D
- *
  * This routine builds ARS's.
  */
 void
@@ -925,8 +911,6 @@ arsabld(void)
 
 
 /**
- * A R S B L D
- *
  * This is the second half of the ARS-building.  It builds the ARS B
  * record.
  */
@@ -967,8 +951,6 @@ arsbbld(void)
 
 
 /**
- * I D E N T B L D
- *
  * This routine makes an ident record.  It calls libwdb to do this.
  */
 void
@@ -1060,8 +1042,6 @@ identbld(void)
 
 
 /**
- * P O L Y H B L D
- *
  * Collect up all the information for a POLY-solid.  These are handled
  * as BoT solids in v5, but we still have to read the data in the old
  * format, and then convert it.
@@ -1162,8 +1142,6 @@ polyhbld(void)
 
 
 /**
- * M A T E R B L D
- *
  * Add information to the region-id based coloring table.
  */
 void
@@ -1194,10 +1172,6 @@ materbld(void)
 }
 
 
-/**
- * C L I N E B L D
- *
- */
 void
 clinebld(void)
 {
@@ -1239,10 +1213,6 @@ clinebld(void)
 }
 
 
-/**
- * B O T B L D
- *
- */
 void
 botbld(void)
 {
@@ -1324,8 +1294,6 @@ botbld(void)
 
 
 /**
- * P I P E B L D
- *
  * This routine reads pipe data from standard in, constructs a
  * doubly linked list of pipe points, and sends this list to
  * mk_pipe().
@@ -1383,8 +1351,6 @@ pipebld(void)
 
 
 /**
- * P A R T I C L E B L D
- *
  * This routine reads particle data from standard in, and constructs
  * the parameters required by mk_particle.
  */
@@ -1424,8 +1390,6 @@ particlebld(void)
 
 
 /**
- * A R B N B L D
- *
  * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
@@ -1484,8 +1448,6 @@ arbnbld(void)
 
 
 /**
- * E N D S W I T H
- *
  * This routine checks the last character in the string to see if it matches the
  * specified character. Used by gettclblock() to check for an escaped return.
  *
@@ -1499,8 +1461,6 @@ endswith(char *line, char ch)
     return 0;
 }
 /**
- * B R A C E C N T
- *
  * This routine counts the number of open braces and is used to determine whether a Tcl
  * command is complete.
  *
@@ -1523,8 +1483,6 @@ bracecnt(char *line)
     return cnt;
 }
 /**
- * G E T T C L B L O C K
- *
  * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
  * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
  * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
@@ -1568,9 +1526,6 @@ gettclblock(struct bu_vls *line, FILE *fp)
 }
 
 
-/**
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {

@@ -74,8 +74,6 @@ struct sizes fb_common_sizes[] = {
 
 
 /*
- *		       F B _ C O M M O N _ F I L E _ S I Z E
- *
  *  If the file name contains size information encoded in it,
  *  then that size is returned, even if it differs from the actual
  *  file dimensions.  (It might have been truncated).
@@ -166,8 +164,6 @@ fb_common_name_size(size_t *widthp, size_t *heightp, const char *name)
 
 
 /*
- *			F B _ C O M M O N _ I M A G E _ S I Z E
- *
  *  Given the number of pixels in an image file,
  *  if this is a "common" image size,
  *  return the width and height of the image.

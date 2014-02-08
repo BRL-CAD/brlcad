@@ -185,8 +185,6 @@ Wgl_doevent(ClientData clientData,
 
 
 /*
- * W G L _ D M
- *
  * Implement display-manager specific commands, from MGED "dm" command.
  */
 static int

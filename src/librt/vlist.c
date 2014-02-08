@@ -526,8 +526,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int

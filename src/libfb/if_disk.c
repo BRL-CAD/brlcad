@@ -118,8 +118,6 @@ dsk_free(FBIO *ifp)
 
 
 /*
- * D I S K _ C O L O R _ C L E A R
- *
  * Clear the disk file to the given color.
  */
 HIDDEN int

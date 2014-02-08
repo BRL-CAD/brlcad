@@ -29,8 +29,6 @@
 
 
 /**
- * _ R B _ I N S E R T ()
- *
  * Insert a node into one linear order of a red-black tree
  *
  * This function has three parameters: the tree and linear order into
@@ -276,8 +274,6 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 
 
 /**
- * _ R B _ S E T _ U N I Q ()
- *
  * Raise or lower the uniqueness flag for one linear order of a
  * red-black tree
  *
@@ -347,8 +343,6 @@ bu_rb_set_uniqv(struct bu_rb_tree *tree, bitv_t flag_rep)
 
 
 /**
- * _ R B _ S E T _ U N I Q _ A L L
- *
  * Raise or lower the uniqueness flags for all the linear orders of a
  * red-black tree
  *

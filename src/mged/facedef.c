@@ -74,8 +74,6 @@ static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *pl
 static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
- * F _ F A C E D E F
- *
  * Redefines one of the defining planes for a GENARB8. Finds which
  * plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
@@ -321,8 +319,6 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * G E T _ P L E Q N
- *
  * Gets the planar equation from the array argv[] and puts the result
  * into 'plane'.
  */
@@ -343,8 +339,6 @@ get_pleqn(fastf_t *plane, const char *argv[])
 
 
 /*
- * G E T _ 3 P T S
- *
  * Gets three definite points from the array argv[] and finds the
  * planar equation from these points.  The resulting plane equation is
  * stored in 'plane'.
@@ -377,8 +371,6 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 
 
 /*
- * G E T _ R O T F B
- *
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
  * stored in 'plane'. The vertices pointed to by 's_recp' are used if
@@ -417,8 +409,6 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 
 
 /*
- * G E T _ N U P N T
- *
  * Gets a point from the three strings in the 'argv' array.  The value
  * of D of 'plane' is changed such that the plane passes through the
  * input point.

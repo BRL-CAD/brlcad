@@ -181,8 +181,6 @@ struct bu_structparse view_parse[] = {
 
 
 /**
- * V I E W _ P I X E L
- *
  * Arrange to have the pixel output.  a_uptr has region pointer, for
  * reference.
  */
@@ -596,8 +594,6 @@ view_pixel(struct application *ap)
 
 
 /**
- * V I E W _ E O L
- *
  * This routine is not used; view_pixel() determines when the last
  * pixel of a scanline is really done, for parallel considerations.
  */
@@ -609,8 +605,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /**
- * V I E W _ E N D
- *
  * Now when lightmodel is 8, heat-graph will be drawn.
  */
 void
@@ -657,8 +651,6 @@ view_end(struct application *ap)
 
 
 /**
- * V I E W _ S E T U P
- *
  * Called before rt_prep() in do.c
  */
 void
@@ -716,8 +708,6 @@ view_setup(struct rt_i *rtip)
 
 
 /**
- * V I E W _ R E _ S E T U P
- *
  * This routine is used to do a "mlib_setup" on reprepped regions.
  * only regions with a NULL reg_mfuncs pointer will be processed.
  */
@@ -752,8 +742,6 @@ view_re_setup(struct rt_i *rtip)
 
 
 /**
- * V I E W _ C L E A N U P
- *
  * Called before rt_clean() in do.c
  */
 void view_cleanup(struct rt_i *rtip)
@@ -775,8 +763,6 @@ void view_cleanup(struct rt_i *rtip)
 
 
 /**
- * H I T _ N O T H I N G
- *
  * a_miss() routine called when no part of the model is hit.
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
@@ -1012,8 +998,6 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 
 
 /**
- * C O L O R V I E W
- *
  * Manage the coloring of whatever it was we just hit.  This can be a
  * recursive procedure.
  */
@@ -1267,8 +1251,6 @@ out:
 
 
 /**
- * V I E W I T
- *
  * a_hit() routine for simple lighting model.
  */
 int viewit(struct application *ap,
@@ -1441,8 +1423,6 @@ kut_ft_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *UNUSED(ra
 
 
 /**
- * V I E W _ I N I T
- *
  * Called once, early on in RT setup, before view size is set.
  */
 int
@@ -1485,8 +1465,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
 
 /**
- * R E P R O J E C T _ S P L A T
- *
  * Called when the reprojected value lies on the current screen.
  * Write the reprojected value into the screen, checking *screen* Z
  * values if the new location is already occupied.
@@ -1529,9 +1507,6 @@ extern int per_processor_chunk;	/* how many pixels to do at once */
 extern int cur_pixel;		/* current pixel number, 0..last_pixel */
 extern int last_pixel;		/* last pixel number */
 
-/**
- * R E P R O J E C T _ W O R K E R
- */
 void
 reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
 {
@@ -1638,8 +1613,6 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
 
 
 /**
- * V I E W 2 _ I N I T
- *
  * Called each time a new image is about to be done.
  */
 void
@@ -1947,8 +1920,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
 
 /**
- * A P P L I C A T I O N _ I N I T
- *
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */

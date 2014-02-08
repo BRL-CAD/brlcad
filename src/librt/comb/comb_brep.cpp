@@ -114,9 +114,6 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 }
 
 
-/**
- * R T _ C O M B _ B R E P
- */
 extern "C" void
 rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct db_i *dbip)
 {

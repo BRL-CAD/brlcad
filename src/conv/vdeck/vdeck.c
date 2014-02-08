@@ -188,8 +188,6 @@ struct db_i	*dbip;		/* Database instance ptr */
 
 
 /*
- *			P R O M P T
- *
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
@@ -201,8 +199,6 @@ prompt(char *fmt)
 
 
 /**
- * S O R T F U N C
- *
  * Comparison function for bu_sort().
  *
  * 'a' is the exact template expected by bu_sort.
@@ -217,9 +213,6 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
 }
 
 
-/**
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -329,8 +322,6 @@ out:
 
 
 /**
- * F L A T T E N _ T R E E
- *
  * This routine turns a union tree into a flat string.
  */
 void
@@ -395,8 +386,6 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 
 
 /**
- * R E G I O N _ E N D
- *
  * This routine will be called by db_walk_tree() once all the solids
  * in this region have been visited.
  */
@@ -538,8 +527,6 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 
 
 /**
- * G E T T R E E _ L E A F
- *
  * Re-use the librt "soltab" structures here, for our own purposes.
  */
 union tree *
@@ -724,8 +711,6 @@ swap_dbl(double *d1, double *d2)
 
 
 /**
- * A D D T O R
- *
  * Process torus.
  */
 void
@@ -752,9 +737,6 @@ addtor(struct bu_vls *v, struct rt_tor_internal *gp, char *name, int num)
 }
 
 
-/**
- * A D D H A L F
- */
 void
 addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num)
 {
@@ -772,9 +754,6 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num)
 }
 
 
-/**
- * A D D A R B N
- */
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num)
 {
@@ -831,8 +810,6 @@ vls_solid_pts(struct bu_vls *v, const point_t *pts, int npts, const char *name, 
 
 
 /**
- *			A D D A R B
- *
  *  Process generalized arb.
  */
 void
@@ -889,8 +866,6 @@ addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num)
 #define SPH	3
 
 /**
- * A D D E L L
- *
  * Process the general ellipsoid.
  */
 void
@@ -975,8 +950,6 @@ addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num)
 
 
 /**
- * A D D T G C
- *
  * Process generalized truncated cone.
  */
 void
@@ -1131,9 +1104,6 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num)
 }
 
 
-/**
- * A R S _ C U R V E _ O U T
- */
 void
 ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
 {
@@ -1163,8 +1133,6 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
 
 
 /**
- * A D D A R S
- *
  * Process triangular surfaced polyhedron - ars.
  */
 void
@@ -1190,8 +1158,6 @@ addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num)
 
 
 /**
- * e w r i t e
- *
  * Write with error checking.
  */
 void
@@ -1208,8 +1174,6 @@ ewrite(FILE *fp, const char *buf, unsigned bytes)
 
 
 /**
- * d e c k
- *
  * make a COMGEOM deck for current list of objects
  */
 void
@@ -1323,8 +1287,6 @@ deck(char *prefix)
 }
 
 /**
- * t o c
- *
  * Build a sorted list of names of all the objects accessible in the
  * object file.
  */
@@ -1355,8 +1317,6 @@ toc()
 
 
 /**
- * l i s t _ t o c
- *
  * List the table of contents.
  */
 void
@@ -1388,8 +1348,6 @@ list_toc(char *args[])
 
 
 /**
- * c o l _ p r t
- *
  * Print list of names in tabular columns.
  */
 int
@@ -1420,8 +1378,6 @@ col_prt(char *list[], int ct)
 
 
 /**
- * i n s e r t
- *
  * Insert each member of the table of contents 'toc_list' which
  * matches one of the arguments into the current list 'curr_list'.
  */
@@ -1449,8 +1405,6 @@ insert(char *args[], int ct)
 }
 
 /**
- * d e l e t e
- *
  * delete all members of current list 'curr_list' which match one of
  * the arguments.
  */
@@ -1494,8 +1448,6 @@ delete_obj(char *args[])
 
 
 /**
- * i t o a
- *
  * Convert integer to ascii  wd format.
  */
 void
@@ -1537,8 +1489,6 @@ vls_blanks(struct bu_vls *v, int n)
 
 
 /**
- * V L S _ I T O A
- *
  * Convert integer to ascii  wd format.
  */
 void
@@ -1600,8 +1550,6 @@ vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
 
 
 /**
- * V L S _ F T O A
- *
  * Convert float to ascii  w.df format.
  */
 void
@@ -1666,8 +1614,6 @@ vls_ftoa(struct bu_vls *v, double f, int w, int d)
 
 
 /**
- * g e t c m d
- *
  * Return first character read from keyboard, copy command into
  * args[0] and arguments into args[1]...args[n].
  */
@@ -1697,8 +1643,6 @@ getcmd(char *args[], int ct)
 
 
 /**
- * g e t a r g
- *
  * Get a word of input into 'str'. Copies no more than maxchars characters
  * into str and ensures str is null-terminated if possible.
  *
@@ -1742,8 +1686,6 @@ getarg(char *str, size_t maxchars)
 
 
 /**
- * m e n u
- *
  * Display menu stored at address 'addr'.
  */
 void
@@ -1758,8 +1700,6 @@ menu(char **addr)
 
 
 /**
- * b l a n k _ f i l l
- *
  * Write count blanks to fildes.
  */
 void
@@ -1770,8 +1710,6 @@ blank_fill(FILE *fp, int count)
 
 
 /**
- * a b o r t
- *
  * Abort command without terminating run (restore command prompt) and
  * cleanup temporary files.
  */
@@ -1786,8 +1724,6 @@ abort_sig(int sig)
 
 
 /**
- * q u i t
- *
  * Terminate run.
  */
 void

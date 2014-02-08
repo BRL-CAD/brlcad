@@ -196,8 +196,6 @@ const struct bu_structparse rt_rpc_parse[] = {
 };
 
 /**
- * R T _ R P C _ B B O X
- *
  * Calculate the RPP for an RPC
  */
 int
@@ -249,8 +247,6 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ R P C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid RPC, and if so, precompute various
  * terms of the formula.
@@ -339,9 +335,6 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ R P C _ P R I N T
- */
 void
 rt_rpc_print(const struct soltab *stp)
 {
@@ -364,8 +357,6 @@ rt_rpc_print(const struct soltab *stp)
 #define RPC_NORM_BACK (4)
 
 /**
- * R T _ R P C _ S H O T
- *
  * Intersect a ray with a rpc.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -517,8 +508,6 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ R P C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -552,8 +541,6 @@ rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ R P C _ C U R V E
- *
  * Return the curvature of the rpc.
  */
 void
@@ -585,8 +572,6 @@ rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ R P C _ U V
- *
  * For a hit on the surface of an rpc, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1
  * u = azimuth
@@ -637,9 +622,6 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R P C _ F R E E
- */
 void
 rt_rpc_free(struct soltab *stp)
 {
@@ -908,9 +890,6 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ R P C _ P L O T
- */
 int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1020,8 +999,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ M K _ P A R A B O L A
- *
  * Approximate a parabola with line segments.  The initial single
  * segment is broken at the point farthest from the parabola if
  * that point is not already within the distance and normal error
@@ -1083,8 +1060,6 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
 
 
 /**
- * R T _ R P C _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1320,8 +1295,6 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ R P C _ I M P O R T
- *
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1387,8 +1360,6 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R P C _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1438,8 +1409,6 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R P C _ I M P O R T 5
- *
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1486,8 +1455,6 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R P C _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1538,8 +1505,6 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R P C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1585,8 +1550,6 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ R P C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1605,10 +1568,6 @@ rt_rpc_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ P A R A M S
- *
- */
 int
 rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1618,9 +1577,6 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ V O L U M E
- */
 void
 rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1636,9 +1592,6 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ C E N T R O I D
- */
 void
 rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1657,9 +1610,6 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ S U R F _ A R E A
- */
 void
 rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {

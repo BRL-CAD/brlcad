@@ -150,8 +150,6 @@ struct hrt_specific {
 
 
 /**
- * R T _ H R T _ B B O X
- *
  * Compute the bounding RPP for a heart.
  */
 int
@@ -213,8 +211,6 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ H R T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid heart, and if so, precompute
  * various terms of the formula.
@@ -344,9 +340,6 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H R T _ P R I N T
- */
 void
 rt_hrt_print(register const struct soltab *stp)
 {
@@ -360,8 +353,6 @@ rt_hrt_print(register const struct soltab *stp)
 
 
 /**
- * R T _ H R T _ S H O T
- *
  * Intersect a ray with a heart, where all constant terms have been
  * precomputed by rt_hrt_prep().  If an intersection occurs, one or
  * two struct seg(s) will be acquired and filled in.
@@ -642,8 +633,6 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ H R T _ V S H O T
- *
  * This is the Becker vector version
  */
 void
@@ -654,8 +643,6 @@ rt_hrt_vshot(void)
 
 
 /**
- * R T _ H R T _ N O R M
- *
  * Compute the normal to the heart, given a point on the heart
  * centered at the origin on the X-Y plane.  The gradient of the heart
  * at that point is in fact the normal vector, which will have to be
@@ -700,8 +687,6 @@ rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
 
 
 /**
- * R T _ H R T _ C U R V E
- *
  * Return the curvature of the heart.
  */
 void
@@ -711,9 +696,6 @@ rt_hrt_curve(void)
 }
 
 
-/**
- * R T _ H R T _ U V
- */
 void
 rt_hrt_uv(void)
 {
@@ -721,9 +703,6 @@ rt_hrt_uv(void)
 }
 
 
-/**
- * R T _ H R T _ F R E E
- */
 void
 rt_hrt_free(struct soltab *stp)
 {
@@ -735,8 +714,6 @@ rt_hrt_free(struct soltab *stp)
 
 
 /**
- * R T _ H R T _ 2 4 P T S
- *
  * Similar to code used by the ELL
  */
 #define HRTOUT(n) ov+(n-1)*5
@@ -786,9 +763,6 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 }
 
 
-/**
- * R T _ H R T _ A D A P T I V E _ P L O T
- */
 int
 rt_hrt_adaptive_plot(void)
 {
@@ -797,9 +771,6 @@ rt_hrt_adaptive_plot(void)
 }
 
 
-/**
- * R T _ H R T _ P L O T
- */
 int
 rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -829,9 +800,6 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 }
 
 
-/**
- * R T _ H R T _ T E S S
- */
 int
 rt_hrt_tess(void)
 {
@@ -841,8 +809,6 @@ rt_hrt_tess(void)
 
 
 /**
- * R T _ H R T _ E X P O R T 5
- *
  * The external form is:
  * V point
  * Xdir vector
@@ -883,8 +849,6 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ H R T _ I M P O R T 5
- *
  * Import a heart from the database format to the internal format.
  *
  */
@@ -927,8 +891,6 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ H R T _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -999,8 +961,6 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ H R T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1019,10 +979,6 @@ rt_hrt_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H R T _ P A R A M S
- *
- */
 int
 rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1032,10 +988,6 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H R T _ S U R F A C E _ A R E A
- *
- */
 void
 rt_hrt_surf_area(void)
 {
@@ -1043,10 +995,6 @@ rt_hrt_surf_area(void)
 }
 
 
-/**
- * R T _ H R T _ V O L U M E
- *
- */
 void
 rt_hrt_volume(void)
 {
@@ -1054,10 +1002,6 @@ rt_hrt_volume(void)
 }
 
 
-/**
- * R T _ H R T _ C E N T R O I D
- *
- */
 void
 rt_hrt_centroid(void)
 {

@@ -177,8 +177,6 @@ pl_ray(struct ray_data *rd)
 
 
 /*
- * N E X T _ S T A T E _ T A B L E
- *
  *			Current_State
  *	Input	|  0   1     2    3    4    5    6
  *	-------------------------------------------
@@ -1148,8 +1146,6 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 
 /**
- * N M G _ R A Y _ S E G S
- *
  * Obtain the list of ray segments which intersect with the nmg.
  * This routine does all of the "work" for rt_nmg_shot()
  *

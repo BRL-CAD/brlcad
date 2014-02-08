@@ -3756,8 +3756,6 @@ This can be seen in this excerpt from rt/worker.c:
 
 <p>
 /*
- *			D O _ R U N
- *
  *  Compute a run of pixels, in parallel if the hardware permits it.
  *
  */
@@ -3786,8 +3784,6 @@ do_run( a, b )
 
 <p>
 /*
- *  			W O R K E R
- *
  *  Compute one pixel, and store it.
  */
 void
@@ -3847,8 +3843,6 @@ used:
 
 <p>
 /*
- *  			V I E W _ P I X E L
- *
  *  Arrange to have the pixel output.
  */
 void
@@ -6431,8 +6425,6 @@ than it's present return(1).  Here is how librt's default handler works:
 
 <p>
 /*
- *			R T _ D E F O V E R L A P
- *
  *  Default handler for overlaps in rt_boolfinal().
  *  Returns -
  *	 0	to eliminate partition with overlap entirely
@@ -6520,8 +6512,6 @@ the comment in the header file:
 
 <p>
 /*
- *			A P P L I C A T I O N
- *
  *  This structure is the only parameter to rt_shootray().
  *  The entire structure should be zeroed (e.g. by bzero() ) before it
  *  is used the first time.

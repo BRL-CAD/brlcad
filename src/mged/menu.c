@@ -91,8 +91,6 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 
 /*
- * M M E N U _ I N I T
- *
  * Clear global data
  */
 void
@@ -104,10 +102,6 @@ mmenu_init(void)
     menu_state->ms_menus[MENU_GEN] = MENU_NULL;
 }
 
-
-/*
- * M M E N U _ S E T
- */
 
 void
 mmenu_set(int index, struct menu_item *value)
@@ -199,8 +193,6 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
 
 
 /*
- * M M E N U _ D I S P L A Y
- *
  * Draw one or more menus onto the display.
  * If "menu_state->ms_flag" is non-zero, then the last selected
  * menu item will be indicated with an arrow.
@@ -283,8 +275,6 @@ mmenu_display(int y_top)
 
 
 /*
- * M M E N U _ S E L E C T
- *
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:

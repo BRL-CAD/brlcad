@@ -86,8 +86,6 @@ historyInit(void)
 
 
 /*
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the history
  * vls'es.
  *
@@ -146,8 +144,6 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 
 
 /*
- * F _ H I S T O R Y
- *
  * Prints out the command history, either to bu_log or to a file.
  */
 int
@@ -221,9 +217,6 @@ cmd_history(void *clientData, int argc, const char **argv)
 }
 
 
-/**
- * H I S T O R Y _ P R E V
- */
 struct bu_vls *
 history_prev(void)
 {
@@ -239,9 +232,6 @@ history_prev(void)
 }
 
 
-/**
- * H I S T O R Y _ C U R
- */
 struct bu_vls *
 history_cur(void)
 {
@@ -252,9 +242,6 @@ history_cur(void)
 }
 
 
-/**
- * H I S T O R Y _ N E X T
- */
 struct bu_vls *
 history_next(void)
 {

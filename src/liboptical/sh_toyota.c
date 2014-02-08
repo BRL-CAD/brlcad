@@ -1418,8 +1418,6 @@ atmos_irradiance(fastf_t lambda)
 
 
 /*
- * O Z O N E _ A B S O R P T I O N
- *
  * Return absorption coefficient due to ozone for a given wavelength
  * of light.
  * Units: m ^ -1 (inverse m)

@@ -114,8 +114,6 @@ mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
 
 
 /**
- * G U I _ O U T P U T
- *
  * Used as a hook for bu_log output.  Sends output to the Tcl
  * procedure whose name is contained in the vls "tcl_output_hook".
  * Useful for user interface building.
@@ -672,8 +670,6 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
 
 /**
- * C M D _ T K
- *
  * Command for initializing the Tk window and defaults.
  *
  * Usage:  loadtk [displayname[.screennum]]
@@ -702,8 +698,6 @@ cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * C M D _ O U T P U T _ H O O K
- *
  * Hooks the output to the given output hook.  Removes the existing
  * output hook!
  */
@@ -758,9 +752,6 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 }
 
 
-/**
- * C M D _ N O P
- */
 int
 cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
@@ -988,8 +979,6 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 
 
 /**
- * M G E D _ C O M P A T
- *
  * This routine is called to perform wildcard expansion and character
  * quoting on the given vls (typically input from the keyboard.)
  */
@@ -1094,8 +1083,6 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
 
 
 /**
- * C M D L I N E
- *
  * This routine is called to process a vls full of commands.  Each
  * command is newline terminated.  The input string will not be
  * altered in any way.
@@ -1255,8 +1242,6 @@ mged_print_result(int UNUSED(status))
 
 
 /**
- * M G E D _ C M D
- *
  * Check a table for the command, check for the correct minimum and
  * maximum number of arguments, and pass control to the proper
  * function.  If the number of arguments is incorrect, print out a
@@ -1382,8 +1367,6 @@ f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * H E L P C O M M
- *
  * Common code for help commands
  */
 HIDDEN int
@@ -1417,8 +1400,6 @@ helpcomm(int argc, const char *argv[], struct funtab *functions)
 
 
 /**
- * F _ H E L P
- *
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */
@@ -1831,8 +1812,6 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, const
 
 
 /**
- * C M D _ U N I T S
- *
  * Change the local units of the description.  Base unit is fixed in
  * mm, so this just changes the current local unit that the user works
  * in.
@@ -1868,8 +1847,6 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 
 
 /**
- * C M D _ S E A R C H
- *
  * Search command in the style of the Unix find command for db
  * objects.
  */
@@ -1893,8 +1870,6 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
 
 
 /**
- * C M D _ L M
- *
  * List regions based on values of their MUVES_Component attribute
  */
 int
@@ -1975,8 +1950,6 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * F _ T O L
- *
  * "tol" displays current settings
  * "tol abs #" sets absolute tolerance.  # > 0.0
  * "tol rel #" sets relative tolerance.  0.0 < # < 1.0
@@ -2089,8 +2062,6 @@ cmd_ev(ClientData UNUSED(clientData),
 
 
 /**
- * C M D _ E
- *
  * The "Big E" command.  Evaluated Edit something (add to visible
  * display).  Usage: E object(s)
  */

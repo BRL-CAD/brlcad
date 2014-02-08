@@ -43,10 +43,6 @@
 /* 10501462 10651848-1 */
 
 
-/*
- *	A S K _ C S E T _ O F _ U N L O A D E D _ C H I L D R E N
- *
- */
 tag_t ask_cset_of_unloaded_children(tag_t part, tag_t part_occ)
 {
     tag_t cset = NULL_TAG;
@@ -186,10 +182,6 @@ open_part(char *p_name, int level)
     return ugpart;
 }
 
-/*
- *	L O A D _ S U B _ P A R T S
- *
- */
 tag_t
 load_sub_parts(tag_t displayed_part)
 {
@@ -229,10 +221,6 @@ load_sub_parts(tag_t displayed_part)
     return unloaded_child_cset;
 }
 
-/*
- *	U N L O A D _ S U B _ P A R T S
- *
- */
 void unload_sub_parts(tag_t loaded_child_cset)
 {
     if (loaded_child_cset) {

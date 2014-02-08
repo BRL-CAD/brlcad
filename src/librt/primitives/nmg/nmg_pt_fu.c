@@ -97,8 +97,6 @@ int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const str
 
 
 /**
- * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
- *
  * Find the square of the distance from a point P to a line segment described
  * by the two endpoints A and B.
  *
@@ -202,8 +200,6 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 
 
 /**
- * N M G _ C L A S S _ P T _ V U
- *
  * Classify a point vs a vertex (touching/missed)
  */
 static int
@@ -1384,8 +1380,6 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 
 
 /**
- * N M G _ C L A S S _ P T _ L U _ E X C E P T
- *
  * Classify a point as being in/on/out of the area bounded by a loop,
  * ignoring any uses of a particular edge in the loop.
  *

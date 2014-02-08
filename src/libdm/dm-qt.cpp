@@ -57,8 +57,6 @@ qt_sendRepaintEvent(struct dm *dmp)
 }
 
 /**
- * Q T _ C L O S E
- *
  * Release the display manager
  */
 HIDDEN int
@@ -125,8 +123,6 @@ qt_drawEnd(struct dm *dmp)
 }
 
 /**
- * Q T _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
@@ -140,8 +136,6 @@ qt_normal(struct dm *dmp)
 }
 
 /**
- * Q T _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to qt_draw().
  */
@@ -161,8 +155,6 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 
 
 /**
- * Q T _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist. The starting position of the
  * beam is as specified.
  */
@@ -704,8 +696,6 @@ qt_processEvents(struct dm *dmp)
 
 
 /**
- * P R O C E S S Q T E V E N T S
- *
  * Function called in Tk event loop. It simply processes any
  * pending Qt events.
  *
@@ -716,8 +706,6 @@ void processQtEvents(ClientData UNUSED(clientData), int UNUSED(flags)) {
 
 
 /**
- * I D L E C A L L
- *
  * Call when Tk is idle. It process Qt events then
  * reschedules itself.
  *
@@ -733,8 +721,6 @@ void IdleCall(ClientData UNUSED(clientData)) {
 __BEGIN_DECLS
 
 /*
- * Q T _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */

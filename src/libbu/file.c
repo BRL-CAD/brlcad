@@ -142,8 +142,6 @@ bu_same_fd(int fd1, int fd2)
 
 
 /**
- * _ b u _ f i l e _ a c c e s s
- *
  * common guts to the file access functions that returns truthfully if
  * the current user has the ability permission-wise to access the
  * specified file.

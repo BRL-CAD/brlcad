@@ -56,10 +56,6 @@ namespace brlcad {
 }
 
 
-/**
- * p u l l b a c k _ c u r v e
- */
-
 enum seam_direction {
     NORTH_SEAM,
     EAST_SEAM,

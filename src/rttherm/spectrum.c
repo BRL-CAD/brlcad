@@ -120,8 +120,6 @@ struct bn_tabdata *rt_NTSC_g_tabdata;
 struct bn_tabdata *rt_NTSC_b_tabdata;
 
 /*
- * R T _ S P E C T _ M A K E _ N T S C _ R G B
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -262,8 +260,6 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 
 
 /*
- * M A K E _ N T S C _ X Y Z 2 R G B
- *
  * Create the map from
  * CIE XYZ perceptual space into
  * an idealized RGB space assuming NTSC primaries with D6500 white.
@@ -324,8 +320,6 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 
 
 /*
- * R T _ S P E C T _ C U R V E _ T O _ X Y Z
- *
  * Convenience routine.
  * Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
  * The normalization xyz_scale = 1.0 / bn_tabdata_area2(cie_y);
@@ -352,8 +346,6 @@ spect_curve_to_xyz(point_t xyz,
 
 
 /*
- * R T _ S P E C T _ R G B _ T O _ C U R V E
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -372,8 +364,6 @@ spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_
 
 
 /*
- * R T _ S P E C T _ X Y Z _ T O _ C U R V E
- *
  * Values of the curve will be normalized to 0..1 range;
  * caller must scale into meaningful units.
  *
@@ -392,8 +382,6 @@ spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_
 
 
 /*
- * R T _ T A B L E _ M A K E _ V I S I B L E _ A N D _ U N I F O R M
- *
  * A quick hack to make sure there are enough samples in the visible band.
  */
 struct bn_table *

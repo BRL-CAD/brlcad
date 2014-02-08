@@ -75,8 +75,6 @@ Usage: fbline [-c ] [-F framebuffer]\n\
 
 
 /*
- * E D G E L I M I T
- *
  * Limit generated positions to edges of screen
  * Really should clip to screen, instead.
  */
@@ -92,8 +90,6 @@ edgelimit(struct coords *ppos)
 
 
 /*
- * R A S T E R
- *
  * Raster - rasterize stroke.
  *
  * Method:
@@ -135,8 +131,6 @@ Raster(struct stroke *vp)
 
 
 /*
- * B U I L D S T R
- *
  * set up DDA parameters
  */
 void
@@ -235,9 +229,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

@@ -35,8 +35,6 @@
 
 
 /*
- * F B _ S I M _ V I E W
- *
  * A routine to simulate the effect of fb_view() by simply
  * storing this information into the FBIO structure.
  */
@@ -55,8 +53,6 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 /*
- * F B _ S I M _ G E T V I E W
- *
  * A routine to simulate the effect of fb_getview() by simply
  * reading this information from the FBIO structure.
  */
@@ -75,8 +71,6 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /*
- * F B _ S I M _ C U R S O R
- *
  * A routine to simulate the effect of fb_cursor() by simply
  * storing this information into the FBIO structure.
  */
@@ -94,8 +88,6 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 
 
 /*
- * F B _ S I M _ G E T C U R S O R
- *
  * A routine to simulate the effect of fb_getcursor() by simply
  * reading this information from the FBIO structure.
  */

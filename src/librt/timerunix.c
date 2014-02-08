@@ -45,9 +45,6 @@
 static time_t time0;
 static struct tms tms0;
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {

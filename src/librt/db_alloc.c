@@ -37,8 +37,6 @@
 
 
 /**
- * D B _ A L L O C
- *
  * Find a block of database storage of "count" granules.
  *
  * Returns:
@@ -105,8 +103,6 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
 
 /**
- * D B _ D E L R E C
- *
  * Delete a specific record from database entry
  * No longer supported.
  */
@@ -125,8 +121,6 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 
 
 /**
- * D B _ D E L E T E
- *
  * Delete the indicated database record(s).
  * Arrange to write "free storage" database markers in its place,
  * positively erasing what had been there before.
@@ -169,8 +163,6 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
 
 /**
- * D B _ Z A P P E R
- *
  * Using a single call to db_put(), write multiple zeroed records out,
  * all with u_id field set to ID_FREE.
  * This will zap all records from "start" to the end of this entry.

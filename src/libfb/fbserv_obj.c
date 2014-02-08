@@ -57,8 +57,6 @@ static FBIO *curr_fbp;		/* current framebuffer pointer */
 
 
 /*
- * C O M M _ E R R O R
- *
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
@@ -68,9 +66,6 @@ comm_error(const char *str)
 }
 
 
-/*
- * D R O P _ C L I E N T
- */
 HIDDEN void
 drop_client(struct fbserv_obj *fbsp, int sub)
 {
@@ -174,9 +169,6 @@ setup_socket(int fd)
 }
 
 
-/*
- * N E W _ C L I E N T
- */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
@@ -446,9 +438,6 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B R E A D R E C T
- */
 void
 fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -492,9 +481,6 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B W R I T E R E C T
- */
 void
 fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -526,9 +512,6 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W R E A D R E C T
- */
 void
 fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -572,9 +555,6 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W W R I T E R E C T
- */
 void
 fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -810,8 +790,6 @@ fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
 
 
 /*
- * R F B W M A P
- *
  * Accept a color map sent by the client, and write it to the
  * framebuffer.  Network format is to send each entry as a network
  * (IBM) order 2-byte short, 256 red shorts, followed by 256 green and

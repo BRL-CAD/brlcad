@@ -72,8 +72,6 @@ struct bu_structparse temp_parse[] = {
 
 
 /*
- * T X T _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  *
@@ -222,9 +220,6 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 }
 
 
-/*
- * T X T _ S E T U P
- */
 HIDDEN int
 temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 
@@ -266,9 +261,6 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * T X T _ P R I N T
- */
 HIDDEN void
 temp_print(register struct region *rp, genptr_t UNUSED(dp))
 {
@@ -276,9 +268,6 @@ temp_print(register struct region *rp, genptr_t UNUSED(dp))
 }
 
 
-/*
- * T X T _ F R E E
- */
 HIDDEN void
 temp_free(genptr_t cp)
 {

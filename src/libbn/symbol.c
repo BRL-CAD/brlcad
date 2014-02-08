@@ -46,9 +46,6 @@
 #include "plot3.h"
 #include "vectfont.h"
 
-/*
- *			T P _ 3 S Y M B O L
- */
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 
@@ -124,9 +121,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 }
 
 
-/*
- *			T P _ 2 S Y M B O L
- */
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 

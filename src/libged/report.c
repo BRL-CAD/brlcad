@@ -123,8 +123,6 @@ print_schain(struct ged *gedp, int lvl)
 
 
 /*
- * D G O _ P R _ S C H A I N _ V L C M D S
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the vlist cmds
  * for each structure.

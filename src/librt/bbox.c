@@ -244,8 +244,6 @@ rt_in_rpp(struct xray *rp,
 
 
 /**
- * R T _ T R A V E R S E _ T R E E
- *
  * Traverse the passed tree using rt_db_internals to show the way
  * This function supports rt_bound_internal and is internal to librt
  *

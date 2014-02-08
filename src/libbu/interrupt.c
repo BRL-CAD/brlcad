@@ -35,9 +35,6 @@
 
 #include "bu.h"
 
-/*
- */
-
 /* wrap for hack above */
 #if !defined(C99_POSIX_USE_BSD)
 /* orig code: */

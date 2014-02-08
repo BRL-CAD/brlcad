@@ -56,8 +56,6 @@
 struct bu_list	HostHead;
 
 /*
- *			G E T _ O U R _ H O S T N A M E
- *
  * There is a problem in some hosts that gethostname() will only
  * return the host name and *not* the fully qualified host name
  * with domain name.
@@ -83,8 +81,6 @@ get_our_hostname(void)
 }
 
 /*
- *			H O S T _ L O O K U P _ B Y _ H O S T E N T
- *
  *  We have a hostent structure, of which, the only thing of interest is
  *  the host name.  Go from name to address back to name, to get formal name.
  *
@@ -129,8 +125,6 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
 }
 
 /*
- *			M A K E _ D E F A U L T _ H O S T
- *
  *  Add a new host entry to the list of known hosts, with
  *  default parameters.
  *  This routine is used to handle unexpected volunteers.
@@ -158,9 +152,6 @@ make_default_host(const char* name)
     return ihp;
 }
 
-/*
- *			H O S T _ L O O K U P _ B Y _ A D D R
- */
 struct ihost *
 host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 {
@@ -200,9 +191,6 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     return make_default_host( name );
 }
 
-/*
- *			H O S T _ L O O K U P _ B Y _ N A M E
- */
 struct ihost *
 host_lookup_by_name(const char* name, int enter)
 {
@@ -225,9 +213,6 @@ host_lookup_by_name(const char* name, int enter)
     return host_lookup_by_hostent( addr, enter );
 }
 
-/*
- *			H O S T _ L O O K U P _ O F _ F D
- */
 struct ihost *
 host_lookup_of_fd(int fd)
 {

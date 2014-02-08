@@ -46,9 +46,6 @@
 #include "raytrace.h"
 
 
-/**
- * N M G _ V I S I T _ V E R T E X
- */
 void
 nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -64,9 +61,6 @@ nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr
 }
 
 
-/**
- * N M G _ V I S I T _ V E R T E X U S E
- */
 void
 nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -86,9 +80,6 @@ nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab,
 }
 
 
-/**
- * N M G _ V I S I T _ E D G E
- */
 void
 nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -101,9 +92,6 @@ nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t s
 }
 
 
-/**
- * N M G _ V I S I T _ E D G E U S E
- */
 void
 nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -124,9 +112,6 @@ nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, gen
 }
 
 
-/**
- * N M G _ V I S I T _ L O O P
- */
 void
 nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -142,9 +127,6 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t s
 }
 
 
-/**
- * N M G _ V I S I T _ L O O P U S E
- */
 void
 nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -171,9 +153,6 @@ nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, gen
 }
 
 
-/**
- * N M G _ V I S I T _ F A C E
- */
 void
 nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -188,9 +167,6 @@ nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t s
 }
 
 
-/**
- * N M G _ V I S I T _ F A C E U S E
- */
 void
 nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -213,9 +189,6 @@ nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, gen
 }
 
 
-/**
- * N M G _ V I S I T _ S H E L L
- */
 void
 nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -247,9 +220,6 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t
 }
 
 
-/**
- * N M G _ V I S I T _ R E G I O N
- */
 void
 nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -270,9 +240,6 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, gen
 
     if (htab->aft_region) htab->aft_region((uint32_t *)r, state, 1);
 }
-/**
- * N M G _ V I S I T _ M O D E L
- */
 void
 nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genptr_t state)
 
@@ -293,9 +260,6 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genp
 }
 
 
-/**
- * N M G _ V I S I T
- */
 void
 nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, genptr_t state)
     /* Handler's private state */

@@ -58,8 +58,6 @@
 
 
 /**
- * D B _ C O M B _ M A T _ C A T E G O R I Z E
- *
  * Describe with a bit vector the effects this matrix will have.
  */
 static int
@@ -840,8 +838,6 @@ db_comb_describe(
 
 
 /**
- * R T _ C O M B _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this combination.
  */
 void

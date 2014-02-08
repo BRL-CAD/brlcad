@@ -211,8 +211,6 @@ _ged_do_tra(struct ged *gedp,
 
 
 /**
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
  *

@@ -101,8 +101,6 @@ void show_color(int off);
 char *first_command = "no_command?";
 
 /*
- * A S S I G N _ T A B D A T A _ T O _ T C L _ V A R
- *
  * Assign the given "C" bn_tabdata structure to the named Tcl variable,
  * and add the name of that variable to the Tcl result string.
  */
@@ -271,8 +269,6 @@ getspectval(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- * G E T S P E C T X Y
- *
  * Given the x, y coordinates of a pixel in the multi-spectral image,
  * return the spectral data found there in Tcl string form.
  */
@@ -563,9 +559,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -692,8 +685,6 @@ doit1(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/*
- */
 void
 find_minmax(void)
 {
@@ -726,8 +717,6 @@ find_minmax(void)
 
 
 /*
- * R E S C A L E
- *
  * Create monochrome image from the spectral data, at wavelength 'wav',
  * given current min & max values.
  */
@@ -769,8 +758,6 @@ rescale(int wav)
 
 
 /*
- * S H O W _ C O L O R
- *
  * Create color image from spectral curve,
  * given current min & max values, and frequency offset (in nm).
  * Go via CIE XYZ space.

@@ -189,8 +189,6 @@ wgl_setBGColor(struct dm *dmp,
 
 
 /*
- *			W G L _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -473,8 +471,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 }
 
 
-/*
- */
 int
 wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
@@ -634,8 +630,6 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 
 /*
- *  			W G L _ C L O S E
- *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -668,8 +662,6 @@ wgl_close(struct dm *dmp)
 
 
 /*
- *			W G L _ D R A W B E G I N
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
@@ -741,9 +733,6 @@ wgl_drawBegin(struct dm *dmp)
 }
 
 
-/*
- *			W G L _ D R A W E N D
- */
 HIDDEN int
 wgl_drawEnd(struct dm *dmp)
 {
@@ -790,8 +779,6 @@ wgl_drawEnd(struct dm *dmp)
 
 
 /*
- *  			W G L _ L O A D M A T R I X
- *
  *  Load a new transformation matrix.  This will be followed by
  *  many calls to wgl_drawVList().
  */
@@ -867,8 +854,6 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 
 
 /*
- * W G L _ L O A D P M A T R I X
- *
  * Load a new projection matrix.
  *
  */
@@ -924,10 +909,6 @@ wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 }
 
 
-/*
- *  			W G L _ D R A W V L I S T H I D D E N L I N E
- *
- */
 HIDDEN int
 wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
@@ -1103,10 +1084,6 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 
-/*
- *  			W G L _ D R A W V L I S T
- *
- */
 HIDDEN int
 wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
@@ -1260,10 +1237,6 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/*
- *  			W G L _ D R A W
- *
- */
 HIDDEN int
 wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -1285,8 +1258,6 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t
 
 
 /*
- *			W G L _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -1316,8 +1287,6 @@ wgl_normal(struct dm *dmp)
 
 
 /*
- *			W G L _ D R A W S T R I N G 2 D
- *
  * Output a string.
  * The starting position of the beam is as specified.
  */
@@ -1339,10 +1308,6 @@ wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size
 }
 
 
-/*
- *			W G L _ D R A W L I N E 2 D
- *
- */
 HIDDEN int
 wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
@@ -1376,10 +1341,6 @@ wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 }
 
 
-/*
- *			W G L _ D R A W L I N E 3 D
- *
- */
 HIDDEN int
 wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
@@ -1387,10 +1348,6 @@ wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 }
 
 
-/*
- *			W G L _ D R A W L I N E S 3 D
- *
- */
 HIDDEN int
 wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
@@ -1569,8 +1526,6 @@ wgl_choose_visual(struct dm *dmp,
 
 
 /*
- *			W G L _ C O N F I G U R E W I N
- *
  *  Either initially, or on resize/reshape of the window,
  *  sense the actual size of the window, and perform any
  *  other initializations of the window configuration.

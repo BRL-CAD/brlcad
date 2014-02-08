@@ -113,8 +113,6 @@ static struct funtab joint_tab[] = {
 
 
 /**
- * J O I N T _ C M D
- *
  * Check a table for the command, check for the correct minimum and
  * maximum number of arguments, and pass control to the proper
  * function.  If the number of arguments is incorrect, print out a
@@ -213,8 +211,6 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
 }
 
 /**
- * H E L P C O M M
- *
  * Common code for help commands
  */
 HIDDEN int
@@ -247,8 +243,6 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 }
 
 /**
- * F _ H E L P
- *
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */

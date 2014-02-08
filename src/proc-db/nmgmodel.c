@@ -515,8 +515,6 @@ make_0manifold_bits()
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

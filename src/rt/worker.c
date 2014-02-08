@@ -449,8 +449,6 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 
 /**
- * W O R K E R
- *
  * Compute some pixels, and store them.
  *
  * This uses a "self-dispatching" parallel algorithm.  Executes until
@@ -550,8 +548,6 @@ pat_found:
 
 
 /**
- * G R I D _ S E T U P
- *
  * In theory, the grid can be specified by providing any two of
  * these sets of parameters:
  *
@@ -696,8 +692,6 @@ grid_setup(void)
 
 
 /**
- * D O _ R U N
- *
  * Compute a run of pixels, in parallel if the hardware permits it.
  *
  * For a general-purpose version, see LIBRT rt_shoot_many_rays().

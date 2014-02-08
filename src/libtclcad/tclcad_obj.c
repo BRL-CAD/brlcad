@@ -1381,8 +1381,6 @@ Go_Init(Tcl_Interp *interp)
 }
 
 /**
- * G O _ C M D
- *
  * @brief
  * Generic interface for database commands.
  *
@@ -1515,8 +1513,6 @@ to_create_cmd(Tcl_Interp *interp,
 
 
 /**
- * G E D _ O P E N _ T C L
- *
  * @brief
  * A TCL interface to wdb_fopen() and wdb_dbopen().
  *
@@ -11435,8 +11431,6 @@ to_rt_end_callback(struct ged *gedp,
 }
 
 /**
- * G O _ R T _ G E T T R E E S
- *
  * @brief
  * Given an instance of a database and the name of some treetops,
  * create a named "ray-tracing" object (proc) which will respond to

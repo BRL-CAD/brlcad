@@ -220,8 +220,6 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
 
 
 /*
- * R T G L _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -571,8 +569,6 @@ Done:
 }
 
 
-/*
- */
 int
 rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
@@ -740,8 +736,6 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 
 /*
- * O G L _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -818,8 +812,6 @@ rtgl_stashTree(struct rtglJobs *job, char *tree)
 
 
 /*
- * O G L _ D R A W B E G I N
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
@@ -878,9 +870,6 @@ rtgl_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * O G L _ D R A W E N D
- */
 HIDDEN int
 rtgl_drawEnd(struct dm *dmp)
 {
@@ -930,8 +919,6 @@ rtgl_drawEnd(struct dm *dmp)
 double startScale = 1;
 
 /*
- * R T G L _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by
  * many calls to rtgl_draw().
  */
@@ -1569,10 +1556,6 @@ fastf_t radius;
 double maxSpan;
 time_t start = 0;
 
-/*
- * R T G L _ D R A W V L I S T
- *
- */
 HIDDEN int
 rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 {
@@ -1921,10 +1904,6 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 }
 
 
-/*
- * R T G L _ D R A W
- *
- */
 HIDDEN int
 rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -1946,8 +1925,6 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 
 
 /*
- * O G L _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -1977,8 +1954,6 @@ rtgl_normal(struct dm *dmp)
 
 
 /*
- * O G L _ D R A W S T R I N G 2 D
- *
  * Output a string.
  * The starting position of the beam is as specified.
  */
@@ -2003,10 +1978,6 @@ rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 }
 
 
-/*
- * O G L _ D R A W L I N E 2 D
- *
- */
 HIDDEN int
 rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
@@ -2015,10 +1986,6 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 }
 
 
-/*
- * O G L _ D R A W L I N E 3 D
- *
- */
 HIDDEN int
 rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
@@ -2028,10 +1995,6 @@ rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 }
 
 
-/*
- * O G L _ D R A W L I N E S 3 D
- *
- */
 HIDDEN int
 rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
@@ -2384,8 +2347,6 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
 
 /**
- * O G L _ C O N F I G U R E W I N
- *
  * Either initially, or on resize/reshape of the window, sense the
  * actual size of the window, and perform any other initializations of
  * the window configuration.

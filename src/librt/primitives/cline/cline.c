@@ -63,8 +63,6 @@ const struct bu_structparse rt_cline_parse[] = {
 };
 
 /**
- * R T _ C L I N E _ B B O X
- *
  * Calculate bounding RPP for cline
  */
 int
@@ -100,8 +98,6 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
 }
 
 /**
- * R T _ C L I N E _ P R E P
- *
  * Given a pointer to a GED database record, determine if this is a
  * valid cline solid, and if so, precompute various terms of the
  * formula.
@@ -150,9 +146,6 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ C L I N E _ P R I N T
- */
 void
 rt_cline_print(register const struct soltab *stp)
 {
@@ -171,8 +164,6 @@ rt_cline_print(register const struct soltab *stp)
 
 
 /**
- * R T _ C L I N E _ S H O T
- *
  * Intersect a ray with a cline mode solid.  If an intersection
  * occurs, at least one struct seg will be acquired and filled in.
  *
@@ -354,8 +345,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 
 
 /**
- * R T _ C L I N E _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -392,8 +381,6 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ C L I N E _ C U R V E
- *
  * Return the curvature of the cline.
  */
 void
@@ -430,9 +417,6 @@ rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
 }
 
 
-/**
- * R T _ C L I N E _ F R E E
- */
 void
 rt_cline_free(register struct soltab *stp)
 {
@@ -445,9 +429,6 @@ rt_cline_free(register struct soltab *stp)
 }
 
 
-/**
- * R T _ C L I N E _ C L A S S
- */
 int
 rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
@@ -460,9 +441,6 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
 }
 
 
-/**
- * R T _ C L I N E _ P L O T
- */
 int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -550,8 +528,6 @@ struct cline_vert {
 
 
 /**
- * R T _ C L I N E _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -820,8 +796,6 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
 
 /**
- * R T _ C L I N E _ I M P O R T
- *
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -870,8 +844,6 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 
 
 /**
- * R T _ C L I N E _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -913,8 +885,6 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 
 
 /**
- * R T _ C L I N E _ I M P O R T 5
- *
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -954,8 +924,6 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
 
 
 /**
- * R T _ C L I N E _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -990,8 +958,6 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
 
 /**
- * R T _ C L I N E _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1028,8 +994,6 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 
 
 /**
- * R T _ C L I N E _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1132,10 +1096,6 @@ rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-/**
- * R T _ C L I N E _ P A R A M S
- *
- */
 int
 rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1144,10 +1104,6 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-/**
- * R T _ C L I N E _ T O _ P I P E
- *
- */
 int
 rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
 {

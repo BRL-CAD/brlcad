@@ -50,8 +50,6 @@ int journal_delay = 0;
 void history_journalize(struct mged_hist *hptr);
 
 /*
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the
  * history vls'es.
  */
@@ -129,8 +127,6 @@ history_journalize(struct mged_hist *hptr)
 
 
 /*
- * F _ J O U R N A L
- *
  * Opens the journal file, so each command and the time since the previous
  * one will be recorded.  Or, if called with no arguments, closes the
  * journal file.
@@ -186,8 +182,6 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ H I S T O R Y
- *
  * Prints out the command history, either to bu_log or to a file.
  */
 

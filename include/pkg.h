@@ -125,9 +125,6 @@ PKG_EXPORT extern struct pkg_conn *pkg_open(const char *host, const char *servic
  */
 PKG_EXPORT extern void pkg_close(struct pkg_conn* pc);
 
-/**
- *
- */
 PKG_EXPORT extern int pkg_process(struct pkg_conn *);
 
 /**

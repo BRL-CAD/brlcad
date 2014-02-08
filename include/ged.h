@@ -86,8 +86,6 @@ __BEGIN_DECLS
 #define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
 
 /**
- * S E M A P H O R E S
- *
  * Definition of global parallel-processing semaphores.
  *
  */
@@ -1216,9 +1214,6 @@ GED_EXPORT extern int ged_get_type(struct ged *gedp, int argc, const char *argv[
  */
 GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
 
-/**
- *
- */
 GED_EXPORT extern int ged_gqa(struct ged *gedp, int argc, const char *argv[]);
 
 /**
@@ -1865,9 +1860,6 @@ GED_EXPORT extern int ged_size(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_simulate(struct ged *gedp, int argc, const char *argv[]);
 
-/**
- *
- */
 GED_EXPORT extern int ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[]);
 
 /**

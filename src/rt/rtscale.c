@@ -88,8 +88,6 @@ int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
 /*
  *
- *                     M A I N
- *
  *  Main exists to coordinate the actions of the three parts of this program.
  *  It also processes its own arguments (argc and argv).
  */
@@ -190,8 +188,6 @@ main(int argc, char **argv)
 
 
 /*
- *		L A Y O U T _ N _ P L O T
- *
  *  This routine lays out the scale in view coordinates.  These are then
  *  converted to model space.
  *  It receives pointers to stdout, a label, and a view2model matrix, as
@@ -496,8 +492,6 @@ make_border(FILE *outfp, fastf_t *v2mod)
 }
 
 /*
- *		M A K E _ B O U N D I N G _ R P P
- *
  * This routine takes a view2model matrix and a file pointer.  It calculates the minimum and
  * the maximum points of the viewing cube in view space, and then translates
  * it to model space and rotates it so that it will not shrink when rotated and

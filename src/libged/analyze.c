@@ -610,8 +610,6 @@ void print_faces_table(struct ged *gedp, table_t *table)
 
 
 /**
- * A N A L Y Z E _ G E N E R A L
- *
  * general analyze function for primitives that can be analyzed using volume
  * and surface area functions from the rt_functab.
  * Currently used for:
@@ -660,8 +658,6 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 
 
 /**
- * F I N D A N G
- *
  * finds direction cosines and rotation, fallback angles of a unit vector
  * angles = pointer to 5 fastf_t's to store angles
  * unitv = pointer to the unit vector (previously computed)
@@ -713,8 +709,6 @@ findang(fastf_t *angles, fastf_t *unitv)
 
 
 /**
- * A N A L Y Z E _ P O L Y _ F A C E
- *
  * general analyze function for polygonal faces.
  * Currently used for:
  * - arb8
@@ -752,9 +746,6 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
 }
 
 
-/**
- * A N A L Y Z E _ E D G E
- */
 HIDDEN void
 analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb,
 	     const int type, row_t *row)
@@ -774,9 +765,6 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 }
 
 
-/**
- * A N A L Y Z E _ A R B 8
- */
 HIDDEN void
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -905,9 +893,6 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-/**
- * A N A L Y Z E _ A R B N
- */
 HIDDEN void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -980,9 +965,6 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 
 #define ARS_PT(ii, jj) (&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
 
-/**
- * A N A L Y Z E _ A R S
- */
 HIDDEN void
 analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1079,9 +1061,6 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 #define PROLATE 1
 #define OBLATE 2
 
-/**
- * A N A L Y Z E _ S U P E R E L L
- */
 HIDDEN void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1175,9 +1154,6 @@ print_results:
 }
 
 
-/**
- * A N A L Y Z E _ S K E T C H
- */
 HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {

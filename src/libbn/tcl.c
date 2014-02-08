@@ -231,7 +231,6 @@ static struct math_func_link {
 
 
 /**
- * B N _ M A T H _ C M D
  *@brief
  * Tcl wrappers for the math functions.
  *

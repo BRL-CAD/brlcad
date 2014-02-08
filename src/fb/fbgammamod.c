@@ -54,9 +54,6 @@ double ga, gm, gg;
 double ba, bm, bg;
 double add, mul, pre_gam, post_gam;	/* globals */
 
-/*
- * D O _ F I L E
- */
 void
 do_file(void)
 {
@@ -101,9 +98,6 @@ do_file(void)
 }
 
 
-/*
- * D O _ F B
- */
 void
 do_fb(void)
 {
@@ -118,9 +112,6 @@ do_fb(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

@@ -913,8 +913,6 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
  */
 
 /*
- * M K _ T R E E _ P U R E
- *
  * Given a list of wmember structures, build a tree that performs
  * the boolean operations in the given sequence.
  * No GIFT semantics or precedence is provided.
@@ -966,8 +964,6 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /*
- * M K _ T R E E _ G I F T
- *
  * Add some nodes to a new or existing combination's tree,
  * with GIFT precedence and semantics.
  *
@@ -1057,8 +1053,6 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /*
- * M K _ A D D M E M B E R
- *
  * Obtain dynamic storage for a new wmember structure, fill in the
  * name, default the operation and matrix, and add to doubly linked
  * list.  In typical use, a one-line call is sufficient.  To change
@@ -1104,9 +1098,6 @@ track_mk_addmember(
 }
 
 
-/*
- * M K _ F R E E M E M B E R S
- */
 static void
 track_mk_freemembers(struct bu_list *headp)
 {
@@ -1122,8 +1113,6 @@ track_mk_freemembers(struct bu_list *headp)
 
 
 /*
- * M K _ C O M B
- *
  * Make a combination, where the
  * members are described by a linked list of wmember structs.
  *

@@ -57,8 +57,6 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 }
 
 /**
- * R T _ P N T S _ B B O X
- *
  * Calculate a bounding box for a set of points
  */
 int
@@ -104,8 +102,6 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 }
 
 /**
- * R T _ P N T S _ E X P O R T 5
- *
  * Export a pnts collection from the internal structure to the
  * database format
  */
@@ -350,8 +346,6 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 
 /**
- * R T _ P N T S _ I M P O R T 5
- *
  * Import a pnts collection from the database format to the internal
  * structure and apply modeling transformations.
  */
@@ -659,8 +653,6 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 
 /**
- * R T _ P N T S _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of the
  * collection.  This uses type aliasing to iterate over the list of
  * points as a bu_list instead of calling up a switching table for
@@ -700,10 +692,6 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 }
 
 
-/**
- * R T _ P N T S _ P R I N T
- *
- */
 void
 rt_pnts_print(register const struct soltab *stp)
 {
@@ -760,8 +748,6 @@ rt_pnts_print(register const struct soltab *stp)
 
 
 /**
- * R T _ P N T S _ P L O T
- *
  * Plot pnts collection as axes or spheres.
  */
 int
@@ -837,8 +823,6 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 
 
 /**
- * R T _ P N T S _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this primitive.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.

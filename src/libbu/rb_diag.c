@@ -33,8 +33,6 @@ static int d_order;	/* Used by describe_node() */
 
 
 /**
- * _ R B _ D E S C R I B E _ N O D E
- *
  * Print out the contents of a red-black node
  *
  * This function has two parameters: the node to describe and its

@@ -2274,8 +2274,6 @@ static char idmap[] = {
 
 
 /**
- * R T _ I D _ S O L I D
- *
  * Given a database record, determine the proper rt_functab subscript.
  * Used by MGED as well as internally to librt.
  *
@@ -2363,8 +2361,6 @@ rt_id_solid(struct bu_external *ep)
 
 
 /**
- * R T _ G E T _ F U N C T A B _ B Y _ L A B E L
- *
  * Given the Tcl 'label' for a given solid type, find the appropriate
  * entry in OBJ[].
  */

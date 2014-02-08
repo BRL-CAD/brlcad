@@ -492,7 +492,6 @@ bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 }
 
 /*
- *			B N _ T A B L E _ F I N D _ X
  *@brief
  *  Return the index in the table's x[] array of the interval which
  *  contains 'xval'.

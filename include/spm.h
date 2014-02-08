@@ -58,7 +58,6 @@ typedef struct {
 __BEGIN_DECLS
 
 /**
- * S P M _ I N I T
  *@brief
  * Return a sphere map structure initialized for N points around the
  * equator.
@@ -72,14 +71,12 @@ __BEGIN_DECLS
 BN_EXPORT extern bn_spm_map_t *bn_spm_init(int N, int elsize);
 
 /**
- * S P M _ F R E E
  *@brief
  * Free the storage associated with a sphere structure.
  */
 BN_EXPORT extern void bn_spm_free(bn_spm_map_t *mp);
 
 /**
- * S P M _ R E A D
  *@brief
  * Read the value of the pixel at the given normalized (u, v)
  * coordinates.  It does NOT check the sanity of the coords.
@@ -90,7 +87,6 @@ BN_EXPORT extern void bn_spm_free(bn_spm_map_t *mp);
 BN_EXPORT extern void bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v);
 
 /**
- * S P M _ W R I T E
  *@brief
  * Write the value of the pixel at the given normalized (u, v)
  * coordinates.  It does NOT check the sanity of the coords.
@@ -101,7 +97,6 @@ BN_EXPORT extern void bn_spm_read(register bn_spm_map_t *mapp, register unsigned
 BN_EXPORT extern void bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v);
 
 /**
- * S P M _ G E T
  *@brief
  * Return a pointer to the storage element indexed by (u, v)
  * coordinates.  It does NOT check the sanity of the coords.
@@ -112,7 +107,6 @@ BN_EXPORT extern void bn_spm_write(register bn_spm_map_t *mapp, register unsigne
 BN_EXPORT extern char *bn_spm_get(register bn_spm_map_t *mapp, double u, double v);
 
 /**
- * S P M _ L O A D
  *@brief
  * Read a saved sphere map from a file ("-" for stdin) into the given
  * map structure.  This does not check for conformity of size, etc.
@@ -122,7 +116,6 @@ BN_EXPORT extern char *bn_spm_get(register bn_spm_map_t *mapp, double u, double 
 BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, char *filename);
 
 /**
- * S P M _ S A V E
  *@brief
  * Write a loaded sphere map to the given file ("-" for stdout).
  * Returns -1 on error, else 0.
@@ -130,7 +123,6 @@ BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, char *filename);
 BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, char *filename);
 
 /**
- * S P M _ P I X _ L O A D
  *@brief
  * Load an 'nx' by 'ny' pix file and filter it into the
  * given sphere structure.
@@ -140,7 +132,6 @@ BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, char *filename);
 BN_EXPORT extern int bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny);
 
 /**
- * S P M _ P I X _ S A V E
  *@brief
  * Save a sphere structure as an 'nx' by 'ny' pix file.
  * @return -1 on error, else 0.
@@ -148,7 +139,6 @@ BN_EXPORT extern int bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx,
 BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx, int ny);
 
 /**
- * S P M _ D U M P
  *@brief
  * Display a sphere structure on stderr.  Used for debugging.
  */

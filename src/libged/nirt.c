@@ -63,8 +63,6 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp,
 
 
 /**
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int

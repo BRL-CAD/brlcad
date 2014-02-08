@@ -544,9 +544,6 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * G R A S S _ P R I N T
- */
 HIDDEN void
 grass_print(register struct region *rp, genptr_t dp)
 {
@@ -554,9 +551,6 @@ grass_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * G R A S S _ F R E E
- */
 HIDDEN void
 grass_free(genptr_t cp)
 {
@@ -1103,8 +1097,6 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 
 
 /*
- * G R A S S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

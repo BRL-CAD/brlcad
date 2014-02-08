@@ -63,9 +63,6 @@ Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]\n\
 ";
 
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
@@ -139,9 +136,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

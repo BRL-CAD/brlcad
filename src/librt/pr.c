@@ -38,9 +38,6 @@
 #include "raytrace.h"
 
 
-/**
- *
- */
 void
 rt_pr_soltab(register const struct soltab *stp)
 {
@@ -64,9 +61,6 @@ rt_pr_soltab(register const struct soltab *stp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_region(register const struct region *rp)
 {
@@ -101,9 +95,6 @@ rt_pr_region(register const struct region *rp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead, const char *title)
 {
@@ -131,9 +122,6 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
 }
 
 
-/**
- *
- */
 void
 rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
 {
@@ -194,9 +182,6 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 }
 
 
-/**
- *
- */
 void
 rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 {
@@ -210,9 +195,6 @@ rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 {
@@ -231,9 +213,6 @@ rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_seg(register const struct seg *segp)
 {
@@ -247,9 +226,6 @@ rt_pr_seg(register const struct seg *segp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_hit(const char *str, register const struct hit *hitp)
 {
@@ -263,9 +239,6 @@ rt_pr_hit(const char *str, register const struct hit *hitp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp)
 {
@@ -280,9 +253,6 @@ rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp
 }
 
 
-/**
- *
- */
 void
 rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit *hitp, int count)
 {
@@ -656,9 +626,6 @@ out:
 }
 
 
-/**
- *
- */
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
 {
@@ -755,9 +722,6 @@ rt_pr_tol(const struct bn_tol *tol)
 }
 
 
-/**
- *
- */
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {

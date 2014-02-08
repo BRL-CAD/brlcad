@@ -116,8 +116,6 @@ rt_nurb_grans(struct face_g_snurb *srf)
 }
 
 /**
- * R T _ N U R B _ B B O X
- *
  * Calculate the bounding RPP of a bspline
  */
 int
@@ -193,8 +191,6 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
 
 /**
- * R T _ N U R B _ P R E P
- *
  * Given a pointer of a GED database record, and a transformation
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
@@ -295,9 +291,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N U R B _ P R I N T
- */
 void
 rt_nurb_print(register const struct soltab *stp)
 {
@@ -321,8 +314,6 @@ rt_nurb_print(register const struct soltab *stp)
 
 
 /**
- * R T _ N U R B _ S H O T
- *
  * Intersect a ray with a nurb.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -479,8 +470,6 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ N U R B _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -511,8 +500,6 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ N U R B _ C U R V E
- *
  * Return the curvature of the nurb.
  */
 void
@@ -543,8 +530,6 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ N U R B _ U V
- *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -565,9 +550,6 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ N U R B _ F R E E
- */
 void
 rt_nurb_free(register struct soltab *stp)
 {
@@ -601,9 +583,6 @@ rt_nurb_free(register struct soltab *stp)
 }
 
 
-/**
- * R T _ N U R B _ C L A S S
- */
 int
 rt_nurb_class(void)
 {
@@ -611,9 +590,6 @@ rt_nurb_class(void)
 }
 
 
-/**
- * R T _ N U R B _ P L O T
- */
 int
 rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
@@ -743,9 +719,6 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 
-/**
- * R T _ N U R B _ T E S S
- */
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
@@ -753,9 +726,6 @@ rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T
- */
 int
 rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -915,9 +885,6 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T
- */
 int
 rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1023,9 +990,6 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T 5
- */
 int
 rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1122,9 +1086,6 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T 5
- */
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1250,9 +1211,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ I F R E E
- */
 void
 rt_nurb_ifree(struct rt_db_internal *ip)
 {
@@ -1278,9 +1236,6 @@ rt_nurb_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ N U R B _ D E S C R I B E
- */
 int
 rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
@@ -1513,10 +1468,6 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 
-/**
- * R T _ N U R B _ P A R A M S
- *
- */
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {

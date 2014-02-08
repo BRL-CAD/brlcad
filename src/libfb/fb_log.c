@@ -35,8 +35,6 @@
 
 
 /*
- * F B _ L O G
- *
  * Log a framebuffer library event in the Standard way.
  */
 #if !defined(_WIN32) || defined(__CYGWIN__)

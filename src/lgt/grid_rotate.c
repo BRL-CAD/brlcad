@@ -37,8 +37,6 @@
 
 
 /**
- * g r i d _ R o t a t e
- *
  * Creates the unit vectors H and V which are the horizontal and
  * vertical components of the grid in target coordinates.  The vectors
  * are found from the azimuth and elevation of the viewing angle

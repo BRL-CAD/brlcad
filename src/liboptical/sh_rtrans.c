@@ -109,9 +109,6 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * R T R A N S _ P R I N T
- */
 HIDDEN void
 rtrans_print(register struct region *rp, genptr_t dp)
 {
@@ -119,9 +116,6 @@ rtrans_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * R T R A N S _ F R E E
- */
 HIDDEN void
 rtrans_free(genptr_t cp)
 {
@@ -130,8 +124,6 @@ rtrans_free(genptr_t cp)
 
 
 /*
- * R T R A N S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */

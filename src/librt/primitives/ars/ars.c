@@ -95,8 +95,6 @@ rt_ars_class(const struct soltab *stp,
 
 
 /**
- * A R S _ R D _ C U R V E
- *
  * reads a set of ARS B records and returns a pointer to memory
  * allocated for holding the curve's fastf_t values.
  */
@@ -138,8 +136,6 @@ ars_rd_curve(union record *rp, int npts, int flip)
 
 
 /**
- * R T _ A R S _ I M P O R T
- *
  * Read all the curves in as a two dimensional array.  The caller is
  * responsible for freeing the dynamic memory.
  *
@@ -225,8 +221,6 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ A R S _ E X P O R T
- *
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
@@ -301,8 +295,6 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ A R S _ I M P O R T 5
- *
  * Read all the curves in as a two dimensional array.  The caller is
  * responsible for freeing the dynamic memory.
  *
@@ -361,8 +353,6 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ A R S _ E X P O R T 5
- *
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
@@ -410,8 +400,6 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ A R S _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -461,8 +449,6 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ A R S _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -490,9 +476,6 @@ rt_ars_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ A R S _ T E S S
- */
 int
 rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
@@ -667,8 +650,6 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ A R S _ B B O X
- *
  * TODO:  produces bboxes that are waaay too big.
  */
 int
@@ -703,8 +684,6 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ A R S _ P R E P
- *
  * This routine is used to prepare a list of planar faces for being
  * shot at by the ars routines.
  *
@@ -768,9 +747,6 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ A R S _ P R I N T
- */
 void
 rt_ars_print(register const struct soltab *stp)
 {
@@ -794,8 +770,6 @@ rt_ars_print(register const struct soltab *stp)
 
 
 /**
- * R T _ A R S _ S H O T
- *
  * Shoot a ray at an ARS.
  *
  * Returns -
@@ -990,8 +964,6 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ H I T S O R T
- *
  * Sort an array of hits into ascending order.
  */
 void
@@ -1013,8 +985,6 @@ rt_hitsort(register struct hit *h, register int nh)
 
 
 /**
- * R T _ A R S _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1030,8 +1000,6 @@ rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ A R S _ C U R V E
- *
  * Return the "curvature" of the ARB face.  Pick a principle direction
  * orthogonal to normal, and indicate no curvature.
  */
@@ -1048,8 +1016,6 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ A R S _ U V
- *
  * For a hit on a face of an ARB, return the (u, v) coordinates of the
  * hit point.  0 <= u, v <= 1.
  *
@@ -1087,9 +1053,6 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ A R S _ P L O T
- */
 int
 rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1334,10 +1297,6 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-/**
- * R T _ A R S _ P A R A M S
- *
- */
 int
 rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

@@ -50,8 +50,6 @@ usage(void)
 }
 
 /*
- *	M a i n
- *
  *	Get ascii input file and output file names.
  */
 int
@@ -109,8 +107,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	C r e a t e _ B r l c a d _ D b
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 void
@@ -134,8 +130,6 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 }
 
 /*
- *	A s c i i _ t o _ B r l c a d
- *
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
@@ -183,8 +177,6 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 }
 
 /*
- *	D e s c r _ t o _ N M G
- *
  *	Convert an ascii description of an nmg to an actual nmg.
  *	(This should be done with lex and yacc.)
  */

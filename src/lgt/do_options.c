@@ -1996,8 +1996,6 @@ f_Tracking_Cursor(char **args)
 
 
 /**
- * f _ P a r a l l e l
- *
  * returns the number of processors or negative on user input error
  */
 static int

@@ -364,8 +364,6 @@ X_choose_visual(struct dm *dmp)
 
 
 /*
- * X _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -409,8 +407,6 @@ X_close(struct dm *dmp)
 
 
 /*
- * X _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -750,9 +746,6 @@ Skip_dials:
 }
 
 
-/*
- * X _ D R A W B E G I N
- */
 HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
@@ -784,9 +777,6 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * X _ E P I L O G
- */
 HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
@@ -811,8 +801,6 @@ X_drawEnd(struct dm *dmp)
 
 
 /*
- * X _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to X_draw().
  */
@@ -839,10 +827,6 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-/**
- * X _ D R A W V L I S T
- *
- */
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
@@ -1139,10 +1123,6 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * X _ D R A W
- *
- */
 HIDDEN int
 X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -1164,8 +1144,6 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *
 
 
 /**
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
@@ -1180,8 +1158,6 @@ X_normal(struct dm *dmp)
 
 
 /**
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */

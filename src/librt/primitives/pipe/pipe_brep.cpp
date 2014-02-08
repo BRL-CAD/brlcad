@@ -31,9 +31,6 @@
 #include "wdb.h"
 
 
-/**
- * R T _ P I P E _ B R E P
- */
 void
 generate_curves(fastf_t id, fastf_t od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner)
 {

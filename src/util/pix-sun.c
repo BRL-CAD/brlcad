@@ -309,8 +309,6 @@ usage(void)
 
 
 /*
- * M A I N
- *
  * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */

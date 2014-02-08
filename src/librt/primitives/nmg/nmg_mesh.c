@@ -41,8 +41,6 @@
 
 
 /**
- * N M G _ I S _ A N G L E _ I N _ W E D G E
- *
  * Determine if T lies within angle AB, such that A < T < B.
  * The angle B is expected to be "more ccw" than A.
  * Because of the wrap from 2pi to 0, B may have a smaller numeric value.
@@ -80,8 +78,6 @@ nmg_is_angle_in_wedge(double a, double b, double t)
 
 
 /**
- * N M G _ P I C K _ B E S T _ E D G E _ G
- *
  * Given two edgeuses with different edge geometry but
  * running between the same two vertices,
  * select the proper edge geometry to associate with.
@@ -178,8 +174,6 @@ nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_t
 
 
 /**
- * N M G _ R A D I A L _ J O I N _ E U
- *
  * Make all the edgeuses around eu2's edge to refer to eu1's edge,
  * taking care to organize them into the proper angular orientation,
  * so that the attached faces are correctly arranged radially
@@ -476,8 +470,6 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 
 
 /**
- * N M G _ M E S H _ T W O _ F A C E S
- *
  * Actually do the work of meshing two faces.
  * The two fu arguments may be the same, which causes the face to be
  * meshed against itself.
@@ -551,8 +543,6 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 
 
 /**
- * N M G _ M E S H _ F A C E S
- *
  * Scan through all the edges of fu1 and fu2, ensuring that all
  * edges involving the same vertex pair are indeed shared.
  * This means worrying about merging ("meshing") all the faces in the
@@ -591,8 +581,6 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
 
 
 /**
- * N M G _ M E S H _ F A C E _ S H E L L
- *
  * The return is the number of edges meshed.
  */
 int
@@ -617,8 +605,6 @@ nmg_mesh_face_shell(struct faceuse *fu1, struct shell *s, const struct bn_tol *t
 
 
 /**
- * N M G _ M E S H _ S H E L L _ S H E L L
- *
  * Mesh every edge in shell 1 with every edge in shell 2.
  * The return is the number of edges meshed.
  *

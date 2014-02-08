@@ -150,9 +150,6 @@ BU_FORTRAN(frtree, FRTREE)(int *fail,
 }
 
 
-/**
- *
- */
 void
 BU_FORTRAN(frprep, FRPREP)(struct rt_i **rtip)
 {

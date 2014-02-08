@@ -86,8 +86,6 @@ extern struct icv_image *bif;
 
 
 /**
- * O L D _ F R A M E
- *
  * Acquire particulars about a frame, in the old format.  Returns -1
  * if unable to acquire info, 0 if successful.
  */
@@ -116,8 +114,6 @@ old_frame(FILE *fp)
 
 
 /**
- * O L D _ W A Y
- *
  * Determine if input file is old or new format, and if old format,
  * handle process.  Returns 0 if new way, 1 if old way (and all done).
  * Note that the rewind() will fail on ttys, pipes, and sockets
@@ -167,8 +163,6 @@ old_way(FILE *fp)
 
 
 /**
- * C M _ S T A R T
- *
  * Process "start" command in new format input stream
  */
 int cm_start(const int argc, const char **argv)
@@ -361,8 +355,6 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 /**
- * C M _ A N I M
- *
  * Experimental animation code
  *
  * Usage: anim path type args
@@ -379,8 +371,6 @@ int cm_anim(const int argc, const char **argv)
 
 
 /**
- * C M _ C L E A N
- *
  * Clean out results of last rt_prep(), and start anew.
  */
 int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
@@ -397,8 +387,6 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 /**
- * C M _ C L O S E D B
- *
  * To be invoked after a "clean" command, to close out the ".g"
  * database.  Intended for memory debugging, to help chase down memory
  * "leaks".  This terminates the program, as there is no longer a
@@ -448,8 +436,6 @@ struct bu_structparse set_parse[] = {
 
 
 /**
- * C M _ S E T
- *
  * Allow variable values to be set or examined.
  */
 int cm_set(const int argc, const char **argv)
@@ -472,9 +458,6 @@ int cm_set(const int argc, const char **argv)
 }
 
 
-/**
- * C M _ A E
- */
 int cm_ae(const int argc, const char **argv)
 {
     if (argc < 3)
@@ -488,9 +471,6 @@ int cm_ae(const int argc, const char **argv)
 }
 
 
-/**
- * C M _ O P T
- */
 int cm_opt(const int argc, const char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
@@ -505,8 +485,6 @@ int cm_opt(const int argc, const char **argv)
 
 
 /**
- * D E F _ T R E E
- *
  * Load default tree list, from command line.
  */
 void
@@ -530,8 +508,6 @@ def_tree(register struct rt_i *rtip)
 
 
 /**
- * D O _ P R E P
- *
  * This is a separate function primarily as a service to REMRT.
  */
 void
@@ -567,8 +543,6 @@ do_prep(struct rt_i *rtip)
 
 
 /**
- * D O _ F R A M E
- *
  * Do all the actual work to run a frame.
  *
  * Returns -1 on error, 0 if OK.
@@ -947,8 +921,6 @@ do_frame(int framenumber)
 
 
 /**
- * D O _ A E
- *
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
  * GIFT "front view", i.e., model (X, Y, Z) is view (Z, X, Y): looking
@@ -1034,9 +1006,6 @@ do_ae(double azim, double elev)
 }
 
 
-/**
- * R E S _ P R
- */
 void
 res_pr(void)
 {

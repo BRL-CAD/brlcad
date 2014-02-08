@@ -269,8 +269,6 @@ if_miss(void)
 
 
 /**
- * I F _ O V E R L A P
- *
  * Default handler for overlaps in rt_boolfinal().
  * Returns -
  *  0 to eliminate partition with overlap entirely

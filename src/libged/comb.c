@@ -678,8 +678,6 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
 
 /*
- * G E D _ C O M B A D D
- *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
@@ -709,8 +707,6 @@ _ged_combadd(struct ged *gedp,
 
 
 /*
- * G E D _ C O M B A D D
- *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).

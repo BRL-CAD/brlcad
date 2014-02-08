@@ -824,8 +824,6 @@ void fillItemTree( jobject parent_node,
 		   jmethodID itemTree_setUseCount_id );
 
 /*
- *			F I L L I T E M M E M B E R S
- *
  * Routine to descend into a BRL-CAD tree structure and call fillItemTree() at each leaf
  */
 void
@@ -1798,8 +1796,6 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
 
 /*
- *				G E T I T E M T R E E
- *
  * This is the implementation of the MUVES3 Platform.getItemTree() method for BRL-CAD geometry.
  * Basically a tree walker that gathers information about the BRL-CAD objects that are prepped
  * and ready for ray-tracing. The returned tree contains leaf nodes for each BRL-CAD region in the

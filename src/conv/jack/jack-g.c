@@ -134,8 +134,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	J A C K _ T O _ B R L C A D
- *
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
@@ -150,8 +148,6 @@ jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name,
 }
 
 /*
- *	R E A D _ P S U R F _ V E R T I C E S
- *
  *	Read in vertices from a psurf file and store them in an
  *	array of nmg vertex structures.
  *
@@ -195,8 +191,6 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 }
 
 /*
- *	R E A D _ P S U R F _ F A C E
- *
  *	Read in the vertexes describing a face of a psurf.
  */
 int
@@ -214,10 +208,6 @@ read_psurf_face(FILE *fp, int *lst)
     return i;
 }
 
-/*
- *	P S U R F _ T O _ N M G
- *
- */
 int
 psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 /* Input/output, nmg model. */
@@ -311,8 +301,6 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 }
 
 /*
- *	C R E A T E _ B R L C A D _ D B
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 int

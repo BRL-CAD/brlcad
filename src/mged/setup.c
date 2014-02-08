@@ -389,8 +389,6 @@ static struct cmdtab mged_cmdtab[] = {
 
 
 /**
- * C M D _ S E T U P
- *
  * Register all MGED commands.
  */
 HIDDEN void

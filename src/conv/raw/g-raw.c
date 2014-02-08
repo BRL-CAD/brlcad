@@ -210,9 +210,6 @@ struct gcv_data {
 static struct gcv_data gcvwriter = {nmg_to_raw};
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

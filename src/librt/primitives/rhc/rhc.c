@@ -203,8 +203,6 @@ const struct bu_structparse rt_rhc_parse[] = {
 
 
 /**
- * R T _ R H C _ B B O X
- *
  * Calculate the bounding RPP for an RHC
  */
 int
@@ -259,8 +257,6 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ R H C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid RHC, and if so, precompute various
  * terms of the formula.
@@ -354,9 +350,6 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ R H C _ P R I N T
- */
 void
 rt_rhc_print(const struct soltab *stp)
 {
@@ -379,8 +372,6 @@ rt_rhc_print(const struct soltab *stp)
 #define RHC_NORM_BACK (4)
 
 /**
- * R T _ R H C _ S H O T
- *
  * Intersect a ray with a rhc.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -568,8 +559,6 @@ check_plates:
 
 
 /**
- * R T _ R H C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -613,8 +602,6 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ R H C _ C U R V E
- *
  * Return the curvature of the rhc.
  */
 void
@@ -653,8 +640,6 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ R H C _ U V
- *
  * For a hit on the surface of an rhc, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1
  * u = azimuth
@@ -707,9 +692,6 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R H C _ F R E E
- */
 void
 rt_rhc_free(struct soltab *stp)
 {
@@ -995,9 +977,6 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 
-/**
- * R T _ R H C _ P L O T
- */
 int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1113,9 +1092,6 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ M K _ H Y P E R B O L A
- */
 /*
   r: rectangular halfwidth
   b: breadth
@@ -1204,8 +1180,6 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
 
 
 /**
- * R T _ R H C _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1460,8 +1434,6 @@ fail:
 
 
 /**
- * R T _ R H C _ I M P O R T
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1535,8 +1507,6 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1580,8 +1550,6 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R H C _ I M P O R T 5
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1634,8 +1602,6 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1680,8 +1646,6 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R H C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1731,8 +1695,6 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ R H C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1751,10 +1713,6 @@ rt_rhc_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R H C _ P A R A M S
- *
- */
 int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1854,8 +1812,6 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 /**
- * R T _ R H C _ C E N T R O I D
- *
  * Computes centroid of a right hyperbolic cylinder
  */
 void

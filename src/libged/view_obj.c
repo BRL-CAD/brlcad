@@ -667,8 +667,6 @@ vo_view2model_tcl(void *clientData,
 
 
 /**
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix f
  *
@@ -2039,8 +2037,6 @@ vo_keypoint_tcl(void *clientData,
 
 
 /*
- * V O _ S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,

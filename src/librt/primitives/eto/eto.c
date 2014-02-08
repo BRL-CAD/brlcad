@@ -151,8 +151,6 @@ const struct bu_structparse rt_eto_parse[] = {
 };
 
 /**
- * R T _ E T O _ B B O X
- *
  * Calculate bounding RPP of elliptical torus
  */
 int
@@ -207,8 +205,6 @@ rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ E T O _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid eto, and if so, precompute
  * various terms of the formula.
@@ -289,9 +285,6 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ E T O _ P R I N T
- */
 void
 rt_eto_print(const struct soltab *stp)
 {
@@ -313,8 +306,6 @@ rt_eto_print(const struct soltab *stp)
 
 
 /**
- * R T _ E T O _ S H O T
- *
  * Intersect a ray with an eto, where all constant terms have been
  * precomputed by rt_eto_prep().  If an intersection occurs, one or
  * two struct seg(s) will be acquired and filled in.
@@ -560,8 +551,6 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ E T O _ N O R M
- *
  * Compute the normal to the eto, given a point on the eto centered at
  * the origin on the X-Y plane.  The gradient of the eto at that point
  * is in fact the normal vector, which will have to be given unit
@@ -612,8 +601,6 @@ rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E T O _ C U R V E
- *
  * Return the curvature of the eto.
  */
 void
@@ -679,9 +666,6 @@ rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ E T O _ U V
- */
 void
 rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
@@ -724,9 +708,6 @@ rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ E T O _ F R E E
- */
 void
 rt_eto_free(struct soltab *stp)
 {
@@ -738,8 +719,6 @@ rt_eto_free(struct soltab *stp)
 
 
 /**
- * M A K E _ E L L I P S E 4
- *
  * Approximate one fourth (1st quadrant) of an ellipse with line
  * segments.  The initial single segment is broken at the point
  * farthest from the ellipse if that point is not already within the
@@ -797,8 +776,6 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
 
 
 /**
- * M A K E _ E L L I P S E
- *
  * Return pointer an array of points approximating an ellipse with
  * semi-major and semi-minor axes a and b.  The line segments fall
  * within the normal and distance tolerances of ntol and dtol.
@@ -1012,8 +989,6 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 /**
- * R T _ E T O _ P L O T
- *
  * The ETO has the following input fields:
  *
  * eto_V V from origin to center
@@ -1131,9 +1106,6 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ E T O _ T E S S
- */
 int
 rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -1312,8 +1284,6 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ E T O _ I M P O R T
- *
  * Import a eto from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
@@ -1381,8 +1351,6 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E T O _ E X P O R T
- *
  * The name will be added by the caller.
  */
 int
@@ -1421,8 +1389,6 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E T O _ I M P O R T 5
- *
  * Import a eto from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
@@ -1468,8 +1434,6 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E T O _ E X P O R T 5
- *
  * The name will be added by the caller.
  */
 int
@@ -1509,8 +1473,6 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E T O _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1558,8 +1520,6 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E T O _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1577,10 +1537,6 @@ rt_eto_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E T O _ P A R A M S
- *
- */
 int
 rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -1591,9 +1547,6 @@ rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E T O _ V O L U M E
- */
 void
 rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1606,9 +1559,6 @@ rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E T O _ C E N T R O I D
- */
 void
 rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1618,9 +1568,6 @@ rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E T O _ S U R F _ A R E A
- */
 void
 rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {

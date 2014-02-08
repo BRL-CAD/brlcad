@@ -241,8 +241,6 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
 
 /*
- * F L A T _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
@@ -295,9 +293,6 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
 }
 
 
-/*
- * F L A T _ P R I N T
- */
 HIDDEN void
 flat_print(register struct region *rp, genptr_t dp)
 {
@@ -305,9 +300,6 @@ flat_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * F L A T _ F R E E
- */
 HIDDEN void
 flat_free(genptr_t cp)
 {

@@ -104,8 +104,6 @@ struct vfont {
 __BEGIN_DECLS
 
 /**
- * V F O N T _ G E T
- *
  * Fetch the named font, and return a struct vfont pointer.
  *
  * First the filename provided is used, then the BRL-CAD font
@@ -122,8 +120,6 @@ __BEGIN_DECLS
 BU_EXPORT extern struct vfont *vfont_get(char *font);
 
 /**
- * V F O N T _ F R E E
- *
  * Return the storage associated with a struct vfont
  */
 BU_EXPORT extern void vfont_free(struct vfont *font);

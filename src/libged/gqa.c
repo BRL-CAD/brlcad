@@ -448,8 +448,6 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 
 
 /**
- * P A R S E _ A R G S
- *
  * Parse through command line flags
  */
 static int
@@ -1433,9 +1431,6 @@ plane_worker (int cpu, genptr_t ptr)
 }
 
 
-/**
- *
- */
 int
 find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 {
@@ -1707,9 +1702,6 @@ options_prep(struct rt_i *rtip, vect_t span)
 }
 
 
-/**
- *
- */
 void
 view_reports(struct cstate *state)
 {

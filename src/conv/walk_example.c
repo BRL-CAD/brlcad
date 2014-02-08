@@ -59,7 +59,6 @@ long debug = 0;
 int verbose = 0;
 
 /**
- *	U S A G E
  *	@brief tell user how to invoke this program, then exit
  *      @param name the name of the running program (argv[0])
  *	@param str a pointer to a null-terminated character string
@@ -75,7 +74,6 @@ void usage(const char *name, const char *str)
 
 
 /** @if no
- *	P A R S E _ A R G S
  * @endif
  *	@brief Parse command line flags.
  *
@@ -114,8 +112,6 @@ int parse_args(int ac, char *av[])
 
 
 /**
- *	R E G I O N _ S T A R T
- *
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
@@ -137,9 +133,6 @@ region_start(struct db_tree_state *UNUSED(tsp),
 
 
 /**
- *	R E G I O N _ E N D
- *
- *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
  *	@param pathp
@@ -169,8 +162,6 @@ region_end(struct db_tree_state *UNUSED(tsp),
 
 
 /**
- *	L E A F _ F U N C
- *
  *	@brief Function to process a leaf node.
  *
  *     	This is actually invoked from db_recurse() from db_walk_subtree().
@@ -233,8 +224,6 @@ leaf_func (struct db_tree_state *UNUSED(tsp),
 
 
 /**
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */

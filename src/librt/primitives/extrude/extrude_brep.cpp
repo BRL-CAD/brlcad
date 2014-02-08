@@ -35,9 +35,6 @@ extern "C" {
 }
 
 
-/**
- * R T _ E X T R U D E _ B R E P
- */
 extern "C" void
 rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

@@ -45,8 +45,6 @@ fastf_t viewsize;
 int curframe;		/* current frame number */
 
 /*
- * C M _ S T A R T
- *
  * Process "start" command in new format input stream
  */
 int
@@ -145,8 +143,6 @@ cm_orientation(const int argc, const char **argv)
 
 
 /*
- * C M _ E N D
- *
  * The output occurs here.
  *
  * framenumber, viewsize, eye x y z, orientation x y z w
@@ -190,8 +186,6 @@ cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 /*
- * C M _ A N I M
- *
  * Experimental animation code
  *
  * Usage:  anim <path> <type> args
@@ -205,8 +199,6 @@ cm_anim(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 /*
- * C M _ C L E A N
- *
  * Clean out results of last rt_prep(), and start anew.
  */
 int
@@ -218,8 +210,6 @@ cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 /*
- * C M _ S E T
- *
  * Allow variable values to be set or examined.
  */
 int
@@ -230,9 +220,6 @@ cm_set(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-/*
- * C M _ A E
- */
 int
 cm_ae(const int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -241,9 +228,6 @@ cm_ae(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-/*
- * C M _ O P T
- */
 int
 cm_opt(const int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -291,9 +275,6 @@ struct command_tab rt_cmdtab[] = {
 };
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

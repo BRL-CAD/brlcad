@@ -36,9 +36,6 @@ extern "C" {
     extern void rt_dsp_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
-/**
- * R T _ H F _ B R E P
- */
 extern "C" void
 rt_hf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

@@ -35,8 +35,6 @@
 
 
 /*
- * F B _ S I M _ R E A D R E C T
- *
  * A routine to simulate the effect of fb_readrect() when a
  * particular display does not handle it.
  */
@@ -67,8 +65,6 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
 
 
 /*
- * F B _ S I M _ W R I T E R E C T
- *
  * A routine to simulate the effect of fb_writerect() when a
  * particular display does not handle it.
  *
@@ -98,9 +94,6 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
 }
 
 
-/*
- * F B _ S I M _ B W R E A D R E C T
- */
 #define SIMBUF_SIZE (24*1024)
 int
 fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
@@ -132,9 +125,6 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
 }
 
 
-/*
- * F B _ S I M _ B W W R I T E R E C T
- */
 int
 fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {

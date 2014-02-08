@@ -32,10 +32,6 @@ static char usage[] = "\
 Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
 
 
-/*
- *	M A I N
- *
- */
 int
 main(int argc, char *argv[])
 {

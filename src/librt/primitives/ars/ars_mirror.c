@@ -33,8 +33,6 @@
 
 
 /**
- * R T _ A R S _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */

@@ -70,9 +70,6 @@ PL_FORTRAN(f2mark, F2MARK)(FILE **fp, int *c, float *x, float*y, float *scale)
     tp_2marker( *fp, *c, *x, *y, *scale );
 }
 
-/*
- *			T P _ 3 M A R K E R
- */
 void
 tp_3marker(FILE *fp, register int c, double x, double y, double z, double scale)
 {

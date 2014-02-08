@@ -755,9 +755,6 @@ WDB_EXPORT extern int mk_ebm(struct rt_wdb *fp, const char *name, const char *fi
 WDB_EXPORT extern int mk_hrt(struct rt_wdb *fp, const char *name, const point_t center,
 			     const vect_t x, const vect_t y, const vect_t z, const fastf_t dist);
 
-/**
- * M K _ V O L
- */
 WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, const char *file,
 			     size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 			     const vect_t cellsize, const matp_t mat);
@@ -933,9 +930,6 @@ WDB_EXPORT extern int mk_version;		/**< @brief  Which version database to write 
  *  Internal routines
  */
 
-/**
- * M K _ F R E E M E M B E R S
- */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 
 #define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)

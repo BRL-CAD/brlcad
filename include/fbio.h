@@ -45,8 +45,6 @@
 #endif
 
 /**
- * R G B p i x e l
- *
  * Format of disk pixels is .pix raw image files.  Formerly used as
  * arguments to many of the library routines, but has fallen into
  * disuse due to the difficulties with ANSI function prototypes, and
@@ -58,8 +56,6 @@ typedef unsigned char RGBpixel[3];
 
 
 /**
- * C o l o r M a p
- *
  * These generic color maps have up to 16 bits of significance,
  * left-justified in a short.  Think of this as fixed-point values
  * from 0 to 1.
@@ -79,7 +75,6 @@ typedef struct {
 
 
 /**
- * F B I O
  *@brief
  * A frame-buffer IO structure.
  *

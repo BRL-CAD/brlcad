@@ -61,9 +61,6 @@ Usage:  dbcp [-v] blocksize < input > output\n\
 	(blocksize = number of 512 byte 'blocks' per record)\n";
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

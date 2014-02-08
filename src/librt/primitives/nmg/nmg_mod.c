@@ -39,9 +39,6 @@
 #include "nurb.h"
 
 
-/**
- * N M G _ M E R G E _ R E G I O N S
- */
 void
 nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)
 {
@@ -80,8 +77,6 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
 
 
 /**
- * N M G _ S H E L L _ C O P L A N A R _ F A C E _ M E R G E
- *
  * A geometric routine to find all pairs of faces in a shell that have
  * the same plane equation (to within the given tolerance), and
  * combine them into a single face.
@@ -204,8 +199,6 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 
 /**
- * N M G _ S I M P L I F Y _ S H E L L
- *
  * Simplify all the faces in this shell, where possible.  Under some
  * circumstances this may result in an empty shell as a result.
  *
@@ -240,8 +233,6 @@ nmg_simplify_shell(struct shell *s)
 
 
 /**
- * N M G _ R M _ R E D U N D A N C I E S
- *
  * Remove all redundant parts between the different "levels" of a shell.
  * Remove wire loops that match face loops.
  * Remove wire edges that match edges in wire loops or face loops.
@@ -566,8 +557,6 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S A N I T I Z E _ S _ L V
- *
  * Remove those pesky little vertex-only loops of orientation
  * "orient".  Typically these will be OT_BOOLPLACE markers created in
  * the process of doing intersections for the boolean operations.
@@ -648,8 +637,6 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 
 
 /**
- * N M G _ S _ S P L I T _ T O U C H I N G L O O P S
- *
  * For every loop in a shell, invoke nmg_split_touchingloops() on it.
  *
  * Needed before starting classification, to separate interior
@@ -698,8 +685,6 @@ nmg_s_split_touchingloops(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S _ J O I N _ T O U C H I N G L O O P S
- *
  * For every loop in a shell, invoke nmg_join_touchingloops() on it.
  */
 void
@@ -742,8 +727,6 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ J S
- *
  * Join two shells into one.
  *
  * This is mostly an up-pointer re-labeling activity, as it is left up
@@ -894,8 +877,6 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
 
 
 /**
- * N M G _ I N V E R T _ S H E L L
- *
  * Reverse the surface normals, and invert the orientation state of
  * all faceuses in a shell.
  *
@@ -944,8 +925,6 @@ nmg_invert_shell(struct shell *s)
 
 
 /**
- * N M G _ C M F A C E
- *
  * Create a face with exactly one exterior loop (and no holes), given
  * an array of pointers to struct vertex pointers.  Intended to help
  * create a "3-manifold" shell, where each edge has only two faces
@@ -1124,8 +1103,6 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 
 
 /**
- * N M G _ C F A C E
- *
  * Create a loop within a face, given a list of vertices.
  *
  * "verts" is an array of "n" pointers to (struct vertex).  "s" is the
@@ -1206,8 +1183,6 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 
 
 /**
- * N M G _ A D D _ L O O P _ T O _ F A C E
- *
  * Create a new loop within a face, given a list of vertices.
  * Modified version of nmg_cface().
  *
@@ -1289,8 +1264,6 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 
 
 /**
- * N M G _ F U _ P L A N E E Q N
- *
  * Given a convex face that has been constructed with edges listed in
  * counter-clockwise (CCW) order, compute the surface normal and plane
  * equation for this face.
@@ -1427,8 +1400,6 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ G L U E F A C E S
- *
  * given a shell containing "n" faces whose outward oriented faceuses
  * are enumerated in "fulist", glue the edges of the faces together
  * Most especially useful after using nmg_cface() several times to
@@ -1464,8 +1435,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S I M P L I F Y _ F A C E
- *
  * combine adjacent loops within a face which serve no apparent
  * purpose by remaining separate and distinct.  Kill "wire-snakes" in
  * face.
@@ -1505,8 +1474,6 @@ nmg_simplify_face(struct faceuse *fu)
 
 
 /**
- * N M G _ R E V E R S E _ F A C E
- *
  * This routine reverses the direction of the Normal vector which
  * defines the plane of the face.
  *
@@ -1588,8 +1555,6 @@ nmg_reverse_face(register struct faceuse *fu)
 
 /**
  * XXX Called in nmg_misc.c / nmg_reverse_face_and_radials()
- * N M G _ F A C E _ F I X _ R A D I A L _ P A R I T Y
- *
  * Around an edge, consider all the edgeuses that belong to a single
  * shell.  The faceuses pertaining to those edgeuses must maintain the
  * appropriate parity with their radial faceuses, so that OT_SAME is
@@ -1732,8 +1697,6 @@ nmg_face_fix_radial_parity(struct faceuse *fu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ M V _ F U _ B E T W E E N _ S H E L L S
- *
  * Move faceuse from 'src' shell to 'dest' shell.
  */
 void
@@ -1791,8 +1754,6 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
 
 
 /**
- * N M G _ M O V E _ F U _ F U
- *
  * Move everything from the source faceuse into the destination
  * faceuse.  Exists as a support routine for nmg_jf() only.
  */
@@ -1822,8 +1783,6 @@ nmg_move_fu_fu(register struct faceuse *dest_fu, register struct faceuse *src_fu
 
 
 /**
- * N M G _ J F
- *
  * Join two faces together by moving everything from the source
  * faceuse and mate into the destination faceuse and mate, taking into
  * account face orientations.  The source face is destroyed by this
@@ -1856,8 +1815,6 @@ nmg_jf(register struct faceuse *dest_fu, register struct faceuse *src_fu)
 
 
 /**
- * N M G _ D U P _ F A C E
- *
  * Construct a duplicate of a face into the shell 's'.  The vertex
  * geometry is copied from the source face into topologically distinct
  * (new) vertex and vertex_g structs.  They will start out being
@@ -1974,8 +1931,6 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 
 
 /**
- * N M G _ J L
- *
  * Join two loops together which share a common edge, such that both
  * occurrences of the common edge are deleted.  This routine always
  * leaves "lu" intact, and kills the loop radial to "eu" (after
@@ -2071,8 +2026,6 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 
 
 /**
- * N M G _ J O I N _ 2 L O O P S
- *
  * Intended to join an interior and exterior loop together, by
  * building a bridge between the two indicated vertices.
  *
@@ -2175,8 +2128,6 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 
 
 /**
- * N M G _ J O I N _ S I N G V U _ L O O P
- *
  * vu1 is in a regular loop, vu2 is in a loop of a single vertex A
  * jaunt is taken from vu1 to vu2 and back to vu1, and the old loop at
  * vu2 is destroyed.
@@ -2225,8 +2176,6 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
 
 /**
- * N M G _ J O I N _ 2 S I N G V U _ L O O P S
- *
  * Both vertices are part of single vertex loops.  Converts loop on
  * vu1 into a real loop that connects them together, with a single
  * edge (two edgeuses).  Loop on vu2 is killed.
@@ -2275,8 +2224,6 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 
 
 /**
- * N M G _ C U T _ L O O P
- *
  * Divide a loop of edges between two vertexuses.
  *
  * Make a new loop between the two vertexes, and split it and the loop
@@ -2476,8 +2423,6 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
 
 /**
- * N M G _ S P L I T _ L U _ A T _ V U
- *
  * In a loop which has at least two distinct uses of a vertex, split
  * off the edges from "split_vu" to the second occurrence of the vertex
  * into a new loop.  It is the caller's responsibility to re-bound the
@@ -2576,8 +2521,6 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
 
 
 /**
- * N M G _ F I N D _ R E P E A T E D _ V _ I N _ L U
- *
  * Given a vertexuse of an edgeuse in a loopuse, see if the vertex is
  * used by at least one other vertexuse in that same loopuse.
  *
@@ -2632,8 +2575,6 @@ nmg_find_repeated_v_in_lu(struct vertexuse *vu)
 
 
 /**
- * N M G _ S P L I T _ T O U C H I N G L O O P S
- *
  * Search through all the vertices in a loop.  Whenever there are two
  * distinct uses of one vertex in the loop, split off all the edges
  * between them into a new loop.
@@ -2726,8 +2667,6 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ J O I N _ T O U C H I N G L O O P S
- *
  * Search through all the vertices in a loopuse that belongs to a
  * faceuse.  Whenever another loopuse in the same faceuse refers to
  * one of this loop's vertices, the two loops touch at (at least) that
@@ -2816,8 +2755,6 @@ nmg_join_touchingloops(struct loopuse *lu)
 
 
 /**
- * N M G _ G E T _ T O U C H I N G _ J A U N T S
- *
  * Create a table of EU's. Each EU will be the first EU in a touching
  * jaunt (edgeuses from vert A->B->A) where vertex B appears elsewhere
  * in the loopuse lu.
@@ -2873,8 +2810,6 @@ nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need
 
 
 /**
- * N M G _ C H E C K _ P R O P O S E D _ L O O P
- *
  * Support routine for nmg_loop_split_at_touching_jaunt().
  *
  * Follow the edgeuses in a proposed loop (that may later be created
@@ -3049,8 +2984,6 @@ nmg_kill_accordions(struct loopuse *lu)
 
 
 /**
- * N M G _ L O O P _ S P L I T _ A T _ T O U C H I N G _ J A U N T
- *
  * If a loop makes a "jaunt" (edgeuses from verts A->B->A), where the
  * tip of the jaunt touches the same loop at a different vertexuse,
  * cut the loop into two.
@@ -3291,8 +3224,6 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ S I M P L I F Y _ L O O P
- *
  * combine adjacent loops within the same parent that touch along a
  * common edge into a single loop, with the edge eliminated.
  */
@@ -3362,8 +3293,6 @@ nmg_simplify_loop(struct loopuse *lu)
 
 
 /**
- * N M G _ K I L L _ S N A K E S
- *
  * Removes "snake" or "disconnected crack" edges from loopuse.
  *
  * Returns -
@@ -3438,8 +3367,6 @@ nmg_kill_snakes(struct loopuse *lu)
 
 
 /**
- * N M G _ M V _ L U _ B E T W E E N _ S H E L L S
- *
  * Move a wire-loopuse from one shell to another.  Note that this
  * routine can not be used on loops in faces.
  */
@@ -3490,8 +3417,6 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
 
 
 /**
- * N M G _ M O V E L T O F
- *
  * move first pair of shell wire loopuses out to become a genuine loop
  * in an existing face.
  *
@@ -3527,8 +3452,6 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
 
 
 /**
- * N M G _ D U P _ L O O P
- *
  * A support routine for nmg_dup_face()
  *
  * trans_tbl may be NULL.
@@ -3691,8 +3614,6 @@ nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
 
 
 /**
- * N M G _ S E T _ L U _ O R I E N T A T I O N
- *
  * Set this loopuse and mate's orientation to be SAME or OPPOSITE from
  * the orientation of the faceuse they each reside in.
  */
@@ -3718,8 +3639,6 @@ nmg_set_lu_orientation(struct loopuse *lu, int is_opposite)
 
 
 /**
- * N M G _ L U _ R E O R I E N T
- *
  * Based upon a geometric calculation, reorient a loop and its mate,
  * if the stored orientation differs from the geometric one.
  *
@@ -3796,8 +3715,6 @@ nmg_lu_reorient(struct loopuse *lu)
 
 
 /**
- * N M G _ E U S P L I T
- *
  * Split an edgeuse by inserting a vertex into middle of the edgeuse.
  *
  * Make a new edge, and a vertex.  If v is non-null it is taken as a
@@ -4055,8 +3972,6 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 
 
 /**
- * N M G _ E S P L I T
- *
  * Split an edge by inserting a vertex into middle of *all* of the
  * uses of this edge, and combine the new edgeuses together onto the
  * new edge.  A more powerful version of nmg_eusplit(), which does
@@ -4218,8 +4133,6 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 
 
 /**
- * N M G _ E B R E A K
- *
  * Like nmg_esplit(), split an edge into two parts.  Ensure that both
  * sets of edgeuses share the original edgeuse geometry.  If the
  * original edge had no edge geometry, then none is created here.
@@ -4254,8 +4167,6 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
 
 
 /*
- * N M G _ E B R E A K E R
- *
  * Like nmg_ebreak(), but with edge radial sorting when sharing
  * occurs.
  *
@@ -4321,8 +4232,6 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ E 2 B R E A K
- *
  * Given two edges that are known to intersect someplace other than at
  * any of their endpoints, break both of them and insert a shared
  * vertex.  Return a pointer to the new vertex.
@@ -4349,8 +4258,6 @@ nmg_e2break(struct edgeuse *eu1, struct edgeuse *eu2)
 
 
 /**
- * N M G _ U N B R E A K _ E D G E
- *
  * Undoes the effect of an unwanted nmg_ebreak().
  *
  * Eliminate the vertex between this edgeuse and the next edge, on all
@@ -4566,8 +4473,6 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 
 
 /**
- * N M G _ U N B R E A K _ S H E L L _ E D G E _ U N S A F E
- *
  * Undoes the effect of an unwanted nmg_ebreak().
  *
  * NOTE: THIS IS LIKELY TO PRODUCE AN ILLEGAL NMG STRUCTURE!!!!  This
@@ -4781,8 +4686,6 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 
 
 /**
- * N M G _ E I N S
- *
  * Insert a new (zero length) edge at the beginning of (i.e., before) an
  * existing edgeuse.  Perhaps this is what nmg_esplit and nmg_eusplit
  * should have been like?
@@ -4859,8 +4762,6 @@ nmg_eins(struct edgeuse *eu)
 
 
 /**
- * N M G _ M V _ E U _ B E T W E E N _ S H E L L S
- *
  * Move a wire edgeuse and its mate from one shell to another.
  */
 void
@@ -4917,8 +4818,6 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
 
 
 /**
- * N M G _ M V _ V U _ B E T W E E N _ S H E L L S
- *
  * If this shell had a single vertexuse in it, move it to the other
  * shell, but "promote" it to a "loop of a single vertex" along the
  * way.

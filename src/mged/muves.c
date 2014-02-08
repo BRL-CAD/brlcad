@@ -164,8 +164,6 @@ Free_muves_comp(struct bu_list *hp)
 
 
 /*
- * F _ R E A D _ M U V E S
- *
  * routine to read MUVES input files and create structures to hold the data
  */
 int
@@ -582,8 +580,6 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
 
 
 /*
- * F _ E _ M U V E S
- *
  * routine to display regions using MUVES component names
  */
 

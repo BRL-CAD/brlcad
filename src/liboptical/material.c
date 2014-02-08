@@ -48,8 +48,6 @@ static const char *mdefault = "default"; /* Name of default material */
 
 
 /**
- * M L I B _ A D D _ S H A D E R
- *
  * Routine to add an array of mfuncs structures to the linked list of
  * material (shader) routines.
  */
@@ -68,8 +66,6 @@ mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
 
 
 /**
- * T R Y _ L O A D
- *
  * Try to load a DSO from the specified path.  If we succeed in
  * opening the DSO, then retrieve the symbol "shader_mfuncs" and look
  * up the shader named "material" in the table.
@@ -200,8 +196,6 @@ done:
 
 
 /**
- * M L I B _ S E T U P
- *
  * Returns -
  * -1 failed
  * 0 indicates that this region should be dropped
@@ -316,8 +310,6 @@ found:
 
 
 /**
- * M L I B _ F R E E
- *
  * Routine to free material-property specific data
  */
 void

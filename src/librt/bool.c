@@ -51,8 +51,6 @@
 
 
 /**
- * R T _ W E A V E 0 S E G
- *
  * If a zero thickness segment abuts another partition, it will be
  * fused in, later.
  *
@@ -626,8 +624,6 @@ rt_defoverlap (register struct application *ap, register struct partition *pp, s
 
 
 /**
- * R T _ G E T _ R E G I O N _ S E G L I S T _ F O R _ P A R T I T I O N
- *
  * Given one of the regions that is involved in a given partition
  * (whether the boolean formula for this region is BOOL_TRUE in this
  * part or not), return a bu_ptbl list containing all the segments in
@@ -664,8 +660,6 @@ rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *
 
 
 /**
- * R T _ T R E E _ M A X _ R A Y N U M
- *
  * Find the maximum value of the raynum (seg_rayp->index) encountered
  * in the segments contributing to this region.
  *
@@ -716,8 +710,6 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
 
 
 /**
- * R T _ F A S T G E N _ V O L _ V O L _ O V E R L A P
- *
  * Handle FASTGEN volume/volume overlap.  Look at underlying segs.  If
  * one is less than 1/4", take the longer.  Otherwise take the
  * shorter.
@@ -844,8 +836,6 @@ out:
 
 
 /**
- * R T _ F A S T G E N _ P L A T E _ V O L _ O V E R L A P
- *
  * Handle FASTGEN plate/volume overlap.
  *
  * Measure width of _preceding_ partition, which must have been
@@ -1194,8 +1184,6 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
 
 
 /**
- * R T _ O V E R L A P _ T A B L E S _ E Q U A L
- *
  * Overlap tables are NULL terminated arrays of region pointers.  The
  * order of entries may be different between the two.
  *
@@ -1237,8 +1225,6 @@ rt_overlap_tables_equal(struct region *const*a, struct region *const*b)
 
 
 /**
- * R T _ T R E E _ T E S T _ R E A D Y
- *
  * Test to see if a region is ready to be evaluated over a given
  * partition, i.e. if all the prerequisites have been satisfied.
  *
@@ -1288,8 +1274,6 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
 
 
 /**
- * R T _ B O O L _ P A R T I T I O N _ E L I G I B L E
- *
  * If every solid in every region participating in this ray-partition
  * has already been intersected with the ray, then this partition can
  * be safely evaluated.
@@ -1336,8 +1320,6 @@ rt_grow_boolstack(register struct resource *resp)
 
 
 /**
- * R T _ B O O L E V A L
- *
  * Using a stack to recall state, evaluate a boolean expression
  * without recursion.
  *

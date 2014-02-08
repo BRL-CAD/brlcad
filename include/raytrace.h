@@ -1122,9 +1122,6 @@ struct db_traverse
 	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
 #define RT_CK_DB_TRAVERSE(_p) BU_CKMAG(_p, RT_DB_TRAVERSE_MAGIC, "db_traverse")
 
-/**
- * C O M B I N E D _ T R E E _ S T A T E
- */
 struct combined_tree_state {
     uint32_t magic;
     struct db_tree_state	cts_s;
@@ -2856,9 +2853,6 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  */
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_prep_timer(void);
 /* Read global timer, return time + str */
 /**
@@ -3146,9 +3140,6 @@ RT_EXPORT extern int	rt_defoverlap(struct application *ap,
 
 /* cut.c */
 
-/*
- * R T _ P R _ C U T _ I N F O
- */
 RT_EXPORT extern void rt_pr_cut_info(const struct rt_i	*rtip,
 				     const char		*str);
 RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
@@ -3528,8 +3519,6 @@ RT_EXPORT extern void db_free_1anim(struct animate *anp);
 /* db_path.c */
 
 /**
- * d b _ n o r m a l i z e
- *
  * Normalize a BRL-CAD path according to rules used for realpath, but
  * without filesystem (or database object) validation.
  *
@@ -3542,20 +3531,11 @@ RT_EXPORT extern const char *db_normalize(const char *path);
 
 
 /* db_fullpath.c */
-/**
- * D B _ F U L L _ P A T H _ I N I T
- */
 RT_EXPORT extern void db_full_path_init(struct db_full_path *pathp);
 
-/**
- * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_add_node_to_full_path(struct db_full_path *pp,
 					       struct directory *dp);
 
-/**
- * D B _ D U P _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
 				       const struct db_full_path *oldp);
 
@@ -3567,15 +3547,10 @@ RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
 RT_EXPORT extern void db_extend_full_path(struct db_full_path *pathp,
 					  size_t incr);
 
-/**
- * D B _ A P P E N D _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
 					  const struct db_full_path *src);
 
 /**
- * D B _ D U P _ P A T H _ T A I L
- *
  * Dup old path from starting index to end.
  */
 RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
@@ -3609,9 +3584,6 @@ RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 					 int fp_flags);
 
 
-/**
- * D B _ P R _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_pr_full_path(const char *msg,
 				      const struct db_full_path *pathp);
 
@@ -4045,8 +4017,6 @@ RT_EXPORT extern int rt_db_put_internal5(struct directory	*dp,
 
 
 /**
- * D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
- *
  * Make only the front (header) portion of a free object.  This is
  * used when operating on very large contiguous free objects in the
  * database (e.g. 50 MBytes).
@@ -4056,8 +4026,6 @@ RT_EXPORT extern void db5_make_free_object_hdr(struct bu_external *ep,
 
 
 /**
- * D B 5 _ M A K E _ F R E E _ O B J E C T
- *
  * Make a complete, zero-filled, free object.  Note that free objects
  * can sometimes get quite large.
  */
@@ -4066,8 +4034,6 @@ RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 
 
 /**
- * D B 5 _ D E C O D E _ S I G N E D
- *
  * Given a variable-width length field in network order (XDR), store
  * it in *lenp.
  *
@@ -4081,8 +4047,6 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 				       int			format);
 
 /**
- * D B 5 _ D E C O D E _ L E N G T H
- *
  * Given a variable-width length field in network order (XDR), store
  * it in *lenp.
  *
@@ -4096,22 +4060,15 @@ RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 					  int format);
 
 /**
- * D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
- *
  * Given a number to encode, decide which is the smallest encoding
  * format which will contain it.
  */
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 
-/**
- * D B 5 _ I M P O R T _ C O L O R _ T A B L E
- */
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
 /**
- * D B 5 _ I M P O R T _ A T T R I B U T E S
- *
  * Convert the on-disk encoding into a handy easy-to-use
  * bu_attribute_value_set structure.
  *
@@ -4131,8 +4088,6 @@ RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
 					   const struct bu_external *ap);
 
 /**
- * D B 5 _ E X P O R T _ A T T R I B U T E S
- *
  * Encode the attribute-value pair information into the external
  * on-disk format.
  *
@@ -4147,8 +4102,6 @@ RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
 
 
 /**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
- *
  * Returns -
  * 0 on success
  * -1 on EOF
@@ -4158,8 +4111,6 @@ RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
 
 /**
- * D B 5 _ H E A D E R _ I S _ V A L I D
- *
  * Verify that this is a valid header for a BRL-CAD v5 database.
  *
  * Returns -
@@ -4174,8 +4125,6 @@ RT_EXPORT extern int db5_fwrite_ident(FILE *,
 
 
 /**
- * D B 5 _ P U T _ C O L O R _ T A B L E
- *
  * Put the old region-id-color-table into the global object.  A null
  * attribute is set if the material table is empty.
  *
@@ -4215,8 +4164,6 @@ RT_EXPORT extern int db_put_external5(struct bu_external *ep,
 				      struct db_i *dbip);
 
 /**
- * D B 5 _ U P D A T E _ A T T R I B U T E S
- *
  * Update an arbitrary number of attributes on a given database
  * object.  For efficiency, this is done without looking at the object
  * body at all.
@@ -4233,8 +4180,6 @@ RT_EXPORT extern int db5_update_attributes(struct directory *dp,
 					   struct db_i *dbip);
 
 /**
- * D B 5 _ U P D A T E _ A T T R I B U T E
- *
  * A convenience routine to update the value of a single attribute.
  *
  * Returns -
@@ -4247,8 +4192,6 @@ RT_EXPORT extern int db5_update_attribute(const char *obj_name,
 					  struct db_i *dbip);
 
 /**
- * D B 5 _ R E P L A C E _ A T T R I B U T E S
- *
  * Replace the attributes of a given database object.
  *
  * For efficiency, this is done without looking at the object body at
@@ -4310,9 +4253,6 @@ RT_EXPORT extern int rt_comb_import4(struct rt_db_internal	*ip,
 				     const struct db_i		*dbip,
 				     struct resource		*resp);
 
-/**
- * R T _ C O M B _ E X P O R T 4
- */
 RT_EXPORT extern int rt_comb_export4(struct bu_external			*ep,
 				     const struct rt_db_internal	*ip,
 				     double				local2mm,
@@ -4320,8 +4260,6 @@ RT_EXPORT extern int rt_comb_export4(struct bu_external			*ep,
 				     struct resource			*resp);
 
 /**
- * D B _ T R E E _ F L A T T E N _ D E S C R I B E
- *
  * Produce a GIFT-compatible listing, one "member" per line,
  * regardless of the structure of the tree we've been given.
  */
@@ -4332,18 +4270,12 @@ RT_EXPORT extern void db_tree_flatten_describe(struct bu_vls	*vls,
 					       double		mm2local,
 					       struct resource	*resp);
 
-/**
- * D B _ T R E E _ D E S C R I B E
- */
 RT_EXPORT extern void db_tree_describe(struct bu_vls	*vls,
 				       const union tree	*tp,
 				       int		indented,
 				       int		lvl,
 				       double		mm2local);
 
-/**
- * D B _ C O M B _ D E S C R I B E
- */
 RT_EXPORT extern void db_comb_describe(struct bu_vls	*str,
 				       const struct rt_comb_internal	*comb,
 				       int		verbose,
@@ -4363,8 +4295,6 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 /*==================== END g_comb.c / table.c interface ========== */
 
 /**
- * D B _ W R A P _ V 4 _ E X T E R N A L
- *
  * As the v4 database does not really have the notion of "wrapping",
  * this function writes the object name into the
  * proper place (a standard location in all granules).
@@ -4375,8 +4305,6 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 /* Some export support routines */
 
 /**
- * D B _ C K _ L E F T _ H E A V Y _ T R E E
- *
  * Support routine for db_ck_v4gift_tree().
  * Ensure that the tree below 'tp' is left-heavy, i.e. that there are
  * nothing but solids on the right side of any binary operations.
@@ -4389,8 +4317,6 @@ RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 					   int		no_unions);
 
 /**
- * D B _ C K _ V 4 G I F T _ T R E E
- *
  * Look a gift-tree in the mouth.
  * Ensure that this boolean tree conforms to the GIFT convention that
  * union operations must bind the loosest.
@@ -4406,8 +4332,6 @@ RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
 
 /**
- * D B _ M K B O O L _ T R E E
- *
  * Given a rt_tree_array array, build a tree of "union tree" nodes
  * appropriately connected together.  Every element of the
  * rt_tree_array array used is replaced with a TREE_NULL.
@@ -4418,16 +4342,11 @@ RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
 					    size_t		howfar,
 					    struct resource	*resp);
 
-/**
- * D B _ M K G I F T _ T R E E
- */
 RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 					    size_t subtreecount,
 					    struct resource *resp);
 
 /**
- * r t _ c o m b _ g e t _ c o l o r
- *
  * fills in rgb with the color for a given comb combination
  *
  * returns truthfully if a color could be got
@@ -4446,8 +4365,6 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
 
 
 /**
- * d b _ c o m b _ m v a l l
- *
  * change all matching object names in the comb tree from old_name to new_name
  *
  * calling function must supply an initialized bu_ptbl, and free it once done.
@@ -4611,8 +4528,6 @@ RT_EXPORT extern int db_scan(struct db_i *,
 #define db_ident(a, b, c)		+++error+++
 
 /**
- * D B 5 _ U P D A T E _ I D E N T
- *
  * Update the _GLOBAL object, which in v5 serves the place of the
  * "ident" header record in v4 as the place to stash global
  * information.  Since every database will have one of these things,
@@ -4627,8 +4542,6 @@ RT_EXPORT extern int db_update_ident(struct db_i *dbip,
 				     double local2mm);
 
 /**
- * D B 5 _ F W R I T E _ I D E N T
- *
  * Create a header for a v5 database.
  *
  * This routine has the same calling sequence as db_fwrite_ident()
@@ -4777,24 +4690,18 @@ RT_EXPORT extern void db_inmem(struct directory	*dp,
 /* db_lookup.c */
 
 /**
- * D B _ D I R E C T O R Y _ S I Z E
- *
  * Return the number of "struct directory" nodes in the given
  * database.
  */
 RT_EXPORT extern size_t db_directory_size(const struct db_i *dbip);
 
 /**
- * D B _ C K _ D I R E C T O R Y
- *
  * For debugging, ensure that all the linked-lists for the directory
  * structure are intact.
  */
 RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
 
 /**
- * D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
- *
  * Returns -
  * 0 if the in-memory directory is empty
  * 1 if the in-memory directory has entries,
@@ -4803,8 +4710,6 @@ RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
 RT_EXPORT extern int db_is_directory_non_empty(const struct db_i	*dbip);
 
 /**
- * D B _ D I R H A S H
- *
  * Returns a hash index for a given string that corresponds with the
  * head of that string's hash chain.
  */
@@ -4812,8 +4717,6 @@ RT_EXPORT extern int db_dirhash(const char *str);
 
 /**
  * Name -
- * D B _ D I R C H E C K
- *
  * Description -
  * This routine ensures that ret_name is not already in the
  * directory. If it is, it tries a fixed number of times to
@@ -4840,8 +4743,6 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 /* convert name to directory ptr */
 
 /**
- * D B _ L O O K U P
- *
  * This routine takes a name and looks it up in the directory table.
  * If the name is present, a pointer to the directory struct element
  * is returned, otherwise NULL is returned.
@@ -4859,8 +4760,6 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 /* lookup directory entries based on attributes */
 
 /**
- * D B _ L O O K U P _ B Y _ A T T R
- *
  * lookup directory entries based on directory flags (dp->d_flags) and
  * attributes the "dir_flags" arg is a mask for the directory flags
  * the *"avs" is an attribute value set used to select from the
@@ -4887,8 +4786,6 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 /* add entry to directory */
 
 /**
- * D B _ D I R A D D
- *
  * Add an entry to the directory.  Try to make the regular path
  * through the code as fast as possible, to speed up building the
  * table of contents.
@@ -4926,8 +4823,6 @@ RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 /* delete entry from directory */
 
 /**
- * D B _ D I R D E L E T E
- *
  * Given a pointer to a directory entry, remove it from the linked
  * list, and free the associated memory.
  *
@@ -4945,15 +4840,11 @@ RT_EXPORT extern int db_fwrite_ident(FILE *,
 				     double);
 
 /**
- * D B _ P R _ D I R
- *
  * For debugging, print the entire contents of the database directory.
  */
 RT_EXPORT extern void db_pr_dir(const struct db_i *dbip);
 
 /**
- * D B _ R E N A M E
- *
  * Change the name string of a directory entry.  Because of the
  * hashing function, this takes some extra work.
  *
@@ -4967,8 +4858,6 @@ RT_EXPORT extern int db_rename(struct db_i *,
 
 
 /**
- * D B _ U P D A T E _ N R E F
- *
  * Updates the d_nref fields (which count the number of times a given entry
  * is referenced by a COMBination in the database).
  *
@@ -4979,8 +4868,6 @@ RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 
 /**
  * DEPRECATED: Use bu_fnmatch() instead of this function.
- *
- * D B _ R E G E X P _ M A T C H
  *
  * If string matches pattern, return 1, else return 0
  *
@@ -4997,8 +4884,6 @@ DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 
 
 /**
- * D B _ R E G E X P _ M A T C H _ A L L
- *
  * Appends a list of all database matches to the given vls, or the pattern
  * itself if no matches are found.
  * Returns the number of matches.
@@ -5087,8 +4972,6 @@ RT_EXPORT extern int db_zapper(struct db_i *,
 			       size_t start);
 
 /**
- * D B _ A L L O C _ D I R E C T O R Y
- *
  * This routine is called by the RT_GET_DIRECTORY macro when the
  * freelist is exhausted.  Rather than simply getting one additional
  * structure, we get a whole batch, saving overhead.
@@ -5585,9 +5468,6 @@ RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
 					   int noisy,
 					   struct resource *resp);
 
-/**
- *
- */
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 				    struct resource *resp);
 
@@ -5788,20 +5668,11 @@ RT_EXPORT extern void rt_memprint(struct mem_map **pp);
 RT_EXPORT extern void rt_memclose(void);
 
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *rt_vlblock_init(void);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_vlblock_free(struct bn_vlblock *vbp);
 
-/**
- *
- */
 RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
 						 int r,
 						 int g,
@@ -5975,9 +5846,6 @@ RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
 RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
 					  struct rt_i *rtip);
 
@@ -6058,26 +5926,14 @@ RT_EXPORT extern int rt_tree_elim_nops(union tree *,
  *									*
  ************************************************************************/
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list	*free_vlist_hd,	/* where to get/put free vlists */
 						    int		max_ent);
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *	rt_vlblock_init(void);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_vlblock_free(struct bn_vlblock *vbp);
 
-/**
- *
- */
 RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
 						 int r,
 						 int g,
@@ -6233,9 +6089,6 @@ RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
 
 /* htbl.c */
 
-/**
- *
- */
 RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b, size_t len, const char *str);
 
 /**
@@ -8157,8 +8010,6 @@ RT_EXPORT extern struct db5_attr_ctype **db5_attr_dump(struct db5_registry *regi
 
 
 /**
- * D B 5 _ S T A N D A R D _ A T T R I B U T E
- *
  * Function returns the string name for a given standard attribute
  * index.  Index values returned from db5_standardize_attribute()
  * correspond to the names returned from this function, returning the
@@ -8187,8 +8038,6 @@ RT_EXPORT extern const char *db5_standard_attribute(int idx);
 RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
 
 /**
- * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
- *
  * Function for recognizing various versions of the DB5 standard
  * attribute names that have been used - returns the attribute type
  * of the supplied attribute name, or -1 if it is not a recognized
@@ -8200,8 +8049,6 @@ RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
 RT_EXPORT extern int db5_is_standard_attribute(const char *attrname);
 
 /**
- * D B 5 _ S T A N D A R D I Z E _ A V S
- *
  * Ensures that an attribute set containing standard attributes with
  * non-standard/old/deprecated names gets the standard name added.  It
  * will update the first non-standard name encountered, but will leave

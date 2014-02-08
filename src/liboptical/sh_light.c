@@ -139,8 +139,6 @@ struct light_obs_stuff {
 
 
 /**
- * A I M _ S E T
- *
  * This routine is called by bu_struct_parse() if the "aim" qualifier
  * is encountered, and causes lt_exaim to be set.
  */
@@ -248,8 +246,6 @@ light_pt_set(const struct bu_structparse *sdp,
 
 
 /**
- * L I G H T _ R E N D E R
- *
  * If we have a direct view of the light, return its color.  A cosine
  * term is needed in the shading of the light source, to make it have
  * dimension and shape.  However, just a simple cosine of the angle
@@ -484,8 +480,6 @@ light_gen_sample_pts_miss(register struct application *UNUSED(ap))
 
 
 /**
- * L I G H T _ G E N _ S A M P L E _ P T S
- *
  * Generate a set of sample points on the surface of the light with
  * surface normals.  calling during shader init to generate samples
  * for all lights.
@@ -563,9 +557,6 @@ light_gen_sample_pts(struct application *upap,
 }
 
 
-/**
- * L I G H T _ P R I N T
- */
 HIDDEN void
 light_print(register struct region *rp, genptr_t dp)
 {
@@ -573,9 +564,6 @@ light_print(register struct region *rp, genptr_t dp)
 }
 
 
-/**
- * L I G H T _ F R E E
- */
 void
 light_free(genptr_t cp)
 {
@@ -596,8 +584,6 @@ light_free(genptr_t cp)
 
 
 /**
- * L I G H T _ S E T U P
- *
  * Called once for each light-emitting region.
  */
 HIDDEN int
@@ -742,8 +728,6 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
 
 /**
- * L I G H T _ I N I T
- *
  * Special routine called by view_2init() to determine the relative
  * intensities of each light source.
  *
@@ -841,8 +825,6 @@ light_init(struct application *ap)
 
 
 /**
- * L I G H T _ C L E A N U P
- *
  * Called from view_end().  Take care of releasing storage for any
  * lights which will not be cleaned up by mlib_free(): implicitly
  * created lights, because they have no associated region, and
@@ -871,8 +853,6 @@ light_cleanup(void)
 
 
 /**
- * L I G H T _ H I T
- *
  * A light visibility test ray hit something.  Determine what this
  * means.
  *
@@ -1263,8 +1243,6 @@ out:
 
 
 /**
- * L I G H T _ M I S S
- *
  * If there is no explicit light solid in the model, we will always
  * "miss" the light, so return light_visible = TRUE.
  */
@@ -1298,8 +1276,6 @@ light_miss(register struct application *ap)
 #define VF_BACKFACE 2
 
 /**
- * l i g h t _ v i s
- *
  * Compute 1 light visibility ray from a hit point to the light.
  * Called by light_obs() to determine light visibility.
  */
@@ -1621,8 +1597,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 
 /**
- * L I G H T _ O B S C U R A T I O N
- *
  * Determine the visibility of each light source in the scene from a
  * particular location.  It is up to the caller to apply
  * sw_lightfract[] to lp_color, etc.
@@ -1783,8 +1757,6 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 
 
 /**
- * L I G H T _ M A K E R
- *
  * Special hook called by view_2init to build 1 or 3 debugging lights.
  */
 void

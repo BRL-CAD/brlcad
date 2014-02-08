@@ -39,8 +39,6 @@
 
 
 /**
- * G E D _ G E T S P A C E
- *
  * This routine walks through the directory entry list and mallocs
  * enough space for pointers to hold the number of entries specified
  * by the argument if > 0.
@@ -62,8 +60,6 @@ _ged_getspace(struct db_i *dbip,
 
 
 /**
- * _ G E D _ C M P D I R N A M E
- *
  * Given two pointers to pointers to directory entries, do a string
  * compare on the respective names and return that value.
  */
@@ -79,8 +75,6 @@ cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 
 
 /**
- * _ G E D _ V L S _ C O L _ P R 4 V
- *
  * Given a pointer to a list of pointers to names and the number of
  * names in that list, sort and print that list in column order over
  * four columns.
@@ -292,8 +286,6 @@ vls_long_dpp(struct ged *gedp,
 
 
 /**
- * G E D _ V L S _ L I N E _ D P P
- *
  * Given a pointer to a list of pointers to names and the number of names
  * in that list, sort and print that list on the same line.
  */

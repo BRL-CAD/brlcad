@@ -201,8 +201,6 @@ Ogl_doevent(ClientData UNUSED(clientData),
 
 
 /*
- * O G L _ D M
- *
  * Implement display-manager specific commands, from MGED "dm" command.
  */
 static int

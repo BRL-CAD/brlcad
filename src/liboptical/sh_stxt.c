@@ -86,8 +86,6 @@ struct mfuncs stxt_mfuncs[] = {
 
 
 /*
- * S T X T _ T R A N S P _ H O O K
- *
  * Hooked function, called by bu_structparse.
  */
 HIDDEN void
@@ -109,8 +107,6 @@ stxt_transp_hook(const struct bu_structparse *ptab,
 
 
 /*
- * S T X T _ R E A D
- *
  * Load the texture into memory.
  * Returns 0 on failure, 1 on success.
  */
@@ -164,9 +160,6 @@ stxt_read(register struct stxt_specific *stp)
 }
 
 
-/*
- * S T X T _ S E T U P
- */
 HIDDEN int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
@@ -206,9 +199,6 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * S T X T _ F R E E
- */
 HIDDEN void
 stxt_free(genptr_t cp)
 {
@@ -223,9 +213,6 @@ stxt_free(genptr_t cp)
 }
 
 
-/*
- * S T X T _ P R I N T
- */
 HIDDEN void
 stxt_print(register struct region *rp, genptr_t dp)
 {
@@ -324,8 +311,6 @@ brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp),
 
 
 /*
- * R B O U N D _ R E N D E R
- *
  * Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
@@ -395,8 +380,6 @@ rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp)
 
 
 /*
- * M B O U N D _ R E N D E R
- *
  * Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int

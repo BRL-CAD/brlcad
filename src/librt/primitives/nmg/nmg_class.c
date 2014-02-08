@@ -91,8 +91,6 @@ static void class_fu_vs_s(struct faceuse *fu, struct shell *s,
 			  char **classlist, const struct bn_tol *tol);
 
 /**
- * N M G _ C L A S S _ S T A T U S
- *
  * Convert classification status to string.
  */
 const char *
@@ -110,9 +108,6 @@ nmg_class_status(int status)
 }
 
 
-/**
- * N M G _ P R _ C L A S S _ S T A T U S
- */
 void
 nmg_pr_class_status(char *prefix, int status)
 {
@@ -122,8 +117,6 @@ nmg_pr_class_status(char *prefix, int status)
 
 
 /**
- * J O I N T _ H I T M I S S 2
- *
  * The ray hit an edge.  We have to decide whether it hit the
  * edge, or missed it.
  *
@@ -192,8 +185,6 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
 
 
 /**
- * N M G _ C L A S S _ P T _ E
- *
  * XXX DANGER:  This routine does not work well.
  *
  * Given the Cartesian coordinates of a point, determine if the point
@@ -398,8 +389,6 @@ out:
 
 
 /**
- * N M G _ C L A S S _ P T _ L
- *
  * XXX DANGER:  This routine does not work well.
  *
  * Given the coordinates of a point which lies on the plane of the face
@@ -491,8 +480,6 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 
 
 /**
- * N M G _ C L A S S _ L U _ F U
- *
  * This is intended as an internal routine to support nmg_lu_reorient().
  *
  * Given a loopuse in a face, pick one of its vertexuses, and classify
@@ -610,8 +597,6 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
 
 
 /**
- * N M G _ C L A S S _ P T _ S
- *
  * This is intended as a general user interface routine.
  * Given the Cartesian coordinates for a point in space,
  * return the classification for that point with respect to a shell.
@@ -786,8 +771,6 @@ out:
 
 
 /**
- * C L A S S _ V U _ V S _ S
- *
  * Classify a loopuse/vertexuse from shell A WRT shell B.
  */
 static int
@@ -919,9 +902,6 @@ out:
 }
 
 
-/**
- * C L A S S _ E U _ V S _ S
- */
 static int
 class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
@@ -1161,8 +1141,6 @@ out:
 
 /* XXX move to nmg_info.c */
 /**
- * N M G _ 2 L U _ I D E N T I C A L
- *
  * Given two edgeuses in different faces that share a common edge,
  * determine if they are from identical loops or not.
  *
@@ -1269,8 +1247,6 @@ out:
 
 
 /**
- * N M G _ R E C L A S S I F Y _ L U _ E U
- *
  * Make all the edges and vertices of a loop carry the same classification
  * as the loop.
  * There is no intrinsic way to tell if an edge is "shared" or
@@ -1350,8 +1326,6 @@ nmg_reclassify_lu_eu(struct loopuse *lu, char **classlist, int newclass)
 
 
 /**
- * C L A S S _ S H A R E D _ L U
- *
  * Classify LU w.r.t. LU_REF.
  *
  * Pre-requisites, required (but not checked for here):
@@ -1521,8 +1495,6 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 
 
 /**
- * C L A S S _ L U _ V S _ S
- *
  * Called by -
  * class_fu_vs_s
  */
@@ -1944,8 +1916,6 @@ out:
 
 
 /**
- * C L A S S _ F U _ V S _ S
- *
  * Called by -
  *	nmg_class_shells()
  */
@@ -1993,8 +1963,6 @@ class_fu_vs_s(struct faceuse *fu, struct shell *s, char **classlist, const struc
 
 
 /**
- * N M G _ C L A S S _ S H E L L S
- *
  * Classify one shell WRT the other shell
  *
  * Implicit return -
@@ -2069,8 +2037,6 @@ nmg_class_shells(struct shell *sA, struct shell *sB, char **classlist, const str
 
 
 /**
- * N M G _ C L A S S I F Y _ P T _ L O O P
- *
  * A generally available interface to nmg_class_pt_l
  *
  * returns the classification from nmg_class_pt_l
@@ -2123,8 +2089,6 @@ nmg_classify_pt_loop(const point_t pt,
 
 
 /**
- * N M G _ G E T _ I N T E R I O R _ P T
- *
  * Find any point that is interior to LU
  *
  * Returns:
@@ -2229,8 +2193,6 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *
 
 
 /**
- * N M G _ C L A S S I F Y _ L U _ L U
- *
  * Generally available classifier for
  * determining if one loop is within another
  *

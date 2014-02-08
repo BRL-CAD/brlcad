@@ -651,8 +651,6 @@ pipe_elements_free(struct bu_list *head)
 
 
 /**
- * R T _ P I P E _ B B O X
- *
  * Calculate a bounding RPP for a pipe
  */
 int
@@ -668,8 +666,6 @@ rt_pipe_bbox(
 
 
 /**
- * R T _ P I P E _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid pipe solid, and if so,
  * precompute various terms of the formula.
@@ -721,9 +717,6 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ P I P E _ P R I N T
- */
 void
 rt_pipe_print(const struct soltab *stp)
 {
@@ -735,9 +728,6 @@ rt_pipe_print(const struct soltab *stp)
 }
 
 
-/**
- * R T _ P I P E P T _ P R I N T
- */
 void
 rt_pipept_print(const struct wdb_pipept *pipept, double mm2local)
 {
@@ -757,9 +747,6 @@ rt_pipept_print(const struct wdb_pipept *pipept, double mm2local)
 }
 
 
-/**
- * R T _ V L S _ P I P E P T
- */
 void
 rt_vls_pipept(
     struct bu_vls *vp,
@@ -1596,8 +1583,6 @@ rt_pipe_elim_dups(
 
 
 /**
- * R T _ P I P E _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1683,8 +1668,6 @@ rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ P I P E _ S H O T
- *
  * Intersect a ray with a pipe.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -1783,8 +1766,6 @@ rt_pipe_shot(
 
 
 /**
- * R T _ P I P E _ C U R V E
- *
  * Return the curvature of the pipe.
  */
 void
@@ -1805,8 +1786,6 @@ rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ P I P E _ U V
- *
  * For a hit on the surface of an pipe, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -1825,9 +1804,6 @@ rt_pipe_uv(
 }
 
 
-/**
- * R T _ P I P E _ F R E E
- */
 void
 rt_pipe_free(struct soltab *stp)
 {
@@ -2032,8 +2008,6 @@ draw_pipe_linear_seg(
 
 
 /**
- * D R A W _ P I P E _ A R C
- *
  * Using the specified number of segments, draw the shortest arc on the given
  * circle which starts at (center + radius * v1) and ends at (arc_end).
  */
@@ -2362,9 +2336,6 @@ rt_pipe_adaptive_plot(
 }
 
 
-/**
- * R T _ P I P E _ P L O T
- */
 int
 rt_pipe_plot(
     struct bu_list *vhead,
@@ -3730,8 +3701,6 @@ tesselate_pipe_end(
 
 
 /**
- * R T _ P I P E _ T E S S
- *
  * XXXX Still needs vertexuse normals!
  */
 int
@@ -3926,9 +3895,6 @@ rt_pipe_tess(
 }
 
 
-/**
- * R T _ P I P E _ I M P O R T
- */
 int
 rt_pipe_import4(
     struct rt_db_internal *ip,
@@ -4003,9 +3969,6 @@ rt_pipe_import4(
 }
 
 
-/**
- * R T _ P I P E _ E X P O R T
- */
 int
 rt_pipe_export4(
     struct bu_external *ep,
@@ -4089,9 +4052,6 @@ rt_pipe_export4(
 }
 
 
-/**
- * R T _ P I P E _ I M P O R T 5
- */
 int
 rt_pipe_import5(
     struct rt_db_internal *ip,
@@ -4162,9 +4122,6 @@ rt_pipe_import5(
 }
 
 
-/**
- * R T _ P I P E _ E X P O R T 5
- */
 int
 rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -4232,8 +4189,6 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 /**
- * R T _ P I P E _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -4287,8 +4242,6 @@ rt_pipe_describe(
 
 
 /**
- * R T _ P I P E _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -4313,8 +4266,6 @@ rt_pipe_ifree(struct rt_db_internal *ip)
 
 
 /**
- * R T _ P I P E _ C K
- *
  * Check pipe solid.  Bend radius must be at least as large as the
  * outer radius.  All bends must have constant diameters.  No
  * consecutive LINEAR sections without BENDS unless the LINEAR
@@ -4426,8 +4377,6 @@ rt_pipe_ck(const struct bu_list *headp)
 
 
 /**
- * R T _ P I P E _ G E T
- *
  * Examples -
  * db get name V# => get coordinates for vertex #
  * db get name I# => get inner radius for vertex #
@@ -4646,10 +4595,6 @@ rt_pipe_adjust(
 }
 
 
-/**
- * R T _ P I P E _ P A R A M S
- *
- */
 int
 rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -4661,10 +4606,6 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P I P E _ S U R F A C E _ A R E A
- *
- */
 void
 rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 {
@@ -4864,10 +4805,6 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 }
 
 
-/**
- * R T _ P I P E _ V O L U M E
- *
- */
 void
 rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
 {
@@ -4888,10 +4825,6 @@ rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P I P E _ C E N T R O I D
- *
- */
 void
 rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
 {

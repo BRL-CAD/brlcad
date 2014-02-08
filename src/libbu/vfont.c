@@ -30,8 +30,6 @@
 
 
 /**
- * _ V A X _ G S H O R T
- *
  * Obtain a 16-bit signed integer from two adjacent characters, stored
  * in VAX order, regardless of word alignment.
  */

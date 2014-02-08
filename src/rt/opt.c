@@ -178,9 +178,6 @@ double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
 extern struct command_tab	rt_cmdtab[];
 
-/*
- *			G E T _ A R G S
- */
 int
 get_args(int argc, const char *argv[])
 {

@@ -127,8 +127,6 @@ rt_botface_w_normals(struct soltab *stp,
 
 
 /**
- * R T _ B O T F A C E
- *
  * This function is called with pointers to 3 points, and is used to
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
@@ -188,8 +186,6 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 
 
 /**
- * R T _ B O T _ B B O X
- *
  * Calculate an RPP for a BoT
  */
 int
@@ -236,8 +232,6 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ B O T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid BOT, and if so, precompute
  * various terms of the formula.
@@ -268,9 +262,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ B O T _ P R I N T
- */
 void
 rt_bot_print(const struct soltab *stp)
 {
@@ -313,8 +304,6 @@ rt_bot_unoriented_segs(struct hit *hits,
 
 
 /**
- * R T _ B O T _ M A K E S E G S
- *
  * Given an array of hits, make segments out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
@@ -337,8 +326,6 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 
 
 /**
- * R T _ B O T _ S H O T
- *
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -373,8 +360,6 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ B O T _ P I E C E _ S H O T
- *
  * Intersect a ray with a list of "pieces" of a BoT.
  *
  * This routine may be invoked many times for a single ray, as the ray
@@ -404,9 +389,6 @@ rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double di
 }
 
 
-/**
- * R T _ B O T _ P I E C E _ H I T S E G S
- */
 void
 rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap)
 {
@@ -423,8 +405,6 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
 
 
 /**
- * R T _ B O T _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -441,8 +421,6 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ B O T _ C U R V E
- *
  * Return the curvature of the bot.
  */
 void
@@ -459,8 +437,6 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ B O T _ U V
- *
  * For a hit on the surface of an bot, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -477,9 +453,6 @@ rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ B O T _ F R E E
- */
 void
 rt_bot_free(struct soltab *stp)
 {
@@ -499,9 +472,6 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ B O T _ C L A S S
- */
 int
 rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
@@ -670,9 +640,6 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 
-/**
- * R T _ B O T _ P L O T
- */
 int
 rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -701,9 +668,6 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ B O T _ P L O T _ P O L Y
- */
 int
 rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
@@ -763,9 +727,6 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 }
 
 
-/**
- * R T _ B O T _ C E N T R O I D
- */
 void
 rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -783,8 +744,6 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ B O T _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -917,8 +876,6 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ B O T _ I M P O R T
- *
  * Import an BOT from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -997,8 +954,6 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ B O T _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1099,9 +1054,6 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-/**
- * R T _ B O T _ I M P O R T 5
- */
 int
 rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1232,9 +1184,6 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ B O T _ E X P O R T 5
- */
 int
 rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1392,8 +1341,6 @@ static char *nocos="\tThis is a plate mode solid with no obliquity angle effect\
 static char *unknown_mode="\tunknown mode\n";
 
 /**
- * R T _ B O T _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1563,8 +1510,6 @@ bot_ifree2(struct rt_bot_internal *bot_ip)
 
 
 /**
- * R T _ B O T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1872,8 +1817,6 @@ static char *los[]={
 
 
 /**
- * R T _ B O T _ G E T
- *
  * Examples -
  * db get name fm	get los facemode bit vector
  * db get name fm#	get los face mode of face # (center, append)
@@ -2176,8 +2119,6 @@ bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
 
 
 /**
- * R T _ B O T _ A D J U S T
- *
  * Examples -
  * db adjust name fm		set los facemode bit vector
  * db adjust name fm#		set los face mode of face # (center, append)
@@ -3928,8 +3869,6 @@ delete_edge(int v1, int v2, struct bot_edge **edges)
 
 
 /**
- * D E C I M A T E _ E D G E
- *
  * Routine to perform the actual edge decimation step The edge from v1
  * to v2 is eliminated by moving v1 to v2.  Faces that used this edge
  * are eliminated.  Faces that used v1 will have that reference
@@ -4118,8 +4057,6 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 
 
 /**
- * E D G E _ C A N _ B E _ D E C I M A T E D
- *
  * Routine to determine if the specified edge can be eliminated within
  * the given constraints:
  *
@@ -4306,8 +4243,6 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 
 
 /**
- * R T _ B O T _ D E C I M A T E
- *
  * routine to reduce the number of triangles in a BOT by edges
  * decimation.
  *

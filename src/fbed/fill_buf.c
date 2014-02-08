@@ -38,8 +38,6 @@
 #include "./extern.h"
 
 /**
- * f i l l _ b u f
- *
  * Fills in the buffer by reading a row of a bitmap from the character
  * font file.  The file pointer is assumed to be in the correct
  * position.

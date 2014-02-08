@@ -145,9 +145,6 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * T O O N _ P R I N T
- */
 HIDDEN void
 toon_print(register struct region *rp, genptr_t dp)
 {
@@ -155,9 +152,6 @@ toon_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * T O O N _ F R E E
- */
 HIDDEN void
 toon_free(genptr_t cp)
 {
@@ -166,8 +160,6 @@ toon_free(genptr_t cp)
 
 
 /*
- * T O O N _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

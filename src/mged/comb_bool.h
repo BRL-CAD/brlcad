@@ -79,10 +79,6 @@ extern struct bool_tree_node *comb_bool_tree;
 	    bu_exit(1, NULL);                                           \
 	}
 
-/*
- *
- */
-
 extern struct bool_tree_node *bt_create_internal (int, struct bool_tree_node *, struct bool_tree_node *);
 extern struct bool_tree_node *bt_create_leaf (char*);
 extern void show_tree_infix (struct bool_tree_node *, int);

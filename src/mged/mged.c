@@ -325,8 +325,6 @@ reset_input_strings()
 
 
 /*
- * Q U I T
- *
  * Handles finishing up.  Also called upon EOF on STDIN.
  */
 void
@@ -337,9 +335,6 @@ quit(void)
 }
 
 
-/*
- * S I G 2
- */
 void
 sig2(int UNUSED(sig))
 {
@@ -349,9 +344,6 @@ sig2(int UNUSED(sig))
 }
 
 
-/*
- * S I G 3
- */
 void
 sig3(int UNUSED(sig))
 {
@@ -396,8 +388,6 @@ mged_view_callback(struct ged_view *gvp,
 
 
 /**
- * N E W _ M A T S
- *
  * Derive the inverse and editing matrices, as required.  Centralized
  * here to simplify things.
  */
@@ -409,8 +399,6 @@ new_mats(void)
 
 
 /**
- * D O _ R C
- *
  * If an mgedrc file exists, open it and process the commands within.
  * Look first for a Shell environment variable, then for a file in the
  * user's home directory, and finally in the current directory.
@@ -1036,9 +1024,6 @@ mged_process_char(char ch)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -1948,8 +1933,6 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
 
 /**
- * E V E N T _ C H E C K
- *
  * Check for events, and dispatch them.  Eventually, this will be done
  * entirely by generating commands
  *
@@ -2265,8 +2248,6 @@ event_check(int non_blocking)
 
 
 /**
- * R E F R E S H
- *
  * NOTE that this routine is not to be casually used to refresh the
  * screen.  The normal procedure for screen refresh is to manipulate
  * the necessary global variables, and wait for refresh to be called
@@ -2458,8 +2439,6 @@ refresh(void)
 
 
 /**
- * F I N I S H
- *
  * This routine should be called in place of exit() everywhere in GED,
  * to permit an accurate finish time to be recorded in the (ugh)
  * logfile, also to remove the device access lock.
@@ -2555,8 +2534,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
 
 
 /**
- * F _ O P E N D B
- *
  * Close the current database, if open, and then open a new database.
  * May also open a display manager, if interactive and none selected
  * yet.
@@ -2924,8 +2901,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 
 /**
- * F _ C L O S E D B
- *
  * Close the current database, if open.
  */
 int

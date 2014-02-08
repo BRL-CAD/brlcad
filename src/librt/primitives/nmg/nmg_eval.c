@@ -81,8 +81,6 @@ static const char *nmg_class_names[] = {
 
 
 /**
- * N M G _ C K _ L U _ O R I E N T A T I O N
- *
  * Make sure that the lu and fu orientation flags are consistent with
  * the geometric arrangement of the vertices and the faceuse normal.
  */
@@ -119,8 +117,6 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
 
 /**
- * N M G _ C L A S S _ N A M E
- *
  * Convert an NMG_CLASS_xxx token into a string name.
  */
 const char *
@@ -182,8 +178,6 @@ static const int intersect_actions[8] = {
 
 
 /**
- * N M G _ E V A L U A T E _ B O O L E A N
- *
  * Evaluate a boolean operation on the two shells "A" and "B", of the
  * form "answer = A op B".  As input, each element (loop-in-face, wire
  * loop, wire edge, vertex) in both A and B has been classified as
@@ -267,8 +261,6 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
 
 
 /**
- * N M G _ E V A L _ A C T I O N
- *
  * Given a pointer to some NMG data structure, search the 4
  * classification lists to determine its classification.  (XXX In the
  * future, this should be done with one big array).  Then, return the
@@ -351,8 +343,6 @@ out:
 
 
 /**
- * N M G _ E V A L _ S H E L L
- *
  * Make a life-and-death decision on every element of a shell.
  * Descend the "great chain of being" from the face to loop to edge to
  * vertex, saving or demoting along the way.
@@ -596,8 +586,6 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 
 
 /**
- * N M G _ E V A L _ P L O T
- *
  * Called from nmg_eval_shell
  *
  * Located here because definition of nmg_bool_state is local to this

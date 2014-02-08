@@ -30,8 +30,6 @@
 
 
 /**
- * _ R B _ S E L E C T
- *
  * Retrieve the element of rank k in one order of a red-black tree
  *
  * This function has three parameters: the root of the tree to search,

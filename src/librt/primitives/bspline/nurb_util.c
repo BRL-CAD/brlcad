@@ -100,8 +100,6 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 
 
 /**
- * R T _ N U R B _ C L E A N _ S N U R B
- *
  * Clean up the storage use of an snurb, but don't release the
  * pointer.  Often used by routines that allocate an array of nurb
  * pointers, or use automatic variables to hold one.
@@ -126,9 +124,6 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 }
 
 
-/**
- * R T _ N U R B _ F R E E _ S N U R B
- */
 void
 rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
 {
@@ -150,8 +145,6 @@ rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
 
 
 /**
- * R T _ N U R B _ C L E A N _ C N U R B
- *
  * Clean up the storage use of a cnurb, but don't release the pointer.
  * Often used by routines that allocate an array of nurb pointers, or
  * use automatic variables to hold one.
@@ -172,8 +165,6 @@ rt_nurb_clean_cnurb(struct edge_g_cnurb *crv)
 
 
 /**
- * R T _ N U R B _ F R E E _ C N U R B
- *
  * Release a cnurb and all the storage that it references.
  */
 void

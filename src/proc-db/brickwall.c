@@ -261,8 +261,6 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
 
 /*
- * G E N _ B R I C K S
- *
  * generate the brick solids, regions thereof, groups for rows
  * and a group for the wall as a whole.
  */
@@ -311,8 +309,6 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	    brick_name, "sh=40 di=0.9 sp=0.1", color);
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

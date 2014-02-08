@@ -439,9 +439,6 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/*
- * T K _ D R A W
- */
 int
 tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -463,8 +460,6 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 
 
 /*
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -479,8 +474,6 @@ tk_normal(struct dm *dmp)
 
 
 /*
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
@@ -879,8 +872,6 @@ struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 
 /*
- * T k _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */

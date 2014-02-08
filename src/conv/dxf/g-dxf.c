@@ -373,8 +373,6 @@ static struct gcv_data gcvwriter = {nmg_to_dxf};
 
 
 /**
- * M A I N
- *
  * This is the gist for what is going on (not verified):
  *
  * 1. initialize tree_state (db_tree_state)

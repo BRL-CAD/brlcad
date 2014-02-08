@@ -576,9 +576,6 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {

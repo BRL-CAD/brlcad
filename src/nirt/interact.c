@@ -80,8 +80,6 @@ sgetc (char *string)
 
 
 /**
- * I N T E R A C T
- *
  * Handle user interaction.  Interact() prompts on stdin for a key
  * word, looks the key word up in the command table and, if it finds
  * the key word, the command is executed.

@@ -47,8 +47,6 @@
 
 
 /**
- * N M G _ P O L Y T O N M G
- *
  * Read a polygon file and convert it to an NMG shell
  *
  * A polygon file consists of the following:
@@ -166,8 +164,6 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 
 
 /**
- * N M G _ I S E C T _ F A C E 3 P _ S H E L L _ I N T
- *
  * Intersect all the edges in fu1 that don't lie on any of the faces
  * of shell s2 with s2, i.e. "interior" edges, where the endpoints lie
  * on s2, but the edge is not shared with a face of s2.  Such edges

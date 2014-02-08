@@ -53,8 +53,6 @@
 
 
 /*
- * C O M M _ E R R O R
- *
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
@@ -98,9 +96,6 @@ fbserv_setup_socket(int fd)
 }
 
 
-/*
- * D R O P _ C L I E N T
- */
 HIDDEN void
 fbserv_drop_client(int sub)
 {
@@ -240,9 +235,6 @@ fbserv_new_client_handler(ClientData clientData,
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -357,9 +349,6 @@ fbserv_makeconn(int fd,
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
 
-/*
- * N E W _ C L I E N T
- */
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp)
 {
@@ -417,9 +406,6 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -650,9 +636,6 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B R E A D R E C T
- */
 void
 rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -696,9 +679,6 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B W R I T E R E C T
- */
 void
 rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -730,9 +710,6 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W R E A D R E C T
- */
 void
 rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -776,9 +753,6 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W W R I T E R E C T
- */
 void
 rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -1004,8 +978,6 @@ rfbrmap(struct pkg_conn *pcp, char *buf)
 
 
 /*
- * R F B W M A P
- *
  * Accept a color map sent by the client, and write it to the
  * framebuffer.  Network format is to send each entry as a network
  * (IBM) order 2-byte short, 256 red shorts, followed by 256 green and

@@ -178,9 +178,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

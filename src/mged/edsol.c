@@ -1578,8 +1578,6 @@ spline_ed(int arg)
     set_e_axes_pos(1);
 }
 /*
- * N M G _ E D
- *
  * Handler for events in the NMG menu.
  * Mostly just set appropriate state flags to prepare us for user's
  * next event.
@@ -2480,8 +2478,6 @@ f_get_solid_keypoint(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), 
 
 
 /*
- * I N I T _ S E D I T
- *
  * First time in for this solid, set things up.
  * If all goes well, change state to ST_S_EDIT.
  * Solid editing is completed only via sedit_accept() / sedit_reject().
@@ -2618,8 +2614,6 @@ init_sedit_vars(void)
 
 
 /*
- * R E P L O T _ E D I T I N G _ S O L I D
- *
  * All solid edit routines call this subroutine after
  * making a change to es_int or es_mat.
  */
@@ -2654,10 +2648,6 @@ replot_editing_solid(void)
 }
 
 
-/*
- * T R A N S F O R M _ E D I T I N G _ S O L I D
- *
- */
 void
 transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
@@ -2671,9 +2661,6 @@ transform_editing_solid(
 
 
 /*
- * S E D I T _ M E N U
- *
- *
  * Put up menu header
  */
 void
@@ -2881,8 +2868,6 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
 
 
 /*
- * P S C A L E
- *
  * Partial scaling of a solid.
  */
 void
@@ -3904,8 +3889,6 @@ pscale(void)
 
 
 /*
- * S E D I T
- *
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  * Called from mged main loop after any event handlers:
@@ -6688,8 +6671,6 @@ update_edit_absolute_tran(vect_t view_pos)
 
 
 /*
- * S E D I T _ M O U S E
- *
  * Mouse (pen) press in graphics area while doing Solid Edit.
  * mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
  * to viewspace.
@@ -7275,9 +7256,6 @@ oedit_abs_scale(void)
 }
 
 
-/*
- * V L S _ S O L I D
- */
 void
 vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 {
@@ -7327,10 +7305,6 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 }
 
 
-/*
- * I N I T _ O B J E D I T _ G U T S
- *
- */
 static void
 init_oedit_guts(void)
 {
@@ -7422,10 +7396,6 @@ init_oedit_vars(void)
 }
 
 
-/*
- * I N I T _ O B J E D I T
- *
- */
 void
 init_oedit(void)
 {
@@ -7949,8 +7919,6 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /*
- * L A B E L _ E D I T E D _ S O L I D
- *
  * Put labels on the vertices of the currently edited solid.
  * XXX This really should use import/export interface! Or be part of it.
  */
@@ -8553,8 +8521,6 @@ sedit_vpick(point_t v_pos)
 				((P1)[Z] - (P0)[Z])*((P1)[Z] - (P0)[Z]))
 
 /*
- * N U R B _ C L O S E S T 2 D
- *
  * Given a pointer (vhead) to vlist point coordinates, a reference
  * point (ref_pt), and a transformation matrix (mat), pass back in
  * "closest_pt" the original, untransformed 3 space coordinates of
@@ -9012,9 +8978,6 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 }
 
 
-/*
- * F _ S E D I T _ R E S E T
- */
 int
 f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {

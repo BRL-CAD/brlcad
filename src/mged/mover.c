@@ -43,8 +43,6 @@ int mat_default = 1;	/* GIFT material code */
 int los_default = 100;	/* Line-of-sight estimate */
 
 /*
- * M O V E H O B J
- *
  * This routine is used when the object to be moved is
  * the top level in its reference path.
  * The object itself (solid or "leaf" combination) is relocated.
@@ -76,8 +74,6 @@ moveHobj(struct directory *dp, matp_t xlate)
 
 
 /*
- * M O V E H I N S T A N C E
- *
  * This routine is used when an instance of an object is to be
  * moved relative to a combination, as opposed to modifying the
  * co-ordinates of member solids.  Input is a pointer to a COMB,

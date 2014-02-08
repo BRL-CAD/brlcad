@@ -88,9 +88,6 @@ extern int miss(register struct application *ap);
 int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
 int bundle_miss(register struct application_bundle *bundle);
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

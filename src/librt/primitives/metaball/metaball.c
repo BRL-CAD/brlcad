@@ -158,8 +158,6 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 }
 
 /**
- * R T _ M E T A B A L L _ B B O X
- *
  * Calculate a bounding RPP around a metaball
  */
 int
@@ -181,8 +179,6 @@ rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const st
 
 
 /**
- * R T _ M E T A B A L L _ P R E P
- *
  * prep and build bounding volumes... unfortunately, generating the
  * bounding sphere is too 'loose' (I think) and O(n^2).
  */
@@ -236,9 +232,6 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 
-/**
- * R T _ M E T A B A L L _ P R I N T
- */
 void
 rt_metaball_print(register const struct soltab *stp)
 {
@@ -257,9 +250,6 @@ rt_metaball_print(register const struct soltab *stp)
 }
 
 
-/**
- * R T _ M E T A B A L L P T _ P R I N T
- */
 void
 rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local)
 {
@@ -370,9 +360,6 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 }
 
 
-/*
- * R T _ M E T A B A L L _ S H O T
- */
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
@@ -543,8 +530,6 @@ rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb
 }
 
 /**
- * R T _ M E T A B A L L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -557,8 +542,6 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 
 
 /**
- * R T _ M E T A B A L L _ C U R V E
- *
  * Return the curvature of the metaball.
  */
 void
@@ -575,8 +558,6 @@ rt_metaball_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ M E T A B A L L _ U V
- *
  * For a hit on the surface of an METABALL, return the (u, v)
  * coordinates of the hit point, 0 <= u, v <= 1.
  *
@@ -620,9 +601,6 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-/**
- * R T _ M E T A B A L L _ F R E E
- */
 void
 rt_metaball_free(register struct soltab *stp)
 {
@@ -669,9 +647,6 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
 }
 
 
-/**
- * R T _ M E T A B A L L _ P L O T
- */
 int
 rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -697,8 +672,6 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 }
 
 /**
- * R T _ M E T A B A L L _ I M P O R T 5
- *
  * Import an metaball/sphere from the database format to the internal
  * structure. Apply modeling transformations as well.
  */
@@ -748,8 +721,6 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
 
 /**
- * R T _ M E T A B A L L _ E X P O R T 5
- *
  * storage is something like
  * long numpoints
  * long method
@@ -806,8 +777,6 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ M E T A B A L L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid. First
  * line describes type of solid. Additional lines are indented one
  * tab, and give parameter values.
@@ -853,8 +822,6 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
 
 /**
- * R T _ M E T A B A L L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.  This only effects the in-memory copy.
  */
@@ -880,8 +847,6 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 
 
 /**
- * R T _ M E T A B A L L _ A D D _ P O I N T
- *
  * Add a single point to an existing metaball.
  */
 int
@@ -900,10 +865,6 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
 }
 
 
-/**
- * R T _ M E T A B A L L _ P A R A M S
- *
- */
 int
 rt_metaball_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -913,8 +874,6 @@ rt_metaball_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
 }
 
 /**
- * R T _ M E T A B A L L _ G E T
- *
  * db get/g2asc
  */
 int
@@ -942,8 +901,6 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
 }
 
 /**
- * R T _ M E T A B A L L _ A D J U S T
- *
  * used for db put/asc2g
  */
 int

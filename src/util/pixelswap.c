@@ -88,8 +88,6 @@ int parse_args(int ac, char **av)
     return bu_optind;
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

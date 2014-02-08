@@ -164,8 +164,6 @@ nmg_to_rib(struct model *m)
 
 
 /*
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */

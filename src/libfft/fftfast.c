@@ -91,8 +91,6 @@ double *sintab;
 double *costab;
 
 /*
- * I N I T _ S I N T A B
- *
  * Internal routine to initialize the sine/cosine table for
  * transforms of a given size.  Checks size for power of two
  * and within table limits.

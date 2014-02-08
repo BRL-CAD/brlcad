@@ -358,19 +358,13 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
-   * G A U S S _ P R I N T
-   */
-HIDDEN void
+HIDDEN void
 gauss_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
 
-/*
- * G A U S S _ F R E E
- */
 HIDDEN void
 gauss_free(genptr_t cp)
 {
@@ -472,8 +466,6 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 
 
 /*
- * G A U S S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

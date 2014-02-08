@@ -728,8 +728,6 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * F B O _ C M D
- *
  * Generic interface for framebuffer object routines.
  * Usage:
  * procname cmd ?args?

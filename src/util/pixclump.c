@@ -140,8 +140,6 @@ static void print_table (void)
 
 
 /*
- * C O L O R _ D I F F ()
- *
  * Returns the square of the Euclidean distance in RGB space
  * between a specified pixel (R/G/B triple) and a specified
  * entry in the color table.

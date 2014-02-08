@@ -91,9 +91,6 @@ usage(const char *s, int n)
 }
 
 
-/*
- * O P E N _ F I L E
- */
 int
 open_file(int i, char *name)
 {
@@ -141,9 +138,6 @@ open_file(int i, char *name)
 }
 
 
-/*
- * G E T _ A R G S
- */
 void
 get_args(int argc, char **argv)
 {

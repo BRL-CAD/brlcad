@@ -78,10 +78,6 @@ trace_do(struct db_i *dbip,
 }
 
 
-/**
- *
- *
- */
 void
 _ged_trace(struct directory *dp,
 	   int pathpos,

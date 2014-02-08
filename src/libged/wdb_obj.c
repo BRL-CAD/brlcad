@@ -187,8 +187,6 @@ static int pathListNoLeaf = 0;
 
 
 /**
- * W D B _ C M P D I R N A M E
- *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
  */
@@ -206,9 +204,6 @@ wdb_cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 #define RT_TERMINAL_WIDTH 80
 #define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
 
-/**
- * V L S _ C O L _ I T E M
- */
 void
 wdb_vls_col_item(struct bu_vls *str,
 		 const char *cp,
@@ -238,9 +233,6 @@ wdb_vls_col_item(struct bu_vls *str,
 }
 
 
-/**
- *
- */
 void
 wdb_vls_col_eol(struct bu_vls *str,
 		int *ccp,
@@ -254,8 +246,6 @@ wdb_vls_col_eol(struct bu_vls *str,
 
 
 /**
- * W D B _ V L S _ C O L _ P R 4 V
- *
  * Given a pointer to a list of pointers to names and the number of
  * names in that list, sort and print that list in column order over
  * four columns.
@@ -466,7 +456,6 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ V L S _ L I N E _ D P P
  *@brief
  * Given a pointer to a list of pointers to names and the number of
  * names in that list, sort and print that list on the same line.
@@ -519,8 +508,6 @@ wdb_vls_line_dpp(struct rt_wdb *UNUSED(wdbp),
 
 
 /**
- * W D B _ G E T S P A C E
- *
  * This routine walks through the directory entry list and mallocs
  * enough space for pointers to hold:
  *
@@ -543,9 +530,6 @@ wdb_getspace(struct db_i *dbip,
 }
 
 
-/*
- * W D B _ D O _ L I S T
- */
 void
 wdb_do_list(struct db_i *dbip,
 	    struct bu_vls *outstrp,
@@ -614,8 +598,6 @@ wdb_do_list(struct db_i *dbip,
 
 
 /*
- * W D B _ C O M B A D D
- *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
@@ -803,8 +785,6 @@ wdb_do_identitize(struct db_i *dbip,
 
 
 /*
- * W D B _ I D E N T I T I Z E ()
- *
  * Traverses an objects paths, setting all member matrices == identity
  *
  */
@@ -834,8 +814,6 @@ wdb_identitize(struct directory *dp,
 
 
 /*
- * W D B _ D I R _ G E T S P A C E
- *
  * This routine walks through the directory entry list and mallocs enough
  * space for pointers to hold:
  * a) all of the entries if called with an argument of 0, or
@@ -869,8 +847,6 @@ wdb_dir_getspace(struct db_i *dbip,
 
 
 /*
- * W D B _ D I R _ S U M M A R Y
- *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
  * as a request to print all the names in that category (e.g., RT_DIR_SOLID).
@@ -934,9 +910,6 @@ wdb_dir_summary(struct db_i *dbip,
 }
 
 
-/*
- * P A T H L I S T _ L E A F _ F U N C
- */
 static union tree *
 wdb_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp),
 		       const struct db_full_path *pathp,
@@ -966,10 +939,6 @@ wdb_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp),
     return TREE_NULL;
 }
 
-
-/*
- * W D B _ B O T _ D E C I M A T E _ C M D
- */
 
 int
 wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
@@ -1786,7 +1755,6 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ M A T C H _ T C L
  *@brief
  * Returns (via interp) a list (possibly empty) of all matches to the
  * (possibly wildcard-containing) arguments given.  Does *NOT* return
@@ -2211,8 +2179,6 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ A D J U S T _ T C L
- *
  *@brief
  * For use with Tcl, this routine accepts as its first argument an item in
  * the database; as its remaining arguments it takes the properties that
@@ -2277,9 +2243,6 @@ wdb_form_cmd(struct rt_wdb *wdbp,
 }
 
 
-/**
- * W D B _ F O R M _ T C L
- */
 static int
 wdb_form_tcl(void *clientData,
 	     int argc,
@@ -2383,8 +2346,6 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ T O P S _ T C L
- *
  * NON-PARALLEL because of rt_uniresource
  */
 static int
@@ -2399,7 +2360,6 @@ wdb_tops_tcl(void *clientData,
 
 
 /**
- * R T _ T C L _ D E L E T E P R O C _ R T
  *@brief
  * Called when the named proc created by rt_gettrees() is destroyed.
  */
@@ -2516,7 +2476,6 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ R T _ G E T T R E E S _ T C L
  *@brief
  * Given an instance of a database and the name of some treetops,
  * create a named "ray-tracing" object (proc) which will respond to
@@ -2819,7 +2778,6 @@ wdb_dump_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ D U M P _ T C L
  *@brief
  * Write the current state of a database object out to a file.
  *
@@ -2837,9 +2795,6 @@ wdb_dump_tcl(void *clientData,
 }
 
 
-/**
- *
- */
 int
 wdb_stub_cmd(struct rt_wdb *wdbp,
 	     int argc,
@@ -3196,7 +3151,6 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ P A T H S U M _ T C L
  *@brief
  * Common code for several direct db methods: listeval, paths
  * Also used as support routine for "l" (list) command.
@@ -3602,9 +3556,6 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 }
 
 
-/*
- * K I L L T R E E
- */
 static void
 wdb_killtree_callback(struct db_i *dbip,
 		      struct directory *dp,
@@ -3865,9 +3816,6 @@ wdb_move_tcl(void *clientData,
 }
 
 
-/**
- *
- */
 int
 wdb_move_all_cmd(struct rt_wdb *wdbp,
 		 int argc,
@@ -4713,7 +4661,6 @@ wdb_dir_check5(struct db_i *input_dbip,
 
 
 /**
- * W D B _ D I R _ C H E C K
  *@brief
  * Check a name against the global directory.
  */
@@ -6114,7 +6061,6 @@ wdb_version_tcl(void *clientData,
 
 
 /**
- * W D B _ P R I N T _ N O D E
  *@brief
  * NON-PARALLEL due to rt_uniresource
  */
@@ -6637,8 +6583,6 @@ wdb_pull_comb(struct db_i *dbip,
 
 
 /**
- * P U L L _ L E A F
- *
  * @brief
  * This routine takes the internal database representation of a leaf node or
  * primitive object and builds  a matrix transformation, closest to this node's,
@@ -6763,8 +6707,6 @@ struct wdb_push_data {
 
 
 /**
- * P U S H _ L E A F
- *
  * This routine must be prepared to run in parallel.
  *
  * @brief
@@ -7642,7 +7584,6 @@ struct wdb_node_data {
 
 
 /**
- * W D B _ N O D E _ W R I T E
  *@brief
  * Support for the 'keep' method.
  * Write each node encountered exactly once.
@@ -9849,7 +9790,6 @@ do_nothing(genptr_t UNUSED(nada1), genptr_t UNUSED(nada2))
 
 
 /**
- * W D B _ C M D
  *@brief
  * Generic interface for database commands.
  *
@@ -9971,7 +9911,6 @@ wdb_init_obj(Tcl_Interp *interp,
 
 
 /**
- * W D B _ O P E N _ T C L
  *@brief
  * A TCL interface to wdb_fopen() and wdb_dbopen().
  *

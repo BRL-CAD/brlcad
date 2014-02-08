@@ -189,8 +189,6 @@ const struct bu_structparse rt_ehy_parse[] = {
 static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
 /**
- * R T _ E H Y _ B B O X
- *
  * Create a bounding RPP for an ehy
  */
 int
@@ -243,8 +241,6 @@ rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ E H Y _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EHY, and if so, precompute
  * various terms of the formula.
@@ -333,9 +329,6 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ E H Y _ P R I N T
- */
 void
 rt_ehy_print(const struct soltab *stp)
 {
@@ -358,8 +351,6 @@ rt_ehy_print(const struct soltab *stp)
 
 
 /**
- * R T _ E H Y _ S H O T
- *
  * Intersect a ray with a ehy.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -491,8 +482,6 @@ check_plates:
 
 
 /**
- * R T _ E H Y _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -529,8 +518,6 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E H Y _ C U R V E
- *
  * Return the curvature of the ehy.
  */
 void
@@ -586,8 +573,6 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E H Y _ U V
- *
  * For a hit on the surface of an ehy, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -641,9 +626,6 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ E H Y _ F R E E
- */
 void
 rt_ehy_free(struct soltab *stp)
 {
@@ -928,9 +910,6 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 
-/**
- * R T _ E H Y _ P L O T
- */
 int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1173,8 +1152,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ E H Y _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1624,8 +1601,6 @@ fail:
 
 
 /**
- * R T _ E H Y _ I M P O R T
- *
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1699,8 +1674,6 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E H Y _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1761,8 +1734,6 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E H Y _ I M P O R T 5
- *
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1812,8 +1783,6 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E H Y _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1875,8 +1844,6 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E H Y _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1920,8 +1887,6 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E H Y _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1941,10 +1906,6 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ E H Y _ P A R A M S
- *
- */
 int
 rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
