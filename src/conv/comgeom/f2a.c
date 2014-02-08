@@ -31,7 +31,9 @@
 #include "bu.h"
 
 
-/** F 2 A () ====  convert float to ascii w.df format.	No leading blanks */
+/**
+ * convert float to ascii w.df format.	No leading blanks.
+ */
 void
 f2a(float f, char *s, int w, int d)
 /* INPUT	===*/
