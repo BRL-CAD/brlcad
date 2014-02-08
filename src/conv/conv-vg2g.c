@@ -42,10 +42,6 @@
 #include "bu.h"
 
 
-union record rec;
-
-char line[256];
-
 int
 main(int argc, char **argv)
 {
@@ -57,6 +53,9 @@ main(int argc, char **argv)
     int ret;
     char *ifpath;
     char *ofpath;
+
+    char line[256] = {0};
+    union record rec;
 
     bu_setprogname(argv[0]);
 
