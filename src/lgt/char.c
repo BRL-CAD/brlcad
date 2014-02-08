@@ -96,7 +96,7 @@ do_line(int xpos, int ypos, char *line)
     return;
 }
 
-/*	d o _ c h a r ( )
+/*
 	Outputs pixel representation of a character by reading a row of a
 	bitmap from the character font file.  The file pointer is assumed
 	to be in the correct position.
@@ -165,7 +165,7 @@ do_char(int c, int xpos, int ypos)
     return;
 }
 
-/*	b i t x ( )
+/*
 	Extract a bit field from a bit string.
 */
 /*ARGSUSED*/

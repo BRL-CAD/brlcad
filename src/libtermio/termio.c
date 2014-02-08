@@ -124,7 +124,7 @@ static struct sgttyb save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 static int fileStatus[FOPEN_MAX];
 
 
-/* c l r _ C b r e a k ()
+/*
    Clear CBREAK mode, for file descriptor 'fd'.
 */
 void
@@ -149,7 +149,7 @@ clr_Cbreak(int fd)
     return;
 }
 
-/* s e t _ C b r e a k ()
+/*
    Set CBREAK mode, 'fd'.
 */
 void
@@ -174,7 +174,7 @@ set_Cbreak(int fd)
     return;
 }
 
-/* c l r _ R a w ()
+/*
    Set cooked mode, 'fd'.
 */
 void
@@ -201,7 +201,7 @@ clr_Raw(int fd)
     return;
 }
 
-/* s e t _ R a w ()
+/*
    Set raw mode, 'fd'.
 */
 void
@@ -228,7 +228,7 @@ set_Raw(int fd)
     return;
 }
 
-/* s e t _ E c h o ()
+/*
    Set echo mode, 'fd'.
 */
 void
@@ -249,7 +249,7 @@ set_Echo(int fd)
     return;
 }
 
-/* c l r _ E c h o ()
+/*
    Clear echo mode, 'fd'.
 */
 void
@@ -270,7 +270,7 @@ clr_Echo(int fd)
     return;
 }
 
-/* s e t _ T a b s ()
+/*
    Turn on tab expansion, 'fd'.
 */
 void
@@ -293,7 +293,7 @@ set_Tabs(int fd)
     return;
 }
 
-/* c l r _ T a b s ()
+/*
    Turn off tab expansion, 'fd'.
 */
 void
@@ -314,7 +314,7 @@ clr_Tabs(int fd)
     return;
 }
 
-/* s e t _ H U P C L ()
+/*
    Turn on "Hang up on last close", 'fd'.
 */
 void
@@ -336,7 +336,7 @@ set_HUPCL(int fd)
     return;
 }
 
-/* c l r _ C R N L ()
+/*
    Turn off CR/LF mapping, fd.
 */
 void
@@ -358,7 +358,7 @@ clr_CRNL(int fd)
 #endif
 }
 
-/* g e t _ O _ S p e e d ()
+/*
    Get the terminals output speed, 'fd'.
 */
 unsigned short
@@ -375,7 +375,6 @@ get_O_Speed(int fd)
 #endif
 }
 
-/* c o p y _ T i o ()						*/
 static void
 copy_Tio(
 #if defined(BSD)
@@ -391,7 +390,7 @@ copy_Tio(
     return;
 }
 
-/* s a v e _ T t y ()
+/*
    Get and save terminal parameters, 'fd'.
 */
 void
@@ -410,7 +409,7 @@ save_Tty(int fd)
     return;
 }
 
-/* r e s e t _ T t y ()
+/*
    Set the terminal back to the mode that the user had last time
    save_Tty() was called for 'fd'.
 */
@@ -429,7 +428,7 @@ reset_Tty(int fd)
     return;
 }
 
-/* s a v e _ F i l _ S t a t ()
+/*
    Save file status flags for 'fd'.
 */
 int
@@ -438,7 +437,7 @@ save_Fil_Stat(int fd)
     return fileStatus[fd] = fcntl(fd, F_GETFL, 0);
 }
 
-/* r e s e t _ F i l _ S t a t ()
+/*
    Restore file status flags for file desc. 'fd' to what they were the
    last time saveFilStat(fd) was called.
 */
@@ -448,7 +447,7 @@ reset_Fil_Stat(int fd)
     return fcntl(fd, F_SETFL, fileStatus[fd]);
 }
 
-/* s e t _ O _ N D E L A Y ()
+/*
    Set non-blocking read on 'fd'.
 */
 int
@@ -463,7 +462,6 @@ set_O_NDELAY(int fd)
 #endif
 }
 
-/* p r n t _ T i o ()						*/
 void
 prnt_Tio(
     char *msg,

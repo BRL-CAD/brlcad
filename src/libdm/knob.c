@@ -62,8 +62,7 @@ dm_unlimit(int i)
     return 0;
 }
 
-/*			D M _ W R A P
- *
+/*
  * Wrap the given value "f" to a new value in the range (-1.0, 1.0).
  */
 fastf_t

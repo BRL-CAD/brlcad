@@ -109,8 +109,7 @@ struct mfuncs tcl_mfuncs[] = {
 };
 
 
-/* T C L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

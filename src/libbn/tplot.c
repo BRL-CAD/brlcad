@@ -74,7 +74,7 @@
 #define LAB_LNGTH	860
 
 
-/**			T P _ S E P
+/**
  *@brief
  *  tp_sep() divides a floating point number into a coefficient
  *  and an exponent. Works in base ten.
@@ -125,7 +125,7 @@ tp_sep(float x, float *coef, int *ex)
 }
 
 
-/**			T P _ I P O W
+/**
  *@brief
  *  tp_ipow() raises a floating point number to a positive integer
  *  power.
@@ -137,8 +137,7 @@ double tp_ipow (double x, int n)
 }
 
 
-/**			T P _ F I X S C
- *
+/**
  *   tp_fixsc is a scaling routine intended to be used in conjunction
  *   with plotting routines. What tp_fixsc does is scale the user supplied
  *   data so that it fits on a specified axis and has 'nice' numbers
@@ -358,7 +357,7 @@ loop:
 }
 
 
-/**			T P _ F T O A
+/**
  * @brief
  * This routine converts a floating point number into a string
  * of ascii characters of the form "sX.XXXesXX". The string is

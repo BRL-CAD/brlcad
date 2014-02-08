@@ -286,8 +286,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 }
 
 
-/* G A U S S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

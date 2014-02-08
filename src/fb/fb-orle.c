@@ -53,7 +53,6 @@ static char *fb_file = (char *)NULL;
 
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap);
 
-/* m a i n ()							*/
 int
 main(int argc, char **argv)
 {
@@ -151,7 +150,6 @@ main(int argc, char **argv)
 }
 
 
-/* p a r s A r g v ()						*/
 static int
 parsArgv(int argc, char **argv)
 {
@@ -229,7 +227,7 @@ parsArgv(int argc, char **argv)
     return 1;
 }
 
-/* p r n t U s a g e ()
+/*
    Print usage message.
 */
 static void

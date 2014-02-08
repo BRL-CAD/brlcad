@@ -988,8 +988,7 @@ nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
 }
 
 
-/** N M G _ F A C E R A D I A L
- *
+/**
  * Looking radially around an edge, find another edge in the same
  * face as the current edge. (this could be the mate to the current edge)
  */

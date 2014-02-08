@@ -979,8 +979,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 }
 
 
-/** N M G _ C K _ E G _ V E R T S
- *
+/**
  * Check if vertices from edgeuses using this edge geometry
  * actually lie on the edge geometry.
  *
@@ -1037,8 +1036,7 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 }
 
 
-/** N M G _ C K _ G E O M E T R Y
- *
+/**
  * Check that vertices actually lie on geometry for
  * faces and edges
  *
@@ -1508,8 +1506,7 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
 }
 
 
-/** N M G _ C K _ V _ I N _ 2 F U S
- *
+/**
  * accepts a vertex pointer, two faceuses, and a tolerance.
  * Checks if the vertex is in both faceuses (topologically
  * and geometrically within tolerance of plane).
@@ -1571,8 +1568,7 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
     }
 
 }
-/** N M G _ C K _ V S _ I N _ R E G I O N
- *
+/**
  * Visits every vertex in the region and checks if the
  * vertex coordinates are within tolerance of every face
  * it is supposed to be in (according to the topology).

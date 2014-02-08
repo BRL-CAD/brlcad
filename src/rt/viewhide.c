@@ -641,8 +641,7 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 }
 
 
-/*		S W A P B U F F
- *
+/*
  *  This routine serves to swap buffer pointers: i.e., one buffer is read
  *  at a time.  The first buffer read becomes the "bottom buffer" the new
  *  buffer becomes the "top buffer".  Once the vertical comparison between
@@ -670,8 +669,7 @@ swapbuff(struct cell **onepp, struct cell **twopp)
 }
 
 
-/*		C L E A N L I N E
- *
+/*
  *  This routine takes as parameters the address of a buffer and an integer
  *  reflecting the width of the file.  It proceeds to ZERO fill the buffer.
  *  This routine returns nothing.

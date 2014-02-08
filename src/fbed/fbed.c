@@ -327,7 +327,6 @@ static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined. */
 FBIO *fbp;				/* Current framebuffer */
 static int cur_width = 512;
 
-/*	m a i n ( ) */
 int
 main(int argc, char **argv)
 {
@@ -529,7 +528,7 @@ popPoint(Point *pt, PtStack **spp)
     return true;
 }
 
-/*	i n i t _ T r y ()
+/*
 	Initialize "try" tree of function names, with key bindings.
 */
 HIDDEN void
@@ -571,7 +570,6 @@ push_Macro(char *buf)
     return 1;
 }
 
-/*	d o _ K e y _ C m d () */
 void
 do_Key_Cmd(int key, int n)
 {
@@ -1843,7 +1841,6 @@ f_Set_Y_Pos() /* Move cursor's Y location (image space). */
 }
 
 
-/*	p a r s _ A r g v () */
 HIDDEN int
 pars_Argv(int argc, char **argv)
 {
@@ -1870,7 +1867,6 @@ pars_Argv(int argc, char **argv)
 }
 
 
-/*	f b _ S e t u p () */
 HIDDEN int
 fb_Setup(void)
 {
@@ -1894,7 +1890,6 @@ fb_Setup(void)
 }
 
 
-/*	f b _ W i n d () */
 HIDDEN void
 fb_Wind(void)
 {
@@ -1907,7 +1902,6 @@ fb_Wind(void)
 }
 
 
-/*	f b _ P a i n t () */
 HIDDEN void
 fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
 {
@@ -1922,7 +1916,6 @@ fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
 }
 
 
-/*	g e n e r a l _ H a n d l e r () */
 HIDDEN void
 general_Handler(int sig)
 {
@@ -2006,7 +1999,6 @@ general_Handler(int sig)
 }
 
 
-/*	i n i t _ T t y () */
 void
 init_Tty(void)
 {
@@ -2024,7 +2016,6 @@ init_Tty(void)
 }
 
 
-/*	r e s t o r e _ T t y () */
 void
 restore_Tty(void)
 {
@@ -2037,7 +2028,6 @@ restore_Tty(void)
 }
 
 
-/*	f b _ G e t _ P i x e l () */
 void
 fb_Get_Pixel(unsigned char *pixel)
 {
@@ -2047,7 +2037,6 @@ fb_Get_Pixel(unsigned char *pixel)
 }
 
 
-/*	g e t _ F b _ P a n e l () */
 RGBpixel *
 get_Fb_Panel(Rect2D *rectp)
 {
@@ -2091,7 +2080,6 @@ get_Fb_Panel(Rect2D *rectp)
 }
 
 
-/*	p u t _ F b _ P a n e l () */
 HIDDEN void
 put_Fb_Panel(Rect2D *rectp, RGBpixel *rgbpanel)
 {
@@ -2115,7 +2103,6 @@ put_Fb_Panel(Rect2D *rectp, RGBpixel *rgbpanel)
 }
 
 
-/*	g e t _ P o i n t () */
 HIDDEN void
 get_Point(char *msg, Point *pointp)
 {
@@ -2166,7 +2153,6 @@ get_Point(char *msg, Point *pointp)
 }
 
 
-/*	g e t _ R e c t a n g l e () */
 HIDDEN void
 get_Rect2D(char *name, Rect2D *rectp)
 {
@@ -2249,7 +2235,6 @@ get_Mouse_Pos(Point *pointp)
 }
 
 
-/*	d o _ B i t p a d () */
 HIDDEN int
 do_Bitpad(Point *pointp)
 {

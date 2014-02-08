@@ -41,8 +41,7 @@
 
 char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
 
-/*	Q U E U E
- *
+/*
  *	send an image off into the printer queuing system
  */
 void

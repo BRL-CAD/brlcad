@@ -64,7 +64,6 @@ void prnt_Macro(char *bufp);
 void prnt_Rect2D(const char *str, Rect2D *rectp);
 /**void prnt_FBC();**/
 
-/*	p r n t _ S t a t u s ( ) */
 void
 prnt_Status(void)
 {
@@ -99,7 +98,6 @@ static char *screen_template[] = {
 };
 
 
-/*	i n i t _ S t a t u s ( ) */
 void
 init_Status(void)
 {
@@ -127,7 +125,7 @@ init_Status(void)
 }
 
 
-/*	p r n t _ U s a g e ( )
+/*
 	Print usage message.
 */
 void
@@ -140,7 +138,6 @@ prnt_Usage(void)
 }
 
 
-/*	p r n t _ P i x e l ( ) */
 void
 prnt_Pixel(char *msg, RGBpixel (*pixelp))
 {
@@ -225,7 +222,6 @@ Va_Decl(prnt_Scroll)
 }
 
 
-/*	p r n t _ D e b u g () */
 /* VARARGS */
 void
 Va_Decl(prnt_Debug)

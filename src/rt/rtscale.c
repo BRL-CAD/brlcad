@@ -379,8 +379,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 }
 
 
-/*		D R A W S C A L E
- *
+/*
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
  * The parameters are a pointer to stdout, a start
@@ -414,8 +413,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
 }
 
 
-/*		D R A W T I C K S
- *
+/*
  * This routine draws the tick marks for the scale.  It takes a out file
  * pointer, a center point whereat to start the tick mark, a height vector
  * for the tick, and a scalar for the tick height.  It returns either
@@ -448,8 +446,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     return 0;
 }
 
-/*		M A K E _ B O R D E R
- *
+/*
  * This routine exists to draw an optional border around the image.  It
  * exists for diagnostic purposes.  It takes a view to model matrix and
  * a file pointer.  It lays out and plots the four corners of the image border.

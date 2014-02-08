@@ -32,7 +32,7 @@
 
 #define NUL	'\0'
 
-/*	m a t c h ( )
+/*
 	if string matches pattern, return 1, else return 0
 	special characters:
 	*	Matches any string including the null string.

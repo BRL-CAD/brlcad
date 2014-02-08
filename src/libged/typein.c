@@ -696,8 +696,7 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* E B M _ I N
- *
+/*
  * Read EBM solid from keyboard
  *
  */
@@ -723,8 +722,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S U B M O D E L _ I N
- *
+/*
  * Read submodel from keyboard
  *
  */
@@ -750,8 +748,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
 }
 
 
-/* D S P _ I N
- *
+/*
  * Read DSP solid from keyboard
  */
 static int
@@ -787,8 +784,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 
 extern void dsp_dump(struct rt_dsp_internal *dsp);
 
-/* D S P _ I N
- *
+/*
  * Read DSP solid from keyboard
  */
 static int
@@ -846,8 +842,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 }
 
 
-/* H F _ I N
- *
+/*
  * Read HF solid from keyboard
  *
  */
@@ -907,8 +902,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* V O L _ I N
- *
+/*
  * Read VOL solid from keyboard
  *
  */
@@ -2414,7 +2408,6 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 }
 
 
-/* P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
     unsigned long i;
@@ -2533,7 +2526,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     valuesPerPoint = ELEMENTS_PER_POINT;
     type = RT_PNT_TYPE_PNT;
     if (hasColor) {
-	/* R G B */
+	/* RGB color */
 	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_COL);
 	valuesPerPoint += 3;
     }

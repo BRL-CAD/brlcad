@@ -259,8 +259,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 }
 
 
-/* H I S T O R Y _ P R E V
- */
 struct bu_vls *
 history_prev(const char *pat)
 {
@@ -282,8 +280,6 @@ history_prev(const char *pat)
 }
 
 
-/* H I S T O R Y _ C U R
- */
 struct bu_vls *
 history_cur(void)
 {
@@ -294,8 +290,6 @@ history_cur(void)
 }
 
 
-/* H I S T O R Y _ N E X T
- */
 struct bu_vls *
 history_next(const char *pat)
 {

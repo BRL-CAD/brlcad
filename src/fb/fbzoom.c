@@ -289,8 +289,6 @@ doKeyPad(void)
 }
 
 
-/* p a r s _ A r g v ()
- */
 int
 pars_Argv(int argc, char **argv)
 {

@@ -959,7 +959,7 @@ getRayOrigin(struct application *ap)
 }
 
 
-/*	c o n s _ V e c t o r ()
+/*
 	Construct a direction vector out of azimuth and elevation angles
 	in radians, allocating storage for it and returning its address.
 */
@@ -1657,7 +1657,6 @@ abort_RT(int UNUSED(sig))
 }
 
 
-/*	v i e w _ p i x () */
 static void
 view_pix(struct application *ap)
 {
@@ -1671,7 +1670,6 @@ view_pix(struct application *ap)
 }
 
 
-/*	v i e w _ e n d () */
 static void
 view_end()
 {

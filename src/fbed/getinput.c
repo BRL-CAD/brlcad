@@ -42,7 +42,7 @@ ring_Bell(void)
     return;
 }
 
-/*	g e t _ I n p u t ()
+/*
 	Get a line of input.
 */
 int
@@ -246,7 +246,7 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 }
 
 
-/*	g e t _ F u n c _ N a m e ()
+/*
 	TENEX-style command completion.
 */
 Func_Tab *

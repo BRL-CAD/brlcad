@@ -189,8 +189,7 @@ singleNormalizedInput_hook(const struct bu_structparse *sdp,
 }
 
 
-/* F L A T _ S E T U P
- *
+/*
  * This routine is called (at prep time) once for each region which uses this
  * shader.  The shader specific flat_specific structure is allocated and
  * default values are set.  Then any user-given values override.

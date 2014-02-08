@@ -730,8 +730,7 @@ nmg_pr_m_struct_counts(const struct model *m, const char *str)
 }
 
 
-/** N M G _ M E R G _ M O D E L S
- *
+/**
  * Combine two NMG model trees into one single NMG model.  The
  * first model inherits the nmgregions of the second.  The second
  * model pointer is freed before return.

@@ -42,8 +42,6 @@ char Stdin[]   = "(stdin)";
 char *progname = noname;
 char *filename = Stdin;
 
-/* S H R I N K _ I M A G E
- */
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
 {

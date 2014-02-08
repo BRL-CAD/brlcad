@@ -112,8 +112,7 @@ dpm_hook(const struct bu_structparse *UNUSED(sdp),
     air_sp->d_p_mm *= meters_to_millimeters;
 }
 
-/* A I R _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

@@ -36,7 +36,7 @@
 #include "./screen.h"
 static int	get_Lgt_Entry(Lgt_Source *entry, FILE *fp), put_Lgt_Entry(Lgt_Source *entry, FILE *fp);
 
-/*	l g t _ P r i n t _ D b ( )
+/*
 	Print light source database entry.
 */
 int
@@ -106,7 +106,7 @@ lgt_Print_Db(int id)
     return	1;
 }
 
-/*	l g t _ R e a d _ D b ( )
+/*
 	Open light source database and read entries into table,
 	return number of entries successfully read.
 */
@@ -128,7 +128,7 @@ lgt_Rd_Db(char *file)
     return	lgt_db_size;
 }
 
-/*	l g t _ S a v e _ D b ( )
+/*
 	Write ASCII light source database from table.
 	Return 1 for success, 0 for failure.
 */
@@ -153,7 +153,7 @@ lgt_Save_Db(char *file)
     return	1;
 }
 
-/*	l g t _ E d i t _ D b _ E n t r y ( )
+/*
 	Create or overwrite entry in light source table.
 */
 int

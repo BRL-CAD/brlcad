@@ -8284,7 +8284,7 @@ wdb_unhide_tcl(void *clientData,
 }
 
 
-/** W D B _ A T T R _ C M D
+/**
  *@brief
  * implements the "attr" command.
  *

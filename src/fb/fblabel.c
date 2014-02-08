@@ -112,7 +112,7 @@ squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n)
 }
 
 
-/* b i t x ()
+/*
    Extract a bit field from a bit string.
 */
 int
@@ -128,8 +128,7 @@ bitx(char *bitstring, int posn)
 }
 
 
-/* f i l l _ b u f ()
- *
+/*
  Fills in the buffer by reading a row of a bitmap from the character
  font file.  The file pointer is assumed to be in the correct
  position.

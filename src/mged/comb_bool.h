@@ -63,8 +63,7 @@ struct tree_tail
 
 extern struct bool_tree_node *comb_bool_tree;
 
-/* T A L L O C ()
- *
+/*
  * Simple interface to malloc()
  *
  * This macro has three parameters:  a pointer, a C data type,

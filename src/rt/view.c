@@ -841,8 +841,7 @@ static int hit_nothing(struct application *ap)
 }
 
 
-/* A O _ R A Y H I T
- *
+/*
  * hit routine for ambient occlusion
  */
 int
@@ -884,8 +883,7 @@ ao_rayhit(register struct application *ap,
 }
 
 
-/* A O _ R A Y H I T
- *
+/*
  * miss routine for ambient occlusion
  */
 int
@@ -897,8 +895,7 @@ ao_raymiss(register struct application *ap)
 }
 
 
-/* a m b i e n t O c c l u s i o n
- *
+/*
  * Compute the ambient term using occlusion rays.
  * Scale the color based upon the occlusion
  */

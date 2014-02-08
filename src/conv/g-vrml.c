@@ -1199,8 +1199,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 }
 
 
-/*	D O _ R E G I O N _ E N D 1
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  */
@@ -1234,8 +1233,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 }
 
-/*	D O _ R E G I O N _ E N D 2
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  *

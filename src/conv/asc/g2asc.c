@@ -812,8 +812,7 @@ particle_dump(void)
 }
 
 
-/*			A R B N _ D U M P
- *
+/*
  *  Print out arbn information.
  *
  */

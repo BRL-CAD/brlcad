@@ -632,8 +632,7 @@ void view_eol(struct application *UNUSED(ap))
 }
 
 
-/* p r i n t _ r e g i o n _ a r e a _ l i s t
- *
+/*
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of
@@ -778,8 +777,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 }
 
 
-/* p r i n t _ a s s e m b l y _ a r e a _ l i s t
- *
+/*
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of

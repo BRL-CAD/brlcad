@@ -2799,8 +2799,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/** R T _ T G C _ T N U R B
- *
+/**
  * "Tessellate an TGC into a trimmed-NURB-NMG data structure.
  * Computing NURB surfaces and trimming curves to interpolate
  * the parameters of the TGC

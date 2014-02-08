@@ -638,8 +638,7 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
 }
 
 
-/** V E R T E X _ N E I G H B O R H O O D
- *
+/**
  * Examine the vertex neighborhood to classify the ray as IN/ON/OUT of
  * the NMG both before and after hitting the vertex.
  *
@@ -2311,8 +2310,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 }
 
 
-/** I S E C T _ R A Y _ S H E L L
- *
+/**
  * Implicit return: adds hit points to the hit-list "hl"
  */
 HIDDEN void

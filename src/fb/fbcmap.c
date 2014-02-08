@@ -584,8 +584,6 @@ unsigned char utah9[256*3] = {
 };
 
 
-/* p a r s _ A r g v ()
- */
 static int
 pars_Argv(int argc, char **argv)
 {

@@ -477,8 +477,7 @@ make_proto(struct grass_specific *grass_sp)
 }
 
 
-/* G R A S S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -922,8 +921,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
 }
 
 
-/* I S E C T _ C E L L
- *
+/*
  * Intersects a region-space ray with a grid cell of grass.
  *
  */

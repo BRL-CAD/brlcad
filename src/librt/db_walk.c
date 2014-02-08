@@ -152,8 +152,7 @@ db_preorder_traverse(struct directory *dp,
 }
 
 
-/* D B _ F U N C T R E E _ S U B T R E E
- *
+/*
  * The only reason for this to be broken out is that
  * 2 separate locations in db_functree() call it.
  */

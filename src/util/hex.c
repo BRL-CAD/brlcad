@@ -121,8 +121,7 @@ void usage(void)
 }
 
 
-/* M A I N
- *
+/*
  * Parse arguments and call 'dump' to perform primary task.
  */
 int

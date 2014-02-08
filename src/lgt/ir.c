@@ -258,7 +258,7 @@ read_IR(FILE *fp)
     }
 }
 
-/*	t e m p _ T o _ R G B ( )
+/*
 	Map temperatures to spectrum of colors.
 	This routine is extracted from the "mandel" program written by
 	Douglas A. Gwyn here at BRL, and has been modified slightly
@@ -317,7 +317,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
     return;
 }
 
-/*	i n i t _ T e m p _ T o _ R G B ( )
+/*
 	Initialize pseudo-color mapping table for the current view.  This
 	color assignment will vary with each set of IR data read so as to
 	map the full range of data to the full spectrum of colors.  This

@@ -870,8 +870,7 @@ fillItemMembers( jobject node,
     }
 }
 
-/*				F I L L I T E M T R E E
- *
+/*
  * Routine to fill a MUVES3 ItemTree structure based on a leaf node of a BRL-CAD tree structure.
  */
 void

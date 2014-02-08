@@ -350,8 +350,7 @@ sigkid(int UNUSED(pid))
 }
 
 
-/* W G L _ X M I T _ S C A N L I N E S
- *
+/*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
@@ -1980,8 +1979,7 @@ backbuffer_to_screen(FBIO *ifp, int one_y)
 }
 
 
-/* W G L _ C H O O S E _ V I S U A L
- *
+/*
  * Select an appropriate visual, and set flags.
  *
  * The user requires support for:

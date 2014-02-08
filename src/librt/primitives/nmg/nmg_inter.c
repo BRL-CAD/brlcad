@@ -5565,8 +5565,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 }
 
 
-/** N M G _ F A C E S _ C A N _ B E _ I N T E R S E C T E D
- *
+/**
  * Check if two faceuses can be intersected normally, by looking at the line
  * of intersection and determining if the vertices from each face are all
  * above the other face on one side of the intersection line and below it

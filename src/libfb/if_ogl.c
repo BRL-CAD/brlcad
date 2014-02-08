@@ -355,8 +355,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 }
 
 
-/* O G L _ X M I T _ S C A N L I N E S
- *
+/*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */

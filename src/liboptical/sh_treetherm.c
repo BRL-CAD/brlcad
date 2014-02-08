@@ -211,8 +211,7 @@ build_tree(struct bu_list *br, struct region *rp)
 }
 
 
-/* T R E E T H E R M _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

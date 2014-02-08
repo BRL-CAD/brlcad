@@ -94,7 +94,6 @@ getdouble(char *cp, int start, size_t len)
 }
 
 
-/* N A M E C V T */
 void
 namecvt(int n, char **cp, int c)
 {

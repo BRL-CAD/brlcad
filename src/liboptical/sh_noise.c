@@ -147,8 +147,7 @@ struct bu_structparse noise_parse_tab[] = {
 };
 
 
-/* G R A V E L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

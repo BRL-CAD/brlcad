@@ -8624,8 +8624,7 @@ nmg_intersect_loops_self(struct shell *s, const struct bn_tol *tol)
 }
 
 
-/** R T _ J O I N _ C N U R B S
- *
+/**
  * Join a list of cnurb structs into a single cnurb.  The curves must
  * have matching endpoints, otherwise nothing is done and (struct
  * cnurb *)NULL is returned.

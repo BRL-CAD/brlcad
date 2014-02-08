@@ -67,7 +67,7 @@ Mat_Db_Entry		mat_nul_entry =
 };
 static int	get_Mat_Entry(Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(Mat_Db_Entry *entry, FILE *fp);
 
-/*	m a t _ R d _ D b ( )
+/*
 	Open material database and read entries into table,
 	return number of entries successfully read.
 */
@@ -92,7 +92,7 @@ mat_Rd_Db(char *file)
     return	mat_db_size;
 }
 
-/*	m a t _ P r i n t _ D b ( )
+/*
 	Print material database entry.
 */
 int
@@ -168,7 +168,7 @@ mat_Print_Db(int material_id)
     return	success;
 }
 
-/*	m a t _ S a v e _ D b ( )
+/*
 	Write ASCII material database from table.
 	Return 1 for success, 0 for failure.
 */
@@ -193,7 +193,7 @@ mat_Save_Db(char *file)
 }
 
 
-/*	m a t _ E d i t _ D b _ E n t r y ( )
+/*
 	Create or overwrite entry in material table.
 */
 int
@@ -277,7 +277,7 @@ mat_Edit_Db_Entry(int id)
     return	1;
 }
 
-/*	m a t _ G e t _ D b _ E n t r y ( )
+/*
 	Return pointer to entry indexed by id or NULL.
 */
 Mat_Db_Entry *

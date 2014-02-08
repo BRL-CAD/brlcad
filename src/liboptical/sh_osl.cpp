@@ -354,8 +354,7 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
     return 0;
 }
 
-/* O S L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.

@@ -78,7 +78,7 @@ fill_buf(int wid, int *buf)
 }
 
 
-/*	c l e a r _ b u f ()
+/*
 	Just sets all the buffer values to zero (this is used to
 	"read" background areas of the character needed for filtering near
 	the edges of the character definition.

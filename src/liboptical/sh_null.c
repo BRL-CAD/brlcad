@@ -52,8 +52,7 @@ struct mfuncs null_mfuncs[] = {
 };
 
 
-/* N U L L _ S E T U P
- *
+/*
  * This routine is called (at prep time) once for each region which uses this
  * shader.  Any shader-specific initialization should be done here.  It should
  * return 1 on success and -1 on failure.  Alternatively, this routine should

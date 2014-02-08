@@ -1535,7 +1535,7 @@ BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
  */
 
 
-/** B N _ D I S T S Q _ L I N E 3 _ L I N E 3
+/**
  *@brief
  * Calculate the square of the distance of closest approach for two
  * lines.
@@ -4136,7 +4136,7 @@ struct vert_root {
 #define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 
-/**		C R E A T E _ V E R T _ T R E E
+/**
  *@brief
  *	routine to create a vertex tree.
  *
@@ -4144,7 +4144,7 @@ struct vert_root {
  */
 BN_EXPORT extern struct vert_root *create_vert_tree(void);
 
-/**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
+/**
  *@brief
  *	routine to create a vertex tree.
  *
@@ -4158,7 +4158,7 @@ BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
  */
 BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
 
-/**		A D D _ V E R T
+/**
  *@brief
  *	Routine to add a vertex to the current list of part vertices.
  *	The array is re-alloc'd if needed.
@@ -4170,7 +4170,7 @@ BN_EXPORT extern int Add_vert(double x,
 			      struct vert_root *tree_root,
 			      fastf_t local_tol_sq);
 
-/**		A D D _ V E R T _ A N D _ N O R M
+/**
  *@brief
  *	Routine to add a vertex and a normal to the current list of part vertices.
  *	The array is re-alloc'd if needed.
@@ -4185,7 +4185,7 @@ BN_EXPORT extern int Add_vert_and_norm(double x,
 				       struct vert_root *tree_root,
 				       fastf_t local_tol_sq);
 
-/**		C L E A N _ V E R T _ T R E E
+/**
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.

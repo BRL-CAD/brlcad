@@ -38,7 +38,6 @@ int		zoom;	/* Current zoom factor of frame buffer.		*/
 int		fb_Setup(char *file, int size);
 void		fb_Zoom_Window(void);
 
-/*	f b _ S e t u p ( )						*/
 int
 fb_Setup(char *file, int size)
 {
@@ -58,7 +57,6 @@ fb_Setup(char *file, int size)
     return	1;
 }
 
-/*	f b _ Z o o m _ W i n d o w ( )					*/
 void
 fb_Zoom_Window(void)
 {

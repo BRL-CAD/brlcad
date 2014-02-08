@@ -2997,8 +2997,7 @@ nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
 }
 
 
-/** N M G _ D O _ R A D I A L _ F L I P S
- *
+/**
  * This routine looks for nmg_radial structures with the same angle,
  * and sorts them to match the order of nmg_radial structures that
  * are not at that same angle

@@ -7531,7 +7531,7 @@ oedit_reject(void)
 }
 
 
-/* F _ E Q N ()
+/*
  * Gets the A, B, C of a planar equation from the command line and puts the
  * result into the array es_peqn[] at the position pointed to by the variable
  * 'es_menu' which is the plane being redefined. This function is only callable

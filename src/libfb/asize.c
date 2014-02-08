@@ -125,8 +125,7 @@ fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int p
 }
 
 
-/*                      F B _ C O M M O N _ N A M E _ S I Z E
- *
+/*
  *  Given the number of pixels in an image file, along with a name for the
  *  image (possibly the filename), attempt to determine the
  *  the width and height of the image.

@@ -90,8 +90,7 @@ Add_lists(uf_list_p_t dest, uf_list_p_t src)
     }
 }
 
-/*	F E A T U R E _ S I G N
- *
+/*
  *	Get a text string that describes the "sign" of a feature
  */
 const char *feature_sign(tag_t feat)
@@ -116,8 +115,7 @@ const char *feature_sign(tag_t feat)
     return p;
 }
 
-/*	U F U S R _ A S K _ U N L O A D
- *
+/*
  *  This is supposed to be helpful when UG thinks it might unload us.
  */
 int ufusr_ask_unload ( void )
@@ -126,9 +124,6 @@ int ufusr_ask_unload ( void )
 }
 
 
-/*	R E P O R T
- *
- */
 int report(char *call, char *file, int line, int code)
 {
     char message[133] = "";
