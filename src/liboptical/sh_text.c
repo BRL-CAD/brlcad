@@ -540,7 +540,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (!tp->tx_trans_valid) {
     opaque:
 	VSETALL(swp->sw_color,
-		bw / 255.0 / (dx*dy));
+		(bw / 255.0) / (dx*dy));
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
 	return 1;
