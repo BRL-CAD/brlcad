@@ -26,14 +26,15 @@
 #include "common.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
+#include "bio.h"
 
 #include "bu.h"
-#include "bio.h"
+
 #include "./test_internals.h"
+
 
 long int
 bu_get_urandom_number()
