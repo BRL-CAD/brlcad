@@ -42,8 +42,6 @@
 #include "bu.h"
 
 
-void mat_pr(char *title, float *mp);
-
 union record rec;
 
 char line[256];
@@ -242,19 +240,6 @@ top:
     }
     printf("%d database granules written\n", count);
     return 0;
-}
-
-
-void
-mat_pr(char *title, float *mp)
-{
-    int i;
-
-    printf("MATRIX %s:\n  ", title);
-    for (i=0; i<16; i++) {
-	printf(" %8.3f", mp[i]);
-	if ((i&3) == 3) printf("\n  ");
-    }
 }
 
 
