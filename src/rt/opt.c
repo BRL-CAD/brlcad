@@ -277,9 +277,6 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 	    {
-#if !defined(_WIN32)
-		char		buf[128];
-#endif
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -309,10 +306,11 @@ get_args(int argc, const char *argv[])
 		else
 		    background[2] = b / 255.0;
 #else
-		sprintf(buf, "set background=%f/%f/%f",
-			r/255., g/255., b/255. );
-		(void)rt_do_cmd( (struct rt_i *)0, buf,
-				 rt_cmdtab );
+		{
+		    char buf[128] = {0};
+		    sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+		    (void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+		}
 #endif
 	    }
 	    break;
