@@ -165,12 +165,10 @@ struct knot_vector {
 };
 
 /*
- * N O T I C E !
- *
- * We rely on the fact that the first 32 bits in a struct is the magic
- * number (which is used to identify the struct type).  This may be
- * either a magic value, or an rt_list structure, which starts with a
- * magic number.
+ * NOTE: We rely on the fact that the first 32 bits in a struct is the
+ * magic number (which is used to identify the struct type).  This may
+ * be either a magic value, or an rt_list structure, which starts with
+ * a magic number.
  *
  * To these ends, there is a standard ordering for fields in
  * "object-use" structures.  That ordering is:

@@ -2274,8 +2274,6 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
 					const struct bn_tol *tol);
 
 /**
- * B N _ D I S T _ L I N E 3_ P T 3
- *@brief
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point.
  *
@@ -4152,7 +4150,7 @@ BN_EXPORT extern struct vert_root *create_vert_tree(void);
  */
 BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
 
-/**		F R E E _ V E R T_ T R E E
+/**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */

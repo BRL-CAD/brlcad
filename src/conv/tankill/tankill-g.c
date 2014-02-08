@@ -106,11 +106,10 @@ Add_solid(int comp_code_num)
     }
 }
 
-/*	T A N K I L L - G
- *
- *	Converts "tankill" format geometry to BRL-CAD model
- */
 
+/*
+ * Converts "tankill" format geometry to BRL-CAD model
+ */
 static void
 usage()
 {

@@ -3304,8 +3304,6 @@ nmg_connect_same_fu_orients(struct shell *s)
 
 
 /**
- * N M G _ F I X _ D E C O M P O S E D_ S H E L L _ N O R M A L S
- *
  * Routine to set all OT_SAME faceuse normals to outward direction.
  * Assumes that there are no other shells sharing edges with this one.
  */

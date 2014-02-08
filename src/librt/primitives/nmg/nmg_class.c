@@ -2486,8 +2486,6 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 
 
 /**
- * N M G _ C L A S S I F Y _ S _ V S _S
- *
  * Classify one shell (s2) with respect to another (s).
  *
  * returns:

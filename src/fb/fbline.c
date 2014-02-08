@@ -172,9 +172,6 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 }
 
 
-/*
- * G E T_ A R G S
- */
 int
 get_args(int argc, char **argv)
 {

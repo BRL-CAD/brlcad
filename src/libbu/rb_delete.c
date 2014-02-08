@@ -88,8 +88,6 @@ _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 }
 
 /**
- * _R B _ D E L E T E ()
- *
  * Delete a node from one order of a red-black tree
  *
  * This function has three parameters: a tree, the node to delete, and

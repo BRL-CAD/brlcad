@@ -53,10 +53,12 @@ unsigned char pixbuf[BUFSIZ*3];
 /*NOBASE*/
 unsigned char vals[1L << (24-3)];
 
+
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(FILE *fd)
+void
+doit(FILE *fd)
 {
     unsigned long pixel, count;
     int bytes;

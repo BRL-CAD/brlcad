@@ -50,7 +50,7 @@ int shape_number;
 
 
 /**
- *	P O P _ I N I T --- initialize a population of a given size
+ * initialize a population of a given size
  */
 void
 pop_init (struct population *p, int size)
@@ -66,8 +66,9 @@ pop_init (struct population *p, int size)
     bn_rand_init(randomer, SEED);
 }
 
+
 /**
- *	P O P _ C L E A N  --- cleanup population struct
+ * cleanup population struct
  */
 void
 pop_clean (struct population *p)
@@ -80,10 +81,13 @@ pop_clean (struct population *p)
     bu_free(p->child, "child");
 }
 
+
 /**
- *	P O P _ S P A W N --- spawn a new population
- *	TODO: generalize/modularize somehow to allow adding more shapes and primitives
- *	also use variable/defined rates, intersection with bounding box, etc...
+ * spawn a new population
+ *
+ * TODO: generalize/modularize somehow to allow adding more shapes and
+ * primitives also use variable/defined rates, intersection with
+ * bounding box, etc...
  */
 void
 pop_spawn (struct population *p)
@@ -152,9 +156,11 @@ pop_spawn (struct population *p)
 	bu_exit(EXIT_FAILURE, "Failed to load initial database");
 }
 
+
 /**
- *	P O P _ A D D --- add a parent to other database
- *	TODO: Don't overwrite previous parents, one .g file per generation
+ * add a parent to other database
+ *
+ * TODO: Don't overwrite previous parents, one .g file per generation
  */
 /*
   void
@@ -170,7 +176,7 @@ pop_spawn (struct population *p)
 
 
 /**
- *	P O P _ W R A N D -- weighted random index of parent
+ * weighted random index of parent
  */
 int
 pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
@@ -187,8 +193,9 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
     return size-1;
 }
 
+
 /**
- *	P O P _ R A N D --- random number (0, 1)
+ * random number (0, 1)
  */
 fastf_t
 pop_rand (void)
@@ -196,9 +203,11 @@ pop_rand (void)
     return bn_rand0to1(randomer);
 }
 
+
 /**
- *	P O P _ R A N D _ G O P --- return a random genetic operation
- *	TODO: implement other operations, weighted (like wrand) op selection
+ * return a random genetic operation
+ *
+ * TODO: implement other operations, weighted (like wrand) op selection
  */
 int
 pop_wrand_gop(void)
@@ -221,10 +230,12 @@ union tree *crossover_point;
 union tree **crossover_parent;
 struct node *node;
 
+
 /**
- *	P O P _ F I N D _ N O D E S --- find nodes with equal # of children
- *	note: not part of pop_functree as a lot less arguments are needed
- *	and it eliminates a lot of overhead
+ * find nodes with equal # of children
+ *
+ * Note: not part of pop_functree as a lot less arguments are needed
+ * and it eliminates a lot of overhead
  */
 int
 pop_find_nodes(	union tree *tp)

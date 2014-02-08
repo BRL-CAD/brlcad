@@ -43,17 +43,6 @@
  * -	char xtitle[], ytitle[]	titles for the axis
  * -	float x[], y[]	the floating point data arrays
  * -	int n		the number of points in the data arrays
- *
- *		R E V I S I O N  H I S T O R Y
- *
- *	WHO	WHEN		WHAT
- *	GWH	5/21/79		Modified ftoa so that nos. < e-15
- *				map to zero.
- *	GWH	6/29/79		Changed the axis drawing loops to
- *				prevent a one tic mark overrun.
- *	GWH	7/10/79		Subtracted one from n to allow for the
- *				fact that fortran arrays start at one
- *				and not zero as with c.
  */
 
 #include "common.h"

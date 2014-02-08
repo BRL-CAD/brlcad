@@ -44,10 +44,9 @@ unsigned char obuf[32767 * 3];
 		      (a)[1] == (b)[1] && \
 		      (a)[2] == (b)[2])
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(const char *s)
+
+void
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -57,10 +56,8 @@ void usage(const char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
 

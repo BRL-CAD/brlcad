@@ -45,10 +45,12 @@ static off_t offset=0;	 /* offset from beginning of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
-/*
- * D U M P --- Dump file in hex
+
+/**
+ * Dump file in hex
  */
-void dump(FILE *fd)
+void
+dump(FILE *fd)
 {
     size_t i;
     char *p;
@@ -111,10 +113,8 @@ void dump(FILE *fd)
 }
 
 
-/*
- * U S A G E --- Print helpful message and bail out
- */
-void usage(void)
+void
+usage(void)
 {
     (void) fprintf(stderr, "Usage: %s [-o offset] [file...]\n", progname);
     bu_exit (1, NULL);

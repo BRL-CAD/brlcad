@@ -398,8 +398,6 @@ rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ C L I N E_ U V
- *
  * For a hit on the surface of an cline, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  */

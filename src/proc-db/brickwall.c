@@ -53,9 +53,6 @@ char color[32] = "160 40 40";
 char mortar_color[32] = "190 190 190";
 
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
 static void
 usage(char *s)
 {
@@ -73,10 +70,8 @@ usage(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
     double d;

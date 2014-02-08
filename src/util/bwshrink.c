@@ -98,10 +98,9 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(void)
+
+void
+usage(void)
 {
     (void) fprintf(stderr,
 		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
@@ -110,10 +109,8 @@ void usage(void)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-void parse_args(int ac, char **av)
+void
+parse_args(int ac, char **av)
 {
     int c;
 

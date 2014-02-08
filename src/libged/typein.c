@@ -1292,7 +1292,9 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 }
 
 
-/* H A L F _ I N () :   	reads halfspace parameters from keyboard
+/*
+ * reads halfspace parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1322,7 +1324,9 @@ half_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 }
 
 
-/* A R B _ I N () :   	reads arb parameters from keyboard
+/*
+ * reads arb parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1366,7 +1370,9 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S P H _ I N () :   	reads sph parameters from keyboard
+/*
+ * reads sph parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1395,7 +1401,9 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 }
 
 
-/* E L L _ I N () :   	reads ell parameters from keyboard
+/*
+ * reads ell parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1472,7 +1480,9 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T O R _ I N () :   	reads tor parameters from keyboard
+/*
+ * reads tor parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1510,7 +1520,9 @@ tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T G C _ I N () :   	reads tgc parameters from keyboard
+/*
+ * reads tgc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1559,7 +1571,9 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R C C _ I N () :   	reads rcc parameters from keyboard
+/*
+ * reads rcc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1602,7 +1616,9 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T E C _ I N () :   	reads tec parameters from keyboard
+/*
+ * reads tec parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1642,7 +1658,9 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R E C _ I N () :   	reads rec parameters from keyboard
+/*
+ * reads rec parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1680,7 +1698,9 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T R C _ I N () :   	reads trc parameters from keyboard
+/*
+ * reads trc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1727,7 +1747,9 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* B O X _ I N () :   	reads box parameters from keyboard
+/*
+ * reads box parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1783,7 +1805,9 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R P P _ I N () :   	reads rpp parameters from keyboard
+/*
+ * reads rpp parameters from keyboard
+ *
  * returns GED_OK if successful read
  * GED_ERROR if unsuccessful read
  */
@@ -1858,7 +1882,9 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 }
 
 
-/* P A R T _ I N () :	reads particle parameters from keyboard
+/*
+ * reads particle parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1893,7 +1919,9 @@ part_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R P C _ I N () :   	reads rpc parameters from keyboard
+/*
+ * reads rpc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1928,7 +1956,9 @@ rpc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R H C _ I N () :   	reads rhc parameters from keyboard
+/*
+ * reads rhc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1964,7 +1994,9 @@ rhc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E P A _ I N () :   	reads epa parameters from keyboard
+/*
+ * reads epa parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2005,7 +2037,9 @@ epa_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E H Y _ I N () :   	reads ehy parameters from keyboard
+/*
+ * reads ehy parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2053,7 +2087,9 @@ ehy_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* H Y P _ I N () :   	reads hyp parameters from keyboard
+/*
+ * reads hyp parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2120,7 +2156,9 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E T O _ I N () :   	reads eto parameters from keyboard
+/*
+ * reads eto parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2161,7 +2199,9 @@ eto_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E X T R U D E _ I N () :   	reads extrude parameters from keyboard
+/*
+ * reads extrude parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2208,7 +2248,9 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* R E V O L V E _ I N () :   	reads extrude parameters from keyboard
+/*
+ * reads extrude parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2259,7 +2301,9 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* G R I P _ I N () :   	reads grip parameters from keyboard
+/*
+ * reads grip parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2287,7 +2331,9 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S U P E R E L L _ I N () :   	reads superell parameters from keyboard
+/*
+ * reads superell parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2767,7 +2813,10 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     return GED_OK;
 }
 
-/* H R T _ I N () :   	reads heart parameters from keyboard
+
+/*
+ * reads heart parameters from keyboard
+ *
  * returns 0 if successfully read
  * returns 1 if unsuccessful read
  */

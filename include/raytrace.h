@@ -6109,7 +6109,7 @@ RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
 
 /************************************************************************
  *									*
- *			N M G Support Function Declarations		*
+ *			NMG Support Function Declarations		*
  *									*
  ************************************************************************/
 #if defined(NMG_H)
@@ -8023,8 +8023,6 @@ RT_EXPORT extern const char *db5_standard_attribute(int idx);
 
 
 /**
- * D B 5 _ S T A N D A R D _ A T T R I B U T E _ DEF
- *
  * Function returns the string definition for a given standard
  * attribute index.  Index values returned from
  * db5_standardize_attribute_def() correspond to the definition

@@ -481,8 +481,6 @@ struct rt_curve {
 
 
 /**
- * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
- *
  * used by the sketch and solid of extrusion
  */
 struct line_seg		/**< @brief line segment */

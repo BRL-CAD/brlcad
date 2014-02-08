@@ -386,8 +386,6 @@ view_end(struct application *UNUSED(ap))
 
 
 /*
- *		H O R I Z O N T A L   C O M P A R I S O N
- *
  *  This routine takes three parameters: a pointer to a "bottom" buffer, the
  *  line width of the incoming file plus two border pixels (mem_width), and
  *  a y-coordinate (file_height).  It returns nothing.
@@ -474,9 +472,8 @@ horiz_cmp(struct cell *botp, int mem_width)
     }
 }
 
+
 /*
- *		V E R T I C A L  C O M P A R I S O N
- *
  *  This routine takes four parameters: a pointer to a "top" buffer, a pointer
  *  to a "bottom" buffer, the file_width + two border pixels (mem_width), and
  *  a y-coordinate (line-count, or file_height).  It returns nothing.
@@ -485,9 +482,7 @@ horiz_cmp(struct cell *botp, int mem_width)
  *  whether their region_id codes are the same.  If these are not
  *  identical, a horizontal line is plotted to mark the boundary where
  *  the region_id codes change.
- *
  */
-
 void
 vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 {
@@ -609,8 +604,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 
 
 /*
- *	           F I N D_ C E L L
- *
  *  This routine takes pointers to two cells.  This is more efficient (takes
  *  less space) than sending the hit_distances.  Furthermore, by selecting
  *  a cell, rather than just a distance, more information becomes available
@@ -622,7 +615,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
  *  Using this hit_distance will be more esthetically pleasing for the bas-
  *  relief.
  */
-
 struct	cell	*
 find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 {

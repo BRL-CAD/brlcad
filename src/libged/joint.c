@@ -3511,17 +3511,16 @@ static struct db_tree_state mesh_initial_tree_state = {
 };
 
 /*
- * F _ J M E S H - function
  * The cvt_vlblock_to_solids() function is not converted it, a bu_bomb() function call
  * it is used temporarily to return from the function. The name variable is commented
  * for the moment, it is not used until the cvt_vlblock_to_solids() cand be fixed.
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
+ *
  * The joint accept option is not working properly, it needs f_Jmesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
  * applies for the mesh and solve options.
  */
-
 int
 f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {

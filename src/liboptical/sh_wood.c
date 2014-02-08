@@ -493,8 +493,6 @@ wood_free(genptr_t cp)
 
 
 /*
- * N O I S E  &  T U R B U L E N C E
- *
  * These are the noise and turbulence routines which the rendering routine
  * uses to perturb the rings.  They are lifted directly from the "sh_marble"
  * routine.  Eventually, they will be moved into a separate library for

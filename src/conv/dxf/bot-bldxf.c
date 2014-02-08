@@ -50,10 +50,9 @@ char *progname = "(noname)";
 long debug = 0;
 int verbose = 0;
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -63,10 +62,8 @@ void usage(char *s)
 }
 
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char *av[])
+int
+parse_args(int ac, char *av[])
 {
     int  c;
 

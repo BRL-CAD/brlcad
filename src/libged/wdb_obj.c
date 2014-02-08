@@ -1821,9 +1821,6 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 
 
 /**
- * W D B _ G E T_ T C L
- *
- *@brief
  * For use with Tcl, this routine accepts as its first argument the name
  * of an object in the database.  If only one argument is given, this routine
  * then fills the result string with the (minimal) attributes of the item.

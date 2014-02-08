@@ -234,7 +234,9 @@ main(int argc, char *argv[])
 
     toc();		/* Build table of contents from directory.	*/
 
-    /*      C o m m a n d   I n t e r p r e t e r			*/
+    /***********************
+     * Command Interpreter *
+     ***********************/
     (void) setjmp(env);/* Point of re-entry from aborted command.	*/
     prompt(CMD_PROMPT);
     while (1) {

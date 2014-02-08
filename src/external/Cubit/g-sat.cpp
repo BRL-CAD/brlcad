@@ -336,10 +336,8 @@ main(int argc, char *argv[])
 }
 
 
-/*
- *      U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+void
+usage(char *s)
 {
     if ( s ) {
 	fputs( s, stderr );
@@ -349,10 +347,8 @@ void usage(char *s)
 }
 
 
-/*
- *      P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args( int ac, char **av )
+int
+parse_args( int ac, char **av )
 {
     int  c;
 

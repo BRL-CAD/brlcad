@@ -2737,10 +2737,6 @@ rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-/**
- * R T _B O T _ P A R A M S
- *
- */
 int
 rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {

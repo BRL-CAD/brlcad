@@ -2031,8 +2031,6 @@ nmg_vert_a_handler(uint32_t *vp, genptr_t state, int UNUSED(unused))
 
 
 /**
- * N M G _ V E R T E X U S E_ N O R M A L _ T A B U L A T E
- *
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every vertexuse normal
  * pointer from there on "down" in the model, each one listed exactly once.

@@ -183,7 +183,7 @@ short local_arb4_edge_vertex_mapping[6][2] = {
  * stolen from mged/arbs.c */
 
 /**
- * C G A R B S :   determines COMGEOM arb types from GED general arbs
+ * determines COMGEOM arb types from GED general arbs
  *
  * Inputs -
  *

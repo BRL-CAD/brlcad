@@ -134,9 +134,6 @@ static const struct bu_structparse reg_sp[] = {
 };
 
 
-/**
- *	U S A G E --- tell user how to invoke this program, then exit
- */
 void
 usage(char *s)
 {

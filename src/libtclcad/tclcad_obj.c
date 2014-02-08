@@ -11381,9 +11381,6 @@ to_rotate_mode(struct ged *gedp,
 }
 
 /**
- * GO _ D E L E T E P R O C _ R T
- *
- *@brief
  * Called when the named proc created by rt_gettrees() is destroyed.
  */
 HIDDEN void

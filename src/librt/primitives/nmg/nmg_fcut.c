@@ -930,8 +930,6 @@ static const char *nmg_wedge2_string[] = {
 #define WEDGE2_TOUCH_AT_DA	4
 
 /**
- * N M G _ C O M P A R E _ 2 _W E D G E S
- *
  * Returns -
  * WEDGE2_OVERLAP AB partially overlaps CD (error)
  * WEDGE2_NO_OVERLAP AB does not overlap CD

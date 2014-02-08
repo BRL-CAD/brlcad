@@ -62,9 +62,10 @@ struct aliashead {
 
 
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(void)
+void
+doit(void)
 {
     struct aliashead ah;
     char *image;

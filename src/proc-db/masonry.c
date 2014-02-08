@@ -211,10 +211,8 @@ set_rotate(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
     struct opening *op;

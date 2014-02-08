@@ -620,8 +620,6 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 
 
 /**
- * N M G _ I S E C T 2 D _ C L E A N U P.
- *
  * Common routine to zap 2d vertex cache, and release dynamic storage.
  */
 void

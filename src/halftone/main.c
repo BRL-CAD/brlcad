@@ -109,7 +109,8 @@ Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	    3  0-Degree Dispersed Screen\n\
        (stdin used with '<' construct if file.bw not supplied)\n";
 
-/*	setup:	process parameters and setup working environment
+/*
+ * process parameters and setup working environment
  *
  * Entry:
  *	argc	- number of arguments.

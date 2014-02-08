@@ -74,7 +74,7 @@ static void track_mk_freemembers();
 static int track_mk_comb();
 
 
-/*	==== I T O A  ()
+/*
  * convert integer to ascii wd format
  */
 static void
