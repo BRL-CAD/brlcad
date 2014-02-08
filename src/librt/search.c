@@ -199,18 +199,18 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		 * path (for search, that would constitute an infinite loop) */
 		struct db_full_path *newpath;
 		db_add_node_to_full_path(path, dp);
+		DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		BU_ALLOC(newpath, struct db_full_path);
+		db_full_path_init(newpath);
+		db_dup_full_path(newpath, path);
+		/* Insert the path in the bu_ptbl collecting paths */
+		bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 		if (!cyclic_path(path, NULL)) {
-		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
-		    BU_ALLOC(newpath, struct db_full_path);
-		    db_full_path_init(newpath);
-		    db_dup_full_path(newpath, path);
-		    /* Insert the path in the bu_ptbl collecting paths */
-		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 		    /* Keep going */
 		    traverse_func(path, resp, client_data);
 		} else {
 		    char *path_string = db_path_to_string(path);
-		    bu_log("WARNING: skipping cyclic path %s\n", path_string);
+		    bu_log("WARNING: not traversing cyclic path %s\n", path_string);
 		    bu_free(path_string, "free path str");
 		}
 		/* Debug printout of path with booleans */
