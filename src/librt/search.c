@@ -153,6 +153,24 @@ print_path_with_bools(struct db_full_path *full_path)
     db_free_full_path(newpath);
 }
 
+HIDDEN int
+db_cyclic_path(struct db_full_path *pathp)
+{
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+    /* skip the last one added since it is currently being tested. */
+    long int depth = pathp->fp_len - 1;
+
+    /* check the path to see if it is groundhog day */
+    while (--depth >= 0) {
+	if (BU_STR_EQUAL(dp->d_namep, pathp->fp_names[depth]->d_namep)) {
+	    return 1;
+	}
+    }
+
+    /* not found */
+    return 0;
+}
 
 /**
  * A generic traversal function maintaining awareness of the full path
@@ -195,24 +213,28 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
-		/* Create the new path */
+		/* Create the new path, if doing so doesn't create a cyclic
+		 * path (for search, that would constitute an infinite loop) */
 		struct db_full_path *newpath;
 		db_add_node_to_full_path(path, dp);
-		DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
-		BU_ALLOC(newpath, struct db_full_path);
-		db_full_path_init(newpath);
-		db_dup_full_path(newpath, path);
-
-		/* Insert the path in the bu_ptbl collecting paths */
-		bu_ptbl_ins(lcd->full_paths, (long *)newpath);
-
+		if (!db_cyclic_path(path)) {
+		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		    BU_ALLOC(newpath, struct db_full_path);
+		    db_full_path_init(newpath);
+		    db_dup_full_path(newpath, path);
+		    /* Insert the path in the bu_ptbl collecting paths */
+		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
+		    /* Keep going */
+		    traverse_func(path, resp, client_data);
+		} else {
+		    char *path_string = db_path_to_string(path);
+		    bu_log("WARNING: skipping cyclic path %s\n", path_string);
+		    bu_free(path_string, "free path str");
+		}
 		/* Debug printout of path with booleans */
 		/*bu_log("inserting path: ");
 		print_path_with_bools(newpath);
 		bu_log("\n");*/
-
-		/* Keep going */
-		traverse_func(path, resp, client_data);
 		DB_FULL_PATH_POP(path);
 		break;
 	    }
