@@ -3594,22 +3594,6 @@ BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
 /*----------------------------------------------------------------------*/
 
 
-/** @file libbn/globals.c
- *
- * New global variables are discouraged and refactoring in ways that
- * eliminates existing global variables without reducing functionality
- * is always encouraged.
- *
- */
-
-/**
- * 1.0/255.0
- */
-#define BN_INV255 0.003921568627450980392156862745098039
-
-/*----------------------------------------------------------------------*/
-
-
 /* tabdata.c */
 
 /**
