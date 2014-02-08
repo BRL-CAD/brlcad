@@ -1386,15 +1386,6 @@ typedef double fastf_t;
  */
 
 /**
- * some handy literals for bit twiddling
- */
-#define BITS_PER_BYTE      8
-#define BITS_PER_HEXCHAR   4
-#define HEXCHARS_PER_BYTE  2
-#define HEX_BASE          16
-#define BINARY_BASE        2
-
-/**
  * bitv_t should be a fast integer type for implementing bit vectors.
  *
  * On many machines, this is a 32-bit "long", but on some machines a

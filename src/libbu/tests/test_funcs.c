@@ -33,6 +33,7 @@
 
 #include "bu.h"
 
+#include "../bu_internals.h"
 #include "./test_internals.h"
 
 
@@ -66,7 +67,7 @@ dump_bitv(const struct bu_bitv *b)
     unsigned bytes;
     struct bu_vls *v = bu_vls_vlsinit();
 
-    bytes = len / BITS_PER_BYTE; /* eight digits per byte */
+    bytes = len / BU_BITS_PER_BYTE; /* eight digits per byte */
     word_count = bytes / BVS;
     chunksize = bytes % BVS;
 
@@ -80,7 +81,7 @@ dump_bitv(const struct bu_bitv *b)
     while (word_count--) {
 	while (chunksize--) {
 	    /* get the appropriate bits in the bit vector */
-	    unsigned long lval = (unsigned long)((b->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*BITS_PER_BYTE))) >> (chunksize*BITS_PER_BYTE)) & (bitv_t)0xff;
+	    unsigned long lval = (unsigned long)((b->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BU_BITS_PER_BYTE))) >> (chunksize * BU_BITS_PER_BYTE)) & (bitv_t)0xff;
 
 	    /* get next eight binary digits from bitv */
 	    int ii;
@@ -96,7 +97,7 @@ dump_bitv(const struct bu_bitv *b)
     /* print out one set of data per X bits */
     x = 16; /* X number of bits per line */
     x = x > len ? len : x;
-    /* we want even output lines (lengths in multiples of BITS_PER_BYTE) */
+    /* we want even output lines (lengths in multiples of BU_BITS_PER_BYTE) */
     if (len % x) {
 	ipad = jpad = x - (len % x);
     };
@@ -149,7 +150,7 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
 {
     const char hex_chars[] = "0123456789abcdef";
     const char bin_chars[] = "01";
-    const int nstrchars = (typ & HEX) ? nbytes * HEXCHARS_PER_BYTE : nbytes * BITS_PER_BYTE;
+    const int nstrchars = (typ & HEX) ? nbytes * BU_HEXCHARS_PER_BYTE : nbytes * BU_BITS_PER_BYTE;
     const char *chars = (typ & HEX) ? hex_chars : bin_chars;
     const int nchars = (typ & HEX) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
     int i;
