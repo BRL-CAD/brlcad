@@ -230,11 +230,11 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    /* DB_INH_LOWER was set -- lower nodes in tree override */
 	    tsp->ts_mater.ma_color_valid = 1;
 	    tsp->ts_mater.ma_color[0] =
-		(((float)(comb->rgb[0]))*BN_INV255);
+		(((float)(comb->rgb[0])) / 255.0);
 	    tsp->ts_mater.ma_color[1] =
-		(((float)(comb->rgb[1]))*BN_INV255);
+		(((float)(comb->rgb[1])) / 255.0);
 	    tsp->ts_mater.ma_color[2] =
-		(((float)(comb->rgb[2]))*BN_INV255);
+		(((float)(comb->rgb[2])) / 255.0);
 	    /* Track further inheritance as specified by this combination */
 	    tsp->ts_mater.ma_cinherit = comb->inherit;
 	}

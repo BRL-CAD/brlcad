@@ -406,9 +406,9 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     if (!tp->tx_trans_valid) {
     opaque:
 	VSET(swp->sw_color,
-	     r * BN_INV255,
-	     g * BN_INV255,
-	     b * BN_INV255);
+	     r / 255.0,
+	     g / 255.0,
+	     b / 255.0);
 
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -540,7 +540,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (!tp->tx_trans_valid) {
     opaque:
 	VSETALL(swp->sw_color,
-		bw * BN_INV255 / (dx*dy));
+		bw / 255.0 / (dx*dy));
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
 	return 1;
@@ -683,9 +683,9 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
     }
 
     VSET(swp->sw_color,
-	 (unsigned char)cp[0] * BN_INV255,
-	 (unsigned char)cp[1] * BN_INV255,
-	 (unsigned char)cp[2] * BN_INV255);
+	 (unsigned char)cp[0] / 255.0,
+	 (unsigned char)cp[1] / 255.0,
+	 (unsigned char)cp[2] / 255.0);
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);

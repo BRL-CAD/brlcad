@@ -179,11 +179,11 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 	    }
 	    materp->ma_color_valid = 1;	/* XXX - really override? */
 	    materp->ma_color[0] =
-		(((float)anp->an_u.anu_c.anc_rgb[0])+0.5)*BN_INV255;
+		(((float)anp->an_u.anu_c.anc_rgb[0])+0.5) / 255.0;
 	    materp->ma_color[1] =
-		(((float)anp->an_u.anu_c.anc_rgb[1])+0.5)*BN_INV255;
+		(((float)anp->an_u.anu_c.anc_rgb[1])+0.5) / 255.0;
 	    materp->ma_color[2] =
-		(((float)anp->an_u.anu_c.anc_rgb[2])+0.5)*BN_INV255;
+		(((float)anp->an_u.anu_c.anc_rgb[2])+0.5) / 255.0;
 	    break;
 	case RT_AN_TEMPERATURE:
 	    if (RT_G_DEBUG&DEBUG_ANIM)
