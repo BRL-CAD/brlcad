@@ -395,8 +395,8 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     for (i = 0; i < 3; i++) {
-	wd->lt_rgb[i] *= BN_INV255;
-	wd->dk_rgb[i] *= BN_INV255;
+	wd->lt_rgb[i] /= 255.0;
+	wd->dk_rgb[i] /= 255.0;
     }
 
     /*
