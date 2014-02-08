@@ -39,6 +39,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "./librt_private.h"
 
 
 void
@@ -883,28 +884,6 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
     return ret;
 }
 
-
-/**
- * Helper routine to detect cyclic references
- */
-HIDDEN int
-_db_detect_cycle(struct db_full_path *pathp, union tree *tp)
-{
-    /* skip the last one added since it is currently being tested. */
-    long int depth = pathp->fp_len - 1;
-
-    /* check the path to see if it is groundhog day */
-    while (--depth >= 0) {
-	if (BU_STR_EQUAL(tp->tr_l.tl_name, pathp->fp_names[depth]->d_namep)) {
-	    return 1;
-	}
-    }
-
-    /* not found */
-    return 0;
-}
-
-
 /**
  * Helper routine for db_recurse()
  */
@@ -935,7 +914,7 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	    }
 
 	    /* protect against cyclic geometry */
-	    if (_db_detect_cycle(pathp, tp)) {
+	    if (cyclic_path(pathp, tp->tr_l.tl_name)) {
 		int depth = pathp->fp_len;
 
 		bu_log("Detected cyclic reference of %s\nPath stack is:\n", tp->tr_l.tl_name);

@@ -531,6 +531,29 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     return 0;
 }
 
+int cyclic_path(const struct db_full_path *fp, const char *name)
+{
+    /* skip the last one added since it is currently being tested. */
+    long int depth = fp->fp_len - 1;
+    const char *test_name;
+
+    if (name && !name[0] == '\0') {
+	test_name = name;
+    } else {
+	test_name = DB_FULL_PATH_CUR_DIR(fp)->d_namep;
+    }
+
+    /* check the path to see if it is groundhog day */
+    while (--depth >= 0) {
+	if (BU_STR_EQUAL(test_name, fp->fp_names[depth]->d_namep)) {
+	    return 1;
+	}
+    }
+
+    /* not cyclic */
+    return 0;
+}
+
 
 /** @} */
 /*

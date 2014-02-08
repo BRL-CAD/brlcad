@@ -92,6 +92,7 @@
 #include "cmd.h"
 
 #include "db.h"
+#include "./librt_private.h"
 #include "./search.h"
 
 
@@ -153,25 +154,6 @@ print_path_with_bools(struct db_full_path *full_path)
     db_free_full_path(newpath);
 }
 
-HIDDEN int
-db_cyclic_path(struct db_full_path *pathp)
-{
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(pathp);
-
-    /* skip the last one added since it is currently being tested. */
-    long int depth = pathp->fp_len - 1;
-
-    /* check the path to see if it is groundhog day */
-    while (--depth >= 0) {
-	if (BU_STR_EQUAL(dp->d_namep, pathp->fp_names[depth]->d_namep)) {
-	    return 1;
-	}
-    }
-
-    /* not found */
-    return 0;
-}
-
 /**
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
@@ -217,7 +199,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		 * path (for search, that would constitute an infinite loop) */
 		struct db_full_path *newpath;
 		db_add_node_to_full_path(path, dp);
-		if (!db_cyclic_path(path)) {
+		if (!cyclic_path(path, NULL)) {
 		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
 		    BU_ALLOC(newpath, struct db_full_path);
 		    db_full_path_init(newpath);

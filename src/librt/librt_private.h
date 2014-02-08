@@ -150,6 +150,18 @@ extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d
  */
 extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
 
+
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
 __END_DECLS
 
 #endif /* LIBRT_LIBRT_PRIVATE_H */
