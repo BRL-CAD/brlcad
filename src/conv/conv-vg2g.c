@@ -109,8 +109,7 @@ main(int argc, char **argv)
 	    rec.i.i_version[0] = '\0';
 	    bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
 	}
-    }
-    else {
+    } else {
 	lseek(ifd, 0, 0);
 	/* have an old vged file to convert */
 
@@ -121,9 +120,7 @@ main(int argc, char **argv)
 	 *    	Hence cv must know the original units of the ".vg" file so
 	 *	that they can be converted to BASE units.
 	 */
-	printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
-	printf("    You must KNOW the units of the %s file\n", argv[1]);
-	printf("    If you don't know, DON'T guess....find out\n");
+	printf("NOTE: not setting the units of %s can lead to unexpected results.\n", argv[1]);
 	(void)putchar( 7 );
 
 	rec.i.i_id = ID_IDENT;
