@@ -962,12 +962,11 @@ rt_shootray(register struct application *ap)
 
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
-	register fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+	fastf_t f, diff;
+
 	f = MAGSQ(ap->a_ray.r_dir);
 	if (NEAR_ZERO(f, 0.0001)) {
 	    bu_bomb("rt_shootray:  zero length dir vector\n");
-	    return 0;
 	}
 	diff = f - 1;
 	if (!NEAR_ZERO(diff, 0.0001)) {
@@ -1615,7 +1614,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
 	fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+
 	f = MAGSQ(ap->a_ray.r_dir);
 	if (NEAR_ZERO(f, 0.0001)) {
 	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
