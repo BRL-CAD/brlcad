@@ -897,7 +897,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-	static int tgc_msgs = 0;
+	static size_t tgc_msgs = 0;
 	/* these are printed in 'mm' regardless of local units */
 
 	if (tgc_msgs++ < 100) {
