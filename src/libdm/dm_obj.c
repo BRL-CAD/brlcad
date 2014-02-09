@@ -90,9 +90,6 @@ struct dm_obj {
     struct bu_observer dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
     int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
-#if 0
-    int (*dmo_drawLabelsHook)();
-#endif
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
