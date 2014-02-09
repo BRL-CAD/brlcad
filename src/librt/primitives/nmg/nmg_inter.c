@@ -6733,8 +6733,10 @@ nmg_isect_2faceuse(point_t pt,
     abs_dir[Y] = fabs(dir[Y]);
     abs_dir[Z] = fabs(dir[Z]);
 
-    /* Clamp abs_dir vector to zero if within tolerance of zero. */
-    VCLAMP(abs_dir);
+    /* Clamp abs_dir vector to integer values if within tolerance,
+     * nominally clamping vector values to zero and one.
+     */
+    VINTCLAMP(abs_dir);
 
     if (abs_dir[X] < abs_dir[Y]) {
 	if (abs_dir[Y] < abs_dir[Z]) {

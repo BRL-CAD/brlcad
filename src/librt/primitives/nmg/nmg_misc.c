@@ -1481,7 +1481,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 
     /* find and scale first vertex of polygon */
     VMOVE(pt_1st, (BU_LIST_FIRST(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
-    VCLAMP(pt_1st);
+    VINTCLAMP(pt_1st);
     VSCALE(pt_1st, pt_1st, scale);
 
     VSETALL(sum, 0.0);
@@ -1493,9 +1493,8 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 	/* move polygon to origin */
 	VSUB2(pt, pt, pt_1st);
 	VSUB2(pt_next, pt_next, pt_1st);
-	/* clamp coordinates to zero if they are within tolerance of zero */
-	VCLAMP(pt);
-	VCLAMP(pt_next);
+	VINTCLAMP(pt);
+	VINTCLAMP(pt_next);
 	pl[X] += (EQUAL(pt[Y], pt_next[Y]) ? (0.0) : (pt[Y] - pt_next[Y])) * (pt[Z] + pt_next[Z]);
 	pl[Y] += (EQUAL(pt[Z], pt_next[Z]) ? (0.0) : (pt[Z] - pt_next[Z])) * (pt[X] + pt_next[X]);
 	pl[Z] += (EQUAL(pt[X], pt_next[X]) ? (0.0) : (pt[X] - pt_next[X])) * (pt[Y] + pt_next[Y]);
@@ -1508,8 +1507,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 	goto out;
     }
 
-    /* clamp coordinates to zero if they are within tolerance of zero */
-    VCLAMP(pl);
+    VINTCLAMP(pl);
 
     /* undo scaling of center of polygon (i.e. center of gravity) */
     VSCALE(cog, sum, 1.0/(cnt * scale));

@@ -468,23 +468,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
 
 
-/** Clamp a 3D vector to zero if within tolerance of zero. */
-#define VCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-    } while (0)
-
-
-/** Clamp a 4D vector to zero if within tolerance of zero. */
-#define HCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-	if (ZERO((a)[H])) (a)[H] = 0.0; \
-    } while (0)
-
-
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
@@ -1360,6 +1343,21 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * considerably less than that of a double.
  */
 #define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
+
+/** Clamp a 3D vector to nearby integer values. */
+#define VINTCLAMP(_v) do { \
+	(_v)[X] = INTCLAMP((_v)[X]); \
+	(_v)[Y] = INTCLAMP((_v)[Y]); \
+	(_v)[Z] = INTCLAMP((_v)[Z]); \
+    } while (0)
+
+
+/** Clamp a 4D vector to nearby integer values. */
+#define HINTCLAMP(_v) do { \
+	VINTCLAMP(_v); \
+	(_v)[H] = INTCLAMP((_v)[H]); \
+    } while (0)
+
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])
