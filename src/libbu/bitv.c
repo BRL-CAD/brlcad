@@ -426,8 +426,8 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      * zero-value bitv.
      *
      */
-    struct bu_vls *v  = bu_vls_vlsinit();
-    struct bu_vls *v2 = bu_vls_vlsinit();
+    struct bu_vls v  = BU_VLS_INIT_ZERO;
+    struct bu_vls v2 = BU_VLS_INIT_ZERO;
     unsigned nbits = nbytes > 0 ? nbytes * BU_BITS_PER_BYTE : 0;
     size_t i, j, vlen, new_vlen, len = 0;
     int err = 0;
@@ -439,26 +439,26 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     unsigned bytes;
 
     /* copy the input string and remove leading and trailing white space */
-    bu_vls_strcpy(v, str);
-    bu_vls_trimspace(v);
+    bu_vls_strcpy(&v, str);
+    bu_vls_trimspace(&v);
 
     /* check first two chars (and remove them) */
-    if (*bu_vls_cstr(v) != '0')
+    if (*bu_vls_cstr(&v) != '0')
 	++err;
-    bu_vls_nibble(v, 1);
+    bu_vls_nibble(&v, 1);
 
-    if (*bu_vls_cstr(v) != 'b' && *bu_vls_cstr(v) != 'B')
+    if (*bu_vls_cstr(&v) != 'b' && *bu_vls_cstr(&v) != 'B')
 	++err;
-    bu_vls_nibble(v, 1);
+    bu_vls_nibble(&v, 1);
 
     /* close up any embedded non-zero or non-one spaces */
-    bu_vls_extend(v2, nbits ? 2 * nbits : 2 * bu_vls_strlen(v));
-    bu_vls_trunc(v2, 0);
-    for (i = 0; i < bu_vls_strlen(v); ++i) {
-	const char c = bu_vls_cstr(v)[i];
+    bu_vls_extend(&v2, nbits ? 2 * nbits : 2 * bu_vls_strlen(&v));
+    bu_vls_trunc(&v2, 0);
+    for (i = 0; i < bu_vls_strlen(&v); ++i) {
+	const char c = bu_vls_cstr(&v)[i];
 	if (c != '0' && c != '1')
 	    continue;
-	bu_vls_printf(v2, "%c", c);
+	bu_vls_printf(&v2, "%c", c);
     }
 
     if (err)
@@ -467,7 +467,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     /* zero-length input is okay, but we always need to add leading
      * zeroes to get a bit-length which is a multiple of eight
      */
-    vlen = bu_vls_strlen(v2);
+    vlen = bu_vls_strlen(&v2);
     new_vlen = nbits > vlen ? nbits : vlen;
     if (new_vlen < BU_BITS_PER_BYTE) {
 	new_vlen = BU_BITS_PER_BYTE;
@@ -479,7 +479,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     if (new_vlen > vlen) {
 	size_t needed_zeroes = new_vlen - vlen;
 	for (i = 0; i < needed_zeroes; ++i) {
-	    bu_vls_prepend(v2, "0");
+	    bu_vls_prepend(&v2, "0");
 	}
 	vlen = new_vlen;
     }
@@ -512,7 +512,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 
 	    /* get next eight binary digits from string */
 	    for (i = 0; i < BU_BITS_PER_BYTE; ++i) {
-		abyte[i] = bu_vls_cstr(v2)[j++];
+		abyte[i] = bu_vls_cstr(&v2)[j++];
 	    }
 
 	    /* convert into an unsigned long */
@@ -542,8 +542,8 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 
 ERROR_RETURN:
 
-    bu_vls_free(v);
-    bu_vls_free(v2);
+    bu_vls_free(&v);
+    bu_vls_free(&v2);
 
     return bv;
 }
@@ -632,35 +632,35 @@ bu_bitv_compare_equal2(const struct bu_bitv *bv1, const struct bu_bitv *bv2)
 void
 bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 {
-    struct bu_vls *b   = bu_vls_vlsinit();
-    struct bu_vls *tmp = bu_vls_vlsinit();
+    struct bu_vls b   = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
     size_t len;
     size_t i;
     char abyte[BU_BITS_PER_BYTE + 1];
     int have_prefix = 0;
 
-    bu_vls_strcpy(b, bstr);
-    bu_vls_trimspace(b);
-    len = bu_vls_strlen(b);
+    bu_vls_strcpy(&b, bstr);
+    bu_vls_trimspace(&b);
+    len = bu_vls_strlen(&b);
 
     /* check for '0b' or '0B' */
-    if (bu_vls_cstr(b)[0] == '0' && len >= 2) {
-	const char c1 = bu_vls_cstr(b)[1];
+    if (bu_vls_cstr(&b)[0] == '0' && len >= 2) {
+	const char c1 = bu_vls_cstr(&b)[1];
 	if (c1 == 'b' || c1 == 'B') {
 	    have_prefix = 1;
-	    bu_vls_nibble(b, 2);
-	    len = bu_vls_strlen(b);
+	    bu_vls_nibble(&b, 2);
+	    len = bu_vls_strlen(&b);
 	}
     }
 
     /* eliminate non-binary characters used for user-spacing */
-    bu_vls_vlscatzap(tmp, b);
+    bu_vls_vlscatzap(&tmp, &b);
     for (i = 0; i < len; ++i) {
-	const char c = bu_vls_cstr(tmp)[i];
+	const char c = bu_vls_cstr(&tmp)[i];
 	if (c == '0' || c == '1')
-	    bu_vls_putc(b, c);
+	    bu_vls_putc(&b, c);
     }
-    len = bu_vls_strlen(b);
+    len = bu_vls_strlen(&b);
 
     /* check valid length, pad with leading zeroes if necessary to get
      * an integral number of bytes */
@@ -674,8 +674,8 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 	    new_len = (len/BU_BITS_PER_BYTE) * BU_BITS_PER_BYTE + BU_BITS_PER_BYTE;
 	leading_zeroes = new_len - len;
 	for (i = 0; i < leading_zeroes; ++i)
-	    bu_vls_prepend(b, "0");
-	len = bu_vls_strlen(b);
+	    bu_vls_prepend(&b, "0");
+	len = bu_vls_strlen(&b);
     }
 
     abyte[BU_BITS_PER_BYTE] = '\0';
@@ -692,7 +692,7 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 	/* get next eight binary digits (one byte) from string; note i
 	 * is incremented here */
 	for (j = 0; j < BU_BITS_PER_BYTE; ++j) {
-	    abyte[j] = bu_vls_cstr(b)[i++];
+	    abyte[j] = bu_vls_cstr(&b)[i++];
 	}
 
 	/* convert into an unsigned long */
@@ -721,8 +721,8 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 
 ERROR_RETURN:
 
-    bu_vls_free(b);
-    bu_vls_free(tmp);
+    bu_vls_free(&b);
+    bu_vls_free(&tmp);
 
 }
 
@@ -730,35 +730,35 @@ ERROR_RETURN:
 void
 bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 {
-    struct bu_vls *h   = bu_vls_vlsinit();
-    struct bu_vls *tmp = bu_vls_vlsinit();
+    struct bu_vls h   = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
     size_t len;
     size_t i;
     char abyte[BU_HEXCHARS_PER_BYTE + 1];
     int have_prefix = 0;
 
-    bu_vls_strcpy(h, hstr);
-    bu_vls_trimspace(h);
-    len = bu_vls_strlen(h);
+    bu_vls_strcpy(&h, hstr);
+    bu_vls_trimspace(&h);
+    len = bu_vls_strlen(&h);
 
     /* check for '0x' or '0X' */
-    if (bu_vls_cstr(h)[0] == '0' && len >= 2) {
-	const char c1 = bu_vls_cstr(h)[1];
+    if (bu_vls_cstr(&h)[0] == '0' && len >= 2) {
+	const char c1 = bu_vls_cstr(&h)[1];
 	if (c1 == 'x' || c1 == 'X') {
 	    have_prefix = 1;
-	    bu_vls_nibble(h, 2);
-	    len = bu_vls_strlen(h);
+	    bu_vls_nibble(&h, 2);
+	    len = bu_vls_strlen(&h);
 	}
     }
 
     /* eliminate non-hex characters used for user-spacing */
-    bu_vls_vlscatzap(tmp, h);
+    bu_vls_vlscatzap(&tmp, &h);
     for (i = 0; i < len; ++i) {
-	const unsigned char c = bu_vls_cstr(tmp)[i];
+	const unsigned char c = bu_vls_cstr(&tmp)[i];
 	if (isxdigit(c))
-	    bu_vls_putc(h, c);
+	    bu_vls_putc(&h, c);
     }
-    len = bu_vls_strlen(h);
+    len = bu_vls_strlen(&h);
 
     /* check valid length, pad with leading zeroes if necessary to get
      * an integral number of bytes */
@@ -772,8 +772,8 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 	    new_len = (len/BU_HEXCHARS_PER_BYTE) * BU_HEXCHARS_PER_BYTE + BU_HEXCHARS_PER_BYTE;
 	leading_zeroes = new_len - len;
 	for (i = 0; i < leading_zeroes; ++i)
-	    bu_vls_prepend(h, "0");
-	len = bu_vls_strlen(h);
+	    bu_vls_prepend(&h, "0");
+	len = bu_vls_strlen(&h);
     }
 
     abyte[BU_HEXCHARS_PER_BYTE] = '\0';
@@ -790,7 +790,7 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 	/* get next two hex digits (one byte) from string; note i is
 	 * incremented here */
 	for (j = 0; j < BU_HEXCHARS_PER_BYTE; ++j) {
-	    abyte[j] = bu_vls_cstr(h)[i++];
+	    abyte[j] = bu_vls_cstr(&h)[i++];
 	}
 
 	/* convert into an unsigned long */
@@ -819,8 +819,8 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 
 ERROR_RETURN:
 
-    bu_vls_free(h);
-    bu_vls_free(tmp);
+    bu_vls_free(&h);
+    bu_vls_free(&tmp);
 
 }
 
