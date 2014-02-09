@@ -848,7 +848,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	VSUB2(vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt);
 	VUNITIZE(va);
 	VUNITIZE(vb);
-	if (VDOT(va, vb) <= M_SQRT1_2) {
+	if (VDOT(va, vb) < M_SQRT1_2) {
 	    bu_bomb("nmg_break_3edge_at_plane() eu1 changes direction?\n");
 	}
     }
@@ -6736,31 +6736,31 @@ nmg_isect_2faceuse(point_t pt,
     /* Clamp abs_dir vector to zero if within tolerance of zero. */
     VCLAMP(abs_dir);
 
-    if (abs_dir[X] >= abs_dir[Y]) {
-	if (abs_dir[X] >= abs_dir[Z]) {
-	    VSET(pl, 1, 0, 0);	/* X */
-	    pl[W] = rpp_min[X];
-	    if (dir[X] < -SMALL_FASTF) {
-		VREVERSE(dir, dir);
-	    }
-	} else {
+    if (abs_dir[X] < abs_dir[Y]) {
+	if (abs_dir[Y] < abs_dir[Z]) {
 	    VSET(pl, 0, 0, 1);	/* Z */
 	    pl[W] = rpp_min[Z];
 	    if (dir[Z] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
-	}
-    } else {
-	if (abs_dir[Y] >= abs_dir[Z]) {
+	} else {
 	    VSET(pl, 0, 1, 0);	/* Y */
 	    pl[W] = rpp_min[Y];
 	    if (dir[Y] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
-	} else {
+	}
+    } else {
+	if (abs_dir[X] < abs_dir[Z]) {
 	    VSET(pl, 0, 0, 1);	/* Z */
 	    pl[W] = rpp_min[Z];
 	    if (dir[Z] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	} else {
+	    VSET(pl, 1, 0, 0);	/* X */
+	    pl[W] = rpp_min[X];
+	    if (dir[X] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
 	}
