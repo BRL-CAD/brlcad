@@ -76,7 +76,7 @@
 inline size_t
 bu_bitv_shift(void)
 {
-    size_t x = sizeof(bitv_t) * BU_BITS_PER_BYTE;
+    size_t x = sizeof(bitv_t) * BITS_PER_BYTE;
 
     FLOOR_ILOG2(x);
 
@@ -99,7 +99,7 @@ bu_bitv_new(size_t nbits)
 
     /* manually initialize */
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
-    bv->nbits = bv_bytes * BU_BITS_PER_BYTE;
+    bv->nbits = bv_bytes * BITS_PER_BYTE;
     BU_BITV_ZEROALL(bv);
 
     return bv;
@@ -228,13 +228,13 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    word_count = bv->nbits / BU_BITS_PER_BYTE / BVS;
+    word_count = bv->nbits / BITS_PER_BYTE / BVS;
     bu_vls_extend(v, word_count * BVS * 2 + 1);
 
     while (word_count--) {
 	chunksize = BVS;
 	while (chunksize--) {
-	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BU_BITS_PER_BYTE))) >> (chunksize * BU_BITS_PER_BYTE)) & (bitv_t)0xff;
+	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BITS_PER_BYTE))) >> (chunksize * BITS_PER_BYTE)) & (bitv_t)0xff;
 	    bu_vls_printf(v, "%02lx", val);
 	}
     }
@@ -316,7 +316,7 @@ bu_hex_to_bitv(const char *str)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval<<(chunksize * BU_BITS_PER_BYTE);
+	    bv->bits[word_count] |= (bitv_t)ulval<<(chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
@@ -428,7 +428,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      */
     struct bu_vls v  = BU_VLS_INIT_ZERO;
     struct bu_vls v2 = BU_VLS_INIT_ZERO;
-    unsigned nbits = nbytes > 0 ? nbytes * BU_BITS_PER_BYTE : 0;
+    unsigned nbits = nbytes > 0 ? nbytes * BITS_PER_BYTE : 0;
     size_t i, j, vlen, new_vlen, len = 0;
     int err = 0;
     struct bu_bitv *bv;
@@ -469,11 +469,11 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      */
     vlen = bu_vls_strlen(&v2);
     new_vlen = nbits > vlen ? nbits : vlen;
-    if (new_vlen < BU_BITS_PER_BYTE) {
-	new_vlen = BU_BITS_PER_BYTE;
+    if (new_vlen < BITS_PER_BYTE) {
+	new_vlen = BITS_PER_BYTE;
     }
-    else if (new_vlen % BU_BITS_PER_BYTE) {
-	new_vlen = (new_vlen / BU_BITS_PER_BYTE) * BU_BITS_PER_BYTE + BU_BITS_PER_BYTE;
+    else if (new_vlen % BITS_PER_BYTE) {
+	new_vlen = (new_vlen / BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
     }
 
     if (new_vlen > vlen) {
@@ -491,7 +491,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     /* note the final length of the bitv may be greater due to word sizes, etc. */
 
     abyte[8] = '\0';
-    bytes = len / BU_BITS_PER_BYTE; /* eight digits per byte */
+    bytes = len / BITS_PER_BYTE; /* eight digits per byte */
     word_count = bytes / BVS;
     chunksize = bytes % BVS;
 
@@ -511,7 +511,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    errno = 0;
 
 	    /* get next eight binary digits from string */
-	    for (i = 0; i < BU_BITS_PER_BYTE; ++i) {
+	    for (i = 0; i < BITS_PER_BYTE; ++i) {
 		abyte[i] = bu_vls_cstr(&v2)[j++];
 	    }
 
@@ -535,7 +535,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * BU_BITS_PER_BYTE);
+	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
@@ -636,7 +636,7 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     size_t len;
     size_t i;
-    char abyte[BU_BITS_PER_BYTE + 1];
+    char abyte[BITS_PER_BYTE + 1];
     int have_prefix = 0;
 
     bu_vls_strcpy(&b, bstr);
@@ -664,26 +664,26 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 
     /* check valid length, pad with leading zeroes if necessary to get
      * an integral number of bytes */
-    if (len < BU_BITS_PER_BYTE || len % BU_BITS_PER_BYTE) {
+    if (len < BITS_PER_BYTE || len % BITS_PER_BYTE) {
 	size_t new_len, leading_zeroes;
 	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
 	bu_log("          padding with leading zeroes to ensure such.\n");
-	if (len < BU_BITS_PER_BYTE)
-	    new_len = BU_BITS_PER_BYTE;
+	if (len < BITS_PER_BYTE)
+	    new_len = BITS_PER_BYTE;
 	else
-	    new_len = (len/BU_BITS_PER_BYTE) * BU_BITS_PER_BYTE + BU_BITS_PER_BYTE;
+	    new_len = (len/BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
 	leading_zeroes = new_len - len;
 	for (i = 0; i < leading_zeroes; ++i)
 	    bu_vls_prepend(&b, "0");
 	len = bu_vls_strlen(&b);
     }
 
-    abyte[BU_BITS_PER_BYTE] = '\0';
+    abyte[BITS_PER_BYTE] = '\0';
 
     bu_vls_trunc(h, 0);
     bu_vls_extend(h, len);
     for (i = 0; i < len; /* i is incremented inside first loop below */) {
-	int j, k = BU_BITS_PER_HEXCHAR;
+	int j, k = BITS_PER_HEXCHAR;
 	unsigned long ulval;
 	/* prepare for error checking the next conversion */
 	char *endptr;
@@ -691,12 +691,12 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 
 	/* get next eight binary digits (one byte) from string; note i
 	 * is incremented here */
-	for (j = 0; j < BU_BITS_PER_BYTE; ++j) {
+	for (j = 0; j < BITS_PER_BYTE; ++j) {
 	    abyte[j] = bu_vls_cstr(&b)[i++];
 	}
 
 	/* convert into an unsigned long */
-	ulval = strtoul(abyte, (char **)&endptr, BU_BINARY_BASE);
+	ulval = strtoul(abyte, (char **)&endptr, BINARY_BASE);
 	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
 
 	/* check for various errors (from 'man strol') */
@@ -711,7 +711,7 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 	}
 	/* parsing was successful */
 
-	for (j = 0; j < BU_HEXCHARS_PER_BYTE; ++j, k -= BU_BITS_PER_HEXCHAR)
+	for (j = 0; j < HEXCHARS_PER_BYTE; ++j, k -= BITS_PER_HEXCHAR)
 	    bu_vls_printf(h, "%1lx", (ulval >> k) & 0xf);
     }
     bu_vls_putc(h, '\0');
@@ -734,7 +734,7 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     size_t len;
     size_t i;
-    char abyte[BU_HEXCHARS_PER_BYTE + 1];
+    char abyte[HEXCHARS_PER_BYTE + 1];
     int have_prefix = 0;
 
     bu_vls_strcpy(&h, hstr);
@@ -762,26 +762,26 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 
     /* check valid length, pad with leading zeroes if necessary to get
      * an integral number of bytes */
-    if (len < BU_HEXCHARS_PER_BYTE || len % BU_HEXCHARS_PER_BYTE) {
+    if (len < HEXCHARS_PER_BYTE || len % HEXCHARS_PER_BYTE) {
 	size_t new_len, leading_zeroes;
 	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
 	bu_log("          padding with leading zeroes to ensure such.\n");
-	if (len < BU_HEXCHARS_PER_BYTE)
-	    new_len = BU_HEXCHARS_PER_BYTE;
+	if (len < HEXCHARS_PER_BYTE)
+	    new_len = HEXCHARS_PER_BYTE;
 	else
-	    new_len = (len/BU_HEXCHARS_PER_BYTE) * BU_HEXCHARS_PER_BYTE + BU_HEXCHARS_PER_BYTE;
+	    new_len = (len/HEXCHARS_PER_BYTE) * HEXCHARS_PER_BYTE + HEXCHARS_PER_BYTE;
 	leading_zeroes = new_len - len;
 	for (i = 0; i < leading_zeroes; ++i)
 	    bu_vls_prepend(&h, "0");
 	len = bu_vls_strlen(&h);
     }
 
-    abyte[BU_HEXCHARS_PER_BYTE] = '\0';
+    abyte[HEXCHARS_PER_BYTE] = '\0';
 
     bu_vls_trunc(b, 0);
-    bu_vls_extend(b, len * BU_BITS_PER_HEXCHAR + (have_prefix ? 2 : 0));
+    bu_vls_extend(b, len * BITS_PER_HEXCHAR + (have_prefix ? 2 : 0));
     for (i = 0; i < len; /* i is incremented inside first loop below */) {
-	size_t j, k = BU_BITS_PER_BYTE;
+	size_t j, k = BITS_PER_BYTE;
 	unsigned long ulval;
 	/* prepare for error checking the next conversion */
 	char *endptr;
@@ -789,12 +789,12 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 
 	/* get next two hex digits (one byte) from string; note i is
 	 * incremented here */
-	for (j = 0; j < BU_HEXCHARS_PER_BYTE; ++j) {
+	for (j = 0; j < HEXCHARS_PER_BYTE; ++j) {
 	    abyte[j] = bu_vls_cstr(&h)[i++];
 	}
 
 	/* convert into an unsigned long */
-	ulval = strtoul(abyte, (char **)&endptr, BU_HEX_BASE);
+	ulval = strtoul(abyte, (char **)&endptr, HEX_BASE);
 	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
 
 	/* check for various errors (from 'man strol') */
@@ -809,7 +809,7 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 	}
 	/* parsing was successful */
 
-	for (j = 0; j < BU_BITS_PER_BYTE; ++j)
+	for (j = 0; j < BITS_PER_BYTE; ++j)
 	    bu_vls_printf(b, "%1lx", (ulval >> --k) & 0x00000001);
     }
     bu_vls_putc(b, '\0');

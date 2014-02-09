@@ -29,11 +29,11 @@
 /**
  * some handy literals for bit twiddling
  */
-#define BU_BITS_PER_BYTE      8
-#define BU_BITS_PER_HEXCHAR   4
-#define BU_HEXCHARS_PER_BYTE  2
-#define BU_HEX_BASE          16
-#define BU_BINARY_BASE        2
+#define BITS_PER_BYTE      8
+#define BITS_PER_HEXCHAR   4
+#define HEXCHARS_PER_BYTE  2
+#define HEX_BASE          16
+#define BINARY_BASE        2
 
 #endif /* LIBBU_BU_INTERNALS_H */
 

@@ -229,7 +229,7 @@ test_bu_bitv_to_hex(int argc, char **argv)
 	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
 
     length = atoi(argv[4]);
-    if (length < (int)BU_BITS_PER_BYTE || length % (int)BU_BITS_PER_BYTE) {
+    if (length < (int)BITS_PER_BYTE || length % BITS_PER_BYTE) {
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
     }
 
@@ -248,7 +248,7 @@ test_bu_bitv_to_hex(int argc, char **argv)
      * there's no bounds checking and assumes implementation is
      * contiguous memory.
      */
-    bu_strlcpy((char*)result_bitv->bits, input, length/BU_BITS_PER_BYTE);
+    bu_strlcpy((char*)result_bitv->bits, input, length/BITS_PER_BYTE);
 
     bu_bitv_to_hex(&result, result_bitv);
 
@@ -299,8 +299,8 @@ test_bu_bitv_shift()
     /*test bu_bitv_shift*/
     res = bu_bitv_shift();
 
-    if (power(2, res) <= (sizeof(bitv_t) * BU_BITS_PER_BYTE)
-	&& power(2, res + 1) > (sizeof(bitv_t) * BU_BITS_PER_BYTE)) {
+    if (power(2, res) <= (sizeof(bitv_t) * BITS_PER_BYTE)
+	&& power(2, res + 1) > (sizeof(bitv_t) * BITS_PER_BYTE)) {
 	test_results = CTEST_PASS;
 	printf("\nPASSED: bu_bitv_shift working");
     } else {
@@ -587,7 +587,7 @@ test_bu_bitv_to_binary(int argc, char **argv)
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
 
     bu_vls_strcpy(&v, argv[3]);
-    b1 = bu_bitv_new(sizeof(input_num) * BU_BITS_PER_BYTE);
+    b1 = bu_bitv_new(sizeof(input_num) * BITS_PER_BYTE);
     b2 = bu_binary_to_bitv(bu_vls_cstr(&v));
     printf("\nExpected bitv: '%s'", bu_vls_cstr(&v));
     printf("\nExpected bitv dump:");
@@ -597,7 +597,7 @@ test_bu_bitv_to_binary(int argc, char **argv)
     BU_CK_BITV(b1);
     BU_CK_BITV(b2);
 
-    len = sizeof(input_num) * BU_BITS_PER_BYTE;
+    len = sizeof(input_num) * BITS_PER_BYTE;
 
     /* set the bits of the new bitv */
     for (i = 0; i < (int)len; ++i) {
