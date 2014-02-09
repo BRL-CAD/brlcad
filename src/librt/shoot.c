@@ -965,11 +965,11 @@ rt_shootray(register struct application *ap)
 	fastf_t f, diff;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_shootray:  zero length dir vector\n");
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;
@@ -1616,11 +1616,11 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	fastf_t f, diff;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;
