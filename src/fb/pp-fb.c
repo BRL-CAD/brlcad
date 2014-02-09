@@ -131,8 +131,12 @@ main(int argc, char **argv)
     int scr_w=512, scr_h=512, scr_set=0;
     int ret;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(5);
+
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
-/* check invocation */
+
+    /* check invocation */
     if (argc<2) {
 	fprintf(stderr,"Usage: pp-fb [options] PPfilename\n");
 	fprintf(stderr,"(See BRL-CAD Package Documentation for more info)\n");
