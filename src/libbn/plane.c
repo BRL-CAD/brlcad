@@ -961,11 +961,16 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("ptol=%g\n", ptol);
 	}
-	if (dist[0] > -ptol && dist[0] < ptol) dist[0] = 0;
-	else if (dist[0] > 1-ptol && dist[0] < 1+ptol) dist[0] = 1;
 
-	if (dist[1] > -ptol && dist[1] < ptol) dist[1] = 0;
-	else if (dist[1] > 1-ptol && dist[1] < 1+ptol) dist[1] = 1;
+ 	if (NEAR_ZERO(dist[0], ptol))
+	    dist[0] = 0.0;
+	else if (NEAR_EQUAL(dist[0], 1.0, ptol))
+	    dist[0] = 1.0;
+
+	if (NEAR_ZERO(dist[1], ptol))
+	    dist[1] = 0.0;
+	else if (NEAR_EQUAL(dist[1], 1.0, ptol))
+	    dist[1] = 1.0;
 
 	if (dist[1] < 0 || dist[1] > 1) nogood = 1;
 	if (dist[0] < 0 || dist[0] > 1) nogood++;
@@ -979,12 +984,17 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
     /* Lines intersect */
     /* If within tolerance of an endpoint (0, 1), make exact. */
     ptol = tol->dist / sqrt(MAGSQ_2D(pdir));
-    if (dist[0] > -ptol && dist[0] < ptol) dist[0] = 0;
-    else if (dist[0] > 1-ptol && dist[0] < 1+ptol) dist[0] = 1;
+
+    if (NEAR_ZERO(dist[0], ptol))
+	dist[0] = 0;
+    else if (NEAR_EQUAL(dist[0], 1.0, ptol))
+	dist[0] = 1;
 
     qtol = tol->dist / sqrt(MAGSQ_2D(qdir));
-    if (dist[1] > -qtol && dist[1] < qtol) dist[1] = 0;
-    else if (dist[1] > 1-qtol && dist[1] < 1+qtol) dist[1] = 1;
+    if (NEAR_ZERO(dist[1], ptol))
+	dist[1] = 0;
+    else if (NEAR_EQUAL(dist[1], 1.0, ptol))
+	dist[1] = 1;
 
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
