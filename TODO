@@ -93,6 +93,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
+  using regular printing and input reading in a loop.
+
 * write a manual page for the bot_fuse command
 
 * Need to mark or otherwise disambiguate grazing hit segments so we
