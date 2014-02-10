@@ -134,7 +134,7 @@ clean_vert_tree( struct vert_root *tree_root )
 }
 
 /**
- * satic recursive routine used by "free_vert_tree"
+ * static recursive routine used by "free_vert_tree"
  */
 static void
 free_vert_tree_recurse( union vert_tree *ptr )

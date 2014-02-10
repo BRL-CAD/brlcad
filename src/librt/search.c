@@ -1659,8 +1659,8 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
-	 * if we encounter an above, then snag the next node and place
-	 * it in the not's subplan.
+	 * if we encounter an above, then snag the next node and place it
+	 * in the not's subplan.
 	 */
 	if (next->type == N_ABOVE) {
 
@@ -2118,7 +2118,7 @@ db_search(struct bu_ptbl *search_results,
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
     /* Note that dbplan references strings using memory
-     * in the following two objects, so they musn't be
+     * in the following two objects, so they mustn't be
      * freed until the plan is freed.*/
     char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
     struct bu_vls plan_string_vls = BU_VLS_INIT_ZERO;
