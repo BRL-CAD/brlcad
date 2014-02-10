@@ -38,17 +38,7 @@
 #  include "fbserv_obj.h"
 #endif
 
-#ifndef DM_EXPORT
-#  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
-#    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
-#  elif defined(DM_DLL_EXPORTS)
-#    define DM_EXPORT __declspec(dllexport)
-#  elif defined(DM_DLL_IMPORTS)
-#    define DM_EXPORT __declspec(dllimport)
-#  else
-#    define DM_EXPORT
-#  endif
-#endif
+#include "./dm/defines.h"
 
 #define DM_NULL (struct dm *)NULL
 #define DM_MIN (-2048)
