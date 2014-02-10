@@ -246,7 +246,7 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %l] {<\n ",
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
 		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
 		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
 		-(long)y);				/* patch y origin */
