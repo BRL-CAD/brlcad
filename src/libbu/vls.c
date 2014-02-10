@@ -451,8 +451,6 @@ bu_vls_substr(struct bu_vls *dest, struct bu_vls *src, size_t begin, size_t ncha
     len = src->vls_len;
     if (UNLIKELY(len <= 0))
 	return;
-    if (UNLIKELY(begin < 0))
-	begin = 0;
     if (UNLIKELY(begin > len))
 	return;
     if (UNLIKELY(nchars <= 0))
