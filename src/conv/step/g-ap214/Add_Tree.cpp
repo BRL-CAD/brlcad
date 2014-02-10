@@ -176,11 +176,15 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * combs - we generate that *after* these results have been vetted) */
 
     const char *no_nonsub_region_below_region_search = "-type region -above -type region ! -bool -";
-    struct bu_ptbl *problem_regions = db_search_path_obj(no_nonsub_region_below_region_search, dp, wdbp);
+    struct bu_ptbl *problem_regions;
+    BU_ALLOC(problem_regions, struct bu_ptbl);
+    (void)db_search(problem_regions, no_nonsub_region_below_region_search, 1, &dp, wdbp, 0);
 
     /* Look for any assembly objects with problems - probably should break this out for reporting purposes... */
     const char *invalid_assembly_search = "-below -type region ! -type region ( -above -type region -or -below=1 -type shape -or -below=1 -bool - -or -below=1 -bool + -or -bool - -or -bool + -or -above -bool - -or -above -bool + )";
-    struct bu_ptbl *invalid_assemblies = db_search_path(invalid_assembly_search, dp, wdbp);
+    struct bu_ptbl *invalid_assemblies;
+    BU_ALLOC(invalid_assemblies, struct bu_ptbl);
+    (void)db_search(invalid_assemblies, invalid_assembly_search, 1, &dp, wdbp, 0);
 
 
     if(BU_PTBL_LEN(problem_regions) > 0 || BU_PTBL_LEN(invalid_assemblies) > 0) {
@@ -190,7 +194,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 
     /* Get the list of assembly objects */
     const char *assembly_search = "-below -type region ! -type region";
-    struct bu_ptbl *assemblies = db_search_path_obj(assembly_search, dp, wdbp);
+    struct bu_ptbl *assemblies;
+    BU_ALLOC(assemblies, struct bu_ptbl);
+    (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
 #if 0
     for (i = 0; i < BU_PTBL_LEN(assemblies); i++) {
 	/* Assembly validity check #1 - solids in assembly bools */
@@ -212,7 +218,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 #endif
 
     const char *region_search = "-type region";
-    struct bu_ptbl *regions = db_search_path_obj(region_search, dp, wdbp);
+    struct bu_ptbl *regions;
+    BU_ALLOC(regions, struct bu_ptbl);
+    (void)db_search(regions, region_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
 
 
     struct rt_db_internal comb_intern;
