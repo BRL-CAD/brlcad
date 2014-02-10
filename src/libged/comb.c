@@ -233,7 +233,6 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     char *only_unions_in_tree_plan = "! -bool u";
     char *solids_in_tree_plan = "! -type comb";
     char *combs_in_tree_plan = "-type comb";
-    struct bu_ptbl *non_union_objects = BU_PTBL_NULL;
     struct bu_ptbl *solids = BU_PTBL_NULL;
     struct bu_ptbl *combs = BU_PTBL_NULL;
     struct bu_ptbl *combs_outside_of_tree = BU_PTBL_NULL;
@@ -241,10 +240,7 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     struct directory **dp_curr;
 
     /* if there are non-union booleans in this comb's tree, error out */
-    non_union_objects = db_search_path_obj(only_unions_in_tree_plan, dp, gedp->ged_wdbp);
-    result_cnt = BU_PTBL_LEN(non_union_objects);
-    bu_ptbl_free(non_union_objects);
-    bu_free(non_union_objects, "free search table structure");
+    result_cnt = db_search(NULL, only_unions_in_tree_plan, 1, &dp, NULL, 0);
     /* if non_union_objects isn't empty, error out */
     if (result_cnt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
@@ -252,8 +248,10 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     }
 
     /* Find the solids and combs in the tree */
-    solids = db_search_path_obj(solids_in_tree_plan, dp, gedp->ged_wdbp);
-    combs = db_search_path_obj(combs_in_tree_plan, dp, gedp->ged_wdbp);
+    BU_ALLOC(solids, struct bu_ptbl);
+    (void)db_search(solids, solids_in_tree_plan, 1, &dp, gedp->ged_wdbp, DB_SEARCH_RETURN_UNIQ_DP);
+    BU_ALLOC(combs, struct bu_ptbl);
+    (void)db_search(combs, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp, DB_SEARCH_RETURN_UNIQ_DP);
 
     /* If it's all solids already, nothing to do */
     if (!BU_PTBL_LEN(combs)) {
@@ -269,7 +267,8 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
-    combs_outside_of_tree = db_search_paths_obj(bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp);
+    BU_ALLOC(combs_outside_of_tree, struct bu_ptbl);
+    (void)db_search(combs_outside_of_tree, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp, DB_SEARCH_RETURN_UNIQ_DP);
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
@@ -340,7 +339,8 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
     int failure_case = 0;
 
     /* Find the regions - need full paths here, because we'll be checking parents */
-    regions = db_search_path(regions_in_tree_plan, dp, gedp->ged_wdbp);
+    BU_ALLOC(regions, struct bu_ptbl);
+    (void)db_search(regions, regions_in_tree_plan, 1, &dp, gedp->ged_wdbp, 0);
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
     if (!BU_PTBL_LEN(regions)) {
@@ -354,7 +354,8 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
     obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
-    combs_outside_of_tree = db_search_paths_obj(bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp);
+    BU_ALLOC(combs_outside_of_tree, struct bu_ptbl);
+    (void)db_search(combs_outside_of_tree, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp, DB_SEARCH_RETURN_UNIQ_DP);
     bu_vls_free(&plan_string);
     bu_free(all_paths, "free db_tops output");
 
@@ -421,7 +422,8 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 	struct directory *new_comb;
 	bu_vls_init(&new_comb_name);
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
-	combs_in_tree = db_search_path_obj(combs_in_tree_plan, dp, gedp->ged_wdbp);
+	BU_ALLOC(combs_in_tree, struct bu_ptbl);
+	(void)db_search(combs_in_tree, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp, DB_SEARCH_RETURN_UNIQ_DP);
         bu_ptbl_ins(combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {

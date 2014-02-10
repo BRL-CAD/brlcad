@@ -3738,53 +3738,21 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
  * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
  *
  */
-RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
-	                                        struct directory *dp,
-	                                        struct rt_wdb *wdbp);
-RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
-                                                 int path_cnt,
-	                                         struct directory **paths,
-	                                         struct rt_wdb *wdbp);
+#define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
+#define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
+#define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
+RT_EXPORT extern int db_search(struct bu_ptbl *results,
+                               const char *plan_string,
+                               int path_cnt,
+                               struct directory **paths,
+                               struct rt_wdb *wdbp,
+                               int s_flags);
 
-/* Because the handling of the plan is now wrapped up inside the
- * search commands, we need a way to check ahead of time to see
- * if the string we have is valid.  Not an issue for hard-coded
- * search strings in C logic, but may be needed when the string
- * is user (or script) generated.
- *
- * Returns: 1 if plan is valid, 0 if it is not */
-RT_EXPORT extern int db_search_plan_validate(const char *plan_string);
-
-/* Properly free the tables returned by db_search_path and db_search_paths */
+/**
+ * Properly free the tables returned by db_search
+ */
 RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
 
-/* Because a list of unique directory pointers is a common output
- * needed from search, functions are provided that produce a
- * table of directory pointers to unique leaf objects from the search
- * results.  Note that db_free_search_tbl does *not* free the table returned
- * by db_search_obj, but a custom free is not needed - only directory
- * pointers are stored in the table, so a normal bu_ptbl_free combined
- * with a freeing of the table structure itself is sufficient.
- */
-RT_EXPORT extern struct bu_ptbl *db_search_path_obj(const char *plan_string,
-	                                            struct directory *dp,
-	                                            struct rt_wdb *wdbp);
-RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
-	                                             int path_cnt,
-	                                             struct directory **paths,
-	                                             struct rt_wdb *wdbp);
-
-/* For situations where performance is critical and there are no
- * search criteria that depend on depth (for example, wanting a list
- * of all brep objects with name matching pattern *.b) a truly flat
- * iteration through the directory objects will be much faster.
- *
- * Returns a bu_ptbl of directory pointers, since full paths are
- * meaningless in this type of search
- */
-RT_EXPORT extern struct bu_ptbl *db_search_flat(const char *plan_string,
-	                                            struct rt_wdb *wdbp,
-						    int flags);
 
 /* db_open.c */
 /**
