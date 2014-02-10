@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef RT_DEFINES_H
+#define RT_DEFINES_H
+
 #ifndef RT_EXPORT
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
@@ -34,6 +37,8 @@
 #    define RT_EXPORT
 #  endif
 #endif
+
+#endif /* RT_DEFINES_H */
 
 /*
  * Local Variables:

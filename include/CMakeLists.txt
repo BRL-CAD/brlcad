@@ -1,29 +1,4 @@
-set(include_hdrs
-  ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
-  RtServerImpl.h
-  bn.h
-  bu.h
-  common.h
-  cursor.h
-  ged.h
-  magic.h
-  pstdint.h
-  raytrace.h
-  rt/defines.h
-  rtfunc.h
-  rtgeom.h
-  rtserver.h
-  tclcad.h
-  analyze.h
-  anim.h
-  bot.h
-  brep.h
-  brlcad.h
-  brlcad.i
-  cmd.h
-  db.h
-  db5.h
-  dg.h
+set(dm_headers
   dm.h
   dm/defines.h
   dm/dm-Null.h
@@ -39,6 +14,40 @@ set(include_hdrs
   dm/dm-wgl.h
   dm/dm_color.h
   dm/dm_xvars.h
+  )
+
+set(rt_headers
+  raytrace.h
+  rt/defines.h
+  rt/search.h
+  )
+
+set(include_hdrs
+  ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
+  RtServerImpl.h
+  bn.h
+  bu.h
+  common.h
+  cursor.h
+  ged.h
+  magic.h
+  pstdint.h
+  ${rt_headers}
+  rtfunc.h
+  rtgeom.h
+  rtserver.h
+  tclcad.h
+  analyze.h
+  anim.h
+  bot.h
+  brep.h
+  brlcad.h
+  brlcad.i
+  cmd.h
+  db.h
+  db5.h
+  dg.h
+  ${dm_headers}
   dvec.h
   fb.h
   fbio.h
