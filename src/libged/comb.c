@@ -240,7 +240,7 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     struct directory **dp_curr;
 
     /* if there are non-union booleans in this comb's tree, error out */
-    result_cnt = db_search(NULL, only_unions_in_tree_plan, 1, &dp, NULL, 0);
+    result_cnt = db_search(NULL, only_unions_in_tree_plan, 1, &dp, NULL, DB_SEARCH_TREE);
     /* if non_union_objects isn't empty, error out */
     if (result_cnt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
@@ -340,7 +340,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 
     /* Find the regions - need full paths here, because we'll be checking parents */
     BU_ALLOC(regions, struct bu_ptbl);
-    (void)db_search(regions, regions_in_tree_plan, 1, &dp, gedp->ged_wdbp, 0);
+    (void)db_search(regions, regions_in_tree_plan, 1, &dp, gedp->ged_wdbp, DB_SEARCH_TREE);
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
     if (!BU_PTBL_LEN(regions)) {

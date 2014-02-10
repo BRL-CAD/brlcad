@@ -3738,6 +3738,7 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
  * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
  *
  */
+#define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
 #define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
 #define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
 #define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
