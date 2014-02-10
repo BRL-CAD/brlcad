@@ -143,12 +143,14 @@ test_bu_hex_to_bitv(int argc, char **argv)
     }
 
     bu_bitv_vls(&v, res_bitv);
-    test_results = bu_strcmp(bu_vls_cstr(&v), expected);
 
-    if (!test_results)
+    if (BU_STR_EQUAL(bu_vls_cstr(&v), expected)) {
+	test_results = CTEST_PASS;
 	printf("\nbu_hex_to_bitv PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_hex_to_bitv FAILED");
+    }
 
     printf("\n  Input:    '%s'", input);
     printf("\n  Output:   '%s'", bu_vls_cstr(&v));
@@ -160,8 +162,6 @@ ERROR_RETURN:
 	bu_bitv_free(res_bitv);
     bu_vls_free(&v);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -191,12 +191,14 @@ test_bu_bitv_vls(int argc, char **argv)
     }
 
     bu_bitv_vls(&a, res_bitv);
-    test_results = bu_strcmp(bu_vls_cstr(&a), expected);
 
-    if (!test_results)
+    if (BU_STR_EQUAL(bu_vls_cstr(&a), expected)) {
+	test_results = CTEST_PASS;
 	printf("\nbu_bitv_vls test PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_bitv_vls test FAILED");
+    }
 
     printf("\n  Input: '%s'", input);
     printf("\n  Output: '%s'", bu_vls_cstr(&a));
@@ -207,8 +209,6 @@ ERROR_RETURN:
     bu_vls_free(&a);
     bu_bitv_free(res_bitv);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -252,12 +252,13 @@ test_bu_bitv_to_hex(int argc, char **argv)
 
     bu_bitv_to_hex(&result, result_bitv);
 
-    test_results = bu_strcmp(bu_vls_cstr(&result), expected);
-
-    if (!test_results)
+    if (BU_STR_EQUAL(bu_vls_cstr(&result), expected)) {
+	test_results = CTEST_PASS;
         printf("\nbu_bitv_to_hex PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
         printf("\nbu_bitv_to_hex FAILED");
+    }
 
     printf("\n  Input: '%s'", input);
     printf("\n  Output: '%s'", bu_vls_cstr(&result));
@@ -269,8 +270,6 @@ ERROR_RETURN:
 	bu_bitv_free(result_bitv);
     bu_vls_free(&result);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -355,17 +354,17 @@ test_bu_bitv_or(int argc , char **argv)
     bu_bitv_vls(&a, res_bitv1);
     bu_bitv_vls(&b, result);
 
-    test_results = bu_strcmp(bu_vls_cstr(&a), bu_vls_cstr(&b));
-
-    if (!test_results)
+    if (BU_STR_EQUAL(bu_vls_cstr(&a), bu_vls_cstr(&b))) {
+	test_results = CTEST_PASS;
 	printf("\nbu_bitv_or test PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_bitv_or test FAILED");
+    }
 
     printf("\n  Input1:   '%s'", input1);
     printf("\n  Input2:   '%s'", input2);
     printf("\n  Expected: '%s'", expected);
-
 
 ERROR_RETURN:
 
@@ -378,8 +377,6 @@ ERROR_RETURN:
     if (result)
 	bu_bitv_free(result);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -428,12 +425,13 @@ test_bu_bitv_and(int argc, char **argv)
     bu_bitv_vls(&a, res_bitv1);
     bu_bitv_vls(&b, result);
 
-    test_results = bu_strcmp(bu_vls_cstr(&a), bu_vls_cstr(&b));
-
-    if (!test_results)
+    if (BU_STR_EQUAL(bu_vls_cstr(&a), bu_vls_cstr(&b))) {
+	test_results = CTEST_PASS;
 	printf("\nbu_bitv_and test PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_bitv_and test FAILED");
+    }
 
     printf("   Input1:   '%s'", input1);
     printf("   Input2:   '%s'", input2);
@@ -451,8 +449,6 @@ ERROR_RETURN:
     if (result)
 	bu_bitv_free(result);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -759,12 +755,13 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
 
     bu_binstr_to_hexstr(input, &v);
 
-    test_results = bu_strcmp(expected, bu_vls_cstr(&v));
-
-    if (!test_results)
+    if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
+	test_results = CTEST_PASS;
 	printf("\nbu_binstr_to_hexstr PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_binstr_to_hexstr FAILED");
+    }
 
     printf("\n  Input:    '%s'", input);
     printf("\n  Output:   '%s'", bu_vls_cstr(&v));
@@ -772,8 +769,6 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
 
     bu_vls_free(&v);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
@@ -795,12 +790,13 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
 
     bu_hexstr_to_binstr(input, &v);
 
-    test_results = bu_strcmp(expected, bu_vls_cstr(&v));
-
-    if (!test_results)
+    if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
+	test_results = CTEST_PASS;
 	printf("\nbu_hexstr_to_binstr PASSED");
-    else
+    } else {
+	test_results = CTEST_FAIL;
 	printf("\nbu_hexstr_to_binstr FAILED");
+    }
 
     printf("\n  Input:    '%s'", input);
     printf("\n  Output:   '%s'", bu_vls_cstr(&v));
@@ -808,8 +804,6 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
 
     bu_vls_free(&v);
 
-    /* a false return above is a CTEST_PASS, so the value is the same
-     * as ctest's CTEST_PASS/CTEST_FAIL */
     return test_results;
 }
 
