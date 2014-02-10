@@ -671,7 +671,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 */
 		nmg_class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
 					       (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					       (void (*)(struct vertexuse *, point_t, const char *))NULL, 
+					       (void (*)(struct vertexuse *, point_t, const char *))NULL,
 					       (const char *)NULL, 0, 0, tol);
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");

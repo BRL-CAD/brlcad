@@ -174,7 +174,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 
     /* Once we have the list of assemblies, search for a variety of db problems - be sure
      * there are no non-union booleans above assembly comb, make sure there aren't any stray
-     * solids floating around in assembly boolean structures, and look for nested regions. 
+     * solids floating around in assembly boolean structures, and look for nested regions.
      * (The first two tests are the real reason
      * we need a full list of all paths instead of just the unique set of assembly
      * combs - we generate that *after* these results have been vetted) */
