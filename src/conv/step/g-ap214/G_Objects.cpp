@@ -43,6 +43,15 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
     if (sc->solid_to_step->find(dp) != sc->solid_to_step->end()) return;
     if (sc->comb_to_step->find(dp) != sc->comb_to_step->end()) return;
     switch (intern->idb_minor_type) {
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
+	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product);
+	    (*sc->solid_to_step)[dp] = brep_product;
+	    (*sc->solid_to_step_shape)[dp] = brep_shape;
+	    break;
+	case DB5_MINORTYPE_BRLCAD_COMBINATION:
+	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
+	    break;
 	case DB5_MINORTYPE_BRLCAD_HALF: /* half_space_solid */
 	    bu_log("half");
 	    //break;
@@ -66,6 +75,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	    /* In principle, some arbs will satisfy block and
 	       -	     * right_angular_wedge - not clear if it's worth
 	       -	     * testing the CSG inputs to identify them */
+#if 0
 	    type = rt_arb_std_type(intern, &arb_tol);
 	    switch (type) {
 		case 4:
@@ -87,6 +97,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 		    bu_log("invalid");
 		    //break;
 	    }
+#endif
 	    //break;
 	case DB5_MINORTYPE_BRLCAD_TOR:
 	    /* The torus, while expressible in AP214 as a geometric representation,
@@ -96,15 +107,6 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	       -	 * NURBS form. */
 	    bu_log("tor");
 	    //break;
-	case DB5_MINORTYPE_BRLCAD_BREP:
-	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
-	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product);
-	    (*sc->solid_to_step)[dp] = brep_product;
-	    (*sc->solid_to_step_shape)[dp] = brep_shape;
-	    break;
-	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
-	    break;
 	default:
 	    /* If it isn't already a BRep, it's not a comb, and it's not a special case try to make it
 	     * into a BRep */

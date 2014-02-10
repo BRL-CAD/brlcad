@@ -25,6 +25,7 @@
  */
 
 #include "AP214e3.h"
+#include "G_Objects.h"
 
 struct AP214_info {
     const struct db_i *dbip;
@@ -35,9 +36,11 @@ struct AP214_info {
 };
 
 HIDDEN int
-conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, const union tree *t, AP203_Contents *sc)
+conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)
 {
     struct directory *left = NULL, *right = NULL, *old = NULL;
+    STEPentity *leftstep = NULL;
+    STEPentity *rightstep = NULL;
     int ret = 0;
     int left_ret = 0;
     int right_ret = 0;
@@ -52,7 +55,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
         case OP_SUBTRACT:
         case OP_XOR:
             /* convert right */
-            ret = conv_tree(d, depth+1, 1, &right, t->tr_b.tb_right, sc);
+            ret = conv_tree(d, depth+1, 1, &right, &rightstep, t->tr_b.tb_right, sc);
 	    right_ret = ret;
 	    if (ret == -1) {
 		break;
@@ -62,7 +65,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
         case OP_GUARD:
         case OP_XNOP:
             /* convert left */
-            ret = conv_tree(d, depth+1, 2, &left, t->tr_b.tb_left, sc);
+            ret = conv_tree(d, depth+1, 2, &left, &leftstep, t->tr_b.tb_left, sc);
 	    left_ret = ret;
             if (ret == -1) {
 		break;
@@ -109,7 +112,6 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
                 dir = db_lookup(sc->dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    struct rt_db_internal intern;
-		    if (solid) (*solid) = dir;
 		    rt_db_get_internal(&intern, dir, sc->dbip, bn_mat_identity, &rt_uniresource);
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 			RT_CK_DB_INTERNAL(&intern);
@@ -119,7 +121,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    /* Probably should return empty object... */
 			    return NULL;
 			} else {
-			    int tree_construct = conv_tree(&dir, depth+1, 0, NULL, comb->tree, sc);
+			    int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    if (sc->comb_to_step->find(dir) != sc->comb_to_step->end()) {
 				bu_log("Combination object %s already exists - returning\n", dir->d_namep);
@@ -131,13 +133,15 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    }
 			}
 		    } else {
+			if (solid) (*solid) = dir;
 			if (sc->solid_to_step->find(dir) != sc->solid_to_step->end()) {
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Solid object %s already exists - Returning\n", dir->d_namep);
 			} else {
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Returning solid object %s\n", dir->d_namep);
-			    sc->solid_to_step->insert(std::make_pair(dir, (STEPentity *)NULL));
+			    Object_To_STEP(dir, &intern, sc->wdbp, sc);
+			    if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
 			}
 			ret = 1;
 		    }
@@ -218,12 +222,6 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	db_free_search_tbl(invalid_assemblies);
     }
 
-    /* Get the list of assembly objects */
-    const char *assembly_search = "-below -type region ! -type region";
-    struct bu_ptbl *assemblies;
-    BU_ALLOC(assemblies, struct bu_ptbl);
-    (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
-
     /* Get the list of region objects */
     const char *region_search = "-type region";
     struct bu_ptbl *regions;
@@ -233,6 +231,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 
     struct rt_db_internal comb_intern;
     sc->dbip = wdbp->dbip;
+    sc->wdbp = wdbp;
     rt_db_get_internal(&comb_intern, dp, sc->dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
@@ -240,8 +239,15 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     if (comb->tree == NULL) {
 	/* Probably should return empty object... */
     } else {
-	(void)conv_tree(&dp, 0, 0, NULL, comb->tree, sc);
+	(void)conv_tree(&dp, 0, 0, NULL, NULL, comb->tree, sc);
     }
+
+    /* Get the list of assembly objects */
+    const char *assembly_search = "-below -type region ! -type region";
+    struct bu_ptbl *assemblies;
+    BU_ALLOC(assemblies, struct bu_ptbl);
+    (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
+
 }
 
 // Local Variables:
