@@ -5277,11 +5277,26 @@ BU_EXPORT extern size_t bu_vls_print_positions_used(const struct bu_vls *vp);
  */
 BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
 
+
 /**
  * Add a string to the beginning of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 				     char *str);
+
+
+/**
+ * Copy a substring from a source vls into a destination vls
+ *
+ *   where:
+ *
+ *     begin  - the index (0-based) of the beginning character position
+ *              in the source vls
+ *     nchars - the number of characters to copy
+ *
+ */
+BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, struct bu_vls *src,
+				    size_t begin, size_t nchars);
 
 /**
  * given an input string, wrap the string in double quotes if there is

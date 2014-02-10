@@ -439,6 +439,43 @@ bu_vls_vlscatzap(struct bu_vls *dest, struct bu_vls *src)
 }
 
 
+void
+bu_vls_substr(struct bu_vls *dest, struct bu_vls *src, size_t begin, size_t nchars)
+{
+    size_t len;
+    size_t i, end;
+
+    BU_CK_VLS(src);
+    BU_CK_VLS(dest);
+
+    len = src->vls_len;
+    if (UNLIKELY(len <= 0))
+	return;
+    if (UNLIKELY(begin < 0))
+	begin = 0;
+    if (UNLIKELY(begin > len))
+	return;
+    if (UNLIKELY(nchars <= 0))
+	return;
+
+    if (nchars > len)
+	nchars = len;
+
+    bu_vls_trunc(dest, 0);
+    bu_vls_extend(dest, nchars + 1);
+
+    end = begin + nchars;
+    if (end > len)
+	end = len;
+
+    for (i = begin; i < end; ++i)
+	bu_vls_putc(dest, bu_vls_cstr(src)[i]);
+
+    /* ensure we have an end */
+    bu_vls_putc(dest, '\0');
+}
+
+
 int
 bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
 {

@@ -626,6 +626,46 @@ test_bu_vls_prepend(int argc, char *argv[])
 }
 
 
+static int
+test_bu_vls_substr(int argc, char **argv)
+{
+    /*         argv[1]    argv[2]      argv[3]        argv[4]      argv[5]
+     * inputs: <func num> <src string> <substr index> <substr len> <expected string>
+     */
+    const char *src_string      = argv[2];
+    size_t begin                = (size_t)atoi(argv[3]);
+    size_t slen                 = (size_t)atoi(argv[4]);
+    const char *expected_result = argv[5];
+
+    struct bu_vls vsrc          = BU_VLS_INIT_ZERO;
+    struct bu_vls vsubstr       = BU_VLS_INIT_ZERO;
+    int test_results            = CTEST_FAIL;
+
+    if (argc != 6)
+	bu_exit(1, "ERROR: input format is <func num> <source string> <begin index> <num chars> <expected result string> [%s]\n", argv[0]);
+
+    bu_vls_strcpy(&vsrc, src_string);
+
+    bu_vls_substr(&vsubstr, &vsrc, begin, slen);
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&vsubstr), expected_result)) {
+	test_results = CTEST_PASS;
+	printf("\nbu_vls_substr PASSED");
+    } else {
+	test_results = CTEST_FAIL;
+	printf("\nbu_vls_substr FAILED");
+    }
+    printf("\n  Input:    '%s'", bu_vls_cstr(&vsrc));
+    printf("\n  Output:   '%s'", bu_vls_cstr(&vsubstr));
+    printf("\n  Expected: '%s'", expected_result);
+
+    bu_vls_free(&vsrc);
+    bu_vls_free(&vsubstr);
+
+    return test_results;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -682,6 +722,8 @@ main(int argc, char *argv[])
 	    return test_bu_vls_detab(argc, argv);
 	case 19:
 	    return test_bu_vls_prepend(argc, argv);
+	case 20:
+	    return test_bu_vls_substr(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);

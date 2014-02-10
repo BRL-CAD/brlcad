@@ -495,6 +495,25 @@ add_test(bu_vls_detab_1 tester_bu_vls 18 "Testing	1 2	3" "Testing 1 2     3")
 
 add_test(bu_vls_prepend_1 tester_bu_vls 19 "2 3" "Test 1 " "Test 1 2 3")
 
+# For function #20 (bu_vls_substr) the <args> format is as follows:
+#
+#   source_string substring_begin_index substring_length expected_result_string
+#
+#  -1         0         1
+#   098765432101234567890
+#            "01234567890" <= 11 chars
+add_test(bu_vls_substr_01 tester_bu_vls 20 "01234567890"  0  5  "01234")
+add_test(bu_vls_substr_02 tester_bu_vls 20 "01234567890" -2  5  "")
+add_test(bu_vls_substr_03 tester_bu_vls 20 "01234567890" -2 20  "")
+add_test(bu_vls_substr_04 tester_bu_vls 20 "01234567890"  5 20  "567890")
+add_test(bu_vls_substr_05 tester_bu_vls 20 "01234567890"  0 20  "01234567890")
+add_test(bu_vls_substr_06 tester_bu_vls 20 "01234567890"  2  5  "23456")
+add_test(bu_vls_substr_07 tester_bu_vls 20 "01234567890" 20  5  "")
+add_test(bu_vls_substr_08 tester_bu_vls 20 "01234567890"  0 -1  "01234567890")
+add_test(bu_vls_substr_09 tester_bu_vls 20 "01234567890"  2 -1  "234567890")
+add_test(bu_vls_substr_10 tester_bu_vls 20 "01234567890"  0  0  "")
+add_test(bu_vls_substr_11 tester_bu_vls 20 "01234567890"  0  2  "01")
+add_test(bu_vls_substr_12 tester_bu_vls 20 "01234567890" 11 20  "")
 
 #
 #  ************ sort.c test *************
