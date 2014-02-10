@@ -179,17 +179,43 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     struct bu_ptbl *problem_regions;
     BU_ALLOC(problem_regions, struct bu_ptbl);
     (void)db_search(problem_regions, no_nonsub_region_below_region_search, 1, &dp, wdbp, DB_SEARCH_TREE);
+    if (BU_PTBL_LEN(problem_regions) > 0) {
+	bu_log("Error - found nested regions within the .g file: \n");
+	for(i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
+	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(problem_regions, i);
+	    bu_log("   %s\n", db_path_to_string(dfp));
+	}
+	db_free_search_tbl(problem_regions);
+	bu_exit(1, "problem regions");
+    } else {
+	db_free_search_tbl(problem_regions);
+    }
 
     /* Look for any assembly objects with problems - probably should break this out for reporting purposes... */
-    const char *invalid_assembly_search = "-below -type region ! -type region ( -above -type region -or -below=1 -type shape -or -below=1 -bool - -or -below=1 -bool + -or -bool - -or -bool + -or -above -bool - -or -above -bool + )";
     struct bu_ptbl *invalid_assemblies;
     BU_ALLOC(invalid_assemblies, struct bu_ptbl);
-    (void)db_search(invalid_assemblies, invalid_assembly_search, 1, &dp, wdbp, DB_SEARCH_TREE);
-
-
-    if(BU_PTBL_LEN(problem_regions) > 0 || BU_PTBL_LEN(invalid_assemblies) > 0) {
-	/* TODO - print problem paths */
-	bu_exit(1, "nested regions");
+    const char *invalid_assembly_under_region =      "-below -type region ! -type region -above -type region";
+    (void)db_search(invalid_assemblies, invalid_assembly_under_region, 1, &dp, wdbp, DB_SEARCH_TREE);
+    const char *invalid_assembly_includes_non_comb = "-below -type region ! -type region -below=1 -type shape";
+    (void)db_search(invalid_assemblies, invalid_assembly_includes_non_comb, 1, &dp, wdbp, DB_SEARCH_TREE);
+    const char *invalid_assembly_below_subtract =    "-below -type region ! -type region -below=1 -bool -";
+    (void)db_search(invalid_assemblies, invalid_assembly_below_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
+    const char *invalid_assembly_below_intersect =   "-below -type region ! -type region -below=1 -bool +";
+    (void)db_search(invalid_assemblies, invalid_assembly_below_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
+    const char *invalid_assembly_above_subtract =    "-below -type region ! -type region -above -bool -";
+    (void)db_search(invalid_assemblies, invalid_assembly_above_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
+    const char *invalid_assembly_above_intersect =   "-below -type region ! -type region -above -bool +";
+    (void)db_search(invalid_assemblies, invalid_assembly_above_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
+    if (BU_PTBL_LEN(invalid_assemblies) > 0) {
+	bu_log("Error - found invalid assemblies within the .g file: \n");
+	for(i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
+	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(invalid_assemblies, i);
+	    bu_log("   %s\n", db_path_to_string(dfp));
+	}
+	db_free_search_tbl(invalid_assemblies);
+	bu_exit(1, "problem assemblies");
+    } else {
+	db_free_search_tbl(invalid_assemblies);
     }
 
     /* Get the list of assembly objects */
@@ -197,26 +223,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     struct bu_ptbl *assemblies;
     BU_ALLOC(assemblies, struct bu_ptbl);
     (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
-#if 0
-    for (i = 0; i < BU_PTBL_LEN(assemblies); i++) {
-	/* Assembly validity check #1 - solids in assembly bools */
-	const char *valid_assembly_solid_search = "( -above ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
-	struct bu_ptbl *problem_solid_assemblies= db_search_path_obj(valid_assembly_solid_search, dp, wdbp);
-	if(BU_PTBL_LEN(problem_solid_assemblies) > 0) {
-	    /* TODO - print problem paths */
-	    bu_exit(1, "assembly solid issues");
-	}
 
-	/* Assembly validity check #2 - subtractions or intersections in assembly bools */
-	const char *valid_assembly_bool_search = "( -above -bool - -or -above -bool + ) -or ( -bool - -or -bool + ) -or ( -below=1 -bool - -or -below=1 -bool + )";
-	struct bu_ptbl *problem_bool_assemblies= db_search_path_obj(valid_assembly_bool_search, dp, wdbp);
-	if(BU_PTBL_LEN(problem_bool_assemblies) > 0) {
-	    /* TODO - print problem paths */
-	    bu_exit(1, "assembly bool issues");
-	}
-    }
-#endif
-
+    /* Get the list of region objects */
     const char *region_search = "-type region";
     struct bu_ptbl *regions;
     BU_ALLOC(regions, struct bu_ptbl);
