@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);

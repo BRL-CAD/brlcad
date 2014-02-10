@@ -55,8 +55,8 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-rtgl.h"
-#include "dm_xvars.h"
+#include "dm/dm-rtgl.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #include "./dm_util.h"

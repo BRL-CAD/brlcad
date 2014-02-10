@@ -58,10 +58,10 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-tk.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "dm_xvars.h"
+#include "dm/dm-tk.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */

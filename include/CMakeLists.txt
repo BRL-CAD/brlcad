@@ -24,20 +24,21 @@ set(include_hdrs
   db.h
   db5.h
   dg.h
-  dm-Null.h
-  dm-X.h
-  dm-glx.h
-  dm-ogl.h
-  dm-pex.h
-  dm-plot.h
-  dm-ps.h
-  dm-qt.h
-  dm-rtgl.h
-  dm-tk.h
-  dm-wgl.h
   dm.h
-  dm_color.h
-  dm_xvars.h
+  dm/defines.h
+  dm/dm-Null.h
+  dm/dm-X.h
+  dm/dm-glx.h
+  dm/dm-ogl.h
+  dm/dm-pex.h
+  dm/dm-plot.h
+  dm/dm-ps.h
+  dm/dm-qt.h
+  dm/dm-rtgl.h
+  dm/dm-tk.h
+  dm/dm-wgl.h
+  dm/dm_color.h
+  dm/dm_xvars.h
   dvec.h
   fb.h
   fbio.h

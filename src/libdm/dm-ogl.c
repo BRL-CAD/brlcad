@@ -75,8 +75,8 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-ogl.h"
-#include "dm_xvars.h"
+#include "dm/dm-ogl.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #include "./dm_util.h"

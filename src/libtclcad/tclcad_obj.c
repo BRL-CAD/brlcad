@@ -60,38 +60,38 @@
 #include "obj.h"
 
 #include "ged.h"
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 
 #ifdef DM_X
 #  ifdef WITH_TK
 #    include "tk.h"
 #endif
 #  include <X11/Xutil.h>
-#  include "dm_xvars.h"
-#  include "dm-X.h"
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
 #  ifdef WITH_TK
 #    include "tk.h"
 #  endif
-#  include "dm_xvars.h"
-#  include "dm-tk.h"
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-#  include "dm_xvars.h"
-#  include "dm-ogl.h"
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
 #  include <tkwinport.h>
-#  include "dm_xvars.h"
-#  include "dm-wgl.h"
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-wgl.h"
 #endif /* DM_WGL */
 
 #ifdef DM_QT
-#  include "dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #endif /* DM_QT */
 
 /* Private headers */

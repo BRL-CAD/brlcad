@@ -40,7 +40,7 @@
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 #include "bu.h"
 #include "vmath.h"

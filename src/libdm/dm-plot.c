@@ -48,8 +48,8 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#include "dm-plot.h"
-#include "dm-Null.h"
+#include "dm/dm-plot.h"
+#include "dm/dm-Null.h"
 
 #include "solid.h"
 #include "plot3.h"

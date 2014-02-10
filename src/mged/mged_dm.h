@@ -29,8 +29,8 @@
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
-#include "dm_xvars.h"
-#include "dm-Null.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
 
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */

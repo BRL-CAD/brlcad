@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 
 
 int

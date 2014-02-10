@@ -46,8 +46,8 @@
 #include "raytrace.h"
 
 #include "dm.h"
-#include "dm-ps.h"
-#include "dm-Null.h"
+#include "dm/dm-ps.h"
+#include "dm/dm-Null.h"
 
 #include "solid.h"
 

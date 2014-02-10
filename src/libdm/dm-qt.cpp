@@ -32,14 +32,14 @@
 #  include <sys/time.h>
 #endif
 
-#include "dm-qt.h"
+#include "dm/dm-qt.h"
 
 #include "tcl.h"
 #include "tk.h"
 #include "bu.h"
 #include "dm.h"
-#include "dm_xvars.h"
-#include "dm-Null.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 

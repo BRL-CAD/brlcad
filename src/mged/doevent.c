@@ -50,7 +50,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

@@ -43,7 +43,7 @@
 #include "bu.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm-X.h"
+#include "dm/dm-X.h"
 
 
 struct cmdtab {

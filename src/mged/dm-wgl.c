@@ -49,8 +49,8 @@
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"
-#include "dm_xvars.h"
-#include "dm-wgl.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-wgl.h"
 
 #include "./mged.h"
 #include "./sedit.h"

@@ -64,8 +64,8 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm_xvars.h"
-#include "dm-ogl.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-ogl.h"
 
 #include "./mged.h"
 #include "./sedit.h"
