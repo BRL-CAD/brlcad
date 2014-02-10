@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 
 * fixed memory leaks in a number of pix utilities - Cezar Elnazi
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
-* improved g-step NURBS geometry import robustness - Keith Bowman
+* improved step-g NURBS geometry import robustness - Keith Bowman
 * added -v verbose output option to MGED 'search' command - Cliff Yapp
 * fixed crash of extrude with special case bezier curves - huskmate13
 * improved performance of 'terrain' & numerous shaders - Sean Morrison
