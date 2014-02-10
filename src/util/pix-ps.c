@@ -215,7 +215,7 @@ main(int argc, char **argv)
     FILE *ofp = stdout;
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
-    ssize_t y;
+    size_t y;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	printusage();
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 	scans_per_patch = height;
     bytes_per_patch = scans_per_patch * (width*3);
 
-    for (y = 0; y < (ssize_t)height; y += scans_per_patch) {
+    for (y = 0; y < height; y += scans_per_patch) {
 	if (y + scans_per_patch > height) {
 	    scans_per_patch = height-y;
 	    bytes_per_patch = scans_per_patch * (width*3);
@@ -246,10 +246,10 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %l] {<\n ",
 		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
 		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
-		(unsigned long)-y);				/* patch y origin */
+		-(long)y);				/* patch y origin */
 
 	/* data */
 	num = 0;
