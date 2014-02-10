@@ -121,15 +121,17 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    /* Probably should return empty object... */
 			    return NULL;
 			} else {
-			    int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    if (sc->comb_to_step->find(dir) != sc->comb_to_step->end()) {
 				bu_log("Combination object %s already exists - returning\n", dir->d_namep);
 			    } else {
+				/* TODO - if a comb has only one solid under it, return that solid for the
+				 * comb */
+				int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 				if (tree_construct == 1) ret = 1;
 				if (tree_construct != 1) ret = 3;
 				bu_log("Returning comb object's boolean_representation %s (%d)\n", dir->d_namep, tree_construct);
-				sc->comb_to_step->insert(std::make_pair(dir, (STEPentity *)NULL));
+				sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
 			    }
 			}
 		    } else {
