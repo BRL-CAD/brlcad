@@ -48,17 +48,7 @@
 
 __BEGIN_DECLS
 
-#ifndef RT_EXPORT
-#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
-#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
-#  elif defined(RT_DLL_EXPORTS)
-#    define RT_EXPORT __declspec(dllexport)
-#  elif defined(RT_DLL_IMPORTS)
-#    define RT_EXPORT __declspec(dllimport)
-#  else
-#    define RT_EXPORT
-#  endif
-#endif
+#include "./rt/defines.h"
 
 /**
  * Each type of debugging support is independently controlled, by a
