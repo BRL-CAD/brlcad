@@ -629,7 +629,7 @@ bu_bitv_compare_equal2(const struct bu_bitv *bv1, const struct bu_bitv *bv2)
 }
 
 
-void
+int
 bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 {
     struct bu_vls b   = BU_VLS_INIT_ZERO;
@@ -638,6 +638,18 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
     size_t i;
     char abyte[BITS_PER_BYTE + 1];
     int have_prefix = 0;
+    int results = BRLCAD_OK;
+
+    if (!bstr) {
+	bu_log("ERROR:  NULL 'bstr'\n");
+	results = BRLCAD_ERROR;
+	goto ERROR_RETURN;
+    }
+    if (!h) {
+	bu_log("ERROR:  NUll 'h'\n");
+	results = BRLCAD_ERROR;
+	goto ERROR_RETURN;
+    }
 
     bu_vls_strcpy(&b, bstr);
     bu_vls_trimspace(&b);
@@ -697,16 +709,20 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 
 	/* convert into an unsigned long */
 	ulval = strtoul(abyte, (char **)&endptr, BINARY_BASE);
+#if 0
 	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
+#endif
 
 	/* check for various errors (from 'man strol') */
 	if ((errno == ERANGE && (ulval == ULONG_MAX))
 	    || (errno != 0 && ulval == 0)) {
 	    bu_log("ERROR: strtoul: %s\n", strerror(errno));
+	    results = BRLCAD_ERROR;
 	    goto ERROR_RETURN;
 	}
 	if (endptr == abyte) {
 	    bu_log("ERROR: no digits were found in '%s'\n", abyte);
+	    results = BRLCAD_ERROR;
 	    goto ERROR_RETURN;
 	}
 	/* parsing was successful */
@@ -724,10 +740,11 @@ ERROR_RETURN:
     bu_vls_free(&b);
     bu_vls_free(&tmp);
 
+    return results;
 }
 
 
-void
+int
 bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 {
     struct bu_vls h   = BU_VLS_INIT_ZERO;
@@ -736,6 +753,18 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
     size_t i;
     char abyte[HEXCHARS_PER_BYTE + 1];
     int have_prefix = 0;
+    int results = BRLCAD_OK;
+
+    if (!hstr) {
+	bu_log("ERROR:  NULL 'hstr'\n");
+	results = BRLCAD_ERROR;
+	goto ERROR_RETURN;
+    }
+    if (!b) {
+	bu_log("ERROR:  NULL 'b'\n");
+	results = BRLCAD_ERROR;
+	goto ERROR_RETURN;
+    }
 
     bu_vls_strcpy(&h, hstr);
     bu_vls_trimspace(&h);
@@ -795,16 +824,20 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
 
 	/* convert into an unsigned long */
 	ulval = strtoul(abyte, (char **)&endptr, HEX_BASE);
+#if 0
 	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
+#endif
 
 	/* check for various errors (from 'man strol') */
 	if ((errno == ERANGE && (ulval == ULONG_MAX))
 	    || (errno != 0 && ulval == 0)) {
 	    bu_log("ERROR: strtoul: %s\n", strerror(errno));
+	    results = BRLCAD_ERROR;
 	    goto ERROR_RETURN;
 	}
 	if (endptr == abyte) {
 	    bu_log("ERROR: no digits were found in '%s'\n", abyte);
+	    results = BRLCAD_ERROR;
 	    goto ERROR_RETURN;
 	}
 	/* parsing was successful */
@@ -821,6 +854,8 @@ ERROR_RETURN:
 
     bu_vls_free(&h);
     bu_vls_free(&tmp);
+
+    return results;
 
 }
 
