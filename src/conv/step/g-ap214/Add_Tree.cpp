@@ -135,6 +135,8 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    }
 			}
 		    } else {
+			/* TODO - if we have a matrix being applied to a solid, investigate
+			 * solid_replica in AP214 */
 			if (solid) (*solid) = dir;
 			if (sc->solid_to_step->find(dir) != sc->solid_to_step->end()) {
 			    if (depth > 0) bu_log("%*s", depth, "");
