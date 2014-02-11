@@ -646,7 +646,7 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
 	goto ERROR_RETURN;
     }
     if (!h) {
-	bu_log("ERROR:  NUll 'h'\n");
+	bu_log("ERROR:  NULL 'h'\n");
 	results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
