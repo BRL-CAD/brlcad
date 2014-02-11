@@ -90,17 +90,7 @@
 
 __BEGIN_DECLS
 
-#ifndef BU_EXPORT
-#  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
-#    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
-#  elif defined(BU_DLL_EXPORTS)
-#    define BU_EXPORT __declspec(dllexport)
-#  elif defined(BU_DLL_IMPORTS)
-#    define BU_EXPORT __declspec(dllimport)
-#  else
-#    define BU_EXPORT
-#  endif
-#endif
+#include "./bu/defines.h"
 
 /* NOTE: do not rely on these values */
 #define BRLCAD_OK 0

@@ -1,3 +1,8 @@
+set(bu_headers
+  bu.h
+  bu/defines.h
+  )
+
 set(dm_headers
   dm.h
   dm/defines.h
@@ -26,7 +31,7 @@ set(include_hdrs
   ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
   RtServerImpl.h
   bn.h
-  bu.h
+  ${bu_headers}
   common.h
   cursor.h
   ged.h
