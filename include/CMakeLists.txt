@@ -1,6 +1,8 @@
 set(bu_headers
   bu.h
+  bu/avs.h
   bu/defines.h
+  bu/vls.h
   )
 
 set(dm_headers
