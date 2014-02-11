@@ -28,7 +28,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 
 struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };

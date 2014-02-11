@@ -30,7 +30,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 /* holds three polynomials to be used in test. */
 bn_poly_t input[3], output[3];
