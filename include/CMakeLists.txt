@@ -1,6 +1,7 @@
 set(bu_headers
   bu.h
   bu/avs.h
+  bu/cv.h
   bu/defines.h
   bu/list.h
   bu/vlb.h
