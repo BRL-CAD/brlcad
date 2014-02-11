@@ -58,7 +58,7 @@ void ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info);
 bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i);
 
 void ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc,
-        STEPentity **brep_shape, STEPentity **brep_product);
+        STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold);
 
 #endif /* ON_BREP_H */
 

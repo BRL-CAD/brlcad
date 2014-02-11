@@ -203,7 +203,7 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 //objects for the empty brep to be "valid" - currently, the Closed_Shell
 //will warn about invalidity on import.  Not sure if its worth it.
 void
-STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
+STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
 {
     std::cout << "Making empty brep: " << dp->d_namep << std::endl;
 
@@ -231,6 +231,7 @@ STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shap
 
     (*brep_product) = Add_Shape_Definition_Representation(dp, sc, advanced_brep);
     (*brep_shape) = advanced_brep;
+    (*brep_manifold) = manifold_solid_brep;
 
     sc->instance_list->Append((STEPentity *)(advanced_brep), completeSE);
     sc->instance_list->Append((STEPentity *)(manifold_solid_brep), completeSE);
@@ -238,7 +239,7 @@ STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shap
 }
 
 void
-ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
+ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
 {
     //ON_wString wstr;
     //ON_TextLog dump(wstr);
@@ -246,7 +247,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
     //ON_String ssw = wstr;
     //bu_log("Brep:\n %s\n", ssw.Array());
     if (!brep) {
-	STEP_Empty_BRep(dp, sc, brep_shape, brep_product);
+	STEP_Empty_BRep(dp, sc, brep_shape, brep_product, brep_manifold);
 	return;
     }
 
@@ -523,6 +524,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
 
     (*brep_product) = Add_Shape_Definition_Representation(dp, sc, info->advanced_brep);
     (*brep_shape) = info->advanced_brep;
+    (*brep_manifold) = info->manifold_solid_brep;
 
     Populate_Instance_List(info);
 

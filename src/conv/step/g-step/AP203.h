@@ -49,8 +49,10 @@ struct AP203_Contents {
     SdaiDesign_context *design_context;
     std::map<struct directory *, STEPentity *> *solid_to_step;
     std::map<struct directory *, STEPentity *> *solid_to_step_shape;
+    std::map<struct directory *, STEPentity *> *solid_to_step_manifold;
     std::map<struct directory *, STEPentity *> *comb_to_step;
     std::map<struct directory *, STEPentity *> *comb_to_step_shape;
+    std::map<struct directory *, STEPentity *> *comb_to_step_manifold;
     int flip_transforms;
 };
 

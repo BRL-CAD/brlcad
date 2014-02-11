@@ -37,15 +37,17 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
     ON_Brep **brep;
     STEPentity *brep_shape;
     STEPentity *brep_product;
+    STEPentity *brep_manifold;
     RT_CK_DB_INTERNAL(intern);
     if (sc->solid_to_step->find(dp) != sc->solid_to_step->end()) return;
     if (sc->comb_to_step->find(dp) != sc->comb_to_step->end()) return;
     switch (intern->idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
 	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
-	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product);
+	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product, &brep_manifold);
 	    (*sc->solid_to_step)[dp] = brep_product;
 	    (*sc->solid_to_step_shape)[dp] = brep_shape;
+	    (*sc->solid_to_step_manifold)[dp] = brep_manifold;
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
@@ -64,17 +66,19 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 		intern->idb_meth->ft_brep(brep, intern, &tol);
 		if (!(*brep)) {
 		    bu_log("failure to convert brep %s (object type %s)\n", dp->d_namep, intern->idb_meth->ft_label);
-		    ON_BRep_to_STEP(dp, NULL, sc, &brep_shape, &brep_product);
+		    ON_BRep_to_STEP(dp, NULL, sc, &brep_shape, &brep_product, &brep_manifold);
 		} else {
-		    ON_BRep_to_STEP(dp, *brep, sc, &brep_shape, &brep_product);
+		    ON_BRep_to_STEP(dp, *brep, sc, &brep_shape, &brep_product, &brep_manifold);
 		}
 		(*sc->solid_to_step)[dp] = brep_product;
 		(*sc->solid_to_step_shape)[dp] = brep_shape;
+		(*sc->solid_to_step_manifold)[dp] = brep_manifold;
 	    } else {
 		/* Out of luck */
-		ON_BRep_to_STEP(dp, NULL, sc, &brep_shape, &brep_product);
+		ON_BRep_to_STEP(dp, NULL, sc, &brep_shape, &brep_product, &brep_manifold);
 		(*sc->solid_to_step)[dp] = brep_product;
 		(*sc->solid_to_step_shape)[dp] = brep_shape;
+		(*sc->solid_to_step_manifold)[dp] = brep_manifold;
 		bu_log("WARNING: No Brep representation available (object type %s) - object %s will be empty in the STEP output.\n", intern->idb_meth->ft_label, dp->d_namep);
 	    }
 	    delete brep_obj;

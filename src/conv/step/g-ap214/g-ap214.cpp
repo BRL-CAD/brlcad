@@ -197,8 +197,10 @@ main(int argc, char *argv[])
 
     sc->solid_to_step = new std::map<struct directory *, STEPentity *>;
     sc->solid_to_step_shape = new std::map<struct directory *, STEPentity *>;
+    sc->solid_to_step_manifold = new std::map<struct directory *, STEPentity *>;
     sc->comb_to_step = new std::map<struct directory *, STEPentity *>;
     sc->comb_to_step_shape = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step_manifold = new std::map<struct directory *, STEPentity *>;
 
     sc->flip_transforms = flip_transforms;
 
@@ -226,8 +228,10 @@ main(int argc, char *argv[])
     delete sfile;
     delete sc->solid_to_step;
     delete sc->solid_to_step_shape;
+    delete sc->solid_to_step_manifold;
     delete sc->comb_to_step;
     delete sc->comb_to_step_shape;
+    delete sc->comb_to_step_manifold;
     delete sc;
     bu_vls_free(&scratch_string);
     bu_free(paths, "free dp list");

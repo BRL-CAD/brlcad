@@ -143,8 +143,9 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Returning solid object %s\n", dir->d_namep);
 			    Object_To_STEP(dir, &intern, sc->wdbp, sc);
-			    if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
 			}
+			if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
+			std::cout << "Step entity in stepobj: " << (*stepobj)->EntityName() << "\n";
 			ret = 1;
 		    }
                 } else {
@@ -233,17 +234,21 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     if (BU_PTBL_LEN(regions) > 0) {
 	for (i = 0; i < BU_PTBL_LEN(regions); i++) {
 	    struct directory *rdp = (struct directory *)BU_PTBL_GET(regions, i);
-	    struct rt_db_internal comb_intern;
-	    sc->dbip = wdbp->dbip;
-	    sc->wdbp = wdbp;
-	    rt_db_get_internal(&comb_intern, rdp, sc->dbip, bn_mat_identity, &rt_uniresource);
-	    RT_CK_DB_INTERNAL(&comb_intern);
-	    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-	    RT_CK_COMB(comb);
-	    if (comb->tree == NULL) {
-		/* Probably should return empty object... */
+	    if (sc->comb_to_step->find(rdp) != sc->comb_to_step->end()) {
+		bu_log("Region object %s already exists - skipping\n", rdp->d_namep);
 	    } else {
-		(void)conv_tree(&rdp, 0, 0, NULL, NULL, comb->tree, sc);
+		struct rt_db_internal comb_intern;
+		sc->dbip = wdbp->dbip;
+		sc->wdbp = wdbp;
+		rt_db_get_internal(&comb_intern, rdp, sc->dbip, bn_mat_identity, &rt_uniresource);
+		RT_CK_DB_INTERNAL(&comb_intern);
+		struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
+		RT_CK_COMB(comb);
+		if (comb->tree == NULL) {
+		    /* Probably should return empty object... */
+		} else {
+		    (void)conv_tree(&rdp, 0, 0, NULL, NULL, comb->tree, sc);
+		}
 	    }
 	}
     }

@@ -47,8 +47,10 @@ struct AP203_Contents {
     SdaiApplication_context *application_context;
     std::map<struct directory *, STEPentity *> *solid_to_step;
     std::map<struct directory *, STEPentity *> *solid_to_step_shape;
+    std::map<struct directory *, STEPentity *> *solid_to_step_manifold;
     std::map<struct directory *, STEPentity *> *comb_to_step;
     std::map<struct directory *, STEPentity *> *comb_to_step_shape;
+    std::map<struct directory *, STEPentity *> *comb_to_step_manifold;
     int flip_transforms;
     struct db_i *dbip;
     struct rt_wdb *wdbp;
