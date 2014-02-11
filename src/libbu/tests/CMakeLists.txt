@@ -332,6 +332,8 @@ add_test(bu_vls_vprintf_test_62 tester_bu_vls_vprintf 62)
 add_test(bu_vls_vprintf_test_63 tester_bu_vls_vprintf 63)
 add_test(bu_vls_vprintf_test_64 tester_bu_vls_vprintf 64)
 add_test(bu_vls_vprintf_test_65 tester_bu_vls_vprintf 65)
+add_test(bu_vls_vprintf_test_66 tester_bu_vls_vprintf 66)
+add_test(bu_vls_vprintf_test_67 tester_bu_vls_vprintf 67)
 
 #
 #  ************ vls.c tests *************
