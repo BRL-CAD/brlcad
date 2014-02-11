@@ -35,7 +35,7 @@
  *
  * edit db.h add solidrec s_type define
  * edit rtgeom.h to add rt_xxx_internal
- * edit magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit table.c:
  *	RT_DECLARE_INTERFACE()
  *	struct rt_functab entry

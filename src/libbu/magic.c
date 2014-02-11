@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include "bu.h"
-#include "magic.h"
+#include "bu/magic.h"
 
 
 const char *

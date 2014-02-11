@@ -32,7 +32,7 @@
  *
  * edit db.h add solidrec s_type define
  * edit rtgeom.h to add rt_xxx_internal
- * edit magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit table.c:
  *	RT_DECLARE_INTERFACE()
  *	struct rt_functab entry
@@ -61,7 +61,7 @@
 
 /* EXAMPLE_INTERNAL shows how one would store the values that describe
  * or implement this primitive.  The internal structure should go into
- * rtgeom.h, the magic number should go into magic.h, and of course
+ * rtgeom.h, the magic number should go into bu/magic.h, and of course
  * the #if wrapper should go away.
  */
 #if defined(EXAMPLE_INTERNAL) || 1
