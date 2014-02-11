@@ -49,13 +49,10 @@
  *
  */
 
-#ifndef MAGIC_H
-#define MAGIC_H
+#ifndef BU_MAGIC_H
+#define BU_MAGIC_H
 
-#include "common.h"
-
-#include "tcl.h"
-
+#include "./defines.h"
 
 /* libbu */
 
@@ -216,7 +213,48 @@
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
 
-#endif /* MAGIC_H */
+
+/** @file libbu/badmagic.c
+ *
+ * Magic checking functions.
+ *
+ */
+
+/**
+ * Macros to check and validate a structure pointer, given that the
+ * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
+ */
+#ifdef NO_BOMBING_MACROS
+#  define BU_CKMAG(_ptr, _magic, _str) BU_IGNORE((_ptr))
+#else
+#  define BU_CKMAG(_ptr, _magic, _str) { \
+        const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
+        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+        } \
+    }
+#endif
+
+
+/**
+ *  Support routine for BU_CKMAG macro.
+ */
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
+
+
+/**
+ * Given a number which has been found in the magic number field of a
+ * structure (which is typically the first entry), determine what kind
+ * of structure this magic number pertains to.  This is called by the
+ * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
+ * error might have been made.
+ */
+BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
+
+
+
+
+#endif /* BU_MAGIC_H */
 
 /** @} */
 
