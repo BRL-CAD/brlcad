@@ -223,7 +223,7 @@ __BEGIN_DECLS
 
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
-#include "magic.h"
+#include "bu/magic.h"
 
 /* FIXME Temporary global interp.  Remove me.  */
 BU_EXPORT extern Tcl_Interp *brlcad_interp;

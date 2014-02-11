@@ -4,6 +4,7 @@ set(bu_headers
   bu/cv.h
   bu/defines.h
   bu/list.h
+  bu/magic.h
   bu/vlb.h
   bu/vls.h
   )
@@ -40,7 +41,6 @@ set(include_hdrs
   common.h
   cursor.h
   ged.h
-  magic.h
   pstdint.h
   ${rt_headers}
   rtfunc.h

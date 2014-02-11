@@ -34,7 +34,6 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "magic.h"
 #include "nmg.h"
 #include "raytrace.h"
 
