@@ -3,6 +3,7 @@ set(bu_headers
   bu/avs.h
   bu/defines.h
   bu/list.h
+  bu/vlb.h
   bu/vls.h
   )
 
