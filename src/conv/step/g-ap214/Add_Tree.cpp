@@ -230,18 +230,22 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     BU_ALLOC(regions, struct bu_ptbl);
     (void)db_search(regions, region_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
 
-
-    struct rt_db_internal comb_intern;
-    sc->dbip = wdbp->dbip;
-    sc->wdbp = wdbp;
-    rt_db_get_internal(&comb_intern, dp, sc->dbip, bn_mat_identity, &rt_uniresource);
-    RT_CK_DB_INTERNAL(&comb_intern);
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-    RT_CK_COMB(comb);
-    if (comb->tree == NULL) {
-	/* Probably should return empty object... */
-    } else {
-	(void)conv_tree(&dp, 0, 0, NULL, NULL, comb->tree, sc);
+    if (BU_PTBL_LEN(regions) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(regions); i++) {
+	    struct directory *rdp = (struct directory *)BU_PTBL_GET(regions, i);
+	    struct rt_db_internal comb_intern;
+	    sc->dbip = wdbp->dbip;
+	    sc->wdbp = wdbp;
+	    rt_db_get_internal(&comb_intern, rdp, sc->dbip, bn_mat_identity, &rt_uniresource);
+	    RT_CK_DB_INTERNAL(&comb_intern);
+	    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
+	    RT_CK_COMB(comb);
+	    if (comb->tree == NULL) {
+		/* Probably should return empty object... */
+	    } else {
+		(void)conv_tree(&rdp, 0, 0, NULL, NULL, comb->tree, sc);
+	    }
+	}
     }
 
     /* Get the list of assembly objects */
