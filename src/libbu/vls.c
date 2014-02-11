@@ -95,7 +95,7 @@ bu_vls_vlsinit(void)
 }
 
 
-char *
+const char *
 bu_vls_cstr(const struct bu_vls *vp)
 {
     /* a wrapper for bu_vls_addr, but name is intended to be more intuitive to use */
@@ -440,7 +440,7 @@ bu_vls_vlscatzap(struct bu_vls *dest, struct bu_vls *src)
 
 
 void
-bu_vls_substr(struct bu_vls *dest, struct bu_vls *src, size_t begin, size_t nchars)
+bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src, size_t begin, size_t nchars)
 {
     size_t len;
     size_t i, end;
@@ -449,11 +449,11 @@ bu_vls_substr(struct bu_vls *dest, struct bu_vls *src, size_t begin, size_t ncha
     BU_CK_VLS(dest);
 
     len = src->vls_len;
-    if (UNLIKELY(len <= 0))
+    if (UNLIKELY(len == 0))
 	return;
     if (UNLIKELY(begin > len))
 	return;
-    if (UNLIKELY(nchars <= 0))
+    if (UNLIKELY(nchars == 0))
 	return;
 
     if (nchars > len)

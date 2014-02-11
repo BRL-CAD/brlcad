@@ -5016,7 +5016,7 @@ BU_EXPORT extern char *bu_vls_addr(const struct bu_vls *vp);
  * (At the moment this function is a mnemonically-named convenience
  * function which returns a call to bu_vls_addr.)
  */
-BU_EXPORT extern char *bu_vls_cstr(const struct bu_vls *vp);
+BU_EXPORT extern const char *bu_vls_cstr(const struct bu_vls *vp);
 
 /**
  * Ensure that the provided VLS has at least 'extra' characters of
@@ -5295,7 +5295,7 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
  *     nchars - the number of characters to copy
  *
  */
-BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, struct bu_vls *src,
+BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src,
 				    size_t begin, size_t nchars);
 
 /**
