@@ -1,4 +1,4 @@
-/*                      D E F I N E S . H
+/*                      B U _ D E F I N E S . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -49,7 +49,7 @@
 /** @defgroup binding Language Bindings */
 /**   @defgroup tcl Tcl Interfacing */
 
-/** @file defines.h
+/** @file bu_defines.h
  *
  * Commonly used definitions for the BRL-CAD Utility Library, LIBBU.
  *

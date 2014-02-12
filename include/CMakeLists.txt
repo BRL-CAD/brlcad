@@ -3,7 +3,7 @@ set(bu_headers
   bu/avs.h
   bu/bitv.h
   bu/cv.h
-  bu/defines.h
+  bu/bu_defines.h
   bu/list.h
   bu/magic.h
   bu/ptbl.h
