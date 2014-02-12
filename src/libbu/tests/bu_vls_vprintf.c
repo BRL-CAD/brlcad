@@ -298,18 +298,8 @@ main(int argc, char *argv[])
 	case 65:
 	    return test_vls("%-20.10s", "123456789012345");
 	case 66:
-	    /* testing the '%o' inside vls_printf.c, at line 554, the
-	     * '010' is currently taken as octal which is 8 in decimal
-	     * (base 10), thus the printed string width is 8; however,
-	     * sprintf correctly interprets the number as decimal so
-	     * the printed field width is 10 characters */
 	    return test_vls("%010s", "1");
 	case 67:
-	    /* testing the '%o' inside vls_printf.c, at line 561, the
-	     * '030' is currently taken as octal which is 24 in
-	     * decimal (base 10), thus the max printed string width is
-	     * 24; however, sprintf correctly interprets the number as
-	     * decimal so 30 characters are printed */
 	    return test_vls("%.030s", "1234567890123456789012345678901234567890");
 
 	/* this test needs a relook
