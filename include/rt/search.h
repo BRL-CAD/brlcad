@@ -27,6 +27,13 @@
 #ifndef RT_SEARCH_H
 #define RT_SEARCH_H
 
+#include "common.h"
+
+#include "../bu/list.h"
+#include "../bu/ptbl.h"
+
+#include "./defines.h"
+
 /**
  * Programmatic interface to the find-command style search functionality
  * available in librt for databases.  These functions search the
