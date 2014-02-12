@@ -27,7 +27,7 @@
 #define BU_VLS_H
 
 #include "common.h"
-#include "stdio.h" /* For FILE - TODO, do we want to use bio.h here?*/
+#include <stdio.h> /* For FILE */
 #include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #ifdef HAVE_STDINT_H

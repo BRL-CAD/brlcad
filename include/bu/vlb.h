@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "stdio.h" /* For FILE - TODO, do we want to use bio.h here?*/
+#include <stdio.h> /* For FILE */
 
 #include "./defines.h"
 
