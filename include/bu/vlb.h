@@ -28,8 +28,8 @@
 
 #include <stdio.h> /* For FILE */
 
-#include "./defines.h"
-#include "./magic.h"
+#include "bu/defines.h"
+#include "bu/magic.h"
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */

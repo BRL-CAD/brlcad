@@ -25,10 +25,10 @@
 
 #include "common.h"
 
-#include "./defines.h"
-#include "./magic.h"
-#include "./list.h"
-#include "./vls.h"
+#include "bu/defines.h"
+#include "bu/magic.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv */

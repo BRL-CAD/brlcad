@@ -54,7 +54,7 @@
 
 #include "common.h"
 
-#include "./defines.h"
+#include "bu/defines.h"
 
 /* libbu */
 

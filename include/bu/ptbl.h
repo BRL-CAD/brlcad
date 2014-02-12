@@ -32,9 +32,9 @@
 #include <stddef.h> /* for size_t */
 #include <sys/types.h> /* for off_t */
 
-#include "./defines.h"
-#include "./magic.h"
-#include "./list.h"
+#include "bu/defines.h"
+#include "bu/magic.h"
+#include "bu/list.h"
 
 /* ptbl.c */
 /** @addtogroup ptbl */

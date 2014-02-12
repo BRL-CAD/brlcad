@@ -41,9 +41,9 @@
 #  include <stdint.h> /* for [u]int[16|32|64]_t */
 #endif
 
-#include "./defines.h"
-#include "./magic.h"
-#include "./vls.h"
+#include "bu/defines.h"
+#include "bu/magic.h"
+#include "bu/vls.h"
 
 /** for attr and avs use.
  */
