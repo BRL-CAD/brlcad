@@ -24,7 +24,8 @@
 #define BU_CV_H
 
 #include "common.h"
-#include "bu_defines.h"
+
+#include "./defines.h"
 
 /*----------------------------------------------------------------------*/
 

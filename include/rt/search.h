@@ -32,7 +32,7 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 
-#include "./defines.h"
+#include "rt/defines.h"
 
 /**
  * Programmatic interface to the find-command style search functionality

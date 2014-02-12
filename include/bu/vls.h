@@ -34,7 +34,7 @@
 #  include <stdint.h> /* for [u]int[16|32|64]_t */
 #endif
 
-#include "bu_defines.h"
+#include "./defines.h"
 #include "./magic.h"
 
 /*----------------------------------------------------------------------*/

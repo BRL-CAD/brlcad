@@ -28,7 +28,7 @@
 
 #include <stdio.h> /* For FILE */
 
-#include "bu_defines.h"
+#include "./defines.h"
 #include "./magic.h"
 
 /*----------------------------------------------------------------------*/

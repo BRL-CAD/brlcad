@@ -53,7 +53,8 @@
 #define BU_MAGIC_H
 
 #include "common.h"
-#include "bu_defines.h"
+
+#include "./defines.h"
 
 /* libbu */
 
