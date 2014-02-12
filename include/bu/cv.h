@@ -23,6 +23,8 @@
 #ifndef BU_CV_H
 #define BU_CV_H
 
+#include "common.h"
+
 #include "./defines.h"
 
 /*----------------------------------------------------------------------*/

@@ -26,6 +26,14 @@
 #ifndef BU_VLS_H
 #define BU_VLS_H
 
+#include "common.h"
+#include "stdio.h" /* For FILE - TODO, do we want to use bio.h here?*/
+#include <sys/types.h> /* for off_t */
+#include <stddef.h> /* for size_t */
+#ifdef HAVE_STDINT_H
+#  include <stdint.h> /* for [u]int[16|32|64]_t */
+#endif
+
 #include "./defines.h"
 
 /*----------------------------------------------------------------------*/

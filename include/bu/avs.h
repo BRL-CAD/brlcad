@@ -33,6 +33,14 @@
 #ifndef BU_AVS_H
 #define BU_AVS_H
 
+#include "common.h"
+
+#include <stddef.h> /* for size_t */
+
+#ifdef HAVE_STDINT_H
+#  include <stdint.h> /* for [u]int[16|32|64]_t */
+#endif
+
 #include "./defines.h"
 #include "./vls.h"
 

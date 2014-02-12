@@ -24,6 +24,10 @@
 #ifndef BU_VLB_H
 #define BU_VLB_H
 
+#include "common.h"
+
+#include "stdio.h" /* For FILE - TODO, do we want to use bio.h here?*/
+
 #include "./defines.h"
 
 /*----------------------------------------------------------------------*/

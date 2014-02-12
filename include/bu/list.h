@@ -25,6 +25,8 @@
 #ifndef BU_LIST_H
 #define BU_LIST_H
 
+#include "common.h"
+
 #include "./defines.h"
 
 /*----------------------------------------------------------------------*/

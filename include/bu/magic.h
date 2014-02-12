@@ -52,6 +52,8 @@
 #ifndef BU_MAGIC_H
 #define BU_MAGIC_H
 
+#include "common.h"
+
 #include "./defines.h"
 
 /* libbu */

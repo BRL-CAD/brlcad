@@ -23,6 +23,8 @@
 #ifndef BU_BITV_H
 #define BU_BITV_H
 
+#include "common.h"
+
 #include "./defines.h"
 #include "./list.h"
 #include "./vls.h"
