@@ -29,8 +29,8 @@
 
 #include "common.h"
 
-#include "../bu/list.h"
-#include "../bu/ptbl.h"
+#include "bu/list.h"
+#include "bu/ptbl.h"
 
 #include "./defines.h"
 
