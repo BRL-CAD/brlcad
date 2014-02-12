@@ -1152,7 +1152,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	    }
 
 	    if (e1 == e2) {
-		/* we found ourself, or already fused, mark as fused and continue */
+		/* we found ourselves, or already fused, mark as fused and continue */
 		edgeuse_vert_list[j][0] = (size_t)NULL;
 		continue;
 	    }

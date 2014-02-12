@@ -2219,7 +2219,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     /* If eu1 is a wire, there is no fu1 to run line through. */
     if (fu1) {
-	/* We are intersecting with ourself */
+	/* We are intersecting with ourselves */
 	nmg_isect_line2_face2pNEW(is, fu1, fu2, &eu1_list, &eu2_list);
     }
 
@@ -3436,14 +3436,14 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
 					(void (*)(struct edgeuse *, point_t, const char *))NULL,
-					(void (*)(struct vertexuse *, point_t, const char *))NULL, 
+					(void (*)(struct vertexuse *, point_t, const char *))NULL,
 					(const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
 					(void (*)(struct edgeuse *, point_t, const char *))NULL,
-					(void (*)(struct vertexuse *, point_t, const char *))NULL, 
+					(void (*)(struct vertexuse *, point_t, const char *))NULL,
 					(const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
