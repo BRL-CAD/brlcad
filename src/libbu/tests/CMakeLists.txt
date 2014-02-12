@@ -370,7 +370,6 @@ CMAKEFILES(
   bitv-tests.cmake
   test_internals.h
   vls-tests.cmake
-  vls-vprintf-tests.cmake
 )
 
 # Local Variables:
