@@ -358,6 +358,20 @@
     }
 #endif
 
+/**
+ * genptr_t - A portable way of declaring a "generic" pointer that is
+ * wide enough to point to anything, which can be used on both ANSI C
+ * and K&R C environments.  On some machines, pointers to functions
+ * can be wider than pointers to data bytes, so a declaration of
+ * "char*" isn't generic enough.
+ *
+ * DEPRECATED: use void* instead
+ */
+#if !defined(GENPTR_NULL)
+typedef void *genptr_t;
+typedef const void *const_genptr_t;
+#  define GENPTR_NULL ((genptr_t)0)
+#endif
 
 #endif  /* BU_DEFINES_H */
 

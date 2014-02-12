@@ -127,23 +127,6 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  */
 BU_EXPORT extern const char *bu_version(void);
 
-
-/**
- * genptr_t - A portable way of declaring a "generic" pointer that is
- * wide enough to point to anything, which can be used on both ANSI C
- * and K&R C environments.  On some machines, pointers to functions
- * can be wider than pointers to data bytes, so a declaration of
- * "char*" isn't generic enough.
- *
- * DEPRECATED: use void* instead
- */
-#if !defined(GENPTR_NULL)
-typedef void *genptr_t;
-typedef const void *const_genptr_t;
-#  define GENPTR_NULL ((genptr_t)0)
-#endif
-
-
 /**
  * MAX_PSW - The maximum number of processors that can be expected on
  * this hardware.  Used to allocate application-specific per-processor
