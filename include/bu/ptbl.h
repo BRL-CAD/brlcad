@@ -32,7 +32,7 @@
 #include <stddef.h> /* for size_t */
 #include <sys/types.h> /* for off_t */
 
-#include "./defines.h"
+#include "bu_defines.h"
 #include "./magic.h"
 #include "./list.h"
 

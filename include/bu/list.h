@@ -27,7 +27,7 @@
 
 #include "common.h"
 
-#include "./defines.h"
+#include "bu_defines.h"
 #include "./magic.h"
 
 /*----------------------------------------------------------------------*/
