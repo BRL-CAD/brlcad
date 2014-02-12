@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include "./defines.h"
+#include "./magic.h"
 
 /*----------------------------------------------------------------------*/
 /** @file libbu/list.c

@@ -29,6 +29,7 @@
 #include <stdio.h> /* For FILE */
 
 #include "./defines.h"
+#include "./magic.h"
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */

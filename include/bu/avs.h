@@ -42,6 +42,7 @@
 #endif
 
 #include "./defines.h"
+#include "./magic.h"
 #include "./vls.h"
 
 /** for attr and avs use.
