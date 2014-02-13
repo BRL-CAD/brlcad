@@ -8,6 +8,7 @@ set(bu_headers
   bu/hash.h
   bu/list.h
   bu/magic.h
+  bu/parse.h
   bu/ptbl.h
   bu/rb.h
   bu/vlb.h
