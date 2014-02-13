@@ -629,51 +629,12 @@ typedef struct bu_external bu_external_t;
 
 
 /** @} */
+
 /*----------------------------------------------------------------------*/
-/* color.c */
 
-#define RED 0
-#define GRN 1
-#define BLU 2
+#include "bu/color.h"
 
-#define HUE 0
-#define SAT 1
-#define VAL 2
-
-#define ACHROMATIC	-1.0
-
-struct bu_color
-{
-    uint32_t buc_magic;
-    fastf_t buc_rgb[3];
-};
-typedef struct bu_color bu_color_t;
-#define BU_COLOR_NULL ((struct bu_color *) 0)
-
-/**
- * asserts the integrity of a bu_color struct.
- */
-#define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
-
-/**
- * initializes a bu_bitv struct without allocating any memory.
- */
-#define BU_COLOR_INIT(_c) { \
-	(_c)->buc_magic = BU_COLOR_MAGIC; \
-	(_c)->buc_rgb[0] = (_c)->buc_rgb[1] = (_c)->buc_rgb[2] = 0; \
-    }
-
-/**
- * macro suitable for declaration statement initialization of a bu_color
- * struct.  does not allocate memory.
- */
-#define BU_COLOR_INIT_ZERO { BU_COLOR_MAGIC, {0, 0, 0} }
-
-/**
- * returns truthfully whether a bu_color has been initialized
- */
-#define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
-
+/*----------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------*/
 
@@ -840,42 +801,7 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
 BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 
 /** @} */
-/** @addtogroup color */
-/** @ingroup container */
-/** @{ */
 
-/**
- * Convert between RGB and HSV color models
- *
- * R, G, and B are in {0, 1, ..., 255},
- *
- * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
- *
- * unless S = 0.0, in which case H = ACHROMATIC.
- *
- * These two routines are adapted from:
- * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
- * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
- * Reading, MA, 1990.
- */
-
-/* color.c */
-BU_EXPORT extern void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv);
-BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
-BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);
-BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-
-/* UNIMPLEMENTED
- *
- * BU_EXPORT export void bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
- * BU_EXPORT export int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
- */
-
-
-/** @} */
 /** @addtogroup file */
 /** @ingroup io */
 /** @{ */

@@ -2,6 +2,7 @@ set(bu_headers
   bu.h
   bu/avs.h
   bu/bitv.h
+  bu/color.h
   bu/cv.h
   bu/defines.h
   bu/list.h
