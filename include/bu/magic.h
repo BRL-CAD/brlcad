@@ -17,6 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#ifndef BU_MAGIC_H
+#define BU_MAGIC_H
+
+#include "common.h"
+
+#include "bu/defines.h"
+
+
 /** @addtogroup magic */
 /** @ingroup memory */
 /** @{ */
@@ -48,13 +57,6 @@
  * various in-memory data structures.
  *
  */
-
-#ifndef BU_MAGIC_H
-#define BU_MAGIC_H
-
-#include "common.h"
-
-#include "bu/defines.h"
 
 /* libbu */
 
@@ -254,11 +256,10 @@ BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const cha
 BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
 
 
+/** @} */
 
 
 #endif /* BU_MAGIC_H */
-
-/** @} */
 
 /*
  * Local Variables:

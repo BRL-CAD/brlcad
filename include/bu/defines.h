@@ -18,37 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup avs Attribute/Value Sets */
-/**   @defgroup bitv Bit Vectors */
-/**   @defgroup color Color */
-/**   @defgroup hash Hash Tables */
-/**   @defgroup list Linked Lists */
-/**   @defgroup parse Structure Parsing */
-/**   @defgroup ptbl Pointer Tables */
-/**   @defgroup rb Red-Black Trees */
-/**   @defgroup vlb Variable-length Byte Buffers */
-/**   @defgroup vls Variable-length Strings */
-/** @defgroup memory Memory Management */
-/**   @defgroup magic Magic Numbers */
-/**   @defgroup malloc Allocation & Deallocation */
-/**   @defgroup mf Memory-mapped Files */
-/** @defgroup io Input/Output */
-/**   @defgroup log Logging */
-/**   @defgroup debug Debugging */
-/**   @defgroup file File Processing */
-/**   @defgroup vfont Vector Fonts */
-/** @defgroup data Data Management */
-/**   @defgroup cmd Command History */
-/**   @defgroup conv Data Conversion */
-/**   @defgroup getopt Command-line Option Parsing*/
-/**   @defgroup hton Network Byte-order Conversion */
-/**   @defgroup hist Histogram Handling */
-/** @defgroup parallel  Parallel Processing */
-/**   @defgroup thread Multithreading */
-/** @defgroup binding Language Bindings */
-/**   @defgroup tcl Tcl Interfacing */
-
 /** @file defines.h
  *
  * Commonly used definitions for the BRL-CAD Utility Library, LIBBU.

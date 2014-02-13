@@ -18,18 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup avs Attribute/Value Sets */
-
-/*----------------------------------------------------------------------*/
-/** @addtogroup avs */
-/** @ingroup container */
-/** @{ */
-/** @file libbu/avs.c
- *
- * Routines to manage attribute/value sets.
- */
-
 #ifndef BU_AVS_H
 #define BU_AVS_H
 
@@ -44,6 +32,15 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
+
+/*----------------------------------------------------------------------*/
+/** @addtogroup avs */
+/** @ingroup container */
+/** @{ */
+/** @file libbu/avs.c
+ *
+ * Routines to manage attribute/value sets.
+ */
 
 /** for attr and avs use.
  */

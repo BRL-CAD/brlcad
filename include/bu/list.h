@@ -18,10 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup list Linked Lists */
-
-
 #ifndef BU_LIST_H
 #define BU_LIST_H
 
@@ -31,6 +27,9 @@
 #include "bu/magic.h"
 
 /*----------------------------------------------------------------------*/
+/** @addtogroup list */
+/** @ingroup container */
+/** @{*/
 /** @file libbu/list.c
  *
  * @brief Support routines for doubly-linked lists.
@@ -541,6 +540,7 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 				       const char *str,
 				       const uint32_t magic);
 
+/** @} */
 
 #endif  /* BU_LIST_H */
 

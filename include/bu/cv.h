@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @defgroup data Data Management */
-/**   @defgroup conv Data Conversion */
 
 #ifndef BU_CV_H
 #define BU_CV_H
@@ -366,6 +364,8 @@ BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
 BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);
+
+/** @} */
 
 #endif  /* BU_CV_H */
 

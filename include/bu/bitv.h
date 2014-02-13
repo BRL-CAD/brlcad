@@ -18,8 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup bitv Bit Vectors */
 #ifndef BU_BITV_H
 #define BU_BITV_H
 
@@ -395,9 +393,6 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  */
 BU_EXPORT extern int bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
-/** @addtogroup bitv */
-/** @ingroup container */
-/** @{ */
 /** @file libbu/printb.c
  *
  * print bitfields

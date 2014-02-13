@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup vlb Variable-length Byte Buffers */
-
 #ifndef BU_VLB_H
 #define BU_VLB_H
 
@@ -159,6 +156,7 @@ BU_EXPORT extern void bu_vlb_print(struct bu_vlb *vlb,
  */
 BU_EXPORT extern void bu_pr_vlb(const char *title, const struct bu_vlb *vlb);
 
+/** @} */
 
 #endif  /* BU_VLB_H */
 
