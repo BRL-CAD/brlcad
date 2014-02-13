@@ -654,7 +654,9 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure \
+INPUT                  = @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_intro.h \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libbu.h \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure \
                          @CMAKE_SOURCE_DIR@/include/ \
                          @CMAKE_SOURCE_DIR@/src/libbu/ \
                          @CMAKE_SOURCE_DIR@/src/libbn/ \
@@ -887,7 +889,7 @@ HTML_OUTPUT            = html
 # each generated HTML page (for example: .htm,.php,.asp). If it is left blank
 # doxygen will generate files with .html extension.
 
-HTML_FILE_EXTENSION    = .html
+HTML_FILE_EXTENSION    = .xhtml
 
 # The HTML_HEADER tag can be used to specify a personal HTML header for
 # each generated HTML page. If it is left blank doxygen will generate a
@@ -1294,7 +1296,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
 # generate Latex output.
 
-GENERATE_LATEX         = YES
+GENERATE_LATEX         = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put.
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
@@ -1826,7 +1828,7 @@ DIRECTORY_GRAPH        = YES
 # HTML_FILE_EXTENSION to xhtml in order to make the SVG files
 # visible in IE 9+ (other browsers do not have this requirement).
 
-DOT_IMAGE_FORMAT       = png
+DOT_IMAGE_FORMAT       = svg
 
 # If DOT_IMAGE_FORMAT is set to svg, then this option can be set to YES to
 # enable generation of interactive SVG images that allow zooming and panning.
@@ -1835,7 +1837,7 @@ DOT_IMAGE_FORMAT       = png
 # need to set HTML_FILE_EXTENSION to xhtml in order to make the SVG files
 # visible. Older versions of IE do not have SVG support.
 
-INTERACTIVE_SVG        = NO
+INTERACTIVE_SVG        = YES
 
 # The tag DOT_PATH can be used to specify the path where the dot tool can be
 # found. If left blank, it is assumed the dot tool can be found in the path.
