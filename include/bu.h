@@ -18,37 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup avs Attribute/Value Sets */
-/**   @defgroup bitv Bit Vectors */
-/**   @defgroup color Color */
-/**   @defgroup hash Hash Tables */
-/**   @defgroup list Linked Lists */
-/**   @defgroup parse Structure Parsing */
-/**   @defgroup ptbl Pointer Tables */
-/**   @defgroup rb Red-Black Trees */
-/**   @defgroup vlb Variable-length Byte Buffers */
-/**   @defgroup vls Variable-length Strings */
-/** @defgroup memory Memory Management */
-/**   @defgroup magic Magic Numbers */
-/**   @defgroup malloc Allocation & Deallocation */
-/**   @defgroup mf Memory-mapped Files */
-/** @defgroup io Input/Output */
-/**   @defgroup log Logging */
-/**   @defgroup debug Debugging */
-/**   @defgroup file File Processing */
-/**   @defgroup vfont Vector Fonts */
-/** @defgroup data Data Management */
-/**   @defgroup cmd Command History */
-/**   @defgroup conv Data Conversion */
-/**   @defgroup getopt Command-line Option Parsing*/
-/**   @defgroup hton Network Byte-order Conversion */
-/**   @defgroup hist Histogram Handling */
-/** @defgroup parallel  Parallel Processing */
-/**   @defgroup thread Multithreading */
-/** @defgroup binding Language Bindings */
-/**   @defgroup tcl Tcl Interfacing */
-
 /** @file bu.h
  *
  * Main header file for the BRL-CAD Utility Library, LIBBU.
@@ -139,13 +108,11 @@ BU_EXPORT extern const char *bu_version(void);
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup conv */
-/** @ingroup data */
-/** @{*/
-
 #include "./bu/cv.h"
 
 /*----------------------------------------------------------------------*/
+
+
 /** @file libbu/endian.c
  *
  * Run-time byte order detection.
@@ -164,16 +131,12 @@ typedef enum {
  */
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
-/*----------------------------------------------------------------------*/
 
-/** @addtogroup list */
-/** @ingroup container */
-/** @{ */
 /*----------------------------------------------------------------------*/
 
 #include "./bu/list.h"
 
-/** @} */
+/*----------------------------------------------------------------------*/
 
 
 /**
@@ -272,26 +235,12 @@ typedef double fastf_t;
 
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bitv */
-/** @ingroup container */
-/** @{*/
-/** @file libbu/bitv.c
- *
- * Routines for managing efficient high-performance bit vectors of
- * arbitrary length.
- *
- * The basic type "bitv_t" is defined in ./bu/bitv.h; it is the widest
- * integer datatype for which efficient hardware support exists.
- * BU_BITV_SHIFT and BU_BITV_MASK are also defined in ./bu/bitv.h
- *
- * These bit vectors are "little endian", bit 0 is in the right hand
- * side of the [0] word.
- *
- */
 
 #include "./bu/bitv.h"
 
 /*----------------------------------------------------------------------*/
+
+
 /** @addtogroup hist */
 /** @ingroup data */
 /** @{ */
@@ -368,30 +317,15 @@ typedef struct bu_hist bu_hist_t;
 	(_hp)->hg_nsamples += __count;  }
 
 /** @} */
+
+
 /*----------------------------------------------------------------------*/
-/* ptbl.c */
-/** @addtogroup ptbl */
-/** @ingroup container */
-/** @{ */
-/** @file libbu/ptbl.c
- *
- * Support for generalized "pointer tables"
- *
- * Support for generalized "pointer tables", kept compactly in a
- * dynamic array.
- *
- * The table is currently un-ordered, and is merely an array of
- * pointers.  The support routines BU_*PTBL* and bu_ptbl* manipulate the
- * array for you.  Pointers to be operated on (inserted, deleted, searched
- * for) are passed as a "pointer to long".
- *
- */
 
 #include "./bu/ptbl.h"
 
-/** @} */
-
 /*----------------------------------------------------------------------*/
+
+
 /** @addtogroup mf */
 /** @ingroup memory */
 /** @{ */
@@ -524,57 +458,20 @@ typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vls */
-/** @ingroup container */
-/** @{ */
-/** @file libbu/vls.c
- *
- @brief
- * Variable Length Strings
- *
- * This structure provides support for variable length strings,
- * freeing the programmer from concerns about having character arrays
- * large enough to hold strings.
- *
- * Assumption:  libc-provided sprintf() function is safe to use in parallel,
- * on parallel systems.
- */
 
 #include "./bu/vls.h"
 
-/** @} */
-
 /*----------------------------------------------------------------------*/
-/** @addtogroup avs */
-/** @ingroup container */
-/** @{ */
-/** @file libbu/avs.c
- *
- * Routines to manage attribute/value sets.
- */
 
 #include "./bu/avs.h"
 
-/** @} */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vlb */
-/** @ingroup container */
-/** @{ */
-/** @file libbu/vlb.c
- *
- * The variable length buffer package.
- *
- * The variable length buffer package.
- *
- */
 
 #include "./bu/vlb.h"
 
-/** @} */
-
-
 /*----------------------------------------------------------------------*/
+
 /** @addtogroup debug Debugging */
 /** @ingroup io */
 /** @{ */
@@ -1772,77 +1669,6 @@ BU_EXPORT extern int bu_parallel_id(void);
  */
 
 BU_EXPORT extern void bu_setlinebuf(FILE *fp);
-
-/** @} */
-
-/** @addtogroup list */
-/** @ingroup container */
-/** @{ */
-
-/**
- * Creates and initializes a bu_list head structure
- */
-BU_EXPORT extern struct bu_list *bu_list_new(void);
-
-/**
- * Returns the results of BU_LIST_POP
- */
-BU_EXPORT extern struct bu_list *bu_list_pop(struct bu_list *hp);
-
-/**
- * Returns the number of elements on a bu_list brand linked list.
- */
-BU_EXPORT extern int bu_list_len(const struct bu_list *hd);
-
-/**
- * Reverses the order of elements in a bu_list linked list.
- */
-BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
-
-/**
- * Given a list of structures allocated with bu_malloc() or
- * bu_calloc() enrolled on a bu_list head, walk the list and free the
- * structures.  This routine can only be used when the structures have
- * no interior pointers.
- */
-BU_EXPORT extern void bu_list_free(struct bu_list *hd);
-
-/**
- * Simple parallel-safe routine for appending a data structure to the
- * end of a bu_list doubly-linked list.
- *
- * @par Issues:
- *  	Only one semaphore shared by all list heads.
- * @n	No portable way to notify waiting thread(s) that are sleeping
- */
-BU_EXPORT extern void bu_list_parallel_append(struct bu_list *headp,
-					      struct bu_list *itemp);
-
-/**
- * Simple parallel-safe routine for dequeueing one data structure from
- * the head of a bu_list doubly-linked list.
- * If the list is empty, wait until some other thread puts something on
- * the list.
- *
- * @par Issues:
- * No portable way to not spin and burn CPU time while waiting
- * @n	for something to show up on the list.
- */
-BU_EXPORT extern struct bu_list *bu_list_parallel_dequeue(struct bu_list *headp);
-
-/**
- * Generic bu_list doubly-linked list checker.
- */
-BU_EXPORT extern void bu_ck_list(const struct bu_list *hd,
-				 const char *str);
-
-/**
- * bu_list doubly-linked list checker which checks the magic number for
- * all elements in the linked list
- */
-BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
-				       const char *str,
-				       const uint32_t magic);
 
 /** @} */
 
