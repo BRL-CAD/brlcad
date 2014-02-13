@@ -7,6 +7,7 @@ set(bu_headers
   bu/list.h
   bu/magic.h
   bu/ptbl.h
+  bu/rb.h
   bu/vlb.h
   bu/vls.h
   )
