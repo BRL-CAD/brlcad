@@ -30,6 +30,7 @@
 #endif
 
 #include "bu/defines.h"
+#include "bu/magic.h"
 #include "bu/list.h"
 #include "bu/bitv.h"
 
