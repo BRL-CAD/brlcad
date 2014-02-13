@@ -38,7 +38,6 @@
 
 /* ptbl.c */
 /** @addtogroup ptbl */
-/** @ingroup container */
 /** @{ */
 /** @file libbu/ptbl.c
  *

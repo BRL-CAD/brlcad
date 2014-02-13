@@ -28,7 +28,6 @@
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup list */
-/** @ingroup container */
 /** @{*/
 /** @file libbu/list.c
  *
@@ -468,12 +467,6 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
     ((struct _type *)(((char *)(_ptr2)) - (bu_offsetof(struct _type, _name2) + bu_offsetof(struct bu_list, magic))))
-/** @} */
-
-
-/** @addtogroup list */
-/** @ingroup container */
-/** @{ */
 
 /**
  * Creates and initializes a bu_list head structure

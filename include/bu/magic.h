@@ -27,7 +27,6 @@
 
 
 /** @addtogroup magic */
-/** @ingroup memory */
 /** @{ */
 /** @file magic.h
  *

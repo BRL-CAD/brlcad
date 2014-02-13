@@ -30,14 +30,10 @@
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */
-/** @ingroup container */
 /** @{ */
 /** @file libbu/vlb.c
  *
  * The variable length buffer package.
- *
- * The variable length buffer package.
- *
  */
 
 /**
