@@ -4971,13 +4971,15 @@ namespace eval ArcherCore {
     if {$_rflag} {
 	rebuildTree
 
-	if {$mEnableListView} {
-	    selectTreePath $mSelectedObj
-	} else {
-	    if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
-	        if {[llength $paths]} {
-	           selectTreePath [lindex $paths 0]
-	        }
+	if {$mSelectedObj != ""} {
+	    if {$mEnableListView} {
+		selectTreePath $mSelectedObj
+	    } else {
+		if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
+		    if {[llength $paths]} {
+		       selectTreePath [lindex $paths 0]
+		    }
+		}
 	    }
 	}
     }
