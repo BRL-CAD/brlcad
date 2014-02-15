@@ -19,7 +19,6 @@
  */
 
 /** @addtogroup cmd */
-/** @ingroup data */
 /** @{ */
 /** @file cmdhist.c
  *

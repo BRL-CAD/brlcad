@@ -112,7 +112,8 @@ BU_EXPORT extern const char *bu_version(void);
 
 /*----------------------------------------------------------------------*/
 
-
+/** @addtogroup endian */
+/** @{ */
 /** @file libbu/endian.c
  *
  * Run-time byte order detection.
@@ -130,6 +131,7 @@ typedef enum {
  * returns the platform byte ordering (e.g., big-/little-endian)
  */
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
+/** @} */
 
 
 /*----------------------------------------------------------------------*/
@@ -146,7 +148,6 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 
 /** @addtogroup hist */
-/** @ingroup data */
 /** @{ */
 /** @file libbu/hist.c
  *
@@ -290,7 +291,6 @@ typedef struct bu_hook_list bu_hook_list_t;
 /*----------------------------------------------------------------------*/
 
 /** @addtogroup debug Debugging */
-/** @ingroup io */
 /** @{ */
 
 /**
@@ -398,7 +398,6 @@ typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/backtrace.c
  *
@@ -522,7 +521,6 @@ BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 
 /** @file libbu/file.c
@@ -896,7 +894,6 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
 /** @} */
 /** @addtogroup getopt */
-/** @ingroup data */
 /** @{ */
 
 /** @file libbu/getopt.c
@@ -948,7 +945,6 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 
 /** @} */
 /** @addtogroup hist */
-/** @ingroup data */
 /** @{ */
 
 /* hist.c */
@@ -974,7 +970,6 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 
 
 /** @addtogroup thread */
-/** @ingroup parallel */
 /** @{ */
 /** @file libbu/parallel.c
  *
@@ -1009,7 +1004,6 @@ BU_EXPORT extern int bu_parallel_id(void);
 /** @} */
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/linebuf.c
  *
@@ -1022,7 +1016,6 @@ BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 /** @} */
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/hook.c
  *
@@ -1047,7 +1040,6 @@ BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
 
 /** @} */
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/log.c
  *
@@ -1197,7 +1189,6 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
 #include "bu/malloc.h"
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/dirname.c
  *
@@ -1277,7 +1268,6 @@ BU_EXPORT extern void bu_basename(char *basename, const char *path);
 /** @} */
 
 /** @addtogroup thread */
-/** @ingroup parallel */
 /** @{ */
 /** @file libbu/kill.c
  *
@@ -1346,7 +1336,6 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
 /** @} */
 
 /** @addtogroup thread */
-/** @ingroup parallel */
 /** @{ */
 
 /** @file libbu/semaphore.c
@@ -1628,7 +1617,6 @@ BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t s
 /** @} */
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 
 /** @file libbu/units.c
@@ -1693,7 +1681,6 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 /** @} */
 
 /** @addtogroup hton */
-/** @ingroup data */
 /** @{ */
 /** @file libbu/htester.c
  *
@@ -1781,7 +1768,6 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
 /** @} */
 
 /** @addtogroup tcl */
-/** @ingroup binding */
 /** @{ */
 /** @file libbu/observer.c
  *
@@ -1822,7 +1808,6 @@ BU_EXPORT extern int Bu_Init(void *interp);
 /** @} */
 
 /** @addtogroup log */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/lex.c
  *
@@ -1897,7 +1882,6 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 #include "bu/hash.h"
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/fchmod.c
  *
@@ -2027,7 +2011,6 @@ BU_EXPORT extern int bu_restore_interrupts(void);
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/simd.c
  * Detect SIMD type at runtime.
@@ -2055,7 +2038,6 @@ BU_EXPORT extern int bu_simd_supported(int level);
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/timer.c
  * Return microsecond accuracy time information.
@@ -2065,7 +2047,6 @@ BU_EXPORT extern int64_t bu_gettime(void);
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /**
  * Evaluate the time_t input as UTC time in ISO format.
@@ -2079,7 +2060,6 @@ BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/dlfcn.c
  * Dynamic Library functionality
@@ -2125,7 +2105,6 @@ BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
 
 /** @addtogroup file */
-/** @ingroup io */
 /** @{ */
 /** @file libbu/sort.c
  * platform-independent re-entrant version of qsort, where the first argument
