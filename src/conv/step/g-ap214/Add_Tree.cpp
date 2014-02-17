@@ -27,13 +27,55 @@
 #include "AP214e3.h"
 #include "G_Objects.h"
 
-struct AP214_info {
-    const struct db_i *dbip;
-    std::map<struct directory *, STEPentity *> objects;
-    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> union_boolean_results;
-    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> intersection_boolean_results;
-    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> subtraction_boolean_results;
-};
+int
+AP214_Boolean_Result(STEPentity **bool_result, int op, struct directory *left, struct directory *right, AP203_Contents *sc)
+{
+    SdaiBoolean_result *boolean_result = NULL;
+    SdaiBoolean_operand *first = NULL;
+    SdaiBoolean_operand *second = NULL;
+
+    if (op != 2 && op != 3 && op != 4) return -1;
+    if (left == RT_DIR_NULL || right == RT_DIR_NULL) return -1;
+
+    boolean_result = (SdaiBoolean_result *)sc->registry->ObjCreate("BOOLEAN_RESULT");
+    sc->instance_list->Append((STEPentity*)boolean_result, completeSE);
+
+    if (sc->solid_to_step_manifold->find(left) != sc->solid_to_step_manifold->end()) {
+	SdaiSolid_model *left_solid = (SdaiSolid_model *)sc->solid_to_step_manifold->find(left)->second;
+	first = new SdaiBoolean_operand(left_solid, SCHEMA_NAMESPACE::t_boolean_operand);
+    }
+    if (!first && sc->comb_to_step_manifold->find(left) != sc->comb_to_step_manifold->end()) {
+	SdaiBoolean_result *left_boolresult = (SdaiBoolean_result *)sc->comb_to_step_manifold->find(left)->second;
+	first = new SdaiBoolean_operand(left_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
+    }
+    sc->instance_list->Append((STEPentity*)first, completeSE);
+    if (sc->solid_to_step_manifold->find(right) != sc->solid_to_step_manifold->end()) {
+	SdaiSolid_model *right_solid = (SdaiSolid_model *)sc->solid_to_step_manifold->find(right)->second;
+	second = new SdaiBoolean_operand(right_solid, SCHEMA_NAMESPACE::t_boolean_operand);
+    }
+    if (!second && sc->comb_to_step_manifold->find(right) != sc->comb_to_step_manifold->end()) {
+	SdaiBoolean_result *right_boolresult = (SdaiBoolean_result *)sc->comb_to_step_manifold->find(right)->second;
+	second = new SdaiBoolean_operand(right_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
+    }
+    sc->instance_list->Append((STEPentity*)second, completeSE);
+    boolean_result->first_operand_(first);
+    boolean_result->second_operand_(second);
+
+    if (op == 2) {
+	boolean_result->operator_(Boolean_operator__union);
+    }
+    if (op == 3) {
+	boolean_result->operator_(Boolean_operator__intersection);
+    }
+    if (op == 4) {
+	boolean_result->operator_(Boolean_operator__difference);
+    }
+
+    (*bool_result) = boolean_result;
+
+    /* Shouldn't get here */
+    return 1;
+}
 
 HIDDEN int
 conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)

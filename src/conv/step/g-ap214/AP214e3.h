@@ -56,11 +56,6 @@ struct AP203_Contents {
     struct rt_wdb *wdbp;
 };
 
-struct AP214_tree_result {
-    STEPentity *shape;
-    STEPentity *product;
-};
-
 void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
 void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
 
