@@ -545,6 +545,9 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
   foreach(inc_dir ${INCLUDE_DIRS})
     get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
     IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
+    if (NOT IS_LOCAL)
+      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
+    endif (NOT IS_LOCAL)
     if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       # Unfortunately, a bug in the CMake SYSTEM option to
       # include_directories requires that these variables
