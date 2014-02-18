@@ -535,6 +535,30 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   endif(${DIR_LIST})
 endmacro(BRLCAD_SORT_INCLUDE_DIRS)
 
+#-----------------------------------------------------------------------------
+# Wrapper to properly include directories for a BRL-CAD build.  Handles the
+# SYSTEM option to the include_directories command, as well as calling the
+# sort macro.
+macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
+  set(INCLUDE_DIRS ${${DIR_LIST}})
+  BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
+  foreach(inc_dir ${INCLUDE_DIRS})
+    get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
+    IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
+    if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
+      # Unfortunately, a bug in the CMake SYSTEM option to
+      # include_directories requires that these variables
+      # be explicitly set on OSX
+      if(APPLE)
+	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
+	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
+      endif(APPLE)
+      include_directories(SYSTEM ${inc_dir})
+    else("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
+      include_directories(${inc_dir})
+    endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
+  endforeach(inc_dir ${ALL_INCLUDES})
+endmacro(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
 #-----------------------------------------------------------------------------
 # Wrapper to handle include directories specific to libraries.  Removes
@@ -549,14 +573,7 @@ macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
   mark_as_advanced(${DIR_LIST})
 
   set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
-  BRLCAD_SORT_INCLUDE_DIRS(ALL_INCLUDES)
-  foreach(inc_dir ${ALL_INCLUDES})
-    if("${inc_dir}" MATCHES "other")
-      include_directories(SYSTEM ${inc_dir})
-    else("${inc_dir}" MATCHES "other")
-      include_directories(${inc_dir})
-    endif("${inc_dir}" MATCHES "other")
-  endforeach(inc_dir ${ALL_INCLUDES})
+  BRLCAD_INCLUDE_DIRS(ALL_INCLUDES)
 endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
