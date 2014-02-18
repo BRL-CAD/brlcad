@@ -24,6 +24,7 @@ set(dm_headers
   dm/dm-X.h
   dm/dm-glx.h
   dm/dm-ogl.h
+  dm/dm-osg.h
   dm/dm-pex.h
   dm/dm-plot.h
   dm/dm-ps.h

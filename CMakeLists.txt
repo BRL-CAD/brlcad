@@ -1141,7 +1141,15 @@ endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 
 # Enable features requiring OpenSceneGraph
-#find_package(OpenSceneGraph REQUIRED osgDB osgUtil osgText osgViewer osgGA)
+option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OSG)
+if(BRLCAD_ENABLE_OSG)
+  find_package(OpenSceneGraph REQUIRED osgDB osgUtil osgText osgViewer osgGA)
+  if(NOT OSG_LIBRARY)
+    message("OpenSceneGraph interface requested, but OSG is not found - disabling")
+    set(BRLCAD_ENABLE_OSG OFF)
+  endif(NOT OSG_LIBRARY)
+endif(BRLCAD_ENABLE_OSG)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
