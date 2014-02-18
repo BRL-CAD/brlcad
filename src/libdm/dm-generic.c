@@ -58,6 +58,12 @@ extern int ogl_share_dlist();
 #  endif
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+extern struct dm *osg_open();
+extern void osg_fogHint();
+extern int osg_share_dlist();
+#endif /* DM_OSG*/
+
 #ifdef DM_RTGL
 extern struct dm *rtgl_open();
 extern void rtgl_fogHint();
@@ -118,6 +124,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	case DM_TYPE_OGL:
 	    return ogl_open(interp, argc, argv);
 #  endif
+#endif
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+	    return osg_open(interp, argc, argv);
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:

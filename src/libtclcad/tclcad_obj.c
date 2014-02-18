@@ -84,6 +84,11 @@
 #  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-osg.h"
+#endif /* DM_OSG */
+
 #ifdef DM_WGL
 #  include <tkwinport.h>
 #  include "dm/dm_xvars.h"
@@ -9996,6 +10001,11 @@ to_new_view(struct ged *gedp,
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+    if (BU_STR_EQUAL(argv[2], "osg"))
+	type = DM_TYPE_OSG;
+#endif /* DM_OSG */
+
 #ifdef DM_WGL
     if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
@@ -12377,7 +12387,7 @@ to_view_win_size(struct ged *gedp,
 	}
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_QT)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_WGL) || defined(DM_QT)
 #   if (defined HAVE_TK)
     Tk_GeometryRequest(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->xtkwin,
 		       width, height);
@@ -13282,6 +13292,32 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 			       0);
 	    break;
 #endif
+
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+#if 0
+	    *gdvp->gdv_fbs.fbs_fbp = osg_interface; /* struct copy */
+
+	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/osg")+1, "if_name");
+	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/osg", strlen("/dev/osg")+1);
+
+	    /* Mark OK by filling in magic number */
+	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _osg_open_existing(gdvp->gdv_fbs.fbs_fbp,
+			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->cmap,
+			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->vip,
+			       gdvp->gdv_dmp->dm_width,
+			       gdvp->gdv_dmp->dm_height,
+			       ((struct osg_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->viewer,
+			       ((struct osg_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+			       0);
+#endif
+	    break;
+#endif
+
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
 	    *gdvp->gdv_fbs.fbs_fbp = wgl_interface; /* struct copy */

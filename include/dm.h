@@ -101,6 +101,7 @@
 #define DM_TYPE_RTGL	9
 #define DM_TYPE_TXT	10
 #define DM_TYPE_QT	11
+#define DM_TYPE_OSG	12
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -118,6 +119,7 @@
 #define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
 #define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
 #define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
+#define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \

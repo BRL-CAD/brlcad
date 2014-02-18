@@ -85,7 +85,9 @@ void dm_osgPaint(struct dm *dmp);
 void dm_osgLoadMatrix(struct dm *dmp, matp_t mp);
 __END_DECLS
 
-struct dm *osg_open(Tcl_Interp *interp, int argc, char **argv);
+extern "C" {
+    struct dm *osg_open(Tcl_Interp *interp, int argc, char **argv);
+}
 HIDDEN int osg_close(struct dm *dmp);
 HIDDEN int osg_drawBegin(struct dm *dmp);
 HIDDEN int osg_drawEnd(struct dm *dmp);
@@ -164,8 +166,8 @@ struct dm dm_osg = {
     1.0,			/* zoom-in limit */
     1,				/* bound flag */
     "ogl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_OGL,
+    "OpenSceneGraph graphics",
+    DM_TYPE_OSG,
     1,
     0,
     0,
@@ -608,6 +610,7 @@ osg_close(struct dm *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
+extern "C"
 struct dm *
 osg_open(Tcl_Interp *interp, int argc, char **argv)
 {

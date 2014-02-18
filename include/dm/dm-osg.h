@@ -28,6 +28,7 @@
 
 #ifdef DM_OSG
 
+#ifdef __cplusplus
 #include <iostream>
 
 #include <osgUtil/Optimizer>
@@ -62,6 +63,7 @@
 #include <osgViewer/api/X11/GraphicsWindowX11>
 #include <osg/MatrixTransform>
 #include <osg/ShapeDrawable>
+#endif
 
 #define Osg_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
@@ -84,8 +86,28 @@ struct modifiable_osg_vars {
 };
 
 
+#ifdef __cplusplus
 struct osg_vars {
+    double left;
+    double right;
+    double bottom;
+    double top;
+    double near;
+    double far;
+    int prev_pflag;
+
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;		/* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+    struct modifiable_osg_vars mvars;
     osg::ref_ptr<osgViewer::Viewer>  viewer;
+};
+#else
+struct osg_vars {
     double left;
     double right;
     double bottom;
@@ -103,6 +125,7 @@ struct osg_vars {
     GLclampf r, g, b;
     struct modifiable_osg_vars mvars;
 };
+#endif
 
 
 
