@@ -22,10 +22,10 @@ set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
 # process.h in points dir makes Windows unhappy,
 # and the TERMLIB_INCLUDE_DIR isn't set there
 if(NOT WIN32)
-	set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
-		${CMAKE_CURRENT_SOURCE_DIR}/points
-		${TERMLIB_INCLUDE_DIR}
-		)
+  set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/points
+    ${TERMLIB_INCLUDE_DIR}
+    )
 endif(NOT WIN32)
 
 BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
@@ -142,12 +142,12 @@ BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
 if(CMAKE_CONFIGURATION_TYPES)
-   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-     configure_file(mged.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/mged.bat COPYONLY)
-   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(mged.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/mged.bat COPYONLY)
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 else(CMAKE_CONFIGURATION_TYPES)
-   configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
+  configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
 endif(CMAKE_CONFIGURATION_TYPES)
 install(PROGRAMS mged.bat DESTINATION bin)
 
