@@ -540,8 +540,12 @@ endmacro(BRLCAD_SORT_INCLUDE_DIRS)
 # SYSTEM option to the include_directories command, as well as calling the
 # sort macro.
 macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
+
   set(INCLUDE_DIRS ${${DIR_LIST}})
+  list(REMOVE_DUPLICATES INCLUDE_DIRS)
+
   BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
+
   foreach(inc_dir ${INCLUDE_DIRS})
     get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
     IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
@@ -561,6 +565,7 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
       include_directories(${inc_dir})
     endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
   endforeach(inc_dir ${ALL_INCLUDES})
+
 endmacro(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
 #-----------------------------------------------------------------------------
