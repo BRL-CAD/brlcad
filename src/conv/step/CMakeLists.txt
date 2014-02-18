@@ -1,20 +1,13 @@
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  )
-LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
-include_directories(${STEP_INCLUDE_DIRS})
-
-set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
-
-# local includes
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${STEPCODE_DIR}/include
   ${STEPCODE_DIR}/src/base
   ${STEPCODE_DIR}/src/clstepcore
@@ -26,6 +19,7 @@ include_directories(
   ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
+BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support
