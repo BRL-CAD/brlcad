@@ -31,13 +31,13 @@
 __BEGIN_DECLS
 
 int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, char *log_bu, float *wireColor);
+drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 
 int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, char *log_bu, float *wireColor);
+drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
 
 int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, char *log_bu);
+drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
