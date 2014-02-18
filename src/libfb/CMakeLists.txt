@@ -59,12 +59,6 @@ set(LIBFB_SOURCES
   vers.c
   )
 
-# Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compliant - anything pulling them in needs the C99 flag
-get_property(libfb_C_FLAGS GLOBAL PROPERTY libfb_C_FLAGS)
-LIST(APPEND libfb_C_FLAGS "${C99_FLAG}")
-set_property(GLOBAL PROPERTY libfb_C_FLAGS "${libfb_C_FLAGS}")
-
 add_definitions(
   -DIF_REMOTE
   -DIF_AB

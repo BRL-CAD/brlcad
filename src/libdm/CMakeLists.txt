@@ -66,12 +66,6 @@ endif(BRLCAD_ENABLE_QT)
 
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
-# Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compliant - anything pulling them in needs the C99 flag
-get_property(libdm_C_FLAGS GLOBAL PROPERTY libdm_C_FLAGS)
-list(APPEND libdm_C_DEFINES "${C99_FLAG}")
-set_property(GLOBAL PROPERTY libdm_C_FLAGS "${libdm_C_FLAGS}")
-
 set(LIBDM_SRCS
   ${dmx11_srcs}
   ${dmw32_srcs}

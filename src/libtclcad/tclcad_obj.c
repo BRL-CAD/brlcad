@@ -6732,7 +6732,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    // convert screen-space delta to model-space delta
+    /* convert screen-space delta to model-space delta */
     view_start[X] = screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
     view_start[Y] = screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
     view_start[Z] = 1;
@@ -6765,7 +6765,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    // need to tell front-end that we've modified the db
+    /* need to tell front-end that we've modified the db */
     Tcl_Eval(current_top->to_interp, "$::ArcherCore::application setSave");
 
     gdvp->gdv_view->gv_prevMouseX = screen_end[X];
