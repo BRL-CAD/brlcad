@@ -165,7 +165,7 @@ struct dm dm_osg = {
     0,                          /* no stereo by default */
     1.0,			/* zoom-in limit */
     1,				/* bound flag */
-    "ogl",
+    "osg",
     "OpenSceneGraph graphics",
     DM_TYPE_OSG,
     1,
