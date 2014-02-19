@@ -188,13 +188,19 @@ dm_osgInit(struct dm *dmp)
 
     assert(dmp);
 
-    win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
-
     //create our graphics context directly so we can pass our own window
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 
     // Init the Windata Variable that holds the handle for the Window to display OSG in.
+    // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
+    // something showing how to handle Cocoa for the Mac, if that's possible
+#if defined(DM_OSG)  /* Will eventually change to DM_X11 */
+    win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(win);
+#elif defined(DM_WIN32)
+    /* win = ? OSG needs HWND for win... */
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
+#endif
 
     // Setup the traits parameters
     traits->x = 0;

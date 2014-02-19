@@ -86,7 +86,6 @@ struct modifiable_osg_vars {
 };
 
 
-#ifdef __cplusplus
 struct osg_vars {
     double left;
     double right;
@@ -103,32 +102,15 @@ struct osg_vars {
     int ovec;		/* Old color map entry number */
     char is_direct;
     GLclampf r, g, b;
+#if defined(DM_WIN32)
+    HGLRC glxc; /* Need to figure out what OSG needs on Win32 */
+#endif
+#ifdef __cplusplus
     struct modifiable_osg_vars mvars;
     osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
     osg::ref_ptr<osgViewer::Viewer>  mainviewer;
-};
-#else
-struct osg_vars {
-    double left;
-    double right;
-    double bottom;
-    double top;
-    double near;
-    double far;
-    int prev_pflag;
-
-    GLdouble faceplate_mat[16];
-    int face_flag;
-    int *perspective_mode;
-    int fontOffset;
-    int ovec;		/* Old color map entry number */
-    char is_direct;
-    GLclampf r, g, b;
-    struct modifiable_osg_vars mvars;
-};
 #endif
-
-
+};
 
 #endif /* DM_OSG */
 
