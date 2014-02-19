@@ -209,22 +209,33 @@ dm_osgInit(struct dm *dmp)
 
     traits->inheritedWindowData = windata;
 
+    // Create the Composite viewer
+    osp->viewer = new osgViewer::CompositeViewer();
+
+    // Create the 3D view
+    osp->mainviewer = new osgViewer::Viewer();
+    osp->viewer->addView(osp->mainviewer);
+
     // Create the Graphics Context
     osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
 
-    osp->viewer = new osgViewer::Viewer();
-
     if (graphicsContext) {
-	osp->viewer->getCamera()->setGraphicsContext(graphicsContext);
-	osp->viewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
-	//osp->viewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+	osp->mainviewer->getCamera()->setGraphicsContext(graphicsContext);
+	osp->mainviewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
+	//osp->mainviewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
     }
 
-    osp->viewer->setCameraManipulator( new osgGA::TrackballManipulator() );
-    osp->viewer->getCamera()->setAllowEventFocus(false);
-    osp->viewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
-    osp->viewer->addEventHandler(new osgViewer::StatsHandler);
+    osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
+    osp->mainviewer->getCamera()->setAllowEventFocus(false);
+    osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+    //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
+
+    osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("cessna.osg", 0));
+
+    osp->mainviewer->setSceneData(scene.get());
+
+    osp->mainviewer->frame();
 
     bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
@@ -242,8 +253,10 @@ dm_osgReshape(struct dm *dmp)
 
     //osp->viewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
 
-    osp->viewer->getEventQueue()->windowResize(0, 0, dmp->dm_width, dmp->dm_height);
-    osp->viewer->getCamera()->getGraphicsContext()->resized(0, 0, dmp->dm_width, dmp->dm_height);
+    osp->mainviewer->getEventQueue()->windowResize(0, 0, dmp->dm_width, dmp->dm_height);
+    osp->mainviewer->getCamera()->getGraphicsContext()->resized(0, 0, dmp->dm_width, dmp->dm_height);
+
+    osp->mainviewer->frame();
 
     bu_log("dm_osgReshape: leave\n");
 }
@@ -259,7 +272,7 @@ dm_osgPaint(struct dm *dmp)
     if (dmp->dm_perspective == 0)
 	return;
 
-    osp->viewer->frame();
+    osp->mainviewer->frame();
 }
 
 
@@ -273,7 +286,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     if (dmp->dm_perspective == 0)
 	return;
 
-    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->viewer->getCameraManipulator()));
+    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
     osg::Quat rot;
     osg::Vec3d old_center;
@@ -306,7 +319,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
 	if (osp->prev_pflag != dmp->dm_perspective) {
 	    bu_log("Setting projection as frustum\n");
-	    osp->viewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+	    osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
 	}
 
 	osp->prev_pflag = dmp->dm_perspective;
@@ -318,7 +331,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 	else
 	    sa = mp[MSA];
 
-	osp->viewer->getCamera()->setProjectionMatrixAsOrtho(-mp[MSA], mp[MSA], -mp[MSA], mp[MSA], 0.0, 2.0);
+	osp->mainviewer->getCamera()->setProjectionMatrixAsOrtho(-mp[MSA], mp[MSA], -mp[MSA], mp[MSA], 0.0, 2.0);
 	osp->prev_pflag = dmp->dm_perspective;
     }
 }
@@ -339,23 +352,6 @@ osg_setBGColor(struct dm *dmp, unsigned char UNUSED(r), unsigned char UNUSED(g),
 {
     if (dmp->dm_debugLevel)
 	bu_log("osg_setBGColor()\n");
-
-    return TCL_OK;
-}
-
-
-/*
- * Either initially, or on resize/reshape of the window,
- * sense the actual size of the window, and perform any
- * other initializations of the window configuration.
- *
- * also change font size if necessary
- */
-HIDDEN int
-osg_configureWin_guts(struct dm *dmp, int UNUSED(force))
-{
-    if (dmp->dm_debugLevel)
-	bu_log("osg_configureWin_guts()\n");
 
     return TCL_OK;
 }
@@ -388,9 +384,10 @@ osg_makeCurrent(struct dm *dmp)
 
 
 HIDDEN int
-osg_configureWin(struct dm *dmp, int force)
+osg_configureWin(struct dm *dmp, int UNUSED(force))
 {
-    return osg_configureWin_guts(dmp, force);
+    dm_osgReshape(dmp);
+    return TCL_OK;
 }
 
 
@@ -636,7 +633,7 @@ osg_drawEnd(struct dm *dmp)
 	bu_log("osg_drawEnd()\n");
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-    osp->viewer->frame();
+    osp->mainviewer->frame();
 
     return TCL_OK;
 }
