@@ -47,32 +47,8 @@
 #include "dm.h"
 #include "dm/dm-osg.h"
 #include "dm/dm_xvars.h"
-#include "solid.h"
 
 #include "./dm_util.h"
-
-#ifdef HAVE_X11_XOSDEFS_H
-#  include <X11/Xfuncproto.h>
-#  include <X11/Xosdefs.h>
-#endif
-#ifdef linux
-#  undef X_NOT_STDC_ENV
-#  undef X_NOT_POSIX
-#endif
-
-#include <X11/extensions/XInput.h>
-
-
-#define VIEWFACTOR      (1.0/(*dmp->dm_vp))
-#define VIEWSIZE        (2.0*(*dmp->dm_vp))
-
-/* these are from /usr/include/gl.h could be device dependent */
-#define XMAXSCREEN	1279
-#define YMAXSCREEN	1023
-#define YSTEREO		491	/* subfield height, in scanlines */
-#define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
-
-HIDDEN XVisualInfo *osg_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
@@ -427,151 +403,6 @@ osg_setLight(struct dm *dmp, int UNUSED(lighting_on))
     return TCL_OK;
 }
 
-
-/**
- * currently, get a double buffered rgba visual that works with Tk and
- * OpenGL
- */
-HIDDEN XVisualInfo *
-osg_choose_visual(struct dm *dmp, Tk_Window tkwin)
-{
-    XVisualInfo *vip, vitemp, *vibase, *maxvip;
-    int tries, baddepth;
-    int num, i, j;
-    int fail;
-    int *good = NULL;
-
-    /* requirements */
-    int screen;
-    int use;
-    int rgba;
-    int dbfr;
-
-    /* desires */
-    int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
-    int zbuffer;
-
-    int m_stereo; /* m_stereo - try to get stereo */
-    int stereo;
-
-    if (dmp->dm_stereo) {
-	m_stereo = 1;
-    } else {
-	m_stereo = 0;
-    }
-
-    memset((void *)&vitemp, 0, sizeof(XVisualInfo));
-    /* Try to satisfy the above desires with a color visual of the
-     * greatest depth */
-
-    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    0, &vitemp, &num);
-    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-
-    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
-
-    while (1) {
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-	    /* requirements */
-	    if (vip->screen != screen)
-		continue;
-
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_USE_GL, &use);
-	    if (fail || !use)
-		continue;
-
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_RGBA, &rgba);
-	    if (fail || !rgba)
-		continue;
-
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if (fail || !dbfr)
-		continue;
-
-	    /* desires */
-	    if (m_zbuffer) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    vip, GLX_DEPTH_SIZE, &zbuffer);
-		if (fail || !zbuffer)
-		    continue;
-	    }
-
-	    if (m_stereo) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    vip, GLX_STEREO, &stereo);
-		if (fail || !stereo) {
-		    bu_log("osg_choose_visual: failed visual - GLX_STEREO\n");
-		    continue;
-		}
-	    }
-
-	    /* this visual meets criteria */
-	    good[j++] = i;
-	}
-
-	/* j = number of acceptable visuals under consideration */
-	if (j >= 1) {
-	    baddepth = 1000;
-	    for (tries = 0; tries < j; ++tries) {
-		maxvip = vibase + good[0];
-		for (i=1; i<j; i++) {
-		    vip = vibase + good[i];
-		    if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
-			maxvip = vip;
-		    }
-		}
-
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
-		    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-					       maxvip->screen), maxvip->visual, AllocNone);
-
-		if (Tk_SetWindowVisual(tkwin,
-				       maxvip->visual, maxvip->depth,
-				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
-
-		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				 maxvip, GLX_DEPTH_SIZE,
-				 &((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
-		    if (((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
-			((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
-
-		    bu_free(good, "dealloc good visuals");
-		    return maxvip; /* success */
-		} else {
-		    /* retry with lesser depth */
-		    baddepth = maxvip->depth;
-		    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
-		}
-	    }
-	}
-
-	/* if no success at this point, relax a desire and try again */
-
-	if (m_stereo) {
-	    m_stereo = 0;
-	    bu_log("Stereo not available.\n");
-	    continue;
-	}
-
-	if (m_zbuffer) {
-	    m_zbuffer = 0;
-	    continue;
-	}
-
-	/* ran out of visuals, give up */
-	break;
-    }
-
-    bu_free(good, "dealloc good visuals");
-    return (XVisualInfo *)NULL; /* failure */
-}
-
-
 /*
  * Gracefully release the display.
  */
@@ -595,21 +426,11 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
-    int j, k;
     int make_square = -1;
-    int ndevices;
-    int nclass = 0;
-    int unused;
-    XDeviceInfoPtr olist = NULL, list = NULL;
-    XDevice *dev = NULL;
-    XEventClass e_class[15];
-    XInputClassInfo *cip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
-    int screen_number = -1;
 
     struct dm_xvars *pubvars = NULL;
     struct osg_vars *privvars = NULL;
@@ -685,50 +506,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     /* this is important so that osg_configureWin knows to set the font */
     pubvars->fontstruct = NULL;
 
-    if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
-	bu_vls_free(&init_proc_vls);
-	(void)osg_close(dmp);
-	return DM_NULL;
-    }
-
-#ifdef HAVE_XQUERYEXTENSION
-    {
-	int return_val;
-
-	if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)) {
-	    bu_vls_free(&init_proc_vls);
-	    (void)osg_close(dmp);
-	    return DM_NULL;
-	}
-    }
-#endif
-
-    screen_number = XDefaultScreen(tmp_dpy);
-    if (screen_number < 0)
-	bu_log("WARNING: screen number is [%d]\n", screen_number);
-
-    if (dmp->dm_width == 0) {
-	dmp->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
-	++make_square;
-    }
-    if (dmp->dm_height == 0) {
-	dmp->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
-	++make_square;
-    }
-
-    if (make_square > 0) {
-	/* Make window square */
-	if (dmp->dm_height <
-	    dmp->dm_width)
-	    dmp->dm_width =
-		dmp->dm_height;
-	else
-	    dmp->dm_height =
-		dmp->dm_width;
-    }
-
-    XCloseDisplay(tmp_dpy);
-
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin =
@@ -766,8 +543,27 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(pubvars->xtkwin));
+
+    if (dmp->dm_width == 0) {
+	dmp->dm_width = WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	++make_square;
+    }
+    if (dmp->dm_height == 0) {
+	dmp->dm_height = HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	++make_square;
+    }
+
+    if (make_square > 0) {
+	/* Make window square */
+	if (dmp->dm_height < dmp->dm_width)
+	    dmp->dm_width = dmp->dm_height;
+	else
+	    dmp->dm_height = dmp->dm_width;
+    }
+
+
+
+    bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
     bu_vls_printf(&str, "_init_dm %s %s\n",
 		  bu_vls_addr(&init_proc_vls),
@@ -783,8 +579,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy =
-	Tk_Display(pubvars->top);
+    pubvars->dpy = Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
     if (!(pubvars->dpy)) {
@@ -798,72 +593,12 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 		       dmp->dm_width,
 		       dmp->dm_height);
 
-    /* must do this before MakeExist */
-    if ((pubvars->vip=osg_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
-	bu_log("osg_open: Can't get an appropriate visual.\n");
-	(void)osg_close(dmp);
-	return DM_NULL;
-    }
-
     pubvars->depth = privvars->mvars.depth;
 
     Tk_MakeWindowExist(pubvars->xtkwin);
 
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
-
-    /*
-     * Take a look at the available input devices. We're looking
-     * for "dial+buttons".
-     */
-    if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
-	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
-    }
-
-    if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1) goto Done;
-
-    for (j = 0; j < ndevices; ++j, list++) {
-	if (list->use == IsXExtensionDevice) {
-	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
-		if ((dev = XOpenDevice(pubvars->dpy,
-				       list->id)) == (XDevice *)NULL) {
-		    bu_log("osg_open: Couldn't open the dials+buttons\n");
-		    goto Done;
-		}
-
-		for (cip = dev->classes, k = 0; k < dev->num_classes;
-		     ++k, ++cip) {
-		    switch (cip->input_class) {
-#ifdef IR_BUTTONS
-			case ButtonClass:
-			    DeviceButtonPress(dev, pubvars->devbuttonpress,
-					      e_class[nclass]);
-			    ++nclass;
-			    DeviceButtonRelease(dev, pubvars->devbuttonrelease,
-						e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-#ifdef IR_KNOBS
-			case ValuatorClass:
-			    DeviceMotionNotify(dev, pubvars->devmotionnotify,
-					       e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-			default:
-			    break;
-		    }
-		}
-
-		XSelectExtensionEvent(pubvars->dpy, pubvars->win, e_class, nclass);
-		goto Done;
-	    }
-	}
-    }
-Done:
-    XFreeDeviceList(olist);
 
     Tk_MapWindow(pubvars->xtkwin);
 
