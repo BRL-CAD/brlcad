@@ -55,7 +55,7 @@
 #include <osgGA/SphericalManipulator>
 
 #include <osgViewer/Viewer>
-#include <osgViewer/ViewerEventHandlers>
+#include <osgViewer/CompositeViewer>
 
 
 #include <osg/TexGen>
@@ -104,7 +104,8 @@ struct osg_vars {
     char is_direct;
     GLclampf r, g, b;
     struct modifiable_osg_vars mvars;
-    osg::ref_ptr<osgViewer::Viewer>  viewer;
+    osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
+    osg::ref_ptr<osgViewer::Viewer>  mainviewer;
 };
 #else
 struct osg_vars {
