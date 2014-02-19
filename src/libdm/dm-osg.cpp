@@ -231,11 +231,24 @@ dm_osgInit(struct dm *dmp)
     //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
 
-    osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("cessna.osg", 0));
-
+    /* Until we have the ability to populate using .g information, do this for testing */
+    osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
     osp->mainviewer->setSceneData(scene.get());
 
+    /* Make sure the initial frame is rendered */
     osp->mainviewer->frame();
+
+    /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "hault"
+     * a multithreaded render using a scene graph with STATIC data per setDataVariance.
+     * Most of the time data in BRL-CAD graphcs will be static, with the exception
+     * being an edit operation.  What I'm wondering is if it is possible to create an all STATIC
+     * tree, and when an edit operation is requested hault all rendering, remove the static
+     * version of the object and replace it with a dynamic one, and start over with the updated
+     * tree.  It would be a shame if we had to declare all objects in a model DYNAMIC when most
+     * of them won't be most of the time. */
+    osp->mainviewer->stopThreading();
+    /* Step 2: update nodes based on what we'll be editing */
+    osp->mainviewer->startThreading();
 
     bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
@@ -283,8 +296,10 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
     assert(dmp);
 
-    if (dmp->dm_perspective == 0)
+    if (dmp->dm_perspective == 0) {
+	bu_log("no matrix for you!\n");
 	return;
+    }
 
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
