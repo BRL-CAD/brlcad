@@ -226,50 +226,29 @@ dm_osgInit(struct dm *dmp)
     traits->width = dmp->dm_width;
     traits->height = dmp->dm_height;
     traits->depth = 24;
-    //traits->alpha = 8;
-    //traits->stencil = 8;
     traits->windowDecoration = false;
     traits->doubleBuffer = true;
     traits->sharedContext = 0;
     traits->setInheritedWindowPixelFormat = true;
-    //traits->windowName = "osgViewer";
 
     traits->inheritedWindowData = windata;
 
     // Create the Graphics Context
     osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
 
-    //osgViewer::Viewer *viewer = new osgViewer::Viewer();
-    //osp->viewer = viewer;
     osp->viewer = new osgViewer::Viewer();
-    //osp->viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
     if (graphicsContext) {
-	//osp->viewer->setUpViewerAsEmbeddedInWindow(0, 0, dmp->dm_width, dmp->dm_height);
-
 	osp->viewer->getCamera()->setGraphicsContext(graphicsContext);
 	osp->viewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
-	//osp->viewer->getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-	osp->viewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
-	//osp->viewer->getCamera()->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 0.0f));
+	//osp->viewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
     }
 
     osp->viewer->setCameraManipulator( new osgGA::TrackballManipulator() );
     osp->viewer->getCamera()->setAllowEventFocus(false);
     osp->viewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+    osp->viewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
-
-    // Default values are as follows:
-    //
-    // left - -0.325000, right - 0.325000, bottom - -0.260000, top - 0.260000, near - 1.000000, far - 10000.000000
-    //
-
-    //osp->viewer->setCameraManipulator( new osgGA::TrackballManipulator() );
-    //osp->viewer->setCameraManipulator( new osgGA::OrbitManipulator() );
-    //osp->viewer->setCameraManipulator( new osgGA::FirstPersonManipulator() );
-    //osp->viewer->setCameraManipulator( new osgGA::TerrainManipulator() );
-    //osp->viewer->setCameraManipulator( new osgGA::SphericalManipulator() );
-    //osp->viewer->setCameraManipulator( new osgGA::FlightManipulator() );
 
     bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
@@ -921,6 +900,9 @@ osg_drawEnd(struct dm *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawEnd()\n");
 
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osp->viewer->frame();
+
     return TCL_OK;
 }
 
@@ -1009,8 +991,6 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 {
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawVList()\n");
-
-    dm_osgPaint(dmp);
 
     return TCL_OK;
 }
