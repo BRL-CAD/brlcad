@@ -244,11 +244,11 @@ dm_osgInit(struct dm *dmp)
     /* Make sure the initial frame is rendered */
     osp->mainviewer->frame();
 
-    /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "hault"
+    /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "halt"
      * a multithreaded render using a scene graph with STATIC data per setDataVariance.
-     * Most of the time data in BRL-CAD graphcs will be static, with the exception
+     * Most of the time data in BRL-CAD graphics will be static, with the exception
      * being an edit operation.  What I'm wondering is if it is possible to create an all STATIC
-     * tree, and when an edit operation is requested hault all rendering, remove the static
+     * tree, and when an edit operation is requested halt all rendering, remove the static
      * version of the object and replace it with a dynamic one, and start over with the updated
      * tree.  It would be a shame if we had to declare all objects in a model DYNAMIC when most
      * of them won't be most of the time. */
