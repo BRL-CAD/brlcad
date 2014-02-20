@@ -99,6 +99,7 @@ struct osg_vars {
     double near;
     double far;
     int prev_pflag;
+    int init;
     float wireColor[4];
 
     GLdouble faceplate_mat[16];
@@ -115,7 +116,8 @@ struct osg_vars {
     struct modifiable_osg_vars mvars;
     osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
     osg::ref_ptr<osgViewer::Viewer>  mainviewer;
-    osg::ref_ptr<osg::Group>  osg_root;
+    osg::ref_ptr<osg::Group> osg_root;
+    osg::ref_ptr<osg::Geode> geode;
 #endif
 };
 

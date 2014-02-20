@@ -744,8 +744,20 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
     int begin;
     int nverts;
 
+    /* Horrible hack to confirm that continually re-creating
+     * osg objects every time havoc is rotated is causing
+     * slow frame rates.  Looks like we need some solution
+     * to recognize when vp is already in osg so we
+     * aren't totally rebuilding the scene graph every time
+     * we update a frame. Even with this, fps is less than
+     * half that of a raw ogl display list view */
+    /* if (osp->init >= 8121) return TCL_OK; */
+
+    osp->init++;
+
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawVList()\n");
+
 
     // create the osg containers to hold our data.
     osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
@@ -760,7 +772,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     // Set wireframe state
     osg::StateSet *geom_state = geom->getOrCreateStateSet();
-    osg::PolygonMode *geom_polymode = new osg::PolygonMode;
+    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
     geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
     geom_state->setAttributeAndModes(geom_polymode);
     geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
