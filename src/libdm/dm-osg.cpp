@@ -766,8 +766,6 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	geom_state->setAttribute(geom_polymode);
     }
     geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-    osg::Material* material = new osg::Material;
-    geom_state->setAttributeAndModes(material,osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
     geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
 
     /* Viewing region is from -1.0 to +1.0 */
