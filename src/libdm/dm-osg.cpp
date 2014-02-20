@@ -345,13 +345,6 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
 	osp->prev_pflag = dmp->dm_perspective;
     } else {
-	fastf_t sa;
-
-	if (mp[MSA] < 0)
-	    sa = -mp[MSA];
-	else
-	    sa = mp[MSA];
-
 	osp->mainviewer->getCamera()->setProjectionMatrixAsOrtho(-mp[MSA], mp[MSA], -mp[MSA], mp[MSA], 0.0, 2.0);
 	osp->prev_pflag = dmp->dm_perspective;
     }
