@@ -751,9 +751,10 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
      * aren't totally rebuilding the scene graph every time
      * we update a frame. Even with this, fps is less than
      * half that of a raw ogl display list view */
-    /* if (osp->init >= 8121) return TCL_OK; */
-
+    /*
+    if (osp->init >= 8121) return TCL_OK;
     osp->init++;
+    */
 
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawVList()\n");
