@@ -329,35 +329,17 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     quat_quat2mat(brl_rot, quat);
     bn_mat_inv(brl_invrot, brl_rot);
     bn_mat_mul(brl_center, brl_invrot, mp);
-    center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
+    center.set(-brl_center[MDX]/2, -brl_center[MDY]/2, -brl_center[MDZ]/2);
     old_center = tbmp->getCenter();
     tbmp->setCenter(center);
 
-    //    bu_log("dm_osgLoadMatrix: mp[MSA] - %lf\n", mp[MSA]);
+    tbmp->setDistance(2*mp[MSA]);
 
-    // Set the distance from eye to center
-    //XXX the current use of dm_perspective is only temporary. At the moment, if dm_perspective is non zero
-    //    a perspective matrix from brlcad is passed in. We don't want this.
-    if (dmp->dm_perspective == 0) {
-	tbmp->setDistance(mp[MSA]);
-
-	if (osp->prev_pflag != dmp->dm_perspective) {
-	    bu_log("Setting projection as frustum\n");
-	    osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
-	}
-
-	osp->prev_pflag = dmp->dm_perspective;
-    } else {
-	osg::Matrix osg_mp(
-		mp[0], mp[1], mp[2], mp[3],
-		mp[4], mp[5], mp[6], mp[7],
-		mp[8], mp[9], mp[10], mp[11],
-		mp[12], mp[13], mp[14], mp[15]);
-
-	osg_mp.invert(osg_mp);
-	osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
-	osp->prev_pflag = dmp->dm_perspective;
+    if (osp->prev_pflag != dmp->dm_perspective) {
+	osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
     }
+
+    osp->prev_pflag = dmp->dm_perspective;
 }
 
 
