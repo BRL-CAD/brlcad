@@ -308,26 +308,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 {
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
-#if 0
-
-    /* This gets some very basic notion of rotation working, but that's about it... */
-    osg::Matrix osg_mp(
-	    mp[0], mp[1], mp[2], mp[3],
-	    mp[4], mp[5], mp[6], mp[7],
-	    mp[8], mp[9], mp[10], mp[11],
-	    mp[12], mp[13], mp[14], mp[15]);
-
-    osg_mp.invert(osg_mp);
-    osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
-
-#endif
-
     assert(dmp);
-
-    if (dmp->dm_perspective == 0) {
-	bu_log("no matrix for you!\n");
-	return;
-    }
 
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
@@ -367,7 +348,14 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
 	osp->prev_pflag = dmp->dm_perspective;
     } else {
-	osp->mainviewer->getCamera()->setProjectionMatrixAsOrtho(-mp[MSA], mp[MSA], -mp[MSA], mp[MSA], 0.0, 2.0);
+	osg::Matrix osg_mp(
+		mp[0], mp[1], mp[2], mp[3],
+		mp[4], mp[5], mp[6], mp[7],
+		mp[8], mp[9], mp[10], mp[11],
+		mp[12], mp[13], mp[14], mp[15]);
+
+	osg_mp.invert(osg_mp);
+	osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
 	osp->prev_pflag = dmp->dm_perspective;
     }
 }
