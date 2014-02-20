@@ -237,9 +237,12 @@ dm_osgInit(struct dm *dmp)
     //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
 
+    osp->osg_root = new osg::Group();
+    osp->mainviewer->setSceneData(osp->osg_root);
+
     /* Until we have the ability to populate using .g information, do this for testing */
-    osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
-    osp->mainviewer->setSceneData(scene.get());
+    //osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
+    //osp->mainviewer->setSceneData(scene.get());
 
     /* Make sure the initial frame is rendered */
     osp->mainviewer->frame();
@@ -726,17 +729,104 @@ HIDDEN int
 osg_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *UNUSED(vp))
 {
     if (dmp->dm_debugLevel)
-	bu_log("osg_drawVList()\n");
+	bu_log("osg_drawVListHiddenLine()\n");
 
     return TCL_OK;
 }
 
 
 HIDDEN int
-osg_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
+osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    register struct bn_vlist *tvp;
+    register int first;
+    int begin;
+    int nverts;
+
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawVList()\n");
+
+    // create the osg containers to hold our data.
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
+    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
+
+    //TODO - set line color
+    osg::Vec4Array* line_color = new osg::Vec4Array;
+    line_color->push_back(osg::Vec4(osp->wireColor[0], osp->wireColor[1], osp->wireColor[2], osp->wireColor[3]));
+    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
+
+    // Set wireframe state
+    osg::StateSet *geom_state = geom->getOrCreateStateSet();
+    osg::PolygonMode *geom_polymode = dynamic_cast< osg::PolygonMode* >(geom_state->getAttribute(osg::StateAttribute::POLYGONMODE));
+    if (!geom_polymode) {
+	geom_polymode = new osg::PolygonMode;
+	geom_state->setAttribute(geom_polymode);
+    }
+    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    osg::Material* material = new osg::Material;
+    geom_state->setAttributeAndModes(material,osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
+    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    begin = 0;
+    nverts = 0;
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, start line */
+		    if (first == 0) {
+			geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+
+		    } else
+			first = 0;
+
+		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+		    begin += nverts;
+		    nverts = 1;
+		    break;
+		case BN_VLIST_POLY_START:
+		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    begin += nverts;
+		    nverts = 0;
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    ++nverts;
+		    break;
+		case BN_VLIST_POLY_END:
+		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    break;
+	    }
+	}
+    }
+
+    if (first == 0) {
+	geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+    }
+
+    geom->setVertexArray(vertices);
+    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
+    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
+
+    geom->setUseDisplayList(true);
+    geode->addDrawable(geom);
+
+    osp->osg_root->addChild(geode);
 
     return TCL_OK;
 }
@@ -745,6 +835,9 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 HIDDEN int
 osg_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
+    if (dmp->dm_debugLevel)
+	bu_log("osg_draw()\n");
+
     if (!callback_function) {
 	if (data) {
 	    osg_drawVList(dmp, (struct bn_vlist *)data);
@@ -871,14 +964,22 @@ osg_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-osg_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
+osg_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t transparency)
 {
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars; 
+
     if (dmp->dm_debugLevel)
 	bu_log("osg_setFGColor()\n");
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
     dmp->dm_fg[2] = b;
+
+    /* wireColor gets the full rgb */
+    osp->wireColor[0] = r / 255.0;
+    osp->wireColor[1] = g / 255.0;
+    osp->wireColor[2] = b / 255.0;
+    osp->wireColor[3] = transparency;
 
     return TCL_OK;
 }

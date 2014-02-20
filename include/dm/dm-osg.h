@@ -39,6 +39,8 @@
 
 #include <osg/CoordinateSystemNode>
 
+#include <osg/Material>
+
 #include <osg/Switch>
 
 #include <osgText/Font>
@@ -61,6 +63,9 @@
 #include <osg/TexGen>
 #include <osg/Texture2D>
 #include <osgViewer/api/X11/GraphicsWindowX11>
+#if defined(DM_WIN32)
+#  include <osgViewer/api/Win32/GraphicsWindowWin32>
+#endif
 #include <osg/MatrixTransform>
 #include <osg/ShapeDrawable>
 #endif
@@ -94,6 +99,7 @@ struct osg_vars {
     double near;
     double far;
     int prev_pflag;
+    float wireColor[4];
 
     GLdouble faceplate_mat[16];
     int face_flag;
@@ -109,6 +115,7 @@ struct osg_vars {
     struct modifiable_osg_vars mvars;
     osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
     osg::ref_ptr<osgViewer::Viewer>  mainviewer;
+    osg::ref_ptr<osg::Group>  osg_root;
 #endif
 };
 
