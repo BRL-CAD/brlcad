@@ -244,6 +244,11 @@ dm_osgInit(struct dm *dmp)
     //osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
     //osp->mainviewer->setSceneData(scene.get());
 
+    /* Provide a timer */
+    osp->timer = new osg::Timer();
+    osp->last_local_draw_time = 0.0;
+    osp->cumulative_draw_time = 0.0;
+
     /* Make sure the initial frame is rendered */
     osp->mainviewer->frame();
 
@@ -639,6 +644,12 @@ osg_drawBegin(struct dm *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawBegin()\n");
 
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
+    if (!osp->init) {
+	osp->timer->setStartTick();
+    }
+
     return TCL_OK;
 }
 
@@ -752,7 +763,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
      * we update a frame. Even with this, fps is less than
      * half that of a raw ogl display list view */
     /*
-    if (osp->init >= 8121) return TCL_OK;
+    if (osp->init >= 29321) return TCL_OK;
     osp->init++;
     */
 
@@ -835,6 +846,22 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
     geode->addDrawable(geom);
 
     osp->osg_root->addChild(geode);
+
+    /* Nifty trick - incremental updating of the view.  It does add
+     * time to the overall drawing process, so it should be a dm
+     * option. */
+#if 0
+    if (osp->timer->time_m() > (50 + 2 * osp->last_local_draw_time)) {
+	osg::Timer localtimer;
+	localtimer.setStartTick();
+	osp->mainviewer->frame();
+	osp->last_local_draw_time = localtimer.time_m();
+	osp->cumulative_draw_time += osp->last_local_draw_time;
+	//bu_log("draw time: %f\n", osp->last_local_draw_time / 1000);
+	//bu_log("cumulative draw time: %f\n", osp->cumulative_draw_time/ 1000);
+	osp->timer->setStartTick();
+    }
+#endif
 
     return TCL_OK;
 }

@@ -59,6 +59,7 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/CompositeViewer>
 
+#include <osg/Timer>
 
 #include <osg/TexGen>
 #include <osg/Texture2D>
@@ -100,6 +101,8 @@ struct osg_vars {
     double far;
     int prev_pflag;
     int init;
+    double last_local_draw_time;
+    double cumulative_draw_time;
     float wireColor[4];
 
     GLdouble faceplate_mat[16];
@@ -109,15 +112,16 @@ struct osg_vars {
     int ovec;		/* Old color map entry number */
     char is_direct;
     GLclampf r, g, b;
+    struct modifiable_osg_vars mvars;
 #if defined(DM_WIN32)
     HGLRC glxc; /* Need to figure out what OSG needs on Win32 */
 #endif
 #ifdef __cplusplus
-    struct modifiable_osg_vars mvars;
     osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
     osg::ref_ptr<osgViewer::Viewer>  mainviewer;
     osg::ref_ptr<osg::Group> osg_root;
     osg::ref_ptr<osg::Geode> geode;
+    osg::Timer *timer;
 #endif
 };
 
