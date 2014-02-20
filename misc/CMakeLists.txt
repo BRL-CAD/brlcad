@@ -72,9 +72,12 @@ set(misc_ignore_files
   CMake
   Description.txt
   doxygen/Doxyfile.in
+  doxygen/doxygen_intro.h
+  doxygen/doxygen_structure_libbu.h
+  doxygen/doxygen_structure_libbn.h
+  doxygen/doxygen_structure
   doxygen/DoxyfileLibs.in
   doxygen/DoxyfileLibs-defaults.in
-  doxygen/doxygen_structure
   doxygen/doxygen_structure_libs.txt
   Makefile.defs
   archlinux
