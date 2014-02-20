@@ -77,7 +77,7 @@
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /** STRING FOR USE WITH GETOPT(3) */
-#define OPT_STRING      "A:bB:Ee:f:h:LMO:su:vx:X:?"
+#define OPT_STRING      "A:bB:Ee:f:H:LMO:su:vx:X:h?"
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
