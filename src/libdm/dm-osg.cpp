@@ -753,19 +753,16 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
     osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
     osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
 
-    //TODO - set line color
+    // Set line color
     osg::Vec4Array* line_color = new osg::Vec4Array;
     line_color->push_back(osg::Vec4(osp->wireColor[0], osp->wireColor[1], osp->wireColor[2], osp->wireColor[3]));
     geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
 
     // Set wireframe state
     osg::StateSet *geom_state = geom->getOrCreateStateSet();
-    osg::PolygonMode *geom_polymode = dynamic_cast< osg::PolygonMode* >(geom_state->getAttribute(osg::StateAttribute::POLYGONMODE));
-    if (!geom_polymode) {
-	geom_polymode = new osg::PolygonMode;
-	geom_state->setAttribute(geom_polymode);
-    }
+    osg::PolygonMode *geom_polymode = new osg::PolygonMode;
     geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geom_state->setAttributeAndModes(geom_polymode);
     geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
 
     /* Viewing region is from -1.0 to +1.0 */
