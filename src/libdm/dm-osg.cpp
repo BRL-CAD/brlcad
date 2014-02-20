@@ -308,6 +308,20 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 {
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
+#if 0
+
+    /* This gets some very basic notion of rotation working, but that's about it... */
+    osg::Matrix osg_mp(
+	    mp[0], mp[1], mp[2], mp[3],
+	    mp[4], mp[5], mp[6], mp[7],
+	    mp[8], mp[9], mp[10], mp[11],
+	    mp[12], mp[13], mp[14], mp[15]);
+
+    osg_mp.invert(osg_mp);
+    osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
+
+#endif
+
     assert(dmp);
 
     if (dmp->dm_perspective == 0) {
@@ -763,7 +777,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
      * we update a frame. Even with this, fps is less than
      * half that of a raw ogl display list view */
     /*
-    if (osp->init >= 29321) return TCL_OK;
+    if (osp->init >= 8121) return TCL_OK;
     osp->init++;
     */
 
