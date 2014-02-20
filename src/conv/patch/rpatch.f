@@ -8,7 +8,7 @@ c     and provide a clean exit from this processing loop.
       program miniconv
 
       real x,y,z,hold,work
-c     haracter minus*1
+      character minus*1
 
       integer ity,ity1,ico, isq(8), m, n, k, cc, tmp
 
@@ -57,6 +57,6 @@ c     Read next element code line
 
  100  format(f8.3,f8.3,f9.3,i6,i4,i11,7i4,2i3)
  101  format(f8.3,' ',f8.3,' ',f9.3,' ',a1,' ',i2,' ',i2,' ',i1,' ',
- 1    i4,' ',i11,' ',7i5,' ',i3,' ',i3)
+     1    i4,' ',i11,' ',7i5,' ',i3,' ',i3)
  200  format(f7.4,f7.4)
       end
