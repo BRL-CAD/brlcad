@@ -101,6 +101,8 @@ struct osg_vars {
     double far;
     int prev_pflag;
     int init;
+    int initial_draw;
+    int nverts;
     double last_local_draw_time;
     double cumulative_draw_time;
     float wireColor[4];

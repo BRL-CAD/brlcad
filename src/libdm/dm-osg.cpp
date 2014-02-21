@@ -233,7 +233,8 @@ dm_osgInit(struct dm *dmp)
 
     osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
     osp->mainviewer->getCamera()->setAllowEventFocus(false);
-    osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,traits->width,0,traits->height));
+    //osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
     //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
 
@@ -248,6 +249,9 @@ dm_osgInit(struct dm *dmp)
     osp->timer = new osg::Timer();
     osp->last_local_draw_time = 0.0;
     osp->cumulative_draw_time = 0.0;
+
+    osp->initial_draw = 1;
+    osp->nverts = 0;
 
     /* Make sure the initial frame is rendered */
     osp->mainviewer->frame();
@@ -327,9 +331,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     std::cout << "scale[" << in_scale.x() << "," << in_scale.y() << "," << in_scale.z() << "]\n";
     std::cout << "so[" << in_so.x() << "," << in_so.y() << "," << in_so.z() << "," << in_so.w() << "]\n";
 
-
-
-
+    
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
     osg::Quat rot;
@@ -338,23 +340,21 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     mat_t brl_invrot;
     mat_t brl_center;
 
-
-
     // Set the view rotation
     quat_mat2quat(quat, mp);
     rot.set(quat[X], quat[Y], quat[Z], quat[W]);
     tbmp->setRotation(rot);
 
-    // Set the view center by first extracting the
-    // view center from mp by backing out the rotation.
+    // TODO - this is different than the center being
+    // calculated by osg from the bounding sphere... 
     quat_quat2mat(brl_rot, quat);
     bn_mat_inv(brl_invrot, brl_rot);
     bn_mat_mul(brl_center, brl_invrot, mp);
     center.set(-brl_center[MDX]/2, -brl_center[MDY]/2, -brl_center[MDZ]/2);
     tbmp->setCenter(center);
 
-    tbmp->setDistance(2*mp[MSA]);
-
+    // TODO - Rather than direct matrix manipulation, can I stash the
+    // "higher level" user inputs in variables and use them directly?
 
     osg::Matrixd tbmp_mat = tbmp->getMatrix();
     osg::Vec3f trans;
@@ -369,7 +369,9 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     std::cout << "so[" << so.x() << "," << so.y() << "," << so.z() << "," << so.w() << "]\n";
 
     if (osp->prev_pflag != dmp->dm_perspective) {
-	osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+	// How and what do I provide for the correct "Ortho" view?  we're still perspective at this point...
+	//std::cout << osp->left << "," << osp->right<< "," << osp->top<< "," << osp->bottom<< "," << osp->near<< "," << osp->far << "\n";
+	//osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
     }
 
     osp->prev_pflag = dmp->dm_perspective;
@@ -678,6 +680,27 @@ osg_drawEnd(struct dm *dmp)
 	bu_log("osg_drawEnd()\n");
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
+    if (osp->initial_draw) {
+	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
+	double radius = sph.radius();
+	double wfactor = 1.0;
+	double hfactor = 1.0;
+	if (dmp->dm_width > dmp->dm_height) {
+	    hfactor = dmp->dm_height/dmp->dm_width;
+	}
+	if (dmp->dm_height > dmp->dm_width) {
+	    wfactor = dmp->dm_width/dmp->dm_height;
+	}
+	osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(wfactor * -radius,wfactor * radius, hfactor * -radius, hfactor * radius));
+	osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+	tbmp->setCenter(sph.center());
+	tbmp->setDistance(sph.radius());
+	if (osp->nverts > 0)
+	    osp->initial_draw = 0;
+	bu_log("initial!\n");
+    }
+
     osp->mainviewer->frame();
 
     return TCL_OK;
@@ -828,11 +851,13 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
 		    begin += nverts;
+		    osp->nverts++;
 		    nverts = 1;
 		    break;
 		case BN_VLIST_POLY_START:
 		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    begin += nverts;
+		    osp->nverts++;
 		    nverts = 0;
 		    break;
 		case BN_VLIST_LINE_DRAW:
@@ -840,6 +865,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    ++nverts;
+		    osp->nverts++;
 		    break;
 		case BN_VLIST_POLY_END:
 		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
