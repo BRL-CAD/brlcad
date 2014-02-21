@@ -187,6 +187,10 @@ osg_setBGColor(struct dm *dmp, unsigned char UNUSED(r), unsigned char UNUSED(g),
     if (dmp->dm_debugLevel)
 	bu_log("osg_setBGColor()\n");
 
+    //TODO - use r, g and b to set OSG background.  Deliberately not doing it for now
+    //so the visual uses the "standard" OSG background color as a tell that we've really
+    //switched to using it.
+
     return TCL_OK;
 }
 
@@ -198,24 +202,23 @@ osg_reshape(struct dm *dmp, int width, int height)
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel) {
 	bu_log("osg_reshape()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
+    // TODO - clear bg color ala glClearColor + glClear
 
     osg::Matrixf orthom;
     orthom.makeIdentity();
     orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,dmp->dm_width,0,dmp->dm_height));
-    osp->mainviewer->getCamera()->setViewMatrix(orthom);
-    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 
     osp->mainviewer->frame();
-
 }
 
 
