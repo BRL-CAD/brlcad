@@ -54,13 +54,6 @@
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-__BEGIN_DECLS
-void dm_osgInit(struct dm *dmp);
-void dm_osgReshape(struct dm *dmp);
-void dm_osgPaint(struct dm *dmp);
-void dm_osgLoadMatrix(struct dm *dmp, matp_t mp);
-__END_DECLS
-
 extern "C" {
     struct dm *osg_open(Tcl_Interp *interp, int argc, char **argv);
 }
@@ -181,170 +174,6 @@ static double ylim_view = 1.0;
 static float wireColor[4];
 
 void
-dm_osgInit(struct dm *dmp)
-{
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-    Window win;
-
-    assert(dmp);
-
-    //create our graphics context directly so we can pass our own window
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-
-    // Init the Windata Variable that holds the handle for the Window to display OSG in.
-    // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
-    // something showing how to handle Cocoa for the Mac, if that's possible
-#if defined(DM_OSG)  /* Will eventually change to DM_X11 */
-    win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(win);
-#elif defined(DM_WIN32)
-    /* win = ? OSG needs HWND for win... */
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
-#endif
-
-    // Setup the traits parameters
-    traits->x = 0;
-    traits->y = 0;
-    traits->width = dmp->dm_width;
-    traits->height = dmp->dm_height;
-    traits->depth = 24;
-    traits->windowDecoration = false;
-    traits->doubleBuffer = true;
-    traits->sharedContext = 0;
-    traits->setInheritedWindowPixelFormat = true;
-
-    traits->inheritedWindowData = windata;
-
-    // Create the Composite viewer
-    osp->viewer = new osgViewer::CompositeViewer();
-
-    // Create the 3D view
-    osp->mainviewer = new osgViewer::Viewer();
-    osp->viewer->addView(osp->mainviewer);
-
-    // Create the Graphics Context
-    osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
-
-    if (graphicsContext) {
-	osp->mainviewer->getCamera()->setGraphicsContext(graphicsContext);
-	osp->mainviewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
-	//osp->mainviewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
-    }
-
-    osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
-    osp->mainviewer->getCamera()->setAllowEventFocus(false);
-    osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,traits->width,0,traits->height));
-    osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
-    //osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
-    //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
-    osp->prev_pflag = dmp->dm_perspective;
-
-    osp->osg_root = new osg::Group();
-    osp->mainviewer->setSceneData(osp->osg_root);
-
-    /* Until we have the ability to populate using .g information, do this for testing */
-    //osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
-    //osp->mainviewer->setSceneData(scene.get());
-
-    /* Provide a timer */
-    osp->timer = new osg::Timer();
-    osp->last_local_draw_time = 0.0;
-    osp->cumulative_draw_time = 0.0;
-
-    osp->initial_draw = 1;
-    osp->nverts = 0;
-
-    /* Make sure the initial frame is rendered */
-    osp->mainviewer->frame();
-
-    /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "halt"
-     * a multithreaded render using a scene graph with STATIC data per setDataVariance.
-     * Most of the time data in BRL-CAD graphics will be static, with the exception
-     * being an edit operation.  What I'm wondering is if it is possible to create an all STATIC
-     * tree, and when an edit operation is requested halt all rendering, remove the static
-     * version of the object and replace it with a dynamic one, and start over with the updated
-     * tree.  It would be a shame if we had to declare all objects in a model DYNAMIC when most
-     * of them won't be most of the time. */
-    osp->mainviewer->stopThreading();
-    /* Step 2: update nodes based on what we'll be editing */
-    osp->mainviewer->startThreading();
-
-    bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
-
-    bu_log("dm_osgInit: leave\n");
-}
-
-
-void
-dm_osgReshape(struct dm *dmp)
-{
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-
-    bu_log("dm_osgReshape: enter\n");
-    assert(dmp);
-
-    osg::Matrixf orthom;
-    orthom.makeIdentity();
-    orthom.makeOrtho(-1.0, 1.0, -1.0, 1.0, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,dmp->dm_width,0,dmp->dm_height));
-    osp->mainviewer->getCamera()->setViewMatrix(orthom);
-    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
-
-    osp->mainviewer->frame();
-
-    bu_log("dm_osgReshape: leave\n");
-}
-
-
-void
-dm_osgPaint(struct dm *dmp)
-{
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-
-    assert(dmp);
-
-    if (dmp->dm_perspective == 0)
-	return;
-
-    osp->mainviewer->frame();
-}
-
-
-void
-dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
-{
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-
-    assert(dmp);
-    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
-    quat_t quat;
-    osg::Quat rot;
-    osg::Vec3d center;
-    mat_t brl_rot;
-    mat_t brl_invrot;
-    mat_t brl_center;
-
-    // Set the view rotation
-    quat_mat2quat(quat, mp);
-    rot.set(quat[X], quat[Y], quat[Z], quat[W]);
-
-    // Find the view center 
-    quat_quat2mat(brl_rot, quat);
-    bn_mat_inv(brl_invrot, brl_rot);
-    bn_mat_mul(brl_center, brl_invrot, mp);
-    center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
-
-
-    // The order is important - first the rotation, then the center.
-    tbmp->setRotation(rot);
-    tbmp->setCenter(center);
-}
-
-
-
-
-void
 osg_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
@@ -365,6 +194,7 @@ osg_setBGColor(struct dm *dmp, unsigned char UNUSED(r), unsigned char UNUSED(g),
 HIDDEN void
 osg_reshape(struct dm *dmp, int width, int height)
 {
+    assert(dmp);
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -374,7 +204,18 @@ osg_reshape(struct dm *dmp, int width, int height)
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
-    dm_osgReshape(dmp);
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
+
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,dmp->dm_width,0,dmp->dm_height));
+    osp->mainviewer->getCamera()->setViewMatrix(orthom);
+    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+    osp->mainviewer->frame();
+
 }
 
 
@@ -389,9 +230,8 @@ osg_makeCurrent(struct dm *dmp)
 
 
 HIDDEN int
-osg_configureWin(struct dm *dmp, int UNUSED(force))
+osg_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
 {
-    dm_osgReshape(dmp);
     return TCL_OK;
 }
 
@@ -605,7 +445,95 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
 
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-    dm_osgInit(dmp);
+
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    Window win;
+
+    assert(dmp);
+
+    //create our graphics context directly so we can pass our own window
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+
+    // Init the Windata Variable that holds the handle for the Window to display OSG in.
+    // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
+    // something showing how to handle Cocoa for the Mac, if that's possible
+#if defined(DM_OSG)  /* Will eventually change to DM_X11 */
+    win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(win);
+#elif defined(DM_WIN32)
+    /* win = ? OSG needs HWND for win... */
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
+#endif
+
+    // Setup the traits parameters
+    traits->x = 0;
+    traits->y = 0;
+    traits->width = dmp->dm_width;
+    traits->height = dmp->dm_height;
+    traits->depth = 24;
+    traits->windowDecoration = false;
+    traits->doubleBuffer = true;
+    traits->sharedContext = 0;
+    traits->setInheritedWindowPixelFormat = true;
+
+    traits->inheritedWindowData = windata;
+
+    // Create the Composite viewer
+    osp->viewer = new osgViewer::CompositeViewer();
+
+    // Create the 3D view
+    osp->mainviewer = new osgViewer::Viewer();
+    osp->viewer->addView(osp->mainviewer);
+
+    // Create the Graphics Context
+    osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
+
+    if (graphicsContext) {
+	osp->mainviewer->getCamera()->setGraphicsContext(graphicsContext);
+	osp->mainviewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
+	//osp->mainviewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+    }
+
+    osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
+    osp->mainviewer->getCamera()->setAllowEventFocus(false);
+    osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,traits->width,0,traits->height));
+    osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
+    //osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
+    //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
+    osp->prev_pflag = dmp->dm_perspective;
+
+    osp->osg_root = new osg::Group();
+    osp->mainviewer->setSceneData(osp->osg_root);
+
+    /* Until we have the ability to populate using .g information, do this for testing */
+    //osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
+    //osp->mainviewer->setSceneData(scene.get());
+
+    /* Provide a timer */
+    osp->timer = new osg::Timer();
+    osp->last_local_draw_time = 0.0;
+    osp->cumulative_draw_time = 0.0;
+
+    osp->initial_draw = 1;
+    osp->nverts = 0;
+
+    /* Make sure the initial frame is rendered */
+    osp->mainviewer->frame();
+
+    /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "halt"
+     * a multithreaded render using a scene graph with STATIC data per setDataVariance.
+     * Most of the time data in BRL-CAD graphics will be static, with the exception
+     * being an edit operation.  What I'm wondering is if it is possible to create an all STATIC
+     * tree, and when an edit operation is requested halt all rendering, remove the static
+     * version of the object and replace it with a dynamic one, and start over with the updated
+     * tree.  It would be a shame if we had to declare all objects in a model DYNAMIC when most
+     * of them won't be most of the time. */
+    osp->mainviewer->stopThreading();
+    /* Step 2: update nodes based on what we'll be editing */
+    osp->mainviewer->startThreading();
+
+    bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
     return dmp;
 }
@@ -679,7 +607,31 @@ osg_drawEnd(struct dm *dmp)
 HIDDEN int
 osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
-    dm_osgLoadMatrix(dmp, (matp_t)mat);
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
+    assert(dmp);
+    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+    quat_t quat;
+    osg::Quat rot;
+    osg::Vec3d center;
+    mat_t brl_rot;
+    mat_t brl_invrot;
+    mat_t brl_center;
+
+    // Set the view rotation
+    quat_mat2quat(quat, mat);
+    rot.set(quat[X], quat[Y], quat[Z], quat[W]);
+
+    // Find the view center
+    quat_quat2mat(brl_rot, quat);
+    bn_mat_inv(brl_invrot, brl_rot);
+    bn_mat_mul(brl_center, brl_invrot, mat);
+    center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
+
+
+    // The order is important - first the rotation, then the center.
+    tbmp->setRotation(rot);
+    tbmp->setCenter(center);
 
     return TCL_OK;
 }
