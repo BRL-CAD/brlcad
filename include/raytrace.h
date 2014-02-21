@@ -427,7 +427,8 @@ struct bound_rpp {
 
 /**
  * Internal information used to keep track of solids in the model.
- * Leaf name and Xform matrix are unique identifier.
+ * Leaf name and Xform matrix are unique identifier.  Note that all
+ * objects store dimensional values in millimeters (mm).
  */
 struct soltab {
     struct bu_list		l;		/**< @brief links, headed by rti_headsolid */
@@ -789,6 +790,15 @@ struct mem_map {
  * opening related files (such as data files for EBM solids or
  * texture-maps).  The array and strings are all dynamically
  * allocated.
+ *
+ * Note that the current working units are specified as a conversion
+ * factor to/from millimeters (they are the 'base' in local2base and
+ * base2local) because database dimensional values are always stored
+ * as millimeters (mm).  The units conversion factor only affects the
+ * display and conversion of input values.  This helps prevent error
+ * accumulation and improves numerical stability when calculations are
+ * made.
+ *
  */
 struct db_i {
     uint32_t dbi_magic;		/**< @brief magic number */
@@ -4426,7 +4436,15 @@ RT_EXPORT extern int db_update_ident(struct db_i *dbip,
  * First, a database header object.
  *
  * Second, create a specially named attribute-only object which
- * contains the attributes "title=" and "units=".
+ * contains the attributes "title=" and "units=" with the values of
+ * title and local2mm respectively.
+ *
+ * Note that the current working units are specified as a conversion
+ * factor to millimeters because database dimensional values are
+ * always stored as millimeters (mm).  The units conversion factor
+ * only affects the display and conversion of input values.  This
+ * helps prevent error accumulation and improves numerical stability
+ * when calculations are made.
  *
  * This routine should only be used by db_create().  Everyone else
  * should use db5_update_ident().
