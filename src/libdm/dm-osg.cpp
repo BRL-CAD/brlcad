@@ -282,10 +282,12 @@ dm_osgReshape(struct dm *dmp)
     bu_log("dm_osgReshape: enter\n");
     assert(dmp);
 
-    //osp->viewer->getCamera()->setViewport(new osg::Viewport(0, 0, dmp->dm_width, dmp->dm_height));
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-1.0, 1.0, -1.0, 1.0, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
-    osp->mainviewer->getEventQueue()->windowResize(0, 0, dmp->dm_width, dmp->dm_height);
-    osp->mainviewer->getCamera()->getGraphicsContext()->resized(0, 0, dmp->dm_width, dmp->dm_height);
 
     osp->mainviewer->frame();
 
@@ -313,25 +315,6 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     assert(dmp);
-
-    osg::Matrix osg_mp(
-	    mp[0], mp[1], mp[2], mp[3],
-	    mp[4], mp[5], mp[6], mp[7],
-	    mp[8], mp[9], mp[10], mp[11],
-	    mp[12], mp[13], mp[14], mp[15]);
-    //osg_mp.invert(osg_mp);
-    osg::Vec3f in_trans;
-    osg::Quat in_rotation;
-    osg::Vec3f in_scale;
-    osg::Quat in_so;
-    osg_mp.decompose(in_trans, in_rotation, in_scale, in_so);
-    std::cout << "matp:\n";
-    std::cout << "translate[" << in_trans.x() << "," << in_trans.y() << "," << in_trans.z() << "]\n";
-    std::cout << "rotate[" << in_rotation.x() << "," << in_rotation.y() << "," << in_rotation.z() << "," << in_rotation.w() << "]\n";
-    std::cout << "scale[" << in_scale.x() << "," << in_scale.y() << "," << in_scale.z() << "]\n";
-    std::cout << "so[" << in_so.x() << "," << in_so.y() << "," << in_so.z() << "," << in_so.w() << "]\n";
-
-    
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
     osg::Quat rot;
@@ -343,38 +326,17 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     // Set the view rotation
     quat_mat2quat(quat, mp);
     rot.set(quat[X], quat[Y], quat[Z], quat[W]);
-    tbmp->setRotation(rot);
 
-    // TODO - this is different than the center being
-    // calculated by osg from the bounding sphere... 
+    // Find the view center 
     quat_quat2mat(brl_rot, quat);
     bn_mat_inv(brl_invrot, brl_rot);
     bn_mat_mul(brl_center, brl_invrot, mp);
-    center.set(-brl_center[MDX]/2, -brl_center[MDY]/2, -brl_center[MDZ]/2);
+    center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
+
+
+    // The order is important - first the rotation, then the center.
+    tbmp->setRotation(rot);
     tbmp->setCenter(center);
-
-    // TODO - Rather than direct matrix manipulation, can I stash the
-    // "higher level" user inputs in variables and use them directly?
-
-    osg::Matrixd tbmp_mat = tbmp->getMatrix();
-    osg::Vec3f trans;
-    osg::Quat rotation;
-    osg::Vec3f scale;
-    osg::Quat so;
-    tbmp_mat.decompose(trans, rotation, scale, so);
-    std::cout << "tbmp:\n";
-    std::cout << "translate[" << trans.x() << "," << trans.y() << "," << trans.z() << "]\n";
-    std::cout << "rotate[" << rotation.x() << "," << rotation.y() << "," << rotation.z() << "," << rotation.w() << "]\n";
-    std::cout << "scale[" << scale.x() << "," << scale.y() << "," << scale.z() << "]\n";
-    std::cout << "so[" << so.x() << "," << so.y() << "," << so.z() << "," << so.w() << "]\n";
-
-    if (osp->prev_pflag != dmp->dm_perspective) {
-	// How and what do I provide for the correct "Ortho" view?  we're still perspective at this point...
-	//std::cout << osp->left << "," << osp->right<< "," << osp->top<< "," << osp->bottom<< "," << osp->near<< "," << osp->far << "\n";
-	//osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
-    }
-
-    osp->prev_pflag = dmp->dm_perspective;
 }
 
 
@@ -695,6 +657,7 @@ osg_drawEnd(struct dm *dmp)
 	osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(wfactor * -radius,wfactor * radius, hfactor * -radius, hfactor * radius));
 	osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
 	tbmp->setCenter(sph.center());
+	bu_log("initial center: %f, %f, %f\n", sph.center().x(), sph.center().y(), sph.center().z());
 	tbmp->setDistance(sph.radius());
 	if (osp->nverts > 0)
 	    osp->initial_draw = 0;
@@ -1093,10 +1056,25 @@ osg_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-osg_setWinBounds(struct dm *dmp, fastf_t *UNUSED(w))
+osg_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osg_setWinBounds()\n");
+
+    dmp->dm_clipmin[0] = w[0];
+    dmp->dm_clipmin[1] = w[2];
+    dmp->dm_clipmin[2] = w[4];
+    dmp->dm_clipmax[0] = w[1];
+    dmp->dm_clipmax[1] = w[3];
+    dmp->dm_clipmax[2] = w[5];
+
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-1.0, 1.0, -1.0, 1.0, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
     return TCL_OK;
 }
 

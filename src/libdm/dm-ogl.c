@@ -1905,8 +1905,8 @@ ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 HIDDEN int
 ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("ogl_setFGColor()\n");
+    /*if (dmp->dm_debugLevel)
+	bu_log("ogl_setFGColor()\n");*/
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
@@ -1965,8 +1965,8 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 HIDDEN int
 ogl_setLineAttr(struct dm *dmp, int width, int style)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("ogl_setLineAttr()\n");
+    /*if (dmp->dm_debugLevel)
+	bu_log("ogl_setLineAttr()\n");*/
 
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
