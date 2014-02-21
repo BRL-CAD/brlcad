@@ -233,7 +233,9 @@ dm_osgInit(struct dm *dmp)
 
     osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
     osp->mainviewer->getCamera()->setAllowEventFocus(false);
+    osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,traits->width,0,traits->height));
+    osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
     //osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
     //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
     osp->prev_pflag = dmp->dm_perspective;
@@ -285,9 +287,9 @@ dm_osgReshape(struct dm *dmp)
     osg::Matrixf orthom;
     orthom.makeIdentity();
     orthom.makeOrtho(-1.0, 1.0, -1.0, 1.0, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,dmp->dm_width,0,dmp->dm_height));
+    osp->mainviewer->getCamera()->setViewMatrix(orthom);
     osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
-
 
     osp->mainviewer->frame();
 
@@ -690,6 +692,9 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 HIDDEN int
 osg_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
+    bu_log("osg_loadPMatrix()\n");
+
+
     fastf_t *mptr;
     GLfloat gtmat[16];
 
