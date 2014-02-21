@@ -1018,7 +1018,7 @@ osg_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 HIDDEN int
 osg_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t transparency)
 {
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars; 
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("osg_setFGColor()\n");
