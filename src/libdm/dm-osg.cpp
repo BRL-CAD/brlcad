@@ -235,6 +235,18 @@ osg_makeCurrent(struct dm *dmp)
 HIDDEN int
 osg_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
 {
+#if 0
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    int width = WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+    int height = HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+
+    if (!force &&
+	    dmp->dm_height == height &&
+	    dmp->dm_width == width)
+	return TCL_OK;
+
+    osg_reshape(dmp, width, height);
+#endif
     return TCL_OK;
 }
 
@@ -245,6 +257,8 @@ osg_setLight(struct dm *dmp, int UNUSED(lighting_on))
     if (dmp->dm_debugLevel)
 	bu_log("osg_setLight()\n");
 
+    // TODO - do we ever NOT want lighting?
+
     return TCL_OK;
 }
 
@@ -254,8 +268,28 @@ osg_setLight(struct dm *dmp, int UNUSED(lighting_on))
 HIDDEN int
 osg_close(struct dm *dmp)
 {
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
     if (dmp->dm_debugLevel)
 	bu_log("osg_close()\n");
+
+    delete osp->timer;
+    osp->mainviewer->stopThreading();
+    osp->viewer->removeView(osp->mainviewer);
+    osp->viewer->stopThreading();
+    delete osp->mainviewer;
+    delete osp->viewer;
+
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
+	Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+
+
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free(dmp->dm_vars.priv_vars, "osg_close: osg_vars");
+    bu_free(dmp->dm_vars.pub_vars, "osg_close: dm_xvars");
+    bu_free(dmp, "osg_close: dmp");
 
     return TCL_OK;
 }
