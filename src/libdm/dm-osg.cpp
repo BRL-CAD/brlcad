@@ -310,14 +310,35 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
     assert(dmp);
 
+    osg::Matrix osg_mp(
+	    mp[0], mp[1], mp[2], mp[3],
+	    mp[4], mp[5], mp[6], mp[7],
+	    mp[8], mp[9], mp[10], mp[11],
+	    mp[12], mp[13], mp[14], mp[15]);
+    //osg_mp.invert(osg_mp);
+    osg::Vec3f in_trans;
+    osg::Quat in_rotation;
+    osg::Vec3f in_scale;
+    osg::Quat in_so;
+    osg_mp.decompose(in_trans, in_rotation, in_scale, in_so);
+    std::cout << "matp:\n";
+    std::cout << "translate[" << in_trans.x() << "," << in_trans.y() << "," << in_trans.z() << "]\n";
+    std::cout << "rotate[" << in_rotation.x() << "," << in_rotation.y() << "," << in_rotation.z() << "," << in_rotation.w() << "]\n";
+    std::cout << "scale[" << in_scale.x() << "," << in_scale.y() << "," << in_scale.z() << "]\n";
+    std::cout << "so[" << in_so.x() << "," << in_so.y() << "," << in_so.z() << "," << in_so.w() << "]\n";
+
+
+
+
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
     quat_t quat;
     osg::Quat rot;
-    osg::Vec3d old_center;
     osg::Vec3d center;
     mat_t brl_rot;
     mat_t brl_invrot;
     mat_t brl_center;
+
+
 
     // Set the view rotation
     quat_mat2quat(quat, mp);
@@ -330,10 +351,22 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
     bn_mat_inv(brl_invrot, brl_rot);
     bn_mat_mul(brl_center, brl_invrot, mp);
     center.set(-brl_center[MDX]/2, -brl_center[MDY]/2, -brl_center[MDZ]/2);
-    old_center = tbmp->getCenter();
     tbmp->setCenter(center);
 
     tbmp->setDistance(2*mp[MSA]);
+
+
+    osg::Matrixd tbmp_mat = tbmp->getMatrix();
+    osg::Vec3f trans;
+    osg::Quat rotation;
+    osg::Vec3f scale;
+    osg::Quat so;
+    tbmp_mat.decompose(trans, rotation, scale, so);
+    std::cout << "tbmp:\n";
+    std::cout << "translate[" << trans.x() << "," << trans.y() << "," << trans.z() << "]\n";
+    std::cout << "rotate[" << rotation.x() << "," << rotation.y() << "," << rotation.z() << "," << rotation.w() << "]\n";
+    std::cout << "scale[" << scale.x() << "," << scale.y() << "," << scale.z() << "]\n";
+    std::cout << "so[" << so.x() << "," << so.y() << "," << so.z() << "," << so.w() << "]\n";
 
     if (osp->prev_pflag != dmp->dm_perspective) {
 	osp->mainviewer->getCamera()->setProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
@@ -746,10 +779,10 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
      * aren't totally rebuilding the scene graph every time
      * we update a frame. Even with this, fps is less than
      * half that of a raw ogl display list view */
-    /*
+//    /*
     if (osp->init >= 8121) return TCL_OK;
     osp->init++;
-    */
+//    */
 
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawVList()\n");
