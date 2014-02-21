@@ -416,7 +416,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (pubvars->xtkwin == NULL) {
-	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
+	bu_log("dm-osg: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)osg_close(dmp);
 	return DM_NULL;
@@ -534,18 +534,14 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
     osp->mainviewer->getCamera()->setAllowEventFocus(false);
     osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,traits->width,0,traits->height));
     osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
-    //osp->mainviewer->getCamera()->getProjectionMatrixAsFrustum(osp->left, osp->right, osp->bottom, osp->top, osp->near, osp->far);
-    //osp->mainviewer->addEventHandler(new osgViewer::StatsHandler);
-    osp->prev_pflag = dmp->dm_perspective;
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 
     osp->osg_root = new osg::Group();
     osp->mainviewer->setSceneData(osp->osg_root);
-
-    /* Until we have the ability to populate using .g information, do this for testing */
-    //osg::ref_ptr<osg::Node> scene = osgDB::readNodeFile(bu_brlcad_data("test.osg", 0));
-    //osp->mainviewer->setSceneData(scene.get());
 
     /* Provide a timer */
     osp->timer = new osg::Timer();
@@ -570,6 +566,9 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     /* Step 2: update nodes based on what we'll be editing */
     osp->mainviewer->startThreading();
 
+    // TODO - this should render the initial frame, not the above explicit ->frame() call
+    osg_configureWin(dmp, 1);
+
     bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
     return dmp;
@@ -592,6 +591,8 @@ osg_drawBegin(struct dm *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawBegin()\n");
 
+    //TODO - clear back buffer
+ 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     if (!osp->init) {
@@ -610,26 +611,9 @@ osg_drawEnd(struct dm *dmp)
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
-    if (osp->initial_draw) {
-	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
-	double radius = sph.radius();
-	double wfactor = 1.0;
-	double hfactor = 1.0;
-	if (dmp->dm_width > dmp->dm_height) {
-	    hfactor = dmp->dm_height/dmp->dm_width;
-	}
-	if (dmp->dm_height > dmp->dm_width) {
-	    wfactor = dmp->dm_width/dmp->dm_height;
-	}
-	osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(wfactor * -radius,wfactor * radius, hfactor * -radius, hfactor * radius));
-	osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
-	tbmp->setCenter(sph.center());
-	bu_log("initial center: %f, %f, %f\n", sph.center().x(), sph.center().y(), sph.center().z());
-	tbmp->setDistance(sph.radius());
-	if (osp->nverts > 0)
-	    osp->initial_draw = 0;
-	bu_log("initial!\n");
-    }
+    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+    osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
+    tbmp->setDistance(2 * sph.radius());
 
     osp->mainviewer->frame();
 
@@ -669,6 +653,18 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     // The order is important - first the rotation, then the center.
     tbmp->setRotation(rot);
     tbmp->setCenter(center);
+
+    // Handle zoom
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    const double y = mat[MSA];
+    const double x = y * (dmp->dm_width/dmp->dm_height);
+    orthom.makeOrtho(-x, x, -y, y, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+
+    // Make sure we aren't clipping away geometry
+    osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
+    tbmp->setDistance(2 * sph.radius());
 
     return TCL_OK;
 }
@@ -1065,7 +1061,7 @@ osg_setWinBounds(struct dm *dmp, fastf_t *w)
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
     osg::Matrixf orthom;
     orthom.makeIdentity();
-    orthom.makeOrtho(-1.0, 1.0, -1.0, 1.0, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
     osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
