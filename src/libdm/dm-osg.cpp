@@ -213,11 +213,12 @@ osg_reshape(struct dm *dmp, int width, int height)
 
     // TODO - clear bg color ala glClearColor + glClear
 
-    osg::Matrixf orthom;
-    orthom.makeIdentity();
-    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-
+    if (dmp->dm_perspective == 0) {
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    }
     osp->mainviewer->frame();
 }
 
@@ -533,13 +534,14 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
     osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
     osp->mainviewer->getCamera()->setAllowEventFocus(false);
-    osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
-    osg::Matrixf orthom;
-    orthom.makeIdentity();
-    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-
+    if (dmp->dm_perspective == 0) {
+	osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    }
     osp->osg_root = new osg::Group();
     osp->mainviewer->setSceneData(osp->osg_root);
 
@@ -654,16 +656,22 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     tbmp->setCenter(center);
 
     // Handle zoom
-    osg::Matrixf orthom;
-    orthom.makeIdentity();
-    const double y = mat[MSA];
-    const double x = y * (dmp->dm_width/dmp->dm_height);
-    orthom.makeOrtho(-x, x, -y, y, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    if (dmp->dm_perspective == 0) {
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	const double y = mat[MSA];
+	const double x = y * (dmp->dm_width/dmp->dm_height);
+	orthom.makeOrtho(-x, x, -y, y, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 
-    // Make sure we aren't clipping away geometry
-    osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
-    tbmp->setDistance(2 * sph.radius());
+	// Make sure we aren't clipping away geometry
+	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
+	tbmp->setDistance(2 * sph.radius());
+    } else {
+	// Not right, and may need to tweak logic elsewhere, but heading in the right
+	// direction for perspective toggle.
+	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(50, dmp->dm_width/dmp->dm_height, -100000, 100000);
+    }
 
     return TCL_OK;
 }
@@ -1057,12 +1065,15 @@ osg_setWinBounds(struct dm *dmp, fastf_t *w)
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-    osg::Matrixf orthom;
-    orthom.makeIdentity();
-    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-    osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+    if (dmp->dm_perspective == 0) {
+	struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+	osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+    }
 
     return TCL_OK;
 }
