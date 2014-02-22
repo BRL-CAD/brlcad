@@ -142,10 +142,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-	else if (density[reg->reg_gmater] >= 0) {
-	    /* precompute cell size */
-	    const fastf_t cell_volume = depth * cell_height * cell_width;
+	} else if (density[reg->reg_gmater] >= 0) {
+	    /* precompute partition size */
+	    const fastf_t partition_volume = depth * cell_height * cell_width;
 
 	    /* convert reg_los percentage to factor */
 	    const fastf_t los_factor = (fastf_t)reg->reg_los * 0.01;
@@ -153,11 +152,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	    /* density needs to be converted from g/cm^3 to g/mm^3 */
 	    const fastf_t density_factor = density[reg->reg_gmater] * 0.001;
 
-	    dp->volume = cell_volume;
+	    dp->volume = partition_volume;
 	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
 	    /* Compute mass in terms of grams */
-	    dp->weight = cell_volume * los_factor * density_factor;
+	    dp->weight = partition_volume * los_factor * density_factor;
 	}
     }
     return 1;	/* report hit to main routine */
