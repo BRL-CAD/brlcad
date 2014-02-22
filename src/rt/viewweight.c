@@ -199,7 +199,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
     register size_t i;
     char buf[BUFSIZ+1];
     char linebuf[BUFSIZ+1];
-    static char null = (char)0;
     const char *curdir = getenv("PWD");
     const char *homedir = getenv("HOME");
     int line;
@@ -223,8 +222,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
      * for which we have no density information.)
      */
     for (i = 0; i < MAXMATLS; i++) {
-	density[i]   = -1.0;
-	dens_name[i] = &null;
+	density[i] = -1.0;
+	dens_name[i] = NULL;
     }
 
 #define maxm(a, b) (a>b?a:b)
