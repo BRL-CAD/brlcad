@@ -86,7 +86,7 @@ char	*densityfile;
  */
 #define MAXMATLS	32768
 fastf_t	density[MAXMATLS];
-char	*dens_name[MAXMATLS];
+char *dens_name[MAXMATLS];
 
 struct datapoint {
     struct datapoint *next;
@@ -136,27 +136,33 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
+	/* if we don't have a valid material density to work with, use a default material */
 	if (density[reg->reg_gmater] < 0) {
 	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
 	    bu_log("  (region %s)\n", reg->reg_name);
+	    bu_log("  Mass is undefined.\n");
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	} else if (density[reg->reg_gmater] >= 0) {
+	}
+
+	{
 	    /* precompute partition size */
 	    const fastf_t partition_volume = depth * cell_height * cell_width;
 
 	    /* convert reg_los percentage to factor */
 	    const fastf_t los_factor = (fastf_t)reg->reg_los * 0.01;
 
-	    /* density needs to be converted from g/cm^3 to g/mm^3 */
-	    const fastf_t density_factor = density[reg->reg_gmater] * 0.001;
-
 	    dp->volume = partition_volume;
 	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
-	    /* Compute mass in terms of grams */
-	    dp->weight = partition_volume * los_factor * density_factor;
+	    if (density[reg->reg_gmater] >= 0) {
+		/* density needs to be converted from g/cm^3 to g/mm^3 */
+		const fastf_t density_factor = density[reg->reg_gmater] * 0.001;
+
+		/* Compute mass in terms of grams */
+		dp->weight = partition_volume * los_factor * density_factor;
+	    }
 	}
     }
     return 1;	/* report hit to main routine */
@@ -212,8 +218,12 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	    outfp = fopen(outputfile, "w");
     }
 
-    for (i = 1; i < MAXMATLS; i++) {
-	density[i]   = -1;
+    /* initialize all possibile material types to a negative value.
+     * (Do this even for density[0], which is used for material types
+     * for which we have no density information.)
+     */
+    for (i = 0; i < MAXMATLS; i++) {
+	density[i]   = -1.0;
 	dens_name[i] = &null;
     }
 
