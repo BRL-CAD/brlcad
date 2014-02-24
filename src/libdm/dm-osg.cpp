@@ -635,24 +635,25 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     assert(dmp);
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
 
-    // Set the view rotation
-    quat_t quat;
-    osg::Quat rot;
-    quat_mat2quat(quat, mat);
-    rot.set(quat[X], quat[Y], quat[Z], quat[W]);
+    osg::Matrix osg_mp(
+	    mat[0], mat[1] * dmp->dm_aspect, mat[2], mat[3],
+	    mat[4], mat[5] * dmp->dm_aspect, mat[6], mat[7],
+	    mat[8], mat[9] * dmp->dm_aspect, mat[10], mat[11],
+	    mat[12], mat[13] * dmp->dm_aspect, mat[14], mat[15]);
 
-    // Find the view center
+    // Set the view rotation
+    tbmp->setRotation(osg_mp.getRotate());
+
+    // Find and set the view center.  Note that the
+    // order is important - first the rotation, then the center.
     osg::Vec3d center;
-    mat_t brl_rot;
-    mat_t brl_invrot;
-    mat_t brl_center;
+    quat_t quat;
+    mat_t brl_rot, brl_invrot, brl_center;
+    quat_mat2quat(quat, mat);
     quat_quat2mat(brl_rot, quat);
     bn_mat_inv(brl_invrot, brl_rot);
     bn_mat_mul(brl_center, brl_invrot, mat);
     center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
-
-    // The order is important - first the rotation, then the center.
-    tbmp->setRotation(rot);
     tbmp->setCenter(center);
 
     // Handle zoom
