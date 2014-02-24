@@ -633,10 +633,10 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
 
     osg::Matrix osg_mp(
-	    mat[0], mat[1] * dmp->dm_aspect, mat[2], mat[3],
-	    mat[4], mat[5] * dmp->dm_aspect, mat[6], mat[7],
-	    mat[8], mat[9] * dmp->dm_aspect, mat[10], mat[11],
-	    mat[12], mat[13] * dmp->dm_aspect, mat[14], mat[15]);
+	    mat[0], mat[1], mat[2], mat[3],
+	    mat[4], mat[5], mat[6], mat[7],
+	    mat[8], mat[9], mat[10], mat[11],
+	    mat[12], mat[13], mat[14], mat[15]);
 
     // Set the view rotation
     tbmp->setRotation(osg_mp.getRotate());
@@ -657,11 +657,10 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     if (dmp->dm_perspective == 0) {
 	osg::Matrixf orthom;
 	orthom.makeIdentity();
-	const double y = mat[MSA];
-	const double x = y * (dmp->dm_width/dmp->dm_height);
+	double y = mat[MSA];
+	double x = y * dmp->dm_width/dmp->dm_height;
 	orthom.makeOrtho(-x, x, -y, y, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-
 	// Make sure we aren't clipping away geometry
 	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
 	tbmp->setDistance(2 * sph.radius());
