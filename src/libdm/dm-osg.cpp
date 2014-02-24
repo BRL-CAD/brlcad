@@ -206,7 +206,6 @@ osg_reshape(struct dm *dmp, int width, int height)
 
     if (dmp->dm_debugLevel) {
 	bu_log("osg_reshape()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
     osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
@@ -234,12 +233,12 @@ osg_makeCurrent(struct dm *dmp)
 
 
 HIDDEN int
-osg_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
+osg_configureWin(struct dm *dmp, int force)
 {
-#if 0
+
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    int width = WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
-    int height = HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+    int width = Tk_Width(pubvars->xtkwin);
+    int height = Tk_Height(pubvars->xtkwin);
 
     if (!force &&
 	    dmp->dm_height == height &&
@@ -247,7 +246,7 @@ osg_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
 	return TCL_OK;
 
     osg_reshape(dmp, width, height);
-#endif
+
     return TCL_OK;
 }
 
@@ -425,11 +424,11 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
 
     if (dmp->dm_width == 0) {
-	dmp->dm_width = WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	dmp->dm_width = Tk_Width(pubvars->top) - 30;
 	++make_square;
     }
     if (dmp->dm_height == 0) {
-	dmp->dm_height = HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	dmp->dm_height = Tk_Height(pubvars->top) - 30;
 	++make_square;
     }
 
@@ -570,8 +569,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
     // TODO - this should render the initial frame, not the above explicit ->frame() call
     osg_configureWin(dmp, 1);
-
-    bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
     return dmp;
 }
