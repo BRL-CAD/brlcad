@@ -594,7 +594,7 @@ osg_drawBegin(struct dm *dmp)
 	bu_log("osg_drawBegin()\n");
 
     //TODO - clear back buffer
- 
+
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     if (!osp->init) {
