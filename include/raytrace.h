@@ -8004,6 +8004,7 @@ RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
 RT_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
+/* TODO - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT extern size_t rt_bot_mintie;
