@@ -51,6 +51,10 @@
 #ifndef BU_DEFINES_H
 #define BU_DEFINES_H
 
+#include "common.h"
+#include <stddef.h>
+#include <sys/types.h>
+
 #ifndef BU_EXPORT
 #  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
 #    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."

@@ -32,6 +32,7 @@
 #include <stdio.h> /* For FILE */
 #include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
+#include <stdlib.h> /* for getenv */
 
 #include "bu/defines.h"
 #include "bu/magic.h"

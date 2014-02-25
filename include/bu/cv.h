@@ -23,6 +23,9 @@
 
 #include "common.h"
 
+#include <stddef.h> /* for size_t */
+#include <limits.h> /* for CHAR_MAX */
+
 #include "bu/defines.h"
 
 /*----------------------------------------------------------------------*/

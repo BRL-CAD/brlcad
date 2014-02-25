@@ -52,36 +52,10 @@
 #ifndef BU_H
 #define BU_H
 
-#include "common.h"
-
-#include <stdlib.h>
-#include <sys/types.h>
-#include <stdarg.h>
-
-__BEGIN_DECLS
 
 #include "./bu/defines.h"
 
-/* system interface headers */
-#include <setjmp.h> /* for bu_setjmp */
-#include <stddef.h> /* for size_t */
-#include <limits.h> /* for CHAR_BIT */
-
-#ifdef HAVE_STDINT_H
-#  include <stdint.h> /* for [u]int[16|32|64]_t */
-#endif
-
-#ifdef HAVE_DLFCN_H
-#  include <dlfcn.h>	/* for RTLD_* */
-#endif
-
-/* common interface headers */
-#include "tcl.h"	/* Included for Tcl_Interp definition */
-#include "bu/magic.h"
-
-/* FIXME Temporary global interp.  Remove me.  */
-BU_EXPORT extern Tcl_Interp *brlcad_interp;
-
+__BEGIN_DECLS
 
 /** @file libbu/vers.c
  *
@@ -108,93 +82,14 @@ BU_EXPORT extern const char *bu_version(void);
 #include "./bu/parse.h"
 #include "./bu/color.h"
 #include "./bu/rb.h"
-
-/**
- * TBD
- */
-struct bu_observer {
-    struct bu_list l;
-    struct bu_vls observer;
-    struct bu_vls cmd;
-};
-typedef struct bu_observer bu_observer_t;
-#define BU_OBSERVER_NULL ((struct bu_observer *)0)
-
-/**
- * asserts the integrity of a non-head node bu_observer struct.
- */
-#define BU_CK_OBSERVER(_op) BU_CKMAG(_op, BU_OBSERVER_MAGIC, "bu_observer magic")
-
-/**
- * initializes a bu_observer struct without allocating any memory.
- */
-#define BU_OBSERVER_INIT(_op) { \
-	BU_LIST_INIT_MAGIC(&(_op)->l, BU_OBSERVER_MAGIC); \
-	BU_VLS_INIT(&(_op)->observer); \
-	BU_VLS_INIT(&(_op)->cmd); \
-    }
-
-/**
- * macro suitable for declaration statement initialization of a bu_observer
- * struct.  does not allocate memory.  not suitable for a head node.
- */
-#define BU_OBSERVER_INIT_ZERO { {BU_OBSERVER_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
-
-/**
- * returns truthfully whether a bu_observer has been initialized.
- */
-#define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/log.h"
 #include "./bu/file.h"
 #include "./bu/getopt.h"
 #include "./bu/parallel.h"
 #include "./bu/malloc.h"
 #include "./bu/str.h"
-
-/** @addtogroup tcl */
-/** @{ */
-/** @file libbu/observer.c
- *
- * @brief
- * Routines for implementing the observer pattern.
- *
- */
-
-/**
- * runs a given command, calling the corresponding observer callback
- * if it matches.
- */
-BU_EXPORT extern int bu_observer_cmd(void *clientData, int argc, const char *argv[]);
-
-/**
- * Notify observers.
- */
-BU_EXPORT extern void bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self);
-
-/**
- * Free observers.
- */
-BU_EXPORT extern void bu_observer_free(struct bu_observer *);
-
-/**
- * Bu_Init
- *
- * Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with
- * "load /usr/brlcad/lib/libbu.so"
- *
- * @param interp	- tcl interpreter in which this command was registered.
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-BU_EXPORT extern int Bu_Init(void *interp);
-
-
-/** @} */
-
-#include "bu/hash.h"
+#include "./bu/hash.h"
+#include "./bu/bu_tcl.h"
 
 __END_DECLS
 
