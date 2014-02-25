@@ -112,27 +112,7 @@ BU_EXPORT extern const char *bu_version(void);
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup endian */
-/** @{ */
-/** @file libbu/endian.c
- *
- * Run-time byte order detection.
- *
- */
-
-typedef enum {
-    BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */
-    BU_BIG_ENDIAN    = 4321, /* MSB first: 68000, IBM, network order */
-    BU_PDP_ENDIAN    = 3412  /* LSB first in word, MSW first in long */
-} bu_endian_t;
-
-
-/**
- * returns the platform byte ordering (e.g., big-/little-endian)
- */
-BU_EXPORT extern bu_endian_t bu_byteorder(void);
-/** @} */
-
+#include "./bu/endian.h"
 
 /*----------------------------------------------------------------------*/
 

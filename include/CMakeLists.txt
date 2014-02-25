@@ -5,6 +5,7 @@ set(bu_headers
   bu/color.h
   bu/cv.h
   bu/defines.h
+  bu/endian.h
   bu/hash.h
   bu/list.h
   bu/magic.h
