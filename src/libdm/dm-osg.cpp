@@ -710,14 +710,20 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
 	tbmp->setDistance(sph.radius());
     } else {
-	// Not right, and may need to tweak logic elsewhere, but heading in the right
-	// direction for perspective toggle.
+	// TODO - somehow, we need to back out the fov, aspect ratio, near and far pieces
+	// from osg_mp.  Look at persp_mat in dozoom.c to see how MGED creates its
+	// matrix - perhaps that will be enough information to tell us how to
+	// extract the key bits.  Simplier would be to have the fov and other
+	// parameters passed directly to the display manager - that is worth
+	// considering.  getPerspective does not do what we need - given osg_mp,
+	// it returns all zeros (???)
+	//
+	// double fov, aspectRatio, zNear, zFar;
+	// osg_mp.getPerspective(fov, aspectRatio, zNear, zFar);
+	// osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(fov, aspectRatio, zNear, zFar);
 	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(50, dmp->dm_width/dmp->dm_height, -mat[15], mat[15]);
 	/*
-	double fov, aspectRatio, zNear, zFar;
-	osg_mp.getPerspective(fov, aspectRatio, zNear, zFar);
 	bu_log("perspective: %f, %f, %f, %f\n", fov, aspectRatio, zNear, zFar);
-	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(fov, aspectRatio, zNear, zFar);
 	*/
     }
 
