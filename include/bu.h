@@ -94,16 +94,6 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  */
 BU_EXPORT extern const char *bu_version(void);
 
-/**
- * MAX_PSW - The maximum number of processors that can be expected on
- * this hardware.  Used to allocate application-specific per-processor
- * tables at compile-time and represent a hard limit on the number of
- * processors/threads that may be spawned. The actual number of
- * available processors is found at runtime by calling bu_avail_cpus()
- */
-#define MAX_PSW 1024
-
-
 #include "./bu/cv.h"
 #include "./bu/endian.h"
 #include "./bu/list.h"
