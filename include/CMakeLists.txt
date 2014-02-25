@@ -20,6 +20,7 @@ set(bu_headers
   bu/parse.h
   bu/ptbl.h
   bu/rb.h
+  bu/str.h
   bu/vlb.h
   bu/vls.h
   )

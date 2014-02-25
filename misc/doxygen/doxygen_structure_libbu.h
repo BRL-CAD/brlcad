@@ -48,6 +48,8 @@
 
 /* I/O */
 /** @ingroup io */
+/**   @defgroup str Strings */
+/** @ingroup io */
 /**   @defgroup log Logging */
 /** @ingroup io */
 /**   @defgroup debug Debugging */
