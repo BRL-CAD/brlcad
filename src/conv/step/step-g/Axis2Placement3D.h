@@ -55,6 +55,7 @@ public:
     virtual const double *GetNormal();
     virtual const double *GetXAxis();
     virtual const double *GetYAxis();
+    const double *GetZAxis();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
