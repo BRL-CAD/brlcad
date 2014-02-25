@@ -7,6 +7,7 @@ set(bu_headers
   bu/debug.h
   bu/defines.h
   bu/endian.h
+  bu/file.h
   bu/hash.h
   bu/hist.h
   bu/list.h
