@@ -721,7 +721,7 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	// double fov, aspectRatio, zNear, zFar;
 	// osg_mp.getPerspective(fov, aspectRatio, zNear, zFar);
 	// osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(fov, aspectRatio, zNear, zFar);
-	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(50, dmp->dm_width/dmp->dm_height, -mat[15], mat[15]);
+	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(20, 1, 0.01, 10000000000);
 	/*
 	bu_log("perspective: %f, %f, %f, %f\n", fov, aspectRatio, zNear, zFar);
 	*/
