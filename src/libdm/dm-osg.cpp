@@ -702,17 +702,23 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     if (dmp->dm_perspective == 0) {
 	osg::Matrixf orthom;
 	orthom.makeIdentity();
-	double y = mat[MSA];
+	double y = mat[MSA]/M_SQRT2;
 	double x = y * dmp->dm_width/dmp->dm_height;
 	orthom.makeOrtho(-x, x, -y, y, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 	// Make sure we aren't clipping away geometry
 	osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
-	tbmp->setDistance(2 * sph.radius());
+	tbmp->setDistance(sph.radius());
     } else {
 	// Not right, and may need to tweak logic elsewhere, but heading in the right
 	// direction for perspective toggle.
-	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(50, dmp->dm_width/dmp->dm_height, -100000, 100000);
+	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(50, dmp->dm_width/dmp->dm_height, -mat[15], mat[15]);
+	/*
+	double fov, aspectRatio, zNear, zFar;
+	osg_mp.getPerspective(fov, aspectRatio, zNear, zFar);
+	bu_log("perspective: %f, %f, %f, %f\n", fov, aspectRatio, zNear, zFar);
+	osp->mainviewer->getCamera()->setProjectionMatrixAsPerspective(fov, aspectRatio, zNear, zFar);
+	*/
     }
 
     return TCL_OK;

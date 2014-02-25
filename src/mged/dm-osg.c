@@ -29,6 +29,12 @@
 #include <math.h>
 #include <string.h>
 
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
+#include "dm/dm_xvars.h"
+#
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -63,6 +69,8 @@ zclip_hook(const struct bu_structparse *sdp,
 
     DM_SET_WIN_BOUNDS(dmp, bounds);
 }
+
+static Tk_GenericProc Osg_doevent;
 
 struct bu_structparse osg_vparse[] = {
     {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
