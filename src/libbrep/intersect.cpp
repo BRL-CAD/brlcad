@@ -2669,6 +2669,87 @@ isocurve_surface_overlap_location(
     return ON_OVERLAP_BOUNDARY;
 }
 
+ON_ClassArray<ON_3dPointArray>
+get_overlap_intersection_parameters(
+	const ON_SimpleArray<OverlapSegment *> &overlaps,
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	Subsurface *treeA,
+	Subsurface *treeB,
+	double intersection_tolerance,
+	double intersection_tolerance_A,
+	double intersection_tolerance_B)
+{
+    int count_before = overlaps.Count();
+
+    ON_ClassArray<ON_3dPointArray> params(count_before);
+    params.SetCount(count_before);
+
+    for (int i = 0; i < count_before; i++) {
+	// Split the curves from the intersection points between them.
+	int count = params[i].Count();
+	for (int j = i + 1; j < count_before; j++) {
+	    ON_SimpleArray<ON_X_EVENT> x_event;
+	    ON_Intersect(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d, x_event, intersection_tolerance);
+	    count += x_event.Count();
+	    for (int k = 0; k < x_event.Count(); k++) {
+		ON_3dPoint param;
+		ON_ClassArray<ON_PX_EVENT> e1, e2, e3, e4;
+		ON_2dPoint uv;
+		ON_2dPoint st;
+		ON_ClassArray<ON_PX_EVENT> pe1, pe2;
+		if (ON_Intersect(x_event[k].m_A[0], *surfA, pe1, intersection_tolerance_A, 0, 0, treeA)
+		    && ON_Intersect(x_event[k].m_B[0], *surfB, pe2, intersection_tolerance_B, 0, 0, treeB)) {
+		    // Pull the 3D curve back to the 2D space
+		    uv = pe1[0].m_b;
+		    st = pe2[0].m_b;
+		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
+			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
+			param.x = x_event[k].m_a[0];
+			param.y = e1[0].m_b[0];
+			param.z = e2[0].m_b[0];
+			params[i].Append(param);
+		    }
+		    if (ON_Intersect(uv, *(overlaps[j]->m_curveA), e3, intersection_tolerance_A)
+			&& ON_Intersect(st, *(overlaps[j]->m_curveB), e4, intersection_tolerance_B)) {
+			// The same routine for overlaps[j]
+			param.x = x_event[k].m_b[0];
+			param.y = e3[0].m_b[0];
+			param.z = e4[0].m_b[0];
+			params[j].Append(param);
+		    }
+		}
+		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap) {
+		    ON_ClassArray<ON_PX_EVENT> psx3, psx4, e5, e6, e7, e8;
+		    if (ON_Intersect(x_event[k].m_A[0], *surfA, psx3, intersection_tolerance, 0, 0, treeA)
+			&& ON_Intersect(x_event[k].m_B[0], *surfB, psx4, intersection_tolerance, 0, 0, treeB)) {
+			// Pull the 3D curve back to the 2D space
+			uv = psx3[0].m_b;
+			st = psx4[0].m_b;
+			if (ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveA), e5, intersection_tolerance_A)
+			    && ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveB), e6, intersection_tolerance_B)) {
+			    param.x = x_event[k].m_a[1];
+			    param.y = e5[0].m_b[0];
+			    param.z = e6[0].m_b[0];
+			    params[i].Append(param);
+			}
+			if (ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveA), e7, intersection_tolerance_A)
+			    && ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveB), e8, intersection_tolerance_B)) {
+			    // The same routine for overlaps[j]
+			    param.x = x_event[k].m_b[1];
+			    param.y = e7[0].m_b[0];
+			    param.z = e8[0].m_b[0];
+			    params[j].Append(param);
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    return params;
+}
+
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -2889,75 +2970,14 @@ ON_Intersect(const ON_Surface *surfA,
 	delete []knots;
     }
 
-    int count_before = overlaps.Count();
     // Not points, but a bundle of params:
     // params[i] - the separating params on overlaps[i]
     // x - curve3d, y - curveA, z - curveB
+    ON_ClassArray<ON_3dPointArray> params = get_overlap_intersection_parameters(
+	    overlaps, surfA, surfB, treeA, treeB, intersection_tolerance,
+	    intersection_tolerance_A, intersection_tolerance_B);
 
-    ON_ClassArray<ON_3dPointArray> params(count_before);
-    for (int i = 0; i < count_before; i++) {
-	// Split the curves from the intersection points between them.
-	int count = params[i].Count();
-	for (int j = i + 1; j < count_before; j++) {
-	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d, x_event, intersection_tolerance);
-	    count += x_event.Count();
-	    for (int k = 0; k < x_event.Count(); k++) {
-		ON_3dPoint param;
-		ON_ClassArray<ON_PX_EVENT> e1, e2, e3, e4;
-		ON_2dPoint uv;
-		ON_2dPoint st;
-		ON_ClassArray<ON_PX_EVENT> pe1, pe2;
-		if (ON_Intersect(x_event[k].m_A[0], *surfA, pe1, intersection_tolerance_A, 0, 0, treeA)
-		    && ON_Intersect(x_event[k].m_B[0], *surfB, pe2, intersection_tolerance_B, 0, 0, treeB)) {
-		    // Pull the 3D curve back to the 2D space
-		    uv = pe1[0].m_b;
-		    st = pe2[0].m_b;
-		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
-			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
-			param.x = x_event[k].m_a[0];
-			param.y = e1[0].m_b[0];
-			param.z = e2[0].m_b[0];
-			params[i].Append(param);
-		    }
-		    if (ON_Intersect(uv, *(overlaps[j]->m_curveA), e3, intersection_tolerance_A)
-			&& ON_Intersect(st, *(overlaps[j]->m_curveB), e4, intersection_tolerance_B)) {
-			// The same routine for overlaps[j]
-			param.x = x_event[k].m_b[0];
-			param.y = e3[0].m_b[0];
-			param.z = e4[0].m_b[0];
-			params[j].Append(param);
-		    }
-		}
-		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap) {
-		    ON_ClassArray<ON_PX_EVENT> psx3, psx4, e5, e6, e7, e8;
-		    if (ON_Intersect(x_event[k].m_A[0], *surfA, psx3, intersection_tolerance, 0, 0, treeA)
-			&& ON_Intersect(x_event[k].m_B[0], *surfB, psx4, intersection_tolerance, 0, 0, treeB)) {
-			// Pull the 3D curve back to the 2D space
-			uv = psx3[0].m_b;
-			st = psx4[0].m_b;
-			if (ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveA), e5, intersection_tolerance_A)
-			    && ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveB), e6, intersection_tolerance_B)) {
-			    param.x = x_event[k].m_a[1];
-			    param.y = e5[0].m_b[0];
-			    param.z = e6[0].m_b[0];
-			    params[i].Append(param);
-			}
-			if (ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveA), e7, intersection_tolerance_A)
-			    && ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveB), e8, intersection_tolerance_B)) {
-			    // The same routine for overlaps[j]
-			    param.x = x_event[k].m_b[1];
-			    param.y = e7[0].m_b[0];
-			    param.z = e8[0].m_b[0];
-			    params[j].Append(param);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    for (int i = 0; i < count_before; i++) {
+    for (int i = 0; i < params.Count(); i++) {
 	params[i].QuickSort(ON_CompareIncreasing);
 	int start = 0;
 	bool splitted = false;
