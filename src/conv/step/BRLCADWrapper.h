@@ -55,7 +55,7 @@ public:
     bool OpenFile(std::string &filename);
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
-    bool WriteBrep(std::string name, ON_Brep *brep);
+    bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
     struct db_i * GetDBIP();
     bool Close();
 };

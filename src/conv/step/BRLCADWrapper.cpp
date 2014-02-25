@@ -109,7 +109,7 @@ BRLCADWrapper::WriteSphere(double *center, double radius)
 
 
 bool
-BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
+BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
 {
     std::ostringstream str;
     std::string strcnt;
@@ -126,9 +126,19 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200, 180, 180};
-    mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);
 
-    return true;
+    /*
+     * mk_region1(wdbp,combname,membname,shadername,shaderargsrgb);
+     */
+    struct bu_list head;
+    BU_LIST_INIT(&head);
+    if (mk_addmember(sol.c_str(), &head, mat, WMOP_UNION) == WMEMBER_NULL)
+	return false;
+
+    if (mk_comb(outfp, reg.c_str(), &head, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0) > 0)
+	return true;
+
+    return false;
 }
 
 struct db_i *
