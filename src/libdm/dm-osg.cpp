@@ -218,7 +218,6 @@ osg_reshape(struct dm *dmp, int width, int height)
 	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
     }
-    osp->mainviewer->frame();
 }
 
 
@@ -236,9 +235,27 @@ HIDDEN int
 osg_configureWin(struct dm *dmp, int force)
 {
 
+    int width;
+    int height;
+
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    int width = Tk_Width(pubvars->xtkwin);
-    int height = Tk_Height(pubvars->xtkwin);
+
+    bu_log("pubvars->top width: %d\n", Tk_Width(pubvars->top));
+    bu_log("pubvars->top height: %d\n", Tk_Height(pubvars->top));
+
+    bu_log("Tk_Parent(pubvars->xtkwin) width: %d\n", Tk_Width(Tk_Parent(pubvars->xtkwin)));
+    bu_log("Tk_Parent(pubvars->xtkwin) height: %d\n", Tk_Height(Tk_Parent(pubvars->xtkwin)));
+
+    bu_log("pubvars->xtkwin width: %d\n", Tk_Width(pubvars->xtkwin));
+    bu_log("pubvars->xtkwin height: %d\n", Tk_Height(pubvars->xtkwin));
+
+    if (pubvars->top != pubvars->xtkwin) {
+	width = Tk_Width(Tk_Parent(pubvars->xtkwin));
+	height = Tk_Height(Tk_Parent(pubvars->xtkwin));
+    } else {
+	width = Tk_Width(pubvars->top);
+	height = Tk_Height(pubvars->top);
+    }
 
     if (!force &&
 	    dmp->dm_height == height &&
@@ -305,7 +322,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
-    int make_square = -1;
+    //int make_square = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
@@ -422,25 +439,16 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-
-    if (dmp->dm_width == 0) {
-	dmp->dm_width = Tk_Width(pubvars->top) - 30;
-	++make_square;
-    }
-    if (dmp->dm_height == 0) {
-	dmp->dm_height = Tk_Height(pubvars->top) - 30;
-	++make_square;
+    if (pubvars->top != pubvars->xtkwin) {
+	dmp->dm_width = Tk_Width(Tk_Parent(pubvars->xtkwin));
+	dmp->dm_height = Tk_Height(Tk_Parent(pubvars->xtkwin));
+    } else {
+	dmp->dm_width = Tk_Width(pubvars->top);
+	dmp->dm_height = Tk_Height(pubvars->top);
     }
 
-    if (make_square > 0) {
-	/* Make window square */
-	if (dmp->dm_height < dmp->dm_width)
-	    dmp->dm_width = dmp->dm_height;
-	else
-	    dmp->dm_height = dmp->dm_width;
-    }
-
-
+    bu_log("tk_width: %d\n", dmp->dm_width);
+    bu_log("tk_height: %d\n", dmp->dm_height);
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
@@ -454,6 +462,8 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	(void)osg_close(dmp);
 	return DM_NULL;
     }
+
+    bu_log("tcl string %s\n", bu_vls_addr(&str));
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
@@ -480,7 +490,9 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_id = pubvars->win;
 
     Tk_MapWindow(pubvars->xtkwin);
-
+/*    dmp->dm_width = Tk_Width(pubvars->xtkwin);
+    dmp->dm_height = Tk_Height(pubvars->xtkwin);
+*/
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
@@ -552,9 +564,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     osp->initial_draw = 1;
     osp->nverts = 0;
 
-    /* Make sure the initial frame is rendered */
-    osp->mainviewer->frame();
-
     /* These next 2 lines aren't needed or useful here - the idea is to test whether we can "halt"
      * a multithreaded render using a scene graph with STATIC data per setDataVariance.
      * Most of the time data in BRL-CAD graphics will be static, with the exception
@@ -567,7 +576,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     /* Step 2: update nodes based on what we'll be editing */
     osp->mainviewer->startThreading();
 
-    // TODO - this should render the initial frame, not the above explicit ->frame() call
     osg_configureWin(dmp, 1);
 
     return dmp;
