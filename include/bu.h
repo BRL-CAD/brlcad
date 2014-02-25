@@ -62,8 +62,6 @@ __BEGIN_DECLS
 
 #include "./bu/defines.h"
 
-
-
 /* system interface headers */
 #include <setjmp.h> /* for bu_setjmp */
 #include <stddef.h> /* for size_t */
@@ -106,68 +104,20 @@ BU_EXPORT extern const char *bu_version(void);
 #define MAX_PSW 1024
 
 
-/*----------------------------------------------------------------------*/
-
 #include "./bu/cv.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/endian.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/list.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/bitv.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/hist.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/ptbl.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/mapped_file.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/vls.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/avs.h"
-
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/vlb.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/debug.h"
-
-/*----------------------------------------------------------------------*/
-
-#include "bu/parse.h"
-
-/*----------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------*/
-
-#include "bu/color.h"
-
-/*----------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------*/
-
-#include "bu/rb.h"
-
-/*----------------------------------------------------------------------*/
+#include "./bu/parse.h"
+#include "./bu/color.h"
+#include "./bu/rb.h"
 
 /**
  * TBD
@@ -208,9 +158,6 @@ typedef struct bu_observer bu_observer_t;
 /*----------------------------------------------------------------------*/
 
 #include "./bu/log.h"
-
-/*----------------------------------------------------------------------*/
-
 #include "./bu/file.h"
 
 /*----------------------------------------------------------------------*/
@@ -796,19 +743,6 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
  * always null-terminated and should be sized accordingly.
  */
 BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
-
-
-/** @addtogroup file */
-/** @{ */
-/** @file libbu/sort.c
- * platform-independent re-entrant version of qsort, where the first argument
- * is the array to sort, the second the number of elements inside the array, the
- * third the size of one element, the fourth the comparison-function and the
- * fifth a variable which is handed as a third argument to the comparison-function.
- */
-BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
-            int (*compare)(const void *, const void *, void *), void *context);
-/** @} */
 
 __END_DECLS
 
