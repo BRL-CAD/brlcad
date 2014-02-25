@@ -8,6 +8,7 @@ set(bu_headers
   bu/defines.h
   bu/endian.h
   bu/file.h
+  bu/getopt.h
   bu/hash.h
   bu/hist.h
   bu/list.h
