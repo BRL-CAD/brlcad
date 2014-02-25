@@ -4,6 +4,7 @@ set(bu_headers
   bu/bitv.h
   bu/color.h
   bu/cv.h
+  bu/debug.h
   bu/defines.h
   bu/endian.h
   bu/hash.h
