@@ -32,6 +32,7 @@
 
 /* implementation headers */
 #include "AdvancedBrepShapeRepresentation.h"
+#include "Axis2Placement3D.h"
 #include "CartesianPoint.h"
 #include "VertexPoint.h"
 #include "SurfacePatch.h"
@@ -107,7 +108,33 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    //onBrep->SpSplitClosedFaces();
 		    //ON_Brep *tbrep = TightenBrep(onBrep);
 
-		    dotg->WriteBrep(name, onBrep);
+		    mat_t mat;
+		    MAT_IDN(mat);
+
+		    Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+		    if (axis != NULL) {
+			mat_t tmat;
+			mat_t rmat;
+
+			//assign matrix values
+			double origZaxis[3] = { 0.0,0.0,1.0 };
+			double origin[3] = { 0.0,0.0,0.0 };
+			const double *translate_to = axis->GetOrigin();
+			const double *newXaxis = axis->GetXAxis();
+			const double *newZaxis = axis->GetZAxis();
+			double ang = acos(VDOT(origZaxis, newZaxis));
+
+			MAT_IDN(tmat);
+			MAT_IDN(rmat);
+
+			MAT_DELTAS_VEC(tmat, translate_to);
+
+			bn_mat_arb_rot(rmat,origin,newXaxis,ang);
+
+			bn_mat_mul(mat, tmat, rmat);
+		    }
+
+		    dotg->WriteBrep(name, onBrep,mat);
 
 		    delete onBrep;
 		}
