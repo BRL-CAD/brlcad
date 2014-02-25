@@ -15,6 +15,7 @@ set(bu_headers
   bu/magic.h
   bu/malloc.h
   bu/mapped_file.h
+  bu/parallel.h
   bu/parse.h
   bu/ptbl.h
   bu/rb.h
