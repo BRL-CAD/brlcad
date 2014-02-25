@@ -10,6 +10,7 @@ set(bu_headers
   bu/hash.h
   bu/hist.h
   bu/list.h
+  bu/log.h
   bu/magic.h
   bu/malloc.h
   bu/mapped_file.h
