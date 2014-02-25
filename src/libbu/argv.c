@@ -23,8 +23,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 size_t
 bu_argv_from_string(char *argv[], size_t lim, char *lp)

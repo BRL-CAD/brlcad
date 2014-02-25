@@ -49,8 +49,7 @@
 #  include <windows.h>
 #endif
 
-#include "bu.h"
-
+#include "bu/parallel.h"
 
 int
 parallel_set_affinity(int cpu)
