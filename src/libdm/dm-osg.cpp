@@ -231,6 +231,7 @@ osg_makeCurrent(struct dm *dmp)
 }
 
 
+
 HIDDEN int
 osg_configureWin(struct dm *dmp, int force)
 {
@@ -240,14 +241,16 @@ osg_configureWin(struct dm *dmp, int force)
 
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    bu_log("pubvars->top width: %d\n", Tk_Width(pubvars->top));
-    bu_log("pubvars->top height: %d\n", Tk_Height(pubvars->top));
+    if (dmp->dm_debugLevel) {
+	bu_log("pubvars->top width: %d\n", Tk_Width(pubvars->top));
+	bu_log("pubvars->top height: %d\n", Tk_Height(pubvars->top));
 
-    bu_log("Tk_Parent(pubvars->xtkwin) width: %d\n", Tk_Width(Tk_Parent(pubvars->xtkwin)));
-    bu_log("Tk_Parent(pubvars->xtkwin) height: %d\n", Tk_Height(Tk_Parent(pubvars->xtkwin)));
+	bu_log("Tk_Parent(pubvars->xtkwin) width: %d\n", Tk_Width(Tk_Parent(pubvars->xtkwin)));
+	bu_log("Tk_Parent(pubvars->xtkwin) height: %d\n", Tk_Height(Tk_Parent(pubvars->xtkwin)));
 
-    bu_log("pubvars->xtkwin width: %d\n", Tk_Width(pubvars->xtkwin));
-    bu_log("pubvars->xtkwin height: %d\n", Tk_Height(pubvars->xtkwin));
+	bu_log("pubvars->xtkwin width: %d\n", Tk_Width(pubvars->xtkwin));
+	bu_log("pubvars->xtkwin height: %d\n", Tk_Height(pubvars->xtkwin));
+    }
 
     if (pubvars->top != pubvars->xtkwin) {
 	width = Tk_Width(Tk_Parent(pubvars->xtkwin));
@@ -439,20 +442,58 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    if (pubvars->top != pubvars->xtkwin) {
-	dmp->dm_width = Tk_Width(Tk_Parent(pubvars->xtkwin));
-	dmp->dm_height = Tk_Height(Tk_Parent(pubvars->xtkwin));
-    } else {
-	dmp->dm_width = Tk_Width(pubvars->top);
-	dmp->dm_height = Tk_Height(pubvars->top);
-    }
 
-    bu_log("tk_width: %d\n", dmp->dm_width);
-    bu_log("tk_height: %d\n", dmp->dm_height);
+    /* Make sure the window is large enough.  (Note - ogl subtracts
+     * 30 from these values - why??)  If these values are not large
+     * enough, the drawing window will not resize properly to match
+     * the height change of the parent window.  This is also true
+     * of the ogl display manager, although it is undocumented *why*
+     * this initial screen-based sizing is needed... */
+    {
+	int make_square = -1;
+
+	if (dmp->dm_width == 0) {
+	    bu_vls_sprintf(&str, "winfo screenwidth .");
+	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+		bu_vls_free(&init_proc_vls);
+		bu_vls_free(&str);
+		(void)osg_close(dmp);
+		return DM_NULL;
+	    } else {
+		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
+		dmp->dm_width = tclresult->internalRep.longValue;
+	    }
+	    ++make_square;
+	}
+	if (dmp->dm_height == 0) {
+	    bu_vls_sprintf(&str, "winfo screenheight .");
+	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+		bu_vls_free(&init_proc_vls);
+		bu_vls_free(&str);
+		(void)osg_close(dmp);
+		return DM_NULL;
+	    } else {
+		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
+		dmp->dm_height = tclresult->internalRep.longValue;
+	    }
+	    ++make_square;
+	}
+
+	if (make_square > 0) {
+	    /* Make window square */
+	    if (dmp->dm_height <
+		    dmp->dm_width)
+		dmp->dm_width =
+		    dmp->dm_height;
+	    else
+		dmp->dm_height =
+		    dmp->dm_width;
+	}
+    }
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
+    bu_vls_sprintf(&str, "_init_dm %s %s\n",
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
@@ -462,8 +503,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	(void)osg_close(dmp);
 	return DM_NULL;
     }
-
-    bu_log("tcl string %s\n", bu_vls_addr(&str));
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
@@ -490,9 +529,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_id = pubvars->win;
 
     Tk_MapWindow(pubvars->xtkwin);
-/*    dmp->dm_width = Tk_Width(pubvars->xtkwin);
-    dmp->dm_height = Tk_Height(pubvars->xtkwin);
-*/
+
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
