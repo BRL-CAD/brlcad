@@ -1636,6 +1636,21 @@ Plane::LoadONBrep(ON_Brep *brep)
     }
 
     if (ON_id >= 0) {
+	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
+
+	if (s) {
+	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
+
+	    // origin may not lie within face so include in extent
+	    double maxdist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_max);
+	    double mindist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_min);
+	    bbdiag += FMAX(maxdist, mindist);
+
+	    ON_Interval extents(-bbdiag, bbdiag);
+	    s->Extend(0,extents);
+	    s->Extend(1,extents);
+	}
+
 	return true;    // already loaded
     }
 
