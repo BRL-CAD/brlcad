@@ -7,6 +7,7 @@ set(bu_headers
   bu/defines.h
   bu/endian.h
   bu/hash.h
+  bu/hist.h
   bu/list.h
   bu/magic.h
   bu/malloc.h
