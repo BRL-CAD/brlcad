@@ -3036,6 +3036,8 @@ ON_Intersect(const ON_Surface *surfA,
 		seg->m_dir = overlaps[i]->m_dir;
 		seg->m_fix = overlaps[i]->m_fix;
 		overlaps.Append(seg);
+	    } else {
+		delete subcurveA;
 	    }
 	    start = j;
 	    splitted = true;
