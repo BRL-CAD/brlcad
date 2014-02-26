@@ -289,6 +289,10 @@ struct dm {
 /** EXPERIMENTAL - considering a new design for the display
  * manager structure.  DO NOT USE!! */
 #if 0
+
+/* Will need bu_dlopen and bu_dlsym for a plugin system - look at how
+ * liboptical's shaders are set up. */
+
 /* Window management functions */
 struct dm_window_functions {
     int (*dm_open)(struct dm *dmp, void *data);
