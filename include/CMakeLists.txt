@@ -1,30 +1,6 @@
-
 add_subdirectory(bu)
-
-set(dm_headers
-  dm.h
-  dm/defines.h
-  dm/dm-Null.h
-  dm/dm-X.h
-  dm/dm-glx.h
-  dm/dm-ogl.h
-  dm/dm-osg.h
-  dm/dm-pex.h
-  dm/dm-plot.h
-  dm/dm-ps.h
-  dm/dm-qt.h
-  dm/dm-rtgl.h
-  dm/dm-tk.h
-  dm/dm-wgl.h
-  dm/dm_color.h
-  dm/dm_xvars.h
-  )
-
-set(rt_headers
-  raytrace.h
-  rt/defines.h
-  rt/search.h
-  )
+add_subdirectory(dm)
+add_subdirectory(rt)
 
 set(include_hdrs
   ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
@@ -35,7 +11,7 @@ set(include_hdrs
   cursor.h
   ged.h
   pstdint.h
-  ${rt_headers}
+  raytrace.h
   rtfunc.h
   rtgeom.h
   rtserver.h
@@ -50,7 +26,7 @@ set(include_hdrs
   db.h
   db5.h
   dg.h
-  ${dm_headers}
+  dm.h
   dvec.h
   fb.h
   fbio.h
