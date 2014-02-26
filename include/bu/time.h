@@ -38,7 +38,7 @@
 #include "bu/defines.h"
 #include "bu/vls.h"
 
-/** @addtogroup timer */
+/** @addtogroup bu_time */
 /** @{ */
 
 /** @file libbu/timer.c

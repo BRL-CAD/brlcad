@@ -72,7 +72,7 @@
 /** @ingroup data */
 /**   @defgroup endian Endian Support */
 /** @ingroup data */
-/**   @defgroup timer Time Delta Measurement */
+/**   @defgroup bu_time Time Support */
 /** @ingroup data */
 /**   @defgroup units Units */
 
