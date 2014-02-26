@@ -285,6 +285,106 @@ struct dm {
     Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
 };
 
+/**********************************************************************************************/
+/** EXPERIMENTAL - considering a new design for the display
+ * manager structure.  DO NOT USE!! */
+#if 0
+/* Window management functions */
+struct dm_window_functions {
+    int (*dm_open)(struct dm *dmp, void *data);
+    int (*dm_close)(struct dm *dmp, void *data);
+    void *(*dm_context)(struct dm *dmp, void *data);
+    int (*dm_configureWin)(struct dm *dmp, int force);
+    int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
+}
+struct dm_window_state {
+    struct bu_vls dm_fullName;	/**< @brief full Tcl/Tk name of drawing window */
+    struct bu_vls dm_shortName;	/**< @brief short Tcl/Tk name of drawing window */
+    int width;
+    int height;
+}
+
+/* Geometry view management functions */
+struct dm_view_state {
+    int dm_zclip;		/**< @brief !0 means zclipping */
+    vect_t dm_clipmin;		/**< @brief minimum clipping vector */
+    vect_t dm_clipmax;		/**< @brief maximum clipping vector */
+    int dm_perspective;		/**< @brief !0 means perspective on */
+    int dm_light;		/**< @brief !0 means lighting on */
+    int dm_transparency;	/**< @brief !0 means transparency on */
+    int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
+    int dm_zbuffer;		/**< @brief !0 means zbuffer on */
+    int dm_fontsize;		/**< @brief !0 override's the auto font size */
+    int dm_displaylist;		/**< @brief !0 means device has displaylist */
+    int dm_stereo;                /**< @brief stereo flag */
+    unsigned char dm_bg[3];	/**< @brief background color */
+    unsigned char dm_fg[3];	/**< @brief foreground color */
+    int width;
+    int height;
+    double fov;
+    double aspect;
+    double near_l;
+    double far_l;
+}
+struct dm_view_functions {
+    int (*dm_normal)(struct dm *dmp);
+    int (*dm_set_perspective_view)(struct dm *dmp, double fov, double aspect, double near_l, double far_l);
+    int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
+    int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
+    int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
+    int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
+    int (*dm_setTransparency)(struct dm *dmp, int transparency_on);
+    int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
+    int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
+    void (*dm_reshape)(struct dm *dmp, int width, int height);
+}
+
+
+/* Geometry drawing functions */
+struct dm_draw_state {
+    struct bu_list *objects;
+}
+
+struct dm_draw_functions {
+    int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
+    int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
+     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
+    int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
+    int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
+    int (*dm_drawLines3D)(struct dm *dmp, int npoints, point_t *points, int sflag);
+    int (*dm_drawPoint2D)(struct dm *dmp, fastf_t x, fastf_t y);
+    int (*dm_drawPoint3D)(struct dm *dmp, point_t point);
+    int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
+    int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
+    int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
+    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);	/**< @brief formerly dmr_object */
+    int (*dm_beginDList)(struct dm *dmp, unsigned int list);
+    int (*dm_endDList)(struct dm *dmp);
+    void (*dm_drawDList)(unsigned int list);
+    int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
+    int (*dm_genDLists)(struct dm *dmp, size_t range);
+}
+
+struct display_manager {
+    struct dm_window_state *dm_win_s;
+    struct dm_window_functions *dm_win_f;
+    struct dm_view_state *dm_view_s;
+    struct dm_view_functions *dm_view_f;
+    struct dm_draw_state *dm_draw_s;
+    struct dm_draw_functions *dm_draw_f;
+    const char *dm_name;		/**< @brief short name of device */
+    const char *dm_lname;		/**< @brief long name of device */
+    int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
+    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
+    void *dm_interp;
+}
+#endif
+
+/**********************************************************************************************/
+
+
+
 
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
