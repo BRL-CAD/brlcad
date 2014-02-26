@@ -3129,25 +3129,18 @@ ON_Intersect(const ON_Surface *surfA,
 
 	    // Check whether the start point and end point is linked to
 	    // another curve.
-	    if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < isect_tol
-		&& overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < isect_tolA
-		&& overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < isect_tolB) {
-		// end -- start -- end -- start
+#define OVERLAPS_LINKED(from, to) \
+    overlaps[i]->m_curve3d->PointAt##from().DistanceTo(overlaps[j]->m_curve3d->PointAt##to()) < isect_tol && \
+    overlaps[i]->m_curveA->PointAt##from().DistanceTo(overlaps[j]->m_curveA->PointAt##to()) < isect_tolA && \
+    overlaps[i]->m_curveB->PointAt##from().DistanceTo(overlaps[j]->m_curveB->PointAt##to()) < isect_tolB
+
+	    if (OVERLAPS_LINKED(Start, End)) {
 		start_linked[i] = end_linked[j] = true;
-	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < isect_tolB) {
-		// start -- end -- start -- end
+	    } else if (OVERLAPS_LINKED(End, Start)) {
 		start_linked[j] = end_linked[i] = true;
-	    } else if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < isect_tolB) {
-		// end -- start -- start -- end
+	    } else if (OVERLAPS_LINKED(Start, Start)) {
 		start_linked[i] = start_linked[j] = true;
-	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < isect_tolB) {
-		// start -- end -- end -- start
+	    } else if (OVERLAPS_LINKED(End, End)) {
 		end_linked[i] = end_linked[j] = true;
 	    }
 	}
@@ -3196,33 +3189,21 @@ ON_Intersect(const ON_Surface *surfA,
 	    }
 
 	    // Merge the curves that link together.
-	    if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < isect_tol
-		&& overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < isect_tolA
-		&& overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < isect_tolB) {
-		// end -- start -- end -- start
+	    if (OVERLAPS_LINKED(Start, End)) {
 		overlaps[i]->m_curve3d = link_curves(overlaps[j]->m_curve3d, overlaps[i]->m_curve3d);
 		overlaps[i]->m_curveA = link_curves(overlaps[j]->m_curveA, overlaps[i]->m_curveA);
 		overlaps[i]->m_curveB = link_curves(overlaps[j]->m_curveB, overlaps[i]->m_curveB);
-	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < isect_tolB) {
-		// start -- end -- start -- end
+	    } else if (OVERLAPS_LINKED(End, Start)) {
 		overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
 		overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
 		overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
-	    } else if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < isect_tolB) {
-		// end -- start -- start -- end
+	    } else if (OVERLAPS_LINKED(Start, Start)) {
 		if (overlaps[i]->m_curve3d->Reverse() && overlaps[i]->m_curveA->Reverse() && overlaps[i]->m_curveB->Reverse()) {
 		    overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
 		    overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
 		    overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
 		}
-	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < isect_tol
-		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < isect_tolA
-		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < isect_tolB) {
-		// start -- end -- end -- start
+	    } else if (OVERLAPS_LINKED(End, End)) {
 		if (overlaps[j]->m_curve3d->Reverse() && overlaps[j]->m_curveA->Reverse() && overlaps[j]->m_curveB->Reverse()) {
 		    overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
 		    overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
