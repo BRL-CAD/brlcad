@@ -1029,7 +1029,10 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY})
-set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
+CHECK_C_COMPILER_FLAG(-fPIC FPIC_COMPILER_FLAG)
+if(FPIC_COMPILER_FLAG)
+  set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
+endif(FPIC_COMPILER_FLAG)
 install(TARGETS tclstub
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
