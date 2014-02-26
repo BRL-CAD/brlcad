@@ -3184,7 +3184,7 @@ ON_Intersect(const ON_Surface *surfA,
 		break;
 	    }
 
-	    if (j == overlaps.Count() || j == i || !overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d) {
+	    if (j == overlaps.Count() || j == i || !is_valid_overlap(overlaps[j])) {
 		continue;
 	    }
 
