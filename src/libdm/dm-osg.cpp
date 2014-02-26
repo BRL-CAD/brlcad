@@ -715,9 +715,9 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	tbmp->setDistance(sph.radius());
     } else {
 	// TODO - somehow, we need to back out the fov, aspect ratio, near and far pieces
-	// from osg_mp.  Look at persp_mat in dozoom.c to see how MGED creates its
+	// from osg_mp .  Look at persp_mat in dozoom.c to see how MGED creates its
 	// matrix - perhaps that will be enough information to tell us how to
-	// extract the key bits.  Simplier would be to have the fov and other
+	// extract the key bits.  Simpler would be to have the fov and other
 	// parameters passed directly to the display manager - that is worth
 	// considering.  getPerspective does not do what we need - given osg_mp,
 	// it returns all zeros (???)
