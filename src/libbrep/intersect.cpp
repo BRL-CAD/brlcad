@@ -2766,6 +2766,18 @@ get_overlap_intersection_parameters(
     return params;
 }
 
+HIDDEN bool
+is_valid_overlap(const OverlapSegment *overlap)
+{
+    if (overlap            &&
+	overlap->m_curve3d &&
+	overlap->m_curveA  &&
+	overlap->m_curveB) {
+	return true;
+    }
+    return false;
+}
+
 HIDDEN void
 split_overlaps_at_intersections(
 	ON_SimpleArray<OverlapSegment *> &overlaps,
@@ -2842,8 +2854,7 @@ split_overlaps_at_intersections(
 
     for (int i = 0; i < overlaps.Count(); i++) {
 	for (int j = i + 1; j < overlaps.Count(); j++) {
-	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB ||
-		!overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB) {
+	    if (!is_valid_overlap(overlaps[i]) || !is_valid_overlap(overlaps[j])) {
 		continue;
 	    }
 	    // Eliminate duplications.
@@ -3103,7 +3114,7 @@ ON_Intersect(const ON_Surface *surfA,
 	start_linked[i] = end_linked[i] = false;
     }
     for (int i = 0; i < overlaps.Count(); i++) {
-	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d) {
+	if (!is_valid_overlap(overlaps[i])) {
 	    continue;
 	}
 
@@ -3112,7 +3123,7 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 
 	for (int j = i + 1; j < overlaps.Count(); j++) {
-	    if (!overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d) {
+	    if (!is_valid_overlap(overlaps[j])) {
 		continue;
 	    }
 
@@ -3143,7 +3154,7 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     for (int i = 0; i < overlaps.Count(); i++) {
-	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d) {
+	if (!is_valid_overlap(overlaps[i])) {
 	    continue;
 	}
 	if (!start_linked[i] || !end_linked[i]) {
@@ -3153,7 +3164,7 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     for (int i = 0; i < overlaps.Count(); i++) {
-	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d) {
+	if (!is_valid_overlap(overlaps[i])) {
 	    continue;
 	}
 
@@ -3218,7 +3229,7 @@ ON_Intersect(const ON_Surface *surfA,
 		    overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
 		}
 	    }
-	    if (!overlaps[j]->m_curve3d || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB) {
+	    if (!is_valid_overlap(overlaps[j])) {
 		delete overlaps[j];
 		overlaps[j] = NULL;
 	    }
