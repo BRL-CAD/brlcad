@@ -80,6 +80,9 @@
 /* Parallel Processing */
 /** @ingroup parallel */
 /**   @defgroup thread Multithreading */
+/** @ingroup parallel */
+/**   @defgroup simd Single Instruction Multiple Data*/
+
 
 /* Language Bindings */
 /** @ingroup binding */

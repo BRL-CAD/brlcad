@@ -21,6 +21,7 @@ set(bu_headers
   bu/parse.h
   bu/ptbl.h
   bu/rb.h
+  bu/simd.h
   bu/str.h
   bu/time.h
   bu/units.h
