@@ -2766,6 +2766,112 @@ get_overlap_intersection_parameters(
     return params;
 }
 
+HIDDEN void
+split_overlaps_at_intersections(
+	ON_SimpleArray<OverlapSegment *> &overlaps,
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	Subsurface *treeA,
+	Subsurface *treeB,
+	double isect_tol,
+	double isect_tolA,
+	double isect_tolB)
+{
+    // Not points, but a bundle of params:
+    // params[i] - the separating params on overlaps[i]
+    // x - curve3d, y - curveA, z - curveB
+    ON_ClassArray<ON_3dPointArray> params = get_overlap_intersection_parameters(
+	    overlaps, surfA, surfB, treeA, treeB, isect_tol,
+	    isect_tolA, isect_tolB);
+
+    // split overlap curves at intersection parameters into subcurves
+    for (int i = 0; i < params.Count(); i++) {
+	params[i].QuickSort(ON_CompareIncreasing);
+	int start = 0;
+	bool splitted = false;
+	for (int j = 1; j < params[i].Count(); j++) {
+	    if (params[i][j].x - params[i][start].x < isect_tol) {
+		continue;
+	    }
+	    ON_Curve *subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
+	    if (subcurveA == NULL) {
+		continue;
+	    }
+	    bool isvalid = false, isreversed = false;
+	    double test_distance = 0.01;
+	    // TODO: more sample points
+	    ON_2dPoint uv1, uv2;
+	    uv1 = uv2 = subcurveA->PointAt(subcurveA->Domain().Mid());
+	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_3dVector::ZAxis);
+	    normal.Unitize();
+	    uv1 -= normal * test_distance;	// left
+	    uv2 += normal * test_distance;	// right
+	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB);
+	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB);
+	    if (in1 && !in2) {
+		isvalid = true;
+	    } else if (!in1 && in2) {
+		// the right side is overlapped.
+		isvalid = true;
+		isreversed = true;
+	    }
+	    if (isvalid) {
+		OverlapSegment *seg = new OverlapSegment;
+		seg->m_curve3d = sub_curve(overlaps[i]->m_curve3d, params[i][start].x, params[i][j].x);
+		seg->m_curveA = subcurveA;
+		seg->m_curveB = sub_curve(overlaps[i]->m_curveB, params[i][start].z, params[i][j].z);
+		if (isreversed) {
+		    seg->m_curve3d->Reverse();
+		    seg->m_curveA->Reverse();
+		    seg->m_curveB->Reverse();
+		}
+		seg->m_dir = overlaps[i]->m_dir;
+		seg->m_fix = overlaps[i]->m_fix;
+		overlaps.Append(seg);
+	    } else {
+		delete subcurveA;
+	    }
+	    start = j;
+	    splitted = true;
+	}
+	if (splitted) {
+	    delete overlaps[i];
+	    overlaps[i] = NULL;
+	}
+    }
+
+    for (int i = 0; i < overlaps.Count(); i++) {
+	for (int j = i + 1; j < overlaps.Count(); j++) {
+	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB) {
+		continue;
+	    }
+	    // Eliminate duplications.
+	    ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+	    if (ON_Intersect(overlaps[i]->m_curveA, overlaps[j]->m_curveA, x_event1, isect_tolA)
+		&& ON_Intersect(overlaps[i]->m_curveB, overlaps[j]->m_curveB, x_event2, isect_tolB)) {
+		if (x_event1[0].m_type == ON_X_EVENT::ccx_overlap
+		    && x_event2[0].m_type == ON_X_EVENT::ccx_overlap) {
+		    if (ON_NearZero(x_event1[0].m_a[0] - overlaps[i]->m_curveA->Domain().Min())
+			&& ON_NearZero(x_event1[0].m_a[1] - overlaps[i]->m_curveA->Domain().Max())
+			&& ON_NearZero(x_event2[0].m_a[0] - overlaps[i]->m_curveB->Domain().Min())
+			&& ON_NearZero(x_event2[0].m_a[1] - overlaps[i]->m_curveB->Domain().Max())) {
+			// overlaps[i] is completely inside overlaps[j]
+			delete overlaps[i];
+			overlaps[i] = NULL;
+		    } else if (ON_NearZero(x_event1[0].m_b[0] - overlaps[j]->m_curveA->Domain().Min())
+			       && ON_NearZero(x_event1[0].m_b[1] - overlaps[j]->m_curveA->Domain().Max())
+			       && ON_NearZero(x_event2[0].m_b[0] - overlaps[j]->m_curveB->Domain().Min())
+			       && ON_NearZero(x_event2[0].m_b[1] - overlaps[j]->m_curveB->Domain().Max())) {
+			// overlaps[j] is completely inside overlaps[i]
+			delete overlaps[j];
+			overlaps[j] = NULL;
+		    }
+		}
+	    }
+	}
+    }
+}
+
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -2986,98 +3092,8 @@ ON_Intersect(const ON_Surface *surfA,
 	delete []knots;
     }
 
-    // Not points, but a bundle of params:
-    // params[i] - the separating params on overlaps[i]
-    // x - curve3d, y - curveA, z - curveB
-    ON_ClassArray<ON_3dPointArray> params = get_overlap_intersection_parameters(
-	    overlaps, surfA, surfB, treeA, treeB, isect_tol,
-	    isect_tolA, isect_tolB);
-
-    for (int i = 0; i < params.Count(); i++) {
-	params[i].QuickSort(ON_CompareIncreasing);
-	int start = 0;
-	bool splitted = false;
-	for (int j = 1; j < params[i].Count(); j++) {
-	    if (params[i][j].x - params[i][start].x < isect_tol) {
-		continue;
-	    }
-	    ON_Curve *subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
-	    if (subcurveA == NULL) {
-		continue;
-	    }
-	    bool isvalid = false, isreversed = false;
-	    double test_distance = 0.01;
-	    // TODO: more sample points
-	    ON_2dPoint uv1, uv2;
-	    uv1 = uv2 = subcurveA->PointAt(subcurveA->Domain().Mid());
-	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_3dVector::ZAxis);
-	    normal.Unitize();
-	    uv1 -= normal * test_distance;	// left
-	    uv2 += normal * test_distance;	// right
-	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB);
-	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB);
-	    if (in1 && !in2) {
-		isvalid = true;
-	    } else if (!in1 && in2) {
-		// the right side is overlapped.
-		isvalid = true;
-		isreversed = true;
-	    }
-	    if (isvalid) {
-		OverlapSegment *seg = new OverlapSegment;
-		seg->m_curve3d = sub_curve(overlaps[i]->m_curve3d, params[i][start].x, params[i][j].x);
-		seg->m_curveA = subcurveA;
-		seg->m_curveB = sub_curve(overlaps[i]->m_curveB, params[i][start].z, params[i][j].z);
-		if (isreversed) {
-		    seg->m_curve3d->Reverse();
-		    seg->m_curveA->Reverse();
-		    seg->m_curveB->Reverse();
-		}
-		seg->m_dir = overlaps[i]->m_dir;
-		seg->m_fix = overlaps[i]->m_fix;
-		overlaps.Append(seg);
-	    } else {
-		delete subcurveA;
-	    }
-	    start = j;
-	    splitted = true;
-	}
-	if (splitted) {
-	    delete overlaps[i];
-	    overlaps[i] = NULL;
-	}
-    }
-
-    for (int i = 0; i < overlaps.Count(); i++) {
-	for (int j = i + 1; j < overlaps.Count(); j++) {
-	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB) {
-		continue;
-	    }
-	    // Eliminate duplications.
-	    ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-	    if (ON_Intersect(overlaps[i]->m_curveA, overlaps[j]->m_curveA, x_event1, isect_tolA)
-		&& ON_Intersect(overlaps[i]->m_curveB, overlaps[j]->m_curveB, x_event2, isect_tolB)) {
-		if (x_event1[0].m_type == ON_X_EVENT::ccx_overlap
-		    && x_event2[0].m_type == ON_X_EVENT::ccx_overlap) {
-		    if (ON_NearZero(x_event1[0].m_a[0] - overlaps[i]->m_curveA->Domain().Min())
-			&& ON_NearZero(x_event1[0].m_a[1] - overlaps[i]->m_curveA->Domain().Max())
-			&& ON_NearZero(x_event2[0].m_a[0] - overlaps[i]->m_curveB->Domain().Min())
-			&& ON_NearZero(x_event2[0].m_a[1] - overlaps[i]->m_curveB->Domain().Max())) {
-			// overlaps[i] is completely inside overlaps[j]
-			delete overlaps[i];
-			overlaps[i] = NULL;
-		    } else if (ON_NearZero(x_event1[0].m_b[0] - overlaps[j]->m_curveA->Domain().Min())
-			       && ON_NearZero(x_event1[0].m_b[1] - overlaps[j]->m_curveA->Domain().Max())
-			       && ON_NearZero(x_event2[0].m_b[0] - overlaps[j]->m_curveB->Domain().Min())
-			       && ON_NearZero(x_event2[0].m_b[1] - overlaps[j]->m_curveB->Domain().Max())) {
-			// overlaps[j] is completely inside overlaps[i]
-			delete overlaps[j];
-			overlaps[j] = NULL;
-		    }
-		}
-	    }
-	}
-    }
+    split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
+	    isect_tol, isect_tolA, isect_tolB);
 
     // Find the neighbors for every overlap segment.
     ON_SimpleArray<bool> start_linked(overlaps.Count()), end_linked(overlaps.Count());
