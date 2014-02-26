@@ -1,34 +1,5 @@
-set(bu_headers
-  bu.h
-  bu/avs.h
-  bu/bitv.h
-  bu/bu_tcl.h
-  bu/color.h
-  bu/cv.h
-  bu/debug.h
-  bu/defines.h
-  bu/endian.h
-  bu/file.h
-  bu/getopt.h
-  bu/hash.h
-  bu/hist.h
-  bu/list.h
-  bu/log.h
-  bu/magic.h
-  bu/malloc.h
-  bu/mapped_file.h
-  bu/parallel.h
-  bu/parse.h
-  bu/ptbl.h
-  bu/rb.h
-  bu/simd.h
-  bu/sort.h
-  bu/str.h
-  bu/time.h
-  bu/units.h
-  bu/vlb.h
-  bu/vls.h
-  )
+
+add_subdirectory(bu)
 
 set(dm_headers
   dm.h
@@ -59,7 +30,7 @@ set(include_hdrs
   ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
   RtServerImpl.h
   bn.h
-  ${bu_headers}
+  bu.h
   common.h
   cursor.h
   ged.h
