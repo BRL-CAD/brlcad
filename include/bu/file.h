@@ -558,16 +558,6 @@ BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
 /** NEW: Do not use. */
 BU_EXPORT extern off_t bu_ftell(FILE *stream);
 
-/** @file libbu/sort.c
- * platform-independent re-entrant version of qsort, where the first argument
- * is the array to sort, the second the number of elements inside the array, the
- * third the size of one element, the fourth the comparison-function and the
- * fifth a variable which is handed as a third argument to the comparison-function.
- */
-BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
-            int (*compare)(const void *, const void *, void *), void *context);
-
-
 /** @} */
 
 #endif  /* BU_FILE_H */

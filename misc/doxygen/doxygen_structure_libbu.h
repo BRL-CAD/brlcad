@@ -70,12 +70,13 @@
 /** @ingroup data */
 /**   @defgroup hist Histogram Handling */
 /** @ingroup data */
+/**   @defgroup sort Sorting Algorithms */
+/** @ingroup data */
 /**   @defgroup endian Endian Support */
 /** @ingroup data */
 /**   @defgroup bu_time Time Support */
 /** @ingroup data */
 /**   @defgroup units Units */
-
 
 /* Parallel Processing */
 /** @ingroup parallel */
