@@ -2842,7 +2842,8 @@ split_overlaps_at_intersections(
 
     for (int i = 0; i < overlaps.Count(); i++) {
 	for (int j = i + 1; j < overlaps.Count(); j++) {
-	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB) {
+	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB ||
+		!overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB) {
 		continue;
 	    }
 	    // Eliminate duplications.
