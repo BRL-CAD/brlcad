@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <stdio.h> /* For FILE */
+#include <stdarg.h> /* For va_list */
 
 #include "bu/defines.h"
 #include "bu/magic.h"
