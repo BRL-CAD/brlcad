@@ -36,7 +36,6 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
-#include "bu/vls.h" /* for utctime - may go away if/when that is broken out into bu/time.h */
 
 /** @addtogroup file */
 /** @{ */
@@ -557,20 +556,6 @@ BU_EXPORT extern int bu_simd_level(void);
  * Returns 1 if they are, 0 if they are not.
  */
 BU_EXPORT extern int bu_simd_supported(int level);
-
-/** @file libbu/timer.c
- * Return microsecond accuracy time information.
- */
-BU_EXPORT extern int64_t bu_gettime(void);
-
-/**
- * Evaluate the time_t input as UTC time in ISO format.
- *
- * The UTC time is written into the user-provided bu_vls struct and is
- * also returned and guaranteed to be a non-null result, returning a
- * static "NULL" UTC time if an error is encountered.
- */
-BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 /** @file libbu/dlfcn.c
  * Dynamic Library functionality

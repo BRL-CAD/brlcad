@@ -71,6 +71,9 @@
 /**   @defgroup hist Histogram Handling */
 /** @ingroup data */
 /**   @defgroup endian Endian Support */
+/** @ingroup data */
+/**   @defgroup timer Time Delta Measurement */
+
 
 
 /* Parallel Processing */

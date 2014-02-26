@@ -84,6 +84,7 @@ BU_EXPORT extern const char *bu_version(void);
 #include "./bu/rb.h"
 #include "./bu/log.h"
 #include "./bu/file.h"
+#include "./bu/time.h"
 #include "./bu/getopt.h"
 #include "./bu/parallel.h"
 #include "./bu/malloc.h"
