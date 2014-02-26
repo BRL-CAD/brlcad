@@ -73,7 +73,8 @@
 /**   @defgroup endian Endian Support */
 /** @ingroup data */
 /**   @defgroup timer Time Delta Measurement */
-
+/** @ingroup data */
+/**   @defgroup units Units */
 
 
 /* Parallel Processing */

@@ -23,6 +23,7 @@ set(bu_headers
   bu/rb.h
   bu/str.h
   bu/time.h
+  bu/units.h
   bu/vlb.h
   bu/vls.h
   )
