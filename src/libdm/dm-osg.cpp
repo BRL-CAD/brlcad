@@ -50,6 +50,11 @@
 
 #include "./dm_util.h"
 
+/* For Tk, we need to offset when thinking about screen size in
+ * order to allow for the Mac OSX top-of-screen toolbar - Tk
+ * itself is quite happy to put things under it */
+#define TK_SCREEN_OFFSET 30
+
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -443,8 +448,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
 
-    /* Make sure the window is large enough.  (Note - ogl subtracts
-     * 30 from these values - why??)  If these values are not large
+    /* Make sure the window is large enough.  If these values are not large
      * enough, the drawing window will not resize properly to match
      * the height change of the parent window.  This is also true
      * of the ogl display manager, although it is undocumented *why*
@@ -461,7 +465,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
-		dmp->dm_width = tclresult->internalRep.longValue;
+		dmp->dm_width = tclresult->internalRep.longValue - TK_SCREEN_OFFSET;
 	    }
 	    ++make_square;
 	}
@@ -474,7 +478,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
-		dmp->dm_height = tclresult->internalRep.longValue;
+		dmp->dm_height = tclresult->internalRep.longValue - TK_SCREEN_OFFSET;
 	    }
 	    ++make_square;
 	}
