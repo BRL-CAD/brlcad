@@ -28,36 +28,62 @@
 #include "G_Objects.h"
 
 int
-AP214_Boolean_Result(STEPentity **bool_result, int op, struct directory *left, struct directory *right, AP203_Contents *sc)
+AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_type, STEPentity *left, STEPentity *right, AP203_Contents *sc, int depth)
 {
+    if (depth > 0) bu_log("%*s", depth, "");
+    bu_log("\nAssembling boolean_result\n");
     SdaiBoolean_result *boolean_result = NULL;
     SdaiBoolean_operand *first = NULL;
     SdaiBoolean_operand *second = NULL;
 
-    if (op != 2 && op != 3 && op != 4) return -1;
-    if (left == RT_DIR_NULL || right == RT_DIR_NULL) return -1;
+    if (op != 2 && op != 3 && op != 4) {
+	if (depth > 0) bu_log("%*s", depth, "");
+	bu_log("unknown op %d\n", op);
+	return -1;
+    }
+
+    if (!left) {
+	if (depth > 0) bu_log("%*s", depth, "");
+	bu_log("error - no left object!\n");
+	return -1;
+    }
+
+    if (!right) {
+	if (depth > 0) bu_log("%*s", depth, "");
+	bu_log("error - no right object!\n");
+	return -1;
+    }
+
+    if (!left_type || !right_type) return -1;
+
+    if (depth > 0) bu_log("%*s", depth, "");
+    std::cout << "Step entity in left: " << left->EntityName() << "\n";
+    if (depth > 0) bu_log("%*s", depth, "");
+    std::cout << "Step entity in right: " << right->EntityName() << "\n";
 
     boolean_result = (SdaiBoolean_result *)sc->registry->ObjCreate("BOOLEAN_RESULT");
     sc->instance_list->Append((STEPentity*)boolean_result, completeSE);
 
-    if (sc->solid_to_step_manifold->find(left) != sc->solid_to_step_manifold->end()) {
-	SdaiSolid_model *left_solid = (SdaiSolid_model *)sc->solid_to_step_manifold->find(left)->second;
+    if (left_type == 1) {
+	SdaiSolid_model *left_solid = (SdaiSolid_model *)left;
 	first = new SdaiBoolean_operand(left_solid, SCHEMA_NAMESPACE::t_boolean_operand);
     }
-    if (!first && sc->comb_to_step_manifold->find(left) != sc->comb_to_step_manifold->end()) {
-	SdaiBoolean_result *left_boolresult = (SdaiBoolean_result *)sc->comb_to_step_manifold->find(left)->second;
+    if (left_type == 2) {
+	SdaiBoolean_result *left_boolresult = (SdaiBoolean_result *)left;
 	first = new SdaiBoolean_operand(left_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
     }
-    sc->instance_list->Append((STEPentity*)first, completeSE);
-    if (sc->solid_to_step_manifold->find(right) != sc->solid_to_step_manifold->end()) {
-	SdaiSolid_model *right_solid = (SdaiSolid_model *)sc->solid_to_step_manifold->find(right)->second;
+    sc->instance_list->Append((STEPentity*)first , completeSE);
+
+    if (right_type == 1) {
+	SdaiSolid_model *right_solid = (SdaiSolid_model *)right;
 	second = new SdaiBoolean_operand(right_solid, SCHEMA_NAMESPACE::t_boolean_operand);
     }
-    if (!second && sc->comb_to_step_manifold->find(right) != sc->comb_to_step_manifold->end()) {
-	SdaiBoolean_result *right_boolresult = (SdaiBoolean_result *)sc->comb_to_step_manifold->find(right)->second;
+    if (right_type == 2) {
+	SdaiBoolean_result *right_boolresult = (SdaiBoolean_result *)right;
 	second = new SdaiBoolean_operand(right_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
     }
     sc->instance_list->Append((STEPentity*)second, completeSE);
+
     boolean_result->first_operand_(first);
     boolean_result->second_operand_(second);
 
@@ -73,7 +99,6 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, struct directory *left, s
 
     (*bool_result) = boolean_result;
 
-    /* Shouldn't get here */
     return 1;
 }
 
@@ -126,6 +151,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    if (!left && !right) {
 		bu_log("Constructed boolean for %s: ", (*d)->d_namep);
 	    }
+
 	    if (left_ret == 1) bu_log("solid");
 	    if (left_ret == 2) bu_log("boolean_result");
 	    if (left_ret == 3) bu_log("comb(boolean_result)");
@@ -143,6 +169,10 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    if (right_ret == 1) bu_log("solid\n");
 	    if (right_ret == 2) bu_log("boolean_result\n");
 	    if (right_ret == 3) bu_log("comb(boolean_result)\n");
+
+	    STEPentity *bool_result;
+	    (void)AP214_Boolean_Result(&bool_result, t->tr_op, left_ret, right_ret, leftstep, rightstep, sc, depth);
+	    (*stepobj) = bool_result;
 
 	    /* If we've got something here, anything above this is a boolean_result */
 	    ret = 2;
@@ -164,32 +194,42 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    return NULL;
 			} else {
 			    if (depth > 0) bu_log("%*s", depth, "");
-			    if (sc->comb_to_step->find(dir) != sc->comb_to_step->end()) {
-				bu_log("Combination object %s already exists - returning\n", dir->d_namep);
+			    if (sc->comb_to_step_manifold->find(dir) != sc->comb_to_step_manifold->end()) {
+				(*stepobj) = (STEPentity *)sc->comb_to_step_manifold->find(dir)->second;
+				bu_log("Combination object manifold %s already exists - returning\n", dir->d_namep);
 			    } else {
 				/* TODO - if a comb has only one solid under it, return that solid for the
 				 * comb */
 				int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 				if (tree_construct == 1) ret = 1;
-				if (tree_construct != 1) ret = 3;
-				bu_log("Returning comb object's boolean_representation %s (%d)\n", dir->d_namep, tree_construct);
-				sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
+				if (tree_construct != 1) {
+				    bu_log("Returning comb object's boolean_representation as created by AP214 boolean assembly  %s (%d)\n", dir->d_namep, tree_construct);
+				    sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
+				    (*sc->comb_to_step_manifold)[dir] = *stepobj;
+				    ret = 2;
+				}
 			    }
 			}
 		    } else {
 			/* TODO - if we have a matrix being applied to a solid, investigate
 			 * solid_replica in AP214 */
 			if (solid) (*solid) = dir;
-			if (sc->solid_to_step->find(dir) != sc->solid_to_step->end()) {
+			if (sc->solid_to_step_manifold->find(dir) != sc->solid_to_step_manifold->end()) {
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Solid object %s already exists - Returning\n", dir->d_namep);
+			    (*stepobj) = sc->solid_to_step_manifold->find(dir)->second;
 			} else {
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Returning solid object %s\n", dir->d_namep);
 			    Object_To_STEP(dir, &intern, sc->wdbp, sc);
+			    if (sc->solid_to_step->find(dir) == sc->solid_to_step->end()) {
+				bu_log("solid creation failed: %s!\n", dir->d_namep);
+			    } else {
+				(*stepobj) = sc->solid_to_step_manifold->find(dir)->second;
+			    }
 			}
-			if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
-			std::cout << "Step entity in stepobj: " << (*stepobj)->EntityName() << "\n";
+			//if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
+			//std::cout << "Step entity in stepobj: " << (*stepobj)->EntityName() << "\n";
 			ret = 1;
 		    }
                 } else {
@@ -281,6 +321,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	    if (sc->comb_to_step->find(rdp) != sc->comb_to_step->end()) {
 		bu_log("Region object %s already exists - skipping\n", rdp->d_namep);
 	    } else {
+		STEPentity *stepobj;
 		struct rt_db_internal comb_intern;
 		sc->dbip = wdbp->dbip;
 		sc->wdbp = wdbp;
@@ -291,7 +332,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		if (comb->tree == NULL) {
 		    /* Probably should return empty object... */
 		} else {
-		    (void)conv_tree(&rdp, 0, 0, NULL, NULL, comb->tree, sc);
+		    (void)conv_tree(&rdp, 0, 0, NULL, &stepobj, comb->tree, sc);
 		}
 	    }
 	}
