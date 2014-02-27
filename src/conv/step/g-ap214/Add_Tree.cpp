@@ -201,9 +201,13 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 				int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 				if (tree_construct == 1) ret = 1;
 				if (tree_construct != 1) {
+				    struct bu_vls comb_shape_name = BU_VLS_INIT_ZERO;
 				    bu_log("Returning comb object's boolean_representation as created by AP214 boolean assembly  %s (%d)\n", dir->d_namep, tree_construct);
 				    sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
 				    (*sc->comb_to_step_manifold)[dir] = *stepobj;
+				    bu_vls_sprintf(&comb_shape_name, "'%s_shape'", dir->d_namep);
+				    ((SdaiBoolean_result *)(*stepobj))->name_(bu_vls_addr(&comb_shape_name));
+				    bu_vls_free(&comb_shape_name);
 				    ret = 2;
 				}
 			    }
