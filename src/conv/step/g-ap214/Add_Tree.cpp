@@ -152,8 +152,11 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    }
 
 	    bu_vls_sprintf(&comb_shape_name, "'%s-", (*d)->d_namep);
-	    if (left_ret == 1) bu_vls_printf(&comb_shape_name, "solid");
-	    if (left_ret == 2) bu_vls_printf(&comb_shape_name, "boolean_result");
+	    if (left) {
+		bu_vls_printf(&comb_shape_name, left->d_namep);
+	    } else {
+		bu_vls_printf(&comb_shape_name, "boolean_result");
+	    }
 	    switch (t->tr_op) {
 		case OP_UNION:
 		    bu_vls_printf(&comb_shape_name, "_UNION_");
@@ -165,9 +168,12 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 		    bu_vls_printf(&comb_shape_name, "_SUBTRACT_");
 		    break;
 	    }
-	    if (right_ret == 1) bu_vls_printf(&comb_shape_name, "solid'");
-	    if (right_ret == 2) bu_vls_printf(&comb_shape_name, "boolean_result'");
-
+	    if (right) {
+		bu_vls_printf(&comb_shape_name, right->d_namep);
+		bu_vls_printf(&comb_shape_name, "'");
+	    } else {
+		bu_vls_printf(&comb_shape_name, "boolean_result'");
+	    }
 
 	    if (left_ret == 1) bu_log("solid");
 	    if (left_ret == 2) bu_log("boolean_result");
