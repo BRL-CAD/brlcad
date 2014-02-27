@@ -72,7 +72,6 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_
 	SdaiBoolean_result *left_boolresult = (SdaiBoolean_result *)left;
 	first = new SdaiBoolean_operand(left_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
     }
-    sc->instance_list->Append((STEPentity*)first , completeSE);
 
     if (right_type == 1) {
 	SdaiSolid_model *right_solid = (SdaiSolid_model *)right;
@@ -82,7 +81,6 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_
 	SdaiBoolean_result *right_boolresult = (SdaiBoolean_result *)right;
 	second = new SdaiBoolean_operand(right_boolresult, SCHEMA_NAMESPACE::t_boolean_operand);
     }
-    sc->instance_list->Append((STEPentity*)second, completeSE);
 
     boolean_result->first_operand_(first);
     boolean_result->second_operand_(second);
