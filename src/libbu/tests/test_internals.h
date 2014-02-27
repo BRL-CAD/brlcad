@@ -44,8 +44,12 @@ __BEGIN_DECLS
 const int CTEST_PASS  = 0;
 const int CTEST_FAIL  = 1;
 
-const int FALSE = 0;
-const int TRUE  = 1;
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
 
 typedef enum {
     HEX         = 0x0001,

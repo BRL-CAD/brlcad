@@ -158,12 +158,12 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
 
     /* get a random seed from system entropy to seed "random()" */
     seed = bu_get_urandom_number();
-    srandom(seed);
+    srand(seed);
 
     bu_vls_trunc(v, 0);
     bu_vls_extend(v, nchars);
     for (i = 0; i < nstrchars; ++i) {
-	long int r = random();
+	long int r = rand();
 	int n = r ? (int)(r % (nchars - 1)) : 0;
 	char c = chars[n];
 	bu_vls_putc(v, c);
