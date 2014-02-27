@@ -38,6 +38,36 @@
 // Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
 
+// The maximal depth for subdivision - trade-off between accuracy and
+// performance.
+#define NR_MAX_DEPTH 8
+#define MAX_PCI_DEPTH NR_MAX_DEPTH
+#define MAX_PSI_DEPTH NR_MAX_DEPTH
+#define MAX_CCI_DEPTH NR_MAX_DEPTH
+#define MAX_CSI_DEPTH NR_MAX_DEPTH
+#define MAX_SSI_DEPTH NR_MAX_DEPTH
+
+
+// We make the default tolerance for PSI the same as that of curve and
+// surface intersections defined by openNURBS (see opennurbs_curve.h
+// and opennurbs_surface.h).
+#define NR_DEFAULT_TOLERANCE 0.001
+#define PCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
+#define PSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
+#define CCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
+#define CSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
+#define SSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
+
+// Used to prevent an infinite loop in the unlikely event that we
+// can't provide a good starting point for the Newton-Raphson
+// Iteration.
+#define NR_MAX_ITERATIONS 100
+#define PCI_MAX_ITERATIONS NR_MAX_ITERATIONS
+#define PSI_MAX_ITERATIONS NR_MAX_ITERATIONS
+#define CCI_MAX_ITERATIONS NR_MAX_ITERATIONS
+#define CSI_MAX_ITERATIONS NR_MAX_ITERATIONS
+#define SSI_MAX_ITERATIONS NR_MAX_ITERATIONS
+
 class XEventProxy {
 public:
     XEventProxy(ON_X_EVENT::TYPE type);
@@ -584,24 +614,6 @@ ON_Intersect(const ON_3dPoint &pointA,
  * - Use Newton-Raphson iterations to calculate an accurate intersection
  *   point, with the estimated one as a start.
  */
-
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define MAX_PCI_DEPTH 8
-
-
-// We make the default tolerance for PSI the same as that of curve-curve
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h).
-#define PCI_DEFAULT_TOLERANCE 0.001
-
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define PCI_MAX_ITERATIONS 100
-
-
 HIDDEN bool
 newton_pci(double &t, const ON_3dPoint &pointA, const ON_Curve &curveB, double tol)
 {
@@ -758,26 +770,6 @@ ON_Intersect(const ON_3dPoint &pointA,
  * - If the closest point is within the given tolerance, there is an
  *   intersection.
  */
-
-
-// We make the default tolerance for PSI the same as that of curve-surface
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h).
-#define PSI_DEFAULT_TOLERANCE 0.001
-
-
-// The default maximal depth for creating a surface tree (8) is way too
-// much - killing performance. Since it's only used for getting an
-// estimation, and we use Newton iterations afterwards, it's reasonable
-// to use a smaller depth in this step.
-#define MAX_PSI_DEPTH 8
-
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define PSI_MAX_ITERATIONS 100
-
-
 HIDDEN bool
 newton_psi(double &u, double &v, const ON_3dPoint &pointA, const ON_Surface &surfB, double tol)
 {
@@ -935,27 +927,9 @@ ON_Intersect(const ON_3dPoint &pointA,
  *   overlap events.
  */
 
-
-// We make the default tolerance for CCI the same as that of curve-curve
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h).
-#define CCI_DEFAULT_TOLERANCE 0.001
-
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define MAX_CCI_DEPTH 8
-
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define CCI_MAX_ITERATIONS 100
-
-
 // We can only test a finite number of points to determine overlap.
 // Here we test 16 points uniformly distributed.
 #define CCI_OVERLAP_TEST_POINTS 16
-
 
 HIDDEN void
 newton_cci(double &t_a, double &t_b, const ON_Curve *curveA, const ON_Curve *curveB, double isect_tol)
@@ -1449,27 +1423,9 @@ ON_Intersect(const ON_Curve *curveA,
  *   overlap events.
  */
 
-
-// We make the default tolerance for CSI the same as that of curve-surface
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h).
-#define CSI_DEFAULT_TOLERANCE 0.001
-
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define MAX_CSI_DEPTH 8
-
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define CSI_MAX_ITERATIONS 100
-
-
 // We can only test a finite number of points to determine overlap.
 // Here we test 2 points uniformly distributed.
 #define CSI_OVERLAP_TEST_POINTS 2
-
 
 HIDDEN void
 newton_csi(double &t, double &u, double &v, const ON_Curve *curveA, const ON_Surface *surfB, double isect_tol, Subsurface *tree)
@@ -2103,24 +2059,6 @@ ON_Intersect(const ON_Curve *curveA,
  * (SPM '08). ACM, New York, NY, USA, 257-268. DOI=10.1145/1364901.1364937
  * http://doi.acm.org/10.1145/1364901.1364937
  */
-
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define MAX_SSI_DEPTH 8
-
-
-// We make the default tolerance for SSI the same as that of surface-surface
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_surface.h).
-#define SSI_DEFAULT_TOLERANCE 0.001
-
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define SSI_MAX_ITERATIONS 100
-
-
 struct Triangle {
     ON_3dPoint a, b, c;
     inline void CreateFromPoints(ON_3dPoint &pA, ON_3dPoint &pB, ON_3dPoint &pC)
