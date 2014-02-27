@@ -357,6 +357,12 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		} else {
 		    (void)conv_tree(&rdp, 0, 0, NULL, &stepobj, comb->tree, sc);
 		}
+
+		//TODO - add Shape_Definition_Representation, figure out how to construct
+		//the appropriate hierarchy and relationships so that the region object can be plugged in
+		//to higher level assemblies.  The boolean_result should (ideally) stand in where
+		//the advanced brep normally would below a wrapper comb, if we can get away with that.
+
 	    }
 	}
     }
