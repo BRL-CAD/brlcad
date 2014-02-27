@@ -103,6 +103,7 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_
 HIDDEN int
 conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)
 {
+    struct bu_vls comb_shape_name = BU_VLS_INIT_ZERO;
     struct directory *left = NULL, *right = NULL, *old = NULL;
     STEPentity *leftstep = NULL;
     STEPentity *rightstep = NULL;
@@ -150,6 +151,24 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 		bu_log("Constructed boolean for %s: ", (*d)->d_namep);
 	    }
 
+	    bu_vls_sprintf(&comb_shape_name, "'%s-", (*d)->d_namep);
+	    if (left_ret == 1) bu_vls_printf(&comb_shape_name, "solid");
+	    if (left_ret == 2) bu_vls_printf(&comb_shape_name, "boolean_result");
+	    switch (t->tr_op) {
+		case OP_UNION:
+		    bu_vls_printf(&comb_shape_name, "_UNION_");
+		    break;
+		case OP_INTERSECT:
+		    bu_vls_printf(&comb_shape_name, "_INTERSECT_");
+		    break;
+		case OP_SUBTRACT:
+		    bu_vls_printf(&comb_shape_name, "_SUBTRACT_");
+		    break;
+	    }
+	    if (right_ret == 1) bu_vls_printf(&comb_shape_name, "solid'");
+	    if (right_ret == 2) bu_vls_printf(&comb_shape_name, "boolean_result'");
+
+
 	    if (left_ret == 1) bu_log("solid");
 	    if (left_ret == 2) bu_log("boolean_result");
 	    if (left_ret == 3) bu_log("comb(boolean_result)");
@@ -171,6 +190,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    STEPentity *bool_result;
 	    (void)AP214_Boolean_Result(&bool_result, t->tr_op, left_ret, right_ret, leftstep, rightstep, sc, depth);
 	    (*stepobj) = bool_result;
+	    ((SdaiBoolean_result *)(*stepobj))->name_(bu_vls_addr(&comb_shape_name));
 
 	    /* If we've got something here, anything above this is a boolean_result */
 	    ret = 2;
@@ -201,13 +221,13 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 				int tree_construct = conv_tree(&dir, depth+1, 0, NULL, stepobj, comb->tree, sc);
 				if (tree_construct == 1) ret = 1;
 				if (tree_construct != 1) {
-				    struct bu_vls comb_shape_name = BU_VLS_INIT_ZERO;
+				    struct bu_vls comb_obj_name = BU_VLS_INIT_ZERO;
 				    bu_log("Returning comb object's boolean_representation as created by AP214 boolean assembly  %s (%d)\n", dir->d_namep, tree_construct);
 				    sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
 				    (*sc->comb_to_step_manifold)[dir] = *stepobj;
-				    bu_vls_sprintf(&comb_shape_name, "'%s_shape'", dir->d_namep);
-				    ((SdaiBoolean_result *)(*stepobj))->name_(bu_vls_addr(&comb_shape_name));
-				    bu_vls_free(&comb_shape_name);
+				    bu_vls_sprintf(&comb_obj_name, "'%s_shape'", dir->d_namep);
+				    ((SdaiBoolean_result *)(*stepobj))->name_(bu_vls_addr(&comb_obj_name));
+				    bu_vls_free(&comb_obj_name);
 				    ret = 2;
 				}
 			    }
@@ -246,6 +266,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", t->tr_op);
             ret = -1;
     }
+    bu_vls_free(&comb_shape_name);
 
     return ret;
 }
