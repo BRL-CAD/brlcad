@@ -14,6 +14,7 @@ set(gap214_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   ../g-step/AP203.cpp
+  ../g-step/Assembly_Product.cpp
   ../g-step/Default_Geometric_Context.cpp
   ../g-step/ON_Brep.cpp
   ../g-step/ON_NurbsCurve.cpp

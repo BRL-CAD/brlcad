@@ -26,6 +26,7 @@
 
 #include "AP214e3.h"
 #include "G_Objects.h"
+#include "Shape_Definition_Representation.h"
 
 int
 AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_type, STEPentity *left, STEPentity *right, AP203_Contents *sc, int depth)
@@ -368,6 +369,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		//the appropriate hierarchy and relationships so that the region object can be plugged in
 		//to higher level assemblies.  The boolean_result should (ideally) stand in where
 		//the advanced brep normally would below a wrapper comb, if we can get away with that.
+		(*sc->comb_to_step)[rdp] = Add_Shape_Definition_Representation(rdp, sc, (SdaiRepresentation *)stepobj);
 
 	    }
 	}
