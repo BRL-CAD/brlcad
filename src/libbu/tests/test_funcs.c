@@ -27,8 +27,12 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <errno.h>
+
+#ifdef HAVE_STDINT_H
+#   include <stdint.h>
+#endif
+
 #include "bio.h"
 
 #include "bu.h"
