@@ -28,6 +28,8 @@
 
 #ifdef DM_OSG
 
+#include "common.h"
+
 #ifdef __cplusplus
 #include <iostream>
 
