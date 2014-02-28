@@ -363,14 +363,12 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		    /* Probably should return empty object... */
 		} else {
 		    (void)conv_tree(&rdp, 0, 0, NULL, &stepobj, comb->tree, sc);
+		    struct bu_vls comb_obj_name = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&comb_obj_name, "'%s_region_shape'", rdp->d_namep);
+		    ((SdaiBoolean_result *)stepobj)->name_(bu_vls_addr(&comb_obj_name));
+		    bu_vls_free(&comb_obj_name);
+		    (*sc->comb_to_step)[rdp] = Add_Shape_Definition_Representation(rdp, sc, (SdaiRepresentation *)stepobj);
 		}
-
-		//TODO - add Shape_Definition_Representation, figure out how to construct
-		//the appropriate hierarchy and relationships so that the region object can be plugged in
-		//to higher level assemblies.  The boolean_result should (ideally) stand in where
-		//the advanced brep normally would below a wrapper comb, if we can get away with that.
-		(*sc->comb_to_step)[rdp] = Add_Shape_Definition_Representation(rdp, sc, (SdaiRepresentation *)stepobj);
-
 	    }
 	}
     }

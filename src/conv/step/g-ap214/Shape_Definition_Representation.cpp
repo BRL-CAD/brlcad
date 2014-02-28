@@ -65,13 +65,6 @@ Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, Sd
     prod_def_form->id_("''");
     prod_def_form->description_("''");
 
-    // PRODUCT_RELATED_PRODUCT_CATEGORY
-    SdaiProduct *prod_rel_prod_cat = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT_RELATED_PRODUCT_CATEGORY");
-    sc->instance_list->Append((STEPentity *)prod_rel_prod_cat, completeSE);
-    prod_rel_prod_cat->id_("''");
-    prod_rel_prod_cat->name_("''");
-    prod_rel_prod_cat->description_("''");
-
     // PRODUCT
     SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
     sc->instance_list->Append((STEPentity *)prod, completeSE);
