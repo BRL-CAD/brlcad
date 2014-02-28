@@ -24,7 +24,6 @@
 
 #include "AP_Common.h"
 #include "Comb.h"
-#include "Trees.h"
 
 /*
  * To associate multiple objects in STEP, we must define and relate product definitions
