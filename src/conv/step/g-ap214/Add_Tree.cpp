@@ -29,38 +29,48 @@
 #include "Shape_Definition_Representation.h"
 
 int
-AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_type, STEPentity *left, STEPentity *right, AP203_Contents *sc, int depth)
+AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_type, STEPentity *left, STEPentity *right, AP203_Contents *sc, int UNUSED(depth))
 {
+#ifdef AP214_DEBUG
     if (depth > 0) bu_log("%*s", depth, "");
     bu_log("\nAssembling boolean_result\n");
+#endif
     SdaiBoolean_result *boolean_result = NULL;
     SdaiBoolean_operand *first = NULL;
     SdaiBoolean_operand *second = NULL;
 
     if (op != 2 && op != 3 && op != 4) {
+#ifdef AP214_DEBUG
 	if (depth > 0) bu_log("%*s", depth, "");
+#endif
 	bu_log("unknown op %d\n", op);
 	return -1;
     }
 
     if (!left) {
+#ifdef AP214_DEBUG
 	if (depth > 0) bu_log("%*s", depth, "");
+#endif
 	bu_log("error - no left object!\n");
 	return -1;
     }
 
     if (!right) {
+#ifdef AP214_DEBUG
 	if (depth > 0) bu_log("%*s", depth, "");
+#endif
 	bu_log("error - no right object!\n");
 	return -1;
     }
 
     if (!left_type || !right_type) return -1;
 
+#ifdef AP214_DEBUG
     if (depth > 0) bu_log("%*s", depth, "");
     std::cout << "Step entity in left: " << left->EntityName() << "\n";
     if (depth > 0) bu_log("%*s", depth, "");
     std::cout << "Step entity in right: " << right->EntityName() << "\n";
+#endif
 
     boolean_result = (SdaiBoolean_result *)sc->registry->ObjCreate("BOOLEAN_RESULT");
     sc->instance_list->Append((STEPentity*)boolean_result, completeSE);
@@ -102,20 +112,22 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_
 }
 
 HIDDEN int
-conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)
+conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)
 {
     struct bu_vls comb_shape_name = BU_VLS_INIT_ZERO;
-    struct directory *left = NULL, *right = NULL, *old = NULL;
+    struct directory *left = NULL, *right = NULL;
     STEPentity *leftstep = NULL;
     STEPentity *rightstep = NULL;
     int ret = 0;
     int left_ret = 0;
     int right_ret = 0;
+#ifdef AP214_DEBUG
     if (depth > 0) bu_log("%*s", depth, "");
     bu_log("Processing: %s, depth: %d", (*d)->d_namep, depth);
     if (parent_branch == 1) bu_log(", branch = right\n");
     if (parent_branch == 2) bu_log(", branch = left\n");
     if (parent_branch == 0) bu_log("\n");
+#endif
     switch (t->tr_op) {
         case OP_UNION:
         case OP_INTERSECT:
@@ -137,6 +149,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
             if (ret == -1) {
 		break;
 	    }
+#ifdef AP214_DEBUG
 	    if (depth > 0) bu_log("%*s", depth, "");
 	    bu_log("Returning boolean_result: ");
 	    if (left && right) {
@@ -151,7 +164,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    if (!left && !right) {
 		bu_log("Constructed boolean for %s: ", (*d)->d_namep);
 	    }
-
+#endif
 	    bu_vls_sprintf(&comb_shape_name, "'%s-", (*d)->d_namep);
 	    if (left) {
 		bu_vls_printf(&comb_shape_name, left->d_namep);
@@ -176,6 +189,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 		bu_vls_printf(&comb_shape_name, "boolean_result'");
 	    }
 
+#ifdef AP214_DEBUG
 	    if (left_ret == 1) bu_log("solid");
 	    if (left_ret == 2) bu_log("boolean_result");
 	    if (left_ret == 3) bu_log("comb(boolean_result)");
@@ -193,7 +207,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 	    if (right_ret == 1) bu_log("solid\n");
 	    if (right_ret == 2) bu_log("boolean_result\n");
 	    if (right_ret == 3) bu_log("comb(boolean_result)\n");
-
+#endif
 	    STEPentity *bool_result;
 	    (void)AP214_Boolean_Result(&bool_result, t->tr_op, left_ret, right_ret, leftstep, rightstep, sc, depth);
 	    (*stepobj) = bool_result;
@@ -218,10 +232,14 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    /* Probably should return empty object... */
 			    return NULL;
 			} else {
+#ifdef AP214_DEBUG
 			    if (depth > 0) bu_log("%*s", depth, "");
+#endif
 			    if (sc->comb_to_step_manifold->find(dir) != sc->comb_to_step_manifold->end()) {
 				(*stepobj) = (STEPentity *)sc->comb_to_step_manifold->find(dir)->second;
+#ifdef AP214_DEBUG
 				bu_log("Combination object manifold %s already exists - returning\n", dir->d_namep);
+#endif
 			    } else {
 				/* TODO - if a comb has only one solid under it, return that solid for the
 				 * comb */
@@ -229,7 +247,9 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 				if (tree_construct == 1) ret = 1;
 				if (tree_construct != 1) {
 				    struct bu_vls comb_obj_name = BU_VLS_INIT_ZERO;
+#ifdef AP214_DEBUG
 				    bu_log("Returning comb object's boolean_representation as created by AP214 boolean assembly  %s (%d)\n", dir->d_namep, tree_construct);
+#endif
 				    sc->comb_to_step->insert(std::make_pair(dir, *stepobj));
 				    (*sc->comb_to_step_manifold)[dir] = *stepobj;
 				    bu_vls_sprintf(&comb_obj_name, "'%s_shape'", dir->d_namep);
@@ -244,12 +264,16 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			 * solid_replica in AP214 */
 			if (solid) (*solid) = dir;
 			if (sc->solid_to_step_manifold->find(dir) != sc->solid_to_step_manifold->end()) {
+#ifdef AP214_DEBUG
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Solid object %s already exists - Returning\n", dir->d_namep);
+#endif
 			    (*stepobj) = sc->solid_to_step_manifold->find(dir)->second;
 			} else {
+#ifdef AP214_DEBUG
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    bu_log("Returning solid object %s\n", dir->d_namep);
+#endif
 			    Object_To_STEP(dir, &intern, sc->wdbp, sc);
 			    if (sc->solid_to_step->find(dir) == sc->solid_to_step->end()) {
 				bu_log("solid creation failed: %s!\n", dir->d_namep);
@@ -257,19 +281,21 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 				(*stepobj) = sc->solid_to_step_manifold->find(dir)->second;
 			    }
 			}
-			//if (stepobj) (*stepobj) = (*(sc->solid_to_step->find(dir))).second;
-			//std::cout << "Step entity in stepobj: " << (*stepobj)->EntityName() << "\n";
 			ret = 1;
 		    }
                 } else {
+#ifdef AP214_DEBUG
 		    if (depth > 0) bu_log("%*s", depth, "");
+#endif
 		    bu_log("Cannot find leaf %s.\n", name);
                     ret = -1;
                 }
                 break;
             }
         default:
+#ifdef AP214_DEBUG
 	    if (depth > 0) bu_log("%*s", depth, "");
+#endif
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", t->tr_op);
             ret = -1;
     }

@@ -33,9 +33,9 @@
 void
 Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
-    int type;
+    //int type;
     struct bn_tol tol;
-    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    //struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     ON_Brep **brep;
     STEPentity *brep_shape;
     STEPentity *brep_product;
@@ -55,23 +55,23 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_HALF: /* half_space_solid */
-	    bu_log("half\n");
+	    //bu_log("half\n");
 	    //break;
 	case DB5_MINORTYPE_BRLCAD_SPH: /* sphere */
-	    bu_log("sph\n");
+	    //bu_log("sph\n");
 	    //break;
 	case DB5_MINORTYPE_BRLCAD_ELL:
 	    /* Check if the ELL happens to be a sphere */
-	    bu_log("sph\n");
+	    //bu_log("sph\n");
 	    //break; - NOTE that we only want to break here if the ell is actually a sphere- otherwise we fall through
 	case DB5_MINORTYPE_BRLCAD_REC:
 	    /* Check if the REC happens to be an RCC - right circular cylinder */
-	    bu_log("rec\n");
+	    //bu_log("rec\n");
 	    //break; - NOTE that we only want to break here if the rec is actually a rcc - otherwise we fall through
 	case DB5_MINORTYPE_BRLCAD_TGC:
 	    /* Check if the TGC happens to be an RCC - right circular cylinder,
 	       -	     * or if it can be approximated as a right circular cone */
-	    bu_log("tgc\n");
+	    //bu_log("tgc\n");
 	    //break; - NOTE that we only want to break here if the tgc is actually a rcc - otherwise we fall through
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    /* In principle, some arbs will satisfy block and
@@ -107,7 +107,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	       -	 * toroidal surface might be used to construct a solid, but it's not
 	       -	 * clear at this point that there is any advantage over just using the
 	       -	 * NURBS form. */
-	    bu_log("tor\n");
+	    //bu_log("tor\n");
 	    //break;
 	default:
 	    /* If it isn't already a BRep, it's not a comb, and it's not a special case try to make it
