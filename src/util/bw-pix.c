@@ -94,6 +94,12 @@ main(int argc, char **argv)
 	return 1;
     }
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
+#endif
+
     img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
