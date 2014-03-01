@@ -31,9 +31,6 @@
 #include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #include <stdarg.h> /* For va_list */
-#ifdef HAVE_STDINT_H
-#  include <stdint.h> /* for [u]int[16|32|64]_t */
-#endif
 
 #include "bu/defines.h"
 #include "bu/magic.h"

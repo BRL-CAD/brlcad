@@ -24,9 +24,6 @@
 #define BU_COLOR_H
 
 #include "common.h"
-#ifdef HAVE_STDINT_H
-#  include <stdint.h> /* for [u]int[16|32|64]_t */
-#endif
 
 #include "bu/defines.h"
 #include "bu/magic.h"

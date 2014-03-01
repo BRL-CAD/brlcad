@@ -31,10 +31,6 @@
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
 
-#ifdef HAVE_STDINT_H
-#  include <stdint.h> /* for [u]int[16|32|64]_t */
-#endif
-
 #include "bu/defines.h"
 #include "bu/vls.h"
 
