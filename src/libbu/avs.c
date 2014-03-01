@@ -24,7 +24,11 @@
 #include <string.h>
 #include <time.h>
 
-#include "bu.h"
+#include "bu/avs.h"
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 #define AVS_ALLOCATION_INCREMENT 32
 

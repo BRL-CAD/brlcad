@@ -27,7 +27,8 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "bu.h"
+#include "bu/bitv.h"
+#include "bu/vls.h"
 #include "./bu_internals.h"
 
 /**

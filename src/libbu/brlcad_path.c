@@ -28,7 +28,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "sysv.h"
 
 /* private headers */
