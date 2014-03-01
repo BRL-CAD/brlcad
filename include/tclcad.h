@@ -33,7 +33,7 @@
 #define TCLCAD_H
 
 #include "common.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "tcl.h"
 #include "ged.h"
 

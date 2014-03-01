@@ -22,7 +22,6 @@ set(include_hdrs
   brep.h
   brlcad.h
   brlcad.i
-  cmd.h
   db.h
   db5.h
   dg.h

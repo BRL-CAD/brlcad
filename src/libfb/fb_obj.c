@@ -37,7 +37,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 

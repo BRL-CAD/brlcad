@@ -89,7 +89,7 @@
 #include <regex.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "db.h"
 #include "./librt_private.h"

@@ -24,7 +24,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "tclcad.h"
 
 

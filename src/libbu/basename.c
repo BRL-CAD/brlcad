@@ -20,10 +20,11 @@
 
 #include "common.h"
 
-#include "bu.h"
 #include <string.h>
 #include <ctype.h>
 
+#include "bu/log.h"
+#include "bu/str.h"
 
 void
 bu_basename(char *basename, const char *path)

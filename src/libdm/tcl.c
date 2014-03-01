@@ -31,7 +31,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 /* private headers */
 #include "brlcad_version.h"

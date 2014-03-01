@@ -46,7 +46,7 @@
 
 #include "bu.h"
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"

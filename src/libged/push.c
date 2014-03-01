@@ -30,7 +30,7 @@
 #include "bio.h"
 
 #include "bu.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 

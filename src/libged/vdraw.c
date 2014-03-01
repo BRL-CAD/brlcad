@@ -104,7 +104,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"

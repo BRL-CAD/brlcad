@@ -37,7 +37,7 @@
 
 #include "bu.h"
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "ged.h"
 #include "obj.h"

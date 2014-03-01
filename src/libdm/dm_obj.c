@@ -36,7 +36,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"                  /* includes bu.h */
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"

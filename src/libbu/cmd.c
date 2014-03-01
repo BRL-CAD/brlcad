@@ -23,8 +23,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 
 int

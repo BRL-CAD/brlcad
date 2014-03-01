@@ -46,7 +46,7 @@
 #include "tcl.h"
 #include "bu.h"
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "solid.h"

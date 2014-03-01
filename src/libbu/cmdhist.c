@@ -23,9 +23,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "cmd.h"
-
+#include "bu/cmd.h"
 
 /**
  * Stores the given command with start and finish times in the

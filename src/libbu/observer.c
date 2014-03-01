@@ -23,8 +23,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"                  /* includes bu.h */
-
+#include "bu/cmd.h"
 
 /**
  * Attach observer.

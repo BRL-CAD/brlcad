@@ -38,7 +38,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"                  /* includes bu.h */
+#include "bu/cmd.h"
 #include "fb.h"
 #include "bu.h"
 

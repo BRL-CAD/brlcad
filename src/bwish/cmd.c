@@ -37,7 +37,7 @@
 #  include "tcl.h"
 #endif
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "libtermio.h"
 
 

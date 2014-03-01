@@ -2,6 +2,7 @@ set(bu_headers
   avs.h
   bitv.h
   bu_tcl.h
+  cmd.h
   color.h
   cv.h
   debug.h

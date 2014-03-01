@@ -28,7 +28,7 @@
 #include "bio.h"
 #include <string.h>
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
