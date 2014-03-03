@@ -2867,12 +2867,7 @@ ON_Intersect(const ON_Surface *surfA,
 	return 0;
     }
 
-    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
-    NodePairs candidates, next_candidates;
-
-    if (rootA->Intersect(*rootB, isect_tol)) {
-	candidates.push_back(std::make_pair(rootA, rootB));
-    } else {
+    if (!rootA->Intersect(*rootB, isect_tol)) {
 	if (treeA == NULL) {
 	    delete rootA;
 	}
@@ -3268,6 +3263,10 @@ ON_Intersect(const ON_Surface *surfA,
      * method of splitting a NURBS surface.
      * So finally only a small subset of the surface tree is created.
      */
+    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
+    NodePairs candidates, next_candidates;
+    candidates.push_back(std::make_pair(rootA, rootB));
+
     for (int h = 0; h <= MAX_SSI_DEPTH; h++) {
 	if (candidates.empty()) {
 	    break;
