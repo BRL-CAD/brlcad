@@ -3149,36 +3149,50 @@ ON_Intersect(const ON_Surface *surfA,
     for (int i = original_count; i < x.Count(); i++) {
 	// The overlap region should be to the LEFT of that *m_curveA*.
 	// (see opennurbs/opennurbs_x.h)
-	double midA = x[i].m_curveA->Domain().Mid();
-	if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
+
+	// find a point with a single tangent
+	double start_t = x[i].m_curveA->Domain().Mid();
+	if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
 	    // if mid point doesn't work, try a couple other points
-	    midA = x[i].m_curveA->Domain().NormalizedParameterAt(1.0 / 3.0);
-	    if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
-		midA = x[i].m_curveA->Domain().NormalizedParameterAt(2.0 / 3.0);
+	    // TODO: what happens if none of them work?
+	    start_t = x[i].m_curveA->Domain().NormalizedParameterAt(1.0 / 3.0);
+	    if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
+		start_t = x[i].m_curveA->Domain().NormalizedParameterAt(2.0 / 3.0);
 	    }
 	}
-	ON_3dVector normalA = ON_CrossProduct(ON_3dVector::ZAxis, x[i].m_curveA->TangentAt(midA));
-	ON_3dPoint left_ptA, right_ptA, mid_ptA;
-	mid_ptA = x[i].m_curveA->PointAt(midA);
-	left_ptA = mid_ptA + normalA * (1 + x[i].m_curveA->BoundingBox().Diagonal().Length());
-	right_ptA = mid_ptA - normalA * (1 + x[i].m_curveA->BoundingBox().Diagonal().Length());
-	// should be outside the closed region
-	ON_LineCurve linecurve1(mid_ptA, left_ptA), linecurve2(mid_ptA, right_ptA);
-	ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-	ON_Intersect(&linecurve1, x[i].m_curveA, x_event1, isect_tol);
-	ON_Intersect(&linecurve2, x[i].m_curveA, x_event2, isect_tol);
+
+	ON_3dPoint start_ptA = x[i].m_curveA->PointAt(start_t);
+	ON_3dVector normA = ON_CrossProduct(ON_3dVector::ZAxis,
+		x[i].m_curveA->TangentAt(start_t));
+	double line_len = 1.0 + x[i].m_curveA->BoundingBox().Diagonal().Length();
+
+	// get a line that should be extending left, through the loop
+	ON_3dPoint left_ptA = start_ptA + normA * line_len;
+	ON_LineCurve inside_lineA(start_ptA, left_ptA);
+	
+	// get a line that should be extending right, away from the loop
+	ON_3dPoint right_ptA = start_ptA - normA * line_len;
+	ON_LineCurve outside_lineA(start_ptA, right_ptA);
+
+	// outside line should intersect at start only
+	// inside line should intersect at start and exit
+	// otherwise we've got them backwards
+	// TODO: seems like this should really be an even/odd test
+	ON_SimpleArray<ON_X_EVENT> inside_events, outside_events;
+	ON_Intersect(&inside_lineA, x[i].m_curveA, inside_events, isect_tol);
+	ON_Intersect(&outside_lineA, x[i].m_curveA, outside_events, isect_tol);
 	std::vector<double> line_t;
-	if (x_event1.Count() != 2 && x_event2.Count() == 2) {
+	if (inside_events.Count() != 2 && outside_events.Count() == 2) {
 	    // the direction of the curve should be opposite
 	    x[i].m_curve3d->Reverse();
 	    x[i].m_curveA->Reverse();
 	    x[i].m_curveB->Reverse();
-	    linecurve1 = linecurve2;
-	    line_t.push_back(x_event2[0].m_a[0]);
-	    line_t.push_back(x_event2[1].m_a[0]);
-	} else if (x_event1.Count() == 2 && x_event2.Count() != 2) {
-	    line_t.push_back(x_event1[0].m_a[0]);
-	    line_t.push_back(x_event1[1].m_a[0]);
+	    inside_lineA = outside_lineA;
+	    line_t.push_back(outside_events[0].m_a[0]);
+	    line_t.push_back(outside_events[1].m_a[0]);
+	} else if (inside_events.Count() == 2 && outside_events.Count() != 2) {
+	    line_t.push_back(inside_events[0].m_a[0]);
+	    line_t.push_back(inside_events[1].m_a[0]);
 	} else {
 	    bu_log("error: Cannot determine the correct direction of overlap event %d\n", i);
 	    continue;
@@ -3187,13 +3201,15 @@ ON_Intersect(const ON_Surface *surfA,
 	// need to reverse inner loops to indicate overlap is outside
 	// the closed region
 	for (int j = original_count; j < x.Count(); j++) {
-	    // any curves that intersect the line transversing this loop may
-	    // be inside the loop
+	    // any curves that intersect the line crossing through the
+	    // loop may be inside the loop
+	    // FIXME: What about curves inside the loop that the line
+	    //        happens to miss?
 	    if (i == j) {
 		continue;
 	    }
 	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(&linecurve1, x[j].m_curveA, x_event, isect_tol);
+	    ON_Intersect(&inside_lineA, x[j].m_curveA, x_event, isect_tol);
 	    for (int k = 0; k < x_event.Count(); k++) {
 		line_t.push_back(x_event[k].m_a[0]);
 	    }
@@ -3201,7 +3217,7 @@ ON_Intersect(const ON_Surface *surfA,
 
 	// normalize all params in line_t
 	for (unsigned int j = 0; j < line_t.size(); j++) {
-	    line_t[j] = linecurve1.Domain().NormalizedParameterAt(line_t[j]);
+	    line_t[j] = inside_lineA.Domain().NormalizedParameterAt(line_t[j]);
 	}
 
 	std::sort(line_t.begin(), line_t.end());
@@ -3211,7 +3227,7 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 
 	// get a test point inside the region
-	ON_3dPoint test_pt2d = linecurve1.PointAt(line_t[1] * 0.5);
+	ON_3dPoint test_pt2d = inside_lineA.PointAt(line_t[1] * 0.5);
 	ON_3dPoint test_pt = surfA->PointAt(test_pt2d.x, test_pt2d.y);
 	ON_ClassArray<ON_PX_EVENT> px_event;
 	if (!ON_Intersect(test_pt, *surfB, px_event, overlap_tol, 0, 0, treeB)) {
