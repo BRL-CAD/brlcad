@@ -3267,10 +3267,7 @@ ON_Intersect(const ON_Surface *surfA,
     NodePairs candidates, next_candidates;
     candidates.push_back(std::make_pair(rootA, rootB));
 
-    for (int h = 0; h <= MAX_SSI_DEPTH; h++) {
-	if (candidates.empty()) {
-	    break;
-	}
+    for (int h = 0; h <= MAX_SSI_DEPTH && !candidates.empty(); h++) {
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    // If the box is considered already belonging to the overlap
