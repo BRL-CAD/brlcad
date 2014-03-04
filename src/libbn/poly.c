@@ -28,11 +28,13 @@
 
 #include "common.h"
 
+#include <stdlib.h>  /* for abs */
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 

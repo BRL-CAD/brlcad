@@ -46,8 +46,11 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 
 void

@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 

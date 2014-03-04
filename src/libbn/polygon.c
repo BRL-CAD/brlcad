@@ -18,7 +18,7 @@
  * information.
  */
 
-#include "bu.h"
+#include "bu/sort.h"
 #include "bn.h"
 
 

@@ -146,7 +146,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 

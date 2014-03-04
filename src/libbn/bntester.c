@@ -20,12 +20,18 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 

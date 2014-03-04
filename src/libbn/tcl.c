@@ -36,7 +36,7 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 

@@ -33,7 +33,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 
