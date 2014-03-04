@@ -2549,6 +2549,43 @@ is_pt_in_surf_overlap(
     return surf1_pt_intersects_surf2 && surfs_parallel_at_pt;
 }
 
+HIDDEN bool
+is_subsurfaceA_in_overlap(
+	ON_SimpleArray<Overlapevent> &overlap_events,
+	const Subsurface *subA,
+	double isect_tolA)
+{
+    ON_2dPoint bbox_min(subA->m_u.Min(), subA->m_v.Min());
+    ON_2dPoint bbox_max(subA->m_u.Max(), subA->m_v.Max());
+
+    // shrink bbox slightly
+    ON_2dPoint offset(isect_tolA, isect_tolA);
+    bbox_min += offset;
+    bbox_max -= offset;
+
+    // the bbox is considered to be inside an overlap if it's inside
+    // an Overlapevent's outer loop and outside any of its inner loops
+    bool inside_overlap = false;
+    for (int i = 0; i < overlap_events.Count() && !inside_overlap; ++i) {
+	Overlapevent *outerloop = &overlap_events[i];
+	if (outerloop->m_type == Overlapevent::outer &&
+	    outerloop->IsBoxCompletelyIn(bbox_min, bbox_max))
+	{
+	    inside_overlap = true;
+	    for (size_t j = 0; j < outerloop->m_inside.size(); ++j) {
+		Overlapevent *innerloop = outerloop->m_inside[j];
+		if (innerloop->m_type == Overlapevent::inner &&
+		    !innerloop->IsBoxCompletelyOut(bbox_min, bbox_max))
+		{
+		    inside_overlap = false;
+		    break;
+		}
+	    }
+	}
+    }
+    return inside_overlap;
+}
+
 enum {
     INSIDE_OVERLAP,
     ON_OVERLAP_BOUNDARY,
@@ -3270,38 +3307,14 @@ ON_Intersect(const ON_Surface *surfA,
     for (int h = 0; h <= MAX_SSI_DEPTH && !candidates.empty(); h++) {
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
-	    // If the box is considered already belonging to the overlap
-	    // regions, we don't need to further sub-divide it.
-	    ON_2dPoint min2d(i->first->m_u.Min() + isect_tolA, i->first->m_v.Min() + isect_tolA);
-	    ON_2dPoint max2d(i->first->m_u.Max() - isect_tolA, i->first->m_v.Max() - isect_tolA);
-	    // A box is inside the overlap region, if and only if it is completely
-	    // inside an outer loop, and outside all inner loops within the outer
-	    // loop.
-	    bool inside_overlap = false;
-	    for (int j = 0; j < overlap_events.Count(); j++) {
-		if (overlap_events[j].m_type == Overlapevent::outer
-		    && overlap_events[j].IsBoxCompletelyIn(min2d, max2d)) {
-		    bool out_of_all_inner = true;
-		    for (unsigned int k = 0; k < overlap_events[j].m_inside.size(); k++) {
-			Overlapevent *event = overlap_events[j].m_inside[k];
-			if (event->m_type == Overlapevent::inner
-			    && !event->IsBoxCompletelyOut(min2d, max2d)) {
-			    out_of_all_inner = false;
-			    break;
-			}
-		    }
-		    if (out_of_all_inner) {
-			inside_overlap = true;
-			break;
-		    }
-		}
-	    }
-	    if (inside_overlap) {
-		// We only do this optimization of surfA, because node pairs
-		// need both boxes from surfA and surfB, and eliminating one of
-		// them is enough.
+	    // If the Subsurface from either surfA or surfB (we're
+	    // checking surfA in this case) is inside an overlap
+	    // region, then we know the Subsurface pair intersects.
+	    if (is_subsurfaceA_in_overlap(overlap_events, i->first, isect_tolA)) {
 		continue;
 	    }
+
+	    // otherwise, subdivide and try again
 	    std::vector<Subsurface *> splittedA, splittedB;
 	    if ((*i).first->Split() != 0) {
 		splittedA.push_back((*i).first);
