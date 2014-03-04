@@ -115,6 +115,11 @@ and new names should be listed for reference.
 
 7.24
 ----
+include/bu
+        hist.h bu_hist bu_hist_t BU_HIST_NULL BU_HIST_INIT_ZERO [deprecated 7.24]
+        BU_HIST_IS_INITIALIZED BU_HIST_TALLY BU_HIST_TALLY_MULTIPLE [deprecated 7.24]
+        bu_hist_free bu_hist_init bu_hist_range bu_hist_pr [deprecated 7.24]
+        functions, macros, and header will be renamed for clarity [deprecated 7.24]
 fbed, pp-fb
         removes termcap use, no known users [deprecated 7.24]
 include/raytrace librt
