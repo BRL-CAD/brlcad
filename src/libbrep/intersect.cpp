@@ -3164,7 +3164,7 @@ ON_Intersect(const ON_Surface *surfA,
 	// get a line that should be extending left, through the loop
 	ON_3dPoint left_ptA = start_ptA + normA * line_len;
 	ON_LineCurve inside_lineA(start_ptA, left_ptA);
-	
+
 	// get a line that should be extending right, away from the loop
 	ON_3dPoint right_ptA = start_ptA - normA * line_len;
 	ON_LineCurve outside_lineA(start_ptA, right_ptA);
