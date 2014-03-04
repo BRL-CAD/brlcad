@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include "bu.h"
+#include "bu/vls.h"
 
 
 static const char SPACE = ' ';

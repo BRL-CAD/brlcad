@@ -20,11 +20,11 @@
 
 #include "common.h"
 
-#include "bu.h"
-
 #ifndef LIBBU_RB_INTERNALS_H
 #define LIBBU_RB_INTERNALS_H seen
 
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 /**
  * This internal macro has two parameters: a tree and an order number.

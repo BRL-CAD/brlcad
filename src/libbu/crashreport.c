@@ -26,10 +26,10 @@
 #include <string.h>
 #include <time.h>
 
-/* common headers */
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "brlcad_version.h"
-
 
 #define CR_BUFSIZE 2048
 static char buffer[CR_BUFSIZE] = {0};

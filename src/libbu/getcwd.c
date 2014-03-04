@@ -36,8 +36,10 @@
 #endif
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_getcwd(char *buf, size_t size)

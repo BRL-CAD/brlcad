@@ -27,7 +27,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/parse.h"
+#include "bu/str.h"
+#include "bu/units.h"
 
 
 /* Note: struct parsing requires no space after the commas.  take care

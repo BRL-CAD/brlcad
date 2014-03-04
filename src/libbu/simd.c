@@ -19,7 +19,7 @@
  */
 
 #include "common.h"
-#include "bu.h"
+#include "bu/simd.h"
 
 int
 bu_simd_level()

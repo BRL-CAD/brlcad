@@ -22,7 +22,10 @@
 
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vlb.h"
+#include "bu/vls.h"
 
 
 #define VLB_BLOCK_SIZE 512

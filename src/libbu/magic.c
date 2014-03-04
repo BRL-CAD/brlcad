@@ -18,11 +18,7 @@
  * information.
  */
 
-#include "common.h"
-
-#include "bu.h"
 #include "bu/magic.h"
-
 
 const char *
 bu_identify_magic(register uint32_t magic)

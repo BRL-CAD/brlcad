@@ -47,8 +47,11 @@
  * SUCH DAMAGE.
  */
 
-#include "stdlib.h"
-#include "bu.h"
+#include "common.h"
+
+#include <stdlib.h>
+
+#include "bu/sort.h"
 
 #define MIN(a, b) (a) < (b) ? a : b
 

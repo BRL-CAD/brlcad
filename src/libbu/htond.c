@@ -26,8 +26,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/log.h"
 
 #define OUT_IEEE_ZERO { \
 	*out++ = 0; \

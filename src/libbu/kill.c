@@ -24,9 +24,8 @@
 #include <signal.h>
 #include "bio.h"
 
-/* common headers */
-#include "bu.h"
-
+/* bu headers */
+#include "bu/parallel.h"
 
 /* c99 doesn't declare these */
 #if defined(HAVE_KILL) && !defined(__cplusplus)

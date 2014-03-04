@@ -26,7 +26,7 @@
 #  include <pthread.h>
 #endif
 
-#include "bu.h"
+#include "bu/parallel.h"
 
 
 #if defined(HAVE_THREAD_LOCAL)

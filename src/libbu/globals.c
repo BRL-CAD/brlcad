@@ -27,8 +27,8 @@
  *
  */
 
-#include "bu.h"
-
+#include "bu/parallel.h"
+#include "bu/vls.h"
 
 /**
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
@@ -82,7 +82,7 @@ int bu_setjmp_valid = 0;
  */
 jmp_buf bu_jmpbuf;
 
-/* externed in bu.h */
+/* externed in bu/ headers */
 int bu_debug = 0;
 int bu_opterr = 1;
 int bu_optind = 1;

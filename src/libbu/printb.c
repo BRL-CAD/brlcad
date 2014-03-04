@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/vls.h"
 
 void
 bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, register const char *bits)

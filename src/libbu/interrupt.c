@@ -33,7 +33,8 @@
 
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
 
 /* wrap for hack above */
 #if !defined(C99_POSIX_USE_BSD)
@@ -107,7 +108,7 @@ interrupt_suspend_signal_handler(int signum)
  * Returns 1 if already suspended.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this HIDDEN function is
  * publicly exposed.
  */
 HIDDEN int
@@ -148,7 +149,7 @@ interrupt_suspend_signal(int signum)
  * Returns 1 if unexpected suspend state.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this HIDDEN function is
  * publicly exposed.
  */
 HIDDEN int

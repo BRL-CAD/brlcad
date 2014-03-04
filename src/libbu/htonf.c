@@ -26,8 +26,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/log.h"
 
 void
 bu_cv_htonf(register unsigned char *out, register const unsigned char *in, size_t count)

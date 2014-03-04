@@ -28,8 +28,12 @@
 #  include <sys/types.h>
 #endif
 #include <ctype.h>
+#include <stdio.h> /* for fprintf */
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 
 size_t

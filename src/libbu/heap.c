@@ -20,8 +20,13 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include <stdlib.h> /* for getenv, atoi, and atexit */
 
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
 
 /**
  * This number specifies the range of byte sizes to support for fast

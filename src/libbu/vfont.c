@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include "vfont-if.h"
-#include "bu.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
 #define DEFAULT_FONT "nonie.r.12"

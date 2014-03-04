@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
 
 /* globals available: bu_opterr, bu_optind, bu_optopt, bu_optarg
  * see globals.c for details

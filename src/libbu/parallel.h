@@ -21,8 +21,6 @@
 #ifndef LIBBU_PARALLEL_H
 #define LIBBU_PARALLEL_H
 
-#include "bu.h"
-
 /**
  * Set affinity mask of current thread to the CPU set it is currently
  * running on. If it is not running on any CPUs in the set, it is

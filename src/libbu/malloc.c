@@ -24,7 +24,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 
 /**
  * this controls whether to semaphore protect malloc calls

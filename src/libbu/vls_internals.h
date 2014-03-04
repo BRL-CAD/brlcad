@@ -21,9 +21,6 @@
 #ifndef LIBBU_VLS_INTERNALS_H
 #define LIBBU_VLS_INTERNALS_H seen
 
-#include "bu.h"
-
-
 /* private constants */
 
 /* minimum vls allocation increment size */

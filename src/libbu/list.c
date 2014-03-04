@@ -21,8 +21,10 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "bu.h"
-
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 
 struct bu_list *
 bu_list_new(void)

@@ -59,8 +59,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 #define FNMATCH_IGNORECASE  BU_FNMATCH_CASEFOLD
 #define FNMATCH_FILE_NAME   BU_FNMATCH_PATHNAME

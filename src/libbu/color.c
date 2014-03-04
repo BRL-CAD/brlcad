@@ -27,7 +27,9 @@
 #include <stdarg.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 /* libfb defines replicated here to avoid a libfb dependency */

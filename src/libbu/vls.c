@@ -32,7 +32,11 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 #include "./vls_internals.h"
 

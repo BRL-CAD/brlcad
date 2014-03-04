@@ -26,7 +26,11 @@
 #include <string.h>
 #include <float.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/units.h"
+#include "bu/vls.h"
 
 
 /* done specifically to avoid a libbn dependency */

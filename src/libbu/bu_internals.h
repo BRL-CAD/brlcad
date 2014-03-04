@@ -21,9 +21,6 @@
 #ifndef LIBBU_BU_INTERNALS_H
 #define LIBBU_BU_INTERNALS_H seen
 
-#include "bu.h"
-
-
 /* private constants */
 
 /**

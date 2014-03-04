@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 void
 bu_hook_list_init(struct bu_hook_list *hlp)

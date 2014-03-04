@@ -23,7 +23,6 @@
 #include "bu.h"
 #include "brlcad_version.h"
 
-
 const char *
 bu_version(void)
 {

@@ -36,8 +36,7 @@
 #  include <strsafe.h>
 #endif
 
-#include "bu.h"
-
+#include "bu/file.h"
 
 #ifdef HAVE_FCHMOD
 /* extern int fchmod(int, mode_t); */

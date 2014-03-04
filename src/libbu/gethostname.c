@@ -27,8 +27,7 @@
 #include "bio.h"
 #include "bin.h"
 
-#include "bu.h"
-
+#include "bu/str.h"
 
 int
 bu_gethostname(char *hostname, size_t hostlen)

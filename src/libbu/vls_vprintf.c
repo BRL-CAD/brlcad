@@ -33,7 +33,8 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 #include "./vls_internals.h"
 

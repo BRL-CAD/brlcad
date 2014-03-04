@@ -33,7 +33,11 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */
 static char bu_progname[MAXPATHLEN] = {0};

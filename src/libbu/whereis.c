@@ -35,7 +35,10 @@
 #endif
 
 /* common headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 /* how big should PATH from getenv ever be */

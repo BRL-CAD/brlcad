@@ -31,7 +31,11 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 

@@ -23,8 +23,9 @@
 #include <time.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/time.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
 
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
