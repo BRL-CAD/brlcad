@@ -51,7 +51,6 @@ __BEGIN_DECLS
 #endif
 
 #include "vmath.h"
-#include "bu.h"
 
 #ifndef __cplusplus
 typedef struct _on_brep_placeholder {
