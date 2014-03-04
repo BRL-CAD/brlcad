@@ -53,6 +53,9 @@
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #define TMP_FILE "/tmp/x.cmap"

@@ -30,7 +30,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/magic.h"
 
 #ifndef FB_EXPORT
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)

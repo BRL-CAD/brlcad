@@ -30,7 +30,7 @@
 #include <math.h>
 
 /* Needed for fastf_t definition */
-#include "bu.h"
+#include "bu/defines.h"
 
 /* Needed for VUNITIZE_TOL and NEAR_ZERO */
 #include "vmath.h"

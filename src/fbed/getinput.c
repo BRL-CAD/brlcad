@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bu/str.h"
 #include "fb.h"
 
 #include "./std.h"

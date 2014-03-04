@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <limits.h>  /* For INT_MAX */
 #include <stdlib.h>
 
 /*
@@ -46,8 +47,10 @@
 #  include <sys/time.h>
 #endif
 
-#include "bu.h"
 #include "fbio.h"
+
+#include "bu/bu_tcl.h"
+#include "bu/vls.h"
 
 /* Library entry points which are macros.
  *

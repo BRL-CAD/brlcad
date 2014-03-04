@@ -27,6 +27,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "bu/color.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #include "./std.h"

@@ -40,6 +40,10 @@
 #include <tk.h>
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
+
 #include "fb.h"
 
 

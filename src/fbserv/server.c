@@ -37,6 +37,7 @@
 #include "bselect.h"
 #include "bio.h"
 
+#include "bu/color.h"
 #include "fb.h"
 #include "fbmsg.h"
 #include "pkg.h"

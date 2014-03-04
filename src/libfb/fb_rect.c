@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 
+#include "bu/color.h"
 #include "fb.h"
 
 
