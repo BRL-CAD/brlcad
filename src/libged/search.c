@@ -230,7 +230,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "aQhv?")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
 	switch(c) {
 	    case 'a':
 		aflag = 1;
@@ -249,7 +249,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		want_help = 1;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
+		bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -258,7 +258,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     argv_orig += (bu_optind - 1);
 
     if (want_help || argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
+	bu_vls_sprintf(gedp->ged_result_str, "Usage: %s", usage);
 	return TCL_OK;
     }
 
