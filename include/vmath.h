@@ -101,7 +101,7 @@
 #include <float.h>
 
 /* for fastf_t */
-#include "bu.h"
+#include "bu/defines.h"
 
 
 __BEGIN_DECLS
