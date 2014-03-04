@@ -223,6 +223,22 @@ static float diffuseColor[4];
 static float backDiffuseColorDark[4];
 static float backDiffuseColorLight[4];
 
+HIDDEN void
+ogl_printmat(struct bu_vls *tmp_vls, fastf_t *mat) {
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
+}
+
+HIDDEN void
+ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[0], m[4], m[8], m[12]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[1], m[5], m[9], m[13]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[2], m[6], m[10], m[14]);
+    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
+}
+
 
 void
 ogl_fogHint(struct dm *dmp, int fastfog)
@@ -235,7 +251,7 @@ ogl_fogHint(struct dm *dmp, int fastfog)
 HIDDEN int
 ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    if (dmp->dm_debugLevel)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
 
     dmp->dm_bg[0] = r;
@@ -413,8 +429,11 @@ ogl_reshape(struct dm *dmp, int width, int height)
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
     if (dmp->dm_debugLevel) {
+	GLfloat m[16];
 	bu_log("ogl_reshape()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
     }
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
@@ -1023,7 +1042,7 @@ Done:
 
     ogl_setZBuffer(dmp, dmp->dm_zbuffer);
     ogl_setLight(dmp, dmp->dm_light);
-
+ 
     return dmp;
 }
 
@@ -1204,6 +1223,24 @@ ogl_drawBegin(struct dm *dmp)
 	bu_log("ogl_drawBegin\n");
     }
 
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&tmp_vls, "initial view matrix = \n");
+
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "initial projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
+
+
+
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -1242,6 +1279,23 @@ ogl_drawBegin(struct dm *dmp)
 	}
     }
 
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&tmp_vls, "after begin view matrix = \n");
+
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "after begin projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
+
+
     return TCL_OK;
 }
 
@@ -1251,6 +1305,19 @@ ogl_drawEnd(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawEnd\n");
+
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "beginning of end view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "beginning of end projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
 
 
     if (dmp->dm_light) {
@@ -1287,6 +1354,20 @@ ogl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "end of drawend view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "end of drawend projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
+
+
     return TCL_OK;
 }
 
@@ -1301,17 +1382,28 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     fastf_t *mptr;
     GLfloat gtmat[16];
 
-    if (dmp->dm_debugLevel) {
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_loadMatrix()\n");
 
-	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "beginning of loadMatrix view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "beginning of loadMatrix projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
+
+
+    if (dmp->dm_debugLevel == 3) {
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
-	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
-	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
-	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
+	ogl_printmat(&tmp_vls, mat);
 
 	bu_log("%s", bu_vls_addr(&tmp_vls));
 	bu_vls_free(&tmp_vls);
@@ -1361,6 +1453,19 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glLoadMatrixf(gtmat);
+
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "end of loadMatrix view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "end of loadMatrix projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
 
     return TCL_OK;
 }
@@ -1428,7 +1533,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     register struct bn_vlist *tvp;
     register int first;
 
-    if (dmp->dm_debugLevel)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_drawVList()\n");
 
 
@@ -1461,9 +1566,9 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
-
+/*
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
@@ -1530,9 +1635,9 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
-
+/*
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
@@ -1607,7 +1712,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
-    if (dmp->dm_debugLevel)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_drawVList()\n");
 
     /* Viewing region is from -1.0 to +1.0 */
@@ -1620,9 +1725,9 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt);
-
+/*
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
@@ -1775,6 +1880,19 @@ ogl_normal(struct dm *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("ogl_normal\n");
 
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "beginning of ogl_normal view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "beginning of ogl_normal projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
+    }
+
     if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -1787,6 +1905,19 @@ ogl_normal(struct dm *dmp)
 	    glDisable(GL_FOG);
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
+    }
+
+    if (dmp->dm_debugLevel == 3) {
+	GLfloat m[16];
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "end of ogl_normal view matrix = \n");
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_vls_printf(&tmp_vls, "end of ogl_normal projection matrix = \n");
+	glGetFloatv (GL_PROJECTION_MATRIX, m);
+	ogl_printglmat(&tmp_vls, m);
+	bu_log("%s", bu_vls_addr(&tmp_vls));
+	bu_vls_free(&tmp_vls);
     }
 
     return TCL_OK;

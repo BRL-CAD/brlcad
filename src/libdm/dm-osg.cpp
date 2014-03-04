@@ -711,7 +711,7 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
     tbmp->setCenter(center);
 #endif
-    osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
+    osp->mainviewer->getCamera()->getViewMatrix().set(osg_mp);
 #if 0
     // Handle zoom
     if (dmp->dm_perspective == 0) {
@@ -955,6 +955,7 @@ osg_normal(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osg_normal\n");
+
     return TCL_OK;
 }
 
