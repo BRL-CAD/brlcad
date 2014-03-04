@@ -2426,7 +2426,7 @@ struct Overlapevent {
 	m_bboxA = _e->m_curveA->BoundingBox();
     }
 
-    bool IsPointOnBoundary(const ON_2dPoint &_pt)
+    bool IsPointOnBoundary(const ON_2dPoint &_pt) const
     {
 	ON_ClassArray<ON_PX_EVENT> px_event;
 	return ON_Intersect(ON_3dPoint(_pt), *(m_event->m_curveA), px_event);
@@ -2437,7 +2437,7 @@ struct Overlapevent {
     // and a point outside the b-box has an odd number of intersections with
     // the boundary, it's considered inside, otherwise outside. (Tangent
     // intersections are counted too.)
-    bool IsPointIn(const ON_2dPoint &_pt)
+    bool IsPointIn(const ON_2dPoint &_pt) const
     {
 	if (!m_bboxA.IsPointIn(_pt)) {
 	    return false;
@@ -2463,7 +2463,7 @@ struct Overlapevent {
     }
 
     // return false if the point is on the boundary
-    bool IsPointOut(const ON_2dPoint &_pt)
+    bool IsPointOut(const ON_2dPoint &_pt) const
     {
 	return !IsPointIn(_pt);
     }
@@ -2474,7 +2474,7 @@ struct Overlapevent {
     // 1) The box is completely in.
     // 2) The box is completely out.
     // 3) The box completely contains the closed region bounded by that curve.
-    bool IsBoxIntersected(const ON_2dPoint &_min, const ON_2dPoint &_max)
+    bool IsBoxIntersected(const ON_2dPoint &_min, const ON_2dPoint &_max) const
     {
 	ON_2dPoint corner[4] = {
 	    _min,
@@ -2497,7 +2497,7 @@ struct Overlapevent {
 	return false;
     }
 
-    bool IsBoxCompletelyIn(const ON_2dPoint &_min, const ON_2dPoint &_max)
+    bool IsBoxCompletelyIn(const ON_2dPoint &_min, const ON_2dPoint &_max) const
     {
 	// there should not be intersections between the box boundaries
 	// and the boundary curve
@@ -2508,7 +2508,7 @@ struct Overlapevent {
 	return m_bboxA.Includes(ON_BoundingBox(_min, _max)) && IsPointIn(center);
     }
 
-    bool IsBoxCompletelyOut(const ON_2dPoint &_min, const ON_2dPoint &_max)
+    bool IsBoxCompletelyOut(const ON_2dPoint &_min, const ON_2dPoint &_max) const
     {
 	if (IsBoxIntersected(_min, _max)) {
 	    return false;
@@ -2517,7 +2517,7 @@ struct Overlapevent {
 	return !IsPointIn(center) && !ON_BoundingBox(_min, _max).Includes(m_bboxA);
     }
 
-    bool IsCurveCompletelyIn(const ON_Curve *_curve)
+    bool IsCurveCompletelyIn(const ON_Curve *_curve) const
     {
 	ON_SimpleArray<ON_X_EVENT> x_event;
 	return !ON_Intersect(m_event->m_curve3d, _curve, x_event) && IsPointIn(_curve->PointAtStart());
