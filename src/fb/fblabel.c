@@ -33,7 +33,7 @@
 
 #include "bu.h"
 #include "fb.h"
-#include "vfont-if.h"
+#include "bu/vfont-if.h"
 #include "pkg.h"
 
 #define FONTBUFSZ 200

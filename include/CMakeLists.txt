@@ -57,7 +57,6 @@ set(include_hdrs
   vectfont.h
   vector_fpu.h
   vector_x86.h
-  vfont-if.h
   vmath.h
   wdb.h
   )
