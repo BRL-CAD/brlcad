@@ -69,8 +69,6 @@
 #include "common.h"
 
 #include "bu/defines.h"
-#include "bu/file.h"
-#include "bu/malloc.h"
 
 #define SXT(c) ((c)|((c&0x80)?(~0xFF):0))
 

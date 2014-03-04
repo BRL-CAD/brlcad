@@ -21,6 +21,8 @@
 #include "common.h"
 
 #include <stdio.h>
+#include "bu/file.h"
+#include "bu/malloc.h"
 #include "bu/vfont-if.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
