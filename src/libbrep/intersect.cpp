@@ -2551,7 +2551,7 @@ is_pt_in_surf_overlap(
 
 HIDDEN bool
 is_subsurfaceA_in_overlap(
-	ON_SimpleArray<Overlapevent> &overlap_events,
+	const ON_SimpleArray<Overlapevent> &overlap_events,
 	const Subsurface *subA,
 	double isect_tolA)
 {
@@ -2567,13 +2567,13 @@ is_subsurfaceA_in_overlap(
     // an Overlapevent's outer loop and outside any of its inner loops
     bool inside_overlap = false;
     for (int i = 0; i < overlap_events.Count() && !inside_overlap; ++i) {
-	Overlapevent *outerloop = &overlap_events[i];
+	const Overlapevent *outerloop = &overlap_events[i];
 	if (outerloop->m_type == Overlapevent::outer &&
 	    outerloop->IsBoxCompletelyIn(bbox_min, bbox_max))
 	{
 	    inside_overlap = true;
 	    for (size_t j = 0; j < outerloop->m_inside.size(); ++j) {
-		Overlapevent *innerloop = outerloop->m_inside[j];
+		const Overlapevent *innerloop = outerloop->m_inside[j];
 		if (innerloop->m_type == Overlapevent::inner &&
 		    !innerloop->IsBoxCompletelyOut(bbox_min, bbox_max))
 		{
