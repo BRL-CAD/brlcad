@@ -217,12 +217,10 @@ osg_reshape(struct dm *dmp, int width, int height)
 
     // TODO - clear bg color ala glClearColor + glClear
 
-    if (dmp->dm_perspective == 0) {
-	osg::Matrixf orthom;
-	orthom.makeIdentity();
-	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-    }
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 }
 
 
@@ -584,16 +582,13 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 	//osp->mainviewer->getCamera()->setClearColor(osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f));
     }
 
-    osp->mainviewer->setCameraManipulator( new osgGA::TrackballManipulator() );
-    osp->mainviewer->getCamera()->setAllowEventFocus(false);
-    if (dmp->dm_perspective == 0) {
-	osp->mainviewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-	osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
-	osg::Matrixf orthom;
-	orthom.makeIdentity();
-	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-    }
+    osp->mainviewer->getCamera()->setAllowEventFocus(false);  // Tk handles events
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg::Matrix::identity());
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
+    osp->mainviewer->getCamera()->setViewMatrix(osg::Matrix::identity());
     osp->osg_root = new osg::Group();
     osp->mainviewer->setSceneData(osp->osg_root);
 
@@ -659,9 +654,9 @@ osg_drawEnd(struct dm *dmp)
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
-    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
-    osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
-    tbmp->setDistance(2 * sph.radius());
+    //osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+    //osg::BoundingSphere sph = osp->mainviewer->getScene()->getSceneData()->getBound();
+    //tbmp->setDistance(2 * sph.radius());
 
     osp->mainviewer->frame();
 
@@ -679,14 +674,28 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     assert(dmp);
-    osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+    //osgGA::TrackballManipulator *tbmp = (dynamic_cast<osgGA::TrackballManipulator *>(osp->mainviewer->getCameraManipulator()));
+    osg::Matrix view_matrix = osp->mainviewer->getCamera()->getViewMatrix();
 
     osg::Matrix osg_mp(
 	    mat[0], mat[1], mat[2], mat[3],
-	    mat[4], mat[5], mat[6], mat[7],
+	    mat[4]*dmp->dm_aspect, mat[5]*dmp->dm_aspect, mat[6]*dmp->dm_aspect, mat[7]*dmp->dm_aspect,
 	    mat[8], mat[9], mat[10], mat[11],
 	    mat[12], mat[13], mat[14], mat[15]);
 
+    std::cout << "incoming matrix:\n";
+	std::cout << osg_mp(0,0) << ", " << osg_mp(0,1) << ", " << osg_mp(0,2) << ", " << osg_mp(0,3) << "\n";
+	std::cout << osg_mp(1,0) << ", " << osg_mp(1,1) << ", " << osg_mp(1,2) << ", " << osg_mp(1,3) << "\n";
+	std::cout << osg_mp(2,0) << ", " << osg_mp(2,1) << ", " << osg_mp(2,2) << ", " << osg_mp(2,3) << "\n";
+	std::cout << osg_mp(3,0) << ", " << osg_mp(3,1) << ", " << osg_mp(3,2) << ", " << osg_mp(3,3) << "\n";
+
+    std::cout << "starting view matrix:\n";
+	std::cout << view_matrix(0,0) << ", " << view_matrix(0,1) << ", " << view_matrix(0,2) << ", " << view_matrix(0,3) << "\n";
+	std::cout << view_matrix(1,0) << ", " << view_matrix(1,1) << ", " << view_matrix(1,2) << ", " << view_matrix(1,3) << "\n";
+	std::cout << view_matrix(2,0) << ", " << view_matrix(2,1) << ", " << view_matrix(2,2) << ", " << view_matrix(2,3) << "\n";
+	std::cout << view_matrix(3,0) << ", " << view_matrix(3,1) << ", " << view_matrix(3,2) << ", " << view_matrix(3,3) << "\n";
+
+#if 0
     // Set the view rotation
     tbmp->setRotation(osg_mp.getRotate());
 
@@ -701,7 +710,9 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
     bn_mat_mul(brl_center, brl_invrot, mat);
     center.set(-brl_center[MDX], -brl_center[MDY], -brl_center[MDZ]);
     tbmp->setCenter(center);
-
+#endif
+    osp->mainviewer->getCamera()->setViewMatrix(osg_mp);
+#if 0
     // Handle zoom
     if (dmp->dm_perspective == 0) {
 	osg::Matrixf orthom;
@@ -715,7 +726,7 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	tbmp->setDistance(sph.radius());
     } else {
 	// TODO - somehow, we need to back out the fov, aspect ratio, near and far pieces
-	// from osg_mp .  Look at persp_mat in dozoom.c to see how MGED creates its
+	// from osg_mp .  Look at proj_mat in dozoom.c to see how MGED creates its
 	// matrix - perhaps that will be enough information to tell us how to
 	// extract the key bits.  Simpler would be to have the fov and other
 	// parameters passed directly to the display manager - that is worth
@@ -730,6 +741,18 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	bu_log("perspective: %f, %f, %f, %f\n", fov, aspectRatio, zNear, zFar);
 	*/
     }
+    std::cout << "trackball matrix:\n";
+	std::cout << tbmatrix(0,0) << ", " << tbmatrix(0,1) << ", " << tbmatrix(0,2) << ", " << tbmatrix(0,3) << "\n";
+	std::cout << tbmatrix(1,0) << ", " << tbmatrix(1,1) << ", " << tbmatrix(1,2) << ", " << tbmatrix(1,3) << "\n";
+	std::cout << tbmatrix(2,0) << ", " << tbmatrix(2,1) << ", " << tbmatrix(2,2) << ", " << tbmatrix(2,3) << "\n";
+	std::cout << tbmatrix(3,0) << ", " << tbmatrix(3,1) << ", " << tbmatrix(3,2) << ", " << tbmatrix(3,3) << "\n";
+#endif
+
+    std::cout << "ending view matrix:\n";
+	std::cout << view_matrix(0,0) << ", " << view_matrix(0,1) << ", " << view_matrix(0,2) << ", " << view_matrix(0,3) << "\n";
+	std::cout << view_matrix(1,0) << ", " << view_matrix(1,1) << ", " << view_matrix(1,2) << ", " << view_matrix(1,3) << "\n";
+	std::cout << view_matrix(2,0) << ", " << view_matrix(2,1) << ", " << view_matrix(2,2) << ", " << view_matrix(2,3) << "\n";
+	std::cout << view_matrix(3,0) << ", " << view_matrix(3,1) << ", " << view_matrix(3,2) << ", " << view_matrix(3,3) << "\n";
 
     return TCL_OK;
 }
@@ -744,51 +767,29 @@ osg_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     bu_log("osg_loadPMatrix()\n");
 
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osg::Matrix proj_matrix = osp->mainviewer->getCamera()->getProjectionMatrix();
 
-    fastf_t *mptr;
-    GLfloat gtmat[16];
+    osg::Matrix osg_mp(
+	    mat[0], mat[1], mat[2], mat[3],
+	    mat[4], mat[5], mat[6], mat[7],
+	    mat[8], mat[9], mat[10], mat[11],
+	    mat[12], mat[13], mat[14], mat[15]);
 
-    glMatrixMode(GL_PROJECTION);
+    std::cout << "starting projection matrix:\n";
+	std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+	std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+	std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+	std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
 
-    if (mat == (fastf_t *)NULL) {
-	if (((struct osg_vars *)dmp->dm_vars.priv_vars)->face_flag) {
-	    glPopMatrix();
-	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-	    glPushMatrix();
-	    glLoadMatrixd(((struct osg_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
-	} else {
-	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-	}
+    osp->mainviewer->getCamera()->setProjectionMatrix(osg_mp);
 
-	return TCL_OK;
-    }
+    std::cout << "ending projection matrix:\n";
+	std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+	std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+	std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+	std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
 
-    mptr = mat;
-
-    gtmat[0] = *(mptr++);
-    gtmat[4] = *(mptr++);
-    gtmat[8] = *(mptr++);
-    gtmat[12] = *(mptr++);
-
-    gtmat[1] = *(mptr++);
-    gtmat[5] = *(mptr++);
-    gtmat[9] = *(mptr++);
-    gtmat[13] = *(mptr++);
-
-    gtmat[2] = *(mptr++);
-    gtmat[6] = *(mptr++);
-    gtmat[10] = -*(mptr++);
-    gtmat[14] = -*(mptr++);
-
-    gtmat[3] = *(mptr++);
-    gtmat[7] = *(mptr++);
-    gtmat[11] = *(mptr++);
-    gtmat[15] = *(mptr++);
-
-    glLoadIdentity();
-    glLoadMatrixf(gtmat);
 
     return TCL_OK;
 }
@@ -1116,6 +1117,8 @@ osg_setWinBounds(struct dm *dmp, fastf_t *w)
     if (dmp->dm_debugLevel)
 	bu_log("osg_setWinBounds()\n");
 
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
     dmp->dm_clipmin[2] = w[4];
@@ -1124,14 +1127,10 @@ osg_setWinBounds(struct dm *dmp, fastf_t *w)
     dmp->dm_clipmax[2] = w[5];
 
 
-    if (dmp->dm_perspective == 0) {
-	struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-	osg::Matrixf orthom;
-	orthom.makeIdentity();
-	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-	osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
-	osp->mainviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
-    }
+    osg::Matrixf orthom;
+    orthom.makeIdentity();
+    orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    osp->mainviewer->getCamera()->setProjectionMatrix(orthom);
 
     return TCL_OK;
 }
