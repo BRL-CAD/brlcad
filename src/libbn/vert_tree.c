@@ -39,6 +39,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 
 

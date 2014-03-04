@@ -36,10 +36,14 @@
 
 #include "common.h"
 
+#include <stdio.h> /* For FILE */
+
 __BEGIN_DECLS
 
 /* interface headers */
-#include "bu.h"		/* required for BU_CKMAG */
+#include "bu/magic.h"	/* required for BU_CKMAG */
+#include "bu/vls.h"	/* using bu_vls in some libbn function defs */
+#include "bu/bu_tcl.h"	/* need this as long as libbn is using Tcl */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
 #ifndef BN_EXPORT
