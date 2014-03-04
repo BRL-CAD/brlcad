@@ -234,7 +234,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	switch(c) {
 	    case 'a':
 		aflag = 1;
-		flags |= DB_LS_HIDDEN;
+		flags |= DB_SEARCH_HIDDEN;
 		break;
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
@@ -243,6 +243,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 
 	    case 'Q':
 		wflag = 1;
+		flags |= DB_SEARCH_QUIET;
 		break;
 	    case 'h':
 	    case '?':
@@ -258,8 +259,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     argv_orig += (bu_optind - 1);
 
     if (want_help || argc == 1) {
-	bu_vls_sprintf(gedp->ged_result_str, "Usage: %s", usage);
-	return TCL_OK;
+	if (!wflag) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Usage: %s", usage);
+	} else {
+	    bu_vls_trunc(gedp->ged_result_str, 0);
+	}
+	return GED_OK;
     }
 
     /* COPY argv_orig to argv; */
@@ -292,12 +297,16 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    BU_ALLOC(new_search, struct ged_search);
 		} else {
 		    /* FIXME: confirm 'argvls' is the desired string to print */
-		    bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: '%s' normalized: '%s' \n",
-				  argv[plan_argv], bu_vls_addr(&argvls));
+		    if (!wflag) {
+			bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: '%s' normalized: '%s' \n",
+				argv[plan_argv], bu_vls_addr(&argvls));
+		    } else {
+			bu_vls_trunc(gedp->ged_result_str, 0);
+		    }
 		    bu_vls_free(&argvls);
 		    bu_free_argv(argc, argv);
 		    _ged_free_search_set(search_set);
-		    return GED_ERROR;
+		    return (wflag) ? GED_OK : GED_ERROR;
 		}
 		if (!is_specific) {
 		    if (!is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
@@ -345,13 +354,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* If we have the quiet flag set, check now whether we have a valid plan.  Search will handle
      * an invalid plan string, but it will report why it is invalid.  So in quiet mode,
      * we need to identify the bad string and return now. */
-    if (wflag && !db_search(NULL, bu_vls_addr(&search_string), 0, NULL, NULL, 0)) {
+    if (wflag && !db_search(NULL, bu_vls_addr(&search_string), 0, NULL, NULL, flags)) {
 	bu_vls_free(&argvls);
 	bu_vls_free(&search_string);
 	bu_free_argv(argc, argv);
 	_ged_free_search_set(search_set);
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	return GED_ERROR;
+	return (wflag) ? GED_OK : GED_ERROR;
     }
 
     /* Check if all of our searches are local or not */

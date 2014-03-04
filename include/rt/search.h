@@ -85,6 +85,7 @@
 #define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
 #define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
 #define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
+#define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                const char *plan_string,
                                int path_cnt,

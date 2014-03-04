@@ -2126,7 +2126,11 @@ db_search(struct bu_ptbl *search_results,
     /* get the plan string into an argv array */
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_form_plan(plan_argv, 0);
+    if (!(s_flags & DB_SEARCH_QUIET)) {
+	dbplan = db_search_form_plan(plan_argv, 0);
+    } else {
+	dbplan = db_search_form_plan(plan_argv, 1);
+    }
     /* No plan, no search */
     if (!dbplan) {
 	bu_vls_free(&plan_string_vls);
