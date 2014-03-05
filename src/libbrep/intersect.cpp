@@ -2233,23 +2233,23 @@ triangle_intersection(const struct Triangle &triA, const struct Triangle &triB, 
 
 struct PointPair {
     int indexA, indexB;
-    double distance3d, dist_u, dist_v, dist_s, dist_t;
+    double distance3d, dist_uA, dist_vA, dist_uB, dist_vB;
     double tol;
-    bool operator < (const PointPair &_pp) const
+    bool operator < (const PointPair &pp) const
     {
-	if (ON_NearZero(distance3d - _pp.distance3d, tol)) {
-	    return dist_u + dist_v + dist_s + dist_t < _pp.dist_u + _pp.dist_v + _pp.dist_s + _pp.dist_t;
+	if (ON_NearZero(distance3d - pp.distance3d, tol)) {
+	    return dist_uA + dist_vA + dist_uB + dist_vB < pp.dist_uA + pp.dist_vA + pp.dist_uB + pp.dist_vB;
 	}
-	return distance3d < _pp.distance3d;
+	return distance3d < pp.distance3d;
     }
 };
 
 
 HIDDEN void
-closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dPointArray &curvept, ON_2dPointArray &curveuv, ON_2dPointArray &curvest)
+closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dPointArray &curvept, ON_2dPointArray &curve_uvA, ON_2dPointArray &curve_uvB)
 {
     // type =
-    // 0: uv.x, 1: uv.y, 2: st.x, 3: st.y
+    // 0: uvA.x, 1: uvA.y, 2: uvB.x, 3: uvB.y
 
     ON_BOOL32 is_closed = (type < 2 ? surfA : surfB)->IsClosed(type % 2);
     const ON_Interval domain = (type < 2 ? surfA : surfB)->Domain(type % 2);
@@ -2260,10 +2260,10 @@ closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dP
     int count = curvept.Count();
     for (int i = 0; i < count; i++) {
 	ON_3dPoint pt3d = ON_3dPoint::UnsetPoint;
-	ON_2dPoint ptuv, ptst;
-	ptuv = curveuv[i];
-	ptst = curvest[i];
-	double &to_compare = (type < 2 ? ptuv : ptst)[type % 2];
+	ON_2dPoint pt_uvA, pt_uvB;
+	pt_uvA = curve_uvA[i];
+	pt_uvB = curve_uvB[i];
+	double &to_compare = (type < 2 ? pt_uvA : pt_uvB)[type % 2];
 	if (ON_NearZero(to_compare - domain.Min())) {
 	    pt3d = curvept[i];
 	    to_compare = domain.Max();
@@ -2273,44 +2273,44 @@ closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dP
 	}
 	if (!pt3d.IsUnsetPoint()) {
 	    curvept.Append(pt3d);
-	    curveuv.Append(ptuv);
-	    curvest.Append(ptst);
+	    curve_uvA.Append(pt_uvA);
+	    curve_uvB.Append(pt_uvB);
 	}
     }
 }
 
 
 HIDDEN bool
-newton_ssi(double &u, double &v, double &s, double &t, const ON_Surface *surfA, const ON_Surface *surfB, double isect_tol)
+newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *surfA, const ON_Surface *surfB, double isect_tol)
 {
-    ON_3dPoint pointA = surfA->PointAt(u, v);
-    ON_3dPoint pointB = surfB->PointAt(s, t);
+    ON_3dPoint pointA = surfA->PointAt(uA, vA);
+    ON_3dPoint pointB = surfB->PointAt(uB, vB);
     if (pointA.DistanceTo(pointB) < isect_tol) {
 	return true;
     }
 
     // Equations:
-    //   x_a(u,v) - x_b(s,t) = 0
-    //   y_a(u,v) - y_b(s,t) = 0
-    //   z_a(u,v) - z_b(s,t) = 0
+    //   x_a(uA,vA) - x_b(uB,vB) = 0
+    //   y_a(uA,vA) - y_b(uB,vB) = 0
+    //   z_a(uA,vA) - z_b(uB,vB) = 0
     // It's an under-determined system. We use Moore-Penrose pseudoinverse:
     // pinv(A) = transpose(A) * inv(A * transpose(A)) (A is a 3x4 Jacobian)
     // A * pinv(A) = I_3
-    double last_u = DBL_MAX / 4, last_v = DBL_MAX / 4, last_s = DBL_MAX / 4, last_t = DBL_MAX / 4;
+    double last_uA = DBL_MAX / 4, last_vA = DBL_MAX / 4, last_uB = DBL_MAX / 4, last_vB = DBL_MAX / 4;
 
     int iteration = 0;
-    while (fabs(last_u - u) + fabs(last_v - v) + fabs(last_s - s) + fabs(last_t - t) > ON_ZERO_TOLERANCE
+    while (fabs(last_uA - uA) + fabs(last_vA - vA) + fabs(last_uB - uB) + fabs(last_vB - vB) > ON_ZERO_TOLERANCE
 	   && iteration++ < SSI_MAX_ITERATIONS) {
-	last_u = u, last_v = v, last_s = s, last_t = t;
-	ON_3dVector deriv_u, deriv_v, deriv_s, deriv_t;
-	surfA->Ev1Der(u, v, pointA, deriv_u, deriv_v);
-	surfB->Ev1Der(s, t, pointB, deriv_s, deriv_t);
+	last_uA = uA, last_vA = vA, last_uB = uB, last_vB = vB;
+	ON_3dVector deriv_uA, deriv_vA, deriv_uB, deriv_vB;
+	surfA->Ev1Der(uA, vA, pointA, deriv_uA, deriv_vA);
+	surfB->Ev1Der(uB, vB, pointB, deriv_uB, deriv_vB);
 	ON_Matrix j(3, 4), f(3, 1);
 	for (int i = 0; i < 3; i++) {
-	    j[i][0] = deriv_u[i];
-	    j[i][1] = deriv_v[i];
-	    j[i][2] = -deriv_s[i];
-	    j[i][3] = -deriv_t[i];
+	    j[i][0] = deriv_uA[i];
+	    j[i][1] = deriv_vA[i];
+	    j[i][2] = -deriv_uB[i];
+	    j[i][3] = -deriv_vB[i];
 	    f[i][0] = pointA[i] - pointB[i];
 	}
 	ON_Matrix jtrans = j;
@@ -2324,25 +2324,25 @@ newton_ssi(double &u, double &v, double &s, double &t, const ON_Surface *surfA, 
 	pinv_j.Multiply(jtrans, j_jtrans);
 	ON_Matrix delta;
 	delta.Multiply(pinv_j, f);
-	u -= delta[0][0];
-	v -= delta[1][0];
-	s -= delta[2][0];
-	t -= delta[3][0];
+	uA -= delta[0][0];
+	vA -= delta[1][0];
+	uB -= delta[2][0];
+	vB -= delta[3][0];
     }
 
     // make sure the solution is inside the domains
-    u = std::min(u, surfA->Domain(0).Max());
-    u = std::max(u, surfA->Domain(0).Min());
-    v = std::min(v, surfA->Domain(1).Max());
-    v = std::max(v, surfA->Domain(1).Min());
-    s = std::min(s, surfB->Domain(0).Max());
-    s = std::max(s, surfB->Domain(0).Min());
-    t = std::min(t, surfB->Domain(1).Max());
-    t = std::max(t, surfB->Domain(1).Min());
+    uA = std::min(uA, surfA->Domain(0).Max());
+    uA = std::max(uA, surfA->Domain(0).Min());
+    vA = std::min(vA, surfA->Domain(1).Max());
+    vA = std::max(vA, surfA->Domain(1).Min());
+    uB = std::min(uB, surfB->Domain(0).Max());
+    uB = std::max(uB, surfB->Domain(0).Min());
+    vB = std::min(vB, surfB->Domain(1).Max());
+    vB = std::max(vB, surfB->Domain(1).Min());
 
-    pointA = surfA->PointAt(u, v);
-    pointB = surfB->PointAt(s, t);
-    return (pointA.DistanceTo(pointB) < isect_tol) && !isnan(u) && !isnan(v) && !isnan(s) & !isnan(t);
+    pointA = surfA->PointAt(uA, vA);
+    pointB = surfB->PointAt(uB, vB);
+    return (pointA.DistanceTo(pointB) < isect_tol) && !isnan(uA) && !isnan(vA) && !isnan(uB) & !isnan(vB);
 }
 
 
@@ -2943,7 +2943,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    rootB, surfB, surfaceB_udomain, surfaceB_vdomain);
 
     ON_3dPointArray curvept, tmp_curvept;
-    ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
+    ON_2dPointArray curve_uvA, curve_uvB, tmp_curve_uvA, tmp_curve_uvB;
 
     // Overlap detection:
     // According to the Theorem 3 in paper:
@@ -2963,8 +2963,8 @@ ON_Intersect(const ON_Surface *surfA,
 	const ON_Surface *surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface *surf2 = i >= 2 ? surfA : surfB;
 	Subsurface *tree = i >= 2 ? treeA : treeB;
-	ON_2dPointArray &ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
-	ON_2dPointArray &ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
+	ON_2dPointArray &ptarray1 = i >= 2 ? tmp_curve_uvB : tmp_curve_uvA;
+	ON_2dPointArray &ptarray2 = i >= 2 ? tmp_curve_uvA : tmp_curve_uvB;
 	int knot_dir = i % 2;
 	int surf_dir = 1 - knot_dir;
 	int knot_count = surf1->SpanCount(surf_dir) + 1;
@@ -3360,18 +3360,18 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_BoundingBox box_intersect;
 	i->first->Intersect(*(i->second), isect_tol, &box_intersect);
 	ON_3dPoint cornerA[4], cornerB[4];
-	double u_min = (*i).first->m_u.Min(), u_max = (*i).first->m_u.Max();
-	double v_min = (*i).first->m_v.Min(), v_max = (*i).first->m_v.Max();
-	double s_min = (*i).second->m_u.Min(), s_max = (*i).second->m_u.Max();
-	double t_min = (*i).second->m_v.Min(), t_max = (*i).second->m_v.Max();
-	cornerA[0] = surfA->PointAt(u_min, v_min);
-	cornerA[1] = surfA->PointAt(u_min, v_max);
-	cornerA[2] = surfA->PointAt(u_max, v_min);
-	cornerA[3] = surfA->PointAt(u_max, v_max);
-	cornerB[0] = surfB->PointAt(s_min, t_min);
-	cornerB[1] = surfB->PointAt(s_min, t_max);
-	cornerB[2] = surfB->PointAt(s_max, t_min);
-	cornerB[3] = surfB->PointAt(s_max, t_max);
+	double min_uA = (*i).first->m_u.Min(), max_uA = (*i).first->m_u.Max();
+	double min_vA = (*i).first->m_v.Min(), max_vA = (*i).first->m_v.Max();
+	double min_uB = (*i).second->m_u.Min(), max_uB = (*i).second->m_u.Max();
+	double min_vB = (*i).second->m_v.Min(), max_vB = (*i).second->m_v.Max();
+	cornerA[0] = surfA->PointAt(min_uA, min_vA);
+	cornerA[1] = surfA->PointAt(min_uA, max_vA);
+	cornerA[2] = surfA->PointAt(max_uA, min_vA);
+	cornerA[3] = surfA->PointAt(max_uA, max_vA);
+	cornerB[0] = surfB->PointAt(min_uB, min_vB);
+	cornerB[1] = surfB->PointAt(min_uB, max_vB);
+	cornerB[2] = surfB->PointAt(max_uB, min_vB);
+	cornerB[3] = surfB->PointAt(max_uB, max_vB);
 
 	/* We approximate each surface sub-patch inside the bounding-box with two
 	 * triangles that share an edge.
@@ -3390,72 +3390,72 @@ ON_Intersect(const ON_Surface *surfA,
 	is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
 	is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
 
-	// calculate the intersection centers' uv (st) coordinates
+	// calculate the intersection centers' uv coordinates
 	ON_3dPoint bcoor[8];
-	ON_2dPoint uv[4]/*surfA*/, st[4]/*surfB*/;
+	ON_2dPoint uvA[4], uvB[4];
 	if (is_intersect[0]) {
 	    bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
 	    bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
-	    uv[0].x = bcoor[0].x * u_min + bcoor[0].y * u_min + bcoor[0].z * u_max;
-	    uv[0].y = bcoor[0].x * v_min + bcoor[0].y * v_max + bcoor[0].z * v_min;
-	    st[0].x = bcoor[1].x * s_min + bcoor[1].y * s_min + bcoor[1].z * s_max;
-	    st[0].y = bcoor[1].x * t_min + bcoor[1].y * t_max + bcoor[1].z * t_min;
+	    uvA[0].x = bcoor[0].x * min_uA + bcoor[0].y * min_uA + bcoor[0].z * max_uA;
+	    uvA[0].y = bcoor[0].x * min_vA + bcoor[0].y * max_vA + bcoor[0].z * min_vA;
+	    uvB[0].x = bcoor[1].x * min_uB + bcoor[1].y * min_uB + bcoor[1].z * max_uB;
+	    uvB[0].y = bcoor[1].x * min_vB + bcoor[1].y * max_vB + bcoor[1].z * min_vB;
 	}
 	if (is_intersect[1]) {
 	    bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
 	    bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
-	    uv[1].x = bcoor[2].x * u_min + bcoor[2].y * u_min + bcoor[2].z * u_max;
-	    uv[1].y = bcoor[2].x * v_min + bcoor[2].y * v_max + bcoor[2].z * v_min;
-	    st[1].x = bcoor[3].x * s_min + bcoor[3].y * s_max + bcoor[3].z * s_max;
-	    st[1].y = bcoor[3].x * t_max + bcoor[3].y * t_min + bcoor[3].z * t_max;
+	    uvA[1].x = bcoor[2].x * min_uA + bcoor[2].y * min_uA + bcoor[2].z * max_uA;
+	    uvA[1].y = bcoor[2].x * min_vA + bcoor[2].y * max_vA + bcoor[2].z * min_vA;
+	    uvB[1].x = bcoor[3].x * min_uB + bcoor[3].y * max_uB + bcoor[3].z * max_uB;
+	    uvB[1].y = bcoor[3].x * max_vB + bcoor[3].y * min_vB + bcoor[3].z * max_vB;
 	}
 	if (is_intersect[2]) {
 	    bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
 	    bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
-	    uv[2].x = bcoor[4].x * u_min + bcoor[4].y * u_max + bcoor[4].z * u_max;
-	    uv[2].y = bcoor[4].x * v_max + bcoor[4].y * v_min + bcoor[4].z * v_max;
-	    st[2].x = bcoor[5].x * s_min + bcoor[5].y * s_min + bcoor[5].z * s_max;
-	    st[2].y = bcoor[5].x * t_min + bcoor[5].y * t_max + bcoor[5].z * t_min;
+	    uvA[2].x = bcoor[4].x * min_uA + bcoor[4].y * max_uA + bcoor[4].z * max_uA;
+	    uvA[2].y = bcoor[4].x * max_vA + bcoor[4].y * min_vA + bcoor[4].z * max_vA;
+	    uvB[2].x = bcoor[5].x * min_uB + bcoor[5].y * min_uB + bcoor[5].z * max_uB;
+	    uvB[2].y = bcoor[5].x * min_vB + bcoor[5].y * max_vB + bcoor[5].z * min_vB;
 	}
 	if (is_intersect[3]) {
 	    bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
 	    bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
-	    uv[3].x = bcoor[6].x * u_min + bcoor[6].y * u_max + bcoor[6].z * u_max;
-	    uv[3].y = bcoor[6].x * v_max + bcoor[6].y * v_min + bcoor[6].z * v_max;
-	    st[3].x = bcoor[7].x * s_min + bcoor[7].y * s_max + bcoor[7].z * s_max;
-	    st[3].y = bcoor[7].x * t_max + bcoor[7].y * t_min + bcoor[7].z * t_max;
+	    uvA[3].x = bcoor[6].x * min_uA + bcoor[6].y * max_uA + bcoor[6].z * max_uA;
+	    uvA[3].y = bcoor[6].x * max_vA + bcoor[6].y * min_vA + bcoor[6].z * max_vA;
+	    uvB[3].x = bcoor[7].x * min_uB + bcoor[7].y * max_uB + bcoor[7].z * max_uB;
+	    uvB[3].y = bcoor[7].x * max_vB + bcoor[7].y * min_vB + bcoor[7].z * max_vB;
 	}
 
 	// The centroid of these intersection centers is the
 	// intersection point we want.
 	int num_intersects = 0;
 	ON_3dPoint average(0.0, 0.0, 0.0);
-	ON_2dPoint avguv(0.0, 0.0), avgst(0.0, 0.0);
+	ON_2dPoint avg_uvA(0.0, 0.0), avg_uvB(0.0, 0.0);
 	for (int j = 0; j < 4; j++) {
 	    if (is_intersect[j]) {
 		average += intersect_center[j];
-		avguv += uv[j];
-		avgst += st[j];
+		avg_uvA += uvA[j];
+		avg_uvB += uvB[j];
 		num_intersects++;
 	    }
 	}
 	if (num_intersects) {
 	    average /= num_intersects;
-	    avguv /= num_intersects;
-	    avgst /= num_intersects;
+	    avg_uvA /= num_intersects;
+	    avg_uvB /= num_intersects;
 	    if (box_intersect.IsPointIn(average)) {
 		// use Newton iterations to get an accurate intersection
-		if (newton_ssi(avguv.x, avguv.y, avgst.x, avgst.y, surfA, surfB, isect_tol)) {
-		    average = surfA->PointAt(avguv.x, avguv.y);
+		if (newton_ssi(avg_uvA.x, avg_uvA.y, avg_uvB.x, avg_uvB.y, surfA, surfB, isect_tol)) {
+		    average = surfA->PointAt(avg_uvA.x, avg_uvA.y);
 		    tmp_curvept.Append(average);
-		    tmp_curveuv.Append(avguv);
-		    tmp_curvest.Append(avgst);
+		    tmp_curve_uvA.Append(avg_uvA);
+		    tmp_curve_uvB.Append(avg_uvB);
 		}
 	    }
 	}
     }
     for (int i = 0; i < 4; i++) {
-	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curveuv, tmp_curvest);
+	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
     }
 
     // use an O(n^2) naive approach to eliminate duplication
@@ -3463,8 +3463,8 @@ ON_Intersect(const ON_Surface *surfA,
 	int j;
 	for (j = 0; j < curvept.Count(); j++)
 	    if (tmp_curvept[i].DistanceTo(curvept[j]) < isect_tol
-		&& tmp_curveuv[i].DistanceTo(curveuv[j]) < isect_tolA
-		&& tmp_curvest[i].DistanceTo(curvest[j]) < isect_tolB) {
+		&& tmp_curve_uvA[i].DistanceTo(curve_uvA[j]) < isect_tolA
+		&& tmp_curve_uvB[i].DistanceTo(curve_uvB[j]) < isect_tolB) {
 		break;
 	    }
 	if (j == curvept.Count()) {
@@ -3472,13 +3472,13 @@ ON_Intersect(const ON_Surface *surfA,
 	    bool inside_overlap = false;
 	    for (int k = 0; k < overlap_events.Count(); k++) {
 		if (overlap_events[k].m_type == Overlapevent::outer
-		    && overlap_events[k].IsPointIn(tmp_curveuv[i])) {
+		    && overlap_events[k].IsPointIn(tmp_curve_uvA[i])) {
 		    bool out_of_all_inner = true;
 		    for (unsigned int m = 0; m < overlap_events[k].m_inside.size(); m++) {
 			Overlapevent *event = overlap_events[k].m_inside[m];
 			if (event->m_type == Overlapevent::inner
-			    && event->IsPointIn(tmp_curveuv[i])
-			    && !event->IsPointOnBoundary(tmp_curveuv[i])) {
+			    && event->IsPointIn(tmp_curve_uvA[i])
+			    && !event->IsPointOnBoundary(tmp_curve_uvA[i])) {
 			    out_of_all_inner = false;
 			    break;
 			}
@@ -3491,8 +3491,8 @@ ON_Intersect(const ON_Surface *surfA,
 	    }
 	    if (!inside_overlap) {
 		curvept.Append(tmp_curvept[i]);
-		curveuv.Append(tmp_curveuv[i]);
-		curvest.Append(tmp_curvest[i]);
+		curve_uvA.Append(tmp_curve_uvA[i]);
+		curve_uvB.Append(tmp_curve_uvB[i]);
 	    }
 	}
     }
@@ -3522,16 +3522,16 @@ ON_Intersect(const ON_Surface *surfA,
     // TODO: need more tests to find a better threshold
     double max_dist = std::min(rootA->m_surf->BoundingBox().Diagonal().Length(), rootB->m_surf->BoundingBox().Diagonal().Length()) * 0.1;
 
-    double max_dist_u = surfA->Domain(0).Length() * 0.05;
-    double max_dist_v = surfA->Domain(1).Length() * 0.05;
-    double max_dist_s = surfB->Domain(0).Length() * 0.05;
-    double max_dist_t = surfB->Domain(1).Length() * 0.05;
+    double max_dist_uA = surfA->Domain(0).Length() * 0.05;
+    double max_dist_vA = surfA->Domain(1).Length() * 0.05;
+    double max_dist_uB = surfB->Domain(0).Length() * 0.05;
+    double max_dist_vB = surfB->Domain(1).Length() * 0.05;
     if (DEBUG_BREP_INTERSECT) {
 	bu_log("max_dist: %f\n", max_dist);
-	bu_log("max_dist_u: %f\n", max_dist_u);
-	bu_log("max_dist_v: %f\n", max_dist_v);
-	bu_log("max_dist_s: %f\n", max_dist_s);
-	bu_log("max_dist_t: %f\n", max_dist_t);
+	bu_log("max_dist_uA: %f\n", max_dist_uA);
+	bu_log("max_dist_vA: %f\n", max_dist_vA);
+	bu_log("max_dist_uB: %f\n", max_dist_uB);
+	bu_log("max_dist_vB: %f\n", max_dist_vB);
     }
 
     std::vector<PointPair> ptpairs;
@@ -3539,12 +3539,12 @@ ON_Intersect(const ON_Surface *surfA,
 	for (int j = i + 1; j < curvept.Count(); j++) {
 	    PointPair ppair;
 	    ppair.distance3d = curvept[i].DistanceTo(curvept[j]);
-	    ppair.dist_u = fabs(curveuv[i].x - curveuv[j].x);
-	    ppair.dist_v = fabs(curveuv[i].y - curveuv[j].y);
-	    ppair.dist_s = fabs(curvest[i].x - curvest[j].x);
-	    ppair.dist_t = fabs(curvest[i].y - curvest[j].y);
+	    ppair.dist_uA = fabs(curve_uvA[i].x - curve_uvA[j].x);
+	    ppair.dist_vA = fabs(curve_uvA[i].y - curve_uvA[j].y);
+	    ppair.dist_uB = fabs(curve_uvB[i].x - curve_uvB[j].x);
+	    ppair.dist_vB = fabs(curve_uvB[i].y - curve_uvB[j].y);
 	    ppair.tol = isect_tol;
-	    if (ppair.dist_u < max_dist_u && ppair.dist_v < max_dist_v && ppair.dist_s < max_dist_s && ppair.dist_t < max_dist_t && ppair.distance3d < max_dist) {
+	    if (ppair.dist_uA < max_dist_uA && ppair.dist_vA < max_dist_vA && ppair.dist_uB < max_dist_uB && ppair.dist_vB < max_dist_vB && ppair.distance3d < max_dist) {
 		ppair.indexA = i;
 		ppair.indexB = j;
 		ptpairs.push_back(ppair);
@@ -3648,12 +3648,12 @@ ON_Intersect(const ON_Surface *surfA,
 		    PointPair newpair;
 		    int start = (*polylines[i])[k], end = (*polylines[j])[m];
 		    newpair.distance3d = curvept[start].DistanceTo(curvept[end]);
-		    newpair.dist_u = fabs(curveuv[start].x - curveuv[end].x);
-		    newpair.dist_v = fabs(curveuv[start].y - curveuv[end].y);
-		    newpair.dist_s = fabs(curvest[start].x - curvest[end].x);
-		    newpair.dist_t = fabs(curvest[start].y - curvest[end].y);
+		    newpair.dist_uA = fabs(curve_uvA[start].x - curve_uvA[end].x);
+		    newpair.dist_vA = fabs(curve_uvA[start].y - curve_uvA[end].y);
+		    newpair.dist_uB = fabs(curve_uvB[start].x - curve_uvB[end].x);
+		    newpair.dist_vB = fabs(curve_uvB[start].y - curve_uvB[end].y);
 		    newpair.tol = isect_tol;
-		    if (newpair.dist_u < max_dist_u && newpair.dist_v < max_dist_v && newpair.dist_s < max_dist_s && newpair.dist_t < max_dist_t) {
+		    if (newpair.dist_uA < max_dist_uA && newpair.dist_vA < max_dist_vA && newpair.dist_uB < max_dist_uB && newpair.dist_vB < max_dist_vB) {
 			if (newpair < pair) {
 			    newpair.indexA = start;
 			    newpair.indexB = end;
@@ -3669,12 +3669,12 @@ ON_Intersect(const ON_Surface *surfA,
 		//       expensive. Is this really necessary?
 		ON_3dPointArray ptarray1, ptarray2, ptarray3, ptarray4;
 		for (int k = 0; k < polylines[i]->Count(); k++) {
-		    ptarray1.Append(curveuv[(*polylines[i])[k]]);
-		    ptarray3.Append(curvest[(*polylines[i])[k]]);
+		    ptarray1.Append(curve_uvA[(*polylines[i])[k]]);
+		    ptarray3.Append(curve_uvB[(*polylines[i])[k]]);
 		}
 		for (int k = 0; k < polylines[j]->Count(); k++) {
-		    ptarray2.Append(curveuv[(*polylines[j])[k]]);
-		    ptarray4.Append(curvest[(*polylines[j])[k]]);
+		    ptarray2.Append(curve_uvA[(*polylines[j])[k]]);
+		    ptarray4.Append(curve_uvB[(*polylines[j])[k]]);
 		}
 		ON_PolylineCurve polyA(ptarray1), polyB(ptarray2), polyC(ptarray3), polyD(ptarray4);
 		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
@@ -3713,7 +3713,7 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     // generate ON_Curves from the polylines
-    ON_SimpleArray<ON_Curve *> intersect3d, intersect_uv2d, intersect_st2d;
+    ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
     for (unsigned int i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
@@ -3741,36 +3741,36 @@ ON_Intersect(const ON_Surface *surfA,
 	    // curve in UV space (surfA)
 	    ptarray.Empty();
 	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curveuv[(*polylines[i])[j]];
+		ON_2dPoint &pt2d = curve_uvA[(*polylines[i])[j]];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curveuv[startpoint].x - curveuv[endpoint].x) < max_dist_u
-		&& fabs(curveuv[startpoint].y - curveuv[endpoint].y) < max_dist_v
+	    if (fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA
+		&& fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA
 		&& i < num_curves) {
-		ON_2dPoint &pt2d = curveuv[startpoint];
+		ON_2dPoint &pt2d = curve_uvA[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolA));
+	    intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
 
 	    // curve in UV space (surfB)
 	    ptarray.Empty();
 	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curvest[(*polylines[i])[j]];
+		ON_2dPoint &pt2d = curve_uvB[(*polylines[i])[j]];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curvest[startpoint].x - curvest[endpoint].x) < max_dist_s
-		&& fabs(curvest[startpoint].y - curvest[endpoint].y) < max_dist_t
+	    if (fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB
+		&& fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB
 		&& i < num_curves) {
-		ON_2dPoint &pt2d = curvest[startpoint];
+		ON_2dPoint &pt2d = curve_uvB[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_st2d.Append(curve_fitting(curve, fitting_tolB));
+	    intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
 
 	    delete polylines[i];
 	}
@@ -3788,8 +3788,8 @@ ON_Intersect(const ON_Surface *surfA,
 	for (int i = 0; i < intersect3d.Count(); i++) {
 	    ON_SSX_EVENT event;
 	    event.m_curve3d = intersect3d[i];
-	    event.m_curveA = intersect_uv2d[i];
-	    event.m_curveB = intersect_st2d[i];
+	    event.m_curveA = intersect_uvA[i];
+	    event.m_curveB = intersect_uvB[i];
 	    // Normalize the curves, so that their domains are the same,
 	    // which is required by ON_SSX_EVENT::IsValid().
 	    event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
@@ -3848,8 +3848,8 @@ ON_Intersect(const ON_Surface *surfA,
 	if (j == intersect3d.Count()) {
 	    ON_SSX_EVENT event;
 	    event.m_point3d = curvept[single_pts[i]];
-	    event.m_pointA = curveuv[single_pts[i]];
-	    event.m_pointB = curvest[single_pts[i]];
+	    event.m_pointA = curve_uvA[single_pts[i]];
+	    event.m_pointB = curve_uvB[single_pts[i]];
 	    // If the normals of all points on the curves have the
 	    // same or opposite direction, the intersection is
 	    // considered tangent.
