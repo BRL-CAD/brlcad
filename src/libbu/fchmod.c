@@ -37,6 +37,7 @@
 #endif
 
 #include "bu/file.h"
+#include "bu/str.h"
 
 #ifdef HAVE_FCHMOD
 /* extern int fchmod(int, mode_t); */
