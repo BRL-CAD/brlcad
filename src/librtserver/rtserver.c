@@ -32,6 +32,7 @@
 #include <pthread.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
