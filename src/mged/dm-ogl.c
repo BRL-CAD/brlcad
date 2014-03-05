@@ -89,6 +89,7 @@ static void establish_transparency(const struct bu_structparse *, const char *, 
 static void do_fogHint(const struct bu_structparse *, const char *, void *, const char *);
 static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void debug_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void logfile_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *);
 
@@ -105,6 +106,7 @@ struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook, NULL, NULL },
+    {"%V",  1, "log",	Ogl_MV_O(log),	logfile_hook, NULL, NULL },
     {"%g",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
     {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook, NULL, NULL },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -353,6 +355,14 @@ debug_hook(const struct bu_structparse *UNUSED(sdp),
     DM_DEBUG(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
 
+static void
+logfile_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
+{
+    DM_LOGFILE(dmp, bu_vls_addr(&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.log));
+}
 
 static void
 bound_hook(const struct bu_structparse *sdp,

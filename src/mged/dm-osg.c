@@ -34,7 +34,8 @@
 #endif
 
 #include "dm/dm_xvars.h"
-#
+#include "dm/dm-osg.h"
+
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -69,6 +70,17 @@ zclip_hook(const struct bu_structparse *sdp,
 
     DM_SET_WIN_BOUNDS(dmp, bounds);
 }
+
+#if 0
+static void
+logfile_hook(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value))
+{
+    DM_LOGFILE(dmp, bu_vls_addr(&((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.log));
+}
+#endif
 
 static Tk_GenericProc Osg_doevent;
 
@@ -163,7 +175,6 @@ Osg_dm_init(struct dm_list *o_dm_list,
 
     return TCL_OK;
 }
-
 
 /*
  * Local Variables:

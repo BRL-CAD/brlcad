@@ -1378,6 +1378,15 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
+X_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
@@ -1669,6 +1678,7 @@ struct dm dm_X = {
     null_setDepthMask,
     X_setZBuffer,
     X_debug,
+    X_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -1703,6 +1713,7 @@ struct dm dm_X = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

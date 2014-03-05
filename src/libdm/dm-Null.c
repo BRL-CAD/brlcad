@@ -217,6 +217,11 @@ null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
     return 0;
 }
 
+int
+null_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
+{
+    return 0;
+}
 
 int
 null_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
@@ -299,6 +304,7 @@ struct dm dm_null = {
     null_setDepthMask,
     null_setZBuffer,
     null_debug,
+    null_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -333,6 +339,7 @@ struct dm dm_null = {
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

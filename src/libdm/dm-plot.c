@@ -458,6 +458,24 @@ plot_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+plot_logfile(struct dm *dmp, const char *filename)
+{
+    Tcl_Obj *obj;
+
+    obj = Tcl_GetObjResult(dmp->dm_interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
+
+    Tcl_SetObjResult(dmp->dm_interp, obj);
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -507,6 +525,7 @@ struct dm dm_plot = {
     null_setDepthMask,
     null_setZBuffer,
     plot_debug,
+    plot_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -541,6 +560,7 @@ struct dm dm_plot = {
     VINIT_ZERO,			/* clipmin */
     VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

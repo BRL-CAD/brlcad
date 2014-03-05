@@ -651,6 +651,15 @@ qt_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
+qt_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
@@ -934,6 +943,7 @@ struct dm dm_qt = {
     null_setDepthMask,
     qt_setZBuffer,
     qt_debug,
+    qt_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -968,6 +978,7 @@ struct dm dm_qt = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

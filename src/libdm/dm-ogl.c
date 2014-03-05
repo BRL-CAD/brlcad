@@ -123,7 +123,8 @@ HIDDEN int ogl_setTransparency(struct dm *dmp, int transparency_on);
 HIDDEN int ogl_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
 HIDDEN int ogl_setWinBounds(struct dm *dmp, fastf_t *w);
-HIDDEN int ogl_debug(struct dm *dmp, int lvl);
+HIDDEN int ogl_debug(struct dm *dmp, int vl);
+HIDDEN int ogl_logfile(struct dm *dmp, const char *filename);
 HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_endDList(struct dm *dmp);
 HIDDEN void ogl_drawDList(unsigned int list);
@@ -161,6 +162,7 @@ struct dm dm_ogl = {
     ogl_setDepthMask,
     ogl_setZBuffer,
     ogl_debug,
+    ogl_logfile,
     ogl_beginDList,
     ogl_endDList,
     ogl_drawDList,
@@ -195,6 +197,7 @@ struct dm dm_ogl = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -732,6 +735,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_lineWidth = 1;
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
+    bu_vls_init(&(dmp->dm_log));
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
@@ -747,6 +751,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
     privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+    bu_vls_init(&(privvars->mvars.log));
 
     dmp->dm_vp = &default_viewscale;
 
@@ -2121,6 +2126,13 @@ ogl_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+ogl_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
 
 HIDDEN int
 ogl_setWinBounds(struct dm *dmp, fastf_t *w)

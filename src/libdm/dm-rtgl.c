@@ -148,6 +148,7 @@ struct dm dm_rtgl = {
     {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
     {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

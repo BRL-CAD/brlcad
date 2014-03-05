@@ -685,6 +685,15 @@ tk_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+tk_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
 tk_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -820,6 +829,7 @@ struct dm dm_tk = {
     null_setDepthMask,
     tk_setZBuffer,
     tk_debug,
+    tk_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -854,6 +864,7 @@ struct dm dm_tk = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

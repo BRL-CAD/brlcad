@@ -54,6 +54,7 @@ struct modifiable_ogl_vars {
     int doublebuffer;
     int depth;
     int debug;
+    struct bu_vls log;
     double bound;
     int boundFlag;
 };

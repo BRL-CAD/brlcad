@@ -239,6 +239,7 @@ struct dm {
     int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
     int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
     int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
+    int (*dm_logfile)(struct dm *dmp, const char *filename); /**< @brief Set DM log file */
     int (*dm_beginDList)(struct dm *dmp, unsigned int list);
     int (*dm_endDList)(struct dm *dmp);
     void (*dm_drawDList)(unsigned int list);
@@ -273,6 +274,7 @@ struct dm {
     vect_t dm_clipmin;		/**< @brief minimum clipping vector */
     vect_t dm_clipmax;		/**< @brief maximum clipping vector */
     int dm_debugLevel;		/**< @brief !0 means debugging */
+    struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
     int dm_perspective;		/**< @brief !0 means perspective on */
     int dm_light;			/**< @brief !0 means lighting on */
     int dm_transparency;		/**< @brief !0 means transparency on */
@@ -416,6 +418,7 @@ struct display_manager {
 #define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
 #define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
 #define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
+#define DM_LOGFILE(_dmp, _lvl) _dmp->dm_logfile(_dmp, _lvl)
 #define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
 #define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_list)

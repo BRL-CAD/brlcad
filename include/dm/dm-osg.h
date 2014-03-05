@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include "bu/vls.h"
 #ifdef __cplusplus
 #include <iostream>
 
@@ -73,7 +74,7 @@
 #include <osg/ShapeDrawable>
 #endif
 
-#define Osg_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+#define Osg_MV_O(_m) offsetof(struct modifiable_osg_vars, _m)
 
 
 struct modifiable_osg_vars {
@@ -89,6 +90,7 @@ struct modifiable_osg_vars {
     int doublebuffer;
     int depth;
     int debug;
+    struct bu_vls log;
     double bound;
     int boundFlag;
 };
@@ -109,13 +111,13 @@ struct osg_vars {
     double cumulative_draw_time;
     float wireColor[4];
 
-    GLdouble faceplate_mat[16];
+    /*GLdouble faceplate_mat[16];*/
     int face_flag;
     int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */
     char is_direct;
-    GLclampf r, g, b;
+    /*GLclampf r, g, b;*/
     struct modifiable_osg_vars mvars;
 #if defined(DM_WIN32)
     HGLRC glxc; /* Need to figure out what OSG needs on Win32 */

@@ -263,6 +263,14 @@ txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 
 
 HIDDEN int
+txt_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
+{
+    bu_log("logfile called\n");
+    return 0;
+}
+
+
+HIDDEN int
 txt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
 {
     bu_log("beginDList called\n");
@@ -351,6 +359,7 @@ struct dm dm_txt = {
     txt_setDepthMask,
     txt_setZBuffer,
     txt_debug,
+    txt_logfile,
     txt_beginDList,
     txt_endDList,
     txt_drawDList,
@@ -385,6 +394,7 @@ struct dm dm_txt = {
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

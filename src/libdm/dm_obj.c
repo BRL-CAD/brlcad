@@ -2634,6 +2634,48 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
     return TCL_ERROR;
 }
 
+/*
+ * Get/set the display manager's log file.
+ *
+ * Usage:
+ * objname logfile [filename]
+ */
+HIDDEN int
+dmo_logfile_tcl(void *clientData, int argc, const char **argv)
+{
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    Tcl_Obj *obj;
+
+    if (!dmop || !dmop->interp)
+	return TCL_ERROR;
+
+    obj = Tcl_GetObjResult(dmop->interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    /* get log file */
+    if (argc == 2) {
+	bu_vls_printf(&vls, "%d", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	Tcl_SetObjResult(dmop->interp, obj);
+	return TCL_OK;
+    }
+
+    /* set log file */
+    if (argc == 3) {
+	return DM_LOGFILE(dmop->dmo_dmp, argv[3]);
+    }
+
+    bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+}
+
+
 
 /*
  * Flush the output buffer.
@@ -3006,6 +3048,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"listen",		dmo_listen_tcl},
 #endif
 	{"loadmat",		dmo_loadmat_tcl},
+	{"logfile",		dmo_logfile_tcl},
 	{"normal",		dmo_normal_tcl},
 	{"observer",		dmo_observer_tcl},
 	{"perspective",		dmo_perspective_tcl},

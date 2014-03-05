@@ -460,6 +460,12 @@ ps_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+ps_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    return TCL_OK;
+}
 
 HIDDEN int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -509,6 +515,7 @@ struct dm dm_ps = {
     null_setDepthMask,
     null_setZBuffer,
     ps_debug,
+    ps_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -543,6 +550,7 @@ struct dm dm_ps = {
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

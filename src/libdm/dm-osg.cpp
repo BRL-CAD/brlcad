@@ -89,6 +89,7 @@ HIDDEN int osg_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int osg_setZBuffer(struct dm *dmp, int zbuffer_on);
 HIDDEN int osg_setWinBounds(struct dm *dmp, fastf_t *w);
 HIDDEN int osg_debug(struct dm *dmp, int lvl);
+HIDDEN int osg_logfile(struct dm *dmp, const char *filename);
 HIDDEN int osg_beginDList(struct dm *dmp, unsigned int list);
 HIDDEN int osg_endDList(struct dm *dmp);
 HIDDEN void osg_drawDList(unsigned int list);
@@ -126,6 +127,7 @@ struct dm dm_osg = {
     osg_setDepthMask,
     osg_setZBuffer,
     osg_debug,
+    osg_logfile,
     osg_beginDList,
     osg_endDList,
     osg_drawDList,
@@ -160,6 +162,7 @@ struct dm dm_osg = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -1107,6 +1110,15 @@ HIDDEN int
 osg_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+osg_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
     return TCL_OK;
 }
