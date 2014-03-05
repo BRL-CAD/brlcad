@@ -54,6 +54,9 @@
 #  undef OUT
 #else
 #  include <unistd.h>
+
+/* provide a stub so we don't need to wrap all setmode() calls */
+#  define setmode(a, b) /* poof */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */
