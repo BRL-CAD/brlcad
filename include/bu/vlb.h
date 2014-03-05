@@ -28,6 +28,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */
 /** @{ */
@@ -153,6 +155,8 @@ BU_EXPORT extern void bu_vlb_print(struct bu_vlb *vlb,
 BU_EXPORT extern void bu_pr_vlb(const char *title, const struct bu_vlb *vlb);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_VLB_H */
 

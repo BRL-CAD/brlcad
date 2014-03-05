@@ -28,6 +28,8 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 
 /** @addtogroup conv */
@@ -457,6 +459,7 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
 
 /** @} */
 
+__END_DECLS
 
 #endif  /* BU_CV_H */
 

@@ -27,9 +27,10 @@
 #include "common.h"
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup str */
 /** @{ */
-
 
 /** @file libbu/str.c
  *
@@ -255,7 +256,7 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
  */
 BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
-
+__END_DECLS
 
 /** @} */
 

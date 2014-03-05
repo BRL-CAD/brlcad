@@ -33,6 +33,8 @@
 #include "bu/magic.h"
 #include "bu/list.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup mf */
 /** @{ */
 /** @file libbu/mappedfile.c
@@ -177,6 +179,8 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * con
 								      const char *appl);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_MAPPED_FILE_H */
 

@@ -29,6 +29,8 @@
 #include "bu/magic.h"
 #include "bu/vls.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs */
 /** @{ */
@@ -240,6 +242,8 @@ BU_EXPORT extern void bu_avs_print(const struct bu_attribute_value_set *avp,
 				   const char *title);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_AVS_H */
 

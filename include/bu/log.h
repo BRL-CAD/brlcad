@@ -37,6 +37,8 @@
 #include "bu/parse.h"
 #include "bu/list.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup log */
 /** @{ */
 /** @file libbu/backtrace.c
@@ -512,6 +514,8 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_LOG_H */
 

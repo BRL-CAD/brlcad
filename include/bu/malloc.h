@@ -30,6 +30,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup malloc */
 /** @{ */
 /** @file libbu/malloc.c
@@ -176,6 +178,8 @@ BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
 
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_MALLOC_H */
 

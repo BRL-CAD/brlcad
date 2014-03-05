@@ -57,6 +57,8 @@
  *
  */
 
+__BEGIN_DECLS
+
 /* libbu */
 
 #define BU_AVS_MAGIC			0x41765321 /**< AvS! */
@@ -257,6 +259,7 @@ BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
 
 /** @} */
 
+__END_DECLS
 
 #endif /* BU_MAGIC_H */
 

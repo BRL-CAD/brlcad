@@ -32,6 +32,8 @@
 #include "bu/magic.h"
 #include "bu/vls.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /* parse.c */
 /** @addtogroup parse */
@@ -468,6 +470,8 @@ BU_EXPORT extern int bu_str_false(const char *str);
 
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_PARSE_H */
 

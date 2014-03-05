@@ -30,6 +30,8 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup sort */
 /** @{ */
 
@@ -44,6 +46,8 @@ BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
 
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_SORT_H */
 

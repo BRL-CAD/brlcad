@@ -28,6 +28,8 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup simd */
 /** @{ */
 
@@ -55,6 +57,8 @@ BU_EXPORT extern int bu_simd_level(void);
 BU_EXPORT extern int bu_simd_supported(int level);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_SIMD_H */
 

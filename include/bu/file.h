@@ -37,6 +37,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup file */
 /** @{ */
 
@@ -559,6 +561,8 @@ BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
 BU_EXPORT extern off_t bu_ftell(FILE *stream);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_FILE_H */
 

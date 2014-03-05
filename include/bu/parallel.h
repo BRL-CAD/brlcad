@@ -33,6 +33,8 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup thread */
 /** @{ */
 
@@ -205,6 +207,7 @@ BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 
 /** @} */
 
+__END_DECLS
 
 #endif  /* BU_PARALLEL_H */
 

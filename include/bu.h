@@ -68,6 +68,8 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern const char *bu_version(void);
 
+__END_DECLS
+
 #include "./bu/cv.h"
 #include "./bu/endian.h"
 #include "./bu/list.h"
@@ -94,8 +96,6 @@ BU_EXPORT extern const char *bu_version(void);
 #include "./bu/str.h"
 #include "./bu/hash.h"
 #include "./bu/bu_tcl.h"
-
-__END_DECLS
 
 #endif  /* BU_H */
 

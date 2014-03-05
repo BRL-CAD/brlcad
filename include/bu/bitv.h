@@ -28,6 +28,8 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv */
 /** @{*/
@@ -423,6 +425,8 @@ BU_EXPORT extern void bu_printb(const char *s,
 				const char *bits);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_BITV_H */
 

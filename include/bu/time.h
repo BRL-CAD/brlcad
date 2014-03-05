@@ -34,6 +34,8 @@
 #include "bu/defines.h"
 #include "bu/vls.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup bu_time */
 /** @{ */
 
@@ -52,6 +54,8 @@ BU_EXPORT extern int64_t bu_gettime(void);
 BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_TIME_H */
 

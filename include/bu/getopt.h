@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bu/defines.h"
 
+__BEGIN_DECLS
 
 /** @addtogroup getopt */
 /** @{ */
@@ -80,7 +81,7 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 
 /** @} */
 
-
+__END_DECLS
 
 #endif  /* BU_GETOPT_H */
 

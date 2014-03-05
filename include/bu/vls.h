@@ -35,6 +35,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup vls */
 /** @{ */
@@ -437,6 +439,7 @@ BU_EXPORT extern const char *bu_vls_encode(struct bu_vls *vp, const char *str);
  */
 BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
 
+__END_DECLS
 
 /** @} */
 

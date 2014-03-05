@@ -31,6 +31,8 @@
 #include "bu/list.h"
 #include "bu/bitv.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup rb */
 /** @{ */
@@ -562,6 +564,8 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_RB_WALK_FUNC_FUNC_DECL(_func) void (*_func)(struct bu_rb_node *, int, void (*)(void), int)
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_RB_H */
 

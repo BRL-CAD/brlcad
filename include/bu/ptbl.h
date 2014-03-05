@@ -36,6 +36,8 @@
 #include "bu/magic.h"
 #include "bu/list.h"
 
+__BEGIN_DECLS
+
 /* ptbl.c */
 /** @addtogroup ptbl */
 /** @{ */
@@ -239,6 +241,8 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
 				    int end);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_PTBL_H */
 

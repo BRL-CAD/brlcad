@@ -26,6 +26,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup list */
 /** @{*/
@@ -600,6 +602,8 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 				       const uint32_t magic);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_LIST_H */
 

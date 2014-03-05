@@ -29,6 +29,8 @@
 #include "bu/defines.h"
 #include "bu/parse.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup units */
 /** @{ */
 
@@ -92,7 +94,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 				void *base,
 				const char *value);
 
-
+__END_DECLS
 
 /** @} */
 
