@@ -28,8 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "bio.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "mater.h"
 #include "solid.h"
 

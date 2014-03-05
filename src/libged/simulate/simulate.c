@@ -38,7 +38,7 @@
 /* Public Headers */
 #include "vmath.h"
 #include "db.h"
-#include "bu.h"
+
 #include "raytrace.h"
 
 /* Private Headers */

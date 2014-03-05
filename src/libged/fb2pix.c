@@ -37,7 +37,8 @@
 #  include <unistd.h>
 #endif
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 

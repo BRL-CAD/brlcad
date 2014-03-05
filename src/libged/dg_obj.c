@@ -44,7 +44,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "bu/cmd.h"
 #include "vmath.h"

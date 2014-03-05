@@ -40,7 +40,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/sort.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

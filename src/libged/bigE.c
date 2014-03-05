@@ -33,7 +33,8 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

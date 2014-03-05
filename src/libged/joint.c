@@ -38,7 +38,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "dg.h"
 #include "solid.h"
 #include "raytrace.h"

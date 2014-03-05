@@ -42,7 +42,9 @@
 #include <limits.h>			/* home of INT_MAX a/k/a MAXINT */
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

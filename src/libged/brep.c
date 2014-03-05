@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bio.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"

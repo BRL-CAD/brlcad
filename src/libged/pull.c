@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "bn.h"
 #include "bu/cmd.h"
 
