@@ -473,9 +473,7 @@ main(int argc, char *argv[])
 
     if (!output_file) {
 	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp), O_BINARY);
-#endif
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "w+b")) == NULL) {
