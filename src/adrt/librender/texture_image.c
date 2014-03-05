@@ -30,11 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-
-
+#include "bu/malloc.h"
 
 void
 texture_image_free(struct texture_s *texture) {

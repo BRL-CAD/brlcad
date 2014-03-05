@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 #ifndef TIE_PRECISION

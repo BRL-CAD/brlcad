@@ -26,12 +26,7 @@
 
 #include "texture.h"
 #include <stdlib.h>
-
-#include "bu.h"
-
-
-
-
+#include "bu/malloc.h"
 
 void
 texture_stack_free(struct texture_s *texture) {

@@ -32,7 +32,8 @@
 
 #include "adrt_struct.h"
 
-#include "bu.h"
+
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
 

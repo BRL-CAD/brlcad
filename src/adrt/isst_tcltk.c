@@ -35,7 +35,9 @@
 #include "tcl.h"
 #include "tk.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
+#include "bu/time.h"
 #include "dm.h"
 
 #include "tie.h"
