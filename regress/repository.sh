@@ -257,13 +257,14 @@ fi
 # have some characteristic feature.
 
 echo "running platform symbol usage check"
-
+PLATFORMS="WIN32 _WIN32 WIN64 _WIN64"
 FOUND=0
-for platform in WIN32 WIN64 ; do
+for platform in $PLATFORMS ; do
     echo "Searching headers for $platform ..."
     MATCH=
     for file in $INCFILES /dev/null ; do
-	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null | grep -v pstdint.h`"
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -e $regex $file /dev/null | grep -v pstdint.h`"
 	if test "x$this" != "x" ; then
 	    MATCH="$MATCH
 $this"
@@ -278,11 +279,13 @@ $this"
     fi
 done
 
-for platform in WIN32 WIN64 ; do
+
+for platform in $PLATFORMS ; do
     echo "Searching sources for $platform ..."
     MATCH=
     for file in $SRCFILES /dev/null ; do
-	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null | grep -v uce-dirent.h`"
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -E $regex $file /dev/null | grep -v uce-dirent.h`"
 	if test "x$this" != "x" ; then
 	    MATCH="$MATCH
 $this"
@@ -297,11 +300,12 @@ $this"
     fi
 done
 
-for platform in WIN32 WIN64 ; do
+for platform in $PLATFORMS ; do
     echo "Searching build files for $platform ..."
     MATCH=
     for file in $BLDFILES /dev/null ; do
-	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null`"
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -E $regex $file /dev/null`"
 	if test "x$this" != "x" ; then
 	    MATCH="$MATCH
 $this"
@@ -319,7 +323,7 @@ done
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=79
+NEED_FIXING=200
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"
