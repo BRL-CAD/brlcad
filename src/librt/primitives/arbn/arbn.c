@@ -36,6 +36,7 @@
 #include "bin.h"
 
 #include "tcl.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"

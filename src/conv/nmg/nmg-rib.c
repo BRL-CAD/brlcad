@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

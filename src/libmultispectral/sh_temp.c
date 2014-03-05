@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"

@@ -31,7 +31,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/vls.h"
 #include "shadefuncs.h"
 #include "shadework.h"
 

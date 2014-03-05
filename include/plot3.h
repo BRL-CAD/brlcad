@@ -32,7 +32,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/defines.h"
 #include "vmath.h"
 #include "bn.h"
 

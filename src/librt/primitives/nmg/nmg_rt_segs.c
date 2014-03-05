@@ -35,6 +35,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

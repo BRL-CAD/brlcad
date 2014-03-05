@@ -55,6 +55,8 @@
 #include <setjmp.h>
 #include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

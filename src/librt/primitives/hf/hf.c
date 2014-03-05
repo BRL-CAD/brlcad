@@ -53,6 +53,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/cv.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

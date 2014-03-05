@@ -31,6 +31,7 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 int

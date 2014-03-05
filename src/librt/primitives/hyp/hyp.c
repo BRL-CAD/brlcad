@@ -38,6 +38,7 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

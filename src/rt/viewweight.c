@@ -35,6 +35,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 

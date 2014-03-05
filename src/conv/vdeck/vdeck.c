@@ -65,6 +65,9 @@
 #endif
 #include "bio.h"
 
+#include "bu/parallel.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

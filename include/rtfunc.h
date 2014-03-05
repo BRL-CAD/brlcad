@@ -35,7 +35,9 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/parse.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS

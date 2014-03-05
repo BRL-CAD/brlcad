@@ -46,6 +46,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges.h"
 #include "brlcad_version.h"

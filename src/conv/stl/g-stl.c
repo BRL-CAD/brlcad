@@ -38,6 +38,8 @@
 #include "bin.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

@@ -27,6 +27,7 @@
 #include "common.h"
 
 /* system headers */
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -34,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

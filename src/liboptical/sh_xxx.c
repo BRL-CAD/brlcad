@@ -67,6 +67,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"

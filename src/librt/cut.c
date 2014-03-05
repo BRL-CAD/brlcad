@@ -43,6 +43,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
+#include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

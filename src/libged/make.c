@@ -31,6 +31,7 @@
 
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "rtgeom.h"
 #include "wdb.h"
 

@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"

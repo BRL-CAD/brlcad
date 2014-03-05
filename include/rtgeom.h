@@ -35,8 +35,12 @@
 
 #include "common.h"
 
+#include "bu/bitv.h"
+#include "bu/color.h"
+#include "bu/list.h"
+#include "bu/mapped_file.h"
+#include "bu/vls.h"
 #include "vmath.h"
-#include "bu.h"
 
 #include "nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"

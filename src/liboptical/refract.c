@@ -27,6 +27,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/sort.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

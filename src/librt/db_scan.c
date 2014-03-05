@@ -32,6 +32,7 @@
 #include <string.h>
 #include "bin.h"
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"

@@ -29,12 +29,14 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

@@ -24,6 +24,7 @@
 #include <math.h>
 #include <assert.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

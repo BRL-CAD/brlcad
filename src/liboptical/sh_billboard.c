@@ -33,6 +33,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

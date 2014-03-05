@@ -40,6 +40,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

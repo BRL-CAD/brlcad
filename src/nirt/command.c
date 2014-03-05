@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/str.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 

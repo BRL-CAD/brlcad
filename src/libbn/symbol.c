@@ -42,6 +42,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/str.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "vectfont.h"

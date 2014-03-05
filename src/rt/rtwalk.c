@@ -33,6 +33,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

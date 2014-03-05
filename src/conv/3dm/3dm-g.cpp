@@ -33,6 +33,7 @@
 #include <vector>
 #include <map>
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 

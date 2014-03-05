@@ -63,6 +63,7 @@
 #include <time.h>
 
 #include "tcl.h"
+#include "bu/parallel.h"
 #include "wdb.h"
 #include "dg.h"
 

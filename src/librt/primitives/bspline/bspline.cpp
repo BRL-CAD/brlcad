@@ -43,6 +43,7 @@
 #include <math.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"

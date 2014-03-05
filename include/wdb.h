@@ -35,7 +35,9 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/magic.h"
+#include "bu/bitv.h"
+#include "bu/list.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"

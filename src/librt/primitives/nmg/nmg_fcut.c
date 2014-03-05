@@ -47,6 +47,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/sort.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

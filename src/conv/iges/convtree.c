@@ -24,6 +24,7 @@
  *
  */
 
+#include "bu/debug.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

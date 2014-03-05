@@ -38,6 +38,7 @@
 #include "bio.h"
 
 #include "tcl.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

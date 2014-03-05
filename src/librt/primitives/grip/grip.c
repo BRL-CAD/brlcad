@@ -40,6 +40,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"

@@ -40,6 +40,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "spectrum.h"

@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -35,6 +36,7 @@
 #  include <signal.h>
 #endif
 
+#include "bu/parallel.h"
 #include "photonmap.h"
 
 

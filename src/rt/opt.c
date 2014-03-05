@@ -31,6 +31,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

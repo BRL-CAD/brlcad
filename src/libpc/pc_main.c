@@ -29,6 +29,8 @@
 
 #include <stdlib.h>
 
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "pc.h"
 
 /**

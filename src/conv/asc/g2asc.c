@@ -33,6 +33,8 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/debug.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"

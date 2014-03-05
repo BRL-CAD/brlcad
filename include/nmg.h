@@ -36,9 +36,11 @@
 #include "common.h"
 
 /* interface headers */
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/magic.h"
+#include "bu/ptbl.h"
 #include "vmath.h"
-#include "bu.h"
-
 
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */

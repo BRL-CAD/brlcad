@@ -34,6 +34,8 @@
 #include "bin.h"
 
 #include "tcl.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

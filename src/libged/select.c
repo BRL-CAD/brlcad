@@ -29,6 +29,7 @@
 #include "bio.h"
 #include "solid.h"
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 int

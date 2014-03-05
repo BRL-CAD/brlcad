@@ -67,6 +67,7 @@ ABDEGHIJKRTUYZ
 
 #include <stdio.h>
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "plot3.h"
 
