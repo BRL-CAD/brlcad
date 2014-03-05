@@ -2550,7 +2550,7 @@ is_pt_in_surf_overlap(
 }
 
 HIDDEN bool
-is_subsurfaceA_in_overlap(
+is_subsurfaceA_completely_inside_overlap(
 	const ON_SimpleArray<Overlapevent> &overlap_events,
 	const Subsurface *subA,
 	double isect_tolA)
@@ -3308,13 +3308,15 @@ ON_Intersect(const ON_Surface *surfA,
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    // If the Subsurface from either surfA or surfB (we're
-	    // checking surfA in this case) is inside an overlap
-	    // region, then we know the Subsurface pair intersects.
-	    if (is_subsurfaceA_in_overlap(overlap_events, i->first, isect_tolA)) {
+	    // checking surfA in this case) is completely inside an
+	    // overlap region, then we know that there is no
+	    // (non-overlap) intersection between this pair of
+	    // Subsurfaces, and thus no point in subdividing them
+	    // further.
+	    if (is_subsurfaceA_completely_inside_overlap(overlap_events, i->first, isect_tolA)) {
 		continue;
 	    }
 
-	    // otherwise, subdivide and try again
 	    std::vector<Subsurface *> splittedA, splittedB;
 	    if ((*i).first->Split() != 0) {
 		splittedA.push_back((*i).first);
