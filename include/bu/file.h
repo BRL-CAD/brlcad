@@ -34,6 +34,10 @@
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
 
+#ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>   /* for RTLD_* */
+#endif
+
 #include "bu/defines.h"
 #include "bu/magic.h"
 
