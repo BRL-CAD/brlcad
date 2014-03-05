@@ -27,7 +27,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "plot3.h"
 

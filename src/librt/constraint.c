@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 
-#include "bu.h"
+
 #include "bn.h"
 #include "db.h"
 #include "pc.h"

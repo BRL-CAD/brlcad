@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include <string.h>
-#include "bu.h"
+
 #include "vmath.h"
 #include "raytrace.h"
 

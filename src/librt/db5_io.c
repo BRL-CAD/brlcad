@@ -32,7 +32,10 @@
 #include <ctype.h>
 #include "bin.h"
 
-#include "bu.h"
+
+#include "bu/endian.h"
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db5.h"

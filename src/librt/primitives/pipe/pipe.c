@@ -38,8 +38,10 @@
 #include "bin.h"
 
 #include "tcl.h"
+
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "db.h"
 #include "nmg.h"

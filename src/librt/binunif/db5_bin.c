@@ -38,7 +38,9 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/cv.h"
+#include "bu/parse.h"
 #include "vmath.h"
 #include "db5.h"
 #include "rtgeom.h"

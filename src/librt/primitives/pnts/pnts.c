@@ -29,8 +29,9 @@
 #include "bin.h"
 
 /* common headers */
+#include "bu/cv.h"
 #include "bn.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "vmath.h"

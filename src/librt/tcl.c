@@ -30,7 +30,8 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

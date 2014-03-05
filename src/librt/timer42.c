@@ -30,7 +30,7 @@
 #endif
 
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "raytrace.h"
 

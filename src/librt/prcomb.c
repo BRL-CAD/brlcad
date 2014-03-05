@@ -28,7 +28,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

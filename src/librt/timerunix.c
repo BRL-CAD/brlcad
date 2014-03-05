@@ -39,7 +39,7 @@
 #  define DEFAULT_HZ yes
 #endif
 
-#include "bu.h"
+
 
 /* Standard System V stuff */
 static time_t time0;

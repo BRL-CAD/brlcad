@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
