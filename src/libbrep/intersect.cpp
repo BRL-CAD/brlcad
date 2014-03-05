@@ -2847,6 +2847,20 @@ split_overlaps_at_intersections(
     }
 }
 
+HIDDEN std::vector<Subsurface *>
+subdivide_subsurface(Subsurface *sub)
+{
+    std::vector<Subsurface *> parts;
+    if (sub->Split() != 0) {
+	parts.push_back(sub);
+    } else {
+	for (int i = 0; i < 4; ++i) {
+	    parts.push_back(sub->m_children[i]);
+	}
+    }
+    return parts;
+}
+
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -3317,26 +3331,17 @@ ON_Intersect(const ON_Surface *surfA,
 		continue;
 	    }
 
-	    std::vector<Subsurface *> splittedA, splittedB;
-	    if ((*i).first->Split() != 0) {
-		splittedA.push_back((*i).first);
-	    } else {
-		for (int j = 0; j < 4; j++) {
-		    splittedA.push_back((*i).first->m_children[j]);
-		}
-	    }
-	    if ((*i).second->Split() != 0) {
-		splittedB.push_back((*i).second);
-	    } else {
-		for (int j = 0; j < 4; j++) {
-		    splittedB.push_back((*i).second->m_children[j]);
-		}
-	    }
-	    for (unsigned int j = 0; j < splittedA.size(); j++)
-		for (unsigned int k = 0; k < splittedB.size(); k++)
-		    if (splittedB[k]->Intersect(*splittedA[j], isect_tol)) {
-			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
+	    // subdivide and add the parts whose bounding boxes
+	    // intersect to the new list of candidates
+	    std::vector<Subsurface *> partsA = subdivide_subsurface(i->first);
+	    std::vector<Subsurface *> partsB = subdivide_subsurface(i->second);
+	    for (size_t j = 0; j < partsA.size(); ++j) {
+		for (size_t k = 0; k < partsB.size(); ++k) {
+		    if (partsB[k]->Intersect(*partsA[j], isect_tol)) {
+			next_candidates.push_back(std::make_pair(partsA[j], partsB[k]));
 		    }
+ 		}
+ 	    }
 	}
 	candidates = next_candidates;
     }
