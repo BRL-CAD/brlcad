@@ -48,10 +48,8 @@ main(void)
     int old_id=(-1);
     int face_count=0;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     while ( scanf( "%d %d %f %d %d", &ident, &face_type, &tmp_a, &tmp_i, &npts ) != EOF )
     {

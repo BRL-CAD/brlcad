@@ -23,12 +23,15 @@
  * color one by replicating each value three times.
  *
  */
+
 #include "common.h"
+
 #include <stdlib.h>
-#include <stdio.h>
 #include "bio.h"
+
 #include "icv.h"
 #include "bu.h"
+
 
 char usage[] = "\
 Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
@@ -37,6 +40,7 @@ Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
 char *out_file = NULL;
 char *in_file = NULL;
 int inx=0, iny=0;
+
 
 int
 get_args(int argc, char **argv)
@@ -94,11 +98,9 @@ main(int argc, char **argv)
 	return 1;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
     if (img == NULL)

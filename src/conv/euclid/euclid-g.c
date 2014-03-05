@@ -186,9 +186,7 @@ main(int argc, char **argv)
 	}
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
-#endif
 
     /* Output BRL-CAD database header.  No problem if more than one. */
     if ( efile == NULL )

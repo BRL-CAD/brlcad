@@ -448,9 +448,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     /* Open error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);

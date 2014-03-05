@@ -169,9 +169,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     in_fp = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(in_fp), O_BINARY);
-#endif
     polysolids = 1;
     id_root = (struct comp_idents *)NULL;
     bu_ptbl_init( &faces, 64, " &faces ");

@@ -32,10 +32,8 @@ main(int UNUSED(ac), char **UNUSED(argv))
 {
     unsigned char pix[3]; /* RGB of one pixel */
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     while (!feof(stdin)
 	   && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {

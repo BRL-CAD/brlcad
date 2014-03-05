@@ -38,7 +38,6 @@
 #endif
 #include "bio.h"
 
-
 #include "bu/getopt.h"
 #include "fb.h"
 #include "fbserv_obj.h"
@@ -164,9 +163,7 @@ get_args(int argc, char **argv)
 			  file_name);
 	    bu_exit(1, NULL);
 	}
-#ifdef _WIN32
 	setmode(infd, O_BINARY);
-#endif
 	fileinput++;
     }
 

@@ -140,9 +140,7 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     ret = fb_write_fp(gedp->ged_fbsp->fbs_fbp, outfp,
 		      screen_width, screen_height,

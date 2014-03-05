@@ -141,14 +141,12 @@ int main(int argc, const char **argv)
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#else
+
     bu_setlinebuf( stdout );
     bu_setlinebuf( stderr );
-#endif
 
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;

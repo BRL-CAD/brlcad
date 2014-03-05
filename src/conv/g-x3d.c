@@ -449,9 +449,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	outfp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(outfp), O_BINARY);
-#endif
     } else {
 	if ((outfp = fopen( out_file, "wb")) == NULL)
 	{

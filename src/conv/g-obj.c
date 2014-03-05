@@ -180,9 +180,7 @@ main(int argc, char **argv)
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);

@@ -74,10 +74,8 @@ main(int argc, char **argv)
     /* Get ascii NMG input file name. */
     if (bu_optind >= argc || (int)(*argv[1]) == '-') {
 	fpin = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpin), O_BINARY);
-#endif
-    bu_log("%s: will be reading from stdin\n",argv[0]);
+	bu_log("%s: will be reading from stdin\n",argv[0]);
     } else {
 	afile = argv[bu_optind];
 	if ((fpin = fopen(afile, "rb")) == NULL) {

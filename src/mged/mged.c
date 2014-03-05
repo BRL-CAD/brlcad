@@ -265,7 +265,6 @@ pr_beep(void)
 
 /* so the Windows-specific calls blend in */
 #if !defined(_WIN32) || defined(__CYGWIN__)
-#  define setmode(a, b) /* poof */
 void _set_invalid_parameter_handler(void (*callback)()) { if (callback) return; }
 #endif
 

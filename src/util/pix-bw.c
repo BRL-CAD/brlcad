@@ -35,10 +35,10 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
-#include "icv.h"
 
 #include "bu.h"
 #include "vmath.h"
+#include "icv.h"
 
 
 unsigned char ibuf[3*1024], obuf[1024];
@@ -151,11 +151,9 @@ main(int argc, char **argv)
 	return 1;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
 

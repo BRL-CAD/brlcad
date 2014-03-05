@@ -80,9 +80,7 @@ main(int argc, char **argv)
     }
     bu_free(ofpath, "ofpath alloc from bu_realpath");
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(ofd, O_BINARY);
-#endif
 
     /* check for conversion from version 3 to version 4 */
     i = read(ifd, &rec, sizeof rec);

@@ -86,9 +86,7 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 	    return -1;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(ifp->if_fd, O_BINARY);
-#endif
 
     ifp->if_width = width;
     ifp->if_height = height;

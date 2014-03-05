@@ -46,10 +46,8 @@ main(void)
     int	a, b;
     int	i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     /* Init rmap */
 

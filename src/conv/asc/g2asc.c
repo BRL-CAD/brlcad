@@ -116,11 +116,9 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     iname = "-";
     ifp = stdin;

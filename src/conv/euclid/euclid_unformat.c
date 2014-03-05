@@ -60,13 +60,10 @@ main(int argc, char *argv[])
 	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
-    while ( bu_fgets( str, sizeof(str), stdin ) )
-    {
+    while ( bu_fgets( str, sizeof(str), stdin ) ) {
 	sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );
 
 	if ( ident > 0 )
@@ -81,15 +78,12 @@ main(int argc, char *argv[])
 	if ( npts > 2 )
 	    printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
 
-	for ( i=0; i<npts; i++ )
-	{
-	    if ( i >= MAX_PTS )
-	    {
+	for ( i=0; i<npts; i++ ) {
+	    if ( i >= MAX_PTS ) {
 		fprintf( stderr, "Too many points, MAX is %d\n", MAX_PTS );
 		return 1;
 	    }
-	    if ( !bu_fgets( str, sizeof(str), stdin ) )
-	    {
+	    if ( !bu_fgets( str, sizeof(str), stdin ) ) {
 		fprintf( stderr, "Unexpected EOF\n" );
 		break;
 	    }
