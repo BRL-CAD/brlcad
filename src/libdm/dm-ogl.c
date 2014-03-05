@@ -1042,7 +1042,7 @@ Done:
 
     ogl_setZBuffer(dmp, dmp->dm_zbuffer);
     ogl_setLight(dmp, dmp->dm_light);
- 
+
     return dmp;
 }
 
