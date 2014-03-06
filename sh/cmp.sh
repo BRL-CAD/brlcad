@@ -241,7 +241,7 @@ sh $i.rt -o $i.rtxray.pix -s$SZ >$i.rtxray.log 2>&1
 chmod 666 $i.rtxray.pix
 if test -f "$i.rtxray.pix" ; then
     chmod 666 $i.rtxray.pix
-    diff="`pixdiff $base.base.rtxray.pix $i.rtxray.pix 2>&1 1>/dev/null`"
+    diff="`pixdiff $base.base.rtxray.pix $i.rtxray.pix 1>/dev/null 2>&1`"
     back="`pixcount $base.base.rtxray.pix 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
     fore="`expr $SZ \* $SZ - $back`"
     obm="`echo $diff | awk '{print $9}'`"
@@ -265,7 +265,7 @@ rm -f $i.rtedge.pix $i.rtedge.log
 sh $i.rt -o $i.rtedge.pix -s$SZ >$i.rtedge.log 2>&1
 chmod 666 $i.rtedge.pix
 if test -f $i.rtedge.pix ; then
-    diff="`pixdiff $base.base.rtedge.pix $i.rtedge.pix 2>&1 1>/dev/null`"
+    diff="`pixdiff $base.base.rtedge.pix $i.rtedge.pix 1>/dev/null 2>&1`"
     back="`pixcount $base.base.rtedge.pix 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
     fore="`expr $SZ \* $SZ - $back`"
     obm="`echo $diff | awk '{print $9}'`"
