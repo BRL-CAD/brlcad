@@ -1137,7 +1137,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 				 -G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		} else {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    set ret [eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			--non-line-color [list $necolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
@@ -1152,7 +1170,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}  {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
