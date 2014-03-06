@@ -47,6 +47,8 @@ set(stepg_SOURCES
   CartesianTransformationOperator.cpp
   CartesianTransformationOperator2D.cpp
   CartesianTransformationOperator3D.cpp
+  CharacterizedDefinition.cpp
+  CharacterizedProductDefinition.cpp
   Circle.cpp
   ClosedShell.cpp
   CompositeCurve.cpp
@@ -141,9 +143,11 @@ set(stepg_SOURCES
   ProductDefinitionContextRole.cpp
   ProductDefinitionFormation.cpp
   ProductDefinitionFormationWithSpecifiedSource.cpp
+  ProductDefinitionRelationship.cpp
   ProductDefinitionShape.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
+  PropertyDefinitionRepresentation.cpp
   QuasiUniformCurve.cpp
   QuasiUniformSurface.cpp
   RatioContextDependentUnit.cpp
@@ -167,8 +171,13 @@ set(stepg_SOURCES
   RepresentationItem.cpp
   RepresentationRelationship.cpp
   RepresentationRelationshipWithTransformation.cpp
+  RepresentedDefinition.cpp
   STEPEntity.cpp
   SeamCurve.cpp
+  ShapeAspect.cpp
+  ShapeAspectRelationship.cpp
+  ShapeDefinition.cpp
+  ShapeDefinitionRepresentation.cpp
   ShapeRepresentation.cpp
   ShapeRepresentationRelationship.cpp
   SiUnit.cpp
@@ -246,6 +255,8 @@ set(stepg_HDRS
   CartesianTransformationOperator.h
   CartesianTransformationOperator2D.h
   CartesianTransformationOperator3D.h
+  CharacterizedDefinition.h
+  CharacterizedProductDefinition.h
   Circle.h
   ClosedShell.h
   CompositeCurve.h
@@ -339,9 +350,11 @@ set(stepg_HDRS
   ProductDefinitionContextRole.h
   ProductDefinitionFormation.h
   ProductDefinitionFormationWithSpecifiedSource.h
+  ProductDefinitionRelationship.h
   ProductDefinitionShape.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
+  PropertyDefinitionRepresentation.h
   QuasiUniformCurve.h
   QuasiUniformSurface.h
   RatioContextDependentUnit.h
@@ -365,8 +378,13 @@ set(stepg_HDRS
   RepresentationItem.h
   RepresentationRelationship.h
   RepresentationRelationshipWithTransformation.h
+  RepresentedDefinition.h
   STEPEntity.h
   SeamCurve.h
+  ShapeAspect.h
+  ShapeAspectRelationship.h
+  ShapeDefinition.h
+  ShapeDefinitionRepresentation.h
   ShapeRepresentation.h
   ShapeRepresentationRelationship.h
   SiUnit.h
