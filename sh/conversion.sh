@@ -459,7 +459,7 @@ EOF
 
 	# convert NMG
 	nmg=fail
-	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -498,7 +498,7 @@ EOF
 
 	# convert BoT
 	bot=fail
-	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -532,7 +532,7 @@ EOF
 
 	# convert Brep
 	brep=fail
-	cmd="$GED -c "$work" brep \"${obj}\" \"${obj}.brep\""
+	cmd="$GED -c \"$work\" brep \"${obj}\" \"${obj}.brep\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
