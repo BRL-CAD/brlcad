@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AXIS2PLACEMENT_H_
-#define AXIS2PLACEMENT_H_
+#ifndef CONV_STEP_STEP_G_AXIS2PLACEMENT_H
+#define CONV_STEP_STEP_G_AXIS2PLACEMENT_H
 
 #include "STEPEntity.h"
 

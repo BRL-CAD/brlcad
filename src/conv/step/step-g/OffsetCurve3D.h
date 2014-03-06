@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef OFFSETCURVE3D_H_
-#define OFFSETCURVE3D_H_
+#ifndef CONV_STEP_STEP_G_OFFSETCURVE3D_H
+#define CONV_STEP_STEP_G_OFFSETCURVE3D_H
 
 #include "Curve.h"
 
