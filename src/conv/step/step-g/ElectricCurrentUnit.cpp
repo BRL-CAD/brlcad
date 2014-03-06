@@ -77,24 +77,16 @@ ElectricCurrentUnit::Print(int level)
     NamedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+ElectricCurrentUnit::GetInstance(STEPWrapper *sw, int id)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ElectricCurrentUnit *object = new ElectricCurrentUnit(sw, sse->STEPfile_id);
+    return new ElectricCurrentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:
