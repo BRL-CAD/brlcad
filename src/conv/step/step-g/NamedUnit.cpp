@@ -51,10 +51,7 @@ NamedUnit::NamedUnit(STEPWrapper *sw, int step_id)
 
 NamedUnit::~NamedUnit()
 {
-    if (dimensions != NULL) {
-	delete dimensions;
-	dimensions = NULL;
-    }
+    dimensions = NULL;
 }
 
 bool
@@ -78,10 +75,7 @@ NamedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *se = step->getEntityAttribute(sse, "dimensions");
 	if (se != NULL) {
 	    if (dimensions == NULL) {
-		dimensions = new DimensionalExponents();
-	    }
-	    if (!dimensions->Load(step, se)) {
-		return false;
+		dimensions = dynamic_cast<DimensionalExponents *>(Factory::CreateObject(sw, (SDAI_Application_instance *)se));
 	    }
 	}
     }
