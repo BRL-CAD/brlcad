@@ -38,7 +38,6 @@
 #include <osg/GraphicsContext>
 #include <osg/Timer>
 
-
 #include <osgViewer/api/X11/GraphicsWindowX11>
 #if defined(DM_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
