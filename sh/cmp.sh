@@ -84,7 +84,6 @@ if ! test -r "$base.base.rt" ; then
     mged -c "$dbfile" "e $base ; ae 35 25 ; zoom 1.25 ; saveview -e ./run.me -l /dev/stdout $base.base.rt"
     if ! test -r "$base.base.rt" ; then
 	echo "ERROR: couldn't saveview from $dbfile to $base.base.rt"
-	continue
     fi
 fi
 
@@ -179,7 +178,6 @@ printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 # fi
 # if ! test -f $base.base.rt.pix ; then
 #     echo "ERROR: $base.base.rt.pix failed to render"
-#     continue
 # fi
 
 # rm -f $i.tie.rt.pix $i.tie.rt.log $i.rt.pix $i.rt.log
@@ -233,7 +231,6 @@ sh $base.base.rt -o $base.base.rtxray.pix -s$SZ >$base.base.rtxray.log 2>&1
 chmod 666 $base.base.rtxray.pix
 if ! test -f $base.base.rtxray.pix ; then
     echo "ERROR: $base.base.rtxray.pix failed to render"
-    continue
 fi
 
 rm -f $i.rtxray.pix $i.rtxray.log
@@ -259,7 +256,6 @@ sh $base.base.rt -o $base.base.rtedge.pix -s$SZ >$base.base.rtedge.log 2>&1
 chmod 666 $base.base.rtedge.pix
 if ! test -f $base.base.rtedge.pix ; then
     echo "ERROR: $base.base.rtedge.pix failed to render"
-    continue
 fi
 rm -f $i.rtedge.pix $i.rtedge.log
 sh $i.rt -o $i.rtedge.pix -s$SZ >$i.rtedge.log 2>&1
@@ -282,7 +278,6 @@ rm -f $base.base.rtarea.log
 sh $base.base.rt -o /dev/null -s$SZ >$base.base.rtarea.log 2>&1
 if ! test -f $base.base.rtarea.log ; then
     echo "ERROR: $base.base.rtarea.log failed to evaluate"
-    continue
 fi
 bare="`grep Cumulative $base.base.rtarea.log | awk '{print $7}'`"
 if test "x$bare" = "x0.0000" ; then
@@ -306,7 +301,6 @@ rm -f $base.base.gqa.log
 g_qa "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
 if ! test -f $base.base.gqa.log ; then
     echo "ERROR: $base.base.gqa.log failed to evaluate"
-    continue
 fi
 bvol=`grep total $base.base.gqa.log | awk '{print $4}'`
 bvol2=`printf "%.1f" $bvol`
