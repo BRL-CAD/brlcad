@@ -19,7 +19,7 @@
  */
 /** @addtogroup libdm */
 /** @{ */
-/** @file dm-qt.h
+/** @file dm-osg.h
  *
  */
 
@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include "bu/vls.h"
+
 #ifdef __cplusplus
 #include <iostream>
 
@@ -72,10 +73,15 @@
 #endif
 #include <osg/MatrixTransform>
 #include <osg/ShapeDrawable>
-#endif
+
+#endif /* __cplusplus */
+
+#define CMAP_BASE 40
+
+/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
+#define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
 #define Osg_MV_O(_m) offsetof(struct modifiable_osg_vars, _m)
-
 
 struct modifiable_osg_vars {
     int cueing_on;
@@ -95,44 +101,34 @@ struct modifiable_osg_vars {
     int boundFlag;
 };
 
-
 struct osg_vars {
-    double left;
-    double right;
-    double bottom;
-    double top;
-    double near;
-    double far;
-    int prev_pflag;
-    int init;
-    int initial_draw;
-    int nverts;
-    double last_local_draw_time;
-    double cumulative_draw_time;
-    float wireColor[4];
-
-    /*GLdouble faceplate_mat[16];*/
+#ifdef __cplusplus
+    GLdouble faceplate_mat[16];
+#endif
     int face_flag;
     int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */
-    char is_direct;
-    /*GLclampf r, g, b;*/
+#ifdef __cplusplus
+    GLclampf r, g, b;
+#endif
     struct modifiable_osg_vars mvars;
 #if defined(DM_WIN32)
     HGLRC glxc; /* Need to figure out what OSG needs on Win32 */
 #endif
 #ifdef __cplusplus
-    osg::ref_ptr<osgViewer::CompositeViewer>  viewer;
-    osg::ref_ptr<osgViewer::Viewer>  mainviewer;
-    osg::ref_ptr<osg::Group> osg_root;
-    osg::ref_ptr<osg::Geode> geode;
+    osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     osg::Timer *timer;
 #endif
 };
 
-#endif /* DM_OSG */
+__BEGIN_DECLS
 
+extern void osg_fogHint();
+
+__END_DECLS
+
+#endif /* DM_OSG */
 #endif /* DM_OSG_H */
 
 /** @} */
