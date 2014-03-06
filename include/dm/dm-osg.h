@@ -35,44 +35,17 @@
 #ifdef __cplusplus
 #include <iostream>
 
-#include <osgUtil/Optimizer>
-
-#include <osgDB/ReadFile>
-#include <osgDB/WriteFile>
-#include <osgDB/Registry>
-
-#include <osg/CoordinateSystemNode>
-
-#include <osg/Material>
-
-#include <osg/Switch>
-
-#include <osgText/Font>
-#include <osgText/Text>
-
-#include <osgGA/StandardManipulator>
-#include <osgGA/TrackballManipulator>
-#include <osgGA/FlightManipulator>
-#include <osgGA/DriveManipulator>
-#include <osgGA/KeySwitchMatrixManipulator>
-#include <osgGA/StateSetManipulator>
-#include <osgGA/AnimationPathManipulator>
-#include <osgGA/TerrainManipulator>
-#include <osgGA/SphericalManipulator>
-
-#include <osgViewer/Viewer>
-#include <osgViewer/CompositeViewer>
-
+#include <osg/GraphicsContext>
 #include <osg/Timer>
 
-#include <osg/TexGen>
-#include <osg/Texture2D>
+
 #include <osgViewer/api/X11/GraphicsWindowX11>
 #if defined(DM_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
 #endif
-#include <osg/MatrixTransform>
-#include <osg/ShapeDrawable>
+
+#include <osgText/Font>
+#include <osgText/Text>
 
 #endif /* __cplusplus */
 
