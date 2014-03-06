@@ -48,6 +48,8 @@ ProductRelatedProductCategory::ProductRelatedProductCategory(STEPWrapper *sw, in
 
 ProductRelatedProductCategory::~ProductRelatedProductCategory()
 {
+    // elements created through factory will be deleted there.
+    products.clear();
 }
 
 string ProductRelatedProductCategory::ClassName()

@@ -48,6 +48,7 @@ BrepWithVoids::BrepWithVoids(STEPWrapper *sw, int step_id)
 
 BrepWithVoids::~BrepWithVoids()
 {
+    // elements created through factory will be deleted there.
     voids.clear();
 }
 

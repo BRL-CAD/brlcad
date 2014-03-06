@@ -53,6 +53,7 @@ MeasureWithUnit::MeasureWithUnit(STEPWrapper *sw, int step_id)
 
 MeasureWithUnit::~MeasureWithUnit()
 {
+    // created through factory will be deleted there.
     unit_component = NULL;
 }
 

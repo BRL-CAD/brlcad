@@ -66,14 +66,7 @@ BSplineCurve::BSplineCurve(STEPWrapper *sw, int step_id)
 
 BSplineCurve::~BSplineCurve()
 {
-    /*
-      LIST_OF_POINTS::iterator i = control_points_list.begin();
-
-      while(i != control_points_list.end()) {
-      delete (*i);
-      i = control_points_list.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     control_points_list.clear();
 }
 

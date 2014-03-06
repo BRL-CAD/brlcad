@@ -49,14 +49,7 @@ Path::Path(STEPWrapper *sw, int step_id)
 
 Path::~Path()
 {
-    /*
-      LIST_OF_ORIENTED_EDGES::iterator i = edge_list.begin();
-
-      while(i != edge_list.end()) {
-      delete (*i);
-      i = edge_list.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     edge_list.clear();
 }
 

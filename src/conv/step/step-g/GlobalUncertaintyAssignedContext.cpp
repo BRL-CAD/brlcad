@@ -50,14 +50,7 @@ GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *
 
 GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext()
 {
-    /*
-      LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::iterator i = uncertainty.begin();
-
-      while(i != uncertainty.end()) {
-      delete (*i);
-      i = uncertainty.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     uncertainty.clear();
 }
 

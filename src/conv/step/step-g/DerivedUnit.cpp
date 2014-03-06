@@ -49,6 +49,7 @@ DerivedUnit::DerivedUnit(STEPWrapper *sw, int step_id)
 
 DerivedUnit::~DerivedUnit()
 {
+    // elements created through factory will be deleted there.
     elements.clear();
 }
 

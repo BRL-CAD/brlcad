@@ -61,6 +61,8 @@ TrimmingSelect::TrimmingSelect(STEPWrapper *sw, int step_id)
 
 TrimmingSelect::~TrimmingSelect()
 {
+    // created through factory will be deleted there.
+    cartesian_point = NULL;
 }
 
 double
