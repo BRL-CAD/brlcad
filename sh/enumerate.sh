@@ -79,17 +79,18 @@ sum ( ) {
 
 
 # print the summary
-printf -- "*****************************************\n"
-printf    "** BRL-CAD PROJECT ENUMERATION SUMMARY **\n"
-printf -- "*****************************************\n"
-printf "BRL-CAD Version: $BRLCAD_VERSION\n"
-printf "Enumeration Run: `date`\n"
-printf "\n"
-printf "Included below are various project enumeration statistics for BRL-CAD.\n"
-printf "The format/output of this script is subject to change without notice.\n"
-printf "Please contact devs@brlcad.org if there are any questions or comments.\n"
-printf "\n"
-printf "Now processing, please wait...\n\n"
+echo "*****************************************"
+echo "** BRL-CAD PROJECT ENUMERATION SUMMARY **"
+echo "*****************************************"
+echo "BRL-CAD Version: $BRLCAD_VERSION"
+echo "Enumeration Run: `date`"
+echo ""
+echo "Included below are various project enumeration statistics for BRL-CAD."
+echo "The format/output of this script is subject to change without notice."
+echo "Please contact devs@brlcad.org if there are any questions or comments."
+echo ""
+echo "Now processing, please wait..."
+echo ""
 
 
 # count number of installed libraries
@@ -131,9 +132,9 @@ otherapps=`for app in $preotherapps $premisapps ; do echo $app ; done | sort | u
 otherapps_count="`echo \"$otherapps\" | wc -l`"
 
 # output summary of compilation products
-printf -- "-----------------------------------------\n"
-printf -- "--        COMPILATION PRODUCTS         --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--        COMPILATION PRODUCTS         --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$libs_count" "BRL-CAD Libraries"
 printf "\t%7d\t%s\n" "$installed_libs_count" "Installed"
 printf "\t%7d\t%s\n" "$uninstalled_libs_count" "Not Installed"
@@ -166,9 +167,9 @@ otherfile_count="`echo $otherdist_count $otherdata_count $othermans_count $other
 otherdir_count="`find \"$BASE\" -type d -regex '.*/other/.*' -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | wc -l`"
 
 # output summary of filesystem organization
-printf -- "-----------------------------------------\n"
-printf -- "--       FILESYSTEM ORGANIZATION       --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--       FILESYSTEM ORGANIZATION       --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$file_count" "BRL-CAD Files"
 printf "%7d\t%s\n" "$dir_count" "BRL-CAD Directories"
 printf "%7d\t%s\n" "$otherfile_count" "3rd Party Files"
@@ -249,9 +250,9 @@ total_noncode="`echo \"$dc_lc_total p\" | dc`"
 total="`echo \"$total_code $total_noncode + p\" | dc`"
 
 # output summary of line count totals
-printf -- "-----------------------------------------\n"
-printf -- "--          LINE COUNT TOTALS          --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--          LINE COUNT TOTALS          --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$total" "BRL-CAD Project Total"
 printf "\t%7d\t%s\n" "$dc_lc_total" "Documentation"
 printf "\t%7d\t%s\n" "$bic_lc_total" "Build Infrastructure"
@@ -263,7 +264,7 @@ printf "\t\t\t%7d\t%s\n" "$sourcebin_lc_total" "Application Code"
 printf "\t\t\t%7d\t%s\n" "$scripts_lc_total" "Scripts"
 printf "%7d\t%s\n" "$blank_lc_total" "Blank Lines (not counted above)"
 printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code (not counted above)"
-printf -- "=========================================\n"
+echo "========================================="
 
 
 # Local Variables:
