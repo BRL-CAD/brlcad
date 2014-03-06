@@ -66,7 +66,8 @@ HP="0"
 GQTOL="-g 10m-10mm"
 dbfile="$1"
 
-printf "\nStarted at `date`\n"
+echo ""
+echo "Started at `date`"
 echo "Using -s$SZ -H$HP"
 
 if ! test -f "$dbfile" ; then
@@ -76,12 +77,13 @@ fi
 
 i="$3"
 base="$2"
-printf "\n=== $i ===\n"
+echo ""
+echo "=== $i ==="
 
 if ! test -r "$base.base.rt" ; then
     mged -c "$dbfile" "e $base ; ae 35 25 ; zoom 1.25 ; saveview -e ./run.me -l /dev/stdout $base.base.rt"
     if ! test -r "$base.base.rt" ; then
-	printf "ERROR: couldn't saveview from $dbfile to $base.base.rt\n"
+	echo "ERROR: couldn't saveview from $dbfile to $base.base.rt"
 	continue
     fi
 fi
@@ -327,7 +329,9 @@ else
     echo "ERROR: $base.base.gqa.log failed to compute volume"
 fi
 
-printf "\n\nFinished at `date`\n"
+echo ""
+echo ""
+echo "Finished at `date`"
 
 # Local Variables:
 # tab-width: 8
