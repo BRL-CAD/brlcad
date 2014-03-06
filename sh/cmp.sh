@@ -97,7 +97,7 @@ if ! test -x "run.me" ; then
     chmod ug+x "run.me"
 fi
 
-cat $base.base.rt | sed "s/\.base\././g" | sed "s/'$base'/'$i'/g" | sed "s/-o $base.rt.pix/-o $i.rt.pix/g" > $i.rt
+sed "s/\.base\././g" $base.base.rt | sed "s/'$base'/'$i'/g" | sed "s/-o $base.rt.pix/-o $i.rt.pix/g" > $i.rt
 export RT=rt
 
   ################
