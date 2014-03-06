@@ -34,6 +34,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup hist */
 /** @{ */
 /** @file libbu/hist.c
@@ -129,6 +131,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 
 /** @} */
 
+__END_DECLS
 
 #endif  /* BU_HIST_H */
 

@@ -28,6 +28,8 @@
 #include "bu/defines.h"
 #include "bu/magic.h"
 
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 
 /** @addtogroup color */
@@ -145,6 +147,7 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 
 /** @} */
 
+__END_DECLS
 
 #endif  /* BU_COLOR_H */
 

@@ -28,6 +28,8 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup hash */
 /** @{ */
 /** @file libbu/hash.c
@@ -299,6 +301,8 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *
 
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_HASH_H */
 

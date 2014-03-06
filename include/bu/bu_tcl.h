@@ -33,6 +33,8 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup tcl */
 /** @{ */
 
@@ -114,6 +116,8 @@ BU_EXPORT extern int Bu_Init(void *interp);
 
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_TCL_H */
 
