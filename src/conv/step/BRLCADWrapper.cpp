@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include <stdlib.h>
 
 /* interface header */
 #include "./BRLCADWrapper.h"
@@ -107,29 +108,109 @@ BRLCADWrapper::WriteSphere(double *center, double radius)
     return true;
 }
 
+std::string
+BRLCADWrapper::GetBRLCADName(std::string &name)
+{
+    std::ostringstream str;
+    std::string strcnt;
+    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
+    int len = 0;
+    char *cp,*tp;
+    int start = 1;
+
+    for (cp = (char *)name.c_str(), len = 0; *cp != '\0'; ++cp, ++len) {
+	if (*cp == '@') {
+	    if (*(cp + 1) == '@')
+		++cp;
+	    else
+		break;
+	}
+	bu_vls_putc(&obj_name, *cp);
+    }
+    bu_vls_putc(&obj_name, '\0');
+    tp = (char *)((*cp == '\0') ? "" : cp + 1);
+
+    do {
+	bu_vls_trunc(&obj_name, len);
+	bu_vls_printf(&obj_name, "%d", start++);
+	bu_vls_strcat(&obj_name, tp);
+    }
+    while (db_lookup(outfp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
+
+    return bu_vls_addr(&obj_name);
+}
+
+static MAP_OF_BU_LIST_HEADS heads;
+bool
+BRLCADWrapper::AddMember(const std::string &combname,const std::string &member,mat_t mat)
+{
+    MAP_OF_BU_LIST_HEADS::iterator i = heads.find(combname);
+    if (i != heads.end()) {
+	struct bu_list *head = (*i).second;
+	if (mk_addmember(member.c_str(), head, mat, WMOP_UNION) == WMEMBER_NULL)
+	    return false;
+    } else {
+	struct bu_list *head = NULL;
+
+	BU_ALLOC(head, struct bu_list);
+
+	BU_LIST_INIT(head);
+	if (mk_addmember(member.c_str(), head, mat, WMOP_UNION) == WMEMBER_NULL)
+	    return false;
+	heads[combname] = head;
+    }
+
+    return true;
+}
+
+bool
+BRLCADWrapper::WriteCombs()
+{
+    MAP_OF_BU_LIST_HEADS::iterator i = heads.begin();
+    while (i != heads.end()) {
+	std::string combname = (*i).first;
+	struct bu_list *head = (*i++).second;
+	unsigned char rgb[] = {200, 180, 180};
+
+	(void)mk_comb(outfp, combname.c_str(), head, 0, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+
+	mk_freemembers(head);
+
+	BU_FREE(head, struct bu_list);
+
+    }
+    heads.clear();
+    return true;
+}
+
+
+void
+BRLCADWrapper::getRandomColor(unsigned char *rgb)
+{
+    /* golden ratio */
+    static fastf_t hsv[3] = { 0.0, 0.5, 0.95 };
+    static double golden_ratio_conjugate = 0.618033988749895;
+    static fastf_t h = drand48();
+
+    h = fmod(h+golden_ratio_conjugate,1.0);
+    *hsv = h * 360.0;
+    bu_hsv_to_rgb(hsv,rgb);
+}
+
 
 bool
 BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
 {
     std::ostringstream str;
     std::string strcnt;
-
-    if (name.empty()) {
-	name = filename;
-    }
-    //TODO: need to do some name checks here for now static
-    //region/solid number increment
-    str << sol_reg_cnt++;
-    strcnt = str.str();
-    std::string sol = name + strcnt + ".s";
-    std::string reg = name + strcnt + ".r";
+    std::string sol = name + ".s";
+    std::string reg = name + ".r";
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200, 180, 180};
 
-    /*
-     * mk_region1(wdbp,combname,membname,shadername,shaderargsrgb);
-     */
+    BRLCADWrapper::getRandomColor(rgb);
+
     struct bu_list head;
     BU_LIST_INIT(&head);
     if (mk_addmember(sol.c_str(), &head, mat, WMOP_UNION) == WMEMBER_NULL)

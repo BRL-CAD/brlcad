@@ -63,11 +63,79 @@ ContextDependentShapeRepresentation::~ContextDependentShapeRepresentation()
     } else {
 	representation_relation.clear();
     }
+    // created through factory will be deleted there.
+    represented_product_relation = NULL;
 }
 
 string ContextDependentShapeRepresentation::ClassName()
 {
     return entityname;
+}
+
+Representation *
+ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_1()
+{
+    if (!representation_relation.empty()) {
+	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
+	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		return rr->GetRepresentationRelationshipRep_1();
+	    }
+	}
+    }
+    return NULL;
+}
+
+Representation *
+ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_2()
+{
+    if (!representation_relation.empty()) {
+	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
+	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		return rr->GetRepresentationRelationshipRep_2();
+	    }
+	}
+    }
+    return NULL;
+}
+
+Axis2Placement3D *
+ContextDependentShapeRepresentation::GetTransformItem_1()
+{
+    if (!representation_relation.empty()) {
+	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
+	RepresentationRelationshipWithTransformation *rrwt = NULL;
+	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+	    if ( (rrwt=dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr)) != NULL) {
+		return rrwt->GetTransformItem_1();
+	    }
+	}
+    }
+    return NULL;
+}
+
+Axis2Placement3D *
+ContextDependentShapeRepresentation::GetTransformItem_2()
+{
+    if (!representation_relation.empty()) {
+	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
+	RepresentationRelationshipWithTransformation *rrwt = NULL;
+	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+	    if ( (rrwt=dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr)) != NULL) {
+		return rrwt->GetTransformItem_2();
+	    }
+	}
+    }
+    return NULL;
 }
 
 bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
@@ -82,6 +150,9 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
     if (representation_relation.empty()) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "representation_relation");
 	if (entity) {
+	    /*
+	     * can't use factory here because complex sub_entities each take same step_id TODO revisit cleanup complex types so they too can use factory
+	     */
 	    if (entity->IsComplex()) {
 		SDAI_Application_instance *sub_entity = step->getEntity(entity, "Representation_Relationship_With_Transformation");
 		if (sub_entity) {
@@ -126,7 +197,8 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    }
 	}
     }
-
+#ifdef LOAD_REPRESENTED_PRODUCT_RELATION
+    // currently don't use/need this when loading geometry from STEP
     if (represented_product_relation == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "represented_product_relation");
 	if (entity) { //this attribute is optional
@@ -136,7 +208,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    return false;
 	}
     }
-
+#endif
     return true;
 }
 

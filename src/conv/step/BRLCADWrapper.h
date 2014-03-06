@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <string>
+#include <map>
 
 extern "C" {
     /* brlcad headers */
@@ -39,6 +40,8 @@ extern "C" {
 
 
 class ON_Brep;
+
+typedef std::map<std::string, struct bu_list *> MAP_OF_BU_LIST_HEADS;
 
 class BRLCADWrapper
 {
@@ -56,6 +59,10 @@ public:
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
     bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
+    bool WriteCombs();
+    bool AddMember(const std::string &combname,const std::string &member,mat_t mat);
+    std::string GetBRLCADName(std::string &name);
+    static void getRandomColor(unsigned char *rgb);
     struct db_i * GetDBIP();
     bool Close();
 };

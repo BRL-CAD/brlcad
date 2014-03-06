@@ -28,6 +28,7 @@
 #include "Factory.h"
 
 #include "ProductDefinitionFormation.h"
+#include "ProductDefinitionFormationWithSpecifiedSource.h"
 #include "ProductDefinitionContext.h"
 #include "ProductDefinition.h"
 
@@ -57,6 +58,9 @@ ProductDefinition::ProductDefinition(STEPWrapper *sw, int step_id)
 
 ProductDefinition::~ProductDefinition()
 {
+    // created through factory will be deleted there.
+    formation = NULL;
+    frame_of_reference = NULL;
 }
 
 string ProductDefinition::ClassName()
@@ -72,6 +76,16 @@ string ProductDefinition::Ident()
 string ProductDefinition::Description()
 {
     return description;
+}
+
+string ProductDefinition::GetProductName()
+{
+    string name;
+    ProductDefinitionFormationWithSpecifiedSource *aPDFwSS = dynamic_cast<ProductDefinitionFormationWithSpecifiedSource *>(formation);
+    if (aPDFwSS != NULL) {
+	name = aPDFwSS->GetProductName();
+    }
+    return name;
 }
 
 bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

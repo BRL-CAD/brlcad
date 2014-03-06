@@ -938,7 +938,9 @@ FaceSurface::AddFace(ON_Brep *brep)
 	face.m_bRev = false;
     } else {
 	face.m_bRev = true;
-	face.Reverse(0);
+#ifndef FLIP_SURFACE_OF_REVERSED_FACE
+	face.Reverse(0); //need to remove here but check for reversed face in raytracer
+#endif
     }
 
     ON_id = face.m_face_index;

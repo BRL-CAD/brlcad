@@ -43,6 +43,7 @@ public:
     RepresentationContext();
     virtual ~RepresentationContext();
     RepresentationContext(STEPWrapper *sw, int step_id);
+    string GetContextIdentifier();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 

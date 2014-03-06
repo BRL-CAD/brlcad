@@ -53,6 +53,10 @@ public:
     ContextDependentShapeRepresentation();
     virtual ~ContextDependentShapeRepresentation();
     ContextDependentShapeRepresentation(STEPWrapper *sw, int step_id);
+    Representation *GetRepresentationRelationshipRep_1();
+    Representation *GetRepresentationRelationshipRep_2();
+    Axis2Placement3D *GetTransformItem_1();
+    Axis2Placement3D *GetTransformItem_2();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();

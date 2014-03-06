@@ -49,6 +49,8 @@ Representation::Representation()
 {
     step = NULL;
     id = 0;
+    items.clear();
+    context_of_items.clear();
 }
 
 
@@ -56,26 +58,14 @@ Representation::Representation(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    items.clear();
+    context_of_items.clear();
 }
 
 
 Representation::~Representation()
 {
-    /*
-      LIST_OF_REPRESENTATION_ITEMS::iterator i = items.begin();
-
-      while (i != items.end()) {
-      delete (*i);
-      i = items.erase(i);
-      }
-
-      LIST_OF_REPRESENTATION_CONTEXT::iterator ic = context_of_items.begin();
-
-      while (ic != context_of_items.end()) {
-      delete (*ic);
-      ic = context_of_items.erase(ic);
-      }
-    */
+    // elements created through factory will be deleted there.
     items.clear();
     if (context_of_items.size() > 1) {
 	LIST_OF_REPRESENTATION_CONTEXT::iterator ic = context_of_items.begin();
@@ -137,6 +127,29 @@ Representation::GetSolidAngleConversionFactor()
     return 1.0; // assume base of steradians
 }
 
+string
+Representation::GetRepresentationContextName()
+{
+    string pname = "";
+
+    if (!context_of_items.empty()) {
+	LIST_OF_REPRESENTATION_CONTEXT::iterator ic;
+	for (ic = context_of_items.begin(); ic != context_of_items.end(); ++ic) {
+	    if ( (dynamic_cast<GeometricRepresentationContext*>(*ic) == NULL) &&
+		    (dynamic_cast<GlobalUncertaintyAssignedContext *>(*ic) == NULL) &&
+		    (dynamic_cast<GlobalUnitAssignedContext *>(*ic) == NULL) &&
+		    (dynamic_cast<ParametricRepresentationContext *>(*ic) == NULL) &&
+		    (dynamic_cast<RepresentationContext *>(*ic) != NULL) ) {
+		RepresentationContext *rc = dynamic_cast<RepresentationContext *>(*ic);
+
+		pname = rc->GetContextIdentifier();
+		break;
+	    }
+	}
+    }
+
+    return pname;
+}
 
 bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {

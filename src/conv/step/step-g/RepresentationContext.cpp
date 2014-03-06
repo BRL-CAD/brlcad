@@ -49,6 +49,12 @@ RepresentationContext::~RepresentationContext()
 {
 }
 
+string
+RepresentationContext::GetContextIdentifier()
+{
+    return context_identifier;
+}
+
 bool
 RepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {

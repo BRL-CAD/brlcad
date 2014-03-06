@@ -67,6 +67,7 @@ typedef std::list<std::string> LIST_OF_STRINGS;
 typedef std::list<SDAI_Application_instance *> LIST_OF_ENTITIES;
 typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
 typedef std::map<std::string, STEPcomplex *> MAP_OF_SUPERTYPES;
+typedef std::map<int, std::string> MAP_OF_IDS_TO_NAMES;
 typedef std::vector<double> VECTOR_OF_REALS;
 typedef std::list<int> LIST_OF_INTEGERS;
 typedef std::list<double> LIST_OF_REALS;
@@ -82,6 +83,7 @@ private:
     Registry  *registry;
     STEPfile  *sfile;
     BRLCADWrapper *dotg;
+    bool verbose;
 
     void printEntity(SDAI_Application_instance *se, int level);
     void printEntityAggregate(STEPaggregate *sa, int level);
@@ -139,6 +141,16 @@ public:
     LIST_OF_REALS *parseListOfReals(const char *in);
     LIST_OF_POINTS *parseListOfPointEntities(const char *in);
     void printLoadStatistics();
+
+    bool isVerbose() const
+    {
+	return verbose;
+    }
+
+    void setVerbose(bool value)
+    {
+	this->verbose = value;
+    }
 };
 
 #endif /* CONV_STEP_STEPWRAPPER_H */

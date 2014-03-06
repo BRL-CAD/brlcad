@@ -33,7 +33,7 @@
 
 // forward declaration of class
 class ON_Brep;
-//class CharacterizedDefinition;
+class CharacterizedDefinition;
 
 class PropertyDefinition: virtual public STEPEntity
 {
@@ -44,7 +44,7 @@ private:
 protected:
     string name;
     string description;
-    //CharacterizedDefinition *definition;
+    CharacterizedDefinition *definition;
 
 public:
     PropertyDefinition();

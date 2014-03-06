@@ -51,6 +51,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();
+    string GetProductName();
     virtual void Print(int level);
 
     //static methods
