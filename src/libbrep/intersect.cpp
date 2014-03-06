@@ -1141,17 +1141,17 @@ ON_Intersect(const ON_Curve *curveA,
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    std::vector<Subcurve *> splittedA, splittedB;
-	    if ((*i).first->m_islinear || (*i).first->Split() != 0) {
-		splittedA.push_back((*i).first);
+	    if (i->first->m_islinear || i->first->Split() != 0) {
+		splittedA.push_back(i->first);
 	    } else {
-		splittedA.push_back((*i).first->m_children[0]);
-		splittedA.push_back((*i).first->m_children[1]);
+		splittedA.push_back(i->first->m_children[0]);
+		splittedA.push_back(i->first->m_children[1]);
 	    }
-	    if ((*i).second->m_islinear || (*i).second->Split() != 0) {
-		splittedB.push_back((*i).second);
+	    if (i->second->m_islinear || i->second->Split() != 0) {
+		splittedB.push_back(i->second);
 	    } else {
-		splittedB.push_back((*i).second->m_children[0]);
-		splittedB.push_back((*i).second->m_children[1]);
+		splittedB.push_back(i->second->m_children[0]);
+		splittedB.push_back(i->second->m_children[1]);
 	    }
 	    // intersected children go to the next step
 	    for (unsigned int j = 0; j < splittedA.size(); j++)
@@ -1619,20 +1619,20 @@ ON_Intersect(const ON_Curve *curveA,
 	    std::vector<Subcurve *> splittedA;
 	    std::vector<Subsurface *> splittedB;
 	    if (i->first->m_islinear && i->second->m_isplanar) {
-		splittedA.push_back((*i).first);
-		splittedB.push_back((*i).second);
+		splittedA.push_back(i->first);
+		splittedB.push_back(i->second);
 	    } else {
-		if ((*i).first->Split() != 0) {
-		    splittedA.push_back((*i).first);
+		if (i->first->Split() != 0) {
+		    splittedA.push_back(i->first);
 		} else {
-		    splittedA.push_back((*i).first->m_children[0]);
-		    splittedA.push_back((*i).first->m_children[1]);
+		    splittedA.push_back(i->first->m_children[0]);
+		    splittedA.push_back(i->first->m_children[1]);
 		}
-		if ((*i).second->Split() != 0) {
-		    splittedB.push_back((*i).second);
+		if (i->second->Split() != 0) {
+		    splittedB.push_back(i->second);
 		} else {
 		    for (int j = 0; j < 4; j++) {
-			splittedB.push_back((*i).second->m_children[j]);
+			splittedB.push_back(i->second->m_children[j]);
 		    }
 		}
 	    }
@@ -3360,10 +3360,10 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_BoundingBox box_intersect;
 	i->first->Intersect(*(i->second), isect_tol, &box_intersect);
 	ON_3dPoint cornerA[4], cornerB[4];
-	double min_uA = (*i).first->m_u.Min(), max_uA = (*i).first->m_u.Max();
-	double min_vA = (*i).first->m_v.Min(), max_vA = (*i).first->m_v.Max();
-	double min_uB = (*i).second->m_u.Min(), max_uB = (*i).second->m_u.Max();
-	double min_vB = (*i).second->m_v.Min(), max_vB = (*i).second->m_v.Max();
+	double min_uA = i->first->m_u.Min(), max_uA = i->first->m_u.Max();
+	double min_vA = i->first->m_v.Min(), max_vA = i->first->m_v.Max();
+	double min_uB = i->second->m_u.Min(), max_uB = i->second->m_u.Max();
+	double min_vB = i->second->m_v.Min(), max_vB = i->second->m_v.Max();
 	cornerA[0] = surfA->PointAt(min_uA, min_vA);
 	cornerA[1] = surfA->PointAt(min_uA, max_vA);
 	cornerA[2] = surfA->PointAt(max_uA, min_vA);
