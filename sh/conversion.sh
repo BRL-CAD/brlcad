@@ -488,7 +488,7 @@ EOF
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 	if [ -e "./${obj}.nmg.extl" ] ; then
-	    `rm "./${obj}.nmg.extl"`
+	    rm "./${obj}.nmg.extl"
 	    nmg=extl
 	fi
 
@@ -522,7 +522,7 @@ EOF
 	    bot_count=`expr $bot_count + 1`
 	fi
 	if [ -e "./${obj}.bot.extl" ] ; then
-	    `rm "./${obj}.bot.extl"`
+	    rm "./${obj}.bot.extl"
 	    bot=extl
 	fi
 
@@ -562,7 +562,7 @@ EOF
 	    fi
 	fi
 	if [ -e "./${obj}.brep.extl" ] ; then
-	    `rm "./${obj}.brep.extl"`
+	    rm "./${obj}.brep.extl"
 	    brep=extl
 	fi
 
