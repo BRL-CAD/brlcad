@@ -81,9 +81,9 @@ string ProductDefinition::Description()
 string ProductDefinition::GetProductName()
 {
     string name;
-    ProductDefinitionFormationWithSpecifiedSource *aPDFwSS = dynamic_cast<ProductDefinitionFormationWithSpecifiedSource *>(formation);
-    if (aPDFwSS != NULL) {
-	name = aPDFwSS->GetProductName();
+    ProductDefinitionFormation *aPDF = dynamic_cast<ProductDefinitionFormation *>(formation);
+    if (aPDF != NULL) {
+	name = aPDF->GetProductName();
     }
     return name;
 }
