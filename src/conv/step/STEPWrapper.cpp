@@ -96,11 +96,11 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
 		if (aBrep) {
 		    if (pname.empty()) {
-			std::string str = "product@.r";
+			std::string str = "product@";
 			pname = dotg->GetBRLCADName(str);
 			idmap[aBrep->GetId()] = pname;
 		    } else {
-			idmap[aBrep->GetId()] = pname + ".r";
+			idmap[aBrep->GetId()] = pname;
 		    }
 
 		    if (isVerbose()) {
