@@ -502,6 +502,18 @@ static void appendInstallationLibraryFilePaths(osgDB::FilePathList& filepath)
     // Append the install prefix path to the library search path if configured
     filepath.push_back(ADDQUOTES(OSG_DEFAULT_LIBRARY_PATH));
 #endif
+#ifdef OSG_RELATIVE_LIBRARY_PATH
+    char *cwd = (char *)calloc(1024, sizeof(char));
+    std::cout << "relative path: " ;
+    if(getcwd(cwd,1024 * sizeof(char)) != NULL) {
+	    std::string cwdstring(cwd);
+	    std::string relstring(ADDQUOTES(OSG_RELATIVE_LIBRARY_PATH));
+	    cwdstring.append(relstring);
+	    filepath.push_back(cwdstring);
+	    std::cout << cwdstring << "\n";
+    }
+    free(cwd);
+#endif
 }
 
 #if defined(WIN32) && !defined(__CYGWIN__)
