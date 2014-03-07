@@ -53,7 +53,6 @@ struct AP203_Contents {
     std::map<struct directory *, STEPentity *> *comb_to_step;
     std::map<struct directory *, STEPentity *> *comb_to_step_shape;
     std::map<struct directory *, STEPentity *> *comb_to_step_manifold;
-    int flip_transforms;
 };
 
 
