@@ -116,7 +116,7 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
     int len = 0;
     char *cp,*tp;
-    int start = 1;
+    static int start = 1;
 
     for (cp = (char *)name.c_str(), len = 0; *cp != '\0'; ++cp, ++len) {
 	if (*cp == '@') {
@@ -204,7 +204,7 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
     std::ostringstream str;
     std::string strcnt;
     std::string sol = name + ".s";
-    std::string reg = name + ".r";
+    std::string reg = name;
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200, 180, 180};
