@@ -46,6 +46,7 @@ include(CMakeParseArguments)
 #             [FIND_VERSION version]
 #             [FIND_COMPONENTS component1 component2 ...]
 #             [REQUIRED_VARS var1 var2 ...]
+#             [RESET_VARS var1 var2 ...]
 #             [ALIASES alias1 alias2 ...]
 #             [FLAGS flag1 flag2 ...]
 #            )
@@ -71,7 +72,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
   if(${ARGC} GREATER 3)
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "" "FIND_NAME;FIND_VERSION;FIND_COMPONENTS;REQUIRED_VARS;ALIASES;FLAGS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "" "FIND_NAME;FIND_VERSION;FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
   endif(${ARGC} GREATER 3)
   if(NOT ${varname_root}_FIND_NAME)
     set(${varname_root}_FIND_NAME ${varname_root})
@@ -81,6 +82,9 @@ macro(THIRD_PARTY dir varname_root build_target description)
   set(${varname_root}_DISABLED 0)
   set(${varname_root}_DISABLE_TEST 0)
   set(${varname_root}_MET_CONDITION 0)
+  foreach(item ${${varname_root}_RESET_VARS})
+    set(${item} "${varname_root}-NOTFOUND" CACHE STRING "${item}" FORCE)
+  endforeach(item ${${varname_root}_RESET_VARS})
 
   # 1. If any of the required flags are off, this extension is a no-go.
   set(DISABLE_STR "")

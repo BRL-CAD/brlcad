@@ -247,7 +247,7 @@ set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
 set(BRLCAD_TERMLIB_BUILD_LABEL "Compile termlib ")
 set(BRLCAD_UTAHRLE_BUILD_LABEL "Compile Utah Raster Toolkit ")
 set(BRLCAD_OPENNURBS_BUILD_LABEL "Compile openNURBS ")
-set(BRLCAD_SCL_BUILD_LABEL "Compile NIST STEP Class Libraries ")
+set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
 set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
 set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
@@ -271,7 +271,7 @@ set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
     TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
-    TERMLIB UTAHRLE OPENNURBS SCL)
+    TERMLIB UTAHRLE OPENNURBS SC)
 
 set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
