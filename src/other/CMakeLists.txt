@@ -896,12 +896,16 @@ if(BRLCAD_OSG_BUILD)
   set(OSGTEXT_LIBRARY osgText CACHE STRING "osg Text library" FORCE)
   set(OSGVIEWER_LIBRARY osgViewer CACHE STRING "osg Viewer library" FORCE)
   set(OPENTHREADS_LIBRARY OpenThreads CACHE STRING "OpenThreads library" FORCE)
-  set(OPENTHREADS_INCLUDE_DIR 
+  set(OPENTHREADS_INCLUDE_DIR
     ${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/src/OpenThreads/include
-    ${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/src/OpenThreads/include)
-  set(OSG_INCLUDE_DIR 
+    ${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/src/OpenThreads/include
+    CACHE STRING "OpenThreads include dirs" FORCE
+    )
+  set(OSG_INCLUDE_DIR
     ${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/include
-    ${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/include)
+    ${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/include
+    CACHE STRING "OpenSceneGraph include dirs" FORCE
+    )
   set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
 else(BRLCAD_OSG_BUILD)
   find_package(OpenThreads)
