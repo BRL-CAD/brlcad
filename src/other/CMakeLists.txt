@@ -869,6 +869,26 @@ AUTO.
 THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 
+
+# OpenSceneGraph Libraries
+set(openscenegraph_ALIASES ENABLE_OPENSCENEGRAPH)
+set(openscenegraph_DESCRIPTION "
+Option for enabling and disabling compilation of the OpenSceneGraph
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(openscenegraph openscenegraph "" openscenegraph_ALIASES openscenegraph_DESCRIPTION NOSYS)
+set(OSG_LIBRARY osg CACHE STRING "libosg" FORCE)
+set(OSGTEXT_LIBRARY osgText CACHE STRING "osg Text library" FORCE)
+set(OSGVIEWER_LIBRARY osgViewer CACHE STRING "osg Viewer library" FORCE)
+set(OSG_INCLUDE_DIR 
+  ${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/src/OpenThreads/include
+  ${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/include
+  ${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/include)
+set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
+
+
 # gdiam
 
 set(libgdiam_ALIASES ENABLE_GDIAM)

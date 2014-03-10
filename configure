@@ -186,6 +186,10 @@ do
                                   shift;;
      --disable-vds)                options="$options -DBRLCAD_LIBVDS=SYSTEM";
                                   shift;;
+     --enable-openscenegraph)                options="$options -DBRLCAD_OPENSCENEGRAPH=BUNDLED";
+                                  shift;;
+     --disable-openscenegraph)                options="$options -DBRLCAD_OPENSCENEGRAPH=SYSTEM";
+                                  shift;;
      --enable-gdiam)                options="$options -DBRLCAD_LIBGDIAM=BUNDLED";
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_LIBGDIAM=SYSTEM";
