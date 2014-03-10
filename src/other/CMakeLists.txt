@@ -794,7 +794,7 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
   ${opennurbs_ALIASES} FLAGS NOSYS)
 
-# STEP Class Libraries
+# STEPcode 
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build
@@ -820,7 +820,8 @@ set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
 # Lots of "libraries" associated with stepcode - use "stepcode" as the
 # stand-in for the build target var.
 THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
-  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} FLAGS NOSYS)
+  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} RESET_VARS
+  EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET FLAGS NOSYS)
 if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
   set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
