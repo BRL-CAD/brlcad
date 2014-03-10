@@ -50,8 +50,10 @@
 #  add_executable(foo foo.cc)
 #  target_link_libraries(foo ${OPENSCENEGRAPH_LIBRARIES})
 #
-# CMake - Cross Platform Makefile Generator
-# Copyright 2000-2011 Kitware, Inc., Insight Software Consortium
+
+#=============================================================================
+# Copyright 2001-2009 Kitware, Inc.
+# Copyright 2009-2012 Philip Lowman <philip@yhbt.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -82,6 +84,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# ------------------------------------------------------------------------------
+#
+# The above copyright and license notice applies to distributions of
+# CMake in source and binary form.  Some source files contain additional
+# notices of original copyright by their contributors; see each source
+# for details.  Third-party software packages supplied with CMake under
+# compatible licenses provide their own copyright notices documented in
+# corresponding subdirectories.
+#
+# ------------------------------------------------------------------------------
+
 # Naming convention:
 #  Local variables of the form _osg_foo
 #  Input variables of the form OpenSceneGraph_FOO
@@ -199,7 +212,7 @@ if(OpenSceneGraph_FIND_REQUIRED)
     endforeach()
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenSceneGraph
                                   REQUIRED_VARS OPENSCENEGRAPH_LIBRARIES OPENSCENEGRAPH_INCLUDE_DIR ${_osg_component_founds}
                                   VERSION_VAR OPENSCENEGRAPH_VERSION)
