@@ -48,10 +48,10 @@ include_directories(
 # these are stored in files in the dlists directory.  Ignore that
 # directory for distcheck
 file(GLOB dlists "*.dist")
-FOREACH(ITEM ${dlists})
+foreach(ITEM ${dlists})
   get_filename_component(dlist ${ITEM} NAME)
   CMAKEFILES(${dlist})
-ENDFOREACH(ITEM ${dlists})
+endforeach(ITEM ${dlists})
 
 # For lower build levels, some of the third party components are not
 # needed.  define some variables we can use for testing.
@@ -88,7 +88,7 @@ Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(regex libregex "" regex_ALIASES regex_DESCRIPTION)
+THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ${regex_ALIASES})
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
@@ -129,7 +129,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(zlib libz "" zlib_ALIASES zlib_DESCRIPTION)
+THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES})
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 
 #-----------------------------------------------------------------------------
@@ -298,7 +298,8 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO. (Except when building with Visual Studio, where it is
 disabled. Windows does not support the termlib API.)
 ")
-THIRD_PARTY(termlib libtermlib "HAVE_TERMLIB;BRLCAD_LEVEL2" termlib_ALIASES termlib_DESCRIPTION)
+THIRD_PARTY(libtermlib TERMLIB termlib termlib_DESCRIPTION REQUIRED_VARS HAVE_TERMLIB
+  BRLCAD_LEVEL2 ALIASES ${termlib_ALIASES})
 if(BRLCAD_TERMLIB_BUILD)
   set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
   CONFIG_H_APPEND(BRLCAD "#undef HAVE_TERMCAP_H\n#cmakedefine HAVE_TERMCAP_H 1\n")
@@ -331,7 +332,10 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(png libpng "BRLCAD_LEVEL2" png_ALIASES png_DESCRIPTION)
+# Note - we don't actually know the libpng build target name for the
+# shared library at this point - use png as a stub and override
+# once we know what PNG_LIB_NAME is.
+THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${png_ALIASES})
 if(BRLCAD_PNG_BUILD)
   # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
   # scoping of CMake variables - use get_directory_property to recover
@@ -386,7 +390,8 @@ Toolkit library provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(utahrle libutahrle "BRLCAD_LEVEL3" utahrle_ALIASES utahrle_DESCRIPTION NOSYS)
+THIRD_PARTY(libutahrle UTAHRLE utahrle utahrle_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3
+  ALIASES ${utahrle_ALIASES} FLAGS NOSYS)
 if(BRLCAD_UTAHRLE_BUILD)
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
@@ -432,7 +437,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl tcl "" tcl_ALIASES tcl_DESCRIPTION)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES})
 if(BRLCAD_TCL_BUILD)
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
@@ -786,7 +791,8 @@ provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
+THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
+  ${opennurbs_ALIASES} FLAGS NOSYS)
 
 # STEP Class Libraries
 # Need Lemon/Perplex to build STEP - conditionalize
@@ -801,8 +807,8 @@ set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
 set(LIB_INSTALL_DIR ${LIB_DIR})
 
-set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
-set(scl_DESCRIPTION "
+set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
+set(sc_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
@@ -811,15 +817,18 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 set(IS_SUBBUILD_STASH ${IS_SUBBUILD})
 set(IS_SUBBUILD ON)
 set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
-THIRD_PARTY(scl stepcode "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
-if(BRLCAD_SCL_BUILD)
+# Lots of "libraries" associated with stepcode - use "stepcode" as the
+# stand-in for the build target var.
+THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
+  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} FLAGS NOSYS)
+if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
   set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
   mark_as_advanced(EXP2CXX_EXEC)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/sc_version_string.h.txt)
-endif(BRLCAD_SCL_BUILD)
+endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
 mark_as_advanced(SC_BUILD_SCHEMAS)
@@ -866,7 +875,7 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
+THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ${libvds_ALIASES} FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 
 # gdiam
@@ -879,7 +888,8 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libgdiam libgdiam "" libgdiam_ALIASES libgdiam_DESCRIPTION NOSYS)
+THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ${libgdiam_ALIASES}
+  FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
 
 # Bullet is not yet integrated as a src/other subbuild, but there is

@@ -671,7 +671,7 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_OPENNURBS
 
 
---- BRLCAD_SCL ---
+--- BRLCAD_SC ---
 
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is AUTO,
@@ -681,7 +681,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
 
 
---- BRLCAD_LIBVDS ---
+--- BRLCAD_VDS ---
 
 Option for enabling and disabling compilation of the libvds triangle
 simplification library provided with BRL-CAD's source code.  Default
@@ -692,7 +692,7 @@ AUTO.
 Aliases:  ENABLE_VDS
 
 
---- BRLCAD_LIBGDIAM ---
+--- BRLCAD_GDIAM ---
 
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
