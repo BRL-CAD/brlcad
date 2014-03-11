@@ -1271,7 +1271,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     tkwin = Tk_MainWindow(OSG(ifp)->fbinterp);
 
-    OSG(ifp)->xtkwin = Tk_CreateWindowFromPath(OSG(ifp)->fbinterp, tkwin, bu_vls_addr(&if_pathName), bu_vls_addr(&if_dName));
+    //OSG(ifp)->xtkwin = Tk_CreateWindowFromPath(OSG(ifp)->fbinterp, tkwin, bu_vls_addr(&if_pathName), bu_vls_addr(&if_dName));
+    OSG(ifp)->xtkwin = tkwin;
 
     bu_vls_printf(&if_tkName, "%s", (char *)Tk_Name(OSG(ifp)->xtkwin));
 
