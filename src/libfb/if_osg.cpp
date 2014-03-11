@@ -704,11 +704,6 @@ expose_callback(FBIO *ifp)
     struct osg_clip *clp;
 
     if (CJDEBUG) fb_log("entering expose_callback()\n");
-#if 0
-    if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
-    }
-#endif
     OSG(ifp)->graphicsContext->makeCurrent();
     if (OSG(ifp)->firstTime) {
 
@@ -801,7 +796,7 @@ expose_callback(FBIO *ifp)
     /* repaint entire image */
     osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
     if (SGI(ifp)->mi_doublebuffer) {
-	glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+	OSG(ifp)->graphicsContext->swapBuffers();
     } else if (OSG(ifp)->copy_flag) {
 	backbuffer_to_screen(ifp, -1);
     }
@@ -821,7 +816,7 @@ expose_callback(FBIO *ifp)
     }
 
     /* unattach context for other threads to use */
-    glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+    OSG(ifp)->graphicsContext->releaseContext();
 }
 
 
@@ -852,6 +847,7 @@ osg_configureWindow(FBIO *ifp, int width, int height)
 HIDDEN void
 osg_do_event(FBIO *ifp)
 {
+#if 0
     XEvent event;
 
     while (XCheckWindowEvent(OSG(ifp)->dispp, OSG(ifp)->wind,
@@ -927,6 +923,9 @@ osg_do_event(FBIO *ifp)
 		break;
 	}
     }
+#endif
+    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+    expose_callback(ifp);
 }
 
 #if 0
@@ -1479,21 +1478,18 @@ HIDDEN int
 osg_flush(FBIO *ifp)
 {
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
-	//if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	//    fb_log("Warning, osg_flush: glXMakeCurrent unsuccessful.\n");
-	//}
 	OSG(ifp)->graphicsContext->makeCurrent();
 
 	/* Send entire in-memory buffer to the screen, all at once */
 	osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	if (SGI(ifp)->mi_doublebuffer) {
-	    glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+	    OSG(ifp)->graphicsContext->swapBuffers();
 	} else if (OSG(ifp)->copy_flag) {
 	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use, also flushes */
-	glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	OSG(ifp)->graphicsContext->releaseContext();
     }
     XFlush(OSG(ifp)->dispp);
     glFlush();
@@ -1628,9 +1624,6 @@ osg_clear(FBIO *ifp, unsigned char *pp)
 
     if (CJDEBUG) printf("entering osg_clear\n");
 
-    //if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-//	fb_log("Warning, osg_clear: glXMakeCurrent unsuccessful.\n");
- //   }
     OSG(ifp)->graphicsContext->makeCurrent();
 
     /* Set clear colors */
@@ -1678,14 +1671,14 @@ osg_clear(FBIO *ifp, unsigned char *pp)
 	} else {
 	    glClear(GL_COLOR_BUFFER_BIT);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+		OSG(ifp)->graphicsContext->swapBuffers();
 	    }
 	}
 
     }
 
     /* unattach context for other threads to use */
-    glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+    OSG(ifp)->graphicsContext->releaseContext();
 
     return 0;
 }
@@ -1724,10 +1717,7 @@ osg_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (OSG(ifp)->use_ext_ctrl) {
 	osg_clipper(ifp);
     } else {
-	//if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	 //   fb_log("Warning, osg_view: glXMakeCurrent unsuccessful.\n");
-	//}
-    OSG(ifp)->graphicsContext->makeCurrent();
+	OSG(ifp)->graphicsContext->makeCurrent();
 
 	/* Set clipping matrix and zoom level */
 	glMatrixMode(GL_PROJECTION);
@@ -1751,13 +1741,13 @@ osg_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	} else {
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+		OSG(ifp)->graphicsContext->swapBuffers();
 	    }
 	}
 	glFlush();
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	OSG(ifp)->graphicsContext->releaseContext();
     }
 
     return 0;
@@ -1917,15 +1907,12 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
     if (!OSG(ifp)->use_ext_ctrl) {
 
-	//if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	 //   fb_log("Warning, osg_write: glXMakeCurrent unsuccessful.\n");
-	//}
-    OSG(ifp)->graphicsContext->makeCurrent();
+	OSG(ifp)->graphicsContext->makeCurrent();
 
 	if (xstart + count < (size_t)ifp->if_width) {
 	    osg_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+		OSG(ifp)->graphicsContext->swapBuffers();
 	    } else if (OSG(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
 		backbuffer_to_screen(ifp, ybase);
@@ -1935,7 +1922,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    if (SGI(ifp)->mi_doublebuffer) {
 		/* refresh whole screen */
 		osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-		glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+		OSG(ifp)->graphicsContext->swapBuffers();
 	    } else {
 		/* just write rectangle */
 		osg_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
@@ -1947,7 +1934,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	glFlush();
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	OSG(ifp)->graphicsContext->releaseContext();
     }
 
     return ret;
@@ -1995,15 +1982,12 @@ osg_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	return width*height;
 
     if (!OSG(ifp)->use_ext_ctrl) {
-	//if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	 //   fb_log("Warning, osg_writerect: glXMakeCurrent unsuccessful.\n");
-	//}
-    OSG(ifp)->graphicsContext->makeCurrent();
+	OSG(ifp)->graphicsContext->makeCurrent();
 
 	if (SGI(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+	    OSG(ifp)->graphicsContext->swapBuffers();
 	} else {
 	    /* just write rectangle*/
 	    osg_xmit_scanlines(ifp, ymin, height, xmin, width);
@@ -2013,7 +1997,7 @@ osg_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	}
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	OSG(ifp)->graphicsContext->releaseContext();
     }
 
     return width*height;
@@ -2060,15 +2044,12 @@ osg_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return width*height;
 
     if (!OSG(ifp)->use_ext_ctrl) {
-	//if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	 //   fb_log("Warning, osg_writerect: glXMakeCurrent unsuccessful.\n");
-	//}
-    OSG(ifp)->graphicsContext->makeCurrent();
+	OSG(ifp)->graphicsContext->makeCurrent();
 
 	if (SGI(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+	    OSG(ifp)->graphicsContext->swapBuffers();
 	} else {
 	    /* just write rectangle*/
 	    osg_xmit_scanlines(ifp, ymin, height, xmin, width);
@@ -2078,7 +2059,7 @@ osg_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	}
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	OSG(ifp)->graphicsContext->releaseContext();
     }
 
     return width*height;
@@ -2130,20 +2111,17 @@ osg_wmap(register FBIO *ifp, register const ColorMap *cmp)
 
 	    /* Software color mapping, trigger a repaint */
 
-	    //if (glXMakeCurrent(OSG(ifp)->dispp, OSG(ifp)->wind, OSG(ifp)->glxc)==False) {
-	//	fb_log("Warning, osg_wmap: glXMakeCurrent unsuccessful.\n");
-	 //   }
-    OSG(ifp)->graphicsContext->makeCurrent();
+	    OSG(ifp)->graphicsContext->makeCurrent();
 
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(OSG(ifp)->dispp, OSG(ifp)->wind);
+		OSG(ifp)->graphicsContext->swapBuffers();
 	    } else if (OSG(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
 
 	    /* unattach context for other threads to use, also flushes */
-	    glXMakeCurrent(OSG(ifp)->dispp, None, NULL);
+	    OSG(ifp)->graphicsContext->releaseContext();
 	} else {
 	    /* Send color map to hardware */
 	    /* This code has yet to be tested */
