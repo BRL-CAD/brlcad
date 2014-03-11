@@ -1267,6 +1267,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     bu_vls_strcpy(&if_dName, ":0.0");
 
     OSG(ifp)->fbinterp = Tcl_CreateInterp();
+    Tcl_Init(OSG(ifp)->fbinterp);
+    Tcl_Eval(OSG(ifp)->fbinterp, "package require Tk");
 
     tkwin = Tk_MainWindow(OSG(ifp)->fbinterp);
 
