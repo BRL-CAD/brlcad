@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include "bu/vls.h"
+#include "dm.h"
 
 #ifdef __cplusplus
 #include <iostream>
@@ -96,7 +97,13 @@ struct osg_vars {
 
 __BEGIN_DECLS
 
-extern void osg_fogHint();
+#ifdef __cplusplus
+extern "C" {
+#endif
+void osg_fogHint(struct dm *dmp, int fastfog);
+#ifdef __cplusplus
+}
+#endif
 
 __END_DECLS
 

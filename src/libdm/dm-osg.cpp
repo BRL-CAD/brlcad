@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#ifdef DM_OGL
+#ifdef DM_OSG
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,15 +34,17 @@
 
 #include "tk.h"
 
+extern "C" {
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-osg.h"
 #include "dm/dm_xvars.h"
-
 #include "./dm_util.h"
+}
+#include "dm/dm-osg.h"
+
 
 /* For Tk, we need to offset when thinking about screen size in
  * order to allow for the Mac OSX top-of-screen toolbar - Tk
@@ -210,14 +212,14 @@ osg_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
 }
 
-
+extern "C" {
 void
 osg_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct osg_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
-
+}
 
 HIDDEN int
 osg_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
@@ -817,7 +819,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int
+extern "C" int
 osg_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 {
 #if 0
@@ -2032,8 +2034,9 @@ osg_genDLists(struct dm *dmp, size_t range)
 
 
 HIDDEN int
-osg_getDisplayImage(struct dm *dmp, unsigned char **image)
+osg_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
 {
+#if 0
     unsigned char *idata = NULL;
     int width = 0;
     int height = 0;
@@ -2117,6 +2120,7 @@ osg_getDisplayImage(struct dm *dmp, unsigned char **image)
 	bu_log("osg_getDisplayImage: Display type not set as OGL or WGL\n");
 	return TCL_ERROR;
     }
+#endif
 
     return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
 }

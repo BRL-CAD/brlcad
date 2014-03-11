@@ -9,6 +9,8 @@ set(FB_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${OPENNURBS_INCLUDE_DIR}
+  ${OPENTHREADS_INCLUDE_DIR}
+  ${OSG_INCLUDE_DIR}
   )
 BRLCAD_LIB_INCLUDE_DIRS(fb FB_INCLUDE_DIRS "")
 
@@ -36,9 +38,21 @@ if(BRLCAD_ENABLE_TK)
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
 
+if(BRLCAD_ENABLE_OSG)
+  set(FBOSGDEFS "-DIF_OSG")
+  set(OSG_LIBRARIES
+    ${OSG_LIBRARY}
+    ${OSGTEXT_LIBRARY}
+    ${OSGVIEWER_LIBRARY}
+    )
+  set(LINKLIBS ${LINKLIBS} ${OSG_LIBRARIES})
+  set(fbosg_srcs if_osg.cpp)
+endif()
+
 set(LIBFB_SOURCES
   ${fbX11_srcs}
   ${fbogl_srcs}
+  ${fbosg_srcs}
   ${fbwgl_srcs}
   ${fbtk_srcs}
   asize.c
@@ -64,6 +78,7 @@ add_definitions(
   -DIF_AB
   ${FBX11DEFS}
   ${FBOGLDEFS}
+  ${FBOSGDEFS}
   ${FBTKDEFS}
   ${XOPEN_DEFINE}
   )
@@ -80,6 +95,7 @@ set(libfb_ignore_files
   if_X.c
   if_X24.c
   if_ogl.c
+  if_osg.cpp
   if_wgl.c
   if_tk.c
   )

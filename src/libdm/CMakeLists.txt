@@ -67,7 +67,7 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 if(BRLCAD_ENABLE_OSG)
-  list(APPEND libdm_DEFINES DM_OSG)
+  list(APPEND libdm_DEFINES DM_OSG IF_OSG)
   set(dmosg_srcs dm-osg.cpp)
   set(OSG_LIBRARIES
     ${OPENTHREADS_LIBRARY}
@@ -96,7 +96,7 @@ set(LIBDM_SRCS
   dm-generic.c
   dm-plot.c
   dm-ps.c
-  dm_obj.c
+  dm_obj.cpp
   dm_util.c
   dm-txt.c
   grid.c

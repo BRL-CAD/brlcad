@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -37,6 +38,7 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -47,6 +49,7 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
+}
 
 #ifdef DM_X
 #  include "dm/dm_xvars.h"
@@ -64,6 +67,11 @@
 #  include "dm/dm_xvars.h"
 #  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
+
+#ifdef DM_OSG
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-osg.h"
+#endif /* DM_OSG */
 
 #ifdef DM_WGL
 #  include "dm/dm_xvars.h"
@@ -172,6 +180,28 @@ dmo_openFb(struct dm_obj *dmop)
 			       0);
 	    break;
 #endif
+
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+	    *dmop->dmo_fbs.fbs_fbp = osg_interface; /* struct copy */
+
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/osg")+1, "if_name");
+	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/osg", strlen("/dev/osg")+1);
+
+	    /* Mark OK by filling in magic number */
+	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _osg_open_existing(dmop->dmo_fbs.fbs_fbp,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+			       dmop->dmo_dmp->dm_width,
+			       dmop->dmo_dmp->dm_height,
+			       ((struct osg_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->graphicsContext);
+	    break;
+#endif
+
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
 	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
@@ -2229,7 +2259,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-#if defined(DM_X) || defined(DM_OGL)
+#if defined(DM_X) || defined(DM_OGL) || defined (DM_OSG)
 
 HIDDEN int
 dmo_png_cmd(struct dm_obj *dmop,
@@ -2501,7 +2531,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 }
 
 
-#endif /* defined(DM_X) || defined(DM_OGL) */
+#endif /* defined(DM_X) || defined(DM_OGL) || defined(DM_OSG) */
 
 
 /*
@@ -2512,7 +2542,7 @@ dmo_png_cmd(struct dm_obj *dmop,
  *
  */
 HIDDEN int
-#if defined(DM_X) || defined(DM_OGL)
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OSG)
 dmo_png_tcl(void *clientData, int argc, const char **argv)
 #else
 dmo_png_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
@@ -2523,7 +2553,7 @@ dmo_png_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-#if defined(DM_X) || defined(DM_OGL)
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OSG)
     return dmo_png_cmd(dmop, argc-1, argv+1);
 #else
     bu_log("Sorry, support for the 'png' command is unavailable.\n");
@@ -2781,7 +2811,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	    }
 	}
 
-#if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_WGL)
 	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->xtkwin,
 			   width, height);
 	return TCL_OK;
@@ -3136,6 +3166,11 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+    if (BU_STR_EQUAL(argv[2], "osg"))
+	type = DM_TYPE_OSG;
+#endif /* DM_OSG */
+
 #ifdef DM_WGL
     if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
@@ -3145,7 +3180,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	Tcl_AppendStringsToObj(obj,
 			       "Unsupported display manager type - ",
 			       argv[2], "\n",
-			       "The supported types are: X, ogl, wgl, and nu",
+			       "The supported types are: X, ogl, wgl, osg, and nu",
 			       (char *)NULL);
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
@@ -3244,7 +3279,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 }
 
 
-int
+extern "C" int
 Dmo_Init(Tcl_Interp *interp)
 {
     BU_LIST_INIT(&HeadDMObj.l);

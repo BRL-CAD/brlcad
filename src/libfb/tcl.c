@@ -89,6 +89,14 @@ extern int ogl_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
+#ifdef IF_OSG
+extern FBIO osg_interface;
+static const char *osg_device_name = "/dev/osg";
+extern void osg_configureWindow(FBIO *ifp, int width, int height);
+extern int osg_open_existing(FBIO *ifp, int argc, const char **argv);
+extern int osg_refresh(FBIO *ifp, int x, int y, int w, int h);
+#endif
+
 #ifdef IF_X
 extern FBIO X24_interface;
 static const char *X_device_name = "/dev/X";
@@ -110,7 +118,7 @@ extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 
 int
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_OSG) && !defined(IF_TK)
 fb_cmd_open_existing(void *clientData, int argc, const char **UNUSED(argv))
 #else
 fb_cmd_open_existing(void *clientData, int argc, const char **argv)
@@ -218,6 +226,28 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     }
 #endif  /* IF_OGL */
 
+#ifdef IF_OSG
+    if (BU_STR_EQUIV(argv[1], osg_device_name)) {
+	found=1;
+	*ifp = osg_interface; /* struct copy */
+
+	ifp->if_name = (char *)malloc((unsigned)strlen(osg_device_name) + 1);
+	bu_strlcpy(ifp->if_name, osg_device_name, strlen(osg_device_name)+1);
+
+	/* Mark OK by filling in magic number */
+	ifp->if_magic = FB_MAGIC;
+
+	if ((osg_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
+	    ifp->if_magic = 0; /* sanity */
+	    free((void *) ifp->if_name);
+	    free((void *) ifp);
+	    bu_log("fb_open_existing: failed to open osg framebuffer\n");
+	    return TCL_ERROR;
+	}
+    }
+#endif  /* IF_OSG */
+
+
     /* FIXME: a printed pointer address string is a blatant security
      * and integrity violation worst practice.  do not use, do not
      * pass go, find a better data-based approach.
@@ -249,6 +279,10 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     bu_vls_strcat(&vls, ogl_device_name);
     bu_vls_strcat(&vls, "\n");
 #endif  /* IF_OGL */
+#ifdef IF_OSG
+    bu_vls_strcat(&vls, osg_device_name);
+    bu_vls_strcat(&vls, "\n");
+#endif  /* IF_OSG */
 #ifdef IF_TK
     bu_vls_strcat(&vls, tk_device_name);
     bu_vls_strcat(&vls, "\n");
@@ -303,6 +337,11 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 	ogl_configureWindow(ifp, width, height);
     }
 #endif  /* IF_OGL */
+#ifdef IF_OSG
+    if (!bu_strncmp(ifp->if_name, osg_device_name, strlen(osg_device_name))) {
+	osg_configureWindow(ifp, width, height);
+    }
+#endif  /* IF_OSG */
 #ifdef IF_TK
 #if 0
 /* XXX TJM implement tk_configureWindow */
@@ -357,6 +396,12 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OGL */
+#ifdef IF_OSG
+    status = -1;
+    if (!bu_strncmp(ifp->if_name, osg_device_name, strlen(osg_device_name))) {
+	status = osg_refresh(ifp, x, y, w, h);
+    }
+#endif  /* IF_OSG */
 #ifdef IF_TK
 #if 0
 /* XXX TJM implement tk_refresh */

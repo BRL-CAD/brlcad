@@ -170,6 +170,16 @@ FB_EXPORT extern int _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Win
 FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 #endif
 
+/*TODO - openscenegraph stuff needed here? */
+#ifdef IF_OSG
+#  ifdef __cplusplus
+extern "C++" {
+#include <osg/GraphicsContext>
+}
+FB_EXPORT extern int _osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext);
+#  endif
+#endif /*IF_OSG*/
+
 #ifdef IF_WGL
 #  include <windows.h>
 #  include <tk.h>

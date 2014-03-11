@@ -165,7 +165,7 @@
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
-#if defined(DM_X) || defined(DM_OGL)
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OSG)
 #define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
 	_shift = 24 - _shift;				\
 	switch (_shift) {				\
@@ -430,6 +430,7 @@ struct display_manager {
 __BEGIN_DECLS
 
 DM_EXPORT extern struct dm dm_ogl;
+DM_EXPORT extern struct dm dm_osg;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
 DM_EXPORT extern struct dm dm_rtgl;

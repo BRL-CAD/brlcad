@@ -105,7 +105,7 @@ typedef struct FBIO_ {
     int (*if_flush)(struct FBIO_ *ifp);		/**< @brief flush output */
     int (*if_free)(struct FBIO_ *ifp);		/**< @brief free resources */
     int (*if_help)(struct FBIO_ *ifp);		/**< @brief print useful info */
-    char *if_type;	/**< @brief what "open" calls it */
+    const char *if_type;	/**< @brief what "open" calls it */
     int if_max_width;	/**< @brief max device width */
     int if_max_height;	/**< @brief max device height */
     /* Dynamic information: per device INSTANCE. */
@@ -149,6 +149,10 @@ FB_EXPORT extern FBIO remote_interface;	/* not in list[] */
 
 #ifdef IF_OGL
 FB_EXPORT extern FBIO ogl_interface;
+#endif
+
+#ifdef IF_OSG
+FB_EXPORT extern FBIO osg_interface;
 #endif
 
 #ifdef IF_WGL

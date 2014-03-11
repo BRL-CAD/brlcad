@@ -59,9 +59,11 @@ extern int ogl_share_dlist();
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
+#  if defined(HAVE_TK)
 extern struct dm *osg_open();
 extern void osg_fogHint();
 extern int osg_share_dlist();
+#  endif
 #endif /* DM_OSG*/
 
 #ifdef DM_RTGL
@@ -126,8 +128,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 #  endif
 #endif
 #ifdef DM_OSG
+#  if defined(HAVE_TK)
 	case DM_TYPE_OSG:
 	    return osg_open(interp, argc, argv);
+#  endif
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:
@@ -174,6 +178,12 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 #  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
 	    return ogl_share_dlist(dmp1, dmp2);
+#  endif
+#endif
+#ifdef DM_OSG
+#  if defined(HAVE_TK)
+	case DM_TYPE_OSG:
+	    return osg_share_dlist(dmp1, dmp2);
 #  endif
 #endif
 #ifdef DM_RTGL
@@ -232,6 +242,13 @@ dm_fogHint(struct dm *dmp, int fastfog)
 #  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
 	    ogl_fogHint(dmp, fastfog);
+	    return;
+#  endif
+#endif
+#ifdef DM_OSG
+#  if defined(HAVE_TK)
+	case DM_TYPE_OSG:
+	    osg_fogHint(dmp, fastfog);
 	    return;
 #  endif
 #endif
