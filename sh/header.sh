@@ -721,7 +721,7 @@ case "x$lineone" in
 	echo "found batch command"
 	skip=0
 	;;
-    x\REM*)
+    xREM*)
 	echo "found batch comment"
 	skip=0
 	;;
