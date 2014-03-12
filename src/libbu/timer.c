@@ -37,6 +37,7 @@
 #  include <sched.h>
 #endif
 
+#include "bu/log.h"
 #include "bu/time.h"
 
 
