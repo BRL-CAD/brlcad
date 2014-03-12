@@ -34,6 +34,9 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+
+#include "bu/vls.h"
+
 #define CMAP_BASE 40
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
