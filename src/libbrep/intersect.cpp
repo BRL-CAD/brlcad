@@ -2587,6 +2587,35 @@ is_subsurfaceA_completely_inside_overlap(
     return inside_overlap;
 }
 
+HIDDEN bool
+is_uvA_completely_inside_overlap(
+	const ON_SimpleArray<Overlapevent> &overlap_events,
+	const ON_2dPoint &pt)
+{
+    // the pt is considered to be inside an overlap if it's inside
+    // an Overlapevent's outer loop and outside any of its inner loops
+    bool inside_overlap = false;
+    for (int i = 0; i < overlap_events.Count() && !inside_overlap; ++i) {
+	const Overlapevent *outerloop = &overlap_events[i];
+	if (outerloop->m_type == Overlapevent::outer &&
+	    outerloop->IsPointIn(pt))
+	{
+	    inside_overlap = true;
+	    for (size_t j = 0; j < outerloop->m_inside.size(); ++j) {
+		const Overlapevent *innerloop = outerloop->m_inside[j];
+		if (innerloop->m_type == Overlapevent::inner &&
+		    innerloop->IsPointIn(pt) &&
+		    !innerloop->IsPointOnBoundary(pt))
+		{
+		    inside_overlap = false;
+		    break;
+		}
+	    }
+	}
+    }
+    return inside_overlap;
+}
+
 enum {
     INSIDE_OVERLAP,
     ON_OVERLAP_BOUNDARY,
@@ -3469,28 +3498,7 @@ ON_Intersect(const ON_Surface *surfA,
 		break;
 	    }
 	if (j == curvept.Count()) {
-	    // test whether this point belongs to the overlap regions
-	    bool inside_overlap = false;
-	    for (int k = 0; k < overlap_events.Count(); k++) {
-		if (overlap_events[k].m_type == Overlapevent::outer
-		    && overlap_events[k].IsPointIn(tmp_curve_uvA[i])) {
-		    bool out_of_all_inner = true;
-		    for (unsigned int m = 0; m < overlap_events[k].m_inside.size(); m++) {
-			Overlapevent *event = overlap_events[k].m_inside[m];
-			if (event->m_type == Overlapevent::inner
-			    && event->IsPointIn(tmp_curve_uvA[i])
-			    && !event->IsPointOnBoundary(tmp_curve_uvA[i])) {
-			    out_of_all_inner = false;
-			    break;
-			}
-		    }
-		    if (out_of_all_inner) {
-			inside_overlap = true;
-			break;
-		    }
-		}
-	    }
-	    if (!inside_overlap) {
+	    if (!is_uvA_completely_inside_overlap(overlap_events, tmp_curve_uvA[i])) {
 		curvept.Append(tmp_curvept[i]);
 		curve_uvA.Append(tmp_curve_uvA[i]);
 		curve_uvB.Append(tmp_curve_uvB[i]);
