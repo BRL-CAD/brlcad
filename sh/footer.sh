@@ -415,8 +415,8 @@ matching_found=0
 index=0
 for var in ${variables[@]} ; do
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_var=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" "$FILE" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" "$FILE" | sed 's/:/ /g' | awk '{print $4}'`
     fi
 
     if [ "x$existing_var" = "x" ] ; then
@@ -441,7 +441,7 @@ done
 ######################
 # check the vi block #
 ######################
-existing_vi="`cat $FILE | grep -i "${prefixspace}${commentchar} ex:"`"
+existing_vi="`grep -i "${prefixspace}${commentchar} ex:" "$FILE"`"
 if [ "x$existing_vi" = "x" ] ; then
     echo "No vi line found..."
 else
@@ -460,7 +460,7 @@ if [ $matching_found -eq 0 ] ; then
     # make sure there are no local vars
     do_not="Local"
     match="Variables"
-    local=`cat "$FILE" | grep -i "${do_not} ${match}:" | awk '{print $1}'`
+    local=`grep -i "${do_not} ${match}:" "$FILE" | awk '{print $1}'`
     # w00t, no local vars so just dump a shiny new block at the end of the file
     if [ "x$local" = "x" ] ; then
 	cat >> $FILE <<EOF
@@ -477,14 +477,14 @@ else
     match="Variables"
 
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${do_not} ${match}:" "$FILE" | sed 's/:/ /g' | awk '{print $4}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "loc. var has trailing goo ... fixing"
 	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ${do_not} ${match}:.*),${prefixspace}${commentchar} ${do_not} ${match}:,i" $FILE
     fi
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* End:" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* End:" "$FILE" | sed 's/:/ /g' | awk '{print $3}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "end has trailing goo ... fixing"
