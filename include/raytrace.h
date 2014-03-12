@@ -49,6 +49,7 @@
 #include "bu/mapped_file.h"
 #include "bu/list.h"
 #include "bu/log.h"
+#include "bu/parallel.h" /* needed for BU_SEM_LAST */
 #include "bu/parse.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
