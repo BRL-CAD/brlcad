@@ -554,9 +554,9 @@ mv -f $FILE ${FILE}.backup
 
 closeit=0
 skip=1
-lineone="`cat ${FILE}.backup | head -n 1`"
-linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
-linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
+lineone="`head -n 1 ${FILE}.backup`"
+linetwo="`head -n 2 ${FILE}.backup | tail -n 1`"
+linethree="`head -n 3 ${FILE}.backup | tail -n 1`"
 case "x$lineone" in
     "x/*"*${title})
 	echo "Found C comment start with file header"
