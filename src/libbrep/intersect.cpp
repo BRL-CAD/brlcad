@@ -2061,13 +2061,14 @@ ON_Intersect(const ON_Curve *curveA,
  */
 struct Triangle {
     ON_3dPoint a, b, c;
+    ON_2dPoint a_2d, b_2d, c_2d;
     inline void CreateFromPoints(ON_3dPoint &pA, ON_3dPoint &pB, ON_3dPoint &pC)
     {
 	a = pA;
 	b = pB;
 	c = pC;
     }
-    ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt)
+    ON_3dPoint BarycentricCoordinate(const ON_3dPoint &pt) const
     {
 	double x, y, z, pivot_ratio;
 	if (ON_Solve2x2(a[0] - c[0], b[0] - c[0], a[1] - c[1], b[1] - c[1], pt[0] - c[0], pt[1] - c[1], &x, &y, &pivot_ratio) == 2) {
@@ -2861,6 +2862,51 @@ subdivide_subsurface(Subsurface *sub)
     return parts;
 }
 
+HIDDEN std::pair<Triangle, Triangle>
+get_subsurface_triangles(const Subsurface *sub, const ON_Surface *surf)
+{
+    double min_u = sub->m_u.Min();
+    double max_u = sub->m_u.Max();
+    double min_v = sub->m_v.Min();
+    double max_v = sub->m_v.Max();
+
+    ON_2dPoint corners2d[4] = {
+	ON_2dPoint(min_u, min_v),
+	ON_2dPoint(min_u, max_v),
+	ON_2dPoint(max_u, min_v),
+	ON_2dPoint(max_u, max_v)};
+
+    ON_3dPoint corners3d[4];
+    for (int i = 0; i < 4; ++i) {
+	corners3d[i] = surf->PointAt(corners2d[i].x, corners2d[i].y);
+    }
+
+    std::pair<Triangle, Triangle> triangles;
+    triangles.first.a_2d = corners2d[0];
+    triangles.first.b_2d = corners2d[1];
+    triangles.first.c_2d = corners2d[2];
+    triangles.first.a = corners3d[0];
+    triangles.first.b = corners3d[1];
+    triangles.first.c = corners3d[2];
+    triangles.second.a_2d = corners2d[1];
+    triangles.second.b_2d = corners2d[2];
+    triangles.second.c_2d = corners2d[3];
+    triangles.second.a = corners3d[1];
+    triangles.second.b = corners3d[2];
+    triangles.second.c = corners3d[3];
+
+    return triangles;
+}
+
+HIDDEN ON_2dPoint
+barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
+{
+    ON_3dVector vertx(tri.a_2d.x, tri.b_2d.x, tri.c_2d.x);
+    ON_3dVector verty(tri.a_2d.y, tri.b_2d.y, tri.c_2d.y);
+    ON_2dPoint uv(ON_DotProduct(bc, vertx), ON_DotProduct(bc, verty));
+    return uv;
+}
+
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -3359,86 +3405,41 @@ ON_Intersect(const ON_Surface *surfA,
 	// Get the corners of each surface sub-patch inside the bounding-box.
 	ON_BoundingBox box_intersect;
 	i->first->Intersect(*(i->second), isect_tol, &box_intersect);
-	ON_3dPoint cornerA[4], cornerB[4];
-	double min_uA = i->first->m_u.Min(), max_uA = i->first->m_u.Max();
-	double min_vA = i->first->m_v.Min(), max_vA = i->first->m_v.Max();
-	double min_uB = i->second->m_u.Min(), max_uB = i->second->m_u.Max();
-	double min_vB = i->second->m_v.Min(), max_vB = i->second->m_v.Max();
-	cornerA[0] = surfA->PointAt(min_uA, min_vA);
-	cornerA[1] = surfA->PointAt(min_uA, max_vA);
-	cornerA[2] = surfA->PointAt(max_uA, min_vA);
-	cornerA[3] = surfA->PointAt(max_uA, max_vA);
-	cornerB[0] = surfB->PointAt(min_uB, min_vB);
-	cornerB[1] = surfB->PointAt(min_uB, max_vB);
-	cornerB[2] = surfB->PointAt(max_uB, min_vB);
-	cornerB[3] = surfB->PointAt(max_uB, max_vB);
 
 	/* We approximate each surface sub-patch inside the bounding-box with two
 	 * triangles that share an edge.
 	 * The intersection of the surface sub-patches is approximated as the
 	 * intersection of triangles.
 	 */
-	struct Triangle triangle[4];
-	triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
-	triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
-	triangle[2].CreateFromPoints(cornerB[0], cornerB[1], cornerB[2]);
-	triangle[3].CreateFromPoints(cornerB[1], cornerB[2], cornerB[3]);
-	bool is_intersect[4];
-	ON_3dPoint intersect_center[4];
-	is_intersect[0] = triangle_intersection(triangle[0], triangle[2], intersect_center[0]);
-	is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
-	is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
-	is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
+	std::pair<Triangle, Triangle> trianglesA = get_subsurface_triangles(i->first, surfA);
+	std::pair<Triangle, Triangle> trianglesB = get_subsurface_triangles(i->second, surfB);
 
 	// calculate the intersection centers' uv coordinates
-	ON_3dPoint bcoor[8];
-	ON_2dPoint uvA[4], uvB[4];
-	if (is_intersect[0]) {
-	    bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
-	    bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
-	    uvA[0].x = bcoor[0].x * min_uA + bcoor[0].y * min_uA + bcoor[0].z * max_uA;
-	    uvA[0].y = bcoor[0].x * min_vA + bcoor[0].y * max_vA + bcoor[0].z * min_vA;
-	    uvB[0].x = bcoor[1].x * min_uB + bcoor[1].y * min_uB + bcoor[1].z * max_uB;
-	    uvB[0].y = bcoor[1].x * min_vB + bcoor[1].y * max_vB + bcoor[1].z * min_vB;
-	}
-	if (is_intersect[1]) {
-	    bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
-	    bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
-	    uvA[1].x = bcoor[2].x * min_uA + bcoor[2].y * min_uA + bcoor[2].z * max_uA;
-	    uvA[1].y = bcoor[2].x * min_vA + bcoor[2].y * max_vA + bcoor[2].z * min_vA;
-	    uvB[1].x = bcoor[3].x * min_uB + bcoor[3].y * max_uB + bcoor[3].z * max_uB;
-	    uvB[1].y = bcoor[3].x * max_vB + bcoor[3].y * min_vB + bcoor[3].z * max_vB;
-	}
-	if (is_intersect[2]) {
-	    bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
-	    bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
-	    uvA[2].x = bcoor[4].x * min_uA + bcoor[4].y * max_uA + bcoor[4].z * max_uA;
-	    uvA[2].y = bcoor[4].x * max_vA + bcoor[4].y * min_vA + bcoor[4].z * max_vA;
-	    uvB[2].x = bcoor[5].x * min_uB + bcoor[5].y * min_uB + bcoor[5].z * max_uB;
-	    uvB[2].y = bcoor[5].x * min_vB + bcoor[5].y * max_vB + bcoor[5].z * min_vB;
-	}
-	if (is_intersect[3]) {
-	    bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
-	    bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
-	    uvA[3].x = bcoor[6].x * min_uA + bcoor[6].y * max_uA + bcoor[6].z * max_uA;
-	    uvA[3].y = bcoor[6].x * max_vA + bcoor[6].y * min_vA + bcoor[6].z * max_vA;
-	    uvB[3].x = bcoor[7].x * min_uB + bcoor[7].y * max_uB + bcoor[7].z * max_uB;
-	    uvB[3].y = bcoor[7].x * max_vB + bcoor[7].y * min_vB + bcoor[7].z * max_vB;
+	int num_intersects = 0;
+	ON_3dPoint average(0.0, 0.0, 0.0);
+	ON_2dPoint avg_uvA(0.0, 0.0), avg_uvB(0.0, 0.0);
+	for (int j = 0; j < 2; ++j) {
+	    const Triangle &triA = j ? trianglesA.second : trianglesA.first;
+
+	    for (int k = 0; k < 2; ++k) {
+		const Triangle &triB = k ? trianglesB.second : trianglesB.first;
+
+		ON_3dPoint intersection_center;
+		if (triangle_intersection(triA, triB, intersection_center)) {
+		    ON_3dPoint bcA = triA.BarycentricCoordinate(intersection_center);
+		    ON_3dPoint bcB = triB.BarycentricCoordinate(intersection_center);
+		    ON_2dPoint uvA = barycentric_to_uv(bcA, triA);
+		    ON_2dPoint uvB = barycentric_to_uv(bcB, triB);
+		    average += intersection_center;
+		    avg_uvA += uvA;
+		    avg_uvB += uvB;
+		    ++num_intersects;
+		}
+	    }
 	}
 
 	// The centroid of these intersection centers is the
 	// intersection point we want.
-	int num_intersects = 0;
-	ON_3dPoint average(0.0, 0.0, 0.0);
-	ON_2dPoint avg_uvA(0.0, 0.0), avg_uvB(0.0, 0.0);
-	for (int j = 0; j < 4; j++) {
-	    if (is_intersect[j]) {
-		average += intersect_center[j];
-		avg_uvA += uvA[j];
-		avg_uvB += uvB[j];
-		num_intersects++;
-	    }
-	}
 	if (num_intersects) {
 	    average /= num_intersects;
 	    avg_uvA /= num_intersects;
