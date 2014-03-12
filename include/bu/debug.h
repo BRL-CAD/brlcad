@@ -30,6 +30,8 @@
 #include "common.h"
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup debug Debugging */
 /** @{ */
 
@@ -82,6 +84,8 @@ BU_EXPORT extern int bu_debug;
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_DEBUG_H */
 
