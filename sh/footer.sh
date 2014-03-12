@@ -375,7 +375,7 @@ fi
 comment_block="
 "
 if [ "x$wrap" = "x1" ] ; then
-    comment_block="${comment_block}/`echo "${commentchar}"`
+    comment_block="${comment_block}/${commentchar}
 "
 fi
 
@@ -387,24 +387,24 @@ fi
 # use temp vars so that emacs doesn't think this line is a local var block too
 do_not="Local"
 parse="Variables"
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} ${do_not} ${parse}:"`
+comment_block="${comment_block}${prefixspace}${commentchar} ${do_not} ${parse}:
 "
 
 index=0
 for var in ${variables[@]} ; do
-    comment_block="${comment_block}`echo "${prefixspace}${commentchar} ${var}: ${values[$index]}"`
+    comment_block="${comment_block}${prefixspace}${commentchar} ${var}: ${values[$index]}
 "
     index="`expr $index \+ 1`"
 done
 
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} End:"`
+comment_block="${comment_block}${prefixspace}${commentchar} End:
 "
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"`"
+comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
 
 if [ "x$wrap" = "x1" ] ; then
     comment_block="${comment_block}
 "
-    comment_block="${comment_block}`echo " ${commentchar}/"`"
+    comment_block="${comment_block} ${commentchar}/"
 fi
 
 
