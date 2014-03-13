@@ -115,7 +115,7 @@ if [ $E -eq 1 ]; then
 fi
 
 # set variables
-BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+BVERSION="`sed 's/[^0-9]//g' include/conf/MAJOR`.`sed 's/[^0-9]//g' include/conf/MINOR`.`sed 's/[^0-9]//g' include/conf/PATCH`"
 TMPDIR="misc/$DNAME-tmp"
 RELEASE="0"
 
@@ -296,7 +296,7 @@ find $TMPDIR/tmp/ ! -type d | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR
 # create rpm file
 fakeroot rpmbuild -vv --buildroot=`pwd`/$TMPDIR/tmp -bb --target $ARCH $TMPDIR/brlcad.spec > $TMPDIR/rpmbuild.log
 
-RPMFILE=`cat $TMPDIR"/rpmbuild.log" | grep "brlcad-"$BVERSION"-"$RELEASE"."$ARCH".rpm" | awk '{print $(NF)}'`
+RPMFILE=`grep "brlcad-$BVERSION-$RELEASE.$ARCH.rpm" "$TMPDIR/rpmbuild.log" | awk '{print $(NF)}'`
 
 mv $RPMFILE ../brlcad-$BVERSION-$RELEASE.$DNAME.$ARCH.rpm
 
