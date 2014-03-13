@@ -71,7 +71,7 @@ if test ! -x "`which rpm 2>/dev/null`" ; then
     ferror "Missing \"rpm\" command" "Exiting..."
 fi
 fcheck(){
-    if ! `rpm -q $1 &>/dev/null` ; then
+    if ! rpm -q $1 >/dev/null 2>&1 ; then
 	echo "* Missing $1..."
 	LLIST=$LLIST" "$1
 	E=1
