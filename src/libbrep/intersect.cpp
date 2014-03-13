@@ -2247,35 +2247,43 @@ struct PointPair {
 
 
 HIDDEN void
-closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dPointArray &curvept, ON_2dPointArray &curve_uvA, ON_2dPointArray &curve_uvB)
+add_points_to_closed_seams(
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	ON_3dPointArray &curvept,
+	ON_2dPointArray &curve_uvA,
+	ON_2dPointArray &curve_uvB)
 {
-    // type =
-    // 0: uvA.x, 1: uvA.y, 2: uvB.x, 3: uvB.y
 
-    ON_BOOL32 is_closed = (type < 2 ? surfA : surfB)->IsClosed(type % 2);
-    const ON_Interval domain = (type < 2 ? surfA : surfB)->Domain(type % 2);
-    if (!is_closed) {
-	return;
-    }
+    for (int i = 0; i < 4; ++i) {
+	int dir = i % 2;
+	bool doA = i < 2;
 
-    int count = curvept.Count();
-    for (int i = 0; i < count; i++) {
-	ON_3dPoint pt3d = ON_3dPoint::UnsetPoint;
-	ON_2dPoint pt_uvA, pt_uvB;
-	pt_uvA = curve_uvA[i];
-	pt_uvB = curve_uvB[i];
-	double &to_compare = (type < 2 ? pt_uvA : pt_uvB)[type % 2];
-	if (ON_NearZero(to_compare - domain.Min())) {
-	    pt3d = curvept[i];
-	    to_compare = domain.Max();
-	} else if (ON_NearZero(to_compare - domain.Max())) {
-	    pt3d = curvept[i];
-	    to_compare = domain.Min();
+	ON_BOOL32 is_closed = (doA ? surfA : surfB)->IsClosed(dir);
+	if (!is_closed) {
+	    continue;
 	}
-	if (!pt3d.IsUnsetPoint()) {
-	    curvept.Append(pt3d);
-	    curve_uvA.Append(pt_uvA);
-	    curve_uvB.Append(pt_uvB);
+	const ON_Interval domain = (doA ? surfA : surfB)->Domain(dir);
+	double dmin = domain.Min();
+	double dmax = domain.Max();
+
+	for (int j = 0; j < curvept.Count(); ++j) {
+	    ON_2dPoint uvA = curve_uvA[j];
+	    ON_2dPoint uvB = curve_uvB[j];
+	    double &dval = (doA ? uvA : uvB)[dir];
+
+	    // if this uv point is NEAR the closed seam, add a new
+	    // point ON the seam with the same 3D coordinates
+	    if (ON_NearZero(dval - dmin)) {
+		dval = dmax;
+	    } else if (ON_NearZero(dval - dmax)) {
+		dval = dmin;
+	    } else {
+		continue;
+	    }
+	    curvept.Append(curvept[j]);
+	    curve_uvA.Append(uvA);
+	    curve_uvB.Append(uvB);
 	}
     }
 }
@@ -3484,9 +3492,8 @@ ON_Intersect(const ON_Surface *surfA,
 	    }
 	}
     }
-    for (int i = 0; i < 4; i++) {
-	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
-    }
+
+    add_points_to_closed_seams(surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
 
     // use an O(n^2) naive approach to eliminate duplication
     for (int i = 0; i < tmp_curvept.Count(); i++) {
