@@ -3553,6 +3553,7 @@ ON_Intersect(const ON_Surface *surfA,
 	bu_log("max_dist_vB: %f\n", max_dist_vB);
     }
 
+    // identify the neighbors of each point
     std::vector<PointPair> ptpairs;
     for (int i = 0; i < curvept.Count(); i++) {
 	for (int j = i + 1; j < curvept.Count(); j++) {
@@ -3573,8 +3574,8 @@ ON_Intersect(const ON_Surface *surfA,
     std::sort(ptpairs.begin(), ptpairs.end());
 
     std::vector<ON_SimpleArray<int>*> polylines(curvept.Count());
-    int *index = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
-    // index[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
+    int *polyline_of_terminal = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
+    // polyline_of_terminal[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
     int *startpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
     int *endpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
     // index of startpoints and endpoints of polylines[i]
@@ -3584,61 +3585,66 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_SimpleArray<int> *single = new ON_SimpleArray<int>();
 	single->Append(i);
 	polylines[i] = single;
-	index[i] = i;
+	polyline_of_terminal[i] = i;
 	startpt[i] = i;
 	endpt[i] = i;
     }
 
     // merge polylines with distance less than max_dist
     for (unsigned int i = 0; i < ptpairs.size(); i++) {
-	int index1 = index[ptpairs[i].indexA], index2 = index[ptpairs[i].indexB];
-	if (index1 == -1 || index2 == -1) {
+	int terminal1 = ptpairs[i].indexA;
+	int terminal2 = ptpairs[i].indexB;
+	int poly1 = polyline_of_terminal[terminal1];
+	int poly2 = polyline_of_terminal[terminal2];
+	if (poly1 == -1 || poly2 == -1) {
 	    continue;
 	}
-	index[startpt[index1]] = index[endpt[index1]] = index1;
-	index[startpt[index2]] = index[endpt[index2]] = index1;
-	ON_SimpleArray<int> *line1 = polylines[index1];
-	ON_SimpleArray<int> *line2 = polylines[index2];
+	polyline_of_terminal[startpt[poly1]] = polyline_of_terminal[endpt[poly1]] = poly1;
+	polyline_of_terminal[startpt[poly2]] = polyline_of_terminal[endpt[poly2]] = poly1;
+	ON_SimpleArray<int> *line1 = polylines[poly1];
+	ON_SimpleArray<int> *line2 = polylines[poly2];
 	if (line1 != NULL && line2 != NULL && line1 != line2) {
 	    ON_SimpleArray<int> *unionline = new ON_SimpleArray<int>();
-	    if ((*line1)[0] == ptpairs[i].indexA) {
-		if ((*line2)[0] == ptpairs[i].indexB) {
+	    bool start1 = (*line1)[0] == terminal1;
+	    bool start2 = (*line2)[0] == terminal2;
+	    if (start1) {
+		if (start2) {
 		    // Case 1: endA -- startA -- startB -- endB
 		    line1->Reverse();
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = endpt[index1];
-		    endpt[index1] = endpt[index2];
+		    startpt[poly1] = endpt[poly1];
+		    endpt[poly1] = endpt[poly2];
 		} else {
 		    // Case 2: startB -- endB -- startA -- endA
 		    unionline->Append(line2->Count(), line2->Array());
 		    unionline->Append(line1->Count(), line1->Array());
-		    startpt[index1] = startpt[index2];
-		    endpt[index1] = endpt[index1];
+		    startpt[poly1] = startpt[poly2];
+		    endpt[poly1] = endpt[poly1];
 		}
 	    } else {
-		if ((*line2)[0] == ptpairs[i].indexB) {
+		if (start2) {
 		    // Case 3: startA -- endA -- startB -- endB
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = startpt[index1];
-		    endpt[index1] = endpt[index2];
+		    startpt[poly1] = startpt[poly1];
+		    endpt[poly1] = endpt[poly2];
 		} else {
 		    // Case 4: start -- endA -- endB -- startB
 		    unionline->Append(line1->Count(), line1->Array());
 		    line2->Reverse();
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = startpt[index1];
-		    endpt[index1] = startpt[index2];
+		    startpt[poly1] = startpt[poly1];
+		    endpt[poly1] = startpt[poly2];
 		}
 	    }
-	    polylines[index1] = unionline;
-	    polylines[index2] = NULL;
+	    polylines[poly1] = unionline;
+	    polylines[poly2] = NULL;
 	    if (line1->Count() >= 2) {
-		index[ptpairs[i].indexA] = -1;
+		polyline_of_terminal[terminal1] = -1;
 	    }
 	    if (line2->Count() >= 2) {
-		index[ptpairs[i].indexB] = -1;
+		polyline_of_terminal[terminal2] = -1;
 	    }
 	    delete line1;
 	    delete line2;
@@ -3798,7 +3804,7 @@ ON_Intersect(const ON_Surface *surfA,
     if (DEBUG_BREP_INTERSECT) {
 	bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
     }
-    bu_free(index, "int");
+    bu_free(polyline_of_terminal, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
 
