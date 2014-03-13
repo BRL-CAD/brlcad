@@ -3495,16 +3495,19 @@ ON_Intersect(const ON_Surface *surfA,
 
     add_points_to_closed_seams(surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
 
-    // use an O(n^2) naive approach to eliminate duplication
+    // get just the unique, non-overlap intersection points
     for (int i = 0; i < tmp_curvept.Count(); i++) {
-	int j;
-	for (j = 0; j < curvept.Count(); j++)
-	    if (tmp_curvept[i].DistanceTo(curvept[j]) < isect_tol
-		&& tmp_curve_uvA[i].DistanceTo(curve_uvA[j]) < isect_tolA
-		&& tmp_curve_uvB[i].DistanceTo(curve_uvB[j]) < isect_tolB) {
+	bool unique_pt = true;
+	for (int j = 0; j < curvept.Count(); j++) {
+	    if (tmp_curvept[i].DistanceTo(curvept[j]) < isect_tol &&
+		tmp_curve_uvA[i].DistanceTo(curve_uvA[j]) < isect_tolA &&
+		tmp_curve_uvB[i].DistanceTo(curve_uvB[j]) < isect_tolB)
+	    {
+		unique_pt = false;
 		break;
 	    }
-	if (j == curvept.Count()) {
+	}
+	if (unique_pt) {
 	    if (!is_uvA_completely_inside_overlap(overlap_events, tmp_curve_uvA[i])) {
 		curvept.Append(tmp_curvept[i]);
 		curve_uvA.Append(tmp_curve_uvA[i]);
