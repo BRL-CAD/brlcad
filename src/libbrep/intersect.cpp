@@ -3574,11 +3574,13 @@ ON_Intersect(const ON_Surface *surfA,
     std::sort(ptpairs.begin(), ptpairs.end());
 
     std::vector<ON_SimpleArray<int>*> polylines(curvept.Count());
-    int *polyline_of_terminal = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
+
     // polyline_of_terminal[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
+    int *polyline_of_terminal = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
+
+    // index of startpoints and endpoints of polylines[i]
     int *startpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
     int *endpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
-    // index of startpoints and endpoints of polylines[i]
 
     // initialize each polyline with only one point
     for (int i = 0; i < curvept.Count(); i++) {
