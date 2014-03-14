@@ -692,7 +692,7 @@ ON_Intersect(const ON_3dPoint &pointA,
     // find the sub-curves that possibly intersect the point
     for (int i = 0; i < MAX_PCI_DEPTH; i++) {
 	next_candidates.clear();
-	for (unsigned int j = 0; j < candidates.size(); j++) {
+	for (size_t j = 0; j < candidates.size(); j++) {
 	    if (candidates[j]->m_islinear) {
 		next_candidates.push_back(candidates[j]);
 	    } else {
@@ -711,7 +711,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	candidates = next_candidates;
     }
 
-    for (unsigned int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
 	// use linear approximation to get an estimated intersection point
 	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
 	double t;
@@ -863,7 +863,7 @@ ON_Intersect(const ON_3dPoint &pointA,
     // find the sub-surfaces that possibly intersect the point
     for (int i = 0; i < MAX_PSI_DEPTH; i++) {
 	next_candidates.clear();
-	for (unsigned int j = 0; j < candidates.size(); j++) {
+	for (size_t j = 0; j < candidates.size(); j++) {
 	    if (candidates[j]->m_isplanar) {
 		next_candidates.push_back(candidates[j]);
 	    } else {
@@ -881,7 +881,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	candidates = next_candidates;
     }
 
-    for (unsigned int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
 	// Use the mid point of the bounding box as the starting point,
 	// and use Newton iterations to get an accurate intersection.
 	double u = candidates[i]->m_u.Mid(), v = candidates[i]->m_v.Mid();
@@ -1154,8 +1154,8 @@ ON_Intersect(const ON_Curve *curveA,
 		splittedB.push_back(i->second->m_children[1]);
 	    }
 	    // intersected children go to the next step
-	    for (unsigned int j = 0; j < splittedA.size(); j++)
-		for (unsigned int k = 0; k < splittedB.size(); k++)
+	    for (size_t j = 0; j < splittedA.size(); j++)
+		for (size_t k = 0; k < splittedB.size(); k++)
 		    if (splittedA[j]->Intersect(*splittedB[k], isect_tol)) {
 			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 		    }
@@ -1636,8 +1636,8 @@ ON_Intersect(const ON_Curve *curveA,
 		    }
 		}
 	    }
-	    for (unsigned int j = 0; j < splittedA.size(); j++)
-		for (unsigned int k = 0; k < splittedB.size(); k++)
+	    for (size_t j = 0; j < splittedA.size(); j++)
+		for (size_t k = 0; k < splittedB.size(); k++)
 		    if (splittedB[k]->Intersect(*splittedA[j], isect_tol)) {
 			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 		    }
@@ -3345,7 +3345,7 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 
 	// normalize all params in line_t
-	for (unsigned int j = 0; j < line_t.size(); j++) {
+	for (size_t j = 0; j < line_t.size(); j++) {
 	    line_t[j] = inside_lineA.Domain().NormalizedParameterAt(line_t[j]);
 	}
 
@@ -3593,7 +3593,7 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     // merge polylines with distance less than max_dist
-    for (unsigned int i = 0; i < ptpairs.size(); i++) {
+    for (size_t i = 0; i < ptpairs.size(); i++) {
 	int terminal1 = ptpairs[i].indexA;
 	int terminal2 = ptpairs[i].indexB;
 	int poly1 = polyline_of_terminal[terminal1];
@@ -3657,12 +3657,12 @@ ON_Intersect(const ON_Surface *surfA,
     // other. But with our merging mechanism, a point can only belong
     // to one curve. If curves need to share an intersection point, we
     // need some "seaming" segments to handle it.
-    unsigned int num_curves = polylines.size();
-    for (unsigned int i = 0; i < num_curves; i++) {
+    size_t num_curves = polylines.size();
+    for (size_t i = 0; i < num_curves; i++) {
 	if (!polylines[i]) {
 	    continue;
 	}
-	for (unsigned int j = i + 1; j < num_curves; j++) {
+	for (size_t j = i + 1; j < num_curves; j++) {
 	    if (!polylines[j]) {
 		continue;
 	    }
@@ -3742,7 +3742,7 @@ ON_Intersect(const ON_Surface *surfA,
     // generate ON_Curves from the polylines
     ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
-    for (unsigned int i = 0; i < polylines.size(); i++) {
+    for (size_t i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
 	    int startpoint = (*polylines[i])[0];
 	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
