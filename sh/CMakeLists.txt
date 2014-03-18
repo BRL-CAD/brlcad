@@ -45,7 +45,6 @@ set(noinst_SCRIPTS
   make_tar.sh
   make_bz2.sh
   make_tgz.sh
-  make_zip.sh
   shtool
   template.sh
   ws.sh
