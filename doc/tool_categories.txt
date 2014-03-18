@@ -417,5 +417,4 @@ loop
 news2tracker.sh
 query
 tracker.sh
-trimconfig.sh
 ttcp

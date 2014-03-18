@@ -16,7 +16,6 @@ set(sh_SCRIPTS
   sgisnap.sh
   show.sh
   tracker.sh
-  trimconfig.sh
   )
 foreach(script ${sh_SCRIPTS})
   if(NOT CMAKE_CONFIGURATION_TYPES)
