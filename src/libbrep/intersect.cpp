@@ -3601,24 +3601,33 @@ ON_Intersect(const ON_Surface *surfA,
 	if (poly1 == -1 || poly2 == -1) {
 	    continue;
 	}
+	// to merge poly2 into poly1, first start by making start/end points belong to poly1
 	polyline_of_terminal[startpt[poly1]] = polyline_of_terminal[endpt[poly1]] = poly1;
 	polyline_of_terminal[startpt[poly2]] = polyline_of_terminal[endpt[poly2]] = poly1;
+
 	ON_SimpleArray<int> *line1 = polylines[poly1];
 	ON_SimpleArray<int> *line2 = polylines[poly2];
 	if (line1 != NULL && line2 != NULL && line1 != line2) {
+	    // Join the two polylines so that terminal1 and terminal2
+	    // are adjacent in the new unionline, reflecting the
+	    // spatial adjacency of the corresponding curve points.
 	    ON_SimpleArray<int> *unionline = new ON_SimpleArray<int>();
 	    bool start1 = (*line1)[0] == terminal1;
 	    bool start2 = (*line2)[0] == terminal2;
 	    if (start1) {
 		if (start2) {
-		    // Case 1: endA -- startA -- startB -- endB
+		    // line1: [terminal1, ..., end1]
+		    // line2: [terminal2, ..., end2]
+		    // unionline: [end1, ..., terminal1, terminal2, ..., end2]
 		    line1->Reverse();
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
 		    startpt[poly1] = endpt[poly1];
 		    endpt[poly1] = endpt[poly2];
 		} else {
-		    // Case 2: startB -- endB -- startA -- endA
+		    // line1: [terminal1, ..., end1]
+		    // line2: [start2, ..., terminal2]
+		    // unionline: [start2, ..., terminal2, terminal1, ..., end1]
 		    unionline->Append(line2->Count(), line2->Array());
 		    unionline->Append(line1->Count(), line1->Array());
 		    startpt[poly1] = startpt[poly2];
@@ -3626,13 +3635,17 @@ ON_Intersect(const ON_Surface *surfA,
 		}
 	    } else {
 		if (start2) {
-		    // Case 3: startA -- endA -- startB -- endB
+		    // line1: [start1, ..., terminal1]
+		    // line2: [terminal2, ..., end2]
+		    // unionline: [start1, ..., terminal1, terminal2, ..., end2]
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
 		    startpt[poly1] = startpt[poly1];
 		    endpt[poly1] = endpt[poly2];
 		} else {
-		    // Case 4: start -- endA -- endB -- startB
+		    // line1: [start1, ..., terminal1]
+		    // line2: [start2, ..., terminal2]
+		    // unionline: [start1, ..., terminal1, terminal2, ..., start2]
 		    unionline->Append(line1->Count(), line1->Array());
 		    line2->Reverse();
 		    unionline->Append(line2->Count(), line2->Array());
@@ -3642,6 +3655,10 @@ ON_Intersect(const ON_Surface *surfA,
 	    }
 	    polylines[poly1] = unionline;
 	    polylines[poly2] = NULL;
+
+	    // If lineN has more than one point, then joining to
+	    // terminalN has made it an interior point and it must be
+	    // invalidiated as a terminal.
 	    if (line1->Count() >= 2) {
 		polyline_of_terminal[terminal1] = -1;
 	    }
