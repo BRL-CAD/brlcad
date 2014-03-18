@@ -3683,6 +3683,8 @@ ON_Intersect(const ON_Surface *surfA,
 	    if (!polylines[j]) {
 		continue;
 	    }
+
+	    // find the closest pair of adjacent points between the two polylines
 	    int point_count1 = polylines[i]->Count();
 	    int point_count2 = polylines[j]->Count();
 	    PointPair pair;
@@ -3711,19 +3713,19 @@ ON_Intersect(const ON_Surface *surfA,
 		// intersections.
 		// TODO: These curve-curve intersections are
 		//       expensive. Is this really necessary?
-		ON_3dPointArray ptarray1, ptarray2, ptarray3, ptarray4;
+		ON_3dPointArray uvA1, uvA2, uvB1, uvB2;
 		for (int k = 0; k < polylines[i]->Count(); k++) {
-		    ptarray1.Append(curve_uvA[(*polylines[i])[k]]);
-		    ptarray3.Append(curve_uvB[(*polylines[i])[k]]);
+		    uvA1.Append(curve_uvA[(*polylines[i])[k]]);
+		    uvB1.Append(curve_uvB[(*polylines[i])[k]]);
 		}
 		for (int k = 0; k < polylines[j]->Count(); k++) {
-		    ptarray2.Append(curve_uvA[(*polylines[j])[k]]);
-		    ptarray4.Append(curve_uvB[(*polylines[j])[k]]);
+		    uvA2.Append(curve_uvA[(*polylines[j])[k]]);
+		    uvB2.Append(curve_uvB[(*polylines[j])[k]]);
 		}
-		ON_PolylineCurve polyA(ptarray1), polyB(ptarray2), polyC(ptarray3), polyD(ptarray4);
+		ON_PolylineCurve curveA1(uvA1), curveA2(uvA2), curveB1(uvB1), curveB2(uvB2);
 		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-		if (ON_Intersect(&polyA, &polyB, x_event1, isect_tol)
-		    && ON_Intersect(&polyC, &polyD, x_event2, isect_tol)) {
+		if (ON_Intersect(&curveA1, &curveA2, x_event1, isect_tol) &&
+		    ON_Intersect(&curveB1, &curveB2, x_event2, isect_tol)) {
 		    continue;
 		}
 
