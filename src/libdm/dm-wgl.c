@@ -2090,6 +2090,7 @@ struct dm dm_wgl = {
     wgl_setDepthMask,
     wgl_setZBuffer,
     wgl_debug,
+    NULL,
     wgl_beginDList,
     wgl_endDList,
     wgl_drawDList,

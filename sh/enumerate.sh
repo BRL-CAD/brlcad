@@ -50,8 +50,6 @@
 #   BRL-CAD Open Source
 ###
 
-SELF="$0"
-ARGS="$*"
 BASE="`dirname $0`/.."
 
 # obtain the version of BRL-CAD from include/conf
@@ -122,13 +120,13 @@ apps_count="`echo $installed_apps_count $uninstalled_apps_count + p | dc`"
 # count installed 3rd party libraries
 preotherlibs="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
 premisclibs="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
-otherlibs=`for app in $preotherlibs $premislibs ; do echo $app ; done | sort | uniq`
+otherlibs=`for app in $preotherlibs $premisclibs ; do echo $app ; done | sort | uniq`
 otherlibs_count="`echo \"$otherlibs\" | wc -l`"
 
 # count 3rd party installed applications
 preotherapps="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
 premiscapps="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
-otherapps=`for app in $preotherapps $premisapps ; do echo $app ; done | sort | uniq`
+otherapps=`for app in $preotherapps $premiscapps ; do echo $app ; done | sort | uniq`
 otherapps_count="`echo \"$otherapps\" | wc -l`"
 
 # output summary of compilation products

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/bitv.h"
 #include "bu/log.h"
 #include "bu/vls.h"
 

@@ -33,6 +33,8 @@
 #  include <GL/gl.h>
 #endif
 
+#include "bu/vls.h"
+
 __BEGIN_DECLS
 
 #define CMAP_BASE 40
@@ -55,6 +57,7 @@ struct modifiable_wgl_vars {
     int doublebuffer;
     int depth;
     int debug;
+    struct bu_vls log;
     double bound;
     int boundFlag;
 };

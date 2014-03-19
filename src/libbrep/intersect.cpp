@@ -692,7 +692,7 @@ ON_Intersect(const ON_3dPoint &pointA,
     // find the sub-curves that possibly intersect the point
     for (int i = 0; i < MAX_PCI_DEPTH; i++) {
 	next_candidates.clear();
-	for (unsigned int j = 0; j < candidates.size(); j++) {
+	for (size_t j = 0; j < candidates.size(); j++) {
 	    if (candidates[j]->m_islinear) {
 		next_candidates.push_back(candidates[j]);
 	    } else {
@@ -711,7 +711,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	candidates = next_candidates;
     }
 
-    for (unsigned int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
 	// use linear approximation to get an estimated intersection point
 	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
 	double t;
@@ -863,7 +863,7 @@ ON_Intersect(const ON_3dPoint &pointA,
     // find the sub-surfaces that possibly intersect the point
     for (int i = 0; i < MAX_PSI_DEPTH; i++) {
 	next_candidates.clear();
-	for (unsigned int j = 0; j < candidates.size(); j++) {
+	for (size_t j = 0; j < candidates.size(); j++) {
 	    if (candidates[j]->m_isplanar) {
 		next_candidates.push_back(candidates[j]);
 	    } else {
@@ -881,7 +881,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	candidates = next_candidates;
     }
 
-    for (unsigned int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
 	// Use the mid point of the bounding box as the starting point,
 	// and use Newton iterations to get an accurate intersection.
 	double u = candidates[i]->m_u.Mid(), v = candidates[i]->m_v.Mid();
@@ -1154,8 +1154,8 @@ ON_Intersect(const ON_Curve *curveA,
 		splittedB.push_back(i->second->m_children[1]);
 	    }
 	    // intersected children go to the next step
-	    for (unsigned int j = 0; j < splittedA.size(); j++)
-		for (unsigned int k = 0; k < splittedB.size(); k++)
+	    for (size_t j = 0; j < splittedA.size(); j++)
+		for (size_t k = 0; k < splittedB.size(); k++)
 		    if (splittedA[j]->Intersect(*splittedB[k], isect_tol)) {
 			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 		    }
@@ -1636,8 +1636,8 @@ ON_Intersect(const ON_Curve *curveA,
 		    }
 		}
 	    }
-	    for (unsigned int j = 0; j < splittedA.size(); j++)
-		for (unsigned int k = 0; k < splittedB.size(); k++)
+	    for (size_t j = 0; j < splittedA.size(); j++)
+		for (size_t k = 0; k < splittedB.size(); k++)
 		    if (splittedB[k]->Intersect(*splittedA[j], isect_tol)) {
 			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 		    }
@@ -2061,13 +2061,14 @@ ON_Intersect(const ON_Curve *curveA,
  */
 struct Triangle {
     ON_3dPoint a, b, c;
+    ON_2dPoint a_2d, b_2d, c_2d;
     inline void CreateFromPoints(ON_3dPoint &pA, ON_3dPoint &pB, ON_3dPoint &pC)
     {
 	a = pA;
 	b = pB;
 	c = pC;
     }
-    ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt)
+    ON_3dPoint BarycentricCoordinate(const ON_3dPoint &pt) const
     {
 	double x, y, z, pivot_ratio;
 	if (ON_Solve2x2(a[0] - c[0], b[0] - c[0], a[1] - c[1], b[1] - c[1], pt[0] - c[0], pt[1] - c[1], &x, &y, &pivot_ratio) == 2) {
@@ -2246,35 +2247,43 @@ struct PointPair {
 
 
 HIDDEN void
-closed_domain(int type, const ON_Surface *surfA, const ON_Surface *surfB, ON_3dPointArray &curvept, ON_2dPointArray &curve_uvA, ON_2dPointArray &curve_uvB)
+add_points_to_closed_seams(
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	ON_3dPointArray &curvept,
+	ON_2dPointArray &curve_uvA,
+	ON_2dPointArray &curve_uvB)
 {
-    // type =
-    // 0: uvA.x, 1: uvA.y, 2: uvB.x, 3: uvB.y
 
-    ON_BOOL32 is_closed = (type < 2 ? surfA : surfB)->IsClosed(type % 2);
-    const ON_Interval domain = (type < 2 ? surfA : surfB)->Domain(type % 2);
-    if (!is_closed) {
-	return;
-    }
+    for (int i = 0; i < 4; ++i) {
+	int dir = i % 2;
+	bool doA = i < 2;
 
-    int count = curvept.Count();
-    for (int i = 0; i < count; i++) {
-	ON_3dPoint pt3d = ON_3dPoint::UnsetPoint;
-	ON_2dPoint pt_uvA, pt_uvB;
-	pt_uvA = curve_uvA[i];
-	pt_uvB = curve_uvB[i];
-	double &to_compare = (type < 2 ? pt_uvA : pt_uvB)[type % 2];
-	if (ON_NearZero(to_compare - domain.Min())) {
-	    pt3d = curvept[i];
-	    to_compare = domain.Max();
-	} else if (ON_NearZero(to_compare - domain.Max())) {
-	    pt3d = curvept[i];
-	    to_compare = domain.Min();
+	ON_BOOL32 is_closed = (doA ? surfA : surfB)->IsClosed(dir);
+	if (!is_closed) {
+	    continue;
 	}
-	if (!pt3d.IsUnsetPoint()) {
-	    curvept.Append(pt3d);
-	    curve_uvA.Append(pt_uvA);
-	    curve_uvB.Append(pt_uvB);
+	const ON_Interval domain = (doA ? surfA : surfB)->Domain(dir);
+	double dmin = domain.Min();
+	double dmax = domain.Max();
+
+	for (int j = 0; j < curvept.Count(); ++j) {
+	    ON_2dPoint uvA = curve_uvA[j];
+	    ON_2dPoint uvB = curve_uvB[j];
+	    double &dval = (doA ? uvA : uvB)[dir];
+
+	    // if this uv point is NEAR the closed seam, add a new
+	    // point ON the seam with the same 3D coordinates
+	    if (ON_NearZero(dval - dmin)) {
+		dval = dmax;
+	    } else if (ON_NearZero(dval - dmax)) {
+		dval = dmin;
+	    } else {
+		continue;
+	    }
+	    curvept.Append(curvept[j]);
+	    curve_uvA.Append(uvA);
+	    curve_uvB.Append(uvB);
 	}
     }
 }
@@ -2586,6 +2595,35 @@ is_subsurfaceA_completely_inside_overlap(
     return inside_overlap;
 }
 
+HIDDEN bool
+is_uvA_completely_inside_overlap(
+	const ON_SimpleArray<Overlapevent> &overlap_events,
+	const ON_2dPoint &pt)
+{
+    // the pt is considered to be inside an overlap if it's inside
+    // an Overlapevent's outer loop and outside any of its inner loops
+    bool inside_overlap = false;
+    for (int i = 0; i < overlap_events.Count() && !inside_overlap; ++i) {
+	const Overlapevent *outerloop = &overlap_events[i];
+	if (outerloop->m_type == Overlapevent::outer &&
+	    outerloop->IsPointIn(pt))
+	{
+	    inside_overlap = true;
+	    for (size_t j = 0; j < outerloop->m_inside.size(); ++j) {
+		const Overlapevent *innerloop = outerloop->m_inside[j];
+		if (innerloop->m_type == Overlapevent::inner &&
+		    innerloop->IsPointIn(pt) &&
+		    !innerloop->IsPointOnBoundary(pt))
+		{
+		    inside_overlap = false;
+		    break;
+		}
+	    }
+	}
+    }
+    return inside_overlap;
+}
+
 enum {
     INSIDE_OVERLAP,
     ON_OVERLAP_BOUNDARY,
@@ -2859,6 +2897,51 @@ subdivide_subsurface(Subsurface *sub)
 	}
     }
     return parts;
+}
+
+HIDDEN std::pair<Triangle, Triangle>
+get_subsurface_triangles(const Subsurface *sub, const ON_Surface *surf)
+{
+    double min_u = sub->m_u.Min();
+    double max_u = sub->m_u.Max();
+    double min_v = sub->m_v.Min();
+    double max_v = sub->m_v.Max();
+
+    ON_2dPoint corners2d[4] = {
+	ON_2dPoint(min_u, min_v),
+	ON_2dPoint(min_u, max_v),
+	ON_2dPoint(max_u, min_v),
+	ON_2dPoint(max_u, max_v)};
+
+    ON_3dPoint corners3d[4];
+    for (int i = 0; i < 4; ++i) {
+	corners3d[i] = surf->PointAt(corners2d[i].x, corners2d[i].y);
+    }
+
+    std::pair<Triangle, Triangle> triangles;
+    triangles.first.a_2d = corners2d[0];
+    triangles.first.b_2d = corners2d[1];
+    triangles.first.c_2d = corners2d[2];
+    triangles.first.a = corners3d[0];
+    triangles.first.b = corners3d[1];
+    triangles.first.c = corners3d[2];
+    triangles.second.a_2d = corners2d[1];
+    triangles.second.b_2d = corners2d[2];
+    triangles.second.c_2d = corners2d[3];
+    triangles.second.a = corners3d[1];
+    triangles.second.b = corners3d[2];
+    triangles.second.c = corners3d[3];
+
+    return triangles;
+}
+
+HIDDEN ON_2dPoint
+barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
+{
+    ON_3dVector vertx(tri.a_2d.x, tri.b_2d.x, tri.c_2d.x);
+    ON_3dVector verty(tri.a_2d.y, tri.b_2d.y, tri.c_2d.y);
+    ON_2dPoint uv(ON_DotProduct(bc, vertx), ON_DotProduct(bc, verty));
+    return uv;
 }
 
 int
@@ -3262,7 +3345,7 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 
 	// normalize all params in line_t
-	for (unsigned int j = 0; j < line_t.size(); j++) {
+	for (size_t j = 0; j < line_t.size(); j++) {
 	    line_t[j] = inside_lineA.Domain().NormalizedParameterAt(line_t[j]);
 	}
 
@@ -3359,86 +3442,41 @@ ON_Intersect(const ON_Surface *surfA,
 	// Get the corners of each surface sub-patch inside the bounding-box.
 	ON_BoundingBox box_intersect;
 	i->first->Intersect(*(i->second), isect_tol, &box_intersect);
-	ON_3dPoint cornerA[4], cornerB[4];
-	double min_uA = i->first->m_u.Min(), max_uA = i->first->m_u.Max();
-	double min_vA = i->first->m_v.Min(), max_vA = i->first->m_v.Max();
-	double min_uB = i->second->m_u.Min(), max_uB = i->second->m_u.Max();
-	double min_vB = i->second->m_v.Min(), max_vB = i->second->m_v.Max();
-	cornerA[0] = surfA->PointAt(min_uA, min_vA);
-	cornerA[1] = surfA->PointAt(min_uA, max_vA);
-	cornerA[2] = surfA->PointAt(max_uA, min_vA);
-	cornerA[3] = surfA->PointAt(max_uA, max_vA);
-	cornerB[0] = surfB->PointAt(min_uB, min_vB);
-	cornerB[1] = surfB->PointAt(min_uB, max_vB);
-	cornerB[2] = surfB->PointAt(max_uB, min_vB);
-	cornerB[3] = surfB->PointAt(max_uB, max_vB);
 
 	/* We approximate each surface sub-patch inside the bounding-box with two
 	 * triangles that share an edge.
 	 * The intersection of the surface sub-patches is approximated as the
 	 * intersection of triangles.
 	 */
-	struct Triangle triangle[4];
-	triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
-	triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
-	triangle[2].CreateFromPoints(cornerB[0], cornerB[1], cornerB[2]);
-	triangle[3].CreateFromPoints(cornerB[1], cornerB[2], cornerB[3]);
-	bool is_intersect[4];
-	ON_3dPoint intersect_center[4];
-	is_intersect[0] = triangle_intersection(triangle[0], triangle[2], intersect_center[0]);
-	is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
-	is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
-	is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
+	std::pair<Triangle, Triangle> trianglesA = get_subsurface_triangles(i->first, surfA);
+	std::pair<Triangle, Triangle> trianglesB = get_subsurface_triangles(i->second, surfB);
 
 	// calculate the intersection centers' uv coordinates
-	ON_3dPoint bcoor[8];
-	ON_2dPoint uvA[4], uvB[4];
-	if (is_intersect[0]) {
-	    bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
-	    bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
-	    uvA[0].x = bcoor[0].x * min_uA + bcoor[0].y * min_uA + bcoor[0].z * max_uA;
-	    uvA[0].y = bcoor[0].x * min_vA + bcoor[0].y * max_vA + bcoor[0].z * min_vA;
-	    uvB[0].x = bcoor[1].x * min_uB + bcoor[1].y * min_uB + bcoor[1].z * max_uB;
-	    uvB[0].y = bcoor[1].x * min_vB + bcoor[1].y * max_vB + bcoor[1].z * min_vB;
-	}
-	if (is_intersect[1]) {
-	    bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
-	    bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
-	    uvA[1].x = bcoor[2].x * min_uA + bcoor[2].y * min_uA + bcoor[2].z * max_uA;
-	    uvA[1].y = bcoor[2].x * min_vA + bcoor[2].y * max_vA + bcoor[2].z * min_vA;
-	    uvB[1].x = bcoor[3].x * min_uB + bcoor[3].y * max_uB + bcoor[3].z * max_uB;
-	    uvB[1].y = bcoor[3].x * max_vB + bcoor[3].y * min_vB + bcoor[3].z * max_vB;
-	}
-	if (is_intersect[2]) {
-	    bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
-	    bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
-	    uvA[2].x = bcoor[4].x * min_uA + bcoor[4].y * max_uA + bcoor[4].z * max_uA;
-	    uvA[2].y = bcoor[4].x * max_vA + bcoor[4].y * min_vA + bcoor[4].z * max_vA;
-	    uvB[2].x = bcoor[5].x * min_uB + bcoor[5].y * min_uB + bcoor[5].z * max_uB;
-	    uvB[2].y = bcoor[5].x * min_vB + bcoor[5].y * max_vB + bcoor[5].z * min_vB;
-	}
-	if (is_intersect[3]) {
-	    bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
-	    bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
-	    uvA[3].x = bcoor[6].x * min_uA + bcoor[6].y * max_uA + bcoor[6].z * max_uA;
-	    uvA[3].y = bcoor[6].x * max_vA + bcoor[6].y * min_vA + bcoor[6].z * max_vA;
-	    uvB[3].x = bcoor[7].x * min_uB + bcoor[7].y * max_uB + bcoor[7].z * max_uB;
-	    uvB[3].y = bcoor[7].x * max_vB + bcoor[7].y * min_vB + bcoor[7].z * max_vB;
+	int num_intersects = 0;
+	ON_3dPoint average(0.0, 0.0, 0.0);
+	ON_2dPoint avg_uvA(0.0, 0.0), avg_uvB(0.0, 0.0);
+	for (int j = 0; j < 2; ++j) {
+	    const Triangle &triA = j ? trianglesA.second : trianglesA.first;
+
+	    for (int k = 0; k < 2; ++k) {
+		const Triangle &triB = k ? trianglesB.second : trianglesB.first;
+
+		ON_3dPoint intersection_center;
+		if (triangle_intersection(triA, triB, intersection_center)) {
+		    ON_3dPoint bcA = triA.BarycentricCoordinate(intersection_center);
+		    ON_3dPoint bcB = triB.BarycentricCoordinate(intersection_center);
+		    ON_2dPoint uvA = barycentric_to_uv(bcA, triA);
+		    ON_2dPoint uvB = barycentric_to_uv(bcB, triB);
+		    average += intersection_center;
+		    avg_uvA += uvA;
+		    avg_uvB += uvB;
+		    ++num_intersects;
+		}
+	    }
 	}
 
 	// The centroid of these intersection centers is the
 	// intersection point we want.
-	int num_intersects = 0;
-	ON_3dPoint average(0.0, 0.0, 0.0);
-	ON_2dPoint avg_uvA(0.0, 0.0), avg_uvB(0.0, 0.0);
-	for (int j = 0; j < 4; j++) {
-	    if (is_intersect[j]) {
-		average += intersect_center[j];
-		avg_uvA += uvA[j];
-		avg_uvB += uvB[j];
-		num_intersects++;
-	    }
-	}
 	if (num_intersects) {
 	    average /= num_intersects;
 	    avg_uvA /= num_intersects;
@@ -3454,42 +3492,23 @@ ON_Intersect(const ON_Surface *surfA,
 	    }
 	}
     }
-    for (int i = 0; i < 4; i++) {
-	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
-    }
 
-    // use an O(n^2) naive approach to eliminate duplication
+    add_points_to_closed_seams(surfA, surfB, tmp_curvept, tmp_curve_uvA, tmp_curve_uvB);
+
+    // get just the unique, non-overlap intersection points
     for (int i = 0; i < tmp_curvept.Count(); i++) {
-	int j;
-	for (j = 0; j < curvept.Count(); j++)
-	    if (tmp_curvept[i].DistanceTo(curvept[j]) < isect_tol
-		&& tmp_curve_uvA[i].DistanceTo(curve_uvA[j]) < isect_tolA
-		&& tmp_curve_uvB[i].DistanceTo(curve_uvB[j]) < isect_tolB) {
+	bool unique_pt = true;
+	for (int j = 0; j < curvept.Count(); j++) {
+	    if (tmp_curvept[i].DistanceTo(curvept[j]) < isect_tol &&
+		tmp_curve_uvA[i].DistanceTo(curve_uvA[j]) < isect_tolA &&
+		tmp_curve_uvB[i].DistanceTo(curve_uvB[j]) < isect_tolB)
+	    {
+		unique_pt = false;
 		break;
 	    }
-	if (j == curvept.Count()) {
-	    // test whether this point belongs to the overlap regions
-	    bool inside_overlap = false;
-	    for (int k = 0; k < overlap_events.Count(); k++) {
-		if (overlap_events[k].m_type == Overlapevent::outer
-		    && overlap_events[k].IsPointIn(tmp_curve_uvA[i])) {
-		    bool out_of_all_inner = true;
-		    for (unsigned int m = 0; m < overlap_events[k].m_inside.size(); m++) {
-			Overlapevent *event = overlap_events[k].m_inside[m];
-			if (event->m_type == Overlapevent::inner
-			    && event->IsPointIn(tmp_curve_uvA[i])
-			    && !event->IsPointOnBoundary(tmp_curve_uvA[i])) {
-			    out_of_all_inner = false;
-			    break;
-			}
-		    }
-		    if (out_of_all_inner) {
-			inside_overlap = true;
-			break;
-		    }
-		}
-	    }
-	    if (!inside_overlap) {
+	}
+	if (unique_pt) {
+	    if (!is_uvA_completely_inside_overlap(overlap_events, tmp_curve_uvA[i])) {
 		curvept.Append(tmp_curvept[i]);
 		curve_uvA.Append(tmp_curve_uvA[i]);
 		curve_uvB.Append(tmp_curve_uvB[i]);
@@ -3534,6 +3553,7 @@ ON_Intersect(const ON_Surface *surfA,
 	bu_log("max_dist_vB: %f\n", max_dist_vB);
     }
 
+    // identify the neighbors of each point
     std::vector<PointPair> ptpairs;
     for (int i = 0; i < curvept.Count(); i++) {
 	for (int j = i + 1; j < curvept.Count(); j++) {
@@ -3554,72 +3574,96 @@ ON_Intersect(const ON_Surface *surfA,
     std::sort(ptpairs.begin(), ptpairs.end());
 
     std::vector<ON_SimpleArray<int>*> polylines(curvept.Count());
-    int *index = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
-    // index[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
+
+    // polyline_of_terminal[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
+    int *polyline_of_terminal = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
+
+    // index of startpoints and endpoints of polylines[i]
     int *startpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
     int *endpt = (int *)bu_malloc(curvept.Count() * sizeof(int), "int");
-    // index of startpoints and endpoints of polylines[i]
 
     // initialize each polyline with only one point
     for (int i = 0; i < curvept.Count(); i++) {
 	ON_SimpleArray<int> *single = new ON_SimpleArray<int>();
 	single->Append(i);
 	polylines[i] = single;
-	index[i] = i;
+	polyline_of_terminal[i] = i;
 	startpt[i] = i;
 	endpt[i] = i;
     }
 
     // merge polylines with distance less than max_dist
-    for (unsigned int i = 0; i < ptpairs.size(); i++) {
-	int index1 = index[ptpairs[i].indexA], index2 = index[ptpairs[i].indexB];
-	if (index1 == -1 || index2 == -1) {
+    for (size_t i = 0; i < ptpairs.size(); i++) {
+	int terminal1 = ptpairs[i].indexA;
+	int terminal2 = ptpairs[i].indexB;
+	int poly1 = polyline_of_terminal[terminal1];
+	int poly2 = polyline_of_terminal[terminal2];
+	if (poly1 == -1 || poly2 == -1) {
 	    continue;
 	}
-	index[startpt[index1]] = index[endpt[index1]] = index1;
-	index[startpt[index2]] = index[endpt[index2]] = index1;
-	ON_SimpleArray<int> *line1 = polylines[index1];
-	ON_SimpleArray<int> *line2 = polylines[index2];
+	// to merge poly2 into poly1, first start by making start/end points belong to poly1
+	polyline_of_terminal[startpt[poly1]] = polyline_of_terminal[endpt[poly1]] = poly1;
+	polyline_of_terminal[startpt[poly2]] = polyline_of_terminal[endpt[poly2]] = poly1;
+
+	ON_SimpleArray<int> *line1 = polylines[poly1];
+	ON_SimpleArray<int> *line2 = polylines[poly2];
 	if (line1 != NULL && line2 != NULL && line1 != line2) {
+	    // Join the two polylines so that terminal1 and terminal2
+	    // are adjacent in the new unionline, reflecting the
+	    // spatial adjacency of the corresponding curve points.
 	    ON_SimpleArray<int> *unionline = new ON_SimpleArray<int>();
-	    if ((*line1)[0] == ptpairs[i].indexA) {
-		if ((*line2)[0] == ptpairs[i].indexB) {
-		    // Case 1: endA -- startA -- startB -- endB
+	    bool start1 = (*line1)[0] == terminal1;
+	    bool start2 = (*line2)[0] == terminal2;
+	    if (start1) {
+		if (start2) {
+		    // line1: [terminal1, ..., end1]
+		    // line2: [terminal2, ..., end2]
+		    // unionline: [end1, ..., terminal1, terminal2, ..., end2]
 		    line1->Reverse();
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = endpt[index1];
-		    endpt[index1] = endpt[index2];
+		    startpt[poly1] = endpt[poly1];
+		    endpt[poly1] = endpt[poly2];
 		} else {
-		    // Case 2: startB -- endB -- startA -- endA
+		    // line1: [terminal1, ..., end1]
+		    // line2: [start2, ..., terminal2]
+		    // unionline: [start2, ..., terminal2, terminal1, ..., end1]
 		    unionline->Append(line2->Count(), line2->Array());
 		    unionline->Append(line1->Count(), line1->Array());
-		    startpt[index1] = startpt[index2];
-		    endpt[index1] = endpt[index1];
+		    startpt[poly1] = startpt[poly2];
+		    endpt[poly1] = endpt[poly1];
 		}
 	    } else {
-		if ((*line2)[0] == ptpairs[i].indexB) {
-		    // Case 3: startA -- endA -- startB -- endB
+		if (start2) {
+		    // line1: [start1, ..., terminal1]
+		    // line2: [terminal2, ..., end2]
+		    // unionline: [start1, ..., terminal1, terminal2, ..., end2]
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = startpt[index1];
-		    endpt[index1] = endpt[index2];
+		    startpt[poly1] = startpt[poly1];
+		    endpt[poly1] = endpt[poly2];
 		} else {
-		    // Case 4: start -- endA -- endB -- startB
+		    // line1: [start1, ..., terminal1]
+		    // line2: [start2, ..., terminal2]
+		    // unionline: [start1, ..., terminal1, terminal2, ..., start2]
 		    unionline->Append(line1->Count(), line1->Array());
 		    line2->Reverse();
 		    unionline->Append(line2->Count(), line2->Array());
-		    startpt[index1] = startpt[index1];
-		    endpt[index1] = startpt[index2];
+		    startpt[poly1] = startpt[poly1];
+		    endpt[poly1] = startpt[poly2];
 		}
 	    }
-	    polylines[index1] = unionline;
-	    polylines[index2] = NULL;
+	    polylines[poly1] = unionline;
+	    polylines[poly2] = NULL;
+
+	    // If lineN has more than one point, then joining to
+	    // terminalN has made it an interior point and it must be
+	    // invalidiated as a terminal.
 	    if (line1->Count() >= 2) {
-		index[ptpairs[i].indexA] = -1;
+		polyline_of_terminal[terminal1] = -1;
 	    }
 	    if (line2->Count() >= 2) {
-		index[ptpairs[i].indexB] = -1;
+		polyline_of_terminal[terminal2] = -1;
 	    }
 	    delete line1;
 	    delete line2;
@@ -3630,15 +3674,17 @@ ON_Intersect(const ON_Surface *surfA,
     // other. But with our merging mechanism, a point can only belong
     // to one curve. If curves need to share an intersection point, we
     // need some "seaming" segments to handle it.
-    unsigned int num_curves = polylines.size();
-    for (unsigned int i = 0; i < num_curves; i++) {
+    size_t num_curves = polylines.size();
+    for (size_t i = 0; i < num_curves; i++) {
 	if (!polylines[i]) {
 	    continue;
 	}
-	for (unsigned int j = i + 1; j < num_curves; j++) {
+	for (size_t j = i + 1; j < num_curves; j++) {
 	    if (!polylines[j]) {
 		continue;
 	    }
+
+	    // find the closest pair of adjacent points between the two polylines
 	    int point_count1 = polylines[i]->Count();
 	    int point_count2 = polylines[j]->Count();
 	    PointPair pair;
@@ -3667,19 +3713,19 @@ ON_Intersect(const ON_Surface *surfA,
 		// intersections.
 		// TODO: These curve-curve intersections are
 		//       expensive. Is this really necessary?
-		ON_3dPointArray ptarray1, ptarray2, ptarray3, ptarray4;
+		ON_3dPointArray uvA1, uvA2, uvB1, uvB2;
 		for (int k = 0; k < polylines[i]->Count(); k++) {
-		    ptarray1.Append(curve_uvA[(*polylines[i])[k]]);
-		    ptarray3.Append(curve_uvB[(*polylines[i])[k]]);
+		    uvA1.Append(curve_uvA[(*polylines[i])[k]]);
+		    uvB1.Append(curve_uvB[(*polylines[i])[k]]);
 		}
 		for (int k = 0; k < polylines[j]->Count(); k++) {
-		    ptarray2.Append(curve_uvA[(*polylines[j])[k]]);
-		    ptarray4.Append(curve_uvB[(*polylines[j])[k]]);
+		    uvA2.Append(curve_uvA[(*polylines[j])[k]]);
+		    uvB2.Append(curve_uvB[(*polylines[j])[k]]);
 		}
-		ON_PolylineCurve polyA(ptarray1), polyB(ptarray2), polyC(ptarray3), polyD(ptarray4);
+		ON_PolylineCurve curveA1(uvA1), curveA2(uvA2), curveB1(uvB1), curveB2(uvB2);
 		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-		if (ON_Intersect(&polyA, &polyB, x_event1, isect_tol)
-		    && ON_Intersect(&polyC, &polyD, x_event2, isect_tol)) {
+		if (ON_Intersect(&curveA1, &curveA2, x_event1, isect_tol) &&
+		    ON_Intersect(&curveB1, &curveB2, x_event2, isect_tol)) {
 		    continue;
 		}
 
@@ -3715,7 +3761,7 @@ ON_Intersect(const ON_Surface *surfA,
     // generate ON_Curves from the polylines
     ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
-    for (unsigned int i = 0; i < polylines.size(); i++) {
+    for (size_t i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
 	    int startpoint = (*polylines[i])[0];
 	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
@@ -3779,7 +3825,7 @@ ON_Intersect(const ON_Surface *surfA,
     if (DEBUG_BREP_INTERSECT) {
 	bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
     }
-    bu_free(index, "int");
+    bu_free(polyline_of_terminal, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
 

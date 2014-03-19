@@ -148,7 +148,7 @@ if [ $TEST -eq 1 ]; then
 fi
 
 # set variables
-BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+BVERSION=`sed 's/[^0-9]//g' include/conf/MAJOR`"."`sed 's/[^0-9]//g' include/conf/MINOR`"."`sed 's/[^0-9]//g' include/conf/PATCH`
 CDATE=`date -R`
 CFILE="debian/changelog"
 RELEASE="0"

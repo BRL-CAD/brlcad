@@ -70,6 +70,7 @@ static void Wgl_colorchange(const struct bu_structparse *, const char *, void *,
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void debug_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void logfile_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void do_fogHint(const struct bu_structparse *, const char *, void *, const char *);
 static void establish_lighting(const struct bu_structparse *, const char *, void *, const char *);
@@ -334,12 +335,12 @@ debug_hook(const struct bu_structparse *UNUSED(sdp),
 }
 
 static void
-debug_hook(const struct bu_structparse *UNUSED(sdp),
+logfile_hook(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *UNUSED(base),
 	   const char *UNUSED(value))
 {
-    DM_LOGFILE(dmp, bu_vls_addr(&(((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.log)));
+    /*DM_LOGFILE(dmp, bu_vls_addr(&(((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.log)));*/
 }
 
 static void

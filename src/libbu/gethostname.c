@@ -27,6 +27,7 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/log.h"
 #include "bu/str.h"
 
 int

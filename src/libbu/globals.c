@@ -27,6 +27,9 @@
  *
  */
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/vls.h"
 
