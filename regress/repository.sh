@@ -218,7 +218,8 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
     # handle implementation exceptions
     MATCH="`echo \"$MATCH\" \
 | sed 's/.*\/bomb\.c:.*abort.*//g' \
-| sed 's/.*\/bu\.h.*//' \
+| sed 's/.*\/bu\/str\.h.*//' \
+| sed 's/.*\/bu\/log\.h.*//' \
 | sed 's/.*\/cursor\.c.*//g' \
 | sed 's/.*\/db\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
