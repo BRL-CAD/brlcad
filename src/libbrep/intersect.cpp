@@ -3708,16 +3708,18 @@ ON_Intersect(const ON_Surface *surfA,
 	    if (!polylines[j]) {
 		continue;
 	    }
+	    ON_SimpleArray<int> &polyline1 = *polylines[i];
+	    ON_SimpleArray<int> &polyline2 = *polylines[j];
 
 	    // find the closest pair of adjacent points between the two polylines
-	    int point_count1 = polylines[i]->Count();
-	    int point_count2 = polylines[j]->Count();
+	    int point_count1 = polyline1.Count();
+	    int point_count2 = polyline2.Count();
 	    PointPair pair;
 	    pair.distance3d = DBL_MAX;
 	    for (int k = 0; k < point_count1; k++) {
 		for (int m = 0; m < point_count2; m++) {
 		    PointPair newpair;
-		    int start = (*polylines[i])[k], end = (*polylines[j])[m];
+		    int start = polyline1[k], end = polyline2[m];
 		    newpair.distance3d = curvept[start].DistanceTo(curvept[end]);
 		    newpair.dist_uA = fabs(curve_uvA[start].x - curve_uvA[end].x);
 		    newpair.dist_vA = fabs(curve_uvA[start].y - curve_uvA[end].y);
@@ -3739,13 +3741,13 @@ ON_Intersect(const ON_Surface *surfA,
 		// TODO: These curve-curve intersections are
 		//       expensive. Is this really necessary?
 		ON_3dPointArray uvA1, uvA2, uvB1, uvB2;
-		for (int k = 0; k < polylines[i]->Count(); k++) {
-		    uvA1.Append(curve_uvA[(*polylines[i])[k]]);
-		    uvB1.Append(curve_uvB[(*polylines[i])[k]]);
+		for (int k = 0; k < polyline1.Count(); k++) {
+		    uvA1.Append(curve_uvA[polyline1[k]]);
+		    uvB1.Append(curve_uvB[polyline1[k]]);
 		}
-		for (int k = 0; k < polylines[j]->Count(); k++) {
-		    uvA2.Append(curve_uvA[(*polylines[j])[k]]);
-		    uvB2.Append(curve_uvB[(*polylines[j])[k]]);
+		for (int k = 0; k < polyline2.Count(); k++) {
+		    uvA2.Append(curve_uvA[polyline2[k]]);
+		    uvB2.Append(curve_uvB[polyline2[k]]);
 		}
 		ON_PolylineCurve curveA1(uvA1), curveA2(uvA2), curveB1(uvB1), curveB2(uvB2);
 		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
@@ -3776,10 +3778,11 @@ ON_Intersect(const ON_Surface *surfA,
 	if (polylines[i] == NULL) {
 	    continue;
 	}
-	int startpoint = (*polylines[i])[0];
-	int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
+	ON_SimpleArray<int> &polyline = *polylines[i];
+	int startpoint = polyline[0];
+	int endpoint = polyline[polyline.Count() - 1];
 
-	if (polylines[i]->Count() == 1) {
+	if (polyline.Count() == 1) {
 	    single_pts.Append(startpoint);
 	    delete polylines[i];
 	    continue;
@@ -3787,8 +3790,8 @@ ON_Intersect(const ON_Surface *surfA,
 
 	// curve in 3D space
 	ON_3dPointArray ptarray;
-	for (int j = 0; j < polylines[i]->Count(); j++) {
-	    ptarray.Append(curvept[(*polylines[i])[j]]);
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ptarray.Append(curvept[polyline[j]]);
 	}
 	// forms a loop (except seaming curves)
 	if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist && i < num_curves) {
@@ -3799,8 +3802,8 @@ ON_Intersect(const ON_Surface *surfA,
 
 	// curve in UV space (surfA)
 	ptarray.Empty();
-	for (int j = 0; j < polylines[i]->Count(); j++) {
-	    ON_2dPoint &pt2d = curve_uvA[(*polylines[i])[j]];
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvA[polyline[j]];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	}
 	// forms a loop (happens rarely compared to 3D)
@@ -3817,8 +3820,8 @@ ON_Intersect(const ON_Surface *surfA,
 
 	// curve in UV space (surfB)
 	ptarray.Empty();
-	for (int j = 0; j < polylines[i]->Count(); j++) {
-	    ON_2dPoint &pt2d = curve_uvB[(*polylines[i])[j]];
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvB[polyline[j]];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	}
 	// forms a loop (happens rarely compared to 3D)
