@@ -3860,35 +3860,41 @@ ON_Intersect(const ON_Surface *surfA,
 	    event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
 	    event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
 	    event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
-	    // If the normals of all points on the curves have the
-	    // same or opposite direction, the intersection is
-	    // considered tangent.
+	    // If the surfA and surfB normals of all points are
+	    // parallel, the intersection is considered tangent.
+	    bool is_tangent = true;
 	    int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
-	    int j;
-	    for (j = 0; j <= count; j++) {
+	    for (int j = 0; j <= count; ++j) {
 		ON_3dVector normalA, normalB;
 		ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
 		ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
-		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA)
-		      && surfB->EvNormal(pointB.x, pointB.y, normalB)
-		      && normalA.IsParallelTo(normalB))) {
+		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
+		      surfB->EvNormal(pointB.x, pointB.y, normalB) &&
+		      normalA.IsParallelTo(normalB)))
+		{
+		    is_tangent = false;
 		    break;
 		}
 	    }
-	    if (j == count + 1) {
-		// For ssx_transverse events, the 3d curve direction
-		// agrees with SurfaceNormalB x SurfaceNormalA.
-		// For ssx_tangent events, the orientation is random.
+	    if (is_tangent) {
+		// For ssx_tangent events, the 3d curve direction may
+		// not agree with SurfaceNormalA x SurfaceNormalB
 		// (See opennurbs/opennurbs_x.h).
 		ON_3dVector direction = event.m_curve3d->TangentAt(0);
-		ON_3dVector SurfaceNormalA = surfA->NormalAt(event.m_curveA->PointAtStart().x, event.m_curveA->PointAtStart().y);
-		ON_3dVector SurfaceNormalB = surfB->NormalAt(event.m_curveB->PointAtStart().x, event.m_curveB->PointAtStart().y);
+		ON_3dVector SurfaceNormalA = surfA->NormalAt(
+			event.m_curveA->PointAtStart().x,
+			event.m_curveA->PointAtStart().y);
+		ON_3dVector SurfaceNormalB = surfB->NormalAt(
+			event.m_curveB->PointAtStart().x,
+			event.m_curveB->PointAtStart().y);
 		if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
-		    if (!(event.m_curve3d->Reverse()
-			  && event.m_curveA->Reverse()
-			  && event.m_curveB->Reverse()))
+		    if (!(event.m_curve3d->Reverse() &&
+			  event.m_curveA->Reverse() &&
+			  event.m_curveB->Reverse()))
+		    {
 			bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
 			       x.Count() - original_count);
+		    }
 		}
 		event.m_type = ON_SSX_EVENT::ssx_tangent;
 	    } else {
@@ -3902,26 +3908,26 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     for (int i = 0; i < single_pts.Count(); i++) {
-	// check if the single point is duplicated (point-curve intersection)
-	int j;
-	for (j = 0; j < intersect3d.Count(); j++) {
+	bool unique_pt = true;
+	for (int j = 0; j < intersect3d.Count(); ++j) {
 	    ON_ClassArray<ON_PX_EVENT> px_event;
 	    if (ON_Intersect(curvept[single_pts[i]], *intersect3d[j], px_event)) {
+		unique_pt = false;
 		break;
 	    }
 	}
-	if (j == intersect3d.Count()) {
+	if (unique_pt) {
 	    ON_SSX_EVENT event;
 	    event.m_point3d = curvept[single_pts[i]];
 	    event.m_pointA = curve_uvA[single_pts[i]];
 	    event.m_pointB = curve_uvB[single_pts[i]];
-	    // If the normals of all points on the curves have the
-	    // same or opposite direction, the intersection is
-	    // considered tangent.
+	    // If the surfA and surfB normals are parallel, the
+	    // intersection is considered tangent.
 	    ON_3dVector normalA, normalB;
-	    if (surfA->EvNormal(event.m_pointA.x, event.m_pointA.y, normalA)
-		&& surfB->EvNormal(event.m_pointB.x, event.m_pointB.y, normalB)
-		&& normalA.IsParallelTo(normalB)) {
+	    if (surfA->EvNormal(event.m_pointA.x, event.m_pointA.y, normalA) &&
+		surfB->EvNormal(event.m_pointB.x, event.m_pointB.y, normalB) &&
+		normalA.IsParallelTo(normalB))
+	    {
 		event.m_type = ON_SSX_EVENT::ssx_tangent_point;
 	    } else {
 		event.m_type = ON_SSX_EVENT::ssx_transverse_point;
