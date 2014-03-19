@@ -3773,64 +3773,67 @@ ON_Intersect(const ON_Surface *surfA,
     ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
     for (size_t i = 0; i < polylines.size(); i++) {
-	if (polylines[i] != NULL) {
-	    int startpoint = (*polylines[i])[0];
-	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
-
-	    if (polylines[i]->Count() == 1) {
-		single_pts.Append(startpoint);
-		delete polylines[i];
-		continue;
-	    }
-
-	    // curve in 3D space
-	    ON_3dPointArray ptarray;
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ptarray.Append(curvept[(*polylines[i])[j]]);
-	    }
-	    // forms a loop (except seaming curves)
-	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist && i < num_curves) {
-		ptarray.Append(curvept[startpoint]);
-	    }
-	    ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
-	    intersect3d.Append(curve);
-
-	    // curve in UV space (surfA)
-	    ptarray.Empty();
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curve_uvA[(*polylines[i])[j]];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA
-		&& fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA
-		&& i < num_curves) {
-		ON_2dPoint &pt2d = curve_uvA[startpoint];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    curve = new ON_PolylineCurve(ptarray);
-	    curve->ChangeDimension(2);
-	    intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
-
-	    // curve in UV space (surfB)
-	    ptarray.Empty();
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curve_uvB[(*polylines[i])[j]];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB
-		&& fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB
-		&& i < num_curves) {
-		ON_2dPoint &pt2d = curve_uvB[startpoint];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    curve = new ON_PolylineCurve(ptarray);
-	    curve->ChangeDimension(2);
-	    intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
-
-	    delete polylines[i];
+	if (polylines[i] == NULL) {
+	    continue;
 	}
+	int startpoint = (*polylines[i])[0];
+	int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
+
+	if (polylines[i]->Count() == 1) {
+	    single_pts.Append(startpoint);
+	    delete polylines[i];
+	    continue;
+	}
+
+	// curve in 3D space
+	ON_3dPointArray ptarray;
+	for (int j = 0; j < polylines[i]->Count(); j++) {
+	    ptarray.Append(curvept[(*polylines[i])[j]]);
+	}
+	// forms a loop (except seaming curves)
+	if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist && i < num_curves) {
+	    ptarray.Append(curvept[startpoint]);
+	}
+	ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
+	intersect3d.Append(curve);
+
+	// curve in UV space (surfA)
+	ptarray.Empty();
+	for (int j = 0; j < polylines[i]->Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvA[(*polylines[i])[j]];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	// forms a loop (happens rarely compared to 3D)
+	if (fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA &&
+	    fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA &&
+	    i < num_curves)
+	{
+	    ON_2dPoint &pt2d = curve_uvA[startpoint];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	curve = new ON_PolylineCurve(ptarray);
+	curve->ChangeDimension(2);
+	intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
+
+	// curve in UV space (surfB)
+	ptarray.Empty();
+	for (int j = 0; j < polylines[i]->Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvB[(*polylines[i])[j]];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	// forms a loop (happens rarely compared to 3D)
+	if (fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB &&
+	    fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB &&
+	    i < num_curves)
+	{
+	    ON_2dPoint &pt2d = curve_uvB[startpoint];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	curve = new ON_PolylineCurve(ptarray);
+	curve->ChangeDimension(2);
+	intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
+
+	delete polylines[i];
     }
 
     if (DEBUG_BREP_INTERSECT) {
