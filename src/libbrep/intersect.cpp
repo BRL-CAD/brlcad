@@ -3778,6 +3778,8 @@ ON_Intersect(const ON_Surface *surfA,
 	if (polylines[i] == NULL) {
 	    continue;
 	}
+	bool is_seam = (i >= num_curves);
+
 	ON_SimpleArray<int> &polyline = *polylines[i];
 	int startpoint = polyline[0];
 	int endpoint = polyline[polyline.Count() - 1];
@@ -3793,8 +3795,8 @@ ON_Intersect(const ON_Surface *surfA,
 	for (int j = 0; j < polyline.Count(); j++) {
 	    ptarray.Append(curvept[polyline[j]]);
 	}
-	// forms a loop (except seaming curves)
-	if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist && i < num_curves) {
+	// close curve if it forms a loop
+	if (!is_seam && curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist) {
 	    ptarray.Append(curvept[startpoint]);
 	}
 	ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
@@ -3806,10 +3808,10 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_2dPoint &pt2d = curve_uvA[polyline[j]];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	}
-	// forms a loop (happens rarely compared to 3D)
-	if (fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA &&
-	    fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA &&
-	    i < num_curves)
+	// close curve if it forms a loop (happens rarely compared to 3D)
+	if (!is_seam &&
+	    fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA &&
+	    fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA)
 	{
 	    ON_2dPoint &pt2d = curve_uvA[startpoint];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
@@ -3824,10 +3826,10 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_2dPoint &pt2d = curve_uvB[polyline[j]];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	}
-	// forms a loop (happens rarely compared to 3D)
-	if (fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB &&
-	    fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB &&
-	    i < num_curves)
+	// close curve if it forms a loop (happens rarely compared to 3D)
+	if (!is_seam &&
+	    fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB &&
+	    fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB)
 	{
 	    ON_2dPoint &pt2d = curve_uvB[startpoint];
 	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
