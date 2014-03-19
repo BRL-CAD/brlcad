@@ -2174,7 +2174,7 @@ db_search(struct bu_ptbl *search_results,
 	 * second pass. */
 	for (i = 0; i < path_cnt; i++) {
 	    struct directory *curr_dp = paths[i];
-	    struct db_full_path *start_path;
+	    struct db_full_path *start_path = NULL;
 	    /* If we're doing a flat search, we don't need to store full path versions
 	     * of directory pointers - allocate one that we will re-use */
 	    if (s_flags & DB_SEARCH_FLAT) {
