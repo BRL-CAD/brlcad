@@ -847,6 +847,13 @@ osg_configureWindow(FBIO *ifp, int width, int height)
 HIDDEN void
 osg_do_event(FBIO *ifp)
 {
+    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+
+    if (BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", 0), "1")) {
+	OSG(ifp)->alive = 0;
+	printf("Close Window event\n");
+    }
+
 #if 0
     XEvent event;
 
@@ -924,8 +931,10 @@ osg_do_event(FBIO *ifp)
 	}
     }
 #endif
-    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-    expose_callback(ifp);
+    if (0 < OSG(ifp)->alive && BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", 0), "1")) {
+	Tcl_SetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", "0", 0);
+	expose_callback(ifp);
+    }
 }
 
 #if 0
@@ -1286,6 +1295,14 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     Tk_MapWindow(OSG(ifp)->xtkwin);
 
+    /* Set Tk variables to handle Window behavior */
+    Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
+    Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
+    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
+    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Expose> {set WM_EXPOSE_EVENT \"1\"}");
+    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Motion> {set WM_EXPOSE_EVENT \"1\"}");
+
+    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     // Init the Windata Variable that holds the handle for the Window to display OSG in.
     // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
@@ -1324,6 +1341,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     while (OSG(ifp)->firstTime == 1)
 	osg_do_event(ifp);
 
+
+    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     return 0;
 }
 
@@ -1437,6 +1456,9 @@ HIDDEN int
 osg_final_close(FBIO *ifp)
 {
 
+    //TODO - need name of window here
+    //Tcl_Eval(OSG(ifp)->fbinterp, "destroy .");
+
     if (CJDEBUG) {
 	printf("osg_final_close: All done...goodbye!\n");
     }
@@ -1539,6 +1561,16 @@ fb_osg_close(FBIO *ifp)
 
     while (0 < OSG(ifp)->alive) {
 	osg_do_event(ifp);
+    }
+
+    {
+	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+
+	OSG(ifp)->graphicsContext->makeCurrent();
+	OSG(ifp)->graphicsContext->releaseContext();
+	bu_vls_sprintf(&tcl_cmd, "destroy %s", (char *)Tk_Name(OSG(ifp)->xtkwin));
+	Tcl_Eval(OSG(ifp)->fbinterp, bu_vls_addr(&tcl_cmd));
+	bu_vls_free(&tcl_cmd);
     }
 
     return 0;
