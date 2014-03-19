@@ -2944,6 +2944,31 @@ barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
     return uv;
 }
 
+HIDDEN bool
+join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair &ppair)
+{
+    int polyline_first = (*polyline)[0];
+    int polyline_last = (*polyline)[polyline->Count() - 1];
+
+    if (polyline_first == ppair.indexA) {
+	polyline->Insert(0, ppair.indexB);
+	return true;
+    }
+    if (polyline_first == ppair.indexB){
+	polyline->Insert(0, ppair.indexA);
+	return true;
+    }
+    if (polyline_last == ppair.indexA){
+	polyline->Append(ppair.indexB);
+	return true;
+    }
+    if (polyline_last == ppair.indexB){
+	polyline->Append(ppair.indexA);
+	return true;
+    }
+    return false;
+}
+
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -3730,25 +3755,11 @@ ON_Intersect(const ON_Surface *surfA,
 		}
 
 		// If the seaming curve is continuous to polylines[i]
-		// or polylines[j], we can just merge them rather than
-		// generate a new segment.
-		if (pair.indexA == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(pair.indexB);
-		} else if (pair.indexB == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(pair.indexA);
-		} else if (pair.indexA == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, pair.indexB);
-		} else if (pair.indexB == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, pair.indexA);
-		} else if (pair.indexA == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(pair.indexB);
-		} else if (pair.indexB == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(pair.indexA);
-		} else if (pair.indexA == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, pair.indexB);
-		} else if (pair.indexB == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, pair.indexA);
-		} else {
+		// or polylines[j], we can just merge the curve with
+		// the polyline, otherwise we generate a new segment.
+		if (!join_continuous_ppair_to_polyline(polylines[i], pair) &&
+		    !join_continuous_ppair_to_polyline(polylines[j], pair))
+		{
 		    ON_SimpleArray<int> *seam = new ON_SimpleArray<int>;
 		    seam->Append(pair.indexA);
 		    seam->Append(pair.indexB);
