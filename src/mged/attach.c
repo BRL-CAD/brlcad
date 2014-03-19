@@ -187,10 +187,10 @@ mged_fb_open(void)
 #  endif
 #endif /* DM_OGL */
 #ifdef DM_OSG
-#if 0
+#  if defined(HAVE_TK)
     if (dmp->dm_type == DM_TYPE_OSG)
 	Osg_fb_open();
-#endif
+#  endif
 #endif /* DM_OSG */
 #ifdef DM_RTGL
     if (dmp->dm_type == DM_TYPE_RTGL)
