@@ -23,6 +23,7 @@
  *
  */
 
+extern "C" {
 #include "common.h"
 
 #include <stdlib.h>
@@ -34,13 +35,16 @@
 #endif
 
 #include "dm/dm_xvars.h"
+}
 #include "dm/dm-osg.h"
 
+extern "C" {
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+}
 
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
+extern "C" void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static void
 dirty_hook(const struct bu_structparse *UNUSED(sdp),
@@ -144,8 +148,7 @@ Osg_dm(int argc, const char *argv[])
     return common_dm(argc, argv);
 }
 
-
-int
+extern "C" int
 Osg_dm_init(struct dm_list *o_dm_list,
 	  int argc,
 	  const char *argv[])
@@ -155,7 +158,7 @@ Osg_dm_init(struct dm_list *o_dm_list,
     dm_var_init(o_dm_list);
 
     /* register application provided routines */
-    cmd_hook = Osg_dm;
+    cmd_hook = (int (*)())Osg_dm;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
     if ((dmp = dm_open(INTERP, DM_TYPE_OSG, argc-1, argv)) == DM_NULL)
@@ -164,7 +167,7 @@ Osg_dm_init(struct dm_list *o_dm_list,
     /* keep display manager in sync */
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
-    eventHandler = Osg_doevent;
+    eventHandler = (int (*)())Osg_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 
     (void)DM_CONFIGURE_WIN(dmp, 0);

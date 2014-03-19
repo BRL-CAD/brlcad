@@ -46,7 +46,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 if(BRLCAD_ENABLE_OSG)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-osg.c")
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-osg.cpp")
 endif(BRLCAD_ENABLE_OSG)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
@@ -162,7 +162,7 @@ set(mged_ignore_files
   comb_bool_parse.y
   comb_bool_scan.l
   dm-ogl.c
-  dm-osg.c
+  dm-osg.cpp
   dm-qt.c
   dm-rtgl.c
   dm-tk.c
