@@ -96,6 +96,34 @@ struct bu_structparse osg_vparse[] = {
     {"",    0, NULL,		 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
+extern "C" void
+Osg_fb_open()
+{
+    const char *osg_name = "/dev/osg";
+
+    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+	Tcl_AppendResult(INTERP, "Osg_fb_open: failed to allocate framebuffer memory\n",
+		(char *)NULL);
+	return;
+    }
+
+    *fbp = osg_interface; /* struct copy */
+
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(osg_name)+1, "if_name");
+    bu_strlcpy(fbp->if_name, osg_name, strlen(osg_name)+1);
+
+    /* Mark OK by filling in magic number */
+    fbp->if_magic = FB_MAGIC;
+    _osg_open_existing(fbp,
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+	    dmp->dm_width, dmp->dm_height,
+	    ((struct osg_vars *)dmp->dm_vars.priv_vars)->graphicsContext);
+}
+
+
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
