@@ -2969,6 +2969,74 @@ join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair
     return false;
 }
 
+// Algorithm Overview
+//
+// 1) Find overlap intersections (regions where the two surfaces are
+//    flush to one another).
+//    a) Intersect the isocurves of surfA with surfB and vice versa
+//       (any intersection points found are saved for later).
+//    b) We save any overlap intersection curves that appear to be
+//       boundary curves (curves which contain part of the boundary
+//       of the overlap region).
+//       i) If the overlap intersection curve is at the edge of the
+//          surface, it's automatically a boundary curve.
+//      ii) If the surfaces overlap on only one side of the overlap
+//          intersection curve, it's a boundary curve (or at least
+//          contains a boundary curve).
+//    c) Because our boundary test is rather simple, not all of the
+//       saved overlap curves actually overlap the surfaces over their
+//       whole domain, so we do additional processing to get the real
+//       overlaps.
+//       i) The overlap curves are intersected with each other.
+//      ii) The curves are split into subcurves at the points where
+//          they intersect.
+//     iii) We retest the subcurves to see if they are truly part of
+//          the overlap region boundary, discarding those that aren't.
+//      iv) Any overlap curve which is completely contained by another
+//          overlap curve is discarded, hopefully leaving a set of
+//          genuine and unique overlap curves.
+//    d) Overlap curves that share endpoints are merged together.
+//    e) Any of the resulting overlap curves which don't form closed
+//       loops are discarded.
+//    f) The overlap loops are turned into overlap intersection
+//       events, with the orientation of outer and inner loops
+//       adjusted as needed to ensure the overlapping regions are
+//       correctly defined.
+// 2) Find non-overlap intersections.
+//    a) The two surfaces are repeatedly subdivided into subsurfaces
+//       until the MAX_SSI_DEPTH is reached. The subsurface pairs
+//       whose bounding boxes intersect are saved.
+//    b) Each pair of potentially intersecting subsurfaces is
+//       intersected.
+//       i) Each subsurface is approximated by two triangles which
+//          share an edge.
+//      ii) The triangles are intersected.
+//     iii) The Newton solver is used to get the center point of the
+//          intersection, using the averaged center point of the
+//          triangle intersections as the initial guess.
+//    c) The center points of the subsurface intersections are
+//       combined with the isocurve/surface intersection points found
+//       in step 1) above.
+//    d) For surface seams that are closed, additional points are
+//       generated on the seams (3d points near the seams are copied,
+//       and their uv values are adjusted to put them over the seam).
+//    e) The list of intersection points is reduced to just the unique
+//       intersection points that are not inside any overlap regions.
+//    f) Polylines are created from the intersection points.
+//       i) Each point starts as its own polyline, and serves as both
+//          endpoints of the line.
+//      ii) The closest pair of endpoints are joined together, then
+//          the next closest, and so on, growing the length of the
+//          polylines.
+//      iv) Endpoints that are too far apart (distance > max_dist) are
+//          not joined, and some intersection points may remain by
+//          themselves.
+//    g) Intersection curves are generated from the polylines, and are
+//       used to make intersection events.
+//    h) Any single intersection points found in step 2-f-iv) above
+//       that aren't contained by one of the generated intersection
+//       curves are used to make additional point intersection
+//       events.
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
