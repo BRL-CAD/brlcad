@@ -13,7 +13,7 @@ GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap242)
 set(gap242_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
-  ../g-step/G_STEP_Util.cpp
+  ../g-step/AP203.cpp
   ../g-step/Default_Geometric_Context.cpp
   ../g-step/ON_Brep.cpp
   ../g-step/ON_NurbsCurve.cpp

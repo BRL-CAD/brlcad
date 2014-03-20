@@ -80,6 +80,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
+# AP203
 add_subdirectory(step-g)
 add_subdirectory(g-step)
 
@@ -91,12 +92,15 @@ add_subdirectory(g-step)
 # to generate multiple files instead of single huge files will
 # help alleviate the issue - something to check into.
 if(BRLCAD_ENABLE_AP203E2)
+  add_subdirectory(g-ap203e2)
   add_subdirectory(ap203e2-g)
 endif(BRLCAD_ENABLE_AP203E2)
 if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(ap214-g)
   add_subdirectory(g-ap214)
 endif(BRLCAD_ENABLE_AP214)
 if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(ap242-g)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 

@@ -1,4 +1,4 @@
-/*                      A P 2 4 2 . h
+/*                      A P 2 0 3 E 2. h
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AP242.h
+/** @file AP203e2.h
  *
  */
 
-#ifndef AP242_H
-#define AP242_H
+#ifndef AP203E2_H
+#define AP203E2_H
 
 #include "common.h"
 
@@ -59,13 +59,13 @@ struct AP203_Contents {
 void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
 void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
 
-struct AP242_tree_result *
-AP242_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
+struct AP203E2_tree_result *
+AP203E2_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
 
-struct AP242_primitive_result *
-AP242_Add_Primitive(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
+struct AP203E2_primitive_result *
+AP203E2_Add_Primitive(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
 
-#endif /* AP242_H */
+#endif /* AP203E2_H */
 /*
  * Local Variables:
  * tab-width: 8
