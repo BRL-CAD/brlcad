@@ -112,6 +112,10 @@ CMAKEFILES(
   ap203_elements.txt
   ap203e2_elements.txt
   ap214e3_elements.txt
+  ap203e2-g
+  ap214-g
+  ap242-g
+  g-ap203e2
   g-ap214
   g-ap242
   )
