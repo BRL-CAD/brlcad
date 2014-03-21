@@ -67,6 +67,18 @@ string ProductDefinitionShape::GetProductName()
     return pname;
 }
 
+int
+ProductDefinitionShape::GetProductId()
+{
+    int ret = 0;
+
+    if (definition) {
+	ret = definition->GetProductId();
+    }
+
+    return ret;
+}
+
 bool ProductDefinitionShape::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;

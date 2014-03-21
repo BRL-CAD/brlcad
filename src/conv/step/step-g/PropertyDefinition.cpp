@@ -64,6 +64,30 @@ string PropertyDefinition::ClassName()
     return entityname;
 }
 
+ProductDefinition *
+PropertyDefinition::GetRelatingProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (definition) {
+	ret = definition->GetRelatingProductDefinition();
+    }
+
+    return ret;
+}
+
+ProductDefinition *
+PropertyDefinition::GetRelatedProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (definition) {
+	ret = definition->GetRelatedProductDefinition();
+    }
+
+    return ret;
+}
+
 bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;

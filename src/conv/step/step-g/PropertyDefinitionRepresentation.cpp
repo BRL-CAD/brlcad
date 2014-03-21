@@ -70,12 +70,14 @@ PropertyDefinitionRepresentation::~PropertyDefinitionRepresentation()
     used_representation = NULL;
 }
 
-string PropertyDefinitionRepresentation::ClassName()
+string
+PropertyDefinitionRepresentation::ClassName()
 {
     return entityname;
 }
 
-string PropertyDefinitionRepresentation::GetProductName()
+string
+PropertyDefinitionRepresentation::GetProductName()
 {
     string name = "";
 
@@ -95,6 +97,24 @@ string PropertyDefinitionRepresentation::GetProductName()
 	}
     }
     return name;
+}
+
+int
+PropertyDefinitionRepresentation::GetProductId()
+{
+    int ret = 0;
+
+    if (definition) {
+	ProductDefinitionShape *aPDS = dynamic_cast<ProductDefinitionShape *>(definition);
+	ProductDefinition *aPD = dynamic_cast<ProductDefinition *>(definition);
+
+	if (aPDS != NULL) {
+	    ret = aPDS->GetProductId();
+	} else if (aPD != NULL) {
+	    ret = aPD->GetProductId();
+	}
+    }
+    return ret;
 }
 
 bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

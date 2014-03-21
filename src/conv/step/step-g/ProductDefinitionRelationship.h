@@ -33,8 +33,7 @@
 
 // forward declaration of class
 class ON_Brep;
-class ProductDefinitionFormation;
-class ProductDefinitionContext;
+class ProductDefinition;
 
 class ProductDefinitionRelationship: virtual public STEPEntity
 {

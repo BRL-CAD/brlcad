@@ -79,6 +79,46 @@ CharacterizedProductDefinition::GetProductName()
     return pname;
 }
 
+int
+CharacterizedProductDefinition::GetProductId()
+{
+    int ret = 0;
+
+    if (type == CharacterizedProductDefinition::PRODUCT_DEFINITION) {
+	ProductDefinition *aPD = GetProductDefinition();
+	if (aPD) {
+	    ret = aPD->GetProductId();
+	}
+    }
+    return ret;
+}
+
+ProductDefinition *
+CharacterizedProductDefinition::GetRelatingProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    ProductDefinitionRelationship *aPDR = GetProductDefinitionRelationship();
+    if (aPDR) {
+	ret = aPDR->GetRelatingProductDefinition();
+    }
+
+    return ret;
+}
+
+ProductDefinition *
+CharacterizedProductDefinition::GetRelatedProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    ProductDefinitionRelationship *aPDR = GetProductDefinitionRelationship();
+    if (aPDR) {
+	ret = aPDR->GetRelatedProductDefinition();
+    }
+
+    return ret;
+}
+
 bool
 CharacterizedProductDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
     step=sw;

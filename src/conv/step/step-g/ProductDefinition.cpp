@@ -88,6 +88,17 @@ string ProductDefinition::GetProductName()
     return name;
 }
 
+int
+ProductDefinition::GetProductId()
+{
+    int ret = 0;
+    ProductDefinitionFormation *aPDF = dynamic_cast<ProductDefinitionFormation *>(formation);
+    if (aPDF != NULL) {
+	ret = aPDF->GetProductId();
+    }
+    return ret;
+}
+
 bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
