@@ -1990,7 +1990,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPoint circleP1, isect, circleP2, PM, PT;
     ON_3dVector tangentP1, tangentP2;
 
-    circleP1 = startpt;
+    circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
     tangentP1 = circle.TangentAt(t);
 
     for (int i = 0; i < narcs; i++) {
