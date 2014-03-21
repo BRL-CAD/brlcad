@@ -38,7 +38,9 @@
 #include "SurfacePatch.h"
 #include "LocalUnits.h"
 #include "ContextDependentShapeRepresentation.h"
+#include "ProductDefinition.h"
 #include "ShapeDefinitionRepresentation.h"
+#include "ShapeRepresentationRelationship.h"
 
 STEPWrapper::STEPWrapper()
     : registry(NULL), sfile(NULL), dotg(NULL), verbose(false)
@@ -59,7 +61,8 @@ STEPWrapper::~STEPWrapper()
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
-    MAP_OF_IDS_TO_NAMES idmap;
+    MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
 
     if (!dot_g) {
 	return false;
@@ -84,13 +87,16 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    } else {
 		int sdr_id = sdr->GetId();
 		std::string pname  = sdr->GetProductName();
+		int product_id = sdr->GetProductId();
+		id2productid_map[sdr_id] = product_id;
 
 		if (pname.empty()) {
 		    std::string str = "ShapeDefinitionRepresentation@";
 		    str = dotg->GetBRLCADName(str);
-		    idmap[sdr_id] = pname;
+		    id2name_map[sdr_id] = pname;
 		} else {
-		    idmap[sdr_id] = pname;
+		    id2name_map[sdr_id] = pname;
+		    id2name_map[product_id] = pname;
 		}
 
 		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
@@ -98,12 +104,15 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    if (pname.empty()) {
 			std::string str = "product@";
 			pname = dotg->GetBRLCADName(str);
-			idmap[aBrep->GetId()] = pname;
+			id2name_map[aBrep->GetId()] = pname;
+			id2name_map[product_id] = pname;
 		    } else {
-			idmap[aBrep->GetId()] = pname;
+			id2name_map[aBrep->GetId()] = pname;
+			id2name_map[product_id] = pname;
 		    }
+		    id2productid_map[aBrep->GetId()] = product_id;
 
-		    if (isVerbose()) {
+		    if (Verbose()) {
 			if (!pname.empty()) {
 			    std::cerr << std::endl << "     Generating Product -" << pname ;
 			} else {
@@ -155,28 +164,126 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 			delete onBrep;
 		    }
-		} else { // must have an assembly
+		} else { // must be an assembly
 		    if (pname.empty()) {
 			std::string str = "assembly@";
 			pname = dotg->GetBRLCADName(str);
 		    }
-		    if (isVerbose()) {
-			if (!pname.empty()) {
-			    std::cerr << std::endl << "     Generating Assembly -" << pname ;
-			} else {
-			    std::cerr << std::endl << "     Generating Assembly";
-			}
-		    }
-
 		    ShapeRepresentation *aSR = sdr->GetShapeRepresentation();
 		    if (aSR) {
-			idmap[aSR->GetId()] = pname;
+			int sr_id = aSR->GetId();
+			id2name_map[sr_id] = pname;
+			id2name_map[product_id] = pname;
+			id2productid_map[sr_id] = product_id;
 		    }
 		}
 	    }
 	}
     }
-    if (isVerbose()) {
+    /*
+     * Pickup BREP related to SHAPE_REPRESENTATION through SHAPE_REPRESENTATION_RELATIONSHIP
+     *
+     * like the following found in OpenBook Part 'C':
+     *    #21281=SHAPE_DEFINITION_REPRESENTATION(#21280,#21270);
+     *        #21280=PRODUCT_DEFINITION_SHAPE('','SHAPE FOR C.',#21279);
+     *            #21279=PRODUCT_DEFINITION('design','',#21278,#21275);
+     *                #21278=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','LAST_VERSION',#21277,.MADE.);
+     *                    #21277=PRODUCT('C','C','NOT SPECIFIED',(#21276));
+     *        #21270=SHAPE_REPRESENTATION('',(#21259),#21267);
+     *            #21259=AXIS2_PLACEMENT_3D('DANTE_BX_CPU_TOP_1',#21256,#21257,#21258);
+     *            #21267=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#21266))
+     *                GLOBAL_UNIT_ASSIGNED_CONTEXT((#21260,#21264,#21265))REPRESENTATION_CONTEXT('ID1','3'));
+     *
+     *    #21271=SHAPE_REPRESENTATION_RELATIONSHIP('','',#21270,#21268);
+     *        #21268=ADVANCED_BREP_SHAPE_REPRESENTATION('',(#21254),#21267);
+     *    #21272=SHAPE_REPRESENTATION_RELATIONSHIP('','',#21270,#21269);
+     *        #21269=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#21255),#21267);
+     *
+     */
+    for (int i = 0; i < num_ents; i++) {
+	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	if (sse == NULL) {
+	    continue;
+	}
+	std::string name = sse->EntityName();
+	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
+	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+
+	    if (srr) {
+		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		if ((aSR) && (aBrep)) {
+		    int sr_id = aSR->GetId();
+		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
+		    if (it != id2productid_map.end()) { // product found
+			int product_id = (*it).second;
+			int brep_id = aBrep->GetId();
+
+			it = id2productid_map.find(brep_id);
+			if (it == id2productid_map.end()) { // brep not loaded yet so lets do that here.
+			    string pname = id2name_map[product_id];
+			    id2productid_map[brep_id] = product_id;
+
+			    if (Verbose()) {
+				if (!pname.empty()) {
+				    std::cerr << std::endl << "     Generating Product -" << pname ;
+				} else {
+				    std::cerr << std::endl << "     Generating Product";
+				}
+			    }
+
+			    LocalUnits::length = aBrep->GetLengthConversionFactor();
+			    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
+			    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
+			    ON_Brep *onBrep = aBrep->GetONBrep();
+			    if (!onBrep) {
+				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
+			    } else {
+				ON_TextLog tl;
+
+				if (!onBrep->IsValid(&tl)) {
+				    bu_log("WARNING: %s is not valid\n", name.c_str());
+				}
+
+				//onBrep->SpSplitClosedFaces();
+				//ON_Brep *tbrep = TightenBrep(onBrep);
+
+				mat_t mat;
+				MAT_IDN(mat);
+
+				Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+				if (axis != NULL) {
+				    //assign matrix values
+				    double translate_to[3];
+				    const double *toXaxis = axis->GetXAxis();
+				    const double *toYaxis = axis->GetYAxis();
+				    const double *toZaxis = axis->GetZAxis();
+				    mat_t rot_mat;
+
+				    VMOVE(translate_to,axis->GetOrigin());
+				    VSCALE(translate_to,translate_to,LocalUnits::length);
+
+				    MAT_IDN(rot_mat);
+				    VMOVE(&rot_mat[0], toXaxis);
+				    VMOVE(&rot_mat[4], toYaxis);
+				    VMOVE(&rot_mat[8], toZaxis);
+				    bn_mat_inv(mat, rot_mat);
+				    MAT_DELTAS_VEC(mat, translate_to);
+				}
+
+				dotg->WriteBrep(pname, onBrep,mat);
+
+				delete onBrep;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    if (Verbose()) {
 	std::cerr << std::endl << "     Generating BRL-CAD hierarchy." << std::endl;
     }
 
@@ -193,13 +300,42 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    if (aCDSR) {
 		int rep_1_id = aCDSR->GetRepresentationRelationshipRep_1()->GetId();
 		int rep_2_id = aCDSR->GetRepresentationRelationshipRep_2()->GetId();
-		Axis2Placement3D *axis1 = aCDSR->GetTransformItem_1();
-		Axis2Placement3D *axis2 = aCDSR->GetTransformItem_2();
-		string comb = idmap[rep_1_id];
-		string member = idmap[rep_2_id];
+		int pid_1 = id2productid_map[rep_1_id];
+		int pid_2 = id2productid_map[rep_2_id];
+		Axis2Placement3D *axis1 = NULL;
+		Axis2Placement3D *axis2 = NULL;
+		string comb = id2name_map[rep_1_id];
+		string member = id2name_map[rep_2_id];
 		mat_t mat;
 		MAT_IDN(mat);
-		if (axis1 != NULL) {
+
+		ProductDefinition *relatingProduct = aCDSR->GetRelatingProductDefinition();
+		ProductDefinition *relatedProduct = aCDSR->GetRelatedProductDefinition();
+		if (relatingProduct && relatedProduct) {
+		    string relatingName = relatingProduct->GetProductName();
+		    int relatingID = relatingProduct->GetProductId();
+		    string relatedName = relatedProduct->GetProductName();
+		    int relatedID = relatedProduct->GetProductId();
+
+		    if ((relatingID == pid_1) && (relatedID == pid_2)) {
+			axis1 = aCDSR->GetTransformItem_1();
+			axis2 = aCDSR->GetTransformItem_2();
+			comb = id2name_map[rep_1_id];
+			member = id2name_map[rep_2_id];
+		    } else if ((relatingID == pid_2) && (relatedID == pid_1)) {
+			axis1 = aCDSR->GetTransformItem_2();
+			axis2 = aCDSR->GetTransformItem_1();
+			comb = id2name_map[rep_2_id];
+			member = id2name_map[rep_1_id];
+		    } else {
+			std::cerr << "Error: Found Representation Relationship Rep_1(name=" << comb << ",Id=" << rep_1_id << ")" << std::endl;
+			std::cerr << "Error: Found Representation Relationship Rep_2(name=" << member << ",Id=" << rep_2_id << ")" << std::endl;
+			std::cerr << "Error: but Relating ProductDefinition (name=" << relatingName << ",Id=" << relatingID << ")"  << std::endl;
+			std::cerr << "Error:     Related ProductDefinition (name=" << relatedName << ",Id=" << relatedID << ")"  << std::endl;
+		    }
+		}
+
+		if ((axis1 != NULL) && (axis2 != NULL)) {
 		    mat_t to_mat;
 		    mat_t from_mat;
 		    mat_t toinv_mat;
