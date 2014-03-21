@@ -1967,7 +1967,7 @@ ON_Intersect(const ON_Curve *curveA,
 		interval_v1.m_t[0] -= v_tol;
 		interval_v1.m_t[1] += v_tol;
 		if (interval_u1.Intersection(interval_u2) && interval_v1.Intersection(interval_v2)) {
-		    // If the uv rectangle of them intersects, it's consider overlap.
+		    // If the uv rectangle of them intersects, it's considered overlap.
 		    // need to merge: pending[j] = union(pending[j], overlap[i])
 		    if (overlap[i].m_a[1] > pending.m_a[1]) {
 			pending.m_a[1] = overlap[i].m_a[1];
@@ -3751,7 +3751,7 @@ ON_Intersect(const ON_Surface *surfA,
 
 	    // If lineN has more than one point, then joining to
 	    // terminalN has made it an interior point and it must be
-	    // invalidiated as a terminal.
+	    // invalidated as a terminal.
 	    if (line1->Count() >= 2) {
 		polyline_of_terminal[terminal1] = -1;
 	    }
