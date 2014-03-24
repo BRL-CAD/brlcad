@@ -921,6 +921,24 @@ typedef struct pbc_data {
     bool order_reversed;
 } PBCData;
 
+struct BrepTrimPoint
+{
+    ON_2dPoint p2d; /* 2d surface parameter space point */
+    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+};
+
+extern int IsAtSeam(const ON_Surface *surf,double u, double v,double tol = 0.0);
+extern int IsAtSeam(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
+extern ON_2dPoint UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
+extern double DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt);
+extern void SwapUVSeamPoint(const ON_Surface *surf,ON_2dPoint &p);
+extern void ForceToClosestSeam(const ON_Surface *surf,ON_2dPoint &pt,double tol= 0.0);
+extern bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
+extern bool FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
+
+
 extern BREP_EXPORT PBCData *
 pullback_samples(const brlcad::SurfaceTree *surfacetree,
 		 const ON_Curve *curve,

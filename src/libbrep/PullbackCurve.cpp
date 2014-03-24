@@ -32,6 +32,8 @@
 #include <vector>
 #include <list>
 #include <limits>
+#include <set>
+#include <map>
 
 #include "tnt.h"
 #include "jama_lu.h"
@@ -640,7 +642,7 @@ interpolateCurve(ON_2dPointArray &samples)
  * rc = 0 Not on seam, 1 on East/West seam(umin/umax), 2 on North/South seam(vmin/vmax), 3 seam on both U/V boundaries
  */
 int
-IsAtSeam(const ON_Surface *surf, double u, double v)
+IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
 {
     int rc = 0;
     int i;
@@ -648,11 +650,18 @@ IsAtSeam(const ON_Surface *surf, double u, double v)
 	if (!surf->IsClosed(i))
 	    continue;
 	double p = (i) ? v : u;
-	if (NEAR_EQUAL(p, surf->Domain(i)[0], PBC_SEAM_TOL) || NEAR_EQUAL(p, surf->Domain(i)[1], PBC_SEAM_TOL))
+	if (NEAR_EQUAL(p, surf->Domain(i)[0], tol) || NEAR_EQUAL(p, surf->Domain(i)[1], tol))
 	    rc += (i + 1);
     }
 
     return rc;
+}
+
+
+int
+IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
+{
+    return IsAtSeam(surf, pt.x, pt.y, tol);
 }
 
 
@@ -879,23 +888,48 @@ pullback_samples(PBCData* data,
 
 
 /*
- *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
- *  the floating point equality used by openNURBS.
+ *  Unwrap 2D UV point values to within actual surface UV. Points often wrap around the closed seam.
  */
-int
-NearSeam(const ON_Surface *surf,ON_2dPoint &pt, double tol = 0.0)
+ON_2dPoint
+UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt, double tol)
 {
-    int rc = 0;
-    int i;
-    for (i=0; i<2; i++) {
+    ON_2dPoint p = pt;
+    for (int i=0; i<2; i++) {
       if (!surf->IsClosed(i))
         continue;
-      double p = (i) ? pt.y : pt.x;
-      if ( NEAR_EQUAL(p, surf->Domain(i)[0], tol) || NEAR_EQUAL(p, surf->Domain(i)[1], tol))
-        rc += (i+1);
+      while (p[i] < surf->Domain(i).m_t[0] - tol) {
+	  double length = surf->Domain(i).Length();
+	  if (i<=0) {
+	      p.x = p.x + length;
+	  } else {
+	      p.y = p.y + length;
+	  }
+      }
+      while (p[i] >= surf->Domain(i).m_t[1] + tol) {
+	  double length = surf->Domain(i).Length();
+	  if (i<=0) {
+	      p.x = p.x - length;
+	  } else {
+	      p.y = p.y - length;
+	  }
+      }
     }
 
-    return rc;
+    return p;
+}
+
+
+double
+DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt)
+{
+    double dist = -1.0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+    for (int i=0; i<2; i++) {
+      if (!surf->IsClosed(i))
+        continue;
+      dist = fmin(fabs(unwrapped_pt[i] - surf->Domain(i)[0]),fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
+    }
+    return dist;
 }
 
 
@@ -943,40 +977,59 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,ON_2dPoint pt,ON_2dPoint
  *  seam function can be used.
  */
 void
-ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &p, double tol)
+ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
 {
     int seam;
-    ON_Interval dom[2];
-    dom[0] = surf->Domain(0);
-    dom[1] = surf->Domain(1);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    ON_2dVector wrap = ON_2dVector::ZeroVector;
+    ON_Interval dom[2] = ON_Interval::EmptyInterval;
+    double length[2] = { ON_UNSET_VALUE, ON_UNSET_VALUE};
 
-    if ((seam=NearSeam(surf, p, tol)) > 0) {
+    for (int i=0; i<2; i++) {
+	dom[i] = surf->Domain(i);
+	length[i] = dom[i].Length();
+	if (!surf->IsClosed(i))
+	    continue;
+	if (pt[i] > dom[i].m_t[1] + tol) {
+	  ON_2dPoint p = pt;
+	  while (p[i] > dom[i].m_t[1] + tol) {
+	      p[i] -= length[i];
+	      wrap[i] += 1.0;
+	  }
+	} else if (pt[i] < dom[i].m_t[0] - tol) {
+	  wrap[i] = floor((pt[i] - dom[i].m_t[0])/length[i])*length[i];
+	}
+    }
+
+    if ((seam=IsAtSeam(surf, unwrapped_pt, tol)) > 0) {
 	if (seam == 1) { // east/west seam
-	    if (fabs(p.x - dom[0].m_t[0]) < dom[0].Length()/2.0) {
-		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    if (fabs(unwrapped_pt.x - dom[0].m_t[0]) < length[0]/2.0) {
+		unwrapped_pt.x = dom[0].m_t[0]; // on east swap to west seam
 	    } else {
-		p.x = dom[0].m_t[1]; // on west swap to east seam
+		unwrapped_pt.x = dom[0].m_t[1]; // on west swap to east seam
 	    }
 	} else if (seam == 2) { // north/south seam
-	    if (fabs(p.y - dom[1].m_t[0]) < dom[1].Length()/2.0) {
-		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    if (fabs(unwrapped_pt.y - dom[1].m_t[0]) < length[1]/2.0) {
+		unwrapped_pt.y = dom[1].m_t[0]; // on north swap to south seam
 	    } else {
-		p.y = dom[1].m_t[1]; // on south swap to north seam
+		unwrapped_pt.y = dom[1].m_t[1]; // on south swap to north seam
 	    }
 	} else { //on both seams
-	    if (fabs(p.x - dom[0].m_t[0]) < dom[0].Length()/2.0) {
-		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    if (fabs(unwrapped_pt.x - dom[0].m_t[0]) < length[0]/2.0) {
+		unwrapped_pt.x = dom[0].m_t[0]; // on east swap to west seam
 	    } else {
-		p.x = dom[0].m_t[1]; // on west swap to east seam
+		unwrapped_pt.x = dom[0].m_t[1]; // on west swap to east seam
 	    }
-	    if (fabs(p.y - dom[1].m_t[0]) < dom[1].Length()/2.0) {
-		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    if (fabs(pt.y - dom[1].m_t[0]) < length[1]/2.0) {
+		unwrapped_pt.y = dom[1].m_t[0]; // on north swap to south seam
 	    } else {
-		p.y = dom[1].m_t[1]; // on south swap to north seam
+		unwrapped_pt.y = dom[1].m_t[1]; // on south swap to north seam
 	    }
 	}
     }
+    pt = unwrapped_pt + wrap;
 }
+
 
 /*
  *  If point lies on a seam(s) swap to opposite side of UV.
@@ -1017,11 +1070,12 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p)
     }
 }
 
+
 /*
  *  Find where Pullback of 3d curve crosses closed seam of surface UV
  */
 bool
-FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to)
+Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
 {
     bool rc = true;
     const ON_Surface *surf = data.surftree->getSurface();
@@ -1042,12 +1096,12 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 		ON_2dPoint p;
 		//lets check to see if p0 || p1 are already on a seam
 		int seam0=0;
-		if ((seam0 = NearSeam(surf,p0, PBC_TOL)) > 0) {
-		    ForceToClosestSeam(surf, p0, PBC_TOL);
+		if ((seam0 = IsAtSeam(surf,p0, tol)) > 0) {
+		    ForceToClosestSeam(surf, p0, tol);
 		}
 		int seam1 = 0;
-		if ((seam1 = NearSeam(surf,p1, PBC_TOL)) > 0) {
-		    ForceToClosestSeam(surf, p1, PBC_TOL);
+		if ((seam1 = IsAtSeam(surf,p1, tol)) > 0) {
+		    ForceToClosestSeam(surf, p1, tol);
 		}
 		if (seam0 > 0 ) {
 		    if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
@@ -1064,61 +1118,67 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 		} else { // crosses the seam somewhere in between the two points
 		    bool seem_not_found = true;
 		    while(seem_not_found) {
-			double t = (t0 + t1)/2.0;
-			int seam;
-			if (toUV(data, p, t, offset)) {
-			    if ((seam=NearSeam(surf,p, PBC_TOL)) > 0) {
-				ForceToClosestSeam(surf, p, PBC_TOL);
-				from = to = p;
-				seam_t = t;
-				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
-				    SwapUVSeamPoint(surf, to);
-				} else {
-				    SwapUVSeamPoint(surf, from);
-				}
-				seem_not_found=false;
-				rc = true;
-			    } else {
-				if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir)) {
-				    p1 = p;
-				    t1 = t;
-				} else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir)) {
-				    p0 = p;
-				    t0=t;
-				} else {
+			double d0 = DistToNearestClosedSeam(surf,p0);
+			double d1 = DistToNearestClosedSeam(surf,p1);
+			if ((d0 > 0.0) && (d1 > 0.0)) {
+			    double t = t0 + (t1 - t0)*(d0/(d0+d1));
+			    int seam;
+			    if (toUV(data, p, t, offset)) {
+				if ((seam=IsAtSeam(surf,p, tol)) > 0) {
+				    ForceToClosestSeam(surf, p, tol);
+				    from = to = p;
+				    seam_t = t;
+				    if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+					SwapUVSeamPoint(surf, to);
+				    } else {
+					SwapUVSeamPoint(surf, from);
+				    }
 				    seem_not_found=false;
-				    rc = false;
-				}
-			    }
-			} else if (toUV(data, p, t, -offset)) {
-			    if ((seam=NearSeam(surf,p, PBC_TOL)) > 0) {
-				ForceToClosestSeam(surf, p, PBC_TOL);
-				from = to = p;
-				seam_t = t;
-				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
-				    SwapUVSeamPoint(surf, to);
+				    rc = true;
 				} else {
-				    SwapUVSeamPoint(surf, from);
+				    if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir)) {
+					p1 = p;
+					t1 = t;
+				    } else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir)) {
+					p0 = p;
+					t0=t;
+				    } else {
+					seem_not_found=false;
+					rc = false;
+				    }
 				}
-				seem_not_found=false;
-				rc = true;
-			    } else {
-				if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir)) {
-				    p1 = p;
-				    t1 = t;
-				} else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir)) {
-				    p0 = p;
-				    t0=t;
-				} else {
+			    } else if (toUV(data, p, t, -offset)) {
+				if ((seam=IsAtSeam(surf,p, tol)) > 0) {
+				    ForceToClosestSeam(surf, p, tol);
+				    from = to = p;
+				    seam_t = t;
+				    if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+					SwapUVSeamPoint(surf, to);
+				    } else {
+					SwapUVSeamPoint(surf, from);
+				    }
 				    seem_not_found=false;
-				    rc = false;
+				    rc = true;
+				} else {
+				    if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir)) {
+					p1 = p;
+					t1 = t;
+				    } else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir)) {
+					p0 = p;
+					t0=t;
+				    } else {
+					seem_not_found=false;
+					rc = false;
+				    }
 				}
+			    } else {
+				seem_not_found=false;
+				rc = false;
 			    }
 			} else {
 			    seem_not_found=false;
 			    rc = false;
 			}
-
 		    }
 		}
 	    }
@@ -1127,11 +1187,99 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 
     return rc;
 }
-#define TEMPDEBUGPRINTING
-#ifdef TEMPDEBUGPRINTING
-bool PRINTDEBUG = false;
-int pt_count=0;
-#endif
+
+
+/*
+ *  Find where 2D trim curve crosses closed seam of surface UV
+ */
+bool
+FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
+{
+    bool rc = true;
+    const ON_Surface *surf = trim.SurfaceOf();
+
+    // quick bail out is surface not closed
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	ON_2dPoint p0 = trim.PointAt(t0);
+	ON_2dPoint p1 = trim.PointAt(t1);
+	ON_Interval dom[2];
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
+	p0 = UnwrapUVPoint(surf,p0);
+	p1 = UnwrapUVPoint(surf,p1);
+
+        int udir=0;
+        int vdir=0;
+	if (ConsecutivePointsCrossClosedSeam(surf,p0,p1,udir,vdir)) {
+	    ON_2dPoint p;
+	    //lets check to see if p0 || p1 are already on a seam
+	    int seam0=0;
+	    if ((seam0 = IsAtSeam(surf,p0, tol)) > 0) {
+		ForceToClosestSeam(surf, p0, tol);
+	    }
+	    int seam1 = 0;
+	    if ((seam1 = IsAtSeam(surf,p1, tol)) > 0) {
+		ForceToClosestSeam(surf, p1, tol);
+	    }
+	    if (seam0 > 0 ) {
+		if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
+		    rc = false;
+		} else { // just p0 on seam
+		    from = to = p0;
+		    seam_t = t0;
+		    SwapUVSeamPoint(surf, to);
+		}
+	    } else if (seam1 > 0) { // only p1 on seam
+		from = to = p1;
+		seam_t = t1;
+		SwapUVSeamPoint(surf, from);
+	    } else { // crosses the seam somewhere in between the two points
+		bool seem_not_found = true;
+		while(seem_not_found) {
+		    double d0 = DistToNearestClosedSeam(surf,p0);
+		    double d1 = DistToNearestClosedSeam(surf,p1);
+		    if ((d0 > 0.0) && (d1 > 0.0)) {
+			double t = t0 + (t1 - t0)*(d0/(d0+d1));
+			int seam;
+			p = trim.PointAt(t);
+			if ((seam=IsAtSeam(surf,p, tol)) > 0) {
+			    ForceToClosestSeam(surf, p, tol);
+			    from = to = p;
+			    seam_t = t;
+
+			    if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+				SwapUVSeamPoint(surf, to);
+			    } else {
+				SwapUVSeamPoint(surf, from);
+			    }
+			    seem_not_found=false;
+			    rc = true;
+			} else {
+			    if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir)) {
+				p1 = p;
+				t1 = t;
+			    } else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir)) {
+				p0 = p;
+				t0=t;
+			    } else {
+				seem_not_found=false;
+				rc = false;
+			    }
+			}
+		    } else {
+			seem_not_found=false;
+			rc = false;
+		    }
+		}
+	    }
+	}
+    }
+
+    return rc;
+}
+
+
 void
 pullback_samples_from_closed_surface(PBCData* data,
 		 double t,
@@ -1179,11 +1327,6 @@ pullback_samples_from_closed_surface(PBCData* data,
     double prev_t;
     double offset = 0.0;
     double delta;
-    ON_2dVector curr_uv_offsets = ON_2dVector::ZeroVector;
-    ON_Interval udom = surf->Domain(0);
-    double ulength = udom.Length();
-    ON_Interval vdom = surf->Domain(1);
-    double vlength = vdom.Length();
     for (size_t i=istart; i<istop; i++) {
 	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
 	if (i <= numKnots/2) {
@@ -1202,20 +1345,12 @@ pullback_samples_from_closed_surface(PBCData* data,
 		offset = -PBC_FROM_OFFSET;
 	    }
 	    if (toUV(*data, pt, curr_t, offset)) {
-		if (NearSeam(surf,pt,PBC_TOL) > 0) {
+		if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_TOL);
 		}
-		pt = pt + curr_uv_offsets;
 		if ((i == istart) && (j == 0)) {
 		    // first point just append and set reference in prev_pt
 		    samples->Append(pt);
-#ifdef TEMPDEBUGPRINTING
-		    if (PRINTDEBUG) {
-			ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
-			//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
-			std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
-		    }
-#endif
 		    prev_pt = pt;
 		    prev_t = curr_t;
 		    continue;
@@ -1230,62 +1365,16 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    samples->Empty();
 			    SwapUVSeamPoint(surf, prev_pt);
 			    samples->Append(prev_pt);
-			} else {
-			    // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
-			    if (udir == 1) {
-				curr_uv_offsets.x += ulength;
-				pt.x += ulength;
-			    } else if  (udir == 2) {
-				curr_uv_offsets.x -= ulength;
-				pt.x -= ulength;
-			    }
-			    if (vdir == 1) {
-				curr_uv_offsets.y += vlength;
-				pt.y += vlength;
-			    } else if  (vdir == 2) {
-				curr_uv_offsets.y -= vlength;
-				pt.y -= vlength;
-			    }
 			}
-		    } else {
+		    } else if (data->curve->IsClosed()) {
 			ON_2dPoint from,to;
 			double seam_t;
-			if (FindTrimSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to)) {
-			    from = from + curr_uv_offsets;
+			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
 			    samples->Append(from);
-			    if (udir == 1) {
-				curr_uv_offsets.x += ulength;
-				pt.x += ulength;
-			    } else if  (udir == 2) {
-				curr_uv_offsets.x -= ulength;
-				pt.x -= ulength;
-			    }
-			    if (vdir == 1) {
-				curr_uv_offsets.y += vlength;
-				pt.y += vlength;
-			    } else if  (vdir == 2) {
-				curr_uv_offsets.y -= vlength;
-				pt.y -= vlength;
-			    }
-			    to = to + curr_uv_offsets;
-#ifdef TEMPDEBUGPRINTING
-			    if (PRINTDEBUG) { //seam = surf->IsAtSeam(pt.x,pt.y)) {
-				ON_3dPoint p3d = surf->PointAt(from.x,from.y);
-				std::cout << "seam from:" << std::endl;
-				//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
-				std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
-			    }
-#endif
+			    data->segments.push_back(samples);
+			    samples= new ON_2dPointArray();
 			    samples->Append(to);
 			    prev_pt = to;
-#ifdef TEMPDEBUGPRINTING
-			    if (PRINTDEBUG) { //seam = surf->IsAtSeam(pt.x,pt.y)) {
-				ON_3dPoint p3d = surf->PointAt(to.x,to.y);
-				std::cout << "seam to:" << std::endl;
-				//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
-				std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
-			    }
-#endif
 			    prev_t = seam_t;
 			} else {
 			    std::cout << "Can not find seam crossing...." << std::endl;
@@ -1294,13 +1383,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 		}
 		samples->Append(pt);
 
-#ifdef TEMPDEBUGPRINTING
-		if (PRINTDEBUG) {
-		    ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
-		    //std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
-		    std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
-		}
-#endif
 		prev_pt = pt;
 		prev_t = curr_t;
 	    }
@@ -1320,13 +1402,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 		int seg = 0;
 		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
 		    samples = *rit;
-#ifdef TEMPDEBUGPRINTING
-		    if (PRINTDEBUG) {
-			for(int i=0;i<samples->Count();i++) {
-			    std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
-			}
-		    }
-#endif
 		    if (seg < numsegs-1) { // since end points should be repeated
 			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
 		    } else {
@@ -1338,31 +1413,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 		}
 		data->segments.clear();
 		data->segments.push_back(reordered_samples);
-#ifdef TEMPDEBUGPRINTING
-		if (PRINTDEBUG) {
-		    for(int i=0;i<reordered_samples->Count();i++) {
-			std::cout << "in pt2d_" << i << " sph "<< reordered_samples->At(i)->x << " " << reordered_samples->At(i)->y << " 0.0 0.1000" << std::endl;
-		    }
-		    numsegs = data->segments.size();
-		}
-#endif
 
 	    } else {
 		//punt for now
-#ifdef TEMPDEBUGPRINTING
-		if (PRINTDEBUG) {
-		    std::cout << "punt for now:" << std::endl;
-		    int seg=0;
-		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
-			samples = *rit;
-			for(int i=0;i<samples->Count();i++) {
-			    std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
-			}
-			rit++;
-		    }
-		    numsegs = data->segments.size();
-		}
-#endif
 	    }
 	}
     }
@@ -1398,7 +1451,7 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 	if ((tmin < 0.0) && (tmax > 0.0)) {
 	    ON_2dPoint uv;
 	    if (toUV(*data, uv, 0.0, PBC_TOL)) {
-		if (IsAtSeam(surf, uv.x, uv.y) > 0) {
+		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
 		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
 		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
 		    if (samples1 != NULL) {
@@ -1407,9 +1460,6 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		    if (samples2 != NULL) {
 			data->segments.push_back(samples2);
 		    }
-		    //TODO: remove debugging code
-		    if (false)
-			std::cerr << "need to divide curve across the seam" << std::endl;
 		} else {
 		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
 		    if (samples != NULL) {
@@ -1844,7 +1894,7 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 		std::cerr << "    T:" << ++trimcnt << std::endl;
 		int i = 0;
 		int singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		int seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
+		int seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
 		std::cerr << "--------";
 		if ((seam > 0) && (singularity >= 0)) {
 		    std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y;
@@ -1860,7 +1910,7 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 
 		i = ilast;
 		singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
+		seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
 		std::cerr << "        ";
 		if ((seam > 0) && (singularity >= 0)) {
 		    std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y << std::endl;
@@ -1899,7 +1949,7 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 		std::cerr << "    T:" << ++trimcnt << std::endl;
 		for (int i = 0; i < samples->Count(); i++) {
 		    int singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		    int seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
+		    int seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
 		    if (i == 0) {
 			std::cerr << "--------";
 		    } else {
@@ -1941,7 +1991,7 @@ resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segme
     for (int i = 0; i < segment.Count(); i++) {
 	int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
 	if (singularity < 0) {
-	    int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
+	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 	    if ((seam > 0)) {
 		if (prev != NULL) {
 		    //std::cerr << " at seam " << seam << " but has prev" << std::endl;
@@ -2006,7 +2056,7 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
 	for (int i = segment.Count() - 1; i >= 0; i--) {
 	    int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
 	    if (singularity < 0) {
-		int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
+		int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 		if ((seam > 0)) {
 		    if (next != NULL) {
 			switch (seam) {
@@ -2068,7 +2118,7 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
     for (int i = 0; i < segment.Count(); i++) {
 	int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
 	if (singularity < 0) {
-	    int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
+	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 	    if ((seam > 0)) {
 		if (prev != NULL) {
 		    //std::cerr << " at seam " << seam << " but has prev" << std::endl;
@@ -2117,7 +2167,7 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
 	for (int i = segment.Count() - 2; i >= 0; i--) {
 	    int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
 	    if (singularity < 0) {
-		int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
+		int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 		if ((seam > 0)) {
 		    if (prev != NULL) {
 			//std::cerr << " at seam " << seam << " but has prev" << std::endl;
@@ -2167,6 +2217,290 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
 
 
 /*
+ * number_of_seam_crossings
+ */
+int
+number_of_seam_crossings(std::list<PBCData*> &pbcs)
+{
+    int rc = 0;
+    std::list<PBCData*>::iterator cs;
+
+    cs = pbcs.begin();
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	if (!data || !data->surftree)
+	    continue;
+
+	const ON_Surface *surf = data->surftree->getSurface();
+	if (!surf)
+	    continue;
+
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	ON_2dPoint *pt = NULL;
+	ON_2dPoint *prev_pt = NULL;
+	while (si != data->segments.end()) {
+	    ON_2dPointArray *samples = (*si);
+	    for (int i = 0; i < samples->Count(); i++) {
+		pt = &(*samples)[i];
+		if (prev_pt == NULL) {
+		    prev_pt = pt;
+		    continue;
+		}
+		int udir= 0;
+		int vdir= 0;
+		if (ConsecutivePointsCrossClosedSeam(surf,*pt,*prev_pt,udir,vdir)) {
+		    rc++;
+		}
+		prev_pt = pt;
+	    }
+	    if (si != data->segments.end())
+		si++;
+	}
+
+	if (cs != pbcs.end())
+	    cs++;
+    }
+
+    return rc;
+}
+
+
+/*
+ * if current and previous point on seam make sure they are on same seam
+ */
+bool
+check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
+{
+    std::list<PBCData*>::iterator cs = pbcs.begin();
+
+    ON_2dPoint *prev_pt = NULL;
+    int prev_seam = 0;
+    while( cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	const ON_Surface *surf = data->surftree->getSurface();
+	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
+	while (seg != data->segments.end()) {
+	    ON_2dPointArray *points = (*seg);
+	    for(int i=0; i < points->Count(); i++) {
+		ON_2dPoint *pt = points->At(i);
+		int seam = IsAtSeam(surf,*pt,PBC_TOL);
+		if (seam > 0) {
+		    if (prev_seam > 0) {
+			if ((seam == 1) && ((prev_seam % 2) == 1)) {
+			    pt->x = prev_pt->x;
+			} else if ((seam == 2) && (prev_seam > 1)) {
+			    pt->y = prev_pt->y;
+			} else if (seam == 3) {
+			    if ((prev_seam % 2) == 1) {
+				pt->x = prev_pt->x;
+			    }
+			    if (prev_seam > 1) {
+				pt->y = prev_pt->y;
+			    }
+			}
+		    }
+		    prev_seam = seam;
+		    prev_pt = pt;
+		}
+	    }
+	    seg++;
+	}
+	cs++;
+    }
+    return true;
+}
+
+
+/*
+ * extend_pullback_at_shared_3D_curve_seam
+ */
+bool
+extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
+{
+    const ON_Curve *next_curve = NULL;
+    std::set<const ON_Curve *> set;
+    std::map<const ON_Curve *,int> map;
+    std::list<PBCData*>::iterator cs = pbcs.begin();
+
+    while( cs != pbcs.end()) {
+	PBCData *data = (*cs++);
+	const ON_Curve *curve = data->curve;
+	const ON_Surface *surf = data->surftree->getSurface();
+
+	if(cs != pbcs.end()) {
+	    PBCData *nextdata = (*cs);
+	    next_curve = nextdata->curve;
+	}
+
+	if (curve == next_curve) {
+	    std::cerr << "Consecutive seam usage" << std::endl;
+	    //find which direction we need to extend
+	    if (surf->IsClosed(0) && !surf->IsClosed(1)) {
+		double length = surf->Domain(0).Length();
+		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
+		while (seg != data->segments.end()) {
+		    ON_2dPointArray *points = (*seg);
+		    for(int i=0; i < points->Count(); i++) {
+			points->At(i)->x = points->At(i)->x + length;
+		    }
+		    seg++;
+		}
+	    } else if (!surf->IsClosed(0) && surf->IsClosed(1)) {
+		double length = surf->Domain(1).Length();
+		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
+		while (seg != data->segments.end()) {
+		    ON_2dPointArray *points = (*seg);
+		    for(int i=0; i < points->Count(); i++) {
+			points->At(i)->y = points->At(i)->y + length;
+		    }
+		    seg++;
+		}
+	    } else {
+		std::cerr << "both directions" << std::endl;
+	    }
+	}
+	next_curve = NULL;
+    }
+    return true;
+}
+
+
+/*
+ * shift_closed_curve_split_over_seam
+ */
+bool
+shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
+{
+    if (pbcs.size() == 1) { // single curve for this loop
+	std::list<PBCData*>::iterator cs;
+
+	PBCData *data = pbcs.front();
+	if (!data || !data->surftree)
+	    return false;
+
+	const ON_Surface *surf = data->surftree->getSurface();
+	if (!surf)
+	    return false;
+
+	ON_Interval udom = surf->Domain(0);
+	ON_Interval vdom = surf->Domain(1);
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	ON_2dPoint pt;
+	ON_2dPoint prev_pt;
+	if (data->curve->IsClosed()) {
+	    int numseamcrossings = number_of_seam_crossings(pbcs);
+	    if (numseamcrossings == 1) {
+		ON_2dPointArray part1,part2;
+		ON_2dPointArray* curr_point_array = &part2;
+		while (si != data->segments.end()) {
+		    ON_2dPointArray *samples = (*si);
+		    for (int i = 0; i < samples->Count(); i++) {
+			pt = (*samples)[i];
+			if (i == 0) {
+			    prev_pt = pt;
+			    curr_point_array->Append(pt);
+			    continue;
+			}
+			int udir= 0;
+			int vdir= 0;
+			if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
+			    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+				SwapUVSeamPoint(surf, pt);
+				curr_point_array->Append(pt);
+				curr_point_array = &part1;
+				SwapUVSeamPoint(surf, pt);
+			    } else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+				SwapUVSeamPoint(surf, prev_pt);
+				curr_point_array->Append(prev_pt);
+			    } else {
+				std::cerr << "shift_single_curve_loop_straddled_over_seam(): Error expecting to see seam in sample points" << std::endl;
+			    }
+			}
+			curr_point_array->Append(pt);
+			prev_pt = pt;
+		    }
+		    samples->Empty();
+		    samples->Append(part1.Count(),part1.Array());
+		    samples->Append(part2.Count(),part2.Array());
+		    if (si != data->segments.end())
+			si++;
+		}
+	    }
+	}
+    }
+    return true;
+}
+
+
+/*
+ * extend_over_seam_crossings
+ */
+bool
+extend_over_seam_crossings(std::list<PBCData*> &pbcs)
+{
+    std::list<PBCData*>::iterator cs;
+
+    ///// Loop through and fix any seam ambiguities
+    ON_2dVector curr_uv_offsets = ON_2dVector::ZeroVector;
+    cs = pbcs.begin();
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	if (!data || !data->surftree)
+	    continue;
+
+	const ON_Surface *surf = data->surftree->getSurface();
+	if (!surf)
+	    continue;
+
+	ON_Interval udom = surf->Domain(0);
+	double ulength = udom.Length();
+	ON_Interval vdom = surf->Domain(1);
+	double vlength = vdom.Length();
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	ON_2dPoint *pt = NULL;
+	ON_2dPoint *prev_pt = NULL;
+	while (si != data->segments.end()) {
+	    ON_2dPointArray *samples = (*si);
+	    for (int i = 0; i < samples->Count(); i++) {
+		pt = &(*samples)[i];
+		*pt += curr_uv_offsets;
+		if (prev_pt == NULL) {
+		    prev_pt = pt;
+		    continue;
+		}
+		int udir= 0;
+		int vdir= 0;
+		if (ConsecutivePointsCrossClosedSeam(surf,*pt,*prev_pt,udir,vdir)) {
+		    // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
+		    if (udir == 1) {
+			curr_uv_offsets.x += ulength;
+			(*pt).x += ulength;
+		    } else if  (udir == 2) {
+			curr_uv_offsets.x -= ulength;
+			(*pt).x -= ulength;
+		    }
+		    if (vdir == 1) {
+			curr_uv_offsets.y += vlength;
+			(*pt).y += vlength;
+		    } else if  (vdir == 2) {
+			curr_uv_offsets.y -= vlength;
+			(*pt).y -= vlength;
+		    }
+		}
+		prev_pt = pt;
+	    }
+	    if (si != data->segments.end())
+		si++;
+	}
+	if (cs != pbcs.end())
+	    cs++;
+    }
+
+    return true;
+}
+
+
+/*
  * run through curve loop to determine correct start/end
  * points resolving ambiguities when point lies on a seam or
  * singularity
@@ -2175,10 +2509,6 @@ bool
 resolve_pullback_seams(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs;
-
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("Before seam cleanup", pbcs, false);
 
     ///// Loop through and fix any seam ambiguities
     ON_2dPoint *prev = NULL;
@@ -2195,16 +2525,8 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 
 	double umin, umax;
 	double vmin, vmax;
-#ifdef SHOW_UNUSED
-	double umid;
-	double vmid;
-#endif
 	surf->GetDomain(0, &umin, &umax);
 	surf->GetDomain(1, &vmin, &vmax);
-#ifdef SHOW_UNUSED
-	umid = (umin + umax) / 2.0;
-	vmid = (vmin + vmax) / 2.0;
-#endif
 
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
@@ -2218,11 +2540,6 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::reverse_iterator rsi(si);
 		while (rcs != pbcs.rend()) {
 		    PBCData *rdata = (*rcs);
-		    if (data->segments.rend() == rdata->segments.rend()) {
-			//TODO: remove debugging
-			if (false)
-			    std::cerr << "Ends match" << std::endl;
-		    }
 		    while (rsi != rdata->segments.rend()) {
 			ON_2dPointArray *rsamples = (*rsi);
 			// first try and resolve on own merits
@@ -2271,10 +2588,6 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 	if (cs != pbcs.end())
 	    cs++;
     }
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("After seam cleanup", pbcs, false);
-
     return true;
 }
 
@@ -2288,10 +2601,6 @@ bool
 resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs = pbcs.begin();
-
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("Before singularity cleanup", pbcs, false);
 
     ///// Loop through and fix any seam ambiguities
     ON_2dPoint *prev = NULL;
@@ -2399,10 +2708,6 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	}
     }
 
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("After singularity cleanup", pbcs, false);
-
     return true;
 }
 
@@ -2421,13 +2726,7 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 	    } else {
 		for (int i = 0; i < samples->Count() - 1; i++) {
 		    while ((i < (samples->Count() - 1)) && (*samples)[i].DistanceTo((*samples)[i + 1]) < 1e-9) {
-			//TODO: remove debugging code
-			if (false)
-			    std::cerr << "Sample Count was " << samples->Count();
 			samples->Remove(i + 1);
-			//TODO: remove debugging code
-			if (false)
-			    std::cerr << " now " << samples->Count() << std::endl;
 		    }
 		}
 		si++;
@@ -2440,19 +2739,12 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 	}
     }
 }
-#ifdef TEMPDEBUGPRINTING
-bool print_pullback = false;
-#endif
+
+
 bool
 check_pullback_data(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
-
-#ifdef TEMPDEBUGPRINTING
-    //TODO: remove debugging code
-    if (print_pullback)
-	print_pullback_data("Before cleanup", pbcs, false);
-#endif
 
     if ((*d) == NULL || (*d)->surftree == NULL)
 	return false;
@@ -2464,26 +2756,40 @@ check_pullback_data(std::list<PBCData*> &pbcs)
     bool singular = has_singularity(surf);
     bool closed = is_closed(surf);
 
-    if (closed) {
-	if (!resolve_pullback_seams(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
-	    return false;
-	}
-    }
     if (singular) {
 	if (!resolve_pullback_singularities(pbcs)) {
 	    std::cerr << "Error: Can not resolve singular ambiguities." << std::endl;
 	}
     }
 
+    if (closed) {
+	// check for same 3D curve use
+	if (!check_for_points_on_same_seam(pbcs)) {
+	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
+	    return false;
+	}
+	// check for same 3D curve use
+	if (!extend_pullback_at_shared_3D_curve_seam(pbcs)) {
+	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
+	    return false;
+	}
+	if (!shift_single_curve_loop_straddled_over_seam(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+	if (!extend_over_seam_crossings(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+	if (!resolve_pullback_seams(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+    }
+
     // consecutive duplicates within segment will cause problems in curve fit
     remove_consecutive_intersegment_duplicates(pbcs);
 
-#ifdef TEMPDEBUGPRINTING
-    //TODO: remove debugging code
-    if (print_pullback)
-	print_pullback_data("After cleanup", pbcs, false);
-#endif
     return true;
 }
 
@@ -2509,7 +2815,7 @@ check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const O
 {
     if (is_closed(surf)) {
 	int is, js;
-	if (((is = IsAtSeam(surf, p1.x, p1.y)) > 0) && ((js = IsAtSeam(surf, p2.x, p2.y)) > 0)) {
+	if (((is = IsAtSeam(surf, p1, PBC_SEAM_TOL)) > 0) && ((js = IsAtSeam(surf, p2, PBC_SEAM_TOL)) > 0)) {
 	    //create new seam trim
 	    if (is == js) {
 		// need to check if seam 3d points are equal
