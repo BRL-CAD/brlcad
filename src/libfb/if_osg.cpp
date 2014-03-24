@@ -57,9 +57,10 @@
 #include <osg/GraphicsContext>
 #include <osg/Timer>
 
-#include <osgViewer/api/X11/GraphicsWindowX11>
-#if defined(DM_WIN32)
+#if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
+#else
+#  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
 #include <osgText/Font>
