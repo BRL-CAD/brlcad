@@ -716,7 +716,7 @@ rt_hrt_free(struct soltab *stp)
 /**
  * Similar to code used by the ELL
  */
-#define HRTOUT(n) ov+(n-1)*5
+#define HRTOUT(n) ov+(n-1)*3
 void
 rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 {
