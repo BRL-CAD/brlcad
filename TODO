@@ -93,6 +93,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Use set_target_properties(target_name PROPERTIES FOLDER "Folder Name")
+  in CMake to organize targets into groups (primarily for MSVC)
+
 * rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
   using regular printing and input reading in a loop.
 
