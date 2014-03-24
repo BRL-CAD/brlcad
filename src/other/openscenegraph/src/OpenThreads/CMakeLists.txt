@@ -29,6 +29,10 @@ if(NOT ANDROID)
   include(${OPENTHREADS_CMAKE_DIR}/CheckAtomicOps.cmake)
 endif()
 
+if(MSVC)
+  include(${OPENTHREADS_CMAKE_DIR}/Handle_MSVC_DLL.cmake)
+endif(MSVC)
+
 # User Options
 option(DYNAMIC_OPENTHREADS "Set to ON to build OpenThreads for dynamic linking.  Use OFF for static." ON)
 if(DYNAMIC_OPENTHREADS)
