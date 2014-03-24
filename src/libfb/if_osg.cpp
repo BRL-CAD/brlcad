@@ -41,8 +41,11 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include <sys/ipc.h>
-#include <sys/shm.h>
+
+#ifdef HAVE_SYS_SHM_H
+#  include <sys/ipc.h>
+#  include <sys/shm.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
