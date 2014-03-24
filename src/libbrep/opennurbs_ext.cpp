@@ -778,6 +778,28 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     if (found) {
 	return 1;
     }
+
+    nodes.clear();
+    (void)m_root->getLeavesBoundingPoint(pt, nodes);
+    for (i = nodes.begin(); i != nodes.end(); i++) {
+	BBNode* node = (*i);
+	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
+	    double dist = fp.DistanceTo(pt);
+	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
+		uv = curr_uv;
+		found = true;
+		return 1; //close enough to same point so no sense in looking for one closer
+	    } else if (NEAR_ZERO(dist, tolerance)) {
+		if (dist < min_dist) {
+		    uv = curr_uv;
+		    min_dist = dist;
+		    found = true; //within tolerance but may be a point closer so keep looking
+		}
+	    }
+	}
+    }
+
     return -1;
 }
 
