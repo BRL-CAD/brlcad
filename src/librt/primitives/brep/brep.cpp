@@ -2077,6 +2077,49 @@ plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurve
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
 
+/*
+ *  Simple check to determine if two consecutive points extend over the seam of the closed UV. The assumption here is that
+ *  the distance between the consecutive points will be a small fraction of the UV domain unless the points jump over the
+ *  closed seam.
+ *
+ *  // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
+ */
+bool
+ConsecutivePointsExtendOverClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir)
+{
+    bool rc = false;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
+
+    udir = vdir = 0;
+    if (surf->IsClosed(0)) {
+	double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
+	if (fabs(delta) > surf->Domain(0).Length()/2.0) {
+	    if (delta < 0.0) {
+		udir = 1; // east bound
+	    } else {
+		udir= 2; // west bound
+	    }
+	    rc = true;
+	}
+    }
+
+    if (surf->IsClosed(1)) {
+	double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
+	if (fabs(delta) > surf->Domain(1).Length()/2.0) {
+	    if (delta < 0.0) {
+		vdir = 2; // north bound
+	    } else {
+		vdir= 1; // south bound
+	    }
+	    rc = true;
+	}
+    }
+
+    return rc;
+}
+
+
 void
 getEdgePoints(const ON_BrepTrim &trim,
 	      fastf_t t1,
@@ -2097,10 +2140,10 @@ getEdgePoints(const ON_BrepTrim &trim,
 {
     const ON_Surface *s = trim.SurfaceOf();
     ON_Interval range = trim.Domain();
-    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
-    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
-    ON_3dVector mid_norm(0.0, 0.0, 0.0);
-    ON_3dVector mid_tang(0.0, 0.0, 0.0);
+    ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
+    ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector mid_norm = ON_3dVector::UnsetVector;
+    ON_3dVector mid_tang = ON_3dVector::UnsetVector;
     fastf_t t = (t1 + t2) / 2.0;
 
     if (trim.EvTangent(t, mid_2d, mid_tang)
@@ -2124,6 +2167,24 @@ getEdgePoints(const ON_BrepTrim &trim,
 	    getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
 		    end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
 		    within_dist, cos_within_ang, param_points);
+	} else {
+	    int udir=0;
+	    int vdir=0;
+	    ON_2dPoint start = start_2d;
+	    ON_2dPoint end = end_2d;
+	    if (ConsecutivePointsExtendOverClosedSeam(s,start,end,udir,vdir)) {
+		double seam_t;
+		ON_2dPoint from = ON_2dPoint::UnsetPoint;
+		ON_2dPoint to = ON_2dPoint::UnsetPoint;
+		if (FindTrimSeamCrossing(trim,t1,t2,seam_t,from,to,BREP_SAME_POINT_TOLERANCE)) {
+		    ON_2dPoint seam_2d = trim.PointAt(seam_t);
+		    ON_3dPoint seam_3d = s->PointAt(seam_2d.x,seam_2d.y);
+		    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
+		    if (param_points.find(tpercent) == param_points.end()) {
+			param_points[tpercent] = new ON_3dPoint(seam_3d);
+		    }
+		}
+	    }
 	}
     }
 }
@@ -2141,6 +2202,9 @@ getEdgePoints(ON_BrepTrim &trim,
     double dist = 1000.0;
 
     const ON_Surface *s = trim.SurfaceOf();
+    ON_Interval dom[2];
+    for(int i=0;i<2;i++)
+	dom[i] = s->Domain(i);
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
@@ -2177,6 +2241,10 @@ getEdgePoints(ON_BrepTrim &trim,
 	param_points = new std::map<double, ON_3dPoint *>();
 	trim.m_trim_user.p = (void *) param_points;
 	ON_Interval range = trim.Domain();
+	if (s->IsClosed(0) || s->IsClosed(1)) {
+	    ON_BoundingBox trim_bbox = ON_BoundingBox::EmptyBoundingBox;
+	    trim.GetBoundingBox(trim_bbox,false);
+	}
 
 	if (trim.IsClosed()) {
 	    double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
@@ -2420,24 +2488,25 @@ getSurfacePoints(const ON_Surface *s,
 	    getSurfacePoints(s, u1, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
 	} else {
+	    if (left) {
+		p2d.Set(u1, v);
+		on_surf_points.Append(p2d);
+	    }
+	    if (below) {
+		p2d.Set(u, v1);
+		on_surf_points.Append(p2d);
+	    }
+	    //center
+	    p2d.Set(u, v);
+	    on_surf_points.Append(p2d);
+	    //right
+	    p2d.Set(u2, v);
+	    on_surf_points.Append(p2d);
+	    //top
+	    p2d.Set(u, v2);
+	    on_surf_points.Append(p2d);
+
 	    if (dist > within_dist + ON_ZERO_TOLERANCE) {
-		if (left) {
-		    p2d.Set(u1, v);
-		    on_surf_points.Append(p2d);
-		}
-		if (below) {
-		    p2d.Set(u, v1);
-		    on_surf_points.Append(p2d);
-		}
-		//center
-		p2d.Set(u, v);
-		on_surf_points.Append(p2d);
-		//right
-		p2d.Set(u2, v);
-		on_surf_points.Append(p2d);
-		//top
-		p2d.Set(u, v2);
-		on_surf_points.Append(p2d);
 
 		getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
@@ -2478,10 +2547,12 @@ getSurfacePoints(ON_BrepFace &face,
 	// face boundary
 	bool bGrowBox = false;
 	ON_3dPoint min, max;
-	for (int ti = 0; ti < face.Loop(0)->TrimCount(); ti++) {
-	    ON_BrepTrim *trim = face.Loop(0)->Trim(ti);
-	    trim->GetBoundingBox(min, max, bGrowBox);
-	    bGrowBox = true;
+	for (int li = 0; li < face.LoopCount(); li++) {
+	    for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
+		ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
+		trim->GetBoundingBox(min, max, bGrowBox);
+		bGrowBox = true;
+	    }
 	}
 
 	ON_BoundingBox tight_bbox;
@@ -2664,6 +2735,354 @@ getSurfacePoints(ON_BrepFace &face,
 
 
 void
+getUVCurveSamples(const ON_Surface *s,
+	    const ON_Curve *curve,
+	    fastf_t t1,
+	    ON_3dPoint &start_2d,
+	    ON_3dVector &start_tang,
+	    ON_3dPoint &start_3d,
+	    ON_3dVector &start_norm,
+	    fastf_t t2,
+	    ON_3dPoint &end_2d,
+	    ON_3dVector &end_tang,
+	    ON_3dPoint &end_3d,
+	    ON_3dVector &end_norm,
+	    fastf_t min_dist,
+	    fastf_t max_dist,
+	    fastf_t within_dist,
+	    fastf_t cos_within_ang,
+	    std::map<double, ON_3dPoint *> &param_points)
+{
+    ON_Interval range = curve->Domain();
+    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
+    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+    ON_3dVector mid_norm(0.0, 0.0, 0.0);
+    ON_3dVector mid_tang(0.0, 0.0, 0.0);
+    fastf_t t = (t1 + t2) / 2.0;
+
+    if (curve->EvTangent(t, mid_2d, mid_tang)
+	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	ON_Line line3d(start_3d, end_3d);
+	double dist3d;
+
+	if ((line3d.Length() > max_dist)
+		|| ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
+			> within_dist + ON_ZERO_TOLERANCE)
+		|| ((((start_tang * end_tang)
+			< cos_within_ang - ON_ZERO_TOLERANCE)
+			|| ((start_norm * end_norm)
+				< cos_within_ang - ON_ZERO_TOLERANCE))
+			&& (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
+	    getUVCurveSamples(s,curve, t1, start_2d, start_tang, start_3d, start_norm,
+		    t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
+		    within_dist, cos_within_ang, param_points);
+	    param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] =
+		    new ON_3dPoint(mid_3d);
+	    getUVCurveSamples(s,curve, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
+		    end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
+		    within_dist, cos_within_ang, param_points);
+	}
+    }
+}
+
+
+std::map<double, ON_3dPoint *> *
+getUVCurveSamples(const ON_Surface *surf,
+	    const ON_Curve *curve,
+	    fastf_t max_dist,
+	    const struct rt_tess_tol *ttol,
+	    const struct bn_tol *tol,
+	    const struct rt_view_info *UNUSED(info))
+{
+    fastf_t min_dist, within_dist, cos_within_ang;
+
+    double dist = 1000.0;
+
+    bool bGrowBox = false;
+    ON_3dPoint min, max;
+    if (curve->GetBoundingBox(min, max, bGrowBox)) {
+	dist = DIST_PT_PT(min,max);
+    }
+
+    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	min_dist = tol->dist;
+    } else {
+	min_dist = ttol->abs;
+    }
+
+    double rel = 0.0;
+    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = ttol->rel * dist;
+	if (max_dist < rel * 10.0) {
+	    max_dist = rel * 10.0;
+	}
+	within_dist = rel < min_dist ? min_dist : rel;
+    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
+	within_dist = min_dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+    }
+
+    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(ttol->norm);
+    } else {
+	cos_within_ang = cos(ON_PI / 2.0);
+    }
+
+    std::map<double, ON_3dPoint *> *param_points = new std::map<double, ON_3dPoint *>();
+    ON_Interval range = curve->Domain();
+
+    if (curve->IsClosed()) {
+	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
+	ON_3dPoint start_2d(0.0, 0.0, 0.0);
+	ON_3dPoint start_3d(0.0, 0.0, 0.0);
+	ON_3dVector start_tang(0.0, 0.0, 0.0);
+	ON_3dVector start_norm(0.0, 0.0, 0.0);
+	ON_3dPoint mid_2d(0.0, 0.0, 0.0);
+	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+	ON_3dVector mid_tang(0.0, 0.0, 0.0);
+	ON_3dVector mid_norm(0.0, 0.0, 0.0);
+	ON_3dPoint end_2d(0.0, 0.0, 0.0);
+	ON_3dPoint end_3d(0.0, 0.0, 0.0);
+	ON_3dVector end_tang(0.0, 0.0, 0.0);
+	ON_3dVector end_norm(0.0, 0.0, 0.0);
+
+	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
+		&& curve->EvTangent(mid_range, mid_2d, mid_tang)
+		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
+		&& surf->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+	    (*param_points)[0.0] = new ON_3dPoint(
+		    surf->PointAt(curve->PointAt(range.m_t[0]).x,
+			    curve->PointAt(range.m_t[0]).y));
+	    getUVCurveSamples(surf,curve, range.m_t[0], start_2d, start_tang,
+		    start_3d, start_norm, mid_range, mid_2d, mid_tang,
+		    mid_3d, mid_norm, min_dist, max_dist, within_dist,
+		    cos_within_ang, *param_points);
+	    (*param_points)[0.5] = new ON_3dPoint(
+		    surf->PointAt(curve->PointAt(mid_range).x,
+			    curve->PointAt(mid_range).y));
+	    getUVCurveSamples(surf,curve, mid_range, mid_2d, mid_tang, mid_3d,
+		    mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
+		    end_norm, min_dist, max_dist, within_dist,
+		    cos_within_ang, *param_points);
+	    (*param_points)[1.0] = new ON_3dPoint(
+		    surf->PointAt(curve->PointAt(range.m_t[1]).x,
+			    curve->PointAt(range.m_t[1]).y));
+	}
+    } else {
+	ON_3dPoint start_2d(0.0, 0.0, 0.0);
+	ON_3dPoint start_3d(0.0, 0.0, 0.0);
+	ON_3dVector start_tang(0.0, 0.0, 0.0);
+	ON_3dVector start_norm(0.0, 0.0, 0.0);
+	ON_3dPoint end_2d(0.0, 0.0, 0.0);
+	ON_3dPoint end_3d(0.0, 0.0, 0.0);
+	ON_3dVector end_tang(0.0, 0.0, 0.0);
+	ON_3dVector end_norm(0.0, 0.0, 0.0);
+
+	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
+		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
+		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
+	    getUVCurveSamples(surf,curve, range.m_t[0], start_2d, start_tang,
+		    start_3d, start_norm, range.m_t[1], end_2d, end_tang,
+		    end_3d, end_norm, min_dist, max_dist, within_dist,
+		    cos_within_ang, *param_points);
+	    (*param_points)[1.0] = new ON_3dPoint(end_3d);
+	}
+    }
+
+
+    return param_points;
+}
+
+
+/*
+ * number_of_seam_crossings
+ */
+int
+number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_trim_points)
+{
+    int rc = 0;
+    for (int i=1; i < brep_trim_points.Count(); i++) {
+	ON_2dPoint &p1 = brep_trim_points[i-1].p2d;
+	ON_2dPoint &p2 = brep_trim_points[i].p2d;
+
+	int udir=0;
+	int vdir=0;
+	if (ConsecutivePointsExtendOverClosedSeam(surf,p1,p2,udir,vdir)) {
+	    rc++;
+	}
+    }
+
+    return rc;
+}
+
+
+bool
+LoopStraddlesDomain(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	int num_crossings = number_of_seam_crossings(surf,brep_loop_points);
+	if (num_crossings == 1) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+
+/*
+ * entering - 1
+ * exiting - 2
+ * contained - 0
+ */
+int
+is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    int numpoints = brep_loop_points.Count();
+    for(int i=1; i < numpoints-1; i++) {
+	int seam = 0;
+	ON_2dPoint p = brep_loop_points[i].p2d;
+	if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
+	    ON_2dPoint unwrapped = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
+	    if (seam == 1) {
+		bool right_seam = unwrapped.x > surf->Domain(0).Mid();
+		bool decreasing = (brep_loop_points[numpoints-1].p2d.x - brep_loop_points[0].p2d.x) < 0;
+		if (right_seam != decreasing) { // basically XOR'ing here
+		    return 2;
+		} else {
+		    return 1;
+		}
+	    } else {
+		bool top_seam = unwrapped.y > surf->Domain(1).Mid();
+		bool decreasing = (brep_loop_points[numpoints-1].p2d.y - brep_loop_points[0].p2d.y) < 0;
+		if (top_seam != decreasing) { // basically XOR'ing here
+		    return 2;
+		} else {
+		    return 1;
+		}
+	    }
+	}
+    }
+    return 0;
+}
+
+/*
+ * shift_closed_curve_split_over_seam
+ */
+bool
+shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	ON_2dPoint p = ON_2dPoint::UnsetPoint;
+	int seam = 0;
+	int i;
+	BrepTrimPoint btp;
+	int numpoints = brep_loop_points.Count();
+	for(i=0; i < numpoints; i++) {
+	    p = brep_loop_points[i].p2d;
+	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
+		while(++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
+		    ON_2dPoint n = brep_loop_points[i].p2d;
+		    if ((seam=IsAtSeam(surf, n, BREP_SAME_POINT_TOLERANCE)) <= 0) {
+			break;
+		    }
+		    p = n;
+		}
+		ForceToClosestSeam(surf,p,BREP_SAME_POINT_TOLERANCE);
+		btp = brep_loop_points[i-1];
+		break;
+	    }
+	}
+	BrepTrimPoint seam_btp = btp;
+	ON_SimpleArray<BrepTrimPoint> shifted_points;
+	ON_2dPoint unwrapped = UnwrapUVPoint(surf,seam_btp.p2d,BREP_SAME_POINT_TOLERANCE);
+
+	int entering = is_entering(surf,brep_loop_points);
+	if (entering > 0) {
+	    if (entering == 1) { // crosses in U
+		shifted_points.Append(seam_btp);
+		for(int j=i; j < brep_loop_points.Count(); j++) {
+		    p = brep_loop_points[j].p2d;
+		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
+		    shifted_points.Append(brep_loop_points[j]);
+		}
+		for(int j=1; j < i-1; j++) {
+		    p = brep_loop_points[j].p2d;
+		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
+		    shifted_points.Append(brep_loop_points[j]);
+		}
+		SwapUVSeamPoint(surf, p);
+		// heading left and hit left seam do this
+		btp.p2d = p;
+		shifted_points.Append(btp);
+	    } else if (entering == 2) {
+		SwapUVSeamPoint(surf, p);
+		// heading left and hit left seam do this
+		btp.p2d = p;
+		shifted_points.Append(btp);
+		for(int j=i; j < brep_loop_points.Count(); j++) {
+		    p = brep_loop_points[j].p2d;
+		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
+		    shifted_points.Append(brep_loop_points[j]);
+		}
+		for(int j=1; j < i-1; j++) {
+		    p = brep_loop_points[j].p2d;
+		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
+		    shifted_points.Append(brep_loop_points[j]);
+		}
+		shifted_points.Append(seam_btp);
+	    }
+
+	    brep_loop_points.Empty();
+	    brep_loop_points.Append(shifted_points.Count(),shifted_points.Array());
+	}
+    }
+    return true;
+}
+
+/*
+ * extend_over_seam_crossings
+ */
+bool
+extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    int num_points = brep_loop_points.Count();
+    double ulength = surf->Domain(0).Length();
+    double vlength = surf->Domain(1).Length();
+    for (int i=1; i < num_points; i++) {
+	if (surf->IsClosed(0)) {
+	    double delta=brep_loop_points[i].p2d.x-brep_loop_points[i-1].p2d.x;
+	    while (fabs(delta) > ulength/2.0) {
+		if (delta < 0.0) {
+		    brep_loop_points[i].p2d.x += ulength; // east bound
+		} else {
+		    brep_loop_points[i].p2d.x -= ulength;; // west bound
+		}
+		delta=brep_loop_points[i].p2d.x-brep_loop_points[i-1].p2d.x;
+	    }
+	}
+	if (surf->IsClosed(1)) {
+	    double delta=brep_loop_points[i].p2d.y-brep_loop_points[i-1].p2d.y;
+	    while (fabs(delta) > vlength/2.0) {
+		if (delta < 0.0) {
+		    brep_loop_points[i].p2d.y += vlength; // north bound
+		} else {
+		    brep_loop_points[i].p2d.y -= vlength;; // south bound
+		}
+		delta=brep_loop_points[i].p2d.y-brep_loop_points[i-1].p2d.y;
+	    }
+	}
+    }
+
+    return true;
+}
+
+
+void
 poly2tri_CDT(struct bu_list *vhead,
 	     ON_BrepFace &face,
 	     const struct rt_tess_tol *ttol,
@@ -2681,6 +3100,7 @@ poly2tri_CDT(struct bu_list *vhead,
     fastf_t max_dist = 0.0;
     p2t::CDT* cdt = NULL;
     ON_BoundingBox loop_bb;
+    int fi = face.m_face_index;
 
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
@@ -2693,25 +3113,47 @@ poly2tri_CDT(struct bu_list *vhead,
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
 
-    for (int li = 0; li < face.LoopCount(); li++) {
-	ON_2dPointArray on_loop_points;
-	std::vector<p2t::Point*> polyline;
-	ON_BrepLoop *loop = face.Loop(li);
+    int loop_cnt = face.LoopCount();
+    ON_2dPoint loop_start = ON_2dVector::UnsetVector;
+    ON_2dPoint loop_end = ON_2dVector::UnsetVector;
+    bool outer = true;
+    ON_2dPointArray on_loop_points;
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+    std::vector<p2t::Point*> polyline;
 
-	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+    // first simply load loop point samples
+    for (int li = 0; li < loop_cnt; li++) {
+	ON_BrepLoop *loop = face.Loop(li);
+	int trim_count = loop->TrimCount();
+	for (int lti = 0; lti < trim_count; lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
 	    //ON_BrepEdge *edge = trim->Edge();
 
 	    if (trim->m_type == ON_BrepTrim::singular) {
+		BrepTrimPoint btp;
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
-		p2t::Point *p = new p2t::Point(trim->PointAtStart().x,
-			trim->PointAtStart().y);
-		polyline.push_back(p);
-		on_loop_points.Append(trim->PointAtStart());
-		(*pointmap)[p] = p3d;
-		// vector just used for freeing 3d point of singularity
-		singularity_points.push_back(p3d);
+		double delta =  trim->Domain().Length() / 10.0;
+		for(int i=1; i<=10; i++) {
+		    btp.p3d = p3d;
+		    btp.p2d = v1.Point();
+		    btp.t = trim->Domain().m_t[0] + (i-1)*delta;
+		    btp.p2d = trim->PointAt(btp.t);
+		    btp.e = ON_UNSET_VALUE;
+		    brep_loop_points[li].Append(btp);
+		}
+		// skip last point of trim if not last trim
+		if (lti < trim_count-1)
+		    continue;
+
+		ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
+		btp.p3d = p3d;
+		btp.p2d = v2.Point();
+		btp.t = trim->Domain().m_t[1];
+		btp.p2d = trim->PointAt(btp.t);
+		btp.e = ON_UNSET_VALUE;
+		brep_loop_points[li].Append(btp);
+
 		continue;
 	    }
 
@@ -2726,44 +3168,148 @@ poly2tri_CDT(struct bu_list *vhead,
 
 		if (trim->GetBoundingBox(boxmin, boxmax, false)) {
 		    double t0, t1;
-		    trim->GetDomain(&t0, &t1);
 
-		    ON_2dPoint p2d = trim->PointAtStart();
 		    std::map<double, ON_3dPoint*>::const_iterator i;
 
+		    trim->GetDomain(&t0, &t1);
 		    for (i = param_points3d->begin();
 			    i != param_points3d->end();) {
-			double t = (*i).first;
-			ON_3dPoint *p3d = (*i).second;
-			if (++i == param_points3d->end())
+			BrepTrimPoint btp;
+			btp.t = (*i).first;
+			btp.p3d = (*i).second;
+
+			// skip last point of trim if not last trim
+			if ((++i == param_points3d->end()) && (lti < trim_count-1) )
 			    continue;
 
-			p2d = trim->PointAt(t0 + (t1 - t0) * t);
+			btp.p2d = trim->PointAt(t0 + (t1 - t0) * btp.t);
+			btp.e = ON_UNSET_VALUE;
+			brep_loop_points[li].Append(btp);
+		    }
+		}
+	    }
+	}
+    }
 
-			// map point to last entry to 3d point
-			p2t::Point *p = new p2t::Point(p2d.x, p2d.y);
-			polyline.push_back(p);
-			on_loop_points.Append(p2d);
-			(*pointmap)[p] = p3d;
+    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    if (s->IsClosed(0) || s->IsClosed(1)) {
+	// force near seam points to seam.
+	for (int li = 0; li < loop_cnt; li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if (num_loop_points > 1) {
+		for(int i = 0; i < num_loop_points; i++) {
+		    ON_2dPoint &p = brep_loop_points[li][i].p2d;
+		    if (IsAtSeam(s,p,BREP_SAME_POINT_TOLERANCE)) {
+			ForceToClosestSeam(s,p,BREP_SAME_POINT_TOLERANCE);
 		    }
 		}
 	    }
 	}
 
-	if (on_loop_points.Count() > 2) {
-	    for (int i = 1; i <= on_loop_points.Count(); i++) {
-		ON_2dPoint *start = NULL;
-		ON_2dPoint *end = NULL;
-
-		if (i == on_loop_points.Count()) {
-		    start = on_loop_points.At(i - 1);
-		    end = on_loop_points.At(0);
-		} else {
-		    start = on_loop_points.At(i - 1);
-		    end = on_loop_points.At(i);
+	// extend loop points over seam if needed.
+	for (int li = 0; li < loop_cnt; li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if ( num_loop_points > 1) {
+		if (!extend_over_seam_crossings(s,brep_loop_points[li])) {
+		    std::cerr << "Error: Face(" << fi << ") cannot extend loops over closed seams."<< std::endl;
 		}
+	    }
+	}
 
-		ON_Line *line = new ON_Line(*start, *end);
+	// process through loops checking for straddle condition.
+	for (int li = 0; li < loop_cnt; li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if (num_loop_points > 1) {
+		ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
+		ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points-1].p2d;
+
+		if (!V2NEAR_EQUAL(brep_loop_begin,brep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+		    if (LoopStraddlesDomain(s,brep_loop_points[li])) {
+			// reorder loop points
+			shift_loop_straddled_over_seam(s,brep_loop_points[li]);
+		    }
+		}
+	    }
+	}
+
+	// process through closing loops that begin and end on closed seam
+	for (int li = 0; li < loop_cnt; li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if (num_loop_points > 1) {
+		ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
+		ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points-1].p2d;
+
+		if (!V2NEAR_EQUAL(brep_loop_begin,brep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+		    if (IsAtSeam(s,brep_loop_begin,BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s,brep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+			for (int rli = li+1; rli < loop_cnt; rli++) {
+			    int rnum_loop_points = brep_loop_points[rli].Count();
+			    ON_2dPoint rbrep_loop_begin = brep_loop_points[rli][0].p2d;
+			    ON_2dPoint rbrep_loop_end = brep_loop_points[rli][rnum_loop_points-1].p2d;
+			    if (!V2NEAR_EQUAL(rbrep_loop_begin,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+				if (IsAtSeam(s,rbrep_loop_begin,BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+				    double t0,t1;
+				    ON_LineCurve line1(brep_loop_end,rbrep_loop_begin);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    for (i = linepoints3d->begin();
+					    i != linepoints3d->end();) {
+					BrepTrimPoint btp;
+
+					if (++i == linepoints3d->end())
+					    continue;
+
+					// skips first point
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    //brep_loop_points[li].Append(brep_loop_points[rli].Count(),brep_loop_points[rli].Array());
+				    for (int j=1;j<rnum_loop_points;j++) {
+					brep_loop_points[li].Append(brep_loop_points[rli][j]);
+				    }
+				    ON_LineCurve line2(rbrep_loop_end,brep_loop_begin);
+				    linepoints3d = getUVCurveSamples(s,&line2,1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line2.GetDomain(&t0, &t1);
+				    for (i = linepoints3d->begin();
+					    i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+					if (++i == linepoints3d->end())
+					    continue;
+
+					// skips first point
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    brep_loop_points[rli].Empty();
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    // process through loops building polygons.
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 2) {
+	    for(int i = 1; i < num_loop_points; i++) {
+		// map point to last entry to 3d point
+		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		polyline.push_back(p);
+		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+	    }
+	    for(int i = 1; i < brep_loop_points[li].Count(); i++) {
+		// map point to last entry to 3d point
+		ON_Line *line = new ON_Line((brep_loop_points[li])[i-1].p2d, (brep_loop_points[li])[i].p2d);
 		ON_BoundingBox bb = line->BoundingBox();
 
 		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
@@ -2775,16 +3321,21 @@ poly2tri_CDT(struct bu_list *vhead,
 
 		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	    }
-	} else {
-	    return;
+	    if (outer) {
+		cdt = new p2t::CDT(polyline);
+		outer = false;
+	    } else {
+		cdt->AddHole(polyline);
+	    }
+	    polyline.clear();
 	}
+    }
 
-	if (li == 0) {
-	    cdt = new p2t::CDT(polyline);
-	} else {
-	    cdt->AddHole(polyline);
-	}
+    delete [] brep_loop_points;
 
+    if (outer) {
+	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized."<< std::endl;
+	return;
     }
 
     getSurfacePoints(face, ttol, tol, info, on_surf_points);
@@ -2977,6 +3528,20 @@ poly2tri_CDT(struct bu_list *vhead,
 	singularity_points.pop_back();
     }
     delete pointmap;
+
+    std::list<std::map<double, ON_3dPoint *> *>::iterator bridgeIter = bridgePoints.begin();
+    while (bridgeIter != bridgePoints.end()) {
+	std::map<double, ON_3dPoint *> *map = (*bridgeIter);
+	std::map<double, ON_3dPoint *>::iterator mapIter = map->begin();
+	while (mapIter != map->end()) {
+	    ON_3dPoint *p = (*mapIter++).second;
+	    delete p;
+	}
+	map->clear();
+	delete map;
+	bridgeIter++;
+    }
+    bridgePoints.clear();
 
     for (int li = 0; li < face.LoopCount(); li++) {
 	ON_BrepLoop *loop = face.Loop(li);
@@ -3357,6 +3922,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		delete st;
 	}
 #endif
+#ifdef WATERTIGHT
 	for (int index = 0; index < brep->m_E.Count(); index++) {
 		ON_BrepEdge& edge = brep->m_E[index];
 		if (edge.m_edge_user.p != NULL) {
@@ -3371,6 +3937,22 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		    edge.m_edge_user.p = NULL;
 		}
 	}
+#else
+	for (int index = 0; index < brep->m_T.Count(); index++) {
+		ON_BrepTrim& trim = brep->m_T[index];
+		if (trim.m_trim_user.p != NULL) {
+		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)trim.m_trim_user.p;
+		    std::map<double,ON_3dPoint *>::iterator i;
+		    for(i=points->begin(); i != points->end(); i++) {
+			ON_3dPoint *p = (*i).second;
+			delete p;
+		    }
+		    points->clear();
+		    delete points;
+		    trim.m_trim_user.p = NULL;
+		}
+	}
+#endif
 
 	return 0;
 }
