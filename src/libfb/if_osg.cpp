@@ -710,7 +710,6 @@ osg_clipper(register FBIO *ifp)
 HIDDEN void
 expose_callback(FBIO *ifp)
 {
-    XWindowAttributes xwa;
     struct osg_clip *clp;
 
     if (CJDEBUG) fb_log("entering expose_callback()\n");
@@ -746,9 +745,8 @@ expose_callback(FBIO *ifp)
 	    OSG(ifp)->copy_flag = 0;
 	}
 
-	XGetWindowAttributes(OSG(ifp)->dispp, OSG(ifp)->wind, &xwa);
-	OSG(ifp)->win_width = xwa.width;
-	OSG(ifp)->win_height = xwa.height;
+	OSG(ifp)->win_width = Tk_Width(OSG(ifp)->xtkwin);
+	OSG(ifp)->win_height = Tk_Height(OSG(ifp)->xtkwin);
 
 	/* clear entire window */
 	glViewport(0, 0, OSG(ifp)->win_width, OSG(ifp)->win_height);
@@ -805,6 +803,7 @@ expose_callback(FBIO *ifp)
 
     /* repaint entire image */
     osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+
     if (SGI(ifp)->mi_doublebuffer) {
 	OSG(ifp)->graphicsContext->swapBuffers();
     } else if (OSG(ifp)->copy_flag) {
@@ -1473,12 +1472,12 @@ osg_final_close(FBIO *ifp)
 	printf("osg_final_close: All done...goodbye!\n");
     }
 
-    if (OSG(ifp)->cursor)
-	XDestroyWindow(OSG(ifp)->dispp, OSG(ifp)->cursor);
-
+#if 0
     XDestroyWindow(OSG(ifp)->dispp, OSG(ifp)->wind);
     XFreeColormap(OSG(ifp)->dispp, OSG(ifp)->xcmap);
+#endif
 
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
 	if (SGI(ifp)->mi_shmid != -1) {
@@ -1496,6 +1495,7 @@ osg_final_close(FBIO *ifp)
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
     }
+#endif
 
     if (OSGL(ifp) != NULL) {
 	(void)free((char *)OSGL(ifp));
@@ -1524,7 +1524,7 @@ osg_flush(FBIO *ifp)
 	/* unattach context for other threads to use, also flushes */
 	OSG(ifp)->graphicsContext->releaseContext();
     }
-    XFlush(OSG(ifp)->dispp);
+    //XFlush(OSG(ifp)->dispp);
     glFlush();
     return 0;
 }
@@ -2261,6 +2261,7 @@ osg_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), i
 HIDDEN int
 osg_cursor(FBIO *ifp, int mode, int x, int y)
 {
+#if 0
     if (mode) {
 	register int xx, xy;
 	register int delta;
@@ -2311,7 +2312,7 @@ osg_cursor(FBIO *ifp, int mode, int x, int y)
 
     /* Without this flush, cursor movement is sluggish */
     XFlush(OSG(ifp)->dispp);
-
+#endif
     /* Update position of cursor */
     ifp->if_cursmode = mode;
     ifp->if_xcurs = x;
