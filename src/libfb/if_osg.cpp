@@ -1318,11 +1318,11 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
     // something showing how to handle Cocoa for the Mac, if that's possible
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-#if defined(IF_OSG)  /* Will eventually change to DM_X11 */
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(OSG(ifp)->wind);
-#elif defined(IF_WIN32)
+#if defined(_WIN32)
     /* win = ? OSG needs HWND for win... */
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
+#else
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(OSG(ifp)->wind);
 #endif
 
     // Setup the traits parameters
