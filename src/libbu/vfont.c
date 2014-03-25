@@ -21,8 +21,9 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "vfont-if.h"
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/vfont-if.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
 #define DEFAULT_FONT "nonie.r.12"
@@ -30,8 +31,6 @@
 
 
 /**
- * _ V A X _ G S H O R T
- *
  * Obtain a 16-bit signed integer from two adjacent characters, stored
  * in VAX order, regardless of word alignment.
  */

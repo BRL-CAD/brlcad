@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AXIS1_PLACEMENT_H_
-#define AXIS1_PLACEMENT_H_
+#ifndef CONV_STEP_STEP_G_AXIS1PLACEMENT_H
+#define CONV_STEP_STEP_G_AXIS1PLACEMENT_H
 
 #include "Placement.h"
 

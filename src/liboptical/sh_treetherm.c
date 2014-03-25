@@ -211,8 +211,7 @@ build_tree(struct bu_list *br, struct region *rp)
 }
 
 
-/* T R E E T H E R M _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -457,9 +456,6 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * T R E E T H E R M _ P R I N T
- */
 HIDDEN void
 tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
 {
@@ -470,9 +466,6 @@ tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
 }
 
 
-/*
- * T R E E T H E R M _ F R E E
- */
 HIDDEN void
 tthrm_free(genptr_t cp)
 {
@@ -527,8 +520,6 @@ get_solid_number(const struct partition *pp)
 
 
 /*
- * T R E E T H E R M _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

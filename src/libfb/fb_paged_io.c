@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bu/color.h"
 #include "fb.h"
 
 
@@ -113,8 +114,6 @@ _fb_pgflush(register FBIO *ifp)
 
 
 /**
- * F B _ I O I N I T
- *
  * This initialization routine must be called before any buffered I/O
  * routines in this file are used.
  */

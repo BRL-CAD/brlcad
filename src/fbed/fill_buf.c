@@ -38,8 +38,6 @@
 #include "./extern.h"
 
 /**
- * f i l l _ b u f
- *
  * Fills in the buffer by reading a row of a bitmap from the character
  * font file.  The file pointer is assumed to be in the correct
  * position.
@@ -80,7 +78,7 @@ fill_buf(int wid, int *buf)
 }
 
 
-/*	c l e a r _ b u f ()
+/*
 	Just sets all the buffer values to zero (this is used to
 	"read" background areas of the character needed for filtering near
 	the edges of the character definition.

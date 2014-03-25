@@ -50,6 +50,7 @@ strappend(char *s, char *t)	/* === */
     *s = '\0';
 }
 
+
 void
 maxmin(int *l, int n, int *max, int *min)	/*  === */
 {
@@ -61,6 +62,7 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
 	++l;
     }
 }
+
 
 /*
  * Local Variables:

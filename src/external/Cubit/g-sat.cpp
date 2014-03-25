@@ -111,9 +111,6 @@ char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
 char *output_file = NULL;
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -339,10 +336,8 @@ main(int argc, char *argv[])
 }
 
 
-/*
- *      U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+void
+usage(char *s)
 {
     if ( s ) {
 	fputs( s, stderr );
@@ -352,10 +347,8 @@ void usage(char *s)
 }
 
 
-/*
- *      P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args( int ac, char **av )
+int
+parse_args( int ac, char **av )
 {
     int  c;
 
@@ -403,8 +396,6 @@ int parse_args( int ac, char **av )
 
 
 /**
- *      R E G I O N _ S T A R T
- *
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
@@ -455,9 +446,6 @@ region_start ( db_tree_state *tsp,
 
 
 /**
- *      R E G I O N _ E N D
- *
- *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
  *      @param tsp

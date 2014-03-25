@@ -44,7 +44,7 @@ static const char *usage[] =
     "",
     "Usage:",
     "",
-    "lgt [-IOjovw file][-AGKTXacefiknps n][-G \"s c g v\"][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
+    "lgt [-IOjovw file][-AKTXacefiknps n][-G \"s c g v\"][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
     "",
     "The options may appear in any order; however, their parameters must",
     "be present, are positional, and if there is more than one parameter",

@@ -33,9 +33,11 @@
 
 // forward declaration of class
 class ON_Brep;
-class RepresentationRelationship;
-class ShapeRepresentationRelationship;
+class Axis2Placement3D;
+class ProductDefinition;
 class ProductDefinitionShape;
+class Representation;
+class RepresentationRelationship;
 
 typedef std::list<RepresentationRelationship *> LIST_OF_REPRESENTATION_RELATIONSHIPS;
 
@@ -53,6 +55,13 @@ public:
     ContextDependentShapeRepresentation();
     virtual ~ContextDependentShapeRepresentation();
     ContextDependentShapeRepresentation(STEPWrapper *sw, int step_id);
+    Representation *GetRepresentationRelationshipRep_1();
+    Representation *GetRepresentationRelationshipRep_2();
+    Axis2Placement3D *GetTransformItem_1();
+    Axis2Placement3D *GetTransformItem_2();
+    ProductDefinition *GetRelatingProductDefinition();
+    ProductDefinition *GetRelatedProductDefinition();
+
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();

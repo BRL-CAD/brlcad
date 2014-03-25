@@ -35,8 +35,12 @@
 
 #include "common.h"
 
+#include "bu/bitv.h"
+#include "bu/color.h"
+#include "bu/list.h"
+#include "bu/mapped_file.h"
+#include "bu/vls.h"
 #include "vmath.h"
-#include "bu.h"
 
 #include "nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
@@ -481,8 +485,6 @@ struct rt_curve {
 
 
 /**
- * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
- *
  * used by the sketch and solid of extrusion
  */
 struct line_seg		/**< @brief line segment */

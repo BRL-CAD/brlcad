@@ -1335,7 +1335,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		start[0] = arc_data.arc_center[0] + arc_data.radius * cos( arc_data.start_angle );
 		start[1] = arc_data.arc_center[1] + arc_data.radius * sin( arc_data.start_angle );
 		start[2] = arc_data.arc_center[2];
-		arc_angle_m_2pi = fabs( arc_data.end_angle - arc_data.start_angle ) - 2.0 * M_PI;
+		arc_angle_m_2pi = fabs( arc_data.end_angle - arc_data.start_angle ) - M_2PI;
 		if ( NEAR_ZERO( arc_angle_m_2pi, 0.0005)  ) {
 		    /* full circle */
 		    csg->radius = -csg->radius;
@@ -5330,10 +5330,9 @@ get_it_all_loaded( tag_t node )
     }
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char *av[])
+
+int
+parse_args(int ac, char *av[])
 {
     int  c;
     char *strrchr();

@@ -30,7 +30,7 @@
 
 #include "fb.h"
 
-/*	e m p t y ( )
+/*
 	Examine file descriptor for input with no time delay.
 	Return 1 if input is pending on file descriptor 'fd'.
 	Return 0 if no input or error.

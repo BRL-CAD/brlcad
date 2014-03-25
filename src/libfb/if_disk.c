@@ -28,6 +28,9 @@
 
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
@@ -83,9 +86,7 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 	    return -1;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(ifp->if_fd, O_BINARY);
-#endif
 
     ifp->if_width = width;
     ifp->if_height = height;
@@ -118,8 +119,6 @@ dsk_free(FBIO *ifp)
 
 
 /*
- * D I S K _ C O L O R _ C L E A R
- *
  * Clear the disk file to the given color.
  */
 HIDDEN int

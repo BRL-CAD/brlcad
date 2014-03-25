@@ -34,12 +34,16 @@
 #include "bin.h"
 
 #include "tcl.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
+
+#include "../../librt_private.h"
 
 
 extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
@@ -92,8 +96,6 @@ static struct bn_tol extr_tol = {
 #define LOOPB		2
 
 /**
- * R T _ E X T R U D E _ B B O X
- *
  * Calculate a bounding RPP for an extruded sketch
  */
 int
@@ -326,8 +328,6 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 
 
 /**
- * R T _ E X T R U D E _ V O L U M E
- *
  * Calculate the volume of an extruded object
  */
 void
@@ -359,8 +359,6 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ E X T R U D E _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EXTRUDE, and if so, precompute
  * various terms of the formula.
@@ -606,9 +604,6 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 }
 
 
-/**
- * R T _ E X T R U D E _ P R I N T
- */
 void
 rt_extrude_print(const struct soltab *stp)
 {
@@ -834,8 +829,6 @@ isect_line_earc(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, con
 
 
 /**
- * R T _ E X T R U D E _ S H O T
- *
  * Intersect a ray with a extrude.  If an intersection occurs, a
  * struct seg will be acquired and filled in.
  *
@@ -997,21 +990,24 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		dists = dist;
 		surfno = CARC_SEG;
 		break;
+
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
 		for (j = 0; j <= (size_t)bsg->degree; j++) {
 		    V2MOVE(verts[j], extr->verts[bsg->ctl_points[j]]);
 		}
+
 		V2MOVE(ray_dir_unit, ray_dir);
 		diff = sqrt(MAG2SQ(ray_dir));
+
 		ray_dir_unit[X] /= diff;
 		ray_dir_unit[Y] /= diff;
 		ray_dir_unit[Z] = 0.0;
 		ray_perp[X] = ray_dir[Y];
 		ray_perp[Y] = -ray_dir[X];
-		dist_count = FindRoots(verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp,
-				       0, extr_tol.dist);
+
+		dist_count = bezier_roots(verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp, 0, extr_tol.dist);
 		if (dist_count) {
 		    free_dists = 1;
 		    dists = (fastf_t *)bu_calloc(dist_count, sizeof(fastf_t), "dists (Bezier)");
@@ -1023,8 +1019,10 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    bu_free((char *)intercept, "Bezier intercept");
 		    surfno = BEZIER_SEG;
 		}
+
 		bu_free((char *)verts, "Bezier verts");
 		break;
+
 	    case CURVE_NURB_MAGIC:
 		break;
 	    default:
@@ -1251,8 +1249,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
 
 /**
- * R T _ E X T R U D E _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1311,8 +1307,6 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E X T R U D E _ C U R V E
- *
  * Return the curvature of the extrude.
  */
 void
@@ -1369,9 +1363,6 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ E X T R U D E _ F R E E
- */
 void
 rt_extrude_free(struct soltab *stp)
 {
@@ -1385,9 +1376,6 @@ rt_extrude_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ E X T R U D E _ P L O T
- */
 int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1584,11 +1572,11 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 		if (csg->orientation) {
 		    /* clock-wise */
 		    while (end_ang > start_ang)
-			end_ang -= 2.0 * M_PI;
+			end_ang -= M_2PI;
 		} else {
 		    /* counter-clock-wise */
 		    while (end_ang < start_ang)
-			end_ang += 2.0 * M_PI;
+			end_ang += M_2PI;
 		}
 
 		/* get mid angle */
@@ -1638,7 +1626,7 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    for (i = 0; i <= bsg->degree; i++) {
 		VMOVE_2D(V[i], skt->verts[bsg->ctl_points[i]]);
 	    }
-	    Bezier(V, bsg->degree, 0.51, NULL, NULL, pt, NULL);
+	    bezier(V, bsg->degree, 0.51, NULL, NULL, pt, NULL);
 	    bu_free((char *)V, "Bezier control points");
 	    break;
 	default:
@@ -1855,6 +1843,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 		}
 		break;
+
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		intercept = NULL;
@@ -1862,7 +1851,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		for (j = 0; j <= bsg->degree; j++) {
 		    V2MOVE(verts[j], ip->verts[bsg->ctl_points[j]]);
 		}
-		code = FindRoots(verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist);
+
+		code = bezier_roots(verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist);
 		for (j = 0; j < code; j++) {
 		    V2SUB2(diff, intercept[j], pta);
 		    dist[0] = sqrt(MAG2SQ(diff));
@@ -1879,12 +1869,14 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 			(*root) = inter;
 		    }
 		}
+
 		if ((*intercept))
 		    bu_free((char *)intercept, "Bezier Intercepts");
 		if ((*normal))
 		    bu_free((char *)normal, "Bezier normals");
 		bu_free((char *)verts, "Bezier Ctl points");
 		break;
+
 	    default:
 		bu_log("isect_2D_loop_ray: Unrecognized curve segment type x%x\n", *lng);
 		bu_bomb("isect_2D_loop_ray: Unrecognized curve segment type\n");
@@ -2023,8 +2015,6 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
 
 
 /*
- * R T _ E X T R U D E _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -2330,8 +2320,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 
 /**
- * R T _ E X T R U D E _ I M P O R T
- *
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2404,8 +2392,6 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
 
 /**
- * R T _ E X T R U D E _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2454,8 +2440,6 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- * R T _ E X T R U D E _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2504,8 +2488,6 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- * R T _ E X T R U D E _ I M P O R T 5
- *
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2567,8 +2549,6 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
 
 /**
- * R T _ E X T R U D E _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2607,8 +2587,6 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 
 
 /**
- * R T _ E X T R U D E _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -2819,10 +2797,6 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 }
 
 
-/**
- * R T _ E X T R U D E _ P A R A M S
- *
- */
 int
 rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {

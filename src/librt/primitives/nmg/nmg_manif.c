@@ -52,8 +52,7 @@
 	}
 
 
-/** N M G _ D A N G L I N G _ F A C E
- *
+/**
  * Determine if a face has any "dangling" edges.
  *
  * Return

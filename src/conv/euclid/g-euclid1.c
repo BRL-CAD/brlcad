@@ -35,6 +35,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -424,8 +426,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
@@ -542,9 +542,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {

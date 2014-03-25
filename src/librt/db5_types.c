@@ -32,7 +32,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db5.h"
 #include "raytrace.h"

@@ -52,8 +52,7 @@ struct mfuncs null_mfuncs[] = {
 };
 
 
-/* N U L L _ S E T U P
- *
+/*
  * This routine is called (at prep time) once for each region which uses this
  * shader.  Any shader-specific initialization should be done here.  It should
  * return 1 on success and -1 on failure.  Alternatively, this routine should
@@ -78,8 +77,6 @@ sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm)
 
 
 /*
- * N U L L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.  This is, of course, not necessary when setup returns 0.
@@ -114,20 +111,16 @@ sh_null_render(struct application *ap, const struct partition *pp, struct shadew
 
 
 /*
- * N U L L _ P R I N T
- *
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
 sh_null_print(register struct region *rp, genptr_t UNUSED(dp))
 {
-    bu_log("%V uses the null shader\n", rp->reg_name);
+    bu_log("%s uses the null shader\n", rp->reg_name);
 }
 
 
 /*
- * N U L L _ F R E E
- *
  * This routine is called after all rendering has completed.  The intent is
  * normally to release any specific structures that were allocated during
  * setup or rendering.

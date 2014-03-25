@@ -31,6 +31,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -178,9 +182,6 @@ double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
 extern struct command_tab	rt_cmdtab[];
 
-/*
- *			G E T _ A R G S
- */
 int
 get_args(int argc, const char *argv[])
 {
@@ -277,7 +278,6 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 	    {
-		char		buf[128];
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -307,10 +307,11 @@ get_args(int argc, const char *argv[])
 		else
 		    background[2] = b / 255.0;
 #else
-		sprintf(buf, "set background=%f/%f/%f",
-			r/255., g/255., b/255. );
-		(void)rt_do_cmd( (struct rt_i *)0, buf,
-				 rt_cmdtab );
+		{
+		    char buf[128] = {0};
+		    sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+		    (void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+		}
 #endif
 	    }
 	    break;
@@ -645,14 +646,14 @@ get_args(int argc, const char *argv[])
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");
-    if (env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	random_mode = 1;
 	bu_log("random mode\n");
     }
     /* TODO: Read from command line */
     /* Read from ENV with we're going to use the experimental mode */
     env_str = getenv("LIBRT_EXP_MODE");
-    if (env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	full_incr_mode = 1;
 	full_incr_nsamples = 10;
 	bu_log("multi-sample mode\n");

@@ -115,20 +115,20 @@ main(int ac, char *av[])
 
     printf("\nPREORDER:\n");
     bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 0);
-    bu_rb_diagnose_tree(testTree, 0, 0);
+    bu_rb_diagnose_tree(testTree, 0, BU_RB_WALK_PREORDER);
     searchedValue = bu_rb_search(testTree, 0, (void *)"h");
 
     printf("\nPREORDER AFTER SEARCH:\n");
     bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 0);
-    bu_rb_diagnose_tree(testTree, 0, 0);
+    bu_rb_diagnose_tree(testTree, 0, BU_RB_WALK_PREORDER);
 
     printf("\nINORDER:\n");
     bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 1);
-    bu_rb_diagnose_tree(testTree, 0, 1);
+    bu_rb_diagnose_tree(testTree, 0, BU_RB_WALK_INORDER);
 
     printf("\nPOSTORDER\n");
     bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 2);
-    bu_rb_diagnose_tree(testTree, 0, 2);
+    bu_rb_diagnose_tree(testTree, 0, BU_RB_WALK_POSTORDER);
 
     if (passed != 3)
 	return 1;

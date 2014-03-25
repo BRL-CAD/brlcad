@@ -32,6 +32,7 @@
 #include "Factory.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
+#include "Axis2Placement3D.h"
 
 
 #define CLASSNAME "AdvancedBrepShapeRepresentation"
@@ -73,6 +74,20 @@ STEPEntity *
 AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
+}
+
+
+Axis2Placement3D *
+AdvancedBrepShapeRepresentation::GetAxis2Placement3d()
+{
+    std::list<RepresentationItem *>::iterator iter;
+    Axis2Placement3D *axis = NULL;
+    for(iter = items.begin(); iter != items.end(); iter++) {
+	axis = dynamic_cast<Axis2Placement3D *>(*iter);
+	if (axis != NULL)
+	    break;
+    }
+    return axis;
 }
 
 

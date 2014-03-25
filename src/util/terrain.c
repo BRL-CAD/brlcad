@@ -661,8 +661,6 @@ parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments, then produce the
  * noise field selected.  Write out binary in network order.
  */

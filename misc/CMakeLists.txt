@@ -48,7 +48,7 @@ BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 if(DOXYGEN_FOUND)
-  configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
+  configure_file(doxygen/Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
   add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
@@ -57,8 +57,8 @@ if(DOXYGEN_FOUND)
   add_custom_target(dox     DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
   add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
 
-  configure_file(DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
-  configure_file(DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
+  configure_file(doxygen/DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
+  configure_file(doxygen/DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
   add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs
@@ -71,10 +71,14 @@ endif(DOXYGEN_FOUND)
 set(misc_ignore_files
   CMake
   Description.txt
-  Doxyfile
-  Doxyfile.in
-  DoxyfileLibs.in
-  DoxyfileLibs-defaults.in
+  doxygen/Doxyfile.in
+  doxygen/doxygen_intro.h
+  doxygen/doxygen_structure_libbu.h
+  doxygen/doxygen_structure_libbn.h
+  doxygen/doxygen_structure
+  doxygen/DoxyfileLibs.in
+  doxygen/DoxyfileLibs-defaults.in
+  doxygen/doxygen_structure_libs.txt
   Makefile.defs
   archlinux
   astyle.opt
@@ -83,12 +87,11 @@ set(misc_ignore_files
   brlcad-config.in
   brlcad.spec.in
   debian
-  doxygen_structure
-  doxygen_structure_libs.txt
   flawfinder
   jove.emacs
   macosx
   nsis
+  svn2git
   win32-msvc
   osg_changes.patch
   )

@@ -1023,9 +1023,6 @@ proe_usage(const char *argv0)
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {

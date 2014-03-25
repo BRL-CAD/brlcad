@@ -26,7 +26,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 
 
 /**

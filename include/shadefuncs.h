@@ -43,8 +43,6 @@
 #endif
 
 /**
- *			M F U N C S
- *
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
@@ -98,8 +96,6 @@ OPTICAL_EXPORT extern int mlib_setup(struct mfuncs **headp,
 OPTICAL_EXPORT extern void mlib_free(struct region *rp);
 
 /**
- * L O A D _ D Y N A M I C _ S H A D E R
- *
  * Given a shader/material name, try to find a DSO to supply the
  * shader.
  */

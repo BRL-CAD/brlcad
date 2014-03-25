@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
 #include "nurb.h"		/* BRL-CAD Spline data structures */

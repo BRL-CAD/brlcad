@@ -32,7 +32,7 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
 
 void *
 bu_dlopen(const char *path, int mode)

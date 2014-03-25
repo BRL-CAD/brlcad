@@ -101,7 +101,7 @@
 #include <float.h>
 
 /* for fastf_t */
-#include "bu.h"
+#include "bu/defines.h"
 
 
 __BEGIN_DECLS
@@ -110,6 +110,9 @@ __BEGIN_DECLS
 #  define M_		XXX /**< all with 36-digits of precision */
 #endif
 
+#ifndef M_1_2PI
+#  define M_1_2PI	0.159154943091895335768883763372514362  /**< 1/(2*pi) */
+#endif
 #ifndef M_1_PI
 #  define M_1_PI	0.318309886183790671537767526745028724  /**< 1/pi */
 #endif
@@ -143,6 +146,9 @@ __BEGIN_DECLS
 #ifndef M_PI
 #  define M_PI		3.14159265358979323846264338327950288   /**< pi */
 #endif
+#ifndef M_2PI
+#  define M_2PI		6.28318530717958647692528676655900576   /**< 2*pi */
+#endif
 #ifndef M_PI_2
 #  define M_PI_2	1.57079632679489661923132169163975144   /**< pi/2 */
 #endif
@@ -153,7 +159,7 @@ __BEGIN_DECLS
 #  define M_PI_4	0.785398163397448309615660845819875721  /**< pi/4 */
 #endif
 #ifndef M_SQRT1_2
-#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< 1/sqrt(2) */
+#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< sqrt(1/2) */
 #endif
 #ifndef M_SQRT2
 #  define M_SQRT2	1.41421356237309504880168872420969808   /**< sqrt(2) */
@@ -460,23 +466,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * clamp a value to a low/high number.
  */
 #define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
-
-
-/** Clamp a 3D vector to zero if within tolerance of zero. */
-#define VCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-    } while (0)
-
-
-/** Clamp a 4D vector to zero if within tolerance of zero. */
-#define HCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-	if (ZERO((a)[H])) (a)[H] = 0.0; \
-    } while (0)
 
 
 /** @brief Compute distance from a point to a plane. */
@@ -1354,6 +1343,21 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * considerably less than that of a double.
  */
 #define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
+
+/** Clamp a 3D vector to nearby integer values. */
+#define VINTCLAMP(_v) do { \
+	(_v)[X] = INTCLAMP((_v)[X]); \
+	(_v)[Y] = INTCLAMP((_v)[Y]); \
+	(_v)[Z] = INTCLAMP((_v)[Z]); \
+    } while (0)
+
+
+/** Clamp a 4D vector to nearby integer values. */
+#define HINTCLAMP(_v) do { \
+	VINTCLAMP(_v); \
+	(_v)[H] = INTCLAMP((_v)[H]); \
+    } while (0)
+
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])

@@ -37,7 +37,8 @@
 #  include <sched.h>
 #endif
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/time.h"
 
 
 int64_t

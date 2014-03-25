@@ -35,9 +35,13 @@
 
 class pcException {
 public:
-    pcException() {};
-    pcException(const char *temp) {str=temp;};
-    ~pcException() {};
+    pcException() {
+    }
+    pcException(const char *temp) {
+	str=temp;
+    }
+    ~pcException() {
+    }
     std::string Error() const {
 	return str;
     }
@@ -51,8 +55,9 @@ private:
  */
 
 struct is_even {
-    bool operator () (int i) const
-    { return (i % 2) == 0; }
+    bool operator () (int i) const {
+	return (i % 2) == 0;
+    }
 };
 
 

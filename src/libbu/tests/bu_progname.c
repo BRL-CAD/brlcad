@@ -34,6 +34,7 @@ main(int ac, char *av[])
     const char *label;
     const char *ans;
     const char *res;
+    char *basename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
 
     if (ac > 1) {
 	fprintf(stderr,"Usage: %s\n", av[0]);
@@ -42,13 +43,14 @@ main(int ac, char *av[])
 
     /* pre-define tests */
     printf("Performing pre-defined tests:\n");
+    bu_basename(basename, av[0]);
 
     /* CASE 0: getting unset name */
     label = "CASE 0";
     res = bu_getprogname();
     ans = "(BRL-CAD)";
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
@@ -60,7 +62,7 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = "(BRL-CAD)";
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset#2", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
@@ -73,7 +75,7 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = "(BRL-CAD)";
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "NULL", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
@@ -86,21 +88,24 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = av[0];
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "av[0]", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
 	fail++;
     }
 
+    bu_free(basename, "bu_progname basename");
     /* CASE 4: set full, then get */
     label = "CASE 4";
     bu_setprogname(av[0]);
     bu_setprogname(bu_argv0_full_path());
     res = bu_getprogname();
     ans = bu_argv0_full_path();
+    basename = (char *)bu_calloc(strlen(bu_argv0_full_path()), sizeof(char), "bu_progname basename");
+    bu_basename(basename, ans);
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(ans))) {
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
@@ -139,8 +144,10 @@ main(int ac, char *av[])
     label = "CASE 7";
     bu_setprogname(av[0]);
     res = bu_argv0_full_path();
+    bu_basename(basename, res);
+
     if (res[0] == BU_DIR_SEPARATOR) {
-	printf("%s: %24s -> %24s [PASSED]\n", label, bu_basename(res), res);
+	printf("%s: %24s -> %24s [PASSED]\n", label, basename, res);
     } else {
 	printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
 	fail++;
@@ -158,7 +165,7 @@ main(int ac, char *av[])
 	fail++;
     }
 
-
+    bu_free(basename, "bu_progname basename");
     return fail;
 }
 

@@ -59,8 +59,6 @@ extern mat_t perspective_mat;  /* defined in dozoom.c */
 extern struct rt_db_internal es_int;
 
 /*
- * C R E A T E _ T E X T _ O V E R L A Y
- *
  * Prepare the numerical display of the currently edited solid/object.
  */
 void
@@ -167,8 +165,6 @@ create_text_overlay(struct bu_vls *vp)
 
 
 /*
- * S C R E E N _ V L S
- *
  * Output a vls string to the display manager,
  * as a text overlay on the graphics area (ugh).
  *
@@ -209,8 +205,6 @@ screen_vls(
 
 
 /*
- * D O T I T L E S
- *
  * Produce titles, etc., on the screen.
  * NOTE that this routine depends on being called AFTER dozoom();
  */

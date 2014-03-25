@@ -63,8 +63,6 @@ struct bu_structparse vertex_desc[] = {
 
 
 /*
- * F _ P O L Y B I N O U T
- *
  * Experimental interface for writing binary polygons that represent
  * the current (evaluated) view.
  *

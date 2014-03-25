@@ -49,9 +49,6 @@ char usage[] = "\
 Usage: pixinterp2x [-h] [-s squarefilesize]\n\
 	[-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
@@ -93,9 +90,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

@@ -86,33 +86,33 @@ EOF
 echo "NIRT Program Output:" > nirt.out
 echo "NIRT Error Log:" > nirt.log
 echo "*** Test 1 - shot command ***" >> nirt.out
-$NIRT -v -h 0 -e "s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
 echo "*** Test 2 - xyz command ***" >> nirt.out
-$NIRT -v -h 0 -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
 echo "*** Test 3 - backout command ***" >> nirt.out
-$NIRT -v -h 0 -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
 echo "*** Test 4 - backout/xyz interaction ***" >> nirt.out
-$NIRT -v -h 0 -e "backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
 echo "*** Test 5 - dir command***" >> nirt.out
-$NIRT -v -h 0 -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
 echo "*** Test 6 - reporting of overlaps ***" >> nirt.out
-$NIRT -v -h 0 -e "backout 1;s;dir 0 0 -1;s;q" nirt.g overlap_example >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "backout 1;s;dir 0 0 -1;s;q" nirt.g overlap_example >> nirt.out 2>> nirt.log
 echo "*** Test 7 - output formatting ***" >> nirt.out
-$NIRT -v -h 0 -b -f csv -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -f csv-gap -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -f default -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -f entryexit -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -f gap1 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -f gap2 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f csv -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f csv-gap -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f default -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f entryexit -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f gap1 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -f gap2 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
 echo "*** Test 8 - attribute reporting ***" >> nirt.out
-$NIRT -v -h 0 -b -e "attr -p; attr rgb; attr -p;s;attr -f;attr -p; attr rgb region;attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -A rgb -e "attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -e "attr -p; attr rgb; attr -p;s;attr -f;attr -p; attr rgb region;attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -A rgb -e "attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
 echo "*** Test 9 - units ***" >> nirt.out
-$NIRT -v -h 0 -b -e "units;s;units m;s;units in;s;units ft;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -e "units;s;units m;s;units in;s;units ft;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
 echo "*** Test 10 - air regions ***" >> nirt.out
-$NIRT -v -h 0 -b -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
-$NIRT -v -h 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
 
 
 

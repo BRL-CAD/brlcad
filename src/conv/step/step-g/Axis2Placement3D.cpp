@@ -208,6 +208,12 @@ Axis2Placement3D::GetYAxis()
     return p[1];
 }
 
+const double *
+Axis2Placement3D::GetZAxis()
+{
+    return p[2];
+}
+
 bool
 Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {

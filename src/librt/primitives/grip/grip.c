@@ -40,6 +40,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -65,9 +66,6 @@ const struct bu_structparse rt_grp_parse[] = {
 };
 
 
-/**
- * R T _ G R P _ P R E P
- */
 int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
@@ -96,9 +94,6 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ G R P _ P R I N T
- */
 void
 rt_grp_print(const struct soltab *stp)
 {
@@ -115,8 +110,6 @@ rt_grp_print(const struct soltab *stp)
 
 
 /**
- * R T _ G R P _ S H O T
- *
  * Function -
  * Shoot a ray at a GRIP
  *
@@ -141,8 +134,6 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ G R P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
@@ -158,8 +149,6 @@ rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ G R P _ C U R V E
- *
  * Return the "curvature" of the grip.
  */
 void
@@ -174,8 +163,6 @@ rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ G R P _ U V
- *
  * For a hit on a face of an HALF, return the (u, v) coordinates of
  * the hit point.  0 <= u, v <= 1.  u extends along the Xbase
  * direction.  v extends along the "Ybase" direction.  Note that a
@@ -194,9 +181,6 @@ rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ G R P _ F R E E
- */
 void
 rt_grp_free(struct soltab *stp)
 {
@@ -207,8 +191,6 @@ rt_grp_free(struct soltab *stp)
 
 
 /**
- * R T _ G R P _ P L O T
- *
  * We represent a GRIP as a pyramid.  The center describes where the
  * center of the base is.  The normal describes which direction the
  * tip of the pyramid is.  Mag describes the distance from the center
@@ -264,8 +246,6 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ G R P _ I M P O R T
- *
  * Returns -
  * -1 failure
  * 0 success
@@ -324,9 +304,6 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ G R P _ E X P O R T
- */
 int
 rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -406,9 +383,6 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ G R I P _ E X P O R T 5
- */
 int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -440,8 +414,6 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ G R P _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -475,8 +447,6 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ G R P _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -490,9 +460,6 @@ rt_grp_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ G R P _ T E S S
- */
 int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
@@ -510,10 +477,6 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/**
- * R T _ G R P _ P A R A M S
- *
- */
 int
 rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

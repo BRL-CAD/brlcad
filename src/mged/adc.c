@@ -282,8 +282,6 @@ draw_ticks(fastf_t angle)
 
 
 /**
- * A D C U R S O R
- *
  * Compute and display the angle/distance cursor.
  */
 void
@@ -435,9 +433,6 @@ adc_print_vars(void)
 }
 
 
-/**
- * F _ A D C
- */
 int
 f_adc (
     ClientData UNUSED(clientData),

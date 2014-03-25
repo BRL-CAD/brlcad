@@ -38,6 +38,8 @@
 /* interface headers */
 #include "ShapeRepresentation.h"
 
+// forward declaration of class
+class Axis2Placement3D;
 
 class AdvancedBrepShapeRepresentation : public ShapeRepresentation
 {
@@ -52,6 +54,7 @@ public:
     AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id);
     virtual ~AdvancedBrepShapeRepresentation();
 
+    Axis2Placement3D *GetAxis2Placement3d();
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
 

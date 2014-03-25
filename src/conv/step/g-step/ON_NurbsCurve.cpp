@@ -23,12 +23,7 @@
  *
  */
 
-#include "common.h"
-
-#include <sstream>
-#include <map>
-
-#include "G_STEP_internal.h"
+#include "AP_Common.h"
 #include "ON_Brep.h"
 
 

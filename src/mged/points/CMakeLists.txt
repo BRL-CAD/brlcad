@@ -5,11 +5,12 @@
 # environments
 set(CMAKE_C_FLAGS "")
 
-include_directories(
+set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${TCL_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
 
 YACC_TARGET(MGEDPointsParser points_parse.y
   ${CMAKE_CURRENT_BINARY_DIR}/points_parse.c)

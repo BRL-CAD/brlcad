@@ -27,10 +27,7 @@
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-
+#include "bu/malloc.h"
 
 void
 texture_mix_free(struct texture_s *texture) {

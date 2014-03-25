@@ -33,6 +33,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"

@@ -47,7 +47,8 @@ Surface::Surface(STEPWrapper *sw, int step_id)
 
 Surface::~Surface()
 {
-    delete trim_curve_3d_bbox;
+    if (trim_curve_3d_bbox)
+	delete trim_curve_3d_bbox;
 }
 
 bool

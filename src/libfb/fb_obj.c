@@ -37,7 +37,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 
@@ -728,8 +728,6 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * F B O _ C M D
- *
  * Generic interface for framebuffer object routines.
  * Usage:
  * procname cmd ?args?

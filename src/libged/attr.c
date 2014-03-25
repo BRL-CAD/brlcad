@@ -27,6 +27,7 @@
 
 #include <string.h>
 
+#include "bu/sort.h"
 #include "./ged_private.h"
 
 

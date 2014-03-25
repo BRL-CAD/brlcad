@@ -24,8 +24,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/malloc.h"
+#include "bu/list.h"
+#include "bu/log.h"
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 #include "vectfont.h"
 

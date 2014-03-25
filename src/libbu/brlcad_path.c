@@ -28,7 +28,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "sysv.h"
 
 /* private headers */
@@ -70,8 +75,6 @@ _brlcad_data(void)
 
 
 /**
- * b u _ r o o t _ m i s s i n g
- *
  *print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
@@ -100,8 +103,6 @@ for sh/bash users:\n\
 
 
 /**
- * b u _ d a t a _ m i s s i n g
- *
  * print out an error/warning message if we cannot find the specified
  * BRLCAD_DATA (compile-time install path)
  */

@@ -207,8 +207,6 @@ struct bu_structparse wood_parse[] = {
 
 
 /*
- * M I S C _ S E T U P _ F U N C T I O N S
- *
  * The following are miscellaneous routines which are invoked by the parser
  * to set flag bits, indicating the presence of actual parsed values.
  */
@@ -239,9 +237,6 @@ wood_D_set(const struct bu_structparse *UNUSED(sdp),
 }
 
 
-/*
- * W O O D _ S E T U P
- */
 HIDDEN int
 wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
@@ -395,8 +390,8 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     for (i = 0; i < 3; i++) {
-	wd->lt_rgb[i] *= bn_inv255;
-	wd->dk_rgb[i] *= bn_inv255;
+	wd->lt_rgb[i] /= 255.0;
+	wd->dk_rgb[i] /= 255.0;
     }
 
     /*
@@ -457,9 +452,6 @@ wood_setup_2(struct wood_specific *wd)
 }
 
 
-/*
- * W O O D _ P R I N T
- */
 HIDDEN void
 wood_print(register struct region *rp, genptr_t UNUSED(dp))
 {
@@ -468,8 +460,6 @@ wood_print(register struct region *rp, genptr_t UNUSED(dp))
 
 
 /*
- * W O O D _ F R E E
- *
  * This routine is called to free up the user block at the end
  * of a frame, as well as clean up any references to objects on
  * the Wood_Chain list.
@@ -503,8 +493,6 @@ wood_free(genptr_t cp)
 
 
 /*
- * N O I S E  &  T U R B U L E N C E
- *
  * These are the noise and turbulence routines which the rendering routine
  * uses to perturb the rings.  They are lifted directly from the "sh_marble"
  * routine.  Eventually, they will be moved into a separate library for
@@ -575,8 +563,6 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
 
 
 /*
- * W O O D _ R E N D E R
- *
  * Given an XYZ hit point, compute the concentric ring structure.  We do
  * this by computing the dot-product of the hit point vs. the ring vertex,
  * which is then used to compute the distance from the ring center.  This
@@ -628,14 +614,14 @@ wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp
      * compute the sine from that product.
      */
 
-    c = fabs(sin((C / wd->spacing) * bn_pi));
+    c = fabs(sin((C / wd->spacing) * M_PI));
 
     /*
      * Dither the "q" control
      */
 
-    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
-    pp = cos(wd->phase * bn_degtorad);
+    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * DEG2RAD);
+    pp = cos(wd->phase * DEG2RAD);
 
     /*
      * Color the hit point based on the phase of the ring

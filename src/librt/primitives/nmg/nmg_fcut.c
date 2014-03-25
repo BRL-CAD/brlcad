@@ -47,6 +47,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/sort.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -209,8 +210,6 @@ nmg_face_state_transition(struct nmg_ray_state *rs,
 			  int other_rs_state);
 
 /**
- * P T B L _ V S O R T
- *
  * Sort list of hit points (vertexuse's) in fu1 (bu_ptbl 'b') on plane
  * of fu2 (defined by pt+dir), by increasing distance, vertex ptr, and
  * vu ptr.  Eliminate duplications of vu at same distance.  (Actually,
@@ -336,8 +335,6 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 
 
 /**
- * N M G _ C K _ V U _ P T B L
- *
  * As an automatic check for the intersector failing to find
  * all intersections, check all the vertices on the intersection line.
  * For each one, find all the other uses in this faceuse, and
@@ -402,8 +399,6 @@ nmg_ck_vu_ptbl(struct bu_ptbl *p, struct faceuse *fu)
 
 
 /**
- * N M G _ V U _ A N G L E _ M E A S U R E
- *
  * Given a vertexuse from a loop which lies in a plane,
  * compute the vector 'vec' from the previous vertex to this one.
  * Using two perpendicular vectors (x_dir and y_dir) which both lie
@@ -448,13 +443,13 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 	this_ass = NMG_V_ASSESSMENT_NEXT(assessment);
     if (this_ass == NMG_E_ASSESSMENT_ON_FORW) {
 	if (in) ang = 0.0;	/* zero angle */
-	else ang = bn_pi;	/* 180 degrees */
+	else ang = M_PI;	/* 180 degrees */
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=%g\n", ang);
 	return ang;
     }
     if (this_ass == NMG_E_ASSESSMENT_ON_REV) {
-	if (in) ang = bn_pi;	/* 180 degrees */
+	if (in) ang = M_PI;	/* 180 degrees */
 	else ang = 0.0;	/* zero angle */
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_REV, ang=%g\n", ang);
@@ -485,7 +480,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 
     ang = bn_angle_measure(vec, x_dir, y_dir);
     if (RTG.NMG_debug&DEBUG_VU_SORT)
-	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*bn_radtodeg);
+	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*RAD2DEG);
 
     /*
      * Since the entry edge is not on the ray, ensure the
@@ -497,13 +492,13 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 	    ang = RADIAN_TWEEK;
 	} else {
 	    /* Assuming NMG_E_ASSESSMENT_LEFT */
-	    ang = bn_twopi - RADIAN_TWEEK;
+	    ang = M_2PI - RADIAN_TWEEK;
 	}
-    } else if (ZERO(ang - bn_pi)) {
+    } else if (ZERO(ang - M_PI)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
-	    ang = bn_pi - RADIAN_TWEEK;
+	    ang = M_PI - RADIAN_TWEEK;
 	} else {
-	    ang = bn_pi + RADIAN_TWEEK;
+	    ang = M_PI + RADIAN_TWEEK;
 	}
     }
 
@@ -511,28 +506,25 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
      * Also, ensure computed angle and topological assessment agree
      * about which side of the ray this edge is on.
      */
-    if (ang > bn_pi) {
+    if (ang > M_PI) {
 	if (this_ass != NMG_E_ASSESSMENT_LEFT) {
 	    bu_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
-		   ang*bn_radtodeg,
+		   ang*RAD2DEG,
 		   nmg_e_assessment_names[this_ass]);
 	}
-    } else if (ang < bn_pi) {
+    } else if (ang < M_PI) {
 	if (this_ass != NMG_E_ASSESSMENT_RIGHT) {
 	    bu_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
-		   ang*bn_radtodeg,
+		   ang*RAD2DEG,
 		   nmg_e_assessment_names[this_ass]);
 	}
     }
     if (RTG.NMG_debug&DEBUG_VU_SORT)
-	bu_log("  final ang=%g (%e), vec=(%g, %g, %g)\n", ang*bn_radtodeg, ang*bn_radtodeg, V3ARGS(vec));
+	bu_log("  final ang=%g (%e), vec=(%g, %g, %g)\n", ang*RAD2DEG, ang*RAD2DEG, V3ARGS(vec));
     return ang;
 }
 
 
-/**
- * N M G _ I S _ V _ O N _ R S _ L I S T
- */
 int
 nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 {
@@ -548,8 +540,6 @@ nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 
 
 /**
- * N M G _ A S S E S S _ E U
- *
  * The current vertex (eu->vu_p) is on the line of intersection.
  * Assess the indicated edge, to see if it lies on the line of
  * intersection, or departs towards the left or right.
@@ -717,9 +707,6 @@ nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
 }
 
 
-/**
- * N M G _ A S S E S S _ V U
- */
 int
 nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 {
@@ -821,9 +808,6 @@ static const char *nmg_wedgeclass_string[] = {
 };
 
 
-/**
- * N M G _ P R _ V U _ S T U F F
- */
 void
 nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 {
@@ -838,8 +822,6 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 
 
 /**
- * N M G _ W E D G E _ C L A S S
- *
  * 0 degrees is to the rear (ON_REV), 90 degrees is to the RIGHT,
  * 180 is ON_FORW, 270 is to the LEFT.
  * Determine if the given wedge is entirely to the left or right of
@@ -949,8 +931,6 @@ static const char *nmg_wedge2_string[] = {
 #define WEDGE2_TOUCH_AT_DA	4
 
 /**
- * N M G _ C O M P A R E _ 2 _W E D G E S
- *
  * Returns -
  * WEDGE2_OVERLAP AB partially overlaps CD (error)
  * WEDGE2_NO_OVERLAP AB does not overlap CD
@@ -1095,8 +1075,6 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 
 
 /**
- * N M G _ F I N D _ V U _ I N _ W E D G E
- *
  * Find the VU which is inside (or on) the given wedge,
  * fitting as tightly to the given wedge as possible,
  * and with the lowest value of lo_ang possible.
@@ -1227,8 +1205,6 @@ nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang,
 
 
 /**
- * N M G _ I S _ W E D G E _ B E F O R E _ C R O S S
- *
  * Determine if the 'wedge' vu, which is either a LEFT or RIGHT wedge,
  * should be processed before or after the 'cross' vu, which is a
  * CROSS wedge.
@@ -1286,8 +1262,6 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 
 
 /**
- * N M G _ F A C E _ V U _ C O M P A R E
- *
  * Support routine for nmg_face_coincident_vu_sort(), via bu_sort().
  *
  * It is important to note that an edge on the LEFT side of the ray
@@ -1440,8 +1414,6 @@ nmg_face_vu_compare(const void *aa, const void *bb, void *UNUSED(arg))
 
 
 /**
- * N M G _ F A C E _ V U _ D O T
- *
  * For the purpose of computing the dot product of the edges around
  * this vertexuse and the ray direction vector, the edge vectors should
  * both be pointing inwards to the vertex,
@@ -1509,8 +1481,6 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
 
 
 /**
- * N M G _ S P E C I A L _ W E D G E _ P R O C E S S I N G
- *
  * If one loop gets cut, then unwind the whole call stack, and reassess
  * where things stand.  (The caller needs to re-call in that case).
  *
@@ -1679,8 +1649,6 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 
 
 /**
- * N M G _ F A C E _ C O I N C I D E N T _ V U _ S O R T
- *
  * Given co-incident vertexuses (same distance along the ray),
  * sort them into the "proper" order for driving the state machine.
  */
@@ -1747,9 +1715,9 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
 	/* x_dir is -dir, y_dir is -left */
 	vs[nvu].in_vu_angle = nmg_vu_angle_measure(rs->vu[i],
-						   rs->ang_x_dir, rs->ang_y_dir, ass, 1) * bn_radtodeg;
+						   rs->ang_x_dir, rs->ang_y_dir, ass, 1) * RAD2DEG;
 	vs[nvu].out_vu_angle = nmg_vu_angle_measure(rs->vu[i],
-						    rs->ang_x_dir, rs->ang_y_dir, ass, 0) * bn_radtodeg;
+						    rs->ang_x_dir, rs->ang_y_dir, ass, 0) * RAD2DEG;
 
 	/* Special case for LEFT & ON combos */
 	if (ass == NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW, NMG_E_ASSESSMENT_LEFT))
@@ -1887,8 +1855,6 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
 
 /**
- * N M G _ S A N I T I Z E _ F U
- *
  * Eliminate any OT_BOOLPLACE self-loops that remain behind in this face.
  */
 void
@@ -1913,8 +1879,6 @@ nmg_sanitize_fu(struct faceuse *fu)
 
 
 /**
- * N M G _ F A C E _ R S _ I N I T
- *
  * Set up nmg_ray_state structure.
  * "left" is a vector that lies in the plane of the face
  * which contains the loops being operated on.
@@ -2027,8 +1991,6 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
 	}
 /**
- * N M G _ E D G E _ G E O M _ I S E C T _ L I N E
- *
  * Force the geometry structure for a given edge to be that of
  * the intersection line between the two faces.
  *
@@ -2246,7 +2208,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 		bu_log("\tfind_loop_to_cut: %d VU's from lu %p\n", count, (void *)lu2);
 
 	    /* need to select correct VU */
-	    vu_angle = (-bn_pi);
+	    vu_angle = (-M_PI);
 	    vu_best = (struct vertexuse *)NULL;
 
 	    VSUB2(x_dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord);
@@ -2379,7 +2341,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 		bu_log("\tfind_loop_to_cut: %d VU's from lu %p\n", count, (void *)lu1);
 
 	    /* need to select correct VU */
-	    vu_angle = (-bn_pi);
+	    vu_angle = (-M_PI);
 	    vu_best = (struct vertexuse *)NULL;
 
 	    VSUB2(x_dir, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord);
@@ -2721,7 +2683,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 */
 	VAVERAGE(mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord)
 	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
-					   (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 1, rs->tol);
+	    				   (void (*)(struct edgeuse *, point_t, const char *))NULL,
+					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
+					   (const char *)NULL, 0, 1, rs->tol);
 
 	if (RTG.NMG_debug&DEBUG_FCUT) {
 	    bu_log("vu1=%p (%g %g %g), vu2=%p (%g %g %g)\n",
@@ -2738,7 +2702,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 * may be outside fu2, and we don't want to cut fu1 here.
 	 */
 	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
-				       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, rs->tol);
+	    			       (void (*)(struct edgeuse *, point_t, const char *))NULL,
+				       (void (*)(struct vertexuse *, point_t, const char *))NULL,
+				       (char *)NULL, 0, 0, rs->tol);
 
 	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;
@@ -2962,9 +2928,6 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 }
 
 
-/**
- * N M G _ U N L I S T _ V
- */
 void
 nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
 {
@@ -2985,8 +2948,6 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
 
 
 /**
- * N M G _ O N O N _ F I X
- *
  * An attempt to fix the condition:
  * nmg_assess_eu():  ON vertexuse in middle of edge?
  *
@@ -3086,8 +3047,6 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
 
 
 /**
- * N M G _ F A C E _ C U T J O I N
- *
  * The main face cut handler.
  * Called from nmg_inter.c by nmg_isect_2faces().
  *
@@ -3390,8 +3349,6 @@ static const struct state_transitions nmg_state_is_in[17] = {
 
 
 /**
- * N M G _ F A C E _ S T A T E _ T R A N S I T I O N
- *
  * Given current (old) state, assess the current vertexuse, and
  * pull the appropriate action and new state from the tables.
  * Then perform the indicated action.

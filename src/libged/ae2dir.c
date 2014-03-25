@@ -71,8 +71,8 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    az *= bn_degtorad;
-    el *= bn_degtorad;
+    az *= DEG2RAD;
+    el *= DEG2RAD;
     V3DIR_FROM_AZEL(dir, az, el);
 
     if (iflag)

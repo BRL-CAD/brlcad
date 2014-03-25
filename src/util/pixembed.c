@@ -55,9 +55,6 @@ Usage: pixembed [-h] [-b border_inset] \n\
 
 char hyphen[] = "-";
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
@@ -120,9 +117,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -176,8 +170,6 @@ main(int argc, char **argv)
 
 
 /*
- * L O A D _ B U F F E R
- *
  * Read one input scanline into the middle of the output scanline,
  * and duplicate the border pixels.
  */
@@ -222,8 +214,6 @@ load_buffer(void)
 
 
 /*
- * W R I T E _ B U F F E R
- *
  * Write the buffer to stdout, with error checking.
  */
 void

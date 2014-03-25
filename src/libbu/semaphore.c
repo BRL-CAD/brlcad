@@ -26,7 +26,9 @@
 #include <math.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)

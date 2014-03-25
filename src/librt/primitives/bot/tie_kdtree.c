@@ -32,7 +32,7 @@
 #endif
 
 #include "bio.h"
-#include "bu.h"
+
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"

@@ -36,7 +36,7 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -231,7 +231,6 @@ static struct math_func_link {
 
 
 /**
- * B N _ M A T H _ C M D
  *@brief
  * Tcl wrappers for the math functions.
  *

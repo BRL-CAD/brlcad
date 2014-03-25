@@ -21,6 +21,8 @@
 #include "common.h"
 #include <stdlib.h>
 
+#include "bu/malloc.h"
+#include "bu/sort.h"
 #include "bn.h"
 #include "./bn_private.h"
 

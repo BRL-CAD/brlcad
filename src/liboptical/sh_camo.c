@@ -38,6 +38,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -260,8 +261,7 @@ setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct 
 }
 
 
-/* C A M O _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -273,9 +273,6 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * C A M O _ P R I N T
- */
 HIDDEN void
 camo_print(register struct region *rp, genptr_t dp)
 {
@@ -283,9 +280,6 @@ camo_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * C A M O _ F R E E
- */
 HIDDEN void
 camo_free(genptr_t cp)
 {
@@ -294,8 +288,6 @@ camo_free(genptr_t cp)
 
 
 /*
- * C A M O _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
@@ -351,8 +343,7 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
 
     return 1;
 }
-/* M A R B L E 2 _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -365,8 +356,6 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
 
 /*
- * M A R B L E 2 _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */

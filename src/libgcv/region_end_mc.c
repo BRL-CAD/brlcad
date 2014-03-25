@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "bu/parallel.h"
 #include "gcv.h"
 
 /* FIXME: this be a dumb hack to avoid void* conversion */

@@ -33,6 +33,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/color.h"
+#include "bu/str.h"
 #include "fb.h"
 
 

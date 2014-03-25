@@ -153,7 +153,7 @@ public:
     /* Return thread specific information */
     void * CreateThreadInfo();
 
-    static void Vec3toPoint_t(Vec3 s, point_t t){
+    static void Vec3toPoint_t(Vec3 s, point_t t) {
 	t[0] = s[0];
 	t[1] = s[1];
 	t[2] = s[2];

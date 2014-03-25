@@ -27,8 +27,10 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "Axis2Placement3D.h"
 #include "Transformation.h"
 #include "RepresentationRelationshipWithTransformation.h"
+#include "ItemDefinedTransformation.h"
 
 #define CLASSNAME "RepresentationRelationshipWithTransformation"
 #define ENTITYNAME "Representation_Relationship_With_Transformation"
@@ -51,11 +53,41 @@ RepresentationRelationshipWithTransformation::RepresentationRelationshipWithTran
 
 RepresentationRelationshipWithTransformation::~RepresentationRelationshipWithTransformation()
 {
+    // created through factory will be deleted there.
+    transformation_operator = NULL;
 }
 
 string RepresentationRelationshipWithTransformation::ClassName()
 {
     return entityname;
+}
+
+Axis2Placement3D *
+RepresentationRelationshipWithTransformation::GetTransformItem_1()
+{
+    Axis2Placement3D *axis = NULL;
+    if (transformation_operator != NULL) {
+	ItemDefinedTransformation *idt = dynamic_cast<ItemDefinedTransformation*>(transformation_operator);
+
+	if (idt) {
+	    axis = idt->GetTransformItem_1();
+	}
+    }
+    return axis;
+}
+
+Axis2Placement3D *
+RepresentationRelationshipWithTransformation::GetTransformItem_2()
+{
+    Axis2Placement3D *axis = NULL;
+    if (transformation_operator != NULL) {
+	ItemDefinedTransformation *idt = dynamic_cast<ItemDefinedTransformation*>(transformation_operator);
+
+	if (idt) {
+	    axis = idt->GetTransformItem_2();
+	}
+    }
+    return axis;
 }
 
 bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

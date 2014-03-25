@@ -28,7 +28,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 
 struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
@@ -138,7 +137,7 @@ int main(void)
 
     ret = test_bn_poly();
 
-    if( ret == 0){
+    if( ret == 0) {
 	bu_log("\nFunction computes correctly\n");
 
 	return ret;

@@ -166,7 +166,7 @@ nmg_eu_dist_set(const struct bu_structparse *UNUSED(sdp),
 
 
 /**
- ** R E A D _ V A R
+ **
  **
  ** Callback used when an MGED variable is read with either the Tcl "set"
  ** command or the Tcl dereference operator '$'.
@@ -196,7 +196,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), c
 
 
 /**
- ** W R I T E _ V A R
+ **
  **
  ** Callback used when an MGED variable is set with the Tcl "set" command.
  **
@@ -224,7 +224,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 
 
 /**
- ** U N S E T _ V A R
+ **
  **
  ** Callback used when an MGED variable is unset.  This function undoes that.
  **
@@ -255,7 +255,7 @@ unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 
 
 /**
- ** M G E D _ V A R I A B L E _ S E T U P
+ **
  **
  ** Sets the variable traces for each of the MGED variables so they can be
  ** accessed with the Tcl "set" and "$" operators.

@@ -45,18 +45,6 @@ extern float bn_rand_poison_[];
 extern int *tp_cindex[];
 extern int tp_ctable[];
 
-/* math constants */
-const fastf_t bn_pi = M_PI;
-const fastf_t bn_twopi = 2.0 * M_PI;
-const fastf_t bn_halfpi = M_PI_2;
-const fastf_t bn_quarterpi = M_PI_4;
-const fastf_t bn_invpi = M_1_PI;
-const fastf_t bn_inv2pi = 1.0 / (2.0 * M_PI);
-const fastf_t bn_inv4pi = 1.0 / (4.0 * M_PI);
-const fastf_t bn_inv255 = 1.0 / 255.0;
-const fastf_t bn_degtorad = DEG2RAD;
-const fastf_t bn_radtodeg = RAD2DEG;
-
 /*
  * Local Variables:
  * tab-width: 8

@@ -19,12 +19,12 @@
  */
 /** @file rt/viewweight.c
  *
- *  Ray Tracing program RTWEIGHT bottom half.
+ * Ray Tracing program RTWEIGHT bottom half.
  *
- *  This module outputs the weights and moments of a target model
- *  using density values located in ".density" or "$HOME/.density"
- *  Output is given in metric and english units, although input is
- *  assumed in lbs/cu.in.
+ * This module outputs the weights and moments of a target model
+ * using density values located in ".density" or "$HOME/.density"
+ * Output is given in metric and english units, although input is
+ * assumed in lbs/cu.in.
  *
  */
 
@@ -35,6 +35,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -51,6 +55,7 @@ extern struct resource resource[];
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
+
 
 const char title[] = "RT Weight";
 
@@ -74,36 +79,37 @@ usage(const char *argv0)
 }
 
 
-int	noverlaps = 0;
-FILE	*densityfp;
-char	*densityfile;
-#define	DENSITY_FILE	".density"
+int noverlaps = 0;
+FILE *densityfp;
+char *densityfile;
+#define DENSITY_FILE ".density"
 
 /* FIXME: use a bu_avs instead of a hard-coded limit so that materials
  * are looked up by the key in the density file, not assuming it's an
  * integer index into a fixed-size array.  gqa does it better by using
  * dynamic memory.
  */
-#define MAXMATLS	32768
-fastf_t	density[MAXMATLS];
-char	*dens_name[MAXMATLS];
+#define MAXMATLS 32768
+fastf_t density[MAXMATLS];
+char *dens_name[MAXMATLS];
 
 struct datapoint {
     struct datapoint *next;
-    vect_t	centroid;
-    fastf_t	weight;
-    fastf_t	volume;
+    vect_t centroid;
+    fastf_t weight;
+    fastf_t volume;
 };
 
-extern int     	rpt_overlap;     	/* report region verbosely */
-extern fastf_t  cell_width;      	/* model space grid cell width */
-extern fastf_t  cell_height;     	/* model space grid cell height */
-extern FILE     *outfp;          	/* optional output file */
-extern char	*outputfile;     	/* name of base of output file */
-extern int	output_is_binary;	/* !0 means output is binary */
+
+extern int rpt_overlap;     	/* report region verbosely */
+extern fastf_t cell_width;      	/* model space grid cell width */
+extern fastf_t cell_height;     	/* model space grid cell height */
+extern FILE *outfp;          	/* optional output file */
+extern char *outputfile;     	/* name of base of output file */
+extern int output_is_binary;	/* !0 means output is binary */
 
 
-int
+static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
@@ -112,10 +118,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
     int part_count = 0;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	register struct region	*reg = pp->pt_regionp;
-	register struct hit	*ihitp = pp->pt_inhit;
-	register struct hit	*ohitp = pp->pt_outhit;
-	register fastf_t	depth;
+	register struct region *reg = pp->pt_regionp;
+	register struct hit *ihitp = pp->pt_inhit;
+	register struct hit *ohitp = pp->pt_outhit;
+	register fastf_t depth;
 	register struct datapoint *dp;
 
 	if (reg->reg_aircode)
@@ -136,38 +142,48 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
+	/* if we don't have a valid material density to work with, use a default material */
 	if (density[reg->reg_gmater] < 0) {
 	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
 	    bu_log("  (region %s)\n", reg->reg_name);
+	    bu_log("  Mass is undefined.\n");
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-	else if (density[reg->reg_gmater] >= 0) {
+
+	{
+	    /* precompute partition size */
+	    const fastf_t partition_volume = depth * cell_height * cell_width;
+
+	    /* convert reg_los percentage to factor */
+	    const fastf_t los_factor = (fastf_t)reg->reg_los * 0.01;
+
+	    dp->volume = partition_volume;
 	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
-	    /* Compute mass in terms of grams */
-	    dp->weight = depth * density[reg->reg_gmater] *
-		(fastf_t)reg->reg_los *
-		cell_height * cell_height * 0.00001;
-	    dp->volume = depth * cell_height * cell_width;
+	    if (density[reg->reg_gmater] >= 0) {
+		/* density needs to be converted from g/cm^3 to g/mm^3 */
+		const fastf_t density_factor = density[reg->reg_gmater] * 0.001;
+
+		/* Compute mass in terms of grams */
+		dp->weight = partition_volume * los_factor * density_factor;
+	    }
 	}
     }
     return 1;	/* report hit to main routine */
 }
 
 
-int
+static int
 miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
 
 
-int
-overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
-	struct region *UNUSED(reg1), struct region *UNUSED(reg2),
-	struct partition *UNUSED(hp))
+static int
+overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
 {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     noverlaps++;
@@ -177,19 +193,15 @@ overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
 
 
 /*
- *  			V I E W _ I N I T
- *
- *  Called at the start of a run.
- *  Returns 1 if framebuffer should be opened, else 0.
+ * Called at the start of a run.
+ * Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
-	  int minus_o, int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     register size_t i;
     char buf[BUFSIZ+1];
     char linebuf[BUFSIZ+1];
-    static char null = (char)0;
     const char *curdir = getenv("PWD");
     const char *homedir = getenv("HOME");
     int line;
@@ -208,9 +220,13 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	    outfp = fopen(outputfile, "w");
     }
 
-    for (i = 1; i < MAXMATLS; i++) {
-	density[i]   = -1;
-	dens_name[i] = &null;
+    /* initialize all possibile material types to a negative value.
+     * (Do this even for density[0], which is used for material types
+     * for which we have no density information.)
+     */
+    for (i = 0; i < MAXMATLS; i++) {
+	density[i] = -1.0;
+	dens_name[i] = NULL;
     }
 
 #define maxm(a, b) (a>b?a:b)
@@ -260,12 +276,12 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	    continue;
 	}
 
-	if (idx > 0 && idx < MAXMATLS ) {
+	if (idx > 0 && idx < MAXMATLS) {
 	    density[idx] = dens;
 	    dens_name[idx] = bu_strdup(buf);
 	} else {
 	    bu_log("Material index %d in '%s' is out of range.\n",
-		   idx, densityfile );
+		   idx, densityfile);
 	}
     }
 
@@ -280,6 +296,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
     return 0;		/* no framebuffer needed */
 }
 
+
 /* beginning of a frame */
 void
 view_2init(struct application *ap, char *UNUSED(framename))
@@ -292,11 +309,13 @@ view_2init(struct application *ap, char *UNUSED(framename))
     }
 }
 
+
 /* end of each pixel */
 void
 view_pixel(struct application *UNUSED(ap))
 {
 }
+
 
 /* end of each line */
 void
@@ -304,10 +323,10 @@ view_eol(struct application *UNUSED(ap))
 {
 }
 
+
 /* a region ID sort comparison for use with bu_sort on a region array */
-int region_ID_cmp(const void *p1,
-		  const void *p2,
-		  void *UNUSED(arg))
+static int
+region_ID_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     /* cast into correct type--note the incoming pointer type is a
        pointer to a pointer which must be dereferenced! */
@@ -315,12 +334,13 @@ int region_ID_cmp(const void *p1,
     struct region *r2 = *(struct region **)p2;
 
     if (r1->reg_regionid < r2->reg_regionid)
-      return -1;
+	return -1;
     else if (r1->reg_regionid > r2->reg_regionid)
-      return +1;
+	return +1;
     else
-      return bu_strcmp(r1->reg_name, r2->reg_name);
+	return bu_strcmp(r1->reg_name, r2->reg_name);
 }
+
 
 /* end of a frame */
 void
@@ -386,19 +406,19 @@ view_end(struct application *ap)
 
     if (noverlaps)
 	bu_log("%d overlap%c detected.\n\n", noverlaps,
-		noverlaps==1 ? '\0' : 's');
+	       noverlaps==1 ? '\0' : 's');
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
     fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
-    fprintf(outfp, "Material  Density(g/cm^3)  Name\n");
+    fprintf(outfp, "Material  Density(g/cm^3) Name\n");
     {
 	register int i;
 	for (i = 1; i < MAXMATLS; i++) {
 	    if (density[i] >= 0)
 		fprintf(outfp, "%5d     %10.4f       %s\n",
 			i, density[i], dens_name[i]);
-      }
+	}
     }
 
     /* is this test really necessary? or can we return if !rpt_overlap? */
@@ -422,9 +442,9 @@ view_end(struct application *ap)
 
 	    for (dp = (struct datapoint *)rp->reg_udata;
 		 dp != (struct datapoint *)NULL; dp = dp->next) {
-		sum_x  += dp->weight * dp->centroid[X];
-		sum_y  += dp->weight * dp->centroid[Y];
-		sum_z  += dp->weight * dp->centroid[Z];
+		sum_x += dp->weight * dp->centroid[X];
+		sum_y += dp->weight * dp->centroid[Y];
+		sum_z += dp->weight * dp->centroid[Z];
 		weight += dp->weight;
 		volume += dp->volume;
 	    }
@@ -493,8 +513,7 @@ view_end(struct application *ap)
 			    dens_name[r->reg_gmater],
 			    density[r->reg_gmater],
 			    flen, flen, &r->reg_name[len]);
-		}
-		else if (r->reg_regionid > id) {
+		} else if (r->reg_regionid > id) {
 		    /* FIXME: an "else" alone should be good enough
 		       because the test should not be necessary if we
 		       trust the sorted array */
@@ -517,7 +536,7 @@ view_end(struct application *ap)
 	    const int ns = 15;
 
 	    if (item_wt[id] < 0)
-	       continue;
+		continue;
 
 	    /* the following format string has 15 spaces before the region name: */
 	    fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
@@ -534,8 +553,7 @@ view_end(struct application *ap)
 		    }
 		    fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
 		    CR = 1;
-		}
-		else if (r->reg_regionid > id) {
+		} else if (r->reg_regionid > id) {
 		    /* FIXME: an "else" alone should be good enough
 		       because the test should not be necessary if we
 		       trust the sorted array */
@@ -553,9 +571,9 @@ view_end(struct application *ap)
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
-    sum_x  *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_y  *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_z  *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
@@ -571,18 +589,25 @@ view_end(struct application *ap)
 
 }
 
-void view_setup(struct rt_i *UNUSED(rtip))
+
+void
+view_setup(struct rt_i *UNUSED(rtip))
 {
 }
 
-/* Associated with "clean" command, before new tree is loaded  */
-void view_cleanup(struct rt_i *UNUSED(rtip))
+
+/* Associated with "clean" command, before new tree is loaded */
+void
+view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
-void application_init (void)
+
+void
+application_init(void)
 {
 }
+
 
 /*
  * Local Variables:

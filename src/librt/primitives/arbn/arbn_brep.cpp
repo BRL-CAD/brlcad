@@ -38,9 +38,6 @@ extern "C" {
 }
 
 
-/**
- * R T _ A R B N _ B R E P
- */
 extern "C" void
 rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

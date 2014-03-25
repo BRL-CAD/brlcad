@@ -479,47 +479,31 @@ void
 plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
 {
     register struct bu_list *vhead;
-    ON_BrepFace *face= trim.Face();
-    const ON_Surface* surf = face->SurfaceOf();
-    fastf_t umin, umax;
-    fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
+    ON_BrepFace *face = trim.Face();
+    point_t pt;
 
     ON_TextLog tl(stderr);
 
     vhead = rt_vlblock_find(vbp, YELLOW);
-#ifndef RESETDOMAIN
-    double width, height;
-    if (face->GetSurfaceSize(&width, &height)) {
-	face->SetDomain(0, 0.0, width);
-	face->SetDomain(1, 0.0, height);
 
-    }
-#endif
-    surf->GetDomain(0, &umin, &umax);
     const ON_Curve* trimCurve = trim.TrimCurveOf();
-    //trimCurve->Dump(tl);
-
     ON_Interval dom = trimCurve->Domain();
-    // XXX todo: dynamically sample the curve
-    for (int k = 1; k <= plotres; k++) {
-	ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double) (k - 1)
-							  / (double) plotres));
-	p.x = p.x/width;
-	p.y = p.y/height;
-	if (dim3d)
-	    p = surf->PointAt(p.x, p.y);
-	VMOVE(pt1, p);
-	p = trimCurve->PointAt(dom.ParameterAt((double) k / (double) plotres));
-	p.x = p.x/width;
-	p.y = p.y/height;
-	if (dim3d)
-	    p = surf->PointAt(p.x, p.y);
-	VMOVE(pt2, p);
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-    }
 
+    //trimCurve->Dump(tl);
+    for (int k = 0; k <= plotres; ++k) {
+	ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)k / plotres));
+
+	if (dim3d) {
+	    p = face->PointAt(p.x, p.y);
+	}
+	VMOVE(pt, p);
+
+	if (k != 0) {
+	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	} else {
+	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	}
+    }
     return;
 }
 

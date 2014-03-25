@@ -32,14 +32,14 @@
 #  include <sys/time.h>
 #endif
 
-#include "dm-qt.h"
+#include "dm/dm-qt.h"
 
 #include "tcl.h"
 #include "tk.h"
 #include "bu.h"
 #include "dm.h"
-#include "dm_xvars.h"
-#include "dm-Null.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -57,8 +57,6 @@ qt_sendRepaintEvent(struct dm *dmp)
 }
 
 /**
- * Q T _ C L O S E
- *
  * Release the display manager
  */
 HIDDEN int
@@ -125,8 +123,6 @@ qt_drawEnd(struct dm *dmp)
 }
 
 /**
- * Q T _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
@@ -140,8 +136,6 @@ qt_normal(struct dm *dmp)
 }
 
 /**
- * Q T _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to qt_draw().
  */
@@ -161,8 +155,6 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 
 
 /**
- * Q T _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist. The starting position of the
  * beam is as specified.
  */
@@ -659,6 +651,15 @@ qt_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
+qt_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
@@ -704,8 +705,6 @@ qt_processEvents(struct dm *dmp)
 
 
 /**
- * P R O C E S S Q T E V E N T S
- *
  * Function called in Tk event loop. It simply processes any
  * pending Qt events.
  *
@@ -716,8 +715,6 @@ void processQtEvents(ClientData UNUSED(clientData), int UNUSED(flags)) {
 
 
 /**
- * I D L E C A L L
- *
  * Call when Tk is idle. It process Qt events then
  * reschedules itself.
  *
@@ -733,8 +730,6 @@ void IdleCall(ClientData UNUSED(clientData)) {
 __BEGIN_DECLS
 
 /*
- * Q T _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -835,7 +830,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n", &init_proc_vls, &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_log("qt_open: _init_dm failed\n");
@@ -948,6 +943,7 @@ struct dm dm_qt = {
     null_setDepthMask,
     qt_setZBuffer,
     qt_debug,
+    qt_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -982,6 +978,7 @@ struct dm dm_qt = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -1219,7 +1216,7 @@ bool QTkMainWindow::event(QEvent *ev)
 	char *tk_event = qt_bindings[index].bind_function(ev);
 	if (tk_event != NULL) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "event generate %V %s", &dmp->dm_pathName, tk_event);
+	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&dmp->dm_pathName), tk_event);
 	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_log("error generate event %s\n", tk_event);
 	    }

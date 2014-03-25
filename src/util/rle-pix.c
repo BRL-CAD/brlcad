@@ -66,9 +66,6 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
 	[file.rle [file.pix]]\n\
 ";
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
@@ -150,9 +147,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

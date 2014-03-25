@@ -120,8 +120,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(NOT "${ARGV5}" STREQUAL "")
 
     # If we've already got a particular distcheck target, don't try to create it again.
-    get_target_property(not_in_all distcheck-${TARGET_SUFFIX} EXCLUDE_FROM_ALL)
-    if(NOT not_in_all)
+    if(NOT TARGET distcheck-${TARGET_SUFFIX})
       # Need to set these locally so configure_file will pick them up...
       SET(TARGET_SUFFIX ${TARGET_SUFFIX})
       SET(CMAKE_OPTS ${CMAKE_OPTS})
@@ -155,9 +154,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
       # Keep track of the distcheck targets
       set(distcheck_targets ${distcheck_targets} distcheck-${TARGET_SUFFIX})
-    else(NOT not_in_all)
+    else(NOT TARGET distcheck-${TARGET_SUFFIX})
       message(WARNING "Distcheck target distcheck-${TARGET_SUFFIX} already defined, skipping...")
-    endif(NOT not_in_all)
+    endif(NOT TARGET distcheck-${TARGET_SUFFIX})
   endmacro(CREATE_DISTCHECK)
 
   # Top level macro for defining the common "standard" cases and lets a CMake build select either

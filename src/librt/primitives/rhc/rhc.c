@@ -167,6 +167,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -203,8 +204,6 @@ const struct bu_structparse rt_rhc_parse[] = {
 
 
 /**
- * R T _ R H C _ B B O X
- *
  * Calculate the bounding RPP for an RHC
  */
 int
@@ -259,8 +258,6 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ R H C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid RHC, and if so, precompute various
  * terms of the formula.
@@ -354,9 +351,6 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ R H C _ P R I N T
- */
 void
 rt_rhc_print(const struct soltab *stp)
 {
@@ -379,8 +373,6 @@ rt_rhc_print(const struct soltab *stp)
 #define RHC_NORM_BACK (4)
 
 /**
- * R T _ R H C _ S H O T
- *
  * Intersect a ray with a rhc.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -568,8 +560,6 @@ check_plates:
 
 
 /**
- * R T _ R H C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -613,8 +603,6 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ R H C _ C U R V E
- *
  * Return the curvature of the rhc.
  */
 void
@@ -653,10 +641,8 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ R H C _ U V
- *
  * For a hit on the surface of an rhc, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * of the hit point, 0 <= u, v <= 1
  * u = azimuth
  * v = elevation
  */
@@ -684,7 +670,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	case RHC_NORM_BODY:
 	    /* Skin.  x, y coordinates define rotation.  radius = 1 */
 	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y] / len) * M_1_PI;
 	    uvp->uv_v = -pprime[X];		/* height */
 	    break;
 
@@ -692,7 +678,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	case RHC_NORM_BACK:
 	    /* end plates - circular mapping, not seamless w/body, top */
 	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y] / len) * M_1_PI;
 	    uvp->uv_v = len;	/* rim v = 1 for both plates */
 	    break;
 
@@ -707,9 +693,6 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R H C _ F R E E
- */
 void
 rt_rhc_free(struct soltab *stp)
 {
@@ -995,9 +978,6 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 
-/**
- * R T _ R H C _ P L O T
- */
 int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1048,7 +1028,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = ttol->norm;
     } else {
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
     }
 
     /* initial hyperbola approximation is a single segment */
@@ -1113,9 +1093,6 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ M K _ H Y P E R B O L A
- */
 /*
   r: rectangular halfwidth
   b: breadth
@@ -1139,18 +1116,18 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     intr = p0[Z] - m * p0[Y];
     /* find point on hyperbola with max dist between hyperbola and line */
     j = b + c;
-    k = 1 - m * m * r * r / (b * (b + 2 * c));
+    k = 1.0 - m * m * r * r / (b * (b + 2.0 * c));
     A = k;
-    B = 2 * j * k;
+    B = 2.0 * j * k;
     C = j * j * k - c * c;
-    discr = sqrt(B * B - 4 * A * C);
-    z0 = (-B + discr) / (2. * A);
+    discr = sqrt(B * B - 4.0 * A * C);
+    z0 = (-B + discr) / (2.0 * A);
 
     if (z0 + RHC_TOL >= -b) {
 	/* use top sheet of hyperboloid */
 	mpt[Z] = z0;
     } else {
-	mpt[Z] = (-B - discr) / (2. * A);
+	mpt[Z] = (-B - discr) / (2.0 * A);
     }
 
     if (NEAR_ZERO(mpt[Z], RHC_TOL)) {
@@ -1158,27 +1135,27 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     }
 
     mpt[X] = 0;
-    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2 * c));
+    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2.0 * c));
 
     if (NEAR_ZERO(mpt[Y], RHC_TOL)) {
-	mpt[Y] = 0.;
+	mpt[Y] = 0.0;
     }
 
     mpt[Y] = r * sqrt(mpt[Y]);
 
-    if (p0[Y] < 0.) {
+    if (p0[Y] < 0.0) {
 	mpt[Y] = -mpt[Y];
     }
 
     /* max distance between that point and line */
     dist = fabs(m * mpt[Y] - mpt[Z] + intr) / sqrt(m * m + 1);
     /* angles between normal of line and of hyperbola at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p0[Z] + c + 1), -1.);
+    VSET(norm_line, m, -1.0, 0.0);
+    VSET(norm_hyperb, 0., (2.0 * c + 1.0) / (p0[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_line);
     VUNITIZE(norm_hyperb);
     theta0 = fabs(acos(VDOT(norm_line, norm_hyperb)));
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p1[Z] + c + 1), -1.);
+    VSET(norm_hyperb, 0.0, (2.0 * c + 1.0) / (p1[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_hyperb);
     theta1 = fabs(acos(VDOT(norm_line, norm_hyperb)));
 
@@ -1204,8 +1181,6 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
 
 
 /**
- * R T _ R H C _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1269,7 +1244,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     } else {
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
     }
 
     /* initial hyperbola approximation is a single segment */
@@ -1460,8 +1435,6 @@ fail:
 
 
 /**
- * R T _ R H C _ I M P O R T
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1535,8 +1508,6 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1580,8 +1551,6 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R H C _ I M P O R T 5
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1634,8 +1603,6 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1680,8 +1647,6 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R H C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1731,8 +1696,6 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ R H C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1751,10 +1714,6 @@ rt_rhc_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R H C _ P A R A M S
- *
- */
 int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1834,28 +1793,26 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     b = rip->rhc_c;
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
-    a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
+    a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
     sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
-    integralArea = (b / a) * ((2 * rip->rhc_r * sqrt_ra) / 2 + ((a * a) / 2) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-    A = 2 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
-    h = (2 * rip->rhc_r) / n;
+    h = (2.0 * rip->rhc_r) / n;
     for (i = 1; i <= (n / 2) - 1; i++) {
-	x = -rip->rhc_r + 2 * i * h;
-	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+	x = -rip->rhc_r + 2.0 * i * h;
+	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
     }
     for (j = 1; j <= (n / 2); j++) {
-	x = -rip->rhc_r + (2 * j - 1) * h;
-	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+	x = -rip->rhc_r + (2.0 * j - 1.0) * h;
+	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
     }
-    arclen = (h / 3) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1) + 2 * sumodds + 4 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1));
+    arclen = (h / 3.0) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0) + 2.0 * sumodds + 4.0 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0));
 
-    *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
+    *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
 }
 
 /**
- * R T _ R H C _ C E N T R O I D
- *
  * Computes centroid of a right hyperbolic cylinder
  */
 void
@@ -1887,18 +1844,18 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	high = xf;
 
 	while (abs(high - low) > epsilon) {
-	    guess = (high + low) / 2;
+	    guess = (high + low) / 2.0;
 	    sqrt_ga = sqrt((guess * guess) - (a * a));
 	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
 
-	    if (guessArea > totalArea / 2) {
+	    if (guessArea > totalArea / 2.0) {
 		high = guess;
 	    } else {
 		low = guess;
 	    }
 	}
 
-	scale_factor = 1 - ((guess - a) / magB);
+	scale_factor = 1.0 - ((guess - a) / magB);
 
 	VSCALE(shift_h, rip->rhc_H, 0.5);
 	VSCALE(*cent, rip->rhc_B, scale_factor);

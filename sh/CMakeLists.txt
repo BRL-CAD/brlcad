@@ -16,7 +16,6 @@ set(sh_SCRIPTS
   sgisnap.sh
   show.sh
   tracker.sh
-  trimconfig.sh
   )
 foreach(script ${sh_SCRIPTS})
   if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -38,7 +37,6 @@ set(noinst_SCRIPTS
   footer.sh
   header.sh
   linkroot.sh
-  libtoolfilename.sh
   make_deb.sh
   make_dmg.sh
   make_pkg.sh
@@ -46,7 +44,6 @@ set(noinst_SCRIPTS
   make_tar.sh
   make_bz2.sh
   make_tgz.sh
-  make_zip.sh
   shtool
   template.sh
   ws.sh

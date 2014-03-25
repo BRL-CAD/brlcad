@@ -4,21 +4,26 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 
 set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
+  AP203.cpp
   Assembly_Product.cpp
-  Comb_Tree.cpp
+  Comb.cpp
   Default_Geometric_Context.cpp
-  G_STEP_Util.cpp
+  G_Objects.cpp
   ON_NurbsCurve.cpp
   ON_NurbsSurface.cpp
   ON_Brep.cpp
   Shape_Definition_Representation.cpp
   Shape_Representation.cpp
   Shape_Representation_Relationship.cpp
+  Trees.cpp
   g-step.cpp
   )
 
@@ -55,11 +60,17 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  AP203.h
   Assembly_Product.h
+  Comb.h
+  Default_Geometric_Context.h
+  G_Objects.h
   ON_Brep.h
-  Comb_Tree.h
-  G_STEP_internal.h
+  Shape_Definition_Representation.h
+  Shape_Representation.h
+  Shape_Representation_Relationship.h
   list_elements.cpp
+  Trees.h
   )
 CMAKEFILES(${IGNORE_FILES})
 

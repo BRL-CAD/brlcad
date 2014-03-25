@@ -828,9 +828,9 @@ main (int argc, char **argv)
 	    /* Rotate the point for display */
 	    theta += twist;
 	    while (theta < 0)
-		theta += M_PI * 2;
-	    while (theta > M_PI * 2)
-		theta -= M_PI * 2;
+		theta += M_2PI;
+	    while (theta > M_2PI)
+		theta -= M_2PI;
 
 	    /* If this point is outside the arc of interest, skip it */
 	    if ((theta < arc_min) || (theta > arc_max)) {

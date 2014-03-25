@@ -39,8 +39,6 @@
 
 
 /**
- * R T _ N U R B _ B E Z I E R
- *
  * Given a single snurb, if it is in Bezier form, duplicate the snurb,
  * and enqueue it on the bezier_hd list.  If the original snurb is NOT
  * in Bezier form, subdivide it a set of snurbs which are, each of
@@ -101,8 +99,6 @@ rt_bez_check(const struct face_g_snurb *srf)
 
 
 /**
- * N U R B _ C R V _ I S _ B E Z I E R
- *
  * Check if a NURB curve is in Bezier form.
  *
  * returns:
@@ -131,8 +127,6 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 
 
 /**
- * N U R B _ C _ T O _ B E Z I E R
- *
  * Split NURB curve into list of Bezier curves.
  *
  * If curve is already Bezier, return NULL

@@ -36,7 +36,7 @@
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"
-#include "dm-ps.h"
+#include "dm/dm-ps.h"
 
 
 extern void dm_var_init(struct dm_list *initial_dm_list);

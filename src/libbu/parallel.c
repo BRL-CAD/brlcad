@@ -111,7 +111,11 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 #include "./parallel.h"
 

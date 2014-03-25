@@ -757,7 +757,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_shape_representation_relationship but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_representation_context but not complex." << std::endl;
 	    return NULL;
 	}
     } else {

@@ -34,6 +34,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -78,9 +80,6 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -181,9 +180,7 @@ main(int argc, char **argv)
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
@@ -556,8 +553,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.

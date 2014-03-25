@@ -25,17 +25,13 @@
 #include "common.h"
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "ged.h"
 
 static char usage[] = "\
 Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
 
 
-/*
- *	M A I N
- *
- */
 int
 main(int argc, char *argv[])
 {
@@ -91,7 +87,7 @@ main(int argc, char *argv[])
     ged_close(gedp);
     if(gedp)
 	BU_PUT(gedp, struct ged);
-    bu_free(av, "free argv copy");
+    bu_free((genptr_t)av, "free argv copy");
 
     return 0;
 }

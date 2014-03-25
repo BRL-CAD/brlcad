@@ -67,6 +67,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -150,8 +151,7 @@ struct mfuncs xxx_mfuncs[] = {
 };
 
 
-/* X X X _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -220,9 +220,6 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * X X X _ P R I N T
- */
 HIDDEN void
 xxx_print(register struct region *rp, genptr_t dp)
 {
@@ -230,9 +227,6 @@ xxx_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * X X X _ F R E E
- */
 HIDDEN void
 xxx_free(genptr_t cp)
 {
@@ -241,8 +235,6 @@ xxx_free(genptr_t cp)
 
 
 /*
- * X X X _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

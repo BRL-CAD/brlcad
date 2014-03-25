@@ -27,8 +27,9 @@
 #include <string.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -526,8 +527,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int

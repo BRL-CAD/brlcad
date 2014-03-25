@@ -35,6 +35,7 @@
 // forward declaration of class
 class ON_Brep;
 class RepresentationItem;
+class Axis2Placement3D;
 
 class ItemDefinedTransformation: virtual public Transformation
 {
@@ -52,6 +53,8 @@ public:
     ItemDefinedTransformation();
     virtual ~ItemDefinedTransformation();
     ItemDefinedTransformation(STEPWrapper *sw, int step_id);
+    Axis2Placement3D *GetTransformItem_1();
+    Axis2Placement3D *GetTransformItem_2();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();

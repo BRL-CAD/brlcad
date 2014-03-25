@@ -36,12 +36,16 @@
 #include "bin.h"
 
 #include "tcl.h"
+#include "bu/debug.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
+
+#include "../../librt_private.h"
 
 
 fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
@@ -116,8 +120,6 @@ rt_check_curve(const struct rt_curve *crv, const struct rt_sketch_internal *skt,
 
 
 /**
- * R T _ S K E T C H _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid SKETCH, and if so, precompute
  * various terms of the formula.
@@ -144,9 +146,6 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ S K E T C H _ P R I N T
- */
 void
 rt_sketch_print(const struct soltab *stp)
 {
@@ -155,8 +154,6 @@ rt_sketch_print(const struct soltab *stp)
 
 
 /**
- * R T _ S K E T C H _ S H O T
- *
  * Intersect a ray with a sketch.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -183,8 +180,6 @@ rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 
 
 /**
- * R T _ S K E T C H _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -202,8 +197,6 @@ rt_sketch_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ S K E T C H _ C U R V E
- *
  * Return the curvature of the sketch.
  */
 void
@@ -223,8 +216,6 @@ rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ S K E T C H _ U V
- *
  * For a hit on the surface of an sketch, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -241,9 +232,6 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 }
 
 
-/**
- * R T _ S K E T C H _ F R E E
- */
 void
 rt_sketch_free(struct soltab *stp)
 {
@@ -343,8 +331,8 @@ rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 			}
 			angMax -= angMin;
 			angle -= angMin;
-			if (angMax < 0) angMax += 2*M_PI;
-			if (angle < 0) angle += 2*M_PI;
+			if (angMax < 0) angMax += M_2PI;
+			if (angle < 0) angle += M_2PI;
 			if (angle < angMax) hits++;
 		    }
 		}
@@ -570,8 +558,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		}
 		if (csg->radius <= 0.0) {
 		    /* this is a full circle */
-		    nsegs = ceil(2.0 * M_PI / delta);
-		    delta = 2.0 * M_PI / (double)nsegs;
+		    nsegs = ceil(M_2PI / delta);
+		    delta = M_2PI / (double)nsegs;
 		    cosdel = cos(delta);
 		    sindel = sin(delta);
 		    oldu = 1.0;
@@ -624,11 +612,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		if (csg->orientation) {
 		    /* clock-wise */
 		    while (end_ang > start_ang)
-			end_ang -= 2.0 * M_PI;
+			end_ang -= M_2PI;
 		} else {
 		    /* counter-clock-wise */
 		    while (end_ang < start_ang)
-			end_ang += 2.0 * M_PI;
+			end_ang += M_2PI;
 		}
 		tot_ang = end_ang - start_ang;
 		nsegs = ceil(tot_ang / delta);
@@ -840,7 +828,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    }
 
 	    /* now do subdivision as necessary */
-	    bezier_hd = subdivide_bezier(bezier_hd, bsg->degree, epsilon, 0);
+	    bezier_hd = bezier_subdivide(bezier_hd, bsg->degree, epsilon, 0);
 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
@@ -869,9 +857,6 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 }
 
 
-/**
- * C U R V E _ T O _ V L I S T
- */
 int
 curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
 {
@@ -898,9 +883,6 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 }
 
 
-/**
- * R T _ S K E T C H _ P L O T
- */
 int
 rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -925,8 +907,6 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
 
 
 /**
- * R T _ S K E T C H _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -941,8 +921,6 @@ rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_
 
 
 /**
- * R T _ S K E T C H _ I M P O R T
- *
  * Import an SKETCH from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1136,8 +1114,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 
 
 /**
- * R T _ S K E T C H _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1339,8 +1315,6 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
 
 /**
- * R T _ S K E T C H _ I M P O R T 5
- *
  * Import an SKETCH from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1531,8 +1505,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 
 
 /**
- * R T _ S K E T C H _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1744,8 +1716,6 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
 
 /**
- * R T _ S K E T C H _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1990,8 +1960,6 @@ rt_curve_free(struct rt_curve *crv)
 
 
 /**
- * R T _ S K E T C H _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -2552,10 +2520,6 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 }
 
 
-/**
- * R T _ S K E T C H _ P A R A M S
- *
- */
 int
 rt_sketch_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

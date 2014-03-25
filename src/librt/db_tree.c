@@ -34,11 +34,13 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "./librt_private.h"
 
 
 void
@@ -106,9 +108,6 @@ db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resou
 }
 
 
-/**
- *
- */
 struct combined_tree_state *
 db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
@@ -127,9 +126,6 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
 }
 
 
-/**
- *
- */
 struct combined_tree_state *
 db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
 {
@@ -145,9 +141,6 @@ db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
 }
 
 
-/**
- *
- */
 void
 db_free_combined_tree_state(struct combined_tree_state *ctsp)
 {
@@ -159,9 +152,6 @@ db_free_combined_tree_state(struct combined_tree_state *ctsp)
 }
 
 
-/**
- *
- */
 void
 db_pr_tree_state(const struct db_tree_state *tsp)
 {
@@ -193,9 +183,6 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 }
 
 
-/**
- *
- */
 void
 db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
 {
@@ -230,11 +217,11 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    /* DB_INH_LOWER was set -- lower nodes in tree override */
 	    tsp->ts_mater.ma_color_valid = 1;
 	    tsp->ts_mater.ma_color[0] =
-		(((float)(comb->rgb[0]))*bn_inv255);
+		(((float)(comb->rgb[0])) / 255.0);
 	    tsp->ts_mater.ma_color[1] =
-		(((float)(comb->rgb[1]))*bn_inv255);
+		(((float)(comb->rgb[1])) / 255.0);
 	    tsp->ts_mater.ma_color[2] =
-		(((float)(comb->rgb[2]))*bn_inv255);
+		(((float)(comb->rgb[2])) / 255.0);
 	    /* Track further inheritance as specified by this combination */
 	    tsp->ts_mater.ma_cinherit = comb->inherit;
 	}
@@ -475,9 +462,6 @@ db_find_named_leafs_parent(int *side, union tree *tp, const char *cp)
 }
 
 
-/**
- *
- */
 void
 db_tree_del_lhs(union tree *tp, struct resource *resp)
 {
@@ -524,9 +508,6 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 }
 
 
-/**
- *
- */
 void
 db_tree_del_rhs(union tree *tp, struct resource *resp)
 {
@@ -883,28 +864,6 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
     return ret;
 }
 
-
-/**
- * Helper routine to detect cyclic references
- */
-HIDDEN int
-_db_detect_cycle(struct db_full_path *pathp, union tree *tp)
-{
-    /* skip the last one added since it is currently being tested. */
-    long int depth = pathp->fp_len - 1;
-
-    /* check the path to see if it is groundhog day */
-    while (--depth >= 0) {
-	if (BU_STR_EQUAL(tp->tr_l.tl_name, pathp->fp_names[depth]->d_namep)) {
-	    return 1;
-	}
-    }
-
-    /* not found */
-    return 0;
-}
-
-
 /**
  * Helper routine for db_recurse()
  */
@@ -935,7 +894,7 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	    }
 
 	    /* protect against cyclic geometry */
-	    if (_db_detect_cycle(pathp, tp)) {
+	    if (cyclic_path(pathp, tp->tr_l.tl_name)) {
 		int depth = pathp->fp_len;
 
 		bu_log("Detected cyclic reference of %s\nPath stack is:\n", tp->tr_l.tl_name);
@@ -1224,9 +1183,6 @@ out:
 }
 
 
-/**
- *
- */
 union tree *
 db_dup_subtree(const union tree *tp, struct resource *resp)
 {
@@ -1292,9 +1248,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 }
 
 
-/**
- *
- */
 void
 db_ck_tree(const union tree *tp)
 {
@@ -1740,9 +1693,6 @@ db_is_tree_all_unions(const union tree *tp)
 }
 
 
-/**
- *
- */
 int
 db_count_subtree_regions(const union tree *tp)
 {
@@ -1779,9 +1729,6 @@ db_count_subtree_regions(const union tree *tp)
 }
 
 
-/**
- *
- */
 int
 db_tally_subtree_regions(
     union tree *tp,
@@ -1891,9 +1838,6 @@ struct db_walk_parallel_state {
 #define DB_CK_WPS(_p) BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
 
 
-/**
- *
- */
 HIDDEN void
 _db_walk_subtree(
     union tree *tp,
@@ -2408,7 +2352,8 @@ rt_shader_mat(
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
-    reg_name = bu_basename(rp->reg_name);
+    reg_name = (char *)bu_calloc(strlen(rp->reg_name), sizeof(char), "rt_shader_mat reg_name");
+    bu_basename(reg_name, rp->reg_name);
     /* get model-to-region space mapping */
     if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
 	bu_free(reg_name, "reg_name free");

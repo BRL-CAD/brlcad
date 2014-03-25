@@ -50,7 +50,9 @@ Conic::Conic(STEPWrapper *sw, int step_id)
 
 Conic::~Conic()
 {
-    delete position;
+    // not created through factory must delete here.
+    if (position)
+	delete position;
 }
 
 const double *

@@ -25,8 +25,7 @@
 #include "bio.h"
 
 /* common headers */
-#include "bu.h"
-
+#include "bu/parallel.h"
 
 int
 bu_process_id()

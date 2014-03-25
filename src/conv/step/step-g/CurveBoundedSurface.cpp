@@ -52,6 +52,9 @@ CurveBoundedSurface::CurveBoundedSurface(STEPWrapper *sw, int step_id)
 
 CurveBoundedSurface::~CurveBoundedSurface()
 {
+    // created through factory will be deleted there.
+    basis_surface = NULL;
+    // elements created through factory will be deleted there.
     boundaries.clear();
 }
 

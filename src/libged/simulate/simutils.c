@@ -67,7 +67,7 @@ print_matrix(char *rb_namep, mat_t t)
     }
 
     bu_vls_strcat(&buffer, "-------------------------------------------------------\n");
-    bu_log("%V", &buffer);
+    bu_log("%s", bu_vls_addr(&buffer));
     bu_vls_free(&buffer);
 }
 

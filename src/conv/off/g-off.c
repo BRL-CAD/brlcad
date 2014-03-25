@@ -65,9 +65,6 @@ static int	regions_done = 0;
 static void nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf);
 static void jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map);
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -247,8 +244,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
@@ -386,8 +381,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 }
 
 /*
- *	N M G _ T O _ P S U R F
- *
  *	Convert an nmg region into Jack format.  This routine makes a
  *	list of unique vertices and writes them to the ascii Jack
  *	data base file.  Then a routine to generate the face vertex
@@ -434,8 +427,6 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 
 
 /*
- *	J A C K _ F A C E S
- *
  *	Continues the conversion of an nmg into Jack format.  Before
  *	this routine is called, a list of unique vertices has been
  *	stored in a heap.  Using this heap and the nmg structure, a

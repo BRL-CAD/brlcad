@@ -61,9 +61,6 @@
 #include "bn.h"
 #include "bu.h"
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {

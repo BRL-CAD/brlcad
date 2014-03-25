@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -226,6 +227,84 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 	    bu_vls_strcat(str, pp->fp_names[i]->d_namep);
 	else
 	    bu_vls_strcat(str, "**NULL**");
+    }
+}
+
+void
+db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, const struct db_i *dbip, const struct bn_tol *tol, int fp_flags)
+{
+    size_t i;
+    int type;
+    BU_CK_VLS(vls);
+    RT_CK_FULL_PATH(full_path);
+
+    if (!full_path->fp_names[0]) {
+	bu_vls_strcat(vls, "**NULL**");
+	return;
+    }
+
+    for (i = 0; i < full_path->fp_len; i++) {
+	bu_vls_putc(vls, '/');
+	if (fp_flags & DB_FP_PRINT_BOOL) {
+	    switch (full_path->fp_bool[i]) {
+		case 2:
+		    bu_vls_strcat(vls, "u ");
+		    break;
+		case 3:
+		    bu_vls_strcat(vls, "+ ");
+		    break;
+		case 4:
+		    bu_vls_strcat(vls, "- ");
+		    break;
+	    }
+	}
+	bu_vls_strcat(vls, full_path->fp_names[i]->d_namep);
+	if (fp_flags & DB_FP_PRINT_TYPE) {
+	    struct rt_db_internal intern;
+	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
+		if (intern.idb_meth->ft_label) {
+		    bu_vls_putc(vls, '(');
+		    switch (intern.idb_minor_type) {
+			case DB5_MINORTYPE_BRLCAD_ARB8:
+			    type = rt_arb_std_type(&intern, tol);
+			    switch (type) {
+				case 4:
+				    bu_vls_strcat(vls, "arb4");
+				    break;
+				case 5:
+				    bu_vls_strcat(vls, "arb5");
+				    break;
+				case 6:
+				    bu_vls_strcat(vls, "arb6");
+				    break;
+				case 7:
+				    bu_vls_strcat(vls, "arb7");
+				    break;
+				case 8:
+				    bu_vls_strcat(vls, "arb8");
+				    break;
+				default:
+				    break;
+			    }
+			    break;
+			case DB5_MINORTYPE_BRLCAD_COMBINATION:
+			    if (full_path->fp_names[i]->d_flags & RT_DIR_REGION) {
+				bu_vls_putc(vls, 'r');
+			    } else {
+				bu_vls_putc(vls, 'c');
+			    }
+			    break;
+			default:
+			    bu_vls_strcat(vls, intern.idb_meth->ft_label);
+			    break;
+		    }
+
+		}
+		bu_vls_putc(vls, ')');
+		rt_db_free_internal(&intern);
+	    }
+	}
+
     }
 }
 
@@ -450,6 +529,29 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     for (i = a->fp_len-1; i >= 0; i--) {
 	if (a->fp_names[i] == dp) return 1;
     }
+    return 0;
+}
+
+int cyclic_path(const struct db_full_path *fp, const char *name)
+{
+    /* skip the last one added since it is currently being tested. */
+    long int depth = fp->fp_len - 1;
+    const char *test_name;
+
+    if (name && !name[0] == '\0') {
+	test_name = name;
+    } else {
+	test_name = DB_FULL_PATH_CUR_DIR(fp)->d_namep;
+    }
+
+    /* check the path to see if it is groundhog day */
+    while (--depth >= 0) {
+	if (BU_STR_EQUAL(test_name, fp->fp_names[depth]->d_namep)) {
+	    return 1;
+	}
+    }
+
+    /* not cyclic */
     return 0;
 }
 

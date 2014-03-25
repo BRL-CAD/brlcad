@@ -31,7 +31,8 @@
  * matumoto@math.keio.ac.jp
  */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 
 /* Period parameters */

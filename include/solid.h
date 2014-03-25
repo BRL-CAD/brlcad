@@ -28,7 +28,7 @@
 #ifndef SOLID_H
 #define SOLID_H
 
-#include "bu.h"
+#include "bu/list.h"
 #include "raytrace.h"
 
 struct solid  {

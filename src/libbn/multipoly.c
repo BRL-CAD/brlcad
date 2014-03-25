@@ -32,7 +32,7 @@
 #include <math.h>
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 

@@ -20,15 +20,13 @@
 
 #include "common.h"
 
-#include "bu.h"
-
 #ifndef LIBBU_RB_INTERNALS_H
 #define LIBBU_RB_INTERNALS_H seen
 
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 /**
- * R B _ C K O R D E R
- *
  * This internal macro has two parameters: a tree and an order number.
  * It ensures that the order number is valid for the tree.
  */
@@ -91,8 +89,6 @@
 #define WALK_DATA 1
 
 /**
- * R B _ R O T A T E
- *
  * This macro has three parameters: the node about which to rotate,
  * the order to be rotated, and the direction of rotation.  They allow
  * indirection in the use of rb_rot_left() and rb_rot_right().
@@ -102,8 +98,6 @@
 			    rb_rot_right((n), (o)))
 
 /**
- * B U _ R B _ O T H E R _ R O T A T E
- *
  * This macro has three parameters: the node about which to rotate,
  * the order to be rotated, and the direction of rotation.  They allow
  * indirection in the use of rb_rot_left() and rb_rot_right().
@@ -117,8 +111,6 @@
  */
 
 /**
- * R B _ N E I G H B O R ()
- *
  * Return a node adjacent to a given red-black node
  *
  * This function has three parameters: the node of interest, the order
@@ -136,20 +128,16 @@ extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int se
  */
 
 /**
- * R B _ R O T _ L E F T
- *
  * Perform left rotation on a red-black tree
  *
  * This function has two parameters: the node about which to rotate
  * and the order to be rotated.  rb_rot_left() is an implementation of
- * the routine called LEFT-ROTATE on p. 266 of Cormen et al, with
+ * the routine called LEFT-ROTATE on p. 266 of Cormen et al., with
  * modification on p. 285.
  */
 extern void rb_rot_left(struct bu_rb_node *x, int order);
 
 /**
- * R B _ R O T _ R I G H T
- *
  * Perform right rotation on a red-black tree
  *
  * This function has two parameters: the node about which to rotate
@@ -159,8 +147,6 @@ extern void rb_rot_left(struct bu_rb_node *x, int order);
 extern void rb_rot_right(struct bu_rb_node *y, int order);
 
 /**
- * R B _ W A L K
- *
  * Traverse a red-black tree
  *
  * This function has five parameters: the tree to traverse, the order
@@ -174,8 +160,6 @@ extern void rb_rot_right(struct bu_rb_node *y, int order);
 extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (void), int what_to_visit, int trav_type);
 
 /**
- * R B _ F R E E _ N O D E
- *
  * Relinquish memory occupied by a red-black node
  *
  * This function has one parameter: a node to free.  rb_free_node()
@@ -185,8 +169,6 @@ extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (void), in
 extern void rb_free_node(struct bu_rb_node *node);
 
 /**
- * R B _ F R E E _ P A C K A G E
- *
  * Relinquish memory occupied by a red-black package
  *
  * This function has one parameter: a package to free.

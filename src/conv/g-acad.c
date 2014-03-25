@@ -38,6 +38,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -324,8 +326,6 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.
@@ -474,9 +474,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -563,9 +560,7 @@ main(int argc, char **argv)
 
     if (!output_file) {
 	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp), O_BINARY);
-#endif
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -577,9 +572,7 @@ main(int argc, char **argv)
     /* Open g-acad error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);

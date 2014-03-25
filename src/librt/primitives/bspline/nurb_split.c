@@ -241,8 +241,6 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 
 
 /**
- * R T _ N U R B _ C _ S P L I T
- *
  * Split a NURB curve by inserting a multiple knot and return the
  * result of the two curves.
  *

@@ -30,7 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+
 
 struct render_flos_s {
     point_t frag_pos;

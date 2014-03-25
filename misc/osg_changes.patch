@@ -30,8 +30,7 @@ Index: src/mged/dozoom.c
 -
 +#if 0
  /*
-  * P E R S P _ M A T
-  *
+   *
 @@ -247,6 +249,7 @@
          }
      }

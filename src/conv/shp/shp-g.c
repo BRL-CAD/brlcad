@@ -198,8 +198,8 @@ main(int argc, char *argv[])
     }
 
     if (opt_verbose) {
-	bu_log("Reading from [%V]\n", &vls_in);
-	bu_log("Writing to [%V]\n\n", &vls_out);
+	bu_log("Reading from [%s]\n", bu_vls_addr(&vls_in));
+	bu_log("Writing to [%s]\n\n", bu_vls_addr(&vls_out));
     }
 
     /* initialize single threaded resource */
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
     /* open the input */
     shapefile = SHPOpen(bu_vls_addr(&vls_in), "rb");
     if (!shapefile) {
-	bu_log("ERROR: Unable to open shapefile [%V]\n", &vls_in);
+	bu_log("ERROR: Unable to open shapefile [%s]\n", bu_vls_addr(&vls_in));
 	bu_vls_free(&vls_in);
 	bu_vls_free(&vls_out);
 	bu_exit(4, NULL);    }
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 
     /* open the .g for writing */
     if ((fd_out = wdb_fopen(bu_vls_addr(&vls_out))) == NULL) {
-	bu_log("ERROR: Unable to open shapefile [%V]\n", &vls_out);
+	bu_log("ERROR: Unable to open shapefile [%s]\n", bu_vls_addr(&vls_out));
 	bu_vls_free(&vls_in);
 	bu_vls_free(&vls_out);
 	perror(argv0);

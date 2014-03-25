@@ -102,7 +102,6 @@ struct vldray
  * been more useful for the file to have several fields for this.
  *
  * 0                   1                   2                   3 3
- * 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |         Screen Y        |          Screen X       |    Level  |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -114,9 +113,6 @@ struct vldray
 	    ((_ap->a_y & 0x1FFF) << (6+13));			\
     }
 
-/*
- * W R A Y
- */
 void
 wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal)
 {
@@ -147,8 +143,6 @@ wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inorma
 
 
 /*
- * W R A Y P T S
- *
  * Write a VLD-standard ray for a section of a ray specified
  * by the "in" and "out" distances along the ray.  This is usually
  * used for logging passage through "air" (i.e., no solid).
@@ -182,8 +176,6 @@ wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FIL
 
 
 /*
- * W R A Y P A I N T
- *
  * Write "paint" into a VLD standard rayfile.
  */
 void

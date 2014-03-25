@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -58,9 +59,7 @@ char mfilename[1024] = {0};
 
 int manifold[4] = { 1, 1, 1, 1 };
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
+
 void
 usage(char *str, int stopprog)
 {
@@ -75,9 +74,6 @@ usage(char *str, int stopprog)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
 int
 parse_args(int ac, char **av)
 {
@@ -515,8 +511,6 @@ make_0manifold_bits()
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

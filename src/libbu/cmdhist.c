@@ -23,13 +23,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "cmd.h"
-
+#include "bu/cmd.h"
 
 /**
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the
  * history vls'es. 'status' is either BRLCAD_OK or BRLCAD_ERROR.
  */

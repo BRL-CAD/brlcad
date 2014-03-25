@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 enum etypes {
@@ -45,8 +46,6 @@ enum etypes {
 
 
 /**
- * C O M B M E M _ M A T _ A E T
- *
  * Given the azimuth, elevation and twist angles, calculate the
  * rotation part of a 4x4 matrix.
  */
@@ -89,8 +88,6 @@ combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ R M A T
- *
  * Disassemble the given rotation matrix into az, el, tw.
  */
 HIDDEN void
@@ -143,8 +140,6 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ M A T
- *
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
 HIDDEN int
@@ -208,8 +203,6 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 
 
 /**
- * C O M B M E M _ A S S E M B L E _ M A T
- *
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
 HIDDEN void
@@ -293,9 +286,9 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 
 		bu_vls_printf(gedp->ged_result_str, "%c {%s} %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
 			      op, itp->tr_l.tl_name,
-			      az * bn_radtodeg,
-			      el * bn_radtodeg,
-			      tw * bn_radtodeg,
+			      az * RAD2DEG,
+			      el * RAD2DEG,
+			      tw * RAD2DEG,
 			      tx, ty, tz,
 			      sa, sx, sy, sz);
 	    }
@@ -584,7 +577,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    sscanf(argv[i+14], "%lf", &kz) == 1) {
 
 	    VSET(aetvec, az, el, tw);
-	    VSCALE(aetvec, aetvec, bn_degtorad);
+	    VSCALE(aetvec, aetvec, DEG2RAD);
 	    VSET(tvec, tx, ty, tz);
 	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
 	    VSET(key_pt, kx, ky, kz);
@@ -680,9 +673,9 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (etype == ETYPES_ROT_AET) {
-		az *= bn_degtorad;
-		el *= bn_degtorad;
-		tw *= bn_degtorad;
+		az *= DEG2RAD;
+		el *= DEG2RAD;
+		tw *= DEG2RAD;
 		combmem_mat_aet(mat_rot, az, el, tw);
 	    } else
 		bn_mat_angles(mat_rot, az, el, tw);
@@ -767,7 +760,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
 	    VSET(dir, dx, dy, dz);
 	    VUNITIZE(dir);
-	    ang *= bn_degtorad;
+	    ang *= DEG2RAD;
 	    bn_mat_arb_rot(mat, pt, dir, ang);
 	}
 

@@ -47,7 +47,9 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db5.h"
@@ -67,8 +69,6 @@ struct db_tree_counter_state {
 
 
 /**
- * D B _ T R E E _ C O U N T E R
- *
  * Count number of non-identity matrices, number of leaf nodes,
  * number of operator nodes, etc.
  *
@@ -153,8 +153,6 @@ struct rt_comb_v5_serialize_state {
 
 
 /**
- * R T _ C O M B _ V 5 _ S E R I A L I Z E
- *
  * In one single pass through the tree, serialize out all three output
  * sections at once.
  */
@@ -251,9 +249,6 @@ rt_comb_v5_serialize(
 }
 
 
-/**
- * R T _ C O M B _ E X P O R T 5
- */
 int
 rt_comb_export5(
     struct bu_external *ep,
@@ -792,8 +787,6 @@ finish:
 
 
 /**
- * R T _ C O M B _ G E T
- *
  * Sets the result string to a description of the given combination.
  * Entered via OBJ[].ft_get().
  */
@@ -906,8 +899,6 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 /**
- * R T _ C O M B _ A D J U S T
- *
  * Example -
  * rgb "1 2 3" ...
  *
@@ -1075,9 +1066,6 @@ not_region:
 }
 
 
-/**
- * R T _ C O M B _ F O R M
- */
 int
 rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
@@ -1090,8 +1078,6 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 /**
- * R T _ C O M B _ M A K E
- *
  * Create a blank combination with appropriate values.  Called via
  * OBJ[ID_COMBINATION].ft_make().
  */

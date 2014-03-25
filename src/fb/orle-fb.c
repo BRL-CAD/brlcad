@@ -63,7 +63,6 @@ static char *fb_file = (char *)NULL;
 
 void fill_Buffer(char *dest, char *src, int scan_bytes, int repeat);
 
-/* m a i n ()							*/
 int
 main(int argc, char **argv)
 {
@@ -243,7 +242,7 @@ main(int argc, char **argv)
 }
 
 
-/* f i l l _ B u f f e r ()
+/*
 	Fill cluster buffer from scanline (as fast as possible).
 */
 void
@@ -258,7 +257,6 @@ fill_Buffer(char *dest, char *src, int scan_bytes, int repeat)
 }
 
 
-/* p a r s _ A r g v ()						*/
 static int
 pars_Argv(int argc, char **argv)
 {
@@ -345,7 +343,7 @@ pars_Argv(int argc, char **argv)
 }
 
 
-/* p r n t _ U s a g e ()
+/*
 	Print usage message.
 */
 static void

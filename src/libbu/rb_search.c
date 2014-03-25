@@ -24,14 +24,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * _ R B _ S E A R C H ()
- *
  * Search for a node in a red-black tree
  *
  * This function has four parameters: the root and order of the tree

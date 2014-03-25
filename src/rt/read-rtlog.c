@@ -43,8 +43,6 @@ extern int verbose;
 
 
 /**
- * R E A D _ R T _ F I L E
- *
  * Read an RT program's log file line by line until it either finds
  * view, orientation, eye_position, and size of the model, or it hits
  * the end of file.  When a colon is found, sscanf() retrieves the

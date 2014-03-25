@@ -137,7 +137,7 @@ if [ -x /usr/bin/mail ] ; then
     exit
 fi
 
-if [ $FAILED -eq 1] ; then
+if [ $FAILED -eq 1 ] ; then
     /bin/echo "Mail delivery failed.  Send file $BUG_REPORT to $BUGEMAIL"
 else
     /bin/echo "Mail agent not found.  Send file $BUG_REPORT to $BUGEMAIL"

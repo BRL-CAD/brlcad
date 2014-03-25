@@ -27,7 +27,7 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
-//#include "CharacterizedDefinition.h"
+#include "CharacterizedDefinition.h"
 #include "PropertyDefinition.h"
 
 #define CLASSNAME "PropertyDefinition"
@@ -40,7 +40,7 @@ PropertyDefinition::PropertyDefinition()
     id = 0;
     name = "";
     description = "";
-    //definition = NULL;
+    definition = NULL;
 }
 
 PropertyDefinition::PropertyDefinition(STEPWrapper *sw, int step_id)
@@ -49,16 +49,43 @@ PropertyDefinition::PropertyDefinition(STEPWrapper *sw, int step_id)
     id = step_id;
     name = "";
     description = "";
-    //definition = NULL;
+    definition = NULL;
 }
 
 PropertyDefinition::~PropertyDefinition()
 {
+    // not created through factory must delete here.
+    if (definition)
+	delete definition;
 }
 
 string PropertyDefinition::ClassName()
 {
     return entityname;
+}
+
+ProductDefinition *
+PropertyDefinition::GetRelatingProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (definition) {
+	ret = definition->GetRelatingProductDefinition();
+    }
+
+    return ret;
+}
+
+ProductDefinition *
+PropertyDefinition::GetRelatedProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (definition) {
+	ret = definition->GetRelatedProductDefinition();
+    }
+
+    return ret;
 }
 
 bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
@@ -73,17 +100,18 @@ bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
-    /*
-     if (definition == NULL) {
-     SDAI_Application_instance *entity = step->getEntityAttribute(sse,"definition");
-     if (entity) { //this attribute is optional
-     definition = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(sw,entity));
-     } else {
-     std::cout << CLASSNAME << ":Error loading attribute 'definition'." << std::endl;
-     return false;
-     }
-     }
-     */
+    if (definition == NULL) {
+	SDAI_Select *select = step->getSelectAttribute(sse, "definition");
+	if (select) {
+	    CharacterizedDefinition *aCD = new CharacterizedDefinition();
+
+	    definition = aCD;
+	    if (!aCD->Load(step, select)) {
+		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedDefinition from PropertyDefinition." << std::endl;
+		return false;
+	    }
+	}
+    }
 
     return true;
 }
@@ -102,7 +130,7 @@ void PropertyDefinition::Print(int level)
     std::cout << "description:" << description << std::endl;
     TAB(level + 1);
     std::cout << "definition:" << std::endl;
-    //definition->Print(level+2);
+    definition->Print(level+2);
 }
 
 STEPEntity *

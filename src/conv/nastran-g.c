@@ -106,7 +106,7 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static char *Usage="Usage: %s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
@@ -578,8 +578,8 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     switch (cs->type) {
 	case CORD_CYL:
-	    c1 = pt[X] * cos(pt[Y] * bn_degtorad);
-	    c2 = pt[X] * sin(pt[Y] * bn_degtorad);
+	    c1 = pt[X] * cos(pt[Y] * DEG2RAD);
+	    c2 = pt[X] * sin(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, pt[Z], cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -590,10 +590,10 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    break;
 
 	case CORD_SPH:
-	    c4 = pt[X] * sin(pt[Y] * bn_degtorad);
-	    c1 = c4 * cos(pt[Z] * bn_degtorad);
-	    c2 = c4 * sin(pt[Z] * bn_degtorad);
-	    c3 = pt[X] * cos(pt[Y] * bn_degtorad);
+	    c4 = pt[X] * sin(pt[Y] * DEG2RAD);
+	    c1 = c4 * cos(pt[Z] * DEG2RAD);
+	    c2 = c4 * sin(pt[Z] * DEG2RAD);
+	    c3 = pt[X] * cos(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, c3, cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -1087,7 +1087,7 @@ get_cbar(void)
     VSCALE(pt1, pt1, conv[units]);
     VSCALE(pt2, pt2, conv[units]);
 
-    radius = sqrt(pb->area/bn_pi);
+    radius = sqrt(pb->area/M_PI);
     radius = radius * conv[units];
 
     VSUB2(height, pt2, pt1);
@@ -1123,7 +1123,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -1146,16 +1146,18 @@ main(int argc, char **argv)
 		units = MM;
 		break;
 	    case 'i':
-		nastran_file = bu_optarg;
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
 		    bu_exit(1, Usage, argv[0]);
 		}
+		nastran_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
+	    default:
+		bu_exit(1, Usage, argv[0]);
 	}
     }
 

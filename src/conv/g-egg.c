@@ -41,6 +41,7 @@
 #include "gcv.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -178,9 +179,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

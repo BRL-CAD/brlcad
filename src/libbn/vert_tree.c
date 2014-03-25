@@ -39,6 +39,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 
 
@@ -105,9 +107,9 @@ create_vert_tree_w_norms(void)
     return tree;
 }
 
-/**		C L E A N _ V E R T_ T R E E _ R E C U R S E
- *@brief
- *	static recursion routine used by "clean_vert_tree"
+
+/**
+ * static recursion routine used by "clean_vert_tree"
  */
 static void
 clean_vert_tree_recurse( union vert_tree *ptr )
@@ -133,9 +135,8 @@ clean_vert_tree( struct vert_root *tree_root )
     tree_root->curr_vert = 0;
 }
 
-/**		F R E E _ V E R T_ T R E E_ R E C U R S E
- *@brief
- *	Static recursive routine used by "free_vert_tree"
+/**
+ * static recursive routine used by "free_vert_tree"
  */
 static void
 free_vert_tree_recurse( union vert_tree *ptr )

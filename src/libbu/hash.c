@@ -25,8 +25,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/magic.h"
+#include "bu/hash.h"
 
 unsigned long
 bu_hash(const unsigned char *str, int len)

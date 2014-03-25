@@ -124,6 +124,9 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
   CMAKE_POLICY(SET CMP0017 OLD)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -243,54 +246,28 @@ set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 math(EXPR BRLCAD_VERSION_NUMBER "${BRLCAD_MAJOR_VERSION} * 10000 + ${BRLCAD_MINOR_VERSION} * 100 + ${BRLCAD_PATCH_VERSION}")
 
 #---------------------------------------------------------------------
-# Define relative install locations.  Don't set these if they have already
-# been set by some other means (like a higher level CMakeLists.txt file
-# including this one).
+# CMake derives much of its functionality from modules, typically
+# stored in one directory - let CMake know where to find them.  If we
+# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
+# our own, otherwise misc/CMake takes first priority.
+set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
+if(BRLCAD_IS_SUBBUILD)
+  set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${BRLCAD_CMAKE_DIR}")
+else(BRLCAD_IS_SUBBUILD)
+  set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+endif(BRLCAD_IS_SUBBUILD)
 
-# The location in which to install BRL-CAD executables.
-if(NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT BIN_DIR)
+#---------------------------------------------------------------------
+# Define relative install locations and output directories.  Don't set
+# these if they have already been set by some other means (like a
+# higher level CMakeLists.txt file including this one).
+# For output directories - where built library and executable
+# files will be placed after building but prior to install.  The
+# necessary variables change between single and multi configuration
+# build systems, so it is necessary to handle both cases on a
+# conditional basis.
 
-# The location in which to install BRL-CAD header files.
-if(NOT INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif(NOT INCLUDE_DIR)
-
-# The location in which to install BRL-CAD libraries.
-if(NOT LIB_DIR)
-  set(LIB_DIR lib)
-endif(NOT LIB_DIR)
-
-# The location in which to install BRL-CAD configuration files.
-if(NOT CONF_DIR)
-  set(CONF_DIR etc)
-endif(NOT CONF_DIR)
-
-# The location in which to install BRL-CAD data files
-if(NOT DATA_DIR)
-  set(DATA_DIR share)
-endif(NOT DATA_DIR)
-
-# The location in which to install BRL-CAD Manual pages
-if(NOT MAN_DIR)
-  set(MAN_DIR ${DATA_DIR}/man)
-endif(NOT MAN_DIR)
-
-# The location in which to install BRL-CAD documentation files
-if(NOT DOC_DIR)
-  set(DOC_DIR ${DATA_DIR}/doc)
-endif(NOT DOC_DIR)
-
-# Make sure no absolute paths have been supplied to these variables
-set(INSTALL_DIRS BIN INCLUDE LIB CONF DATA MAN DOC)
-foreach(instdir ${INSTALL_DIRS})
-  get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
-  if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
-    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"")
-    set(HAVE_INSTALL_DIR_FULL_PATH 1)
-  endif("${${instdir}_DIR}" STREQUAL "${instdir_full}")
-endforeach(instdir ${INSTALL_DIRS})
+include(${BRLCAD_CMAKE_DIR}/Path_Setup.cmake)
 
 #---------------------------------------------------------------------
 # Searching the system for packages presents something of a dilemma -
@@ -501,17 +478,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
-# CMake derives much of its functionality from modules, typically
-# stored in one directory - let CMake know where to find them.  If we
-# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
-# our own, otherwise misc/CMake takes first priority.
-set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
-if(BRLCAD_IS_SUBBUILD)
-  set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${BRLCAD_CMAKE_DIR}")
-else(BRLCAD_IS_SUBBUILD)
-  set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
-endif(BRLCAD_IS_SUBBUILD)
-
 # Load macros that will be used to define the BRL-CAD
 # build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
@@ -677,87 +643,7 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
-endif(NOT APPLE)
-# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
-# http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-#---------------------------------------------------------------------
-# Output directories - this is where built library and executable
-# files will be placed after building but prior to install.  The
-# necessary variables change between single and multi configuration
-# build systems, so it is necessary to handle both cases on a
-# conditional basis.
-
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  # If we're not doing multi-configuration, just set the three main
-  # variables to the correct values.
-  if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
-  endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
-  endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
-  endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  # Multi-configuration is more difficult.  Not only do we need to
-  # properly set the output directories, but we also need to
-  # identify the "toplevel" directory for each configuration so
-  # we can place files, documentation, etc. in the correct
-  # relative positions.  Because files may be placed by CMake
-  # without a build target to put them in their proper relative build
-  # directory position using these paths, we must fully qualify them
-  # without using CMAKE_CFG_INTDIR.
-  #
-  # We define directories that may not be quite "standard"
-  # for a particular build tool - for example, native VS2010 projects use
-  # another directory to denote CPU type being compiled for - but CMake only
-  # supports multi-configuration setups having multiple configurations,
-  # not multiple compilers.
-  #
-  # One additional wrinkle we must watch for here is the case where
-  # a multi-configuration setup uses "." for its internal directory -
-  # if that's the case, we need to just set the various config output
-  # directories to the same value.
-  set(CFG_ROOT ${BRLCAD_BINARY_DIR})
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-      set(CFG_ROOT ${BRLCAD_BINARY_DIR}/${CFG_TYPE})
-    endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
-    endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
-    endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
-    endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
-      set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${CFG_ROOT} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
-    if(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
-      set("BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}" ${CFG_ROOT} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
-  endforeach()
-endif(NOT CMAKE_CONFIGURATION_TYPES)
+include(${BRLCAD_CMAKE_DIR}/RPath_Setup.cmake)
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -1140,6 +1026,17 @@ if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 
+# Enable features requiring OpenSceneGraph
+option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OSG)
+if(BRLCAD_ENABLE_OSG)
+  find_package(OpenSceneGraph 3.2.0 REQUIRED osgText osgViewer)
+  if(NOT OSG_LIBRARY)
+    message("OpenSceneGraph interface requested, but OSG is not found - disabling")
+    set(BRLCAD_ENABLE_OSG OFF)
+  endif(NOT OSG_LIBRARY)
+endif(BRLCAD_ENABLE_OSG)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1475,6 +1372,11 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 # load our compiler testing macro definitions
 include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
+# Cache the original CMake sets of build flags for later use
+if(NOT CMAKE_BUILD_FLAGS_CACHED)
+  CACHE_BUILD_FLAGS()
+endif(NOT CMAKE_BUILD_FLAGS_CACHED)
+
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
@@ -1795,7 +1697,16 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
 # timeSetEvent in Windows memory management
-BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
+if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES "winmm.lib")
+  check_c_source_compiles("#include <windows.h>\nint main() {(void)timeSetEvent(1000, 100, (LPTIMECALLBACK)NULL, (DWORD_PTR)NULL, TIME_ONESHOT);}" HAVE_TIMESETEVENT)
+  if(HAVE_TIMESETEVENT)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TIMESETEVENT 1\n")
+    set(WINMM_LIBRARY "winmm.lib")
+  endif(HAVE_TIMESETEVENT)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+endif("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
 
 
 # *******************************************************************
@@ -1840,6 +1751,7 @@ BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 # Need to compare this with the configure.ac list
 BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 BRLCAD_INCLUDE_FILE(curses.h HAVE_CURSES_H)
+BRLCAD_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
 BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
@@ -2070,6 +1982,17 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
   endif(HAVE_PROGRAM_INVOCATION_NAME)
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
+# test for lrint
+if("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
+  check_c_source_compiles("#include <math.h>\nint main() {return lrint(3.14);}" HAVE_LRINT)
+  if(HAVE_LRINT)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_LRINT 1\n")
+  endif(HAVE_LRINT)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+endif("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
+
 #-----------------------------------------------------------------------
 # check C99 and POSIX 200112L missing functions with a more
 # rigorously-controlled compiler environment
@@ -2227,7 +2150,7 @@ endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # If we're building on Windows, use config_win.h file
 if(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
+  CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")
 endif(WIN32)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
@@ -2235,6 +2158,11 @@ CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
+
+# Generate the windows specific file, if needed
+if(WIN32)
+  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${BRLCAD_BINARY_DIR}/include/config_win.h)
+endif(WIN32)
 
 # Create a 1 second sleep utility executable
 try_compile(BUILD_SLEEP
@@ -2260,11 +2188,6 @@ set(toplevel_DOCFILES
   README
   )
 BRLCAD_ADDDATA(toplevel_DOCFILES ".")
-
-# Generate the windows specific file, if needed
-if(WIN32)
-  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in ${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
-endif(WIN32)
 
 # *******************************************************************
 # ***                     Summarize Results                       ***
@@ -2765,23 +2688,23 @@ else("${CMAKE_GENERATOR}" MATCHES "Make")
     )
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
+# Have touched every file and directory that we are going to touch with the
+# build system - time to write out our lists for future processing.
+get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
+get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
+string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
+string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake "${CMAKE_IGNORE_FILES}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake "${CMAKE_IGNORE_DIRS}")
+
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
   set(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_end.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c)
-  set(CMAKE_REQUIRED_LIBRARIES "${M_LIBRARY}")
-  if(M_LIBRARY)
-    TRY_RUN(TIME_RESULT TIME_COMPILED
-      ${CMAKE_BINARY_DIR}/CMakeTmp
-      ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
-      CMAKE_FLAGS -DCOMPILE_DEFINITIONS:STRING=-l${M_LIBRARY}
-      OUTPUT_VARIABLE COMPILEMESSAGES)
-  else(M_LIBRARY)
-    TRY_RUN(TIME_RESULT TIME_COMPILED
-      ${CMAKE_BINARY_DIR}/CMakeTmp
-      ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
-      OUTPUT_VARIABLE COMPILEMESSAGES)
-  endif(M_LIBRARY)
+  TRY_RUN(TIME_RESULT TIME_COMPILED
+    ${CMAKE_BINARY_DIR}/CMakeTmp
+    ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
+    OUTPUT_VARIABLE COMPILEMESSAGES)
   file(READ ${DELTA_END} CONFIG_TIME_MSG)
   string(STRIP "${CONFIG_TIME_MSG}" CONFIG_TIME_MSG)
   set(CONFIG_TIME_MSG_LABEL "Elapsed configuration time")
@@ -2792,15 +2715,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
-
-# Have touched every file and directory that we are going to touch with the
-# build system - time to write out our lists for future processing.
-get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
-get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
-string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
-string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake "${CMAKE_IGNORE_FILES}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake "${CMAKE_IGNORE_DIRS}")
 
 # Local Variables:
 # tab-width: 8

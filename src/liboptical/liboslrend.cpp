@@ -26,24 +26,30 @@
 #include "liboslrend.h"
 
 
-OSLRenderer::OSLRenderer(){
+OSLRenderer::OSLRenderer()
+{
 
     shadingsys = ShadingSystem::create(&rend, NULL, &errhandler);
 
     ssi = (ShadingSystemImpl *)shadingsys;
 }
 
-OSLRenderer::~OSLRenderer(){
+
+OSLRenderer::~OSLRenderer()
+{
 
     ssi->destroy_thread_info(handle);
     ShadingSystem::destroy(shadingsys);
 }
 
-ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
+
+ShadingAttribStateRef
+OSLRenderer::AddShader(ShaderGroupInfo &group_info)
+{
 
     shadingsys->ShaderGroupBegin();
 
-    for(size_t i = 0; i < group_info.shader_layers.size(); i++){
+    for(size_t i = 0; i < group_info.shader_layers.size(); i++) {
 
 	ShaderInfo &sh_info = group_info.shader_layers[i];
 
@@ -56,7 +62,7 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	    shadingsys->Parameter(sh_info.cparam[i].first.c_str(), TypeDesc::TypeColor, &(sh_info.cparam[i].second));
 	for(size_t i = 0; i < sh_info.sparam.size(); i++)
 	    shadingsys->Parameter(sh_info.sparam[i].first.c_str(), TypeDesc::TypeString, &(sh_info.sparam[i].second));
-	for(size_t i = 0; i < sh_info.vparam.size(); i++){
+	for(size_t i = 0; i < sh_info.vparam.size(); i++) {
 	    std::pair< TypeDesc, Vec3 > &vec_type = sh_info.vparam[i].second;
 	    shadingsys->Parameter(sh_info.vparam[i].first.c_str(), vec_type.first, &(vec_type.second));
 	}
@@ -70,7 +76,7 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
     }
 
     /* Set the edges between shader layers */
-    for(size_t i = 0; i < group_info.shader_edges.size(); i++){
+    for(size_t i = 0; i < group_info.shader_edges.size(); i++) {
 	ShaderParam &sh_param1 = group_info.shader_edges[i].first;
 	ShaderParam &sh_param2 = group_info.shader_edges[i].second;
 	shadingsys->ConnectShaders(sh_param1.layername.c_str(), sh_param1.paramname.c_str(),
@@ -90,7 +96,7 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 Color3
 OSLRenderer::QueryColor(RenderInfo *info) const
 {
-    if(info->depth >= 5){
+    if(info->depth >= 5) {
 	return Color3(0.0f);
     }
 

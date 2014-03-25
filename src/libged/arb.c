@@ -78,8 +78,8 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    rota *= bn_degtorad;
-    fb *= bn_degtorad;
+    rota *= DEG2RAD;
+    fb *= DEG2RAD;
 
     BU_ALLOC(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);

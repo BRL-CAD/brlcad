@@ -60,8 +60,6 @@ struct bu_structparse stk_parse[] = {
 
 
 /*
- * E X T _ S E T U P
- *
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
@@ -106,9 +104,6 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * S T K _ D O S E T U P
- */
 HIDDEN int
 sh_stk_dosetup(char *cp, struct region *rp, genptr_t *dpp, struct mfuncs **mpp, struct rt_i *rtip)
 
@@ -197,8 +192,6 @@ out:
 
 
 /*
- * S T K _ S E T U P
- *
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
@@ -272,8 +265,6 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
 
 /*
- * S T K _ R E N D E R
- *
  * Evaluate all of the rendering functions in the stack.
  *
  * Returns:
@@ -315,9 +306,6 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
 }
 
 
-/*
- * S T K _ P R I N T
- */
 HIDDEN void
 sh_stk_print(register struct region *rp, genptr_t dp)
 {
@@ -345,9 +333,6 @@ sh_stk_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * S T K _ F R E E
- */
 HIDDEN void
 sh_stk_free(genptr_t cp)
 {

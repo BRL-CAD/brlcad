@@ -27,7 +27,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "plot3.h"
 
@@ -167,9 +167,6 @@ again:
 }
 
 
-/**
- *
- */
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
@@ -754,9 +751,6 @@ rt_3move_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 {
@@ -767,9 +761,6 @@ rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {
@@ -971,15 +962,14 @@ rt_shootray(register struct application *ap)
 
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
-	register fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+	fastf_t f, diff;
+
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_shootray:  zero length dir vector\n");
-	    return 0;
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;
@@ -1624,13 +1614,13 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
 	fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;

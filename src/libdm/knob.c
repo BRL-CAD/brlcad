@@ -34,8 +34,6 @@
 #ifdef IR_KNOBS
 
 /*
- *                      D M _ L I M I T
- *
  * Because the dials are so sensitive, setting them exactly to
  * zero is very difficult.  This function can be used to extend the
  * location of "zero" into "the dead zone".
@@ -52,8 +50,6 @@ dm_limit(int i)
 }
 
 /*
- *			D M _ U N L I M I T
- *
  * This function reverses the effects of dm_limit.
  */
 int
@@ -66,8 +62,7 @@ dm_unlimit(int i)
     return 0;
 }
 
-/*			D M _ W R A P
- *
+/*
  * Wrap the given value "f" to a new value in the range (-1.0, 1.0).
  */
 fastf_t

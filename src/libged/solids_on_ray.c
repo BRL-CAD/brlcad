@@ -29,9 +29,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -104,8 +104,6 @@ rpt_miss(struct application *ap)
 
 
 /*
- * G E D _ S K E W E R _ S O L I D S
- *
  * Fire a ray at some geometry and obtain a list of the solids
  * encountered, sorted by first intersection.
  *

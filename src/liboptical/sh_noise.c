@@ -58,7 +58,7 @@ noise_deg_to_rad(const struct bu_structparse *sdp,
     double *p = (double *)((char *)base + sdp->sp_offset);
 
     /* reconvert with optional units */
-    *p = *p * (bn_pi / 180.0);
+    *p = *p * DEG2RAD;
 }
 
 
@@ -92,7 +92,7 @@ struct noise_specific noise_defaults = {
     1.0,		/* h_val */
     4.0,		/* octaves */
     1.0,		/* size */
-    1.57079632679489661923,		/* max_angle M_PI_2 */
+    M_PI_2,		/* max_angle */
     VINITALL(1.0),	/* vscale */
     VINITALL(1000.0),	/* delta into noise space */
     MAT_INIT_ZERO,	/* m_to_sh */
@@ -147,8 +147,7 @@ struct bu_structparse noise_parse_tab[] = {
 };
 
 
-/* G R A V E L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -233,9 +232,6 @@ found:
 }
 
 
-/*
- * G R A V E L _ P R I N T
- */
 HIDDEN void
 noise_print(register struct region *rp, genptr_t dp)
 {
@@ -243,9 +239,6 @@ noise_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * G R A V E L _ F R E E
- */
 HIDDEN void
 noise_free(genptr_t cp)
 {
@@ -254,8 +247,6 @@ noise_free(genptr_t cp)
 #define RESCALE_NOISE(n) n += 1.0
 
 /*
- * N O R M _ N O I S E
- *
  * Apply a noise function to the surface normal
  */
 static void
@@ -324,8 +315,6 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 
 
 /*
- * F R A C T A L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

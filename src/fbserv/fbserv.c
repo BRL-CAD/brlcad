@@ -178,8 +178,6 @@ get_args(int argc, char **argv)
 }
 
 /*
- *			I S _ S O C K E T
- *
  * Determine if a file descriptor corresponds to an open socket.
  * Used to detect when we are started from INETD which gives us an
  * open socket connection on fd 0.
@@ -247,9 +245,6 @@ setup_socket(int fd)
 }
 
 
-/*
- *			N E W _ C L I E N T
- */
 void
 new_client(struct pkg_conn *pcp)
 {
@@ -271,9 +266,6 @@ new_client(struct pkg_conn *pcp)
     pkg_close(pcp);
 }
 
-/*
- *			D R O P _ C L I E N T
- */
 void
 drop_client(int sub)
 {
@@ -291,8 +283,6 @@ drop_client(int sub)
 
 
 /*
- *			C O M M _ E R R O R
- *
  *  Communication error.  An error occurred on the PKG link.
  *  It may be local, or it may be between us and the client we are serving.
  *  We send a copy to syslog or stderr.
@@ -316,8 +306,6 @@ comm_error(const char *str)
 }
 
 /*
- *			M A I N _ L O O P
- *
  *  Loop forever handling clients as they come and go.
  *  Access to the framebuffer may be interleaved, if the user
  *  wants it that way.
@@ -406,9 +394,6 @@ init_syslog(void)
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -549,8 +534,6 @@ main(int argc, char **argv)
 
 #ifndef _WIN32
 /*
- *			F B _ L O G
- *
  *  Handles error or log messages from the frame buffer library.
  *  We route these back to all clients in an ERROR packet.  Note that
  *  this is a replacement for the default fb_log function in libfb

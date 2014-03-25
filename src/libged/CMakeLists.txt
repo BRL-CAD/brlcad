@@ -103,6 +103,7 @@ set(LIBGED_SOURCES
   find.c
   form.c
   fracture.c
+  gdiff.c
   ged.c
   ged_util.c
   get.c

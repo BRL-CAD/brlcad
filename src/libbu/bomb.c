@@ -26,8 +26,10 @@
 #include <stdarg.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 
 /**
  * list of callbacks to call during bu_bomb.

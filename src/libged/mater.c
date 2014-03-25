@@ -86,7 +86,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     if ((!offset && argc < 7) || (offset && argc < 5)) {
 	/* help, let them know the old value */
 	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "Current shader string = %V\n", &comb->shader);
+	    bu_vls_printf(gedp->ged_result_str, "Current shader string = %s\n", bu_vls_addr(&comb->shader));
 	} else if (argc == 3) {
 	    if (!comb->rgb_valid)
 		bu_vls_printf(gedp->ged_result_str, "Current color = (No color specified)\n");

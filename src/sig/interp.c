@@ -21,11 +21,11 @@
  * Do the interpolation necessary to change a set of points from
  * linear to log scale.
  *
- * Input, a set of linearly separated samples.
- * Output, the same number of samples on a log baseline.
+ * Input: a set of linearly separated samples.
+ * Output: the same number of samples on a log baseline.
  *
  * This uses fourth order Lagrange Interpolation and may
- * be too wigly for our purposes.
+ * be too wiggly for our purposes.
  *
  * Sure this is ugly.... I'll be happy if it works at all.
  */

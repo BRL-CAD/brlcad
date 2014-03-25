@@ -44,8 +44,8 @@
 #define DFLT_PIXEL_SIZE 3
 
 static char usage[] = "\
-Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
-    or 'imgdims [-# bytes/pixel] num_bytes'\n";
+Usage: imgdims [-ns] [-# bytes/pixel] file_name\n\
+    or imgdims [-# bytes/pixel] num_bytes\n";
 #define OPT_STRING "ns#:h?"
 
 

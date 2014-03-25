@@ -22,7 +22,7 @@
 
 #include "bio.h"
 
-#include "bu.h"
+
 #include "ged.h"
 
 

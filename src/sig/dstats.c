@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -48,10 +49,12 @@ main(int ac, char *av[])
     double buf[IBUFSIZE];		/* Input buffer */
 
     int i, n;
-    long num_values;
+    long num_values = 0;
     double *bp;
-    double sum, sum2;
-    double max, min;
+    double sum = 0.0;
+    double sum2 = 0.0;
+    double min = DBL_MAX;
+    double max = DBL_MIN;
     double mean, var;
     FILE *fp;
 
@@ -71,17 +74,8 @@ main(int ac, char *av[])
 	fp = stdin;
 
     /*
-     * Find sum, min, max.
+     * Find min, max.
      */
-    num_values = 0;
-    sum = sum2 = 0;
-#if defined(HUGE_VAL)
-    min = HUGE_VAL;
-    max = -HUGE_VAL;
-#else
-    min = HUGE;
-    max = -HUGE;
-#endif
     while ((n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num_values += n;
 	bp = &buf[0];

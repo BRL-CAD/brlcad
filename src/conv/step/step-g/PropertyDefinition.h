@@ -33,7 +33,8 @@
 
 // forward declaration of class
 class ON_Brep;
-//class CharacterizedDefinition;
+class CharacterizedDefinition;
+class ProductDefinition;
 
 class PropertyDefinition: virtual public STEPEntity
 {
@@ -44,12 +45,14 @@ private:
 protected:
     string name;
     string description;
-    //CharacterizedDefinition *definition;
+    CharacterizedDefinition *definition;
 
 public:
     PropertyDefinition();
     virtual ~PropertyDefinition();
     PropertyDefinition(STEPWrapper *sw, int step_id);
+    ProductDefinition *GetRelatingProductDefinition();
+    ProductDefinition *GetRelatedProductDefinition();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();

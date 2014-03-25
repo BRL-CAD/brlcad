@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	else
 	    return 1;
     } else {
-	float xval, yval;
+	double xval, yval;
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	ret = scanf("%f%f", &xval, &yval);
+	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
 	}

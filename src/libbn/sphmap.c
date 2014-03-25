@@ -24,7 +24,10 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 #include "spm.h"
@@ -82,7 +85,7 @@ bn_spm_init(int N, int elsize)
 
     total = 0;
     for (i = 0; i < N/4; i++) {
-	nx = ceil(N*cos(i*bn_twopi/N));
+	nx = ceil(N*cos(i*M_2PI/N));
 	if (nx > N) nx = N;
 	mapp->nx[ N/4 + i ] = nx;
 	mapp->nx[ N/4 - i -1 ] = nx;

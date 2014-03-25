@@ -239,8 +239,6 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
 
 /*
- * N M G _ P A T C H _ C O P L A N A R _ F A C E _ M E R G E
- *
  * A geometric routine to find all pairs of faces in a shell that have
  * the same plane equation (to within the given tolerance), and
  * combine them into a single face.
@@ -2680,8 +2678,6 @@ process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count,
 
 
 /**
- * M K _ C Y L A D D M E M B E R
- *
  * For the cylinder given by 'name1', determine whether it has any
  * volume mode subtractions from it by looking at the subtraction list
  * for this component number. If we find that this cylinder is one of
@@ -3069,8 +3065,6 @@ proc_rod(int cnt)
 
 
 /**
- * S E T _ C O L O R
- *
  * Given a color_map entry (for the thousand series) for the
  * combination being made, set the rgb color array for the upcoming
  * call to make combinations.
@@ -3304,8 +3298,6 @@ inside_cyl(int i, int j)
 
 
 /**
- * G E T _ S U B T R A C T
- *
  * Make up the list of subtracted volume mode solids for this group of
  * cylinders. Go through the cylinder list and, for each solid, see
  * whether any of the other solid records following qualify as volume

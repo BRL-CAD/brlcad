@@ -67,7 +67,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/defines.h"  /* Needed only for the deprecated functions below using fastf_t */
 
 __BEGIN_DECLS
 

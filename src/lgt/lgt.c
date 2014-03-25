@@ -30,6 +30,7 @@
 #include <assert.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -57,7 +58,6 @@ static void init_Lgts(void);
 void exit_Neatly(int status);
 int key_Frame(void);
 
-/* m a i n ()							*/
 int
 main(int argc, char **argv)
 {
@@ -123,7 +123,6 @@ main(int argc, char **argv)
 }
 
 
-/* i n t e r p o l a t e _ F r a m e ()				*/
 int
 interpolate_Frame(int frame)
 {
@@ -175,7 +174,6 @@ interpolate_Frame(int frame)
 }
 
 
-/* e x i t _ N e a t l y ()					*/
 void
 exit_Neatly(int status)
 {
@@ -184,7 +182,6 @@ exit_Neatly(int status)
 }
 
 
-/* r e a d y _ O u t p u t _ D e v i c e ()			*/
 int
 ready_Output_Device(int frame)
 {
@@ -220,7 +217,6 @@ ready_Output_Device(int frame)
 }
 
 
-/* c l o s e _ O u t p u t _ D e v i c e ()			*/
 void
 close_Output_Device(int frame)
 {
@@ -241,7 +237,7 @@ intr_sig(int UNUSED(sig))
 }
 
 
-/* i n i t _ L g t s ()
+/*
    Set certain default lighting info.
 */
 static void

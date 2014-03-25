@@ -88,9 +88,6 @@ struct mfuncs fbm_mfuncs[] = {
 };
 
 
-/*
- * F B M _ S E T U P
- */
 HIDDEN int
 fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
@@ -114,9 +111,6 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * F B M _ P R I N T
- */
 HIDDEN void
 fbm_print(register struct region *rp, genptr_t dp)
 {
@@ -124,9 +118,6 @@ fbm_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * F B M _ F R E E
- */
 HIDDEN void
 fbm_free(genptr_t cp)
 {
@@ -134,9 +125,6 @@ fbm_free(genptr_t cp)
 }
 
 
-/*
- * F B M _ R E N D E R
- */
 int
 fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {

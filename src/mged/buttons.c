@@ -210,9 +210,6 @@ struct menu_item oed_menu[] = {
 };
 
 
-/*
- * B U T T O N
- */
 void
 button(int bnum)
 {
@@ -235,8 +232,6 @@ button(int bnum)
 
 
 /*
- * F _ P R E S S
- *
  * Hook for displays with no buttons
  *
  * Given a string description of which button to press, simulate
@@ -323,8 +318,6 @@ f_press(ClientData clientData,
 
 
 /*
- * L A B E L _ B U T T O N
- *
  * For a given GED button number, return the "press" ID string.
  * Useful for displays with programmable button labels, etc.
  */
@@ -470,8 +463,6 @@ bv_vsave()
 
 
 /*
- * B V _ A D C U R S O R
- *
  * Toggle state of angle/distance cursor.
  * "press adc"
  * This command conflicts with existing "adc" command,
@@ -918,8 +909,6 @@ be_s_scale()
 
 
 /*
- * N O T _ S T A T E
- *
  * Returns 0 if current state is as desired,
  * Returns !0 and prints error message if state mismatch.
  */
@@ -970,8 +959,6 @@ stateChange(int UNUSED(oldstate), int newstate)
 
 
 /*
- * C H G _ S T A T E
- *
  * Returns 0 if state change is OK,
  * Returns !0 and prints error message if error.
  */
@@ -1017,8 +1004,6 @@ state_err(char *str)
 
 
 /*
- * B T N _ I T E M _ H I T
- *
  * Called when a menu item is hit
  */
 void
@@ -1032,8 +1017,6 @@ btn_item_hit(int arg, int menu, int UNUSED(item))
 
 
 /*
- * B T N _ H E A D _ M E N U
- *
  * Called to handle hits on menu heads.
  * Also called from main() with arg 0 in init.
  */

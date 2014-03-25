@@ -34,7 +34,7 @@
 #include "bn.h"
 #include "db.h"
 #include "raytrace.h"
-#include "bu.h"
+
 
 struct col_properties {
     int col_cnt;

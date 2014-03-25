@@ -11,6 +11,7 @@ set(DM_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OSG_INCLUDE_DIR}
   )
 
 # local includes
@@ -64,18 +65,24 @@ if(BRLCAD_ENABLE_QT)
   add_definitions(${Qt5Widgets_DEFINITIONS})
 endif(BRLCAD_ENABLE_QT)
 
-set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
+if(BRLCAD_ENABLE_OSG)
+  list(APPEND libdm_DEFINES DM_OSG)
+  set(dmosg_srcs dm-osg.cpp)
+  set(OSG_LIBRARIES
+    ${OSG_LIBRARY}
+    ${OSGTEXT_LIBRARY}
+    ${OSGVIEWER_LIBRARY}
+    )
+endif(BRLCAD_ENABLE_OSG)
 
-# Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compliant - anything pulling them in needs the C99 flag
-get_property(libdm_C_FLAGS GLOBAL PROPERTY libdm_C_FLAGS)
-list(APPEND libdm_C_DEFINES "${C99_FLAG}")
-set_property(GLOBAL PROPERTY libdm_C_FLAGS "${libdm_C_FLAGS}")
+
+set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
   ${dmx11_srcs}
   ${dmw32_srcs}
   ${dmogl_srcs}
+  ${dmosg_srcs}
   ${dmrtgl_srcs}
   ${dmtk_srcs}
   ${dmqt_srcs}
@@ -101,7 +108,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Qt5Widgets_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Qt5Widgets_LIBRARIES};${OSG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -111,6 +118,7 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
+  dm-osg.cpp
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c

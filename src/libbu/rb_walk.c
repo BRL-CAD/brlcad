@@ -24,14 +24,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * P R E W A L K N O D E S
- *
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
@@ -59,8 +56,6 @@ prewalknodes(struct bu_rb_node *root,
 
 
 /**
- * I N W A L K N O D E S
- *
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
@@ -88,8 +83,6 @@ inwalknodes(struct bu_rb_node *root,
 
 
 /**
- * P O S T W A L K N O D E S
- *
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void
@@ -117,8 +110,6 @@ postwalknodes(struct bu_rb_node *root,
 
 
 /**
- * P R E W A L K D A T A
- *
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
@@ -146,8 +137,6 @@ prewalkdata(struct bu_rb_node *root,
 
 
 /**
- * I N W A L K D A T A
- *
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
@@ -175,8 +164,6 @@ inwalkdata(struct bu_rb_node *root,
 
 
 /**
- * P O S T W A L K D A T A
- *
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void
@@ -223,9 +210,9 @@ rb_walk(struct bu_rb_tree *tree,
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
     switch (trav_type) {
-	case PREORDER:
-	case INORDER:
-	case POSTORDER:
+	case BU_RB_WALK_PREORDER:
+	case BU_RB_WALK_INORDER:
+	case BU_RB_WALK_POSTORDER:
 	    switch (what_to_visit) {
 		case WALK_NODES:
 		case WALK_DATA: {

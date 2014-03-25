@@ -576,9 +576,6 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -634,7 +631,7 @@ main(int argc, char **argv)
 		eval_all = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*bn_pi/180.0;
+		ttol.norm = atof(bu_optarg)*DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */
@@ -683,9 +680,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    perror(argv[0]);
@@ -1202,8 +1197,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 }
 
 
-/*	D O _ R E G I O N _ E N D 1
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  */
@@ -1237,8 +1231,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 }
 
-/*	D O _ R E G I O N _ E N D 2
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  *

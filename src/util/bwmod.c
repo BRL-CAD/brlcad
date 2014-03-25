@@ -232,11 +232,9 @@ int main(int argc, char **argv)
     int n;
     unsigned long clip_high, clip_low;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     progname = *argv;
 

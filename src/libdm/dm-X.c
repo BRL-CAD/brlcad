@@ -60,9 +60,9 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "dm_xvars.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #include "./dm_util.h"
@@ -364,8 +364,6 @@ X_choose_visual(struct dm *dmp)
 
 
 /*
- * X _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -409,8 +407,6 @@ X_close(struct dm *dmp)
 
 
 /*
- * X _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -531,9 +527,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);
@@ -750,9 +746,6 @@ Skip_dials:
 }
 
 
-/*
- * X _ D R A W B E G I N
- */
 HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
@@ -784,9 +777,6 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * X _ E P I L O G
- */
 HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
@@ -811,8 +801,6 @@ X_drawEnd(struct dm *dmp)
 
 
 /*
- * X _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to X_draw().
  */
@@ -839,10 +827,6 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-/**
- * X _ D R A W V L I S T
- *
- */
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
@@ -1139,10 +1123,6 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * X _ D R A W
- *
- */
 HIDDEN int
 X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -1164,8 +1144,6 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *
 
 
 /**
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
@@ -1180,8 +1158,6 @@ X_normal(struct dm *dmp)
 
 
 /**
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */
@@ -1396,6 +1372,15 @@ HIDDEN int
 X_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+X_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
     return TCL_OK;
 }
@@ -1693,6 +1678,7 @@ struct dm dm_X = {
     null_setDepthMask,
     X_setZBuffer,
     X_debug,
+    X_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -1727,6 +1713,7 @@ struct dm dm_X = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

@@ -25,8 +25,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 char *
 bu_fgets(char *s, int size, FILE *stream)

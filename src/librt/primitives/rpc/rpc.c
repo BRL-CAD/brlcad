@@ -139,7 +139,7 @@
  * If Dz' == 0, line L' is parallel to the top plate, so there is no
  * hit on the top plate.  Otherwise, rays intersect the top plate
  * with k = (0 - Pz')/Dz'.  The solution is within the top plate
- * IFF -1 <= Wx' <= 0 and -1 <= Wy' <= 1.
+ * IFF -1 <= Wx' <= 0 and -1 <= Wy' <= 1
  *
  * If Dx' == 0, line L' is parallel to the end plates, so there is no
  * hit on the end plates.  Otherwise, rays intersect the front plate
@@ -165,6 +165,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -196,8 +197,6 @@ const struct bu_structparse rt_rpc_parse[] = {
 };
 
 /**
- * R T _ R P C _ B B O X
- *
  * Calculate the RPP for an RPC
  */
 int
@@ -249,8 +248,6 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ R P C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid RPC, and if so, precompute various
  * terms of the formula.
@@ -339,9 +336,6 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ R P C _ P R I N T
- */
 void
 rt_rpc_print(const struct soltab *stp)
 {
@@ -364,8 +358,6 @@ rt_rpc_print(const struct soltab *stp)
 #define RPC_NORM_BACK (4)
 
 /**
- * R T _ R P C _ S H O T
- *
  * Intersect a ray with a rpc.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -400,8 +392,8 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	a = dprime[Y] * dprime[Y];
 	b = 2.0 * dprime[Y] * pprime[Y] - dprime[Z];
-	c = pprime[Y] * pprime[Y] - pprime[Z] - 1;
-	disc = b*b - 4 * a * c;
+	c = pprime[Y] * pprime[Y] - pprime[Z] - 1.0;
+	disc = b*b - 4.0 * a * c;
 	if (disc <= 0)
 	    goto check_plates;
 	disc = sqrt(disc);
@@ -517,8 +509,6 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ R P C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -552,8 +542,6 @@ rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ R P C _ C U R V E
- *
  * Return the curvature of the rpc.
  */
 void
@@ -569,7 +557,7 @@ rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	    VMOVE(cvp->crv_pdir, rpc->rpc_Hunit);
 	    cvp->crv_c1 = 0;
 	    /* k = z'' / (1 + z'^2) ^ 3/2 */
-	    zp2 = 2 * rpc->rpc_b * rpc->rpc_inv_rsq;
+	    zp2 = 2.0 * rpc->rpc_b * rpc->rpc_inv_rsq;
 	    zp1 = zp2 * hitp->hit_point[Y];
 	    cvp->crv_c2 = zp2 / pow((1 + zp1*zp1), 1.5);
 	    break;
@@ -585,10 +573,8 @@ rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ R P C _ U V
- *
  * For a hit on the surface of an rpc, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * of the hit point, 0 <= u, v <= 1
  * u = azimuth
  * v = elevation
  */
@@ -614,14 +600,14 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	case RPC_NORM_BODY:
 	    /* Skin.  x, y coordinates define rotation.  radius = 1 */
 	    len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y]/len) * M_1_PI;
 	    uvp->uv_v = -pprime[X];		/* height */
 	    break;
 	case RPC_NORM_FRT:
 	case RPC_NORM_BACK:
 	    /* end plates - circular mapping, not seamless w/body, top */
 	    len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y]/len) * M_1_PI;
 	    uvp->uv_v = len;	/* rim v = 1 for both plates */
 	    break;
 	case RPC_NORM_TOP:
@@ -637,9 +623,6 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R P C _ F R E E
- */
 void
 rt_rpc_free(struct soltab *stp)
 {
@@ -666,7 +649,7 @@ rt_rpc_free(struct soltab *stp)
 static fastf_t
 rpc_parabola_p(fastf_t r, fastf_t mag_b)
 {
-    return (r * r) / (4 * mag_b);
+    return (r * r) / (4.0 * mag_b);
 }
 
 static fastf_t
@@ -702,8 +685,8 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
     BU_ALLOC(curve->next, struct rt_pt_node);
 
     curve->next->next = NULL;
-    VSET(curve->p,       0, 0, -mag_b);
-    VSET(curve->next->p, 0, r, 0);
+    VSET(curve->p,       0.0, 0.0, -mag_b);
+    VSET(curve->next->p, 0.0, r, 0.0);
 
     if (num_points < 3) {
 	return curve;
@@ -802,7 +785,7 @@ rpc_plot_curve_connections(
 
     p = rpc_parabola_p(rpc->rpc_r, mag_Z);
 
-    connections_per_half = .5 + num_connections / 2.0;
+    connections_per_half = 0.5 + num_connections / 2.0;
     z_step = mag_Z / (connections_per_half + 1.0);
 
     for (z = 0.0; z <= mag_Z; z += z_step) {
@@ -835,8 +818,8 @@ rpc_curve_points(
     height = -MAGNITUDE(rpc->rpc_B);
     halfwidth = rpc->rpc_r;
 
-    VSET(p0, 0, 0, height);
-    VSET(p1, 0, halfwidth, 0);
+    VSET(p0, 0.0, 0.0, height);
+    VSET(p1, 0.0, halfwidth, 0.0);
 
     est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
 
@@ -908,9 +891,6 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ R P C _ P L O T
- */
 int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -952,15 +932,15 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pt_node);
     BU_ALLOC(pts->next, struct rt_pt_node);
 
     pts->next->next = NULL;
-    VSET(pts->p,       0, -rh, 0);
-    VSET(pts->next->p, 0,  rh, 0);
+    VSET(pts->p,       0.0, -rh, 0.0);
+    VSET(pts->next->p, 0.0,  rh, 0.0);
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
@@ -1020,8 +1000,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ M K _ P A R A B O L A
- *
  * Approximate a parabola with line segments.  The initial single
  * segment is broken at the point farthest from the parabola if
  * that point is not already within the distance and normal error
@@ -1045,22 +1023,22 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     m = (p1[Z] - p0[Z]) / (p1[Y] - p0[Y]);
     intr = p0[Z] - m * p0[Y];
     /* point on parabola with max dist between parabola and line */
-    mpt[X] = 0;
-    mpt[Y] = (r * r * m) / (2 * b);
+    mpt[X] = 0.0;
+    mpt[Y] = (r * r * m) / (2.0 * b);
     if (NEAR_ZERO(mpt[Y], RPC_TOL))
-	mpt[Y] = 0.;
-    mpt[Z] = (mpt[Y] * m / 2) - b;
+	mpt[Y] = 0.0;
+    mpt[Z] = (mpt[Y] * m / 2.0) - b;
     if (NEAR_ZERO(mpt[Z], RPC_TOL))
-	mpt[Z] = 0.;
+	mpt[Z] = 0.0;
     /* max distance between that point and line */
-    dist = fabs(mpt[Z] + b + b + intr) / sqrt(m * m + 1);
+    dist = fabs(mpt[Z] + b + b + intr) / sqrt(m * m + 1.0);
     /* angles between normal of line and of parabola at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_parab, 2. * b / (r * r) * p0[Y], -1., 0.);
+    VSET(norm_line, m, -1.0, 0.0);
+    VSET(norm_parab, 2.0 * b / (r * r) * p0[Y], -1.0, 0.0);
     VUNITIZE(norm_line);
     VUNITIZE(norm_parab);
     theta0 = fabs(acos(VDOT(norm_line, norm_parab)));
-    VSET(norm_parab, 2. * b / (r * r) * p1[Y], -1., 0.);
+    VSET(norm_parab, 2.0 * b / (r * r) * p1[Y], -1.0, 0.0);
     VUNITIZE(norm_parab);
     theta1 = fabs(acos(VDOT(norm_line, norm_parab)));
     /* split segment at widest point if not within error tolerances */
@@ -1083,8 +1061,6 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
 
 
 /**
- * R T _ R P C _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1146,15 +1122,15 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pt_node);
     BU_ALLOC(pts->next, struct rt_pt_node);
 
     pts->next->next = NULL;
-    VSET(pts->p,       0, -rh, 0);
-    VSET(pts->next->p, 0,  rh, 0);
+    VSET(pts->p,       0.0, -rh, 0.0);
+    VSET(pts->next->p, 0.0,  rh, 0.0);
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
@@ -1320,8 +1296,6 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ R P C _ I M P O R T
- *
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1387,8 +1361,6 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R P C _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1438,8 +1410,6 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R P C _ I M P O R T 5
- *
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1486,8 +1456,6 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R P C _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1538,8 +1506,6 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R P C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1585,8 +1551,6 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ R P C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1605,10 +1569,6 @@ rt_rpc_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ P A R A M S
- *
- */
 int
 rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1618,9 +1578,6 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ V O L U M E
- */
 void
 rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1636,9 +1593,6 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ C E N T R O I D
- */
 void
 rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1657,9 +1611,6 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ R P C _ S U R F _ A R E A
- */
 void
 rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {

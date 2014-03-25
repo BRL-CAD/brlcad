@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 #ifndef BUFSIZE
 #  define BUFSIZE 2048

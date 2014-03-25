@@ -22,12 +22,8 @@
  *
  */
 
-#include "common.h"
-
-#include "raytrace.h"
-#include "Comb_Tree.h"
-#include "G_STEP_internal.h"
-#include "ON_Brep.h"
+#include "AP_Common.h"
+#include "Comb.h"
 
 /*
  * To associate multiple objects in STEP, we must define and relate product definitions
@@ -159,20 +155,75 @@ Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
     return Create_AXIS2_PLACEMENT_3D(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, registry, instance_list);
 }
 
+STEPentity *
+Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
+	fastf_t pt_x, fastf_t pt_y, fastf_t pt_z,
+	fastf_t d1_x, fastf_t d1_y, fastf_t d1_z,
+	fastf_t d2_x, fastf_t d2_y, fastf_t d2_z,
+	fastf_t d3_x, fastf_t d3_y, fastf_t d3_z,
+	fastf_t scale,
+	Registry *registry, InstMgr *instance_list)
+{
+    SdaiCartesian_transformation_operator_3d *op3d = (SdaiCartesian_transformation_operator_3d *)registry->ObjCreate("CARTESIAN_TRANSFORMATION_OPERATOR_3D");
+    SdaiDirection *axis1 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiDirection *axis2 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiDirection *axis3 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiCartesian_point *local_origin = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, local_origin);
+    local_origin->name_("'local_origin'");
+    XYZ_to_Direction(d1_x, d1_y, d1_z, axis1);
+    axis1->name_("'axis1'");
+    XYZ_to_Direction(d2_x, d2_y, d2_z, axis2);
+    axis2->name_("'axis2'");
+    XYZ_to_Direction(d3_x, d3_y, d3_z, axis3);
+    axis3->name_("'axis3'");
+
+    op3d->local_origin_(local_origin);
+    op3d->axis1_(axis1);
+    op3d->axis2_(axis2);
+    op3d->axis3_(axis3);
+    op3d->scale_(scale);
+    op3d->name_("''");
+
+    /* For whatever reason, we seem to a) have TWO attributes called "name"
+     * that need to be set and b) a "description" attribute that doesn't respond
+     * to setting via op3d->description_("''") - fall back on attribute list
+     * access */
+    ((STEPentity *)op3d)->ResetAttributes();
+    STEPattribute * attr = ((STEPentity *)op3d)->NextAttribute();
+    while( attr != 0 ) {
+	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
+	attr = ((STEPentity *)op3d)->NextAttribute();
+    }
+
+    instance_list->Append((STEPentity *)local_origin, completeSE);
+    instance_list->Append((STEPentity *)axis1, completeSE);
+    instance_list->Append((STEPentity *)axis2, completeSE);
+    instance_list->Append((STEPentity *)axis3, completeSE);
+    instance_list->Append((STEPentity *)op3d, completeSE);
+    return (STEPentity *)op3d;
+}
+
 // Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
 // If NULL, geometry is being deformed in a way not supported by AP203
+//
+// Note:  After some experimentation with CARTESIAN_TRANSFORMATION_OPERATOR_3D did not
+// succeed in generating useful imports, it looks like the limitation expressed in the
+// STEP PDM Schema usage guide may hold in this context:
+// http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf
+//
+// "With regard to the transformations in the context of assembly, a part is in
+//  principle incorporated in the assembly only by rigid motion (i.e.,
+//  translation and/or rotation) excluding mirroring and scaling."
+//
+// What this means is that any scaling operations in BRL-CAD's matrices are not
+// going to be expressible in STEP, because it is an "in-principle" conflict with
+// how STEP views assemblies.
+
 STEPentity *
 Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 {
-    // TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
-    // allow uniform scaling as well and appears to be compatible with the
-    // same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
-    // for simple cases without scaling (i.e. VUNITIZE doesn't change the length
-    // of X, Y or Z unit vectors after the matrix is applied), the former when
-    // the there is uniform scaling (X, Y and Z lengths all change by the same
-    // amount) and in the worst case (non-uniform scaling) will have to create
-    // a new Brep and abandon the attempt to preserve the comb-level operation.
-
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
     vect_t outx, outy, outz;
@@ -191,24 +242,18 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     VUNITIZE(outx);
     VUNITIZE(outy);
     VUNITIZE(outz);
-    if (NEAR_ZERO(xm - 1.0, RT_LEN_TOL) && NEAR_ZERO(ym - 1.0, RT_LEN_TOL) && NEAR_ZERO(zm - 1.0, RT_LEN_TOL)) {
-	bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	return Create_AXIS2_PLACEMENT_3D(outorig[0], outorig[1], outorig[2],
-		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
-    } else {
-	if (NEAR_ZERO(xm - ym, RT_LEN_TOL) && NEAR_ZERO(xm - zm, RT_LEN_TOL)) {
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	    bu_log("Scaling: %f\n", xm);
-	    return NULL;
-	} else {
-	    return NULL;
-	}
+
+    // If we aren't scaling, handle things with axis placement
+    if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
+	return Create_AXIS2_PLACEMENT_3D(
+		outorig[0], outorig[1], outorig[2],
+		outz[0], outz[1], outz[2],
+		outx[0], outx[1], outx[2],
+		registry, instance_list);
     }
+
+    // Have scaling, which STEP doesn't support in assemblies
+    return NULL;
 }
 
 // Representation relationships are a complex type
@@ -224,6 +269,7 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "rep_1")) {
 	    attr->ptr.c = new (STEPentity *);
 	    *(attr->ptr.c) = parent;
@@ -251,63 +297,62 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
 
 void
 Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
-	struct comb_maps *maps,
-	Registry *registry, InstMgr *instance_list)
+	AP203_Contents *sc)
 {
     struct rt_db_internal comb_intern;
-    STEPentity *parent_shape = maps->comb_to_step_shape.find(dp)->second;
+    STEPentity *parent_shape = sc->comb_to_step_shape->find(dp)->second;
     rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-    for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--){
-	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
+    for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--) {
+	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
 	STEPentity *curr_transform = NULL;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);
-	STEPentity *child_shape = maps->comb_to_step_shape.find(curr_dp)->second;
+	STEPentity *child_shape = sc->comb_to_step_shape->find(curr_dp)->second;
 	if (!child_shape)
-	    child_shape = maps->brep_to_step_shape.find(curr_dp)->second;
-	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
+	    child_shape = sc->solid_to_step_shape->find(curr_dp)->second;
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
 	if(curr_matrix) {
-	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
-	    bn_mat_print(curr_dp->d_namep, curr_matrix);
-	    curr_transform = Mat_to_Rep(curr_matrix, registry, instance_list);
+	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
+	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
+	    //bn_mat_print(curr_dp->d_namep, curr_matrix);
+	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
 	} else {
-	    curr_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
-	    bu_log("identity matrix\n");
+	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
+	    //bu_log("identity matrix\n");
 	}
 	if (curr_transform) {
-	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
+	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)sc->registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
 	    item_transform->name_("''");
 	    item_transform->description_("''");
-	    item_transform->transform_item_1_((SdaiRepresentation_item_ptr)orig_transform);
-	    item_transform->transform_item_2_((SdaiRepresentation_item_ptr)curr_transform);
-	    instance_list->Append((STEPentity *)item_transform, completeSE);
-	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
+	    item_transform->transform_item_1_((SdaiRepresentation_item_ptr)curr_transform);
+	    item_transform->transform_item_2_((SdaiRepresentation_item_ptr)orig_transform);
+	    sc->instance_list->Append((STEPentity *)item_transform, completeSE);
+	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)sc->registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
 	    usage->id_("''");
 	    usage->name_("''");
 	    usage->description_("''");
 	    usage->reference_designator_("''");
-	    usage->relating_product_definition_((SdaiProduct_definition *)maps->comb_to_step.find(dp)->second);
-	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)maps->comb_to_step.find(curr_dp)->second;
+	    usage->relating_product_definition_((SdaiProduct_definition *)sc->comb_to_step->find(dp)->second);
+	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)sc->comb_to_step->find(curr_dp)->second;
 	    if (!child_def)
-		child_def = (SdaiProduct_definition *)maps->brep_to_step.find(curr_dp)->second;
+		child_def = (SdaiProduct_definition *)sc->solid_to_step->find(curr_dp)->second;
 	    usage->related_product_definition_(child_def);
-	    instance_list->Append((STEPentity *)usage, completeSE);
-	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+	    sc->instance_list->Append((STEPentity *)usage, completeSE);
+	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
 	    pshape->name_("''");
 	    pshape->description_("''");
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
-	    instance_list->Append((STEPentity *)pshape, completeSE);
-	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, registry, instance_list);
-	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
+	    sc->instance_list->Append((STEPentity *)pshape, completeSE);
+	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, sc->registry, sc->instance_list);
+	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)sc->registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
 	    cshape->represented_product_relation_(pshape);
-	    instance_list->Append((STEPentity *)cshape, completeSE);
+	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
 	} else {
-	    bu_log("non-uniform scaling detected: %s/%s\n", dp->d_namep, curr_dp->d_namep);
+	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matrices from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
 	}
     }
     rt_db_free_internal(&comb_intern);

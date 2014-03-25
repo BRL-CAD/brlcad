@@ -716,8 +716,6 @@ ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned i
 /* end image utilities */
 
 /**
- * I C V _ R O T
- *
  * Rotate an image.
  * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
  *

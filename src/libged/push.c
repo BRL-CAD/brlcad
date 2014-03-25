@@ -29,8 +29,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "cmd.h"
+
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -89,8 +89,6 @@ identitize(struct directory *dp,
 
 
 /**
- * P U S H _ L E A F
- *
  * This routine must be prepared to run in parallel.
  *
  * @brief

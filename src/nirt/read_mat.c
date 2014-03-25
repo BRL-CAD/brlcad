@@ -51,9 +51,6 @@
 extern outval			ValTab[];
 extern int			nirt_debug;
 
-/**
- * R E A D _ M A T
- */
 void read_mat (struct rt_i *rtip)
 {
     double scan[16] = MAT_INIT_ZERO;

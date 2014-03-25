@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
+
 #include "vmath.h"
 #include "nurb.h"
 

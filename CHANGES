@@ -115,6 +115,13 @@ and new names should be listed for reference.
 
 7.24
 ----
+include/bu
+        hist.h bu_hist bu_hist_t BU_HIST_NULL BU_HIST_INIT_ZERO [deprecated 7.24]
+        BU_HIST_IS_INITIALIZED BU_HIST_TALLY BU_HIST_TALLY_MULTIPLE [deprecated 7.24]
+        bu_hist_free bu_hist_init bu_hist_range bu_hist_pr [deprecated 7.24]
+        functions, macros, and header will be renamed for clarity [deprecated 7.24]
+fbed, pp-fb
+        removes termcap use, no known users [deprecated 7.24]
 include/raytrace librt
         db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
         db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
@@ -122,7 +129,7 @@ include/raytrace librt
 src/irprep
         all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
-        RT_DBHASH and RT_DBNHASH [deprecation 7.24]
+        RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
 7.22
 ----
@@ -957,3 +964,20 @@ s/bu_hash_tbl_pr/bu_hash_tbl_print/g
 	renamed for better consistency in hash table API and with other libbu API [7.24]
 s/dm_applicationfocus([[:space:]]);//g
 	only useful in older os x versions, users can now do the same thing via XQuartz preferences
+s/bu_vls_trunc2/bu_vls_trunc/g
+        removed duplicitous function in favor of more general version
+s/bn_pi/M_PI/g
+s/bn_twopi/M_2PI/g
+s/bn_halfpi/M_PI_2/g
+s/bn_quarterpi/M_PI_4/g
+s/bn_invpi/M_1_PI/g
+s/bn_inv2pi/M_1_2PI/g
+s/bn_inv4pi/M_1_4PI)/g
+s/bn_inv255/(1.0 \/ 255.0)/g
+s/bn_degtorad/DEG2RAD/g
+s/bn_radtodeg/RAD2DEG/g
+s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
+        eliminated a number of libbn globals in favor of existing constants
+s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont-if.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g

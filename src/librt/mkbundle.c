@@ -31,7 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -69,7 +69,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	register int i;
 
 	theta = 0;
-	delta = bn_twopi / rays_per_ring;
+	delta = M_2PI / rays_per_ring;
 	fraction = ((double)(ring+1)) / nring;
 	theta = delta * fraction;	/* spiral skew */
 	radial_scale = radius * fraction;

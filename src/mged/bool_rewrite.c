@@ -65,8 +65,6 @@
  */
 
 /*
- * F I N D _ B O O L _ T R E E _ R E W R I T E ()
- *
  * Find an applicable rewrite for the root of a Boolean tree
  *
  * This function has one parameter: a Boolean-tree node.
@@ -122,8 +120,6 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 
 
 /*
- * D U P _ B O O L _ T R E E ()
- *
  * Duplicate a Boolean tree
  *
  * This function has one parameter: a Boolean-tree node.
@@ -144,8 +140,6 @@ static struct bool_tree_node *dup_bool_tree (struct bool_tree_node *rp)
 
 
 /*
- * D O _ B O O L _ T R E E _ R E W R I T E ()
- *
  * Perform one rewrite step on the root of a Boolean tree
  *
  * This function has two parameters: a Boolean-tree node and a rule
@@ -212,8 +206,6 @@ static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 
 
 /*
- * C O N V E R T _ O N E _ N O D E ()
- *
  * Successively rewrite the root of a Boolean tree
  *
  * This function has one parameter: a Boolean-tree node.
@@ -238,8 +230,6 @@ static int convert_one_node (struct bool_tree_node *rp)
 
 
 /*
- * _ C V T _ T O _ G I F T _ B O O L ()
- *
  * Make one conversion pass through a Boolean tree
  *
  * This function has one parameter: a Boolean-tree node.
@@ -265,8 +255,6 @@ static int _cvt_to_gift_bool (struct bool_tree_node *rp)
 
 
 /*
- * C V T _ T O _ G I F T _ B O O L ()
- *
  * Convert a Boolean tree to GIFT-Boolean form.
  *
  * This function has one parameter: a Boolean-tree node.
@@ -291,8 +279,6 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 
 
 /*
- * S H O W _ G I F T _ B O O L ()
- *
  * Pretty print a GIFT-Boolean tree.
  *
  * This function has two parameters: a Boolean-tree node and a flag.

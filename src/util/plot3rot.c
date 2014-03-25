@@ -70,8 +70,6 @@ void three_dcoord_out(FILE *fp, fastf_t *m);
 
 
 /*
- * M O D E L _ R P P
- *
  * Process a space command.
  * Behavior depends on setting of several flags.
  *
@@ -303,9 +301,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -354,9 +349,6 @@ main(int argc, char **argv)
 }
 
 
-/*
- * D O F I L E
- */
 void
 dofile(FILE *fp)
 {
@@ -537,9 +529,6 @@ dofile(FILE *fp)
 }
 
 
-/*
- * C O P Y _ S T R I N G
- */
 void
 copy_string(FILE *fp)
 {

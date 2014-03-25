@@ -39,7 +39,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -297,7 +297,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     line[count] = '\0';
 
     /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else
 	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
@@ -469,9 +469,6 @@ _ged_run_rt(struct ged *gedp)
 }
 
 
-/**
- *
- */
 size_t
 ged_count_tops(struct ged *gedp)
 {
@@ -485,8 +482,6 @@ ged_count_tops(struct ged *gedp)
 
 
 /**
- * G E D _ B U I L D _ T O P S
- *
  * Build a command line vector of the tops of all objects in view.
  */
 int

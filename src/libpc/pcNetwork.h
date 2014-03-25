@@ -68,7 +68,8 @@ class Vertexwriter {
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
 public:
-    Vertexwriter(const Graph& graph) : g(graph) {};
+    Vertexwriter(const Graph& graph) : g(graph) {
+    }
     void operator() (std::ostream& output, const Vertex& v) const {
 	output << "[label=\"" << g[v]->getID() << "\"]";
     }
@@ -83,7 +84,8 @@ class Edgewriter {
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::edge_descriptor Edge;
 public:
-    Edgewriter(const Graph& graph) : g(graph) {};
+    Edgewriter(const Graph& graph) : g(graph) {
+    }
     void operator() (std::ostream& output, const Edge& e) const {
 	output << "[label=\"" << g[e]->getExp() << "\"]";
     }

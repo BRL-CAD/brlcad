@@ -51,6 +51,8 @@ public:
     RepresentationRelationship();
     virtual ~RepresentationRelationship();
     RepresentationRelationship(STEPWrapper *sw, int step_id);
+    Representation *GetRepresentationRelationshipRep_1();
+    Representation *GetRepresentationRelationshipRep_2();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();

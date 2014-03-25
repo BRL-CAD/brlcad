@@ -248,6 +248,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "bu/log.h"
 #include "vmath.h"
 
 

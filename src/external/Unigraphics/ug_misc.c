@@ -43,10 +43,6 @@
 /* 10501462 10651848-1 */
 
 
-/*
- *	A S K _ C S E T _ O F _ U N L O A D E D _ C H I L D R E N
- *
- */
 tag_t ask_cset_of_unloaded_children(tag_t part, tag_t part_occ)
 {
     tag_t cset = NULL_TAG;
@@ -94,8 +90,7 @@ Add_lists(uf_list_p_t dest, uf_list_p_t src)
     }
 }
 
-/*	F E A T U R E _ S I G N
- *
+/*
  *	Get a text string that describes the "sign" of a feature
  */
 const char *feature_sign(tag_t feat)
@@ -120,8 +115,7 @@ const char *feature_sign(tag_t feat)
     return p;
 }
 
-/*	U F U S R _ A S K _ U N L O A D
- *
+/*
  *  This is supposed to be helpful when UG thinks it might unload us.
  */
 int ufusr_ask_unload ( void )
@@ -130,9 +124,6 @@ int ufusr_ask_unload ( void )
 }
 
 
-/*	R E P O R T
- *
- */
 int report(char *call, char *file, int line, int code)
 {
     char message[133] = "";
@@ -186,10 +177,6 @@ open_part(char *p_name, int level)
     return ugpart;
 }
 
-/*
- *	L O A D _ S U B _ P A R T S
- *
- */
 tag_t
 load_sub_parts(tag_t displayed_part)
 {
@@ -229,10 +216,6 @@ load_sub_parts(tag_t displayed_part)
     return unloaded_child_cset;
 }
 
-/*
- *	U N L O A D _ S U B _ P A R T S
- *
- */
 void unload_sub_parts(tag_t loaded_child_cset)
 {
     if (loaded_child_cset) {

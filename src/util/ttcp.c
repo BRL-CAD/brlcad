@@ -110,8 +110,6 @@ int b_flag = 0;			/* use mread() */
 double cput, realt;		/* user, real time (seconds) */
 
 /*
- * M R E A D
- *
  * This function performs the function of a read(II) but will
  * call read(II) multiple times in order to get the requested
  * number of characters.  This can be necessary because
@@ -186,9 +184,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, char *cp);
 #endif
 
-/*
- * P R E P _ T I M E R
- */
 void
 prep_timer(void)
 {
@@ -202,10 +197,6 @@ prep_timer(void)
 }
 
 
-/*
- * R E A D _ T I M E R
- *
- */
 double
 read_timer(char *str, int len)
 {
@@ -407,9 +398,6 @@ psecs(long l, char *cp)
 }
 #endif
 
-/*
- * N R E A D
- */
 int
 Nread(int fd, char *buf, int count)
 {
@@ -441,9 +429,6 @@ delay(int us)
 }
 
 
-/*
- * N W R I T E
- */
 int
 Nwrite(int fd, char *buf, int count)
 {

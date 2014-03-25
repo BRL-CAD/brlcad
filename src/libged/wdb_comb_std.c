@@ -32,7 +32,8 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "ged.h"

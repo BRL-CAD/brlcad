@@ -24,14 +24,10 @@
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-
-
 
 void
 texture_clouds_free(struct texture_s *texture) {

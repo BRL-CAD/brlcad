@@ -53,6 +53,9 @@
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #define TMP_FILE "/tmp/x.cmap"
@@ -1618,8 +1621,6 @@ X_help(FBIO *ifp)
 
 
 /*
- * c o n v R G B
- *
  * convert a single RGBpixel to its corresponding entry in the Sun
  * colormap.
  */
@@ -1652,8 +1653,6 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 
 
 /*
- * G E N M A P
- *
  * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)

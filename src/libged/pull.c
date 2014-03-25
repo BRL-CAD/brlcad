@@ -30,9 +30,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -154,8 +154,6 @@ translate(matp_t matrix, mat_t tm, point_t min, point_t max)
 
 
 /**
- * P U L L _ L E A F
- *
  * @brief
  * This routine takes the internal database representation of a leaf node or
  * primitive object and builds  a matrix transformation, closest to this node's,

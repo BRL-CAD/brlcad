@@ -247,7 +247,7 @@ prnt_XSetup(const char *msg, register Xtnd_Rle_Header *setup)
     return;
 }
 
-/* r l e _ r h d r ()
+/*
    This routine should be called before 'rle_decode_ln()' or 'rle_rmap()'
    to position the file pointer correctly and set up the global flags
    _bw_flag and _cm_flag, and to fill in _bg_pixel if necessary, and
@@ -366,7 +366,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
     return 0;
 }
 
-/* r l e _ w h d r ()
+/*
    This routine should be called after 'setfbsize()', unless the
    framebuffer image is the default size (512).
    This routine should be called before 'rle_encode_ln()' to set up
@@ -438,7 +438,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     return 0;
 }
 
-/* _ g e t _ C o l o r _ M a p _ S e g ()
+/*
    Read the color map stored in the RLE file.
    The RLE format stores color map entries as short integers
    RIGHT justified in the word, while libfb expects color
@@ -461,7 +461,7 @@ _get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
     return 0;
 }
 
-/* r l e _ r m a p ()
+/*
    Read a color map in RLE format.
    Returns -1 upon failure, 0 otherwise.
 */
@@ -479,7 +479,7 @@ rle_rmap(FILE *fp, RLEColorMap *cmap)
 	return 0;
 }
 
-/* _ p u t _ C o l o r _ M a p _ S e g ()
+/*
    Output color map segment to RLE file as shorts.  See above.
 */
 HIDDEN int
@@ -499,7 +499,7 @@ _put_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
     return 0;
 }
 
-/* _ p u t _ S t d _ M a p ()
+/*
    Output standard color map to RLE file as shorts.
 */
 HIDDEN int
@@ -522,7 +522,7 @@ _put_Std_Map(FILE *fp)
     return 0;
 }
 
-/* r l e _ w m a p ()
+/*
    Write a color map in RLE format.
    Returns -1 upon failure, 0 otherwise.
 */
@@ -548,7 +548,7 @@ rle_wmap(FILE *fp, RLEColorMap *cmap)
 	return 0;
 }
 
-/* r l e _ d e c o d e _ l n ()
+/*
    Decode one scanline into 'scan_buf'.
    Buffer is assumed to be filled with background color.
    Returns -1 on failure, 1 if buffer is altered
@@ -662,7 +662,7 @@ rle_decode_ln(register FILE *fp, RLEpixel *scan_buf)
     return dirty_flag;
 }
 
-/* _ p u t _ D a t a ()
+/*
    Put one or more pixels of byte data into the output file.
 */
 HIDDEN void
@@ -680,7 +680,7 @@ _put_Data(register FILE *fp, register unsigned char *cp, int n)
     return;
 }
 
-/* _ e n c _ S e g m e n t ()
+/*
    Output code for segment.
 */
 HIDDEN void
@@ -745,7 +745,7 @@ _enc_Segment(FILE *fp, register RLEpixel (*data_p), register RLEpixel (*last_p))
     return;
 }
 
-/* _ e n c _ C o l o r _ S e g ()
+/*
    Encode a segment, 'seg', for specified 'color'.
 */
 HIDDEN void
@@ -761,7 +761,7 @@ _enc_Color_Seg(FILE *fp, register int seg, register int color)
     return;
 }
 
-/* _ b g _ G e t _ R u n s ()
+/*
    Fill the 'runs' segment array from 'pixelp' to 'endpix'.
    This routine will fail and return -1 if the array fills up
    before all pixels are processed, otherwise a 'nseg' is returned.
@@ -801,7 +801,7 @@ _bg_Get_Runs(register RLEpixel (*pixelp), register RLEpixel (*endpix))
     return nseg;
 }
 
-/* r l e _ e n c o d e _ l n ()
+/*
    Encode a given scanline of pixels into RLE format.
    Returns -1 upon failure, 0 otherwise.
 */

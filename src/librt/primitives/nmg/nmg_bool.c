@@ -59,8 +59,6 @@ int debug_file_count=0;
 
 
 /**
- * N M G _ P L O T _ O P E N _ E D G E S
- *
  * Find open edges, if any, in NMG object pointed to by magic_p and
  * create a UNIX plot file containing these edges.
  *
@@ -169,8 +167,6 @@ nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
 
 
 /**
- * N M G _ H A S _ D A N G L I N G _ F A C E S
- *
  * Argument is expected to be model, region, shell, or faceuse
  * pointer.
  *
@@ -204,8 +200,6 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
 
 
 /**
- * N M G _ S H O W _ E A C H _ L O O P
- *
  * Within a shell, show each loop as a separate display.  Pause after
  * displaying each one.
  *
@@ -430,8 +424,6 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 
 
 /**
- * N M G _ C L A S S I F Y _ S H A R E D _ E D G E S _ V E R T S
- *
  * Preprocessor routine for classifier to get all the easy shared
  * edges and vertices marked as shared.
  */
@@ -508,8 +500,6 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 
 
 /**
- * N M G _ K I L L _ A N T I _ L O O P S
- *
  * Look for same loop in opposite direction in shell "s", Kill them.
  */
 
@@ -628,8 +618,6 @@ nmg_kill_wire_edges(struct shell *s)
 
 
 /**
- * N M G _ B O O L
- *
  * Perform boolean operations on a pair of shells.
  *
  * The return is an updated version of shell A.  Shell B is destroyed.
@@ -1126,8 +1114,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 
 /**
- * N M G _ D O _ B O O L
- *
  * BUG: we assume only one shell per region
  */
 struct nmgregion *
@@ -1171,8 +1157,6 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
 
 
 /**
- * N M G _ B O O L T R E E _ L E A F _ T E S S
- *
  * Called from db_walk_tree() each time a tree leaf is encountered.
  * The primitive solid, in external format, is provided in 'ep', and
  * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
@@ -1239,8 +1223,6 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 /**
- * N M G _ B O O L T R E E _ L E A F _ T N U R B
- *
  * Called from db_walk_tree() each time a tree leaf is encountered.
  * The primitive solid, in external format, is provided in 'ep', and
  * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
@@ -1300,8 +1282,6 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
 int nmg_bool_eval_silent=0;
 
 /**
- * N M G _ B O O L T R E E _ E V A L U A T E
- *
  * Given a tree of leaf nodes tessellated earlier by
  * nmg_booltree_leaf_tess(), use recursion to do a depth-first
  * traversal of the tree, evaluating each pair of boolean operations
@@ -1527,8 +1507,6 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
 
 /**
- * N M G _ B O O L E A N
- *
  * This is the main application interface to the NMG Boolean
  * Evaluator.
  *

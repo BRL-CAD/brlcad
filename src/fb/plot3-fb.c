@@ -513,8 +513,6 @@ get_strokes(void)
 
 
 /*
- * S X T 1 6
- *
  * Take a value which is currently considered "unsigned" with 16 bits
  * of significance, and sign-extend it in a reasonably portable way.
  * We assume the machine is twos-compliment.
@@ -650,8 +648,6 @@ Foo(int code)				/* returns status code */
 
 
 /*
- * P R E P _ D D A
- *
  * Set up multi-band DDA parameters for stroke
  */
 static void
@@ -875,8 +871,6 @@ GetDCoords(coords *coop)
 
 
 /*
- * E D G E L I M I T
- *
  * Limit generated positions to edges of screen
  */
 void
@@ -1351,8 +1345,6 @@ SetSigs(void)
 
 
 /*
- * M A I N
- *
  * Parse arguments, valid ones are:
  * name of file to plot (instead of STDIN)
  * -d for debugging statements

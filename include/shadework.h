@@ -33,9 +33,6 @@
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
-/**
- * S H A D E W O R K
- */
 struct shadework {
 /* FIXME: At least the first three of these need to be spectral curves */
     fastf_t		sw_transmit;	/**< @brief  0.0 -> 1.0 */

@@ -27,8 +27,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"		/* this includes bu.h */
-#include "bu.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 
 

@@ -54,6 +54,8 @@ ProductDefinitionFormation::ProductDefinitionFormation(STEPWrapper *sw, int step
 
 ProductDefinitionFormation::~ProductDefinitionFormation()
 {
+    // created through factory will be deleted there.
+    of_product = NULL;
 }
 
 string ProductDefinitionFormation::ClassName()
@@ -66,9 +68,22 @@ string ProductDefinitionFormation::Ident()
     return ident;
 }
 
-string ProductDefinitionFormation::Description()
+string
+ProductDefinitionFormation::Description()
 {
     return description;
+}
+
+string
+ProductDefinitionFormation::GetProductName()
+{
+    return of_product->Name();
+}
+
+int
+ProductDefinitionFormation::GetProductId()
+{
+    return of_product->GetId();
 }
 
 bool ProductDefinitionFormation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

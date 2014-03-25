@@ -54,7 +54,7 @@ nawk '
 # Both of these would be easy to add.
 function inside_cyl(m,n)
 {
-	for( m += 3; m < n; m += 3 ){
+	for( m += 3; m < n; m += 3 ) {
 		ax = substr(comp[m-3],1,8)
 		ay = substr(comp[m-3],9,8)
 		az = substr(comp[m-3],18,8)

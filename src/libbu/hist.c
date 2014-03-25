@@ -24,8 +24,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/hist.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 void
 bu_hist_free(struct bu_hist *histp)

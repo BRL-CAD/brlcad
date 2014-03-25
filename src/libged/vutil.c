@@ -89,7 +89,7 @@ _ged_mat_aet(struct ged_view *gvp)
 		  0.0,
 		  270.0 - gvp->gv_aet[0]);
 
-    twist = -gvp->gv_aet[2] * bn_degtorad;
+    twist = -gvp->gv_aet[2] * DEG2RAD;
     c_twist = cos(twist);
     s_twist = sin(twist);
     bn_mat_zrot(tmat, s_twist, c_twist);
@@ -211,8 +211,6 @@ _ged_do_tra(struct ged *gedp,
 
 
 /**
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
  *

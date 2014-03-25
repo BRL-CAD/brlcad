@@ -100,12 +100,12 @@ main(int argc, char *argv[])
     VSETALL(look, 0.0);
     VSETALL(eye, 0.0);
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
 	return 0;
     }
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	usage();
 	return 0;
     }

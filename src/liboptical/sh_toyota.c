@@ -154,18 +154,18 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->atmos_trans = 0.772;/* atmospheric transmittance */
     tp->weather = CLEAR_SKY;/* no clouds */
 
-    /*            / 2*M_PI  / arctan(rs/d)
+    /*            /  M_2PI  / arctan(rs/d)
      * sun_sang = |         |
      *	          |         |     sin(theta) d-theta d-phi
      *	          /         /
      *
-     *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
+     *	    = M_2PI*(1 - cos(arctan(rs/d)))
      *
-     *      = 2*M_PI*(1 - cos(arctan(695300/149000000)))
+     *      = M_2PI*(1 - cos(arctan(695300/149000000)))
      *
-     *	    = 2*M_PI*(1 - cos(.00466640908179121739))
+     *	    = M_2PI*(1 - cos(.00466640908179121739))
      *
-     *	    = 2*M_PI*(1 - .99998911233289762807)
+     *	    = M_2PI*(1 - .99998911233289762807)
      *
      *	    = .00006840922996708585320208283043854326275346156491
      *
@@ -1418,8 +1418,6 @@ atmos_irradiance(fastf_t lambda)
 
 
 /*
- * O Z O N E _ A B S O R P T I O N
- *
  * Return absorption coefficient due to ozone for a given wavelength
  * of light.
  * Units: m ^ -1 (inverse m)
@@ -2181,7 +2179,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.0; phi < 2*M_PI; phi += SPREAD) {
+	for (phi = 0.0; phi < M_2PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
@@ -2200,7 +2198,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 		Sun, ts->weather, t_vl);
 	    /* XXX hack */		if (i_dot_n > 0.0) {
 		irradiance +=
-		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
+		    reflectance(lambda, acos(i_dot_n)*RAD2DEG,
 				ts->refl, ts->refl_lines)
 		    * bg_radiance
 		    * i_dot_n
@@ -2218,7 +2216,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	pdv_3line(stdout, swp->sw_hit.hit_point, work);
     }
     irradiance +=
-	reflectance(lambda, acos(i_dot_n)*bn_radtodeg, ts->refl, ts->refl_lines)
+	reflectance(lambda, acos(i_dot_n)*RAD2DEG, ts->refl, ts->refl_lines)
 	* bg_radiance
 	* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 	* del_omega;
@@ -2302,7 +2300,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	/* Direct sunlight contribution. */
 	direct_sunlight =
 	    M_1_PI
-	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
+	    * reflectance(ts->wavelength, acos(i_dot_n)*RAD2DEG,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)

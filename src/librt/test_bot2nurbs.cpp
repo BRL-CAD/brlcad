@@ -586,7 +586,7 @@ shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_
 static void
 construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
-    if (faces->size() > 0){
+    if (faces->size() > 0) {
 	while(faces->size() > 0) {
 	    info->patch_cnt++;
 	    size_t new_patch = info->patch_cnt;

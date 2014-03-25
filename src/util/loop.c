@@ -48,6 +48,11 @@
 #define REAL 1
 #define CHAR 2
 
+void
+usage()
+{
+	bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -68,7 +73,7 @@ main(int argc, char *argv[])
     int oneone;
 
     if (argc < 3 || argc > 5) {
-	bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	usage();
 	return 9;
     }
 
@@ -78,13 +83,13 @@ main(int argc, char *argv[])
 	oneone = argv[1][1];
 	if (oneone < 0)
 	    oneone = 0;
-	if (oneone > CHAR_MAX)
+	else if (oneone > CHAR_MAX)
 	    oneone = CHAR_MAX;
 
 	if (oneone == 'c') {
 	    status = CHAR;
 	} else if ((oneone != '.') && !isdigit(oneone)) {
-	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    usage();
 	    return 9;
 	}
     }
@@ -141,7 +146,7 @@ main(int argc, char *argv[])
 	char *cp;
 	char fmt_string[50];
 
-	int field_width = 0;
+	int field_width;
 
 	int zeros      = 0;  /* leading zeros for output */
 	int zeros_arg1 = 0;  /* leading zeros in arg[1]  */
@@ -224,7 +229,7 @@ main(int argc, char *argv[])
 	}
     } else {
 	if (argc < 4) {
-	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    usage();
 	    return 9;
 	}
 	/* print out character output */

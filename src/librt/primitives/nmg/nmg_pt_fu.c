@@ -97,8 +97,6 @@ int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const str
 
 
 /**
- * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
- *
  * Find the square of the distance from a point P to a line segment described
  * by the two endpoints A and B.
  *
@@ -202,8 +200,6 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 
 
 /**
- * N M G _ C L A S S _ P T _ V U
- *
  * Classify a point vs a vertex (touching/missed)
  */
 static int
@@ -305,8 +301,7 @@ nmg_eu_is_part_of_crack(const struct edgeuse *eu)
 }
 
 
-/** N M G _ C L A S S _ P T _ E U V U
- *
+/**
  * Classify a point with respect to an EU where the VU is the
  * closest to the point. The EU and its left vector form an XY
  * coordinate system in the face, with EU along the X-axis and
@@ -544,8 +539,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 }
 
 
-/** N M G _ C L A S S _ P T _ E U
- *
+/**
  * If there is no ve_dist structure for this edge, compute one and
  * add it to the list.
  *
@@ -892,8 +886,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 }
 
 
-/** C O M P U T E _ L O O P _ C L A S S
- *
+/**
  * Given a list of edge_info structures for the edges of a loop,
  * determine what the classification for the loop should be.
  *
@@ -1384,8 +1377,6 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 
 
 /**
- * N M G _ C L A S S _ P T _ L U _ E X C E P T
- *
  * Classify a point as being in/on/out of the area bounded by a loop,
  * ignoring any uses of a particular edge in the loop.
  *

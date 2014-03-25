@@ -40,6 +40,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"

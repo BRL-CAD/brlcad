@@ -47,9 +47,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "solid.h"
 #include "dg.h"
@@ -63,8 +63,6 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp,
 
 
 /**
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int
@@ -218,7 +216,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		struct bu_vls tmp = BU_VLS_INIT_ZERO;
 		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", &tmp);
+		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", (&tmp));
 		bu_vls_free(&tmp);
 
 		if (count)

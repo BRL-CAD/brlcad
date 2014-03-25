@@ -39,15 +39,12 @@
 #  define DEFAULT_HZ yes
 #endif
 
-#include "bu.h"
+
 
 /* Standard System V stuff */
 static time_t time0;
 static struct tms tms0;
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {

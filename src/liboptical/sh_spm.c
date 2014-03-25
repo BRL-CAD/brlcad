@@ -65,8 +65,6 @@ struct mfuncs spm_mfuncs[] = {
 
 
 /*
- * S P M _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  */
@@ -106,8 +104,6 @@ spm_mfree(genptr_t cp)
 
 
 /*
- * S P M _ S E T U P
- *
  * Returns -
  * <0 failed
  * >0 success
@@ -144,9 +140,6 @@ fail:
 }
 
 
-/*
- * S P M _ P R I N T
- */
 HIDDEN void
 spm_print(register struct region *rp, genptr_t dp)
 {

@@ -52,6 +52,8 @@ Product::Product(STEPWrapper *sw, int step_id)
 
 Product::~Product()
 {
+    // elements created through factory will be deleted there.
+    frame_of_reference.clear();
 }
 
 string Product::ClassName()

@@ -46,8 +46,6 @@ int ipathpos = 0;	/* path index of illuminated element */
 
 
 /*
- * I L L U M I N A T E
- *
  * All solids except for the illuminated one have s_iflag set to DOWN.
  * The illuminated one has s_iflag set to UP, and also has the global
  * variable "illump" pointing at it.
@@ -92,8 +90,6 @@ illuminate(int y) {
 
 
 /*
- * A I L L
- *
  * advance illump or ipathpos
  */
 int
@@ -173,8 +169,6 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 
 /*
- * W R T _ V I E W
- *
  * Given a model-space transformation matrix "change", return a matrix
  * which applies the change with-respect-to the view center.
  */
@@ -194,8 +188,6 @@ wrt_view(mat_t out, const mat_t change, const mat_t in)
 
 
 /*
- * W R T _ P O I N T
- *
  * Given a model-space transformation matrix "change", return a matrix
  * which applies the change with-respect-to "point".
  */
@@ -214,8 +206,6 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 
 
 /*
- * F _ M A T P I C K
- *
  * When in O_PATH state, select the arc which contains the matrix
  * which is going to be "object edited".  The choice is recorded in
  * variable "ipathpos".
@@ -322,8 +312,6 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ M O U S E
- *
  * X and Y are expected to be in -2048 <= x, y <= +2047 range.  The
  * "up" flag is 1 on the not-pressed to pressed transition, and 0 on
  * the pressed to not-pressed transition.

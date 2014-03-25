@@ -44,10 +44,6 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
-#  ifdef IGNORE
-#    define _BIO_IGNORE(x) IGNORE(x)
-#    undef IGNORE
-#  endif
 #  include <windows.h>
 #  include <io.h>
 
@@ -56,15 +52,11 @@
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #  undef IN
 #  undef OUT
-/* In case windows.h squashed our ignore, reinstate it - see common.h */
-#  ifdef _BIO_IGNORE
-#    ifdef IGNORE
-#      undef IGNORE
-#    endif
-#    define IGNORE(x) _BIO_IGNORE(x)
-#  endif
 #else
 #  include <unistd.h>
+
+/* provide a stub so we don't need to wrap all setmode() calls */
+#  define setmode(a, b) /* poof */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */

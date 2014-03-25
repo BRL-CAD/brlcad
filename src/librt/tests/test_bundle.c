@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+
 #include "bn.h"
 #include "vmath.h"
 #include "plot3.h"

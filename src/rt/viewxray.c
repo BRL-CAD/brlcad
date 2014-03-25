@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"

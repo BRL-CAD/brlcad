@@ -34,7 +34,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -465,9 +466,6 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 }
 
 
-/**
- *
- */
 void
 rt_plot_all_solids(
     FILE *fp,

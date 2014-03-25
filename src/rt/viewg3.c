@@ -46,6 +46,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -108,8 +110,6 @@ int raymiss(register struct application *ap);
 
 
 /*
- * V I E W _ I N I T
- *
  * This routine is called by main().  It prints the overall shotline
  * header. Furthermore, pointers to rayhit() and raymiss() are set up
  * and are later called from do_run().
@@ -173,8 +173,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * View_2init is called by do_frame(), which in turn is called by
  * main() in rt.c.  It writes the view-specific COVART header.
  *
@@ -233,8 +231,6 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 
 
 /*
- * R A Y M I S S
- *
  * Null function -- handle a miss
  * This function is called by rt_shootray(), which is called by
  * do_frame().
@@ -247,8 +243,6 @@ raymiss(register struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ P I X E L
- *
  * This routine is called from do_run(), and in this case does
  * nothing.
  */
@@ -260,8 +254,6 @@ view_pixel(struct application *UNUSED(ap))
 
 
 /*
- * R A Y H I T
- *
  * Rayhit() is called by rt_shootray() when the ray hits one or more
  * objects.  A per-shotline header record is written, followed by
  * information about each object hit.
@@ -549,7 +541,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	in_obliq = acos(-dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 	RT_HIT_NORMAL(normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
 	dot_prod = VDOT(ap->a_ray.r_dir, normal);
 	if (dot_prod > 1.0)
@@ -558,7 +550,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	out_obliq = acos(dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 
 	/* Check for exit obliquities greater than 90 degrees. */
 
@@ -679,8 +671,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
 /*
- * V I E W _ E O L
- *
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
@@ -691,8 +681,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ E N D
- *
  * View_end() is called by rt_shootray in do_run().  It outputs a
  * special 999.9 "end of view" marker, composed of a "999.9" shotline
  * header, with one all-zero component record.  This is the way GIFT
@@ -723,8 +711,6 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- * P A R T _ C O M P A C T
- *
  * This routine takes a partition-head pointer, an application
  * structure pointer, and a tolerance.  It goes through the partition
  * list shot-line by shot-line and checks for regions with identical

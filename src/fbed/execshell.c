@@ -33,6 +33,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/log.h"
 #include "fb.h"
 
 #include "./std.h"
@@ -47,7 +48,7 @@
 #endif
 
 
-/*	e x e c _ S h e l l ( )
+/*
 	If args[0] is NULL, spawn a shell, otherwise execute the specified
 	command line.
 	Return the exit status of the program, or -1 if wait() or fork()

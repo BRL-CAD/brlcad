@@ -21,7 +21,6 @@
  *
  * Program to take input with up to 3 white-space separated columns,
  * expressed as
- * x y z
  * and produce a 3-D UNIX-plot file of the resulting space curve.
  *
  */

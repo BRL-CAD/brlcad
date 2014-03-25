@@ -131,6 +131,37 @@ extern void plot_ellipse(
 	const vect_t b,
 	int num_points);
 
+
+/**
+ * Evaluate a Bezier curve at a particular parameter value. Fill in
+ * control points for resulting sub-curves if "Left" and "Right" are
+ * non-null.
+ */
+extern void bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
+
+/**
+ * Given an equation in Bernstein-Bezier form, find all of the roots
+ * in the interval [0, 1].  Return the number of roots found.
+ */
+extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
+
+/**
+ * subdivide a 2D bezier curve at t=0.5
+ */
+extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
+
+
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
 __END_DECLS
 
 #endif /* LIBRT_LIBRT_PRIVATE_H */

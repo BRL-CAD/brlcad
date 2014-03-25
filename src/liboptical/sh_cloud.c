@@ -62,8 +62,6 @@ struct mfuncs cloud_mfuncs[] = {
 
 
 /*
- * C L O U D _ T E X T U R E
- *
  * Returns the texture value for a plane point
  */
 double
@@ -94,10 +92,10 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
      * Compute initial Phases and Frequencies
      * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
      */
-    Fx = bn_twopi * initFx;
-    Fy = bn_twopi * initFy;
-    Px = bn_halfpi * bn_tab_sin(0.5 * Fy * y);
-    Py = bn_halfpi * bn_tab_sin(0.5 * Fx * x);
+    Fx = M_2PI * initFx;
+    Fy = M_2PI * initFy;
+    Px = M_PI_2 * bn_tab_sin(0.5 * Fy * y);
+    Py = M_PI_2 * bn_tab_sin(0.5 * Fx * x);
 
     /* unattenuated starting factor */
     C = 1.0;
@@ -116,8 +114,8 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	 * Compute the new phases and frequencies.
 	 * N.B. The phases shouldn't vary the same way!
 	 */
-	Px = bn_halfpi * bn_tab_sin(Fy * y);
-	Py = bn_halfpi * bn_tab_sin(Fx * x);
+	Px = M_PI_2 * bn_tab_sin(Fy * y);
+	Py = M_PI_2 * bn_tab_sin(Fx * x);
 	Fx *= 2;
 	Fy *= 2;
 
@@ -135,9 +133,6 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 }
 
 
-/*
- * C L O U D _ S E T U P
- */
 HIDDEN int
 cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
@@ -156,9 +151,6 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t
 }
 
 
-/*
- * C L O U D _ P R I N T
- */
 HIDDEN void
 cloud_print(register struct region *rp, genptr_t dp)
 {
@@ -166,9 +158,6 @@ cloud_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * C L O U D _ F R E E
- */
 HIDDEN void
 cloud_free(genptr_t cp)
 {
@@ -177,8 +166,6 @@ cloud_free(genptr_t cp)
 
 
 /*
- * C L O U D _ R E N D E R
- *
  * Return a sky color with translucency control.
  * Threshold is the intensity below which it is completely translucent.
  * Range in the range on intensities over which translucence varies

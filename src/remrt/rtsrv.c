@@ -153,9 +153,6 @@ int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
 char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -379,8 +376,6 @@ main(int argc, char **argv)
 }
 
 /*
- *			P H _ E N Q U E U E
- *
  *  Generic routine to add a newly arrived PKG to a linked list,
  *  for later processing.
  *  Note that the buffer will be freed when the list element is processed.
@@ -421,8 +416,6 @@ ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
 }
 
 /*
- *			P H _ D I R B U I L D
- *
  *  The only argument is the name of the database file.
  */
 void
@@ -479,8 +472,6 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
 }
 
 /*
- *			P H _ G E T T R E E S
- *
  *  Each word in the command buffer is the name of a treetop.
  */
 void
@@ -553,9 +544,6 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	fprintf(stderr, "MSG_START error\n");
 }
 
-/*
- *			P R O C E S S _ C M D
- */
 void
 process_cmd(char *buf)
 {
@@ -676,9 +664,6 @@ prepare(void)
 }
 
 /*
- *			P H _ L I N E S
- *
- *
  *  Process pixels from 'a' to 'b' inclusive.
  *  The results are sent back all at once.
  *  Limitation:  may not do more than 'width' pixels at once,
@@ -756,8 +741,6 @@ ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 /**** Other replacement routines from libbu/log.c ****/
 int	bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
 /*
- *			B U _ L O G _ I N D E N T _ D E L T A
- *
  *  Change indentation level by indicated number of characters.
  *  Call with a large negative number to cancel all indentation.
  */
@@ -769,8 +752,6 @@ bu_log_indent_delta(int delta)
 }
 
 /*
- *			B U _ L O G _ I N D E N T _ V L S
- *
  *  For multi-line vls generators, honor logindent level like bu_log() does,
  *  and prefix the proper number of spaces.
  *  Should be called at the front of each new line.
@@ -783,8 +764,6 @@ bu_log_indent_vls(struct bu_vls *v)
 
 
 /*
- *			B U _ L O G
- *
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
@@ -815,8 +794,6 @@ bu_log(const char *fmt, ...)
 
 
 /*
- *			B U _ B O M B
- *
  *  Replacement for the LIBBU routine of the same name.
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
@@ -856,9 +833,6 @@ ph_unexp(struct pkg_conn *pc, char *buf)
     (void)free(buf);
 }
 
-/*
- *			P H _ E N D
- */
 void
 ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
 {
@@ -867,9 +841,6 @@ ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
     bu_exit(0, NULL);
 }
 
-/*
- *			P H _ P R I N T
- */
 void
 ph_print(struct pkg_conn *UNUSED(pc), char *buf)
 {

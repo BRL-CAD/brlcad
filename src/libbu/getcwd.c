@@ -28,13 +28,18 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
 #endif
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_getcwd(char *buf, size_t size)

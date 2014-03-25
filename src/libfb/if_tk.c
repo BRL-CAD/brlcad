@@ -31,18 +31,18 @@
 #ifdef IF_TK
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
 #endif
-
 #include <tcl.h>
 #include <tk.h>
+#include "bio.h"
+
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #include "fb.h"
 

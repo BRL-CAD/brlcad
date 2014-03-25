@@ -61,6 +61,7 @@ public:
     double GetLengthConversionFactor();
     double GetPlaneAngleConversionFactor();
     double GetSolidAngleConversionFactor();
+    string GetRepresentationContextName();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 

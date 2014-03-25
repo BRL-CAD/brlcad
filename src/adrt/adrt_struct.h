@@ -33,6 +33,8 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "bu/list.h"
+
 #include "tie.h"
 #include "texture_internal.h"
 #include "render.h"

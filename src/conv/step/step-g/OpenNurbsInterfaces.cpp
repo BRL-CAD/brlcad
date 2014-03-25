@@ -938,7 +938,9 @@ FaceSurface::AddFace(ON_Brep *brep)
 	face.m_bRev = false;
     } else {
 	face.m_bRev = true;
-	face.Reverse(0);
+#ifndef FLIP_SURFACE_OF_REVERSED_FACE
+	face.Reverse(0); //need to remove here but check for reversed face in raytracer
+#endif
     }
 
     ON_id = face.m_face_index;
@@ -1636,6 +1638,21 @@ Plane::LoadONBrep(ON_Brep *brep)
     }
 
     if (ON_id >= 0) {
+	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
+
+	if (s) {
+	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
+
+	    // origin may not lie within face so include in extent
+	    double maxdist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_max);
+	    double mindist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_min);
+	    bbdiag += FMAX(maxdist, mindist);
+
+	    ON_Interval extents(-bbdiag, bbdiag);
+	    s->Extend(0,extents);
+	    s->Extend(1,extents);
+	}
+
 	return true;    // already loaded
     }
 
@@ -1973,7 +1990,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPoint circleP1, isect, circleP2, PM, PT;
     ON_3dVector tangentP1, tangentP2;
 
-    circleP1 = startpt;
+    circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
     tangentP1 = circle.TangentAt(t);
 
     for (int i = 0; i < narcs; i++) {

@@ -38,7 +38,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"                  /* includes bu.h */
+#include "bu/cmd.h"
 #include "fb.h"
 #include "bu.h"
 
@@ -430,8 +430,6 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 /*
- * F B _ I N I T
- *
  * Allows LIBFB to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libfb.so"
  *

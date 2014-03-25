@@ -79,7 +79,7 @@ available to receive files as well as for the evaluation of raw
 throughput performance of the network connection between the two
 systems.  TTCP includes support for sourcing to/from memory, variable
 packet sizes, and loading metrics.  TTCP is described as a standard
-testing tool for TCP implementors via Network Working Group RFC 2398.
+testing tool for TCP implementers via Network Working Group RFC 2398.
 
 = Geometry Modeling Kernel =
 

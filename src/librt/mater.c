@@ -48,9 +48,6 @@
 static struct mater *material_head = MATER_NULL;
 
 
-/**
- *
- */
 void
 rt_pr_mater(register const struct mater *mp)
 {
@@ -210,20 +207,17 @@ rt_region_color_map(register struct region *regp)
 	    regp->reg_regionid >= mp->mt_low) {
 	    regp->reg_mater.ma_color_valid = 1;
 	    regp->reg_mater.ma_color[0] =
-		(((double)mp->mt_r)+0.5)*bn_inv255;
+		(((double)mp->mt_r)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[1] =
-		(((double)mp->mt_g)+0.5)*bn_inv255;
+		(((double)mp->mt_g)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[2] =
-		(((double)mp->mt_b)+0.5)*bn_inv255;
+		(((double)mp->mt_b)+0.5) / 255.0;
 	    return;
 	}
     }
 }
 
 
-/**
- *
- */
 void
 rt_vls_color_map(struct bu_vls *str)
 {

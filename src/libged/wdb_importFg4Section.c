@@ -37,6 +37,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/debug.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

@@ -39,7 +39,21 @@
 
 /* interface headers */
 #include "tcl.h"
-#include "bu.h"
+#include "bu/avs.h"
+#include "bu/bitv.h"
+#include "bu/bu_tcl.h"
+#include "bu/file.h"
+#include "bu/hash.h"
+#include "bu/hist.h"
+#include "bu/malloc.h"
+#include "bu/mapped_file.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/parallel.h" /* needed for BU_SEM_LAST */
+#include "bu/parse.h"
+#include "bu/ptbl.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bn.h"
 #include "db5.h"
 #include "nmg.h"
@@ -48,21 +62,9 @@
 
 __BEGIN_DECLS
 
-#ifndef RT_EXPORT
-#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
-#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
-#  elif defined(RT_DLL_EXPORTS)
-#    define RT_EXPORT __declspec(dllexport)
-#  elif defined(RT_DLL_IMPORTS)
-#    define RT_EXPORT __declspec(dllimport)
-#  else
-#    define RT_EXPORT
-#  endif
-#endif
+#include "./rt/defines.h"
 
 /**
- * D E B U G
- *
  * Each type of debugging support is independently controlled, by a
  * separate bit in the word RT_G_DEBUG
  *
@@ -167,8 +169,6 @@ __BEGIN_DECLS
 
 
 /**
- * R T _ T E S S _ T O L
- *
  * Tessellation (geometric) tolerances, different beasts than the
  * calculation tolerance in bn_tol.
  */
@@ -182,8 +182,6 @@ struct rt_tess_tol {
 #define RT_TESS_TOL_INIT_ZERO {RT_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
 
 /**
- * R T _ D B _ I N T E R N A L
- *
  * A handle on the internal format of an MGED database object.
  */
 struct rt_db_internal {
@@ -206,8 +204,6 @@ struct rt_db_internal {
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
- * D B _ F U L L _ P A T H
- *
  * For collecting paths through the database tree.
  * The fp_bool array can optionally hold a boolean flag
  * associated with each corresponding dp in fp_names.  This
@@ -236,8 +232,6 @@ struct db_full_path {
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
- * X R A Y
- *
  * All necessary information about a ray.
  * Not called just "ray" to prevent conflicts with VLD stuff.
  */
@@ -253,8 +247,6 @@ struct xray {
 #define RT_CK_RAY(_p) BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
- * X R A Y S
- *
  * This plural xrays structure is a bu_list based container designed
  * to hold a list or bundle of xray(s). This bundle is utilized by
  * rt_shootrays() through its application bundle input.
@@ -268,8 +260,6 @@ struct xrays
 
 
 /**
- * H I T
- *
  * Information about where a ray hits the surface
  *
  * Important Note:  Surface Normals always point OUT of a solid.
@@ -327,8 +317,6 @@ struct hit {
 
 
 /**
- * C U R V A T U R E
- *
  * Information about curvature of the surface at a hit point.  The
  * principal direction pdir has unit length and principal curvature
  * c1.  |c1| <= |c2|, i.e. c1 is the most nearly flat principle
@@ -369,8 +357,6 @@ struct curvature {
 /* RT_GET_CURVATURE(_curvp, _partition, inhit/outhit flag, ap) */
 
 /**
- * U V C O O R D
- *
  * Mostly for texture mapping, information about parametric space.
  */
 struct uvcoord {
@@ -394,8 +380,6 @@ struct uvcoord {
 
 
 /**
- * S E G
- *
  * Intersection segment.
  *
  * Includes information about both endpoints of intersection.
@@ -456,10 +440,9 @@ struct bound_rpp {
 
 
 /**
- * S O L T A B
- *
  * Internal information used to keep track of solids in the model.
- * Leaf name and Xform matrix are unique identifier.
+ * Leaf name and Xform matrix are unique identifier.  Note that all
+ * objects store dimensional values in millimeters (mm).
  */
 struct soltab {
     struct bu_list		l;		/**< @brief links, headed by rti_headsolid */
@@ -555,7 +538,7 @@ struct soltab {
 #define ID_MAXIMUM	44	/**< @brief Maximum defined ID_xxx value */
 
 /**
- * M A T E R _ I N F O
+ * Container for material information
  */
 struct mater_info {
     float	ma_color[3];	/**< @brief explicit color:  0..1  */
@@ -569,8 +552,6 @@ struct mater_info {
 
 
 /**
- * R E G I O N
- *
  * The region structure.
  */
 struct region {
@@ -598,8 +579,6 @@ struct region {
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 /**
- * P A R T I T I O N
- *
  * Partitions of a ray.  Passed from rt_shootray() into user's a_hit()
  * function.
  *
@@ -689,8 +668,6 @@ struct partition {
 #define DEQUEUE_PT(_cur) BU_LIST_DEQUEUE((struct bu_list *)_cur)
 
 /**
- * P A R T I T I O N _ L I S T
- *
  * The partition_list structure - bu_list based structure for
  * holding ray bundles.
  *
@@ -705,8 +682,6 @@ struct partition_list {
 
 
 /**
- * P A R T I T I O N _ B U N D L E
- *
  * Partition bundle.  Passed from rt_shootrays() into user's bundle_hit()
  * function.
  *
@@ -720,8 +695,6 @@ struct partition_bundle {
 
 
 /**
- * C U T
- *
  * Structures for space subdivision.
  *
  * cut_type is an integer for efficiency of access in rt_shootray() on
@@ -780,8 +753,6 @@ union cutter {
 #define CUTTER_NULL	((union cutter *)0)
 
 /**
- * M E M _ M A P
- *
  * These structures are used to manage internal resource maps.
  * Typically these maps describe some kind of memory or file space.
  */
@@ -826,8 +797,6 @@ struct mem_map {
 
 
 /**
- * D B _ I
- *
  * One of these structures is used to describe each separate instance
  * of a BRL-CAD model database ".g" file.
  *
@@ -835,6 +804,15 @@ struct mem_map {
  * opening related files (such as data files for EBM solids or
  * texture-maps).  The array and strings are all dynamically
  * allocated.
+ *
+ * Note that the current working units are specified as a conversion
+ * factor to/from millimeters (they are the 'base' in local2base and
+ * base2local) because database dimensional values are always stored
+ * as millimeters (mm).  The units conversion factor only affects the
+ * display and conversion of input values.  This helps prevent error
+ * accumulation and improves numerical stability when calculations are
+ * made.
+ *
  */
 struct db_i {
     uint32_t dbi_magic;		/**< @brief magic number */
@@ -869,8 +847,6 @@ struct db_i {
 
 
 /**
- * D I R E C T O R Y
- *
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
@@ -980,8 +956,6 @@ struct directory {
 
 
 /**
- * R T _ C O M B _ I N T E R N A L
- *
  * In-memory format for database "combination" record (non-leaf node).
  * (Regions and Groups are both a kind of Combination).  Perhaps move
  * to wdb.h or rtgeom.h?
@@ -1045,8 +1019,6 @@ struct rt_comb_internal {
 
 
 /**
- * R T _ B I N U N I F _ I N T E R N A L
- *
  * In-memory format for database uniform-array binary object.
  * Perhaps move to wdb.h or rtgeom.h?
  */
@@ -1072,8 +1044,6 @@ struct rt_binunif_internal {
 
 
 /**
- * P C _ C O N S T R A I N T
- *
  * In-memory format for database "constraint" record
  */
 struct rt_constraint_internal {
@@ -1089,8 +1059,6 @@ struct rt_constraint_internal {
 
 
 /**
- * D B _ T R E E _ S T A T E
- *
  * State for database tree walker db_walk_tree() and related
  * user-provided handler routines.
  */
@@ -1141,8 +1109,6 @@ struct db_tree_state {
 #define RT_CK_DBTS(_p) BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /**
- * D B _ T R A V E R S E
- *
  * State for database traversal functions.
  */
 struct db_traverse
@@ -1170,9 +1136,6 @@ struct db_traverse
 	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
 #define RT_CK_DB_TRAVERSE(_p) BU_CKMAG(_p, RT_DB_TRAVERSE_MAGIC, "db_traverse")
 
-/**
- * C O M B I N E D _ T R E E _ S T A T E
- */
 struct combined_tree_state {
     uint32_t magic;
     struct db_tree_state	cts_s;
@@ -1181,8 +1144,6 @@ struct combined_tree_state {
 #define RT_CK_CTS(_p) BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
 
 /**
- * T R E E
- *
  * Binary trees representing the Boolean operations between solids.
  */
 #define MKOP(x)		(x)
@@ -1304,8 +1265,6 @@ union tree {
 
 
 /**
- * R T _ T R E E _ A R R A Y
- *
  * flattened version of the union tree
  */
 struct rt_tree_array
@@ -1321,8 +1280,6 @@ struct rt_tree_array
 #define RT_MAXLINE		10240
 
 /**
- * R T _ W D B
- *
  * This data structure is at the core of the "LIBWDB" support for
  * allowing application programs to read and write BRL-CAD databases.
  * Many different access styles are supported.
@@ -1370,8 +1327,6 @@ struct rt_wdb {
 #define RT_MINVIEWSCALE 0.00005
 
 /**
- * A N I M A T E
- *
  * Each one of these structures specifies an arc in the tree that is
  * to be operated on for animation purposes.  More than one animation
  * operation may be applied at any given arc.  The directory structure
@@ -1425,8 +1380,6 @@ struct animate {
 #define RT_CK_ANIMATE(_p) BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /**
- * R T _ H T B L
- *
  * Support for variable length arrays of "struct hit".
  * Patterned after the libbu/ptbl.c idea.
  */
@@ -1439,8 +1392,6 @@ struct rt_htbl {
 #define RT_CK_HTBL(_p) BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
 
 /**
- * R T _ P I E C E S T A T E
- *
  * Holds onto memory re-used by rt_shootray() from shot to shot.
  * One of these for each solid which uses pieces.
  * There is a separate array of these for each cpu.
@@ -1461,8 +1412,6 @@ struct rt_piecestate {
 #define RT_CK_PIECESTATE(_p) BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
 
 /**
- * R T _ P I E C E L I S T
- *
  * For each space partitioning cell, there is one of these for each
  * solid in that cell which uses pieces.  Storage for the array is
  * allocated at cut time, and never changes.
@@ -1491,8 +1440,6 @@ struct rt_piecelist {
 #define RT_DEFAULT_MINTIE		0	/* disabled by default */
 
 /**
- * R E S O U R C E
- *
  * Per-CPU statistics and resources.
  *
  * One of these structures is allocated per processor.  To prevent
@@ -1568,8 +1515,6 @@ RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined 
 
 
 /**
- * R T _ R E P R E P _ O B J _ L I S T
- *
  * Structure used by the "reprep" routines
  */
 struct rt_reprep_obj_list {
@@ -1590,8 +1535,6 @@ struct rt_reprep_obj_list {
 
 
 /**
- * P I X E L _ E X T
- *
  * This structure is intended to describe the area and/or volume
  * represented by a ray.  In the case of the "rt" program it
  * represents the extent in model coordinates of the prism behind the
@@ -1611,8 +1554,6 @@ struct pixel_ext {
 #define BU_CK_PIXEL_EXT(_p) BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
 
 /**
- * A P P L I C A T I O N
- *
  * This structure is the only parameter to rt_shootray().  The entire
  * structure should be zeroed (e.g. by memset) before it is used the
  * first time.
@@ -1711,8 +1652,6 @@ struct application {
 
 
 /**
- * A P P L I C A T I O N _ B U N D L E
- *
  * This structure is the only parameter to rt_shootrays().  The entire
  * structure should be zeroed (e.g. by memset) before it is used the
  * first time.
@@ -1763,7 +1702,7 @@ struct application_bundle
 
 
 #ifdef NO_BOMBING_MACROS
-#  define RT_AP_CHECK(_ap) IGNORE((_ap))
+#  define RT_AP_CHECK(_ap) BU_IGNORE((_ap))
 #else
 #  define RT_AP_CHECK(_ap)	\
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
@@ -1771,8 +1710,6 @@ struct application_bundle
 #endif
 
 /**
- * R T _ G
- *
  * Definitions for librt.a which are global to the library regardless
  * of how many different models are being worked on
  */
@@ -1804,8 +1741,6 @@ RT_EXPORT extern struct rt_g RTG;
 #endif
 
 /**
- * S E M A P H O R E S
- *
  * Definition of global parallel-processing semaphores.
  *
  * res_syscall is now	BU_SEM_SYSCALL
@@ -1823,8 +1758,6 @@ RT_EXPORT extern struct rt_g RTG;
 
 
 /**
- * R T _ I
- *
  * @brief
  * This structure keeps track of almost everything for ray-tracing
  * support: Regions, primitives, model bounding box, statistics.
@@ -1971,8 +1904,6 @@ struct rt_i {
 #define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /**
- * C O M M A N D _ T A B
- *
  * Table for driving generic command-parsing routines
  */
 struct command_tab {
@@ -1986,8 +1917,6 @@ struct command_tab {
 
 
 /**
- * R T _ P O I N T _ L A B E L S
- *
  * Used by MGED for labeling vertices of a solid.
  */
 struct rt_point_labels {
@@ -1997,8 +1926,6 @@ struct rt_point_labels {
 
 
 /**
- * R T _ P T _ N O D E
- *
  * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c
  * to contain forward-linked lists of points.
  */
@@ -2008,8 +1935,6 @@ struct rt_pt_node {
 };
 
 /**
- * R T _ V I E W _ I N F O
- *
  * Normally, librt doesn't have a concept of a "display"
  * of the geometry.  However for at least the plotting routines,
  * view information is sometimes needed to produce more intelligent
@@ -2037,8 +1962,6 @@ struct rt_view_info {
 };
 
 /**
- * R T _ S E L E C T I O N
- *
  * Specifies a subset of a primitive's geometry as the target for
  * an operation.
  *
@@ -2050,8 +1973,6 @@ struct rt_selection {
 };
 
 /**
- * R T _ S E L E C T I O N _ S E T
- *
  * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
@@ -2065,8 +1986,6 @@ struct rt_selection_set {
 };
 
 /**
- *  R T _ O B J E C T _ S E L E C T I O N S
- *
  * Stores selections associated with an object. There is an entry in
  * the selections table for each kind of selection (e.g. "active",
  * "option"). The table entries are sets to allow more than one
@@ -2081,8 +2000,6 @@ struct rt_object_selections {
 };
 
 /**
- * R T _ S E L E C T I O N _ Q U E R Y
- *
  * Analogous to a database query. Specifies how to filter and sort
  * the selectable components of a primitive in order to find the most
  * relevant selections for a particular application.
@@ -2100,8 +2017,6 @@ struct rt_selection_query {
 };
 
 /**
- * R T _ S E L E C T I O N _ T R A N S L A T I O N
- *
  * Parameters of a translation applied to a selection.
  *
  * TODO: This structure is tentative and subject to change or removal
@@ -2114,8 +2029,6 @@ struct rt_selection_translation {
 };
 
 /**
- * R T _ S E L E C T I O N _ O P E R A T I O N
- *
  * Describes an operation that can be applied to a selection.
  *
  * TODO: This structure is tentative and subject to change or removal
@@ -2131,8 +2044,6 @@ struct rt_selection_operation {
 };
 
 /**
- * R T _ F U N C T A B
- *
  * Object-oriented interface to BRL-CAD geometry.
  *
  * These are the methods for a notional object class "brlcad_solid".
@@ -2352,8 +2263,6 @@ RT_EXPORT extern const struct rt_functab OBJ[];
 
 
 /**
- * R T _ S H O O T R A Y _ S T A T U S
- *
  * Internal to shoot.c and bundle.c
  */
 struct rt_shootray_status {
@@ -2462,7 +2371,7 @@ struct hitmiss {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm) IGNORE((hm))
+#  define NMG_CK_HITMISS(hm) BU_IGNORE((hm))
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
@@ -2490,7 +2399,7 @@ struct hitmiss {
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd) IGNORE((rd))
+#  define NMG_CK_HITMISS_LISTS(rd) BU_IGNORE((rd))
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
@@ -2593,7 +2502,7 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, str) IGNORE((rd))
+#  define nmg_bu_bomb(rd, str) BU_IGNORE((rd))
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
@@ -2661,8 +2570,6 @@ RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
 				       int ncpu);
 
 /**
- * R T _ D E F A U L T _ M U L T I O V E R L A P
- *
  * Default version of a_multioverlap().
  *
  * Resolve the overlap of multiple regions withing a single partition.
@@ -2691,8 +2598,6 @@ RT_EXPORT extern void rt_default_multioverlap(struct application *ap,
 					      struct partition *InputHdp);
 
 /**
- * R T _ S I L E N T _ L O G O V E R L A P
- *
  * If an application doesn't want any logging from LIBRT, it should
  * just set ap->a_logoverlap = rt_silent_logoverlap.
  */
@@ -2702,8 +2607,6 @@ RT_EXPORT extern void rt_silent_logoverlap(struct application *ap,
 					   const struct partition *InputHdp);
 
 /**
- * R T _ D E F A U L T _ L O G O V E R L A P
- *
  * Log a multiplicity of overlaps within a single partition.  This
  * function is intended for logging only, and a_multioverlap() is
  * intended for resolving the overlap, only.  This function can be
@@ -2777,8 +2680,6 @@ RT_EXPORT extern int rt_shootray(struct application *ap);
 /* Shoot a bundle of rays */
 
 /*
- * R T _ S H O O T R A Y S
- *
  * Function for shooting a bundle of rays. Iteratively walks list of
  * rays contained in the application bundles xrays field 'b_rays'
  * passing each single ray to r_shootray().
@@ -2966,9 +2867,6 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  */
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_prep_timer(void);
 /* Read global timer, return time + str */
 /**
@@ -3022,8 +2920,6 @@ RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const ma
 /* Weave segs into partitions */
 
 /**
- * R T _ B O O L W E A V E
- *
  * Weave a chain of segments into an existing set of partitions.  The
  * edge of each partition is an inhit or outhit of some solid (seg).
  *
@@ -3054,8 +2950,6 @@ RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
 /* Eval booleans over partitions */
 
 /**
- * R T _ B O O L F I N A L
- *
  * Consider each partition on the sorted & woven input partition list.
  * If the partition ends before this box's start, discard it
  * immediately.  If the partition begins beyond this box's end,
@@ -3135,8 +3029,6 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
 				  const struct bu_bitv *solidbits);
 
 /**
- * R T _ G R O W _ B O O L S T A C K
- *
  * Increase the size of re_boolstack to double the previous size.
  * Depend on bu_realloc() to copy the previous data to the new area
  * when the size is increased.
@@ -3148,8 +3040,6 @@ RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
 /* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a, b, 0.001)) */
 
 /**
- * R T _ F D I F F
- *
  * Compares two floating point numbers.  If they are within "epsilon"
  * of each other, they are considered the same.
  *
@@ -3169,8 +3059,6 @@ DEPRECATED RT_EXPORT extern int rt_fdiff(double a, double b);
 /* DEPRECATED: Relative Difference (use EQUAL(a, b)) */
 
 /**
- * R T _ R E L D I F F
- *
  * Compute the relative difference of two floating point numbers.
  *
  * Returns 0.0 if exactly the same, otherwise ratio of difference,
@@ -3202,8 +3090,6 @@ RT_EXPORT extern void rt_pr_hit(const char *str,
  * declarations moved to db.h */
 
 /**
- * R T _ C U T _ I T
- *
  * Go through all the solids in the model, given the model mins and
  * maxes, and generate a cutting tree.  A strategy better than
  * incrementally cutting each solid is to build a box node which
@@ -3218,8 +3104,6 @@ RT_EXPORT extern void rt_cut_it(struct rt_i *rtip,
 /* print cut node */
 
 /**
- * R T _ P R _ C U T
- *
  * Print out a cut tree.
  *
  * lvl is recursion level.
@@ -3228,8 +3112,6 @@ RT_EXPORT extern void rt_pr_cut(const union cutter *cutp,
 				int lvl);
 /* free a cut tree */
 /**
- * R T _ F R _ C U T
- *
  * Free a whole cut tree below the indicated node.  The strategy we
  * use here is to free everything BELOW the given node, so as not to
  * clobber rti_CutHead !
@@ -3250,15 +3132,11 @@ RT_EXPORT extern void rt_rebuild_overlaps(struct partition	*PartHdp,
 					  int		rebuild_fastgen_plates_only);
 
 /**
- * R T _ P A R T I T I O N _ L E N
- *
  * Return the length of a partition linked list.
  */
 RT_EXPORT extern int rt_partition_len(const struct partition *partheadp);
 
 /**
- * R T _ D E F O V E R L A P
- *
  * Default handler for overlaps in rt_boolfinal().
  *
  * Returns -
@@ -3276,9 +3154,6 @@ RT_EXPORT extern int	rt_defoverlap(struct application *ap,
 
 /* cut.c */
 
-/*
- * R T _ P R _ C U T _ I N F O
- */
 RT_EXPORT extern void rt_pr_cut_info(const struct rt_i	*rtip,
 				     const char		*str);
 RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
@@ -3292,8 +3167,6 @@ RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
 				   fastf_t bb[6]);
 
 /**
- * R T _ C U T _ E X T E N D
- *
  * Add a solid into a given boxnode, extending the lists there.  This
  * is used only for building the root node, which will then be
  * subdivided.
@@ -3306,8 +3179,6 @@ RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
 /* find RPP of one region */
 
 /**
- * R T _ R P P _ R E G I O N
- *
  * Calculate the bounding RPP for a region given the name of the
  * region node in the database.  See remarks in _rt_getregion() above
  * for name conventions.  Returns 0 for failure (and prints a
@@ -3319,8 +3190,6 @@ RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
 				   fastf_t *max_rpp);
 
 /**
- * R T _ I N _ R P P
- *
  * Compute the intersections of a ray with a rectangular parallelepiped
  * (RPP) that has faces parallel to the coordinate planes
  *
@@ -3356,8 +3225,6 @@ RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
 						      int n);
 
 /*
- * R T _ C U T _ C L E A N
- *
  * The rtip->rti_CutFree list can not be freed directly because is
  * bulk allocated.  Fortunately, we have a list of all the
  * bu_malloc()'ed blocks.  This routine may be called before the first
@@ -3368,7 +3235,6 @@ RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 /* Find the bounding box given a struct rt_db_internal : bbox.c */
 
 /**
- * R T _ B O U N D _ I N T E R N A L
  *
  * Calculate the bounding RPP of the internal format passed in 'ip'.
  * The bounding RPP is returned in rpp_min and rpp_max in mm
@@ -3394,8 +3260,6 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 /* Read semi-colon terminated line */
 
 /*
- * R T _ R E A D _ C M D
- *
  * Read one semi-colon terminated string of arbitrary length from the
  * given file into a dynamically allocated buffer.  Various commenting
  * and escaping conventions are implemented here.
@@ -3408,8 +3272,6 @@ RT_EXPORT extern char *rt_read_cmd(FILE *fp);
 /* do cmd from string via cmd table */
 
 /*
- * R T _ D O _ C M D
- *
  * Slice up input buffer into whitespace separated "words", look up
  * the first word as a command, and if it has the correct number of
  * args, call that function.  Negative min/max values in the tp
@@ -3426,8 +3288,6 @@ RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
 			       const struct command_tab *tp);
 
 /**
- * R T _ S P L I T _ C M D
- *
  * DEPRECATED: use bu_argv_from_string() instead
  */
 RT_EXPORT extern int rt_split_cmd(char **argv, int lim, char *lp);
@@ -3673,8 +3533,6 @@ RT_EXPORT extern void db_free_1anim(struct animate *anp);
 /* db_path.c */
 
 /**
- * d b _ n o r m a l i z e
- *
  * Normalize a BRL-CAD path according to rules used for realpath, but
  * without filesystem (or database object) validation.
  *
@@ -3687,26 +3545,15 @@ RT_EXPORT extern const char *db_normalize(const char *path);
 
 
 /* db_fullpath.c */
-/**
- * D B _ F U L L _ P A T H _ I N I T
- */
 RT_EXPORT extern void db_full_path_init(struct db_full_path *pathp);
 
-/**
- * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_add_node_to_full_path(struct db_full_path *pp,
 					       struct directory *dp);
 
-/**
- * D B _ D U P _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
 				       const struct db_full_path *oldp);
 
 /**
- * D B _ E X T E N D _ F U L L _ P A T H
- *
  * Extend "pathp" so that it can grow from current fp_len by incr more names.
  *
  * This is intended primarily as an internal method.
@@ -3714,15 +3561,10 @@ RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
 RT_EXPORT extern void db_extend_full_path(struct db_full_path *pathp,
 					  size_t incr);
 
-/**
- * D B _ A P P E N D _ F U L L _ P A T H
- */
 RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
 					  const struct db_full_path *src);
 
 /**
- * D B _ D U P _ P A T H _ T A I L
- *
  * Dup old path from starting index to end.
  */
 RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
@@ -3731,16 +3573,12 @@ RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
 
 
 /**
- * D B _ P A T H _ T O _ S T R I N G
- *
  * Unlike rt_path_str(), this version can be used in parallel.
  * Caller is responsible for freeing the returned buffer.
  */
 RT_EXPORT extern char *db_path_to_string(const struct db_full_path *pp);
 
 /**
- * D B _ P A T H _ T O _ V L S
- *
  * Append a string representation of the path onto the vls.  Must have
  * exactly the same formatting conventions as db_path_to_string().
  */
@@ -3748,15 +3586,23 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 				     const struct db_full_path *pp);
 
 /**
- * D B _ P R _ F U L L _ P A T H
+ * Append a string representation of the path onto the vls, with
+ * options to decorate nodes with additional information.
  */
+#define DB_FP_PRINT_BOOL         0x1    /* print boolean operations */
+#define DB_FP_PRINT_TYPE         0x2    /* print object types */
+RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
+	                                 const struct db_full_path *full_path,
+					 const struct db_i *dbip,  /* needed for type determination */
+					 const struct bn_tol *tol, /* needed for arb type determination */
+					 int fp_flags);
+
+
 RT_EXPORT extern void db_pr_full_path(const char *msg,
 				      const struct db_full_path *pathp);
 
 
 /**
- * D B _ S T R I N G _ T O _ P A T H
- *
  * Reverse the effects of db_path_to_string().
  *
  * The db_full_path structure will be initialized.  If it was already
@@ -3772,8 +3618,6 @@ RT_EXPORT extern int db_string_to_path(struct db_full_path *pp,
 
 
 /**
- * D B _ A R G V _ T O _ P A T H
- *
  * Treat elements from argv[0] to argv[argc-1] as a path specification.
  *
  * The path structure will be fully initialized.  If it was already in
@@ -3790,8 +3634,6 @@ RT_EXPORT extern int db_argv_to_path(struct db_full_path	*pp,
 
 
 /**
- * D B _ F R E E _ F U L L _ P A T H
- *
  * Free the contents of the db_full_path structure, but not the
  * structure itself, which might be automatic.
  */
@@ -3799,8 +3641,6 @@ RT_EXPORT extern void db_free_full_path(struct db_full_path *pp);
 
 
 /**
- * D B _ I D E N T I C A L _ F U L L _ P A T H S
- *
  * Returns -
  * 1 match
  * 0 different
@@ -3810,8 +3650,6 @@ RT_EXPORT extern int db_identical_full_paths(const struct db_full_path *a,
 
 
 /**
- * D B _ F U L L _ P A T H _ S U B S E T
- *
  * Returns -
  * 1 if 'b' is a proper subset of 'a'
  * 0 if not.
@@ -3822,8 +3660,6 @@ RT_EXPORT extern int db_full_path_subset(const struct db_full_path	*a,
 
 
 /**
- * D B _ F U L L _ P A T H _ M A T C H _ T O P
- *
  * Returns -
  * 1 if 'a' matches the top part of 'b'
  * 0 if not.
@@ -3835,8 +3671,6 @@ RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 
 
 /**
- * D B _ F U L L _ P A T H _ S E A R C H
- *
  * Returns -
  * 1 'dp' is found on this path
  * 0 not found
@@ -3847,131 +3681,10 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 
 /* search.c */
 
-
-/* DEPRECATED - db_full_path_list structure is replaced by
- * bu_ptbl and char ** arrays in new search functionality*/
-struct db_full_path_list {
-    struct bu_list l;
-    struct db_full_path *path;
-    int local;
-};
-DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
-DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
-DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
-					  struct db_i *dbip,
-					  struct rt_wdb *wdbp);
-DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
-DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
-								struct db_full_path_list *path_list,
-								struct db_i *dbip,
-								struct rt_wdb *wdbp);
-DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
-							  struct db_full_path_list *path_list,
-							  struct db_i *dbip,
-							  struct rt_wdb *wdbp);
-
-/* search.c */
-/**
- * D B _ S E A R C H _ P A T H
- *
- * Programmatic interface to the find-command style search functionality
- * available in librt for databases.  These functions search the
- * database using a supplied list of filter criteria and return either
- * db_full_path instances or directory pointers (depending on the function).
- * Both types of returns use a bu_ptbl container to hold the set of results.
- *
- * Design notes:
- *
- * * As long as struct db_i retains its pointer back to its parent rt_wdb
- *   structure, and dbip is a parameter in rt_wdb, only one of the two is
- *   needed as a parameter and either will work.  Probably go with rt_wdb,
- *   since it isn't tagged as private within the data structure definition,
- *   but on the other hand some ways db_i would be preferable since it
- *   would allow the search functions to break out cleanly into a
- *   hypothetical libgio/libdb that is separate from the raytracing.
- *   Unfortunately, the need to get to the internal form of some of the
- *   primitives means we do need rt_wdb available for now.  If the ways
- *   search currently is accessing rt_wdb could be avoided with a future
- *   improvement/redesign, then db_i and using the private link to rt_wdb
- *   is justified.  Need to discuss before this API is finalized.
- *
- * * Plan strings are the most intuitive way for humans to spell out a search
- *   pattern - db_search_formplan becomes a behind-the-scenes function that
- *   the user then doesn't have to worry about.  Only counterargument would
- *   be re-using plans already built from a string, and the slight overhead
- *   of rebuilding the plan from a string for repeated search calls isn't
- *   sufficient justification for the added API complexity without hard
- *   evidence that complexity is needed.
- *
- * * Offer simple function calls for the common cases of one path and an
- *   array of paths, and for both input cases support returning either
- *   a db_full_path set or a unique directory pointer set via table.  This
- *   should cover the most common programmatic situations, while still
- *   allowing commands enough flexibility to do what they need to (see,
- *   for example, combining results from search sets (multiple arrays
- *   of paths) in libged's search result consolidation.)
- *
- * * Need to add a plan option for dealing with hidden geometry during the search,
- *   maybe -nohide or something like that...  The traversal by default shouldn't
- *   traverse down anything hidden, but we should be able to override that at user request.
- *
- * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
- * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
- *
- */
-RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
-	                                        struct directory *dp,
-	                                        struct rt_wdb *wdbp);
-RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
-                                                 int path_cnt,
-	                                         struct directory **paths,
-	                                         struct rt_wdb *wdbp);
-
-/* Because the handling of the plan is now wrapped up inside the
- * search commands, we need a way to check ahead of time to see
- * if the string we have is valid.  Not an issue for hard-coded
- * search strings in C logic, but may be needed when the string
- * is user (or script) generated.
- *
- * Returns: 1 if plan is valid, 0 if it is not */
-RT_EXPORT extern int db_search_plan_validate(const char *plan_string);
-
-/* Properly free the tables returned by db_search_path and db_search_paths */
-RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
-
-/* Because a list of unique directory pointers is a common output
- * needed from search, functions are provided that produce a
- * table of directory pointers to unique leaf objects from the search
- * results.  Note that db_free_search_tbl does *not* free the table returned
- * by db_search_obj, but a custom free is not needed - only directory
- * pointers are stored in the table, so a normal bu_ptbl_free combined
- * with a freeing of the table structure itself is sufficient.
- */
-RT_EXPORT extern struct bu_ptbl *db_search_path_obj(const char *plan_string,
-	                                            struct directory *dp,
-	                                            struct rt_wdb *wdbp);
-RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
-	                                             int path_cnt,
-	                                             struct directory **paths,
-	                                             struct rt_wdb *wdbp);
-
-/* For situations where performance is critical and there are no
- * search criteria that depend on depth (for example, wanting a list
- * of all brep objects with name matching pattern *.b) a truly flat
- * iteration through the directory objects will be much faster.
- *
- * Returns a bu_ptbl of directory pointers, since full paths are
- * meaningless in this type of search
- */
-RT_EXPORT extern struct bu_ptbl *db_search_flat(const char *plan_string,
-	                                            struct rt_wdb *wdbp,
-						    int flags);
+#include "./rt/search.h"
 
 /* db_open.c */
 /**
- * D B _ S Y N C
- *
  * Ensure that the on-disk database has been completely written out of
  * the operating system's cache.
  */
@@ -4015,8 +3728,6 @@ db_open(const char *name, const char *mode);
 
 /* create a new model database */
 /**
- * D B _ C R E A T E
- *
  * Create a new database containing just a header record, regardless
  * of whether the database previously existed or not, and open it for
  * reading and writing.
@@ -4033,8 +3744,6 @@ RT_EXPORT extern struct db_i *db_create(const char *name,
 
 /* close a model database */
 /**
- * D B _ C L O S E _ C L I E N T
- *
  * De-register a client of this database instance, if provided, and
  * close out the instance.
  */
@@ -4042,8 +3751,6 @@ RT_EXPORT extern void db_close_client(struct db_i *dbip,
 				      long *client);
 
 /**
- * D B _ C L O S E
- *
  * Close a database, releasing dynamic memory Wait until last user is
  * done, though.
  */
@@ -4052,8 +3759,6 @@ RT_EXPORT extern void db_close(struct db_i *dbip);
 
 /* dump a full copy of a database */
 /**
- * D B _ D U M P
- *
  * Dump a full copy of one database into another.  This is a good way
  * of committing a ".inmem" database to a ".g" file.  The input is a
  * database instance, the output is a LIBWDB object, which could be a
@@ -4067,8 +3772,6 @@ RT_EXPORT extern int db_dump(struct rt_wdb *wdbp,
 			     struct db_i *dbip);
 
 /**
- * D B _ C L O N E _ D B I
- *
  * Obtain an additional instance of this same database.  A new client
  * is registered at the same time if one is specified.
  */
@@ -4120,8 +3823,6 @@ RT_EXPORT extern int db5_realloc(struct db_i *dbip,
 
 
 /**
- * D B 5 _ E X P O R T _ O B J E C T 3
- *
  * A routine for merging together the three optional parts of an
  * object into the final on-disk format.  Results in extra data
  * copies, but serves as a starting point for testing.  Any of name,
@@ -4140,8 +3841,6 @@ RT_EXPORT extern void db5_export_object3(struct bu_external *out,
 
 
 /**
- * R T _ D B _ C V T _ T O _ E X T E R N A L 5
- *
  * The attributes are taken from ip->idb_avs
  *
  * If present, convert attributes to on-disk format.  This must happen
@@ -4169,8 +3868,6 @@ RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
 
 
 /*
- * D B _ W R A P _ V 5 _ E X T E R N A L
- *
  * Modify name of external object, if necessary.
  */
 RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
@@ -4178,8 +3875,6 @@ RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 
 
 /**
- * R T _ D B _ G E T _ I N T E R N A L 5
- *
  * Get an object from the database, and convert it into its internal
  * representation.
  *
@@ -4198,8 +3893,6 @@ RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal	*ip,
 
 
 /**
- * R T _ D B _ P U T _ I N T E R N A L 5
- *
  * Convert the internal representation of a solid to the external one,
  * and write it into the database.
  *
@@ -4221,8 +3914,6 @@ RT_EXPORT extern int rt_db_put_internal5(struct directory	*dp,
 
 
 /**
- * D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
- *
  * Make only the front (header) portion of a free object.  This is
  * used when operating on very large contiguous free objects in the
  * database (e.g. 50 MBytes).
@@ -4232,8 +3923,6 @@ RT_EXPORT extern void db5_make_free_object_hdr(struct bu_external *ep,
 
 
 /**
- * D B 5 _ M A K E _ F R E E _ O B J E C T
- *
  * Make a complete, zero-filled, free object.  Note that free objects
  * can sometimes get quite large.
  */
@@ -4242,8 +3931,6 @@ RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 
 
 /**
- * D B 5 _ D E C O D E _ S I G N E D
- *
  * Given a variable-width length field in network order (XDR), store
  * it in *lenp.
  *
@@ -4257,8 +3944,6 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 				       int			format);
 
 /**
- * D B 5 _ D E C O D E _ L E N G T H
- *
  * Given a variable-width length field in network order (XDR), store
  * it in *lenp.
  *
@@ -4272,22 +3957,15 @@ RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 					  int format);
 
 /**
- * D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
- *
  * Given a number to encode, decide which is the smallest encoding
  * format which will contain it.
  */
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 
-/**
- * D B 5 _ I M P O R T _ C O L O R _ T A B L E
- */
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
 /**
- * D B 5 _ I M P O R T _ A T T R I B U T E S
- *
  * Convert the on-disk encoding into a handy easy-to-use
  * bu_attribute_value_set structure.
  *
@@ -4307,8 +3985,6 @@ RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
 					   const struct bu_external *ap);
 
 /**
- * D B 5 _ E X P O R T _ A T T R I B U T E S
- *
  * Encode the attribute-value pair information into the external
  * on-disk format.
  *
@@ -4323,8 +3999,6 @@ RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
 
 
 /**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
- *
  * Returns -
  * 0 on success
  * -1 on EOF
@@ -4334,8 +4008,6 @@ RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
 
 /**
- * D B 5 _ H E A D E R _ I S _ V A L I D
- *
  * Verify that this is a valid header for a BRL-CAD v5 database.
  *
  * Returns -
@@ -4350,8 +4022,6 @@ RT_EXPORT extern int db5_fwrite_ident(FILE *,
 
 
 /**
- * D B 5 _ P U T _ C O L O R _ T A B L E
- *
  * Put the old region-id-color-table into the global object.  A null
  * attribute is set if the material table is empty.
  *
@@ -4365,8 +4035,6 @@ RT_EXPORT extern int db5_update_ident(struct db_i *dbip,
 				      double local2mm);
 
 /**
- *
- * D B _ P U T _ E X T E R N A L 5
  *
  * Given that caller already has an external representation of the
  * database object, update it to have a new name (taken from
@@ -4393,8 +4061,6 @@ RT_EXPORT extern int db_put_external5(struct bu_external *ep,
 				      struct db_i *dbip);
 
 /**
- * D B 5 _ U P D A T E _ A T T R I B U T E S
- *
  * Update an arbitrary number of attributes on a given database
  * object.  For efficiency, this is done without looking at the object
  * body at all.
@@ -4411,8 +4077,6 @@ RT_EXPORT extern int db5_update_attributes(struct directory *dp,
 					   struct db_i *dbip);
 
 /**
- * D B 5 _ U P D A T E _ A T T R I B U T E
- *
  * A convenience routine to update the value of a single attribute.
  *
  * Returns -
@@ -4425,8 +4089,6 @@ RT_EXPORT extern int db5_update_attribute(const char *obj_name,
 					  struct db_i *dbip);
 
 /**
- * D B 5 _ R E P L A C E _ A T T R I B U T E S
- *
  * Replace the attributes of a given database object.
  *
  * For efficiency, this is done without looking at the object body at
@@ -4441,7 +4103,7 @@ RT_EXPORT extern int db5_replace_attributes(struct directory *dp,
 					    struct bu_attribute_value_set *avsp,
 					    struct db_i *dbip);
 
-/** D B _ G E T _ A T T R I B U T E S
+/**
  *
  * Get attributes for an object pointed to by *dp
  *
@@ -4456,15 +4118,11 @@ RT_EXPORT extern int db5_get_attributes(const struct db_i *dbip,
 /* db_comb.c */
 
 /**
- * D B _ T R E E _ N L E A V E S
- *
  * Return count of number of leaf nodes in this tree.
  */
 RT_EXPORT extern size_t db_tree_nleaves(const union tree *tp);
 
 /**
- * D B _ F L A T T E N _ T R E E
- *
  * Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
  * left-heavy), and flatten it into an array layout, ready for conversion
  * back to the GIFT-inspired V4 database format.
@@ -4484,8 +4142,6 @@ RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array	*rt_
 						       struct resource		*resp);
 
 /**
- * R T _ C O M B _ I M P O R T 4
- *
  * Import a combination record from a V4 database into internal form.
  */
 RT_EXPORT extern int rt_comb_import4(struct rt_db_internal	*ip,
@@ -4494,9 +4150,6 @@ RT_EXPORT extern int rt_comb_import4(struct rt_db_internal	*ip,
 				     const struct db_i		*dbip,
 				     struct resource		*resp);
 
-/**
- * R T _ C O M B _ E X P O R T 4
- */
 RT_EXPORT extern int rt_comb_export4(struct bu_external			*ep,
 				     const struct rt_db_internal	*ip,
 				     double				local2mm,
@@ -4504,8 +4157,6 @@ RT_EXPORT extern int rt_comb_export4(struct bu_external			*ep,
 				     struct resource			*resp);
 
 /**
- * D B _ T R E E _ F L A T T E N _ D E S C R I B E
- *
  * Produce a GIFT-compatible listing, one "member" per line,
  * regardless of the structure of the tree we've been given.
  */
@@ -4516,18 +4167,12 @@ RT_EXPORT extern void db_tree_flatten_describe(struct bu_vls	*vls,
 					       double		mm2local,
 					       struct resource	*resp);
 
-/**
- * D B _ T R E E _ D E S C R I B E
- */
 RT_EXPORT extern void db_tree_describe(struct bu_vls	*vls,
 				       const union tree	*tp,
 				       int		indented,
 				       int		lvl,
 				       double		mm2local);
 
-/**
- * D B _ C O M B _ D E S C R I B E
- */
 RT_EXPORT extern void db_comb_describe(struct bu_vls	*str,
 				       const struct rt_comb_internal	*comb,
 				       int		verbose,
@@ -4535,8 +4180,6 @@ RT_EXPORT extern void db_comb_describe(struct bu_vls	*str,
 				       struct resource	*resp);
 
 /**
- * R T _ C O M B _ D E S C R I B E
- *
  * OBJ[ID_COMBINATION].ft_describe() method
  */
 RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
@@ -4549,8 +4192,6 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 /*==================== END g_comb.c / table.c interface ========== */
 
 /**
- * D B _ W R A P _ V 4 _ E X T E R N A L
- *
  * As the v4 database does not really have the notion of "wrapping",
  * this function writes the object name into the
  * proper place (a standard location in all granules).
@@ -4561,8 +4202,6 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 /* Some export support routines */
 
 /**
- * D B _ C K _ L E F T _ H E A V Y _ T R E E
- *
  * Support routine for db_ck_v4gift_tree().
  * Ensure that the tree below 'tp' is left-heavy, i.e. that there are
  * nothing but solids on the right side of any binary operations.
@@ -4575,8 +4214,6 @@ RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 					   int		no_unions);
 
 /**
- * D B _ C K _ V 4 G I F T _ T R E E
- *
  * Look a gift-tree in the mouth.
  * Ensure that this boolean tree conforms to the GIFT convention that
  * union operations must bind the loosest.
@@ -4592,8 +4229,6 @@ RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
 
 /**
- * D B _ M K B O O L _ T R E E
- *
  * Given a rt_tree_array array, build a tree of "union tree" nodes
  * appropriately connected together.  Every element of the
  * rt_tree_array array used is replaced with a TREE_NULL.
@@ -4604,16 +4239,11 @@ RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
 					    size_t		howfar,
 					    struct resource	*resp);
 
-/**
- * D B _ M K G I F T _ T R E E
- */
 RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 					    size_t subtreecount,
 					    struct resource *resp);
 
 /**
- * r t _ c o m b _ g e t _ c o l o r
- *
  * fills in rgb with the color for a given comb combination
  *
  * returns truthfully if a color could be got
@@ -4632,8 +4262,6 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
 
 
 /**
- * d b _ c o m b _ m v a l l
- *
  * change all matching object names in the comb tree from old_name to new_name
  *
  * calling function must supply an initialized bu_ptbl, and free it once done.
@@ -4797,8 +4425,6 @@ RT_EXPORT extern int db_scan(struct db_i *,
 #define db_ident(a, b, c)		+++error+++
 
 /**
- * D B 5 _ U P D A T E _ I D E N T
- *
  * Update the _GLOBAL object, which in v5 serves the place of the
  * "ident" header record in v4 as the place to stash global
  * information.  Since every database will have one of these things,
@@ -4813,8 +4439,6 @@ RT_EXPORT extern int db_update_ident(struct db_i *dbip,
 				     double local2mm);
 
 /**
- * D B 5 _ F W R I T E _ I D E N T
- *
  * Create a header for a v5 database.
  *
  * This routine has the same calling sequence as db_fwrite_ident()
@@ -4826,7 +4450,15 @@ RT_EXPORT extern int db_update_ident(struct db_i *dbip,
  * First, a database header object.
  *
  * Second, create a specially named attribute-only object which
- * contains the attributes "title=" and "units=".
+ * contains the attributes "title=" and "units=" with the values of
+ * title and local2mm respectively.
+ *
+ * Note that the current working units are specified as a conversion
+ * factor to millimeters because database dimensional values are
+ * always stored as millimeters (mm).  The units conversion factor
+ * only affects the display and conversion of input values.  This
+ * helps prevent error accumulation and improves numerical stability
+ * when calculations are made.
  *
  * This routine should only be used by db_create().  Everyone else
  * should use db5_update_ident().
@@ -4918,8 +4550,6 @@ RT_EXPORT extern int rt_db_flip_endian(struct db_i *dbip);
 /* db5_comb.c */
 
 /**
- * R T _ C O M B _ I M P O R T 5
- *
  * Read a combination object in v5 external (on-disk) format, and
  * convert it into the internal format described in rtgeom.h
  *
@@ -4965,24 +4595,18 @@ RT_EXPORT extern void db_inmem(struct directory	*dp,
 /* db_lookup.c */
 
 /**
- * D B _ D I R E C T O R Y _ S I Z E
- *
  * Return the number of "struct directory" nodes in the given
  * database.
  */
 RT_EXPORT extern size_t db_directory_size(const struct db_i *dbip);
 
 /**
- * D B _ C K _ D I R E C T O R Y
- *
  * For debugging, ensure that all the linked-lists for the directory
  * structure are intact.
  */
 RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
 
 /**
- * D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
- *
  * Returns -
  * 0 if the in-memory directory is empty
  * 1 if the in-memory directory has entries,
@@ -4991,8 +4615,6 @@ RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
 RT_EXPORT extern int db_is_directory_non_empty(const struct db_i	*dbip);
 
 /**
- * D B _ D I R H A S H
- *
  * Returns a hash index for a given string that corresponds with the
  * head of that string's hash chain.
  */
@@ -5000,8 +4622,6 @@ RT_EXPORT extern int db_dirhash(const char *str);
 
 /**
  * Name -
- * D B _ D I R C H E C K
- *
  * Description -
  * This routine ensures that ret_name is not already in the
  * directory. If it is, it tries a fixed number of times to
@@ -5028,8 +4648,6 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 /* convert name to directory ptr */
 
 /**
- * D B _ L O O K U P
- *
  * This routine takes a name and looks it up in the directory table.
  * If the name is present, a pointer to the directory struct element
  * is returned, otherwise NULL is returned.
@@ -5047,8 +4665,6 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 /* lookup directory entries based on attributes */
 
 /**
- * D B _ L O O K U P _ B Y _ A T T R
- *
  * lookup directory entries based on directory flags (dp->d_flags) and
  * attributes the "dir_flags" arg is a mask for the directory flags
  * the *"avs" is an attribute value set used to select from the
@@ -5075,8 +4691,6 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 /* add entry to directory */
 
 /**
- * D B _ D I R A D D
- *
  * Add an entry to the directory.  Try to make the regular path
  * through the code as fast as possible, to speed up building the
  * table of contents.
@@ -5114,8 +4728,6 @@ RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 /* delete entry from directory */
 
 /**
- * D B _ D I R D E L E T E
- *
  * Given a pointer to a directory entry, remove it from the linked
  * list, and free the associated memory.
  *
@@ -5133,15 +4745,11 @@ RT_EXPORT extern int db_fwrite_ident(FILE *,
 				     double);
 
 /**
- * D B _ P R _ D I R
- *
  * For debugging, print the entire contents of the database directory.
  */
 RT_EXPORT extern void db_pr_dir(const struct db_i *dbip);
 
 /**
- * D B _ R E N A M E
- *
  * Change the name string of a directory entry.  Because of the
  * hashing function, this takes some extra work.
  *
@@ -5155,8 +4763,6 @@ RT_EXPORT extern int db_rename(struct db_i *,
 
 
 /**
- * D B _ U P D A T E _ N R E F
- *
  * Updates the d_nref fields (which count the number of times a given entry
  * is referenced by a COMBination in the database).
  *
@@ -5167,8 +4773,6 @@ RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 
 /**
  * DEPRECATED: Use bu_fnmatch() instead of this function.
- *
- * D B _ R E G E X P _ M A T C H
  *
  * If string matches pattern, return 1, else return 0
  *
@@ -5185,8 +4789,6 @@ DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 
 
 /**
- * D B _ R E G E X P _ M A T C H _ A L L
- *
  * Appends a list of all database matches to the given vls, or the pattern
  * itself if no matches are found.
  * Returns the number of matches.
@@ -5275,8 +4877,6 @@ RT_EXPORT extern int db_zapper(struct db_i *,
 			       size_t start);
 
 /**
- * D B _ A L L O C _ D I R E C T O R Y
- *
  * This routine is called by the RT_GET_DIRECTORY macro when the
  * freelist is exhausted.  Rather than simply getting one additional
  * structure, we get a whole batch, saving overhead.
@@ -5284,8 +4884,6 @@ RT_EXPORT extern int db_zapper(struct db_i *,
 RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
 
 /**
- * R T _ A L L O C _ S E G _ B L O C K
- *
  * This routine is called by the GET_SEG macro when the freelist is
  * exhausted.  Rather than simply getting one additional structure, we
  * get a whole batch, saving overhead.  When this routine is called,
@@ -5775,9 +5373,6 @@ RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
 					   int noisy,
 					   struct resource *resp);
 
-/**
- *
- */
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 				    struct resource *resp);
 
@@ -5978,20 +5573,11 @@ RT_EXPORT extern void rt_memprint(struct mem_map **pp);
 RT_EXPORT extern void rt_memclose(void);
 
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *rt_vlblock_init(void);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_vlblock_free(struct bn_vlblock *vbp);
 
-/**
- *
- */
 RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
 						 int r,
 						 int g,
@@ -6165,16 +5751,11 @@ RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
 RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
 					  struct rt_i *rtip);
 
 
 /**
- * R T _ R E S _ P I E C E S _ I N I T
- *
  * Allocate the per-processor state variables needed to support
  * rt_shootray()'s use of 'solid pieces'.
  */
@@ -6202,8 +5783,6 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 
 
 /**
- * R T _ B O U N D _ T R E E
- *
  * Calculate the bounding RPP of the region whose boolean tree is
  * 'tp'.  The bounding RPP is returned in tree_min and tree_max, which
  * need not have been initialized first.
@@ -6252,26 +5831,14 @@ RT_EXPORT extern int rt_tree_elim_nops(union tree *,
  *									*
  ************************************************************************/
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list	*free_vlist_hd,	/* where to get/put free vlists */
 						    int		max_ent);
 
-/**
- *
- */
 RT_EXPORT extern struct bn_vlblock *	rt_vlblock_init(void);
 
 
-/**
- *
- */
 RT_EXPORT extern void rt_vlblock_free(struct bn_vlblock *vbp);
 
-/**
- *
- */
 RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
 						 int r,
 						 int g,
@@ -6427,9 +5994,6 @@ RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
 
 /* htbl.c */
 
-/**
- *
- */
 RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b, size_t len, const char *str);
 
 /**
@@ -6450,7 +6014,7 @@ RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
 
 /************************************************************************
  *									*
- *			N M G Support Function Declarations		*
+ *			NMG Support Function Declarations		*
  *									*
  ************************************************************************/
 #if defined(NMG_H)
@@ -8351,8 +7915,6 @@ RT_EXPORT extern struct db5_attr_ctype **db5_attr_dump(struct db5_registry *regi
 
 
 /**
- * D B 5 _ S T A N D A R D _ A T T R I B U T E
- *
  * Function returns the string name for a given standard attribute
  * index.  Index values returned from db5_standardize_attribute()
  * correspond to the names returned from this function, returning the
@@ -8366,8 +7928,6 @@ RT_EXPORT extern const char *db5_standard_attribute(int idx);
 
 
 /**
- * D B 5 _ S T A N D A R D _ A T T R I B U T E _ DEF
- *
  * Function returns the string definition for a given standard
  * attribute index.  Index values returned from
  * db5_standardize_attribute_def() correspond to the definition
@@ -8381,8 +7941,6 @@ RT_EXPORT extern const char *db5_standard_attribute(int idx);
 RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
 
 /**
- * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
- *
  * Function for recognizing various versions of the DB5 standard
  * attribute names that have been used - returns the attribute type
  * of the supplied attribute name, or -1 if it is not a recognized
@@ -8394,8 +7952,6 @@ RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
 RT_EXPORT extern int db5_is_standard_attribute(const char *attrname);
 
 /**
- * D B 5 _ S T A N D A R D I Z E _ A V S
- *
  * Ensures that an attribute set containing standard attributes with
  * non-standard/old/deprecated names gets the standard name added.  It
  * will update the first non-standard name encountered, but will leave
@@ -8443,15 +7999,11 @@ RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
 /* defined in db5_bin.c */
 
 /**
- * R T _ B I N U N I F _ F R E E
- *
  * Free the storage associated with a binunif_internal object
  */
 RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
 
 /**
- * R T _ B I N U N I F _ D U M P
- *
  * Diagnostic routine
  */
 RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
@@ -8466,6 +8018,7 @@ RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
 RT_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
+/* TODO - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT extern size_t rt_bot_mintie;

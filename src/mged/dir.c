@@ -38,8 +38,6 @@
 
 
 /*
- * F _ M E M P R I N T
- *
  * Debugging aid:  dump memory maps
  */
 int

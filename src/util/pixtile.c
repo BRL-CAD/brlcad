@@ -47,9 +47,6 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {

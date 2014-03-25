@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"

@@ -34,9 +34,6 @@ extern "C" {
     void rt_pipe_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
-/**
- * R T _ C L I N E _ B R E P
- */
 extern "C" void
 rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

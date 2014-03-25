@@ -22,8 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
 
+
+#include "bu/malloc.h"
 #include "render.h"
 #include "adrt_struct.h"
 

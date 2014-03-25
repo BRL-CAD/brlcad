@@ -34,7 +34,7 @@
 
 #include "bu.h"
 
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 
 /* Return the allocated pixel value that most closely represents

@@ -48,8 +48,6 @@
 				fflush(stdout)
 
 /*
- * S O L _ N A M E _ D I S T
- *
  * Little pair for storing the name and distance of a solid
  */
 struct sol_name_dist
@@ -62,8 +60,6 @@ struct sol_name_dist
 
 #ifdef OLD_RPT
 /*
- * S O L _ C O M P _ N A M E
- *
  * The function to order solids alphabetically by name
  */
 static int
@@ -80,8 +76,6 @@ sol_comp_name(void *v1, void *v2)
 
 
 /*
- * S O L _ C O M P _ D I S T
- *
  * The function to order solids by distance along the ray
  */
 static int
@@ -102,9 +96,6 @@ sol_comp_dist(void *v1, void *v2)
 }
 
 
-/*
- * M K _ S O L I D
- */
 static struct sol_name_dist *
 mk_solid(char *name, fastf_t dist)
 {
@@ -120,8 +111,6 @@ mk_solid(char *name, fastf_t dist)
 
 
 /*
- * F R E E _ S O L I D
- *
  * This function has two parameters: the solid to free and
  * an indication whether the name member of the solid should
  * also be freed.
@@ -137,9 +126,6 @@ free_solid(struct sol_name_dist *sol, int free_name)
 }
 
 
-/*
- * P R I N T _ S O L I D
- */
 static void
 print_solid(void *vp)
 {
@@ -157,8 +143,6 @@ print_solid(void *vp)
 
 
 /*
- * N O _ O P
- *
  * Null event handler for use by rt_shootray().
  *
  * Does nothing.  Returns 1.
@@ -171,8 +155,6 @@ no_op(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct regio
 
 
 /*
- * R P T _ H I T S _ M I K E
- *
  * Each partition represents a segment, i.e. a single solid.
  * Boolean operations have not been performed.
  * The partition list is sorted by ascending inhit distance.
@@ -204,8 +186,6 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *U
 
 
 /*
- * R P T _ M I S S
- *
  * Miss handler for use by rt_shootray().
  *
  * Stuffs the address of a null string in ap->a_uptr and returns 0.
@@ -221,8 +201,6 @@ rpt_miss(struct application *ap)
 
 
 /*
- * S K E W E R _ S O L I D S
- *
  * Fire a ray at some geometry and obtain a list of
  * the solids encountered, sorted by first intersection.
  *

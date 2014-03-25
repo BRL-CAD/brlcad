@@ -28,11 +28,16 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
+
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
-#include "bio.h"
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -43,8 +48,6 @@ static const char *mdefault = "default"; /* Name of default material */
 
 
 /**
- * M L I B _ A D D _ S H A D E R
- *
  * Routine to add an array of mfuncs structures to the linked list of
  * material (shader) routines.
  */
@@ -63,8 +66,6 @@ mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
 
 
 /**
- * T R Y _ L O A D
- *
  * Try to load a DSO from the specified path.  If we succeed in
  * opening the DSO, then retrieve the symbol "shader_mfuncs" and look
  * up the shader named "material" in the table.
@@ -195,8 +196,6 @@ done:
 
 
 /**
- * M L I B _ S E T U P
- *
  * Returns -
  * -1 failed
  * 0 indicates that this region should be dropped
@@ -252,7 +251,7 @@ retry:
      * dynamically load it.
      */
 
-    bu_log("Shader (name: \"%V\" parameters: \"%V\")... ", &name, &params);
+    bu_log("Shader (name: \"%s\" parameters: \"%s\")... ", bu_vls_addr(&name), bu_vls_addr(&params));
 
     mfp_new = load_dynamic_shader(bu_vls_addr(&name));
     if (mfp_new) {
@@ -268,8 +267,8 @@ retry:
      * table) and search again.
      */
 
-    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%V'.\n\n",
-	   rp->reg_name, &name);
+    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%s'.\n\n",
+	   rp->reg_name, bu_vls_addr(&name));
 
     if (material != mdefault) {
 	material = mdefault;
@@ -311,8 +310,6 @@ found:
 
 
 /**
- * M L I B _ F R E E
- *
  * Routine to free material-property specific data
  */
 void

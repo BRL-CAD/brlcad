@@ -281,9 +281,6 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 }
 
 
-/**
- * R T _ N U R B _ R E G I O N _ F R O M _ S R F
- */
 struct face_g_snurb *
 rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
 {
@@ -322,9 +319,6 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 }
 
 
-/**
- * R T _ N U R B _ I N T E R S E C T
- */
 struct rt_nurb_uv_hit *
 rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
 {

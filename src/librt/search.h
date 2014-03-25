@@ -63,9 +63,9 @@
 /* node struct - holds data specific to each node under consideration */
 struct db_node_t {
     struct db_full_path *path;
-    int flat_search;
-    int orig_len;
-    int matching_len;
+    struct bu_ptbl *full_paths;
+    int flags;
+    int matched_filters;
 };
 
 /* search node type */

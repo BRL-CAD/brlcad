@@ -38,7 +38,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "dg.h"
 #include "solid.h"
 #include "raytrace.h"
@@ -113,8 +114,6 @@ static struct funtab joint_tab[] = {
 
 
 /**
- * J O I N T _ C M D
- *
  * Check a table for the command, check for the correct minimum and
  * maximum number of arguments, and pass control to the proper
  * function.  If the number of arguments is incorrect, print out a
@@ -213,8 +212,6 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
 }
 
 /**
- * H E L P C O M M
- *
  * Common code for help commands
  */
 HIDDEN int
@@ -247,8 +244,6 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 }
 
 /**
- * F _ H E L P
- *
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */
@@ -549,27 +544,30 @@ static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct ged *gedp, struct bu_vls *str, char *error)
+parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
 {
     char *text;
     size_t i;
+    size_t len;
+    const char *str = bu_vls_addr(vlsp);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!str->vls_str) {
+    len = bu_vls_strlen(vlsp);
+    if (!len) {
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
 	return;
     }
-    text = (char *)bu_malloc(str->vls_offset+2, "error pointer");
-    for (i=0; i<str->vls_offset; i++) {
-	text[i]=(str->vls_str[i] == '\t')? '\t' : '-';
+    text = (char *)bu_malloc(len+2, "error pointer");
+    for (i=0; i<len; i++) {
+	text[i]=(str[i] == '\t')? '\t' : '-';
     }
-    text[str->vls_offset] = '^';
-    text[str->vls_offset+1] = '\0';
+    text[len] = '^';
+    text[len+1] = '\0';
 
     {
-	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str->vls_str, text);
+	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str, text);
     }
 
     bu_free(text, "error pointer");
@@ -3514,17 +3512,16 @@ static struct db_tree_state mesh_initial_tree_state = {
 };
 
 /*
- * F _ J M E S H - function
  * The cvt_vlblock_to_solids() function is not converted it, a bu_bomb() function call
  * it is used temporarily to return from the function. The name variable is commented
  * for the moment, it is not used until the cvt_vlblock_to_solids() cand be fixed.
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
+ *
  * The joint accept option is not working properly, it needs f_Jmesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
  * applies for the mesh and solve options.
  */
-
 int
 f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {

@@ -76,8 +76,6 @@ char ctemp[7];
 
 /*
  *
- * E D I T I T
- *
  * No-frills edit - opens an editor on the supplied
  * file name.
  *
@@ -107,8 +105,6 @@ editit(const char *command, const char *tempfile) {
 
 
 /*
- *
- * F _ E D C O L O R ()
  *
  * control routine for editing color
  */
@@ -180,8 +176,6 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 
 /*
  *
- * F _ E D M A T E R ()
- *
  * control routine for editing mater information
  */
 int
@@ -219,8 +213,6 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 
 
 /*
- *
- * F _ R E D ()
  *
  * Get editing string and call ged_red
  */

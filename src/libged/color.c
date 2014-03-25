@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "ged.h"
 #include "db.h"
 #include "mater.h"

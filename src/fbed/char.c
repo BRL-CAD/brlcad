@@ -209,7 +209,7 @@ menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border)
     return;
 }
 
-/*	b i t x ()
+/*
 	Extract a bit field from a bit string.
 */
 int

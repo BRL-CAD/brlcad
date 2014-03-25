@@ -34,6 +34,7 @@
 
 #include <tcl.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -109,8 +110,7 @@ struct mfuncs tcl_mfuncs[] = {
 };
 
 
-/* T C L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -171,9 +171,6 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * T C L _ P R I N T
- */
 HIDDEN void
 tcl_print(register struct region *rp, genptr_t dp)
 {
@@ -181,9 +178,6 @@ tcl_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * T C L _ F R E E
- */
 HIDDEN void
 tcl_free(genptr_t cp)
 {
@@ -192,8 +186,6 @@ tcl_free(genptr_t cp)
 
 
 /*
- * T C L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

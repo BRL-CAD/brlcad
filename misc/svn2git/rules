@@ -1,0 +1,136 @@
+create repository brlcad
+end repository
+
+create repository rt3
+end repository
+
+create repository geomcore
+end repository
+
+create repository isst
+end repository
+
+create repository jbrlcad
+end repository
+
+create repository ova
+end repository
+
+create repository rtcmp
+end repository
+
+create repository web
+end repository
+
+create repository webcad
+end repository
+
+match /trunk/
+   min revision 1
+   max revision 22796
+   repository brlcad
+   branch master
+end match
+
+match /brlcad/trunk/
+   repository brlcad
+   branch master
+end match
+
+match /brlcad/branches/STABLE/
+   repository brlcad
+   branch STABLE
+end match
+
+match /brlcad/branches/RELEASE/
+   repository brlcad
+   branch RELEASE
+end match
+
+match /brlcad/branches/attr-extension-mods/
+   repository brlcad
+   branch attr-extension-mods
+end match
+
+match /brlcad/branches/bottie/
+   repository brlcad
+   branch bottie
+end match
+
+match /brlcad/branches/bullet/
+   repository brlcad
+   branch bullet
+end match
+
+match /brlcad/branches/dmtogl/
+   repository brlcad
+   branch dmtogl
+end match
+
+match /brlcad/branches/nurbs/
+   repository brlcad
+   branch nurbs
+end match
+
+match /brlcad/branches/opencl/
+   repository brlcad
+   branch opencl
+end match
+
+match /brlcad/branches/rel8/
+   repository brlcad
+   branch rel8
+end match
+
+match /brlcad/branches/surfacetree/
+   repository brlcad
+   branch surfacetree
+end match
+
+match /osl/
+   repository brlcad
+   branch osl
+end match
+
+match /rt\^3/
+   repository rt3
+   branch master
+end match
+
+match /ova/
+   repository ova
+   branch master
+end match
+
+match /isst/
+   repository isst
+   branch master
+end match
+
+match /jbrlcad/
+   repository jbrlcad
+   branch master
+end match
+
+match /web/
+   repository web
+   branch master
+end match
+
+match /webcad/
+   repository webcad
+   branch master
+end match
+
+match /rtcmp/
+   repository rtcmp
+   branch master
+end match
+
+match /geomcore/
+   repository geomcore
+   branch master
+end match
+
+match /
+end match

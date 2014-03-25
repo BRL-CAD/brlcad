@@ -50,14 +50,7 @@ Face::Face(STEPWrapper *sw, int step_id)
 
 Face::~Face()
 {
-    /*
-      LIST_OF_FACE_BOUNDS::iterator i = bounds.begin();
-
-      while(i != bounds.end()) {
-      delete (*i);
-      i = bounds.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     bounds.clear();
 }
 

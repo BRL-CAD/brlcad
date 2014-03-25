@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AXIS2_PLACEMENT_3D_H_
-#define AXIS2_PLACEMENT_3D_H_
+#ifndef CONV_STEP_STEP_G_AXIS2PLACEMENT3D_H
+#define CONV_STEP_STEP_G_AXIS2PLACEMENT3D_H
 
 #include "Placement.h"
 
@@ -55,6 +55,7 @@ public:
     virtual const double *GetNormal();
     virtual const double *GetXAxis();
     virtual const double *GetYAxis();
+    const double *GetZAxis();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);

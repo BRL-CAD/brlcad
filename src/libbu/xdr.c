@@ -25,7 +25,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/cv.h"
 
 
 unsigned char *

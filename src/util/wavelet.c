@@ -77,9 +77,6 @@ size_t limit = 0;
 int decomp_recon;
 
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
 void
 usage(char *s)
 {
@@ -93,9 +90,6 @@ usage(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
 int
 parse_args(int ac, char **av)
 {
@@ -408,8 +402,6 @@ wlt_reconstruct_2d(void)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

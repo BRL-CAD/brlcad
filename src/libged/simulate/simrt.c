@@ -460,12 +460,14 @@ init_rayshot_results(void)
 void
 clear_bad_chars(struct bu_vls *vp)
 {
-    unsigned int i = 0;
-    for (i = vp->vls_offset; i<(vp->vls_offset + vp->vls_len); i++) {
-	if (vp->vls_str[i] == '-' ||
-	   vp->vls_str[i] == '/')
-	    vp->vls_str[i] = 'R';
+    size_t i;
+    char *str = bu_vls_addr(vp);
+    size_t len = bu_vls_strlen(vp);
 
+    for (i = 0; i<len; i++) {
+	if (str[i] == '-' || str[i] == '/') {
+	    str[i] = 'R';
+	}
     }
 }
 

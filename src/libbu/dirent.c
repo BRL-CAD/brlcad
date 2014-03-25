@@ -25,9 +25,10 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "uce-dirent.h"
-
 
 size_t
 bu_dir_list(const char *path, const char *pattern, char ***files)

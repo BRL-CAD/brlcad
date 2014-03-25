@@ -239,7 +239,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 			    const wchar_t* UNUSED(function),
 			    const wchar_t* UNUSED(file),
 			    unsigned int UNUSED(line),
-			    unsigned int *UNUSED(pReserved))
+			    uintptr_t UNUSED(pReserved))
 {
 /*
  * Windows, I think you're number one!
@@ -251,7 +251,7 @@ void
 pr_prompt(int show_prompt)
 {
     if (show_prompt) {
-	bu_log("%V", &mged_prompt);
+	bu_log("%s", bu_vls_addr(&mged_prompt));
     }
 }
 
@@ -265,7 +265,6 @@ pr_beep(void)
 
 /* so the Windows-specific calls blend in */
 #if !defined(_WIN32) || defined(__CYGWIN__)
-#  define setmode(a, b) /* poof */
 void _set_invalid_parameter_handler(void (*callback)()) { if (callback) return; }
 #endif
 
@@ -325,8 +324,6 @@ reset_input_strings()
 
 
 /*
- * Q U I T
- *
  * Handles finishing up.  Also called upon EOF on STDIN.
  */
 void
@@ -337,9 +334,6 @@ quit(void)
 }
 
 
-/*
- * S I G 2
- */
 void
 sig2(int UNUSED(sig))
 {
@@ -349,9 +343,6 @@ sig2(int UNUSED(sig))
 }
 
 
-/*
- * S I G 3
- */
 void
 sig3(int UNUSED(sig))
 {
@@ -396,8 +387,6 @@ mged_view_callback(struct ged_view *gvp,
 
 
 /**
- * N E W _ M A T S
- *
  * Derive the inverse and editing matrices, as required.  Centralized
  * here to simplify things.
  */
@@ -409,8 +398,6 @@ new_mats(void)
 
 
 /**
- * D O _ R C
- *
  * If an mgedrc file exists, open it and process the commands within.
  * Look first for a Shell environment variable, then for a file in the
  * user's home directory, and finally in the current directory.
@@ -502,10 +489,10 @@ mged_insert_char(char ch)
 
 	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 	bu_vls_trunc(&input_str, input_str_index);
-	bu_log("%c%V", (int)ch, &temp);
+	bu_log("%c%s", (int)ch, bu_vls_addr(&temp));
 	pr_prompt(interactive);
 	bu_vls_putc(&input_str, (int)ch);
-	bu_log("%V", &input_str);
+	bu_log("%s", bu_vls_addr(&input_str));
 	bu_vls_vlscat(&input_str, &temp);
 	++input_str_index;
 	bu_vls_free(&temp);
@@ -548,7 +535,7 @@ do_tab_expansion()
 	    bu_vls_strcat(&input_str, " ");
 
 	input_str_index = bu_vls_strlen(&input_str);
-	bu_log("%V", &input_str);
+	bu_log("%s", bu_vls_addr(&input_str));
     } else {
 	bu_log("ERROR\n");
 	bu_log("%s\n", Tcl_GetStringResult(INTERP));
@@ -622,18 +609,18 @@ mged_process_char(char ch)
 
 	    /* If no input and a default is supplied then use it */
 	    if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-		bu_vls_printf(&input_str_prefix, "%s%V\n",
+		bu_vls_printf(&input_str_prefix, "%s%s\n",
 			      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			      &curr_cmd_list->cl_more_default);
+			      bu_vls_addr(&curr_cmd_list->cl_more_default));
 	    else {
 		if (curr_cmd_list->cl_quote_string)
-		    bu_vls_printf(&input_str_prefix, "%s\"%V\"\n",
+		    bu_vls_printf(&input_str_prefix, "%s\"%s\"\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  &input_str);
+				  bu_vls_addr(&input_str));
 		else
-		    bu_vls_printf(&input_str_prefix, "%s%V\n",
+		    bu_vls_printf(&input_str_prefix, "%s%s\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  &input_str);
+				  bu_vls_addr(&input_str));
 	    }
 
 	    curr_cmd_list->cl_quote_string = 0;
@@ -711,9 +698,9 @@ mged_process_char(char ch)
 	    } else {
 		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index-1);
-		bu_log("\b%V ", &temp);
+		bu_log("\b%s ", bu_vls_addr(&temp));
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    }
@@ -748,9 +735,9 @@ mged_process_char(char ch)
 
 	    bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index+1);
 	    bu_vls_trunc(&input_str, input_str_index);
-	    bu_log("%V ", &temp);
+	    bu_log("%s ", bu_vls_addr(&temp));
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
 	    escaped = bracketed = 0;
@@ -758,7 +745,7 @@ mged_process_char(char ch)
 	case CTRL_U:                   /* Delete whole line */
 	    pr_prompt(interactive);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
@@ -767,17 +754,17 @@ mged_process_char(char ch)
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str)-input_str_index);
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
@@ -857,7 +844,7 @@ mged_process_char(char ch)
 
 	    pr_prompt(interactive);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 
 	    pr_prompt(interactive);
@@ -865,7 +852,7 @@ mged_process_char(char ch)
 	    bu_vls_vlscat(&input_str, vp);
 	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
 		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    input_str_index = bu_vls_strlen(&input_str);
 	    escaped = bracketed = 0;
 	    break;
@@ -897,14 +884,14 @@ mged_process_char(char ch)
 		len = bu_vls_strlen(&input_str);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V", &input_str, &temp);
+		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, len - input_str_index);
-		bu_log("%V", &temp2);
+		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    }
@@ -934,14 +921,14 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V", &input_str, &temp);
+		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, i - input_str_index);
-		bu_log("%V", &temp2);
+		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -970,7 +957,7 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1003,7 +990,7 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1036,17 +1023,16 @@ mged_process_char(char ch)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {
     /* pipes used for setting up read/write channels during graphical
      * initialization.
      */
+#ifdef HAVE_PIPE
     int pipe_out[2];
     int pipe_err[2];
+#endif
 
     int rateflag = 0;
     int c;
@@ -1766,13 +1752,13 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
 	/* If no input and a default is supplied then use it */
 	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-	    bu_vls_printf(&input_str_prefix, "%s%V\n",
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &curr_cmd_list->cl_more_default);
+			  bu_vls_addr(&curr_cmd_list->cl_more_default));
 	else
-	    bu_vls_printf(&input_str_prefix, "%s%V\n",
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &input_str);
+			  bu_vls_addr(&input_str));
 
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 
@@ -1946,8 +1932,6 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
 
 /**
- * E V E N T _ C H E C K
- *
  * Check for events, and dispatch them.  Eventually, this will be done
  * entirely by generating commands
  *
@@ -2263,8 +2247,6 @@ event_check(int non_blocking)
 
 
 /**
- * R E F R E S H
- *
  * NOTE that this routine is not to be casually used to refresh the
  * screen.  The normal procedure for screen refresh is to manipulate
  * the necessary global variables, and wait for refresh to be called
@@ -2456,8 +2438,6 @@ refresh(void)
 
 
 /**
- * F I N I S H
- *
  * This routine should be called in place of exit() everywhere in GED,
  * to permit an accurate finish time to be recorded in the (ugh)
  * logfile, also to remove the device access lock.
@@ -2553,8 +2533,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
 
 
 /**
- * F _ O P E N D B
- *
  * Close the current database, if open, and then open a new database.
  * May also open a display manager, if interactive and none selected
  * yet.
@@ -2922,8 +2900,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 
 /**
- * F _ C L O S E D B
- *
  * Close the current database, if open.
  */
 int

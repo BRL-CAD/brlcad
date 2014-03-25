@@ -69,7 +69,9 @@ public:
 
     bool solved();
     bool check();
-    void evalfunction(functor pf) { eval = pf; };
+    void evalfunction(functor pf) {
+	eval = pf;
+    }
 
     /** Data access/modification methods */
     std::string getID() const { return id; }

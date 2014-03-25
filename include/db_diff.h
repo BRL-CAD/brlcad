@@ -31,8 +31,9 @@
  * getting called.  Any objects in dbip_right but not in dbip_left
  * cause add_func() to get called.  Any objects in dbip_left but not
  * in dbip_right cause del_func() to get called.  Objects existing in
- * both (i.e., with the same name) cause chgd_func() to get called.
- * If the object is unchanged, unch_func() is called.  NULL may be
+ * both (i.e., with the same name) but differing in some fashion
+ * cause chgd_func() to get called. If the object exists in both
+ * but is unchanged, unch_func() is called.  NULL may be
  * passed to skip any callback.
  *
  * The function returns 0 if there are no differences, or returns the
@@ -45,8 +46,15 @@ db_diff(const struct db_i *dbip_left,
 	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added, void *data),
 	int (*del_func)(const struct db_i *left, const struct db_i *right, const struct directory *removed, void *data),
 	int (*chgd_func)(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data),
-	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data));
+	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
+	void *client_data);
 
+/**
+ * The flags parameter is a bitfield is used with db_compare() to
+ * specify whether to report internal object parameter differences
+ * (DB_COMPARE_PARAM), attribute differences (DB_COMPARE_ATTRS), or
+ * everything (DB_COMPARE_ALL).
+ */
 typedef enum {
     DB_COMPARE_ALL=0x00,
     DB_COMPARE_PARAM=0x01,
@@ -62,14 +70,13 @@ typedef enum {
  * right, removed in the right, changed going from left to right, or
  * unchanged.
  *
+ * The flags parameter is a bitfield specifying what type of
+ * comparisons to perform.  The default is to compare everything and
+ * report on any differences encountered.
+ *
  * The same bu_attribute_value_set container may be passed to any of
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
- *
- * The flags parameter is a bitfield specifying whether to report
- * internal object parameter differences (DB_COMPARE_PARAM), attribute
- * differences (DB_COMPARE_ATTRS), or everything (DB_COMPARE_ALL).
- * The default is to report everything.
  *
  * This function returns 0 if there are no differences and non-0 if
  * there are differences.  Negative values indicate an internal error.

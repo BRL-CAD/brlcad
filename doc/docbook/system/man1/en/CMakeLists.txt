@@ -99,6 +99,7 @@ set(docbook_man1_EN
   g-obj.xml
   g-raw.xml
   g-shell-rect.xml
+  g-step.xml
   g-stl.xml
   g-tankill.xml
   g-var.xml

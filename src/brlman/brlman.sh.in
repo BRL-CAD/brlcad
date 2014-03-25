@@ -43,7 +43,7 @@
 
 man_file="`@BTCLSH_BIN_DIR@/brlman.tcl $@`"
 
-if test "$man_file" == "Graphical mode done." ; then
+if test "$man_file" = "Graphical mode done." ; then
   exit 0
 fi
 

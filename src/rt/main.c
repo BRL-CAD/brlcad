@@ -39,6 +39,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -101,9 +102,6 @@ extern struct resource	resource[];	/* from opt.c */
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
 
-/*
- *			S I G I N F O _ H A N D L E R
- */
 void
 siginfo_handler(int UNUSED(arg))
 {
@@ -117,9 +115,6 @@ siginfo_handler(int UNUSED(arg))
 }
 
 
-/*
- *			M E M O R Y _ S U M M A R Y
- */
 void
 memory_summary(void)
 {
@@ -138,9 +133,6 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
-/*
- *			M A I N
- */
 int main(int argc, const char **argv)
 {
     struct rt_i *rtip = NULL;
@@ -149,14 +141,12 @@ int main(int argc, const char **argv)
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#else
+
     bu_setlinebuf( stdout );
     bu_setlinebuf( stderr );
-#endif
 
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;

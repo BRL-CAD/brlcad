@@ -37,8 +37,6 @@
 #include "./extern.h"
 
 /*
- * B R S T _ L O G
- *
  * Log an RT library event
  */
 void

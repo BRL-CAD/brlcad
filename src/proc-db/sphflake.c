@@ -223,7 +223,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     size_t len = 0;
     unsigned int c[3];
 
-    if (name == NULL)
+    if (name == NULL || name[0] == '\0')
 	bu_strlcpy(p->fileName, DEFAULT_FILENAME, sizeof(p->fileName));
     else
 	bu_strlcpy(p->fileName, name, sizeof(p->fileName));

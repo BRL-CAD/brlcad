@@ -43,8 +43,12 @@
 #include "bio.h"
 
 /* common headers */
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
 #if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL)

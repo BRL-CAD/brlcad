@@ -1,3 +1,7 @@
+add_subdirectory(bu)
+add_subdirectory(dm)
+add_subdirectory(rt)
+
 set(include_hdrs
   ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
   RtServerImpl.h
@@ -6,10 +10,8 @@ set(include_hdrs
   common.h
   cursor.h
   ged.h
-  magic.h
   pstdint.h
   raytrace.h
-  rt/defines.h
   rtfunc.h
   rtgeom.h
   rtserver.h
@@ -20,24 +22,10 @@ set(include_hdrs
   brep.h
   brlcad.h
   brlcad.i
-  cmd.h
   db.h
   db5.h
   dg.h
-  dm-Null.h
-  dm-X.h
-  dm-glx.h
-  dm-ogl.h
-  dm-pex.h
-  dm-plot.h
-  dm-ps.h
-  dm-qt.h
-  dm-rtgl.h
-  dm-tk.h
-  dm-wgl.h
   dm.h
-  dm_color.h
-  dm_xvars.h
   dvec.h
   fb.h
   fbio.h
@@ -69,12 +57,11 @@ set(include_hdrs
   vectfont.h
   vector_fpu.h
   vector_x86.h
-  vfont-if.h
   vmath.h
   wdb.h
   )
 if(WIN32)
-  set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
+  set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win.h)
 endif(WIN32)
 install(FILES ${include_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 
@@ -93,8 +80,7 @@ set(noinst_HEADERS
 
 set(include_misc
   conf
-  config_win.h
-  config_win_cmake.h.in
+  config_win.h.in
   )
 
 CMAKEFILES(${include_hdrs})

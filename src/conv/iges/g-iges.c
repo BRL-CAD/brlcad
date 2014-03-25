@@ -46,6 +46,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges.h"
 #include "brlcad_version.h"
@@ -184,9 +186,6 @@ char **independent;
 size_t no_of_indeps = 0;
 int do_nurbs = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -487,8 +486,6 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 
 
 /*
- * D O _ N M G _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.

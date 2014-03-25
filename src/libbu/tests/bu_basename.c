@@ -35,9 +35,9 @@ void
 automatic_test(const char *input)
 {
 
-    char *ans = NULL;
     char buf_input[1000];
-    char *res = NULL;
+    char *ans = NULL;
+    char *res = (char *)bu_calloc(strlen(buf_input), sizeof(char), "automatic_test res");
 
 #ifdef HAVE_BASENAME
     if (input)
@@ -50,20 +50,19 @@ automatic_test(const char *input)
 	ans = basename(buf_input);
 
     if (!input)
-	res = bu_basename(NULL);
+	bu_basename(res, NULL);
     else
-	res = bu_basename(buf_input);
+	bu_basename(res, buf_input);
 
     if (BU_STR_EQUAL(res, ans))
 	printf("%24s -> %24s [PASSED]\n", input, res);
     else
 	bu_exit(EXIT_FAILURE, "%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
-
     bu_free(res, NULL);
+
 #else
     printf("BASENAME not available on this platform\n");
 #endif
-
     /* FIXME: this does not functionally halt */
 }
 

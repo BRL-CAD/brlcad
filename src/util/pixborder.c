@@ -82,8 +82,6 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [file.pix]\n";
 
 /*
- * R E A D _ H S V ()
- *
  * Read in an HSV triple.
  */
 static int read_hsv (fastf_t *hsvp, char *buf)
@@ -103,9 +101,6 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 }
 
 
-/*
- * R E A D _ R O W ()
- */
 static int
 read_row(unsigned char *rp, size_t width, FILE *fp)
 {
@@ -133,9 +128,6 @@ read_row(unsigned char *rp, size_t width, FILE *fp)
  * Reading, MA, 1990.
  */
 
-/*
- * R G B _ T O _ H S V ()
- */
 static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
@@ -196,9 +188,6 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 
-/*
- * H S V _ T O _ R G B ()
- */
 int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3];
@@ -252,9 +241,6 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 
-/*
- * S A M E _ R G B ()
- */
 static int same_rgb (unsigned char *color1, unsigned char *color2)
 {
     return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
@@ -263,9 +249,6 @@ static int same_rgb (unsigned char *color1, unsigned char *color2)
 }
 
 
-/*
- * S A M E _ H S V ()
- */
 static int same_hsv (fastf_t *color1, fastf_t *color2)
 {
     return ((fabs(color1[HUE] - color2[HUE]) <= hsv_tol[HUE]) &&
@@ -274,9 +257,6 @@ static int same_hsv (fastf_t *color1, fastf_t *color2)
 }
 
 
-/*
- * I S _ I N T E R I O R ()
- */
 static int is_interior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -294,9 +274,6 @@ static int is_interior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ E X T E R I O R ()
- */
 static int is_exterior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -314,9 +291,6 @@ static int is_exterior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ B O R D E R ()
- */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
 /* Previous row */
@@ -362,9 +336,6 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
 }
 
 
-/*
- * G E T _ A R G S ()
- */
 static int
 get_args (int argc, char **argv)
 {
@@ -501,9 +472,6 @@ get_args (int argc, char **argv)
 }
 
 
-/*
- * M A I N ()
- */
 int
 main (int argc, char **argv)
 {

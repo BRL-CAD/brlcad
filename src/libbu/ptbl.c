@@ -23,8 +23,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/ptbl.h"
 
 void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)

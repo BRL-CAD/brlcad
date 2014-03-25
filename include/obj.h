@@ -37,8 +37,6 @@ __BEGIN_DECLS
 
 
 /**
- * V I E W _ O B J
- *
  * A view object maintains state for controlling a view.
  */
 struct view_obj {

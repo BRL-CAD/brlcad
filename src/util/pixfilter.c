@@ -238,8 +238,6 @@ main(int argc, char **argv)
 
 
 /*
- * S E L E C T _ F I L T E R
- *
  * Looks at the command line string and selects a filter
  * based on it.
  */

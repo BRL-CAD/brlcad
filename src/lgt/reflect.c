@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -42,7 +43,6 @@
 #include "./screen.h"
 
 
-#define TWO_PI (2.0 * M_PI)
 #define RI_AIR 1.0  /* refractive index of air */
 
 /* These are used by the hidden-line drawing routines. */

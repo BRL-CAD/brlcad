@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 

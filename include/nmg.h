@@ -36,9 +36,11 @@
 #include "common.h"
 
 /* interface headers */
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/magic.h"
+#include "bu/ptbl.h"
 #include "vmath.h"
-#include "bu.h"
-
 
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */
@@ -152,7 +154,6 @@
 	}
 
 /**
- * K N O T _ V E C T O R
  * @brief
  * Definition of a knot vector.
  *
@@ -166,12 +167,10 @@ struct knot_vector {
 };
 
 /*
- * N O T I C E !
- *
- * We rely on the fact that the first 32 bits in a struct is the magic
- * number (which is used to identify the struct type).  This may be
- * either a magic value, or an rt_list structure, which starts with a
- * magic number.
+ * NOTE: We rely on the fact that the first 32 bits in a struct is the
+ * magic number (which is used to identify the struct type).  This may
+ * be either a magic value, or an rt_list structure, which starts with
+ * a magic number.
  *
  * To these ends, there is a standard ordering for fields in
  * "object-use" structures.  That ordering is:
@@ -185,9 +184,6 @@ struct knot_vector {
  */
 
 
-/**
- * M O D E L
- */
 struct model {
     uint32_t magic;
     struct bu_list r_hd;	/**< @brief list of regions */
@@ -196,9 +192,6 @@ struct model {
     long maxindex;		/**< @brief # of structs so far */
 };
 
-/**
- * R E G I O N
- */
 struct nmgregion {
     struct bu_list l;		/**< @brief regions, in model's r_hd list */
     struct model *m_p;		/**< @brief owning model */
@@ -215,8 +208,6 @@ struct nmgregion_a {
 };
 
 /**
- * S H E L L
- *
  * When a shell encloses volume, it's done entirely by the list of
  * faceuses.
  *
@@ -253,8 +244,6 @@ struct shell_a {
 };
 
 /**
- * F A C E
- *
  * Note: there will always be exactly two faceuse's using a face.  To
  * find them, go up fu_p for one, then across fumate_p to other.
  */
@@ -344,8 +333,6 @@ struct faceuse {
 	} }
 
 /**
- * L O O P
- *
  * To find all the uses of this loop, use lu_p for one loopuse, then
  * go down and find an edge, then wander around either eumate_p or
  * radial_p from there.
@@ -399,8 +386,6 @@ struct loopuse {
 };
 
 /**
- * E D G E
- *
  * To find all edgeuses of an edge, use eu_p to get an arbitrary
  * edgeuse, then wander around either eumate_p or radial_p from there.
  *
@@ -481,8 +466,6 @@ struct edgeuse {
 };
 
 /**
- * V E R T E X
- *
  * The vertex and vertexuse structures are connected in a way
  * different from the superior kinds of topology elements.  The vertex
  * structure heads a linked list that all vertexuse's that use the

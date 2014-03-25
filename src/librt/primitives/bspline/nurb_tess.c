@@ -142,8 +142,6 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 
 /**
- * R T _ C N U R B _ P A R _ E D G E
- *
  * Calculate the maximum edge length (in parameter space) that will
  * keep the curve approximation within epsilon of the true curve
  *

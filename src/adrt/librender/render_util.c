@@ -28,7 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+
 
 struct render_segment_s {
     adrt_mesh_t *mesh;

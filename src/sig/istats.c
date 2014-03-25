@@ -22,13 +22,14 @@
  * gather statistics on a set of short integers.
  *
  * Options
- * h help
+ * h (or ?) help
  */
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -50,6 +51,7 @@ usage(const char *progname)
 static int
 parse_args(int ac, char **av, const char **progname)
 {
+    const char optstring[] = "h?";
     int c;
 
     if (!(*progname=strrchr(*av, '/')))
@@ -59,11 +61,10 @@ parse_args(int ac, char **av, const char **progname)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, "h")) != -1)
+    while ((c=bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage(*progname); break;
+	    default: usage(*progname);
+		break;
 	}
 
     return bu_optind;
@@ -74,22 +75,21 @@ static void
 comp_stats(FILE *fd)
 {
     short *buffer=(short *)NULL;
-    short min, max;
-    double stdev, sum, sum_sq, num, sqrt(double);
-    int count;
-    int i;
-
+    short min = SHRT_MAX;
+    short max = SHRT_MIN;
+    double doub, stdev;
+    double sum = 0.0;
+    double sum_sq = 0.0;
+    double num = 0.0;
+    int count, i;
 
     buffer = (short *)bu_calloc(10240, sizeof(short), "buffer");
 
-    stdev = sum = sum_sq = count = num = 0.0;
-    min = 32767;
-    max = -32768;
-
     while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
-	    sum += (double)buffer[i];
-	    sum_sq += (double)(buffer[i] * buffer[i]);
+	    doub = (double)buffer[i];
+	    sum += doub;
+	    sum_sq += doub*doub;
 	    if (buffer[i] > max) max = buffer[i];
 	    if (buffer[i] < min) min = buffer[i];
 	}

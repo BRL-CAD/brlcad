@@ -30,7 +30,7 @@
 #include <time.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/parallel.h"
 #include "raytrace.h" /* for last RT_SEM_LAST */
 
 #include "camera.h"

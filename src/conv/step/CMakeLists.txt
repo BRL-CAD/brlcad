@@ -1,20 +1,13 @@
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  )
-LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
-include_directories(${STEP_INCLUDE_DIRS})
-
-set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
-
-# local includes
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${STEPCODE_DIR}/include
   ${STEPCODE_DIR}/src/base
   ${STEPCODE_DIR}/src/clstepcore
@@ -26,13 +19,7 @@ include_directories(
   ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
-
-set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
-add_definitions(-DAP203)
-#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
-#add_definitions(-DAP203e2)
-#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap214e3/AP214E3_2010.exp)
-#add_definitions(-DAP214e3)
+BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support
@@ -63,6 +50,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   set(EXPRESS_OUTPUT
     ${express_srcs}
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
     ${SCHEMA_OUT_DIR}/Sdaiclasses.h
     ${SCHEMA_OUT_DIR}/schema.h
     )
@@ -86,18 +75,49 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
     DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+
+  set(clean_files ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
+# AP203
 add_subdirectory(step-g)
 add_subdirectory(g-step)
 
+# Support for AP203e2, AP214 and AP242 is under development and not
+# yet functional.  Since the large C++ files generated for these
+# tools take a hideously long time to build on Windows, and are
+# noticable even on other platforms, wrap them with conditionals
+# until they do something useful.  It may be that work in STEPcode
+# to generate multiple files instead of single huge files will
+# help alleviate the issue - something to check into.
+if(BRLCAD_ENABLE_AP203E2)
+  add_subdirectory(g-ap203e2)
+  add_subdirectory(ap203e2-g)
+endif(BRLCAD_ENABLE_AP203E2)
+if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(ap214-g)
+  add_subdirectory(g-ap214)
+endif(BRLCAD_ENABLE_AP214)
+if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(ap242-g)
+  add_subdirectory(g-ap242)
+endif(BRLCAD_ENABLE_AP242)
+
 CMAKEFILES(
+  AP_Common.h
   BRLCADWrapper.h
   STEPWrapper.h
   ap_schema.h
   ap203_elements.txt
   ap203e2_elements.txt
   ap214e3_elements.txt
+  ap203e2-g
+  ap214-g
+  ap242-g
+  g-ap203e2
+  g-ap214
+  g-ap242
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)

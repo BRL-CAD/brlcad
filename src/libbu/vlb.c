@@ -22,7 +22,10 @@
 
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vlb.h"
+#include "bu/vls.h"
 
 
 #define VLB_BLOCK_SIZE 512
@@ -150,7 +153,7 @@ bu_pr_vlb(const char *title, const struct bu_vlb *vlb)
     }
 
     /* print as one call */
-    bu_log("%V", &v);
+    bu_log("%s", bu_vls_addr(&v));
 
     bu_vls_free(&v);
 }

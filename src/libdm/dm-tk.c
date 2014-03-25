@@ -58,10 +58,10 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-tk.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "dm_xvars.h"
+#include "dm/dm-tk.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -439,9 +439,6 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/*
- * T K _ D R A W
- */
 int
 tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -463,8 +460,6 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 
 
 /*
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -479,8 +474,6 @@ tk_normal(struct dm *dmp)
 
 
 /*
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
@@ -692,6 +685,15 @@ tk_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+tk_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
 tk_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -827,6 +829,7 @@ struct dm dm_tk = {
     null_setDepthMask,
     tk_setZBuffer,
     tk_debug,
+    tk_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -861,6 +864,7 @@ struct dm dm_tk = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -879,8 +883,6 @@ struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 
 /*
- * T k _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -982,9 +984,9 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);

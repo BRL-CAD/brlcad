@@ -59,8 +59,6 @@ static const int unused = 0;
 
 
 /*
- *			S T R D U P
- *
  * Given a string, allocate enough memory to hold it using malloc(),
  * duplicate the strings, returns a pointer to the new string.
  */

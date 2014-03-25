@@ -96,8 +96,8 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    rota *= bn_degtorad;
-    fba *= bn_degtorad;
+    rota *= DEG2RAD;
+    fba *= DEG2RAD;
 
     /* calculate plane defined by these angles */
     norm[0] = cos(fba) * cos(rota);

@@ -442,7 +442,7 @@ char_To_String(int i)
     return	buf;
 }
 
-/*	g e t _ R e g i o n _ N a m e ( )
+/*
 	TENEX-style name completion.
 	Returns a linked-list of pointers to octree leaf nodes.
 */

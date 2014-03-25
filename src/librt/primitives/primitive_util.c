@@ -363,7 +363,7 @@ plot_ellipse(
     point_t p;
     fastf_t radian, radian_step;
 
-    radian_step = bn_twopi / num_points;
+    radian_step = M_2PI / num_points;
 
     ellipse_point_at_radian(p, center, axis_a, axis_b,
 	    radian_step * (num_points - 1));

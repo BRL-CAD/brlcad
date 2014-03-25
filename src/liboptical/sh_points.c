@@ -81,8 +81,6 @@ struct points {
 
 
 /*
- * P O I N T S _ S E T U P
- *
  * Returns -
  * <0 failed
  * >0 success
@@ -152,8 +150,6 @@ fail:
 
 
 /*
- * P O I N T S _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * and a "size" of the pixel being rendered (du, dv), fill in the
  * color of the "brightest" point (if any) within that region.
@@ -220,9 +216,6 @@ points_render(struct application *ap, const struct partition *UNUSED(partp), str
 }
 
 
-/*
- * P O I N T S _ P R I N T
- */
 HIDDEN void
 points_print(register struct region *UNUSED(rp), genptr_t dp)
 {

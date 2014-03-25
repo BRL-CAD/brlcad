@@ -30,11 +30,9 @@
 
 #include "vmath.h"
 #include "plot3.h"
-#include "bu.h"
 #include "bn.h"
 
 /**
- * T P _ 3 V E C T O R
  *@brief
  * Draw a vector between points "from" and "to", with the option of
  * having an arrowhead on either or both ends.

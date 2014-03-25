@@ -48,14 +48,7 @@ Polyline::Polyline(STEPWrapper *sw, int step_id)
 
 Polyline::~Polyline()
 {
-    /* list clear
-       LIST_OF_POINTS::iterator i = points.begin();
-
-       while(i != points.end()) {
-       delete (*i);
-       i = points.erase(i);
-       }
-    */
+    // elements created through factory will be deleted there.
     points.clear();
 }
 

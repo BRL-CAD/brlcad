@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "icv.h"
 
 #include "./ged_private.h"

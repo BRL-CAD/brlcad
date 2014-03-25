@@ -158,10 +158,6 @@ _ged_get_obj_bounds(struct ged *gedp,
 }
 
 
-/**
- *
- *
- */
 static int
 get_objpath_mat(struct ged *gedp,
 		    int argc,

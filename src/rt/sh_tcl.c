@@ -48,8 +48,6 @@ extern int get_args(int argc, const char *argv[]); /* opt.c */
 
 
 /*
- *			S H _ D I R E C T C H A N G E _ R G B
- *
  *  Go poke the rgb values of a region, on the fly.
  *  This does not update the inmemory database,
  *  so any changes will vanish on next re-prep unless other measures
@@ -114,8 +112,6 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 
 
 /*
- *			S H _ D I R E C T C H A N G E _ S H A D E R
- *
  *  Go poke the rgb values of a region, on the fly.
  *  This does not update the inmemory database,
  *  so any changes will vanish on next re-prep unless other measures
@@ -181,8 +177,6 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 }
 
 /*
- *			S H _ O P T
- *
  *  Process RT-style command-line options.
  */
 int
@@ -198,8 +192,6 @@ sh_opt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 }
 
 /*
- *			S H _ T C L _ S E T U P
- *
  *  Add all the supported Tcl interfaces to RT material/shader routines to
  *  the list of commands known by the given interpreter.
  */

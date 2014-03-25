@@ -29,7 +29,8 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 #include "bn.h"
 
 __BEGIN_DECLS

@@ -59,7 +59,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	VSCALE(pt, pt, bn_radtodeg);
+	VSCALE(pt, pt, RAD2DEG);
 	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
 
 	return GED_OK;

@@ -36,6 +36,7 @@
 #include "bin.h"
 
 #include "tcl.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
@@ -43,8 +44,6 @@
 #include "raytrace.h"
 
 /**
- * R T _ A R B N _ B B O X
- *
  * Calculate a bounding RPP for an ARBN
  */
 int
@@ -98,8 +97,6 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
 
 /**
- * R T _ A R B N _ P R E P
- *
  * Returns -
  *  0 OK
  * !0 failure
@@ -208,9 +205,6 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ A R B N _ P R I N T
- */
 void
 rt_arbn_print(const struct soltab *stp)
 {
@@ -232,8 +226,6 @@ rt_arbn_print(const struct soltab *stp)
 
 
 /**
- * R T _ A R B N _ S H O T
- *
  * Intersect a ray with an ARBN.
  * Find the largest "in" distance and the smallest "out" distance.
  * Cyrus & Beck algorithm for convex polyhedra.
@@ -312,8 +304,6 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
- * R T _ A R B N _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -335,8 +325,6 @@ rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ A R B N _ C U R V E
- *
  * Return the "curvature" of the ARB face.
  * Pick a principle direction orthogonal to normal, and
  * indicate no curvature.
@@ -354,8 +342,6 @@ rt_arbn_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ A R B N _ U V
- *
  * For a hit on a face of an ARB, return the (u, v) coordinates
  * of the hit point.  0 <= u, v <= 1.
  * u extends along the arb_U direction defined by B-A,
@@ -377,9 +363,6 @@ rt_arbn_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 }
 
 
-/**
- * R T _ A R B N _ F R E E
- */
 void
 rt_arbn_free(struct soltab *stp)
 {
@@ -392,8 +375,6 @@ rt_arbn_free(struct soltab *stp)
 
 
 /**
- * R T _ A R B N _ P L O T
- *
  * Brute force through all possible plane intersections.
  * Generate all edge lines, then intersect the line with all
  * the other faces to find the vertices on that line.
@@ -561,8 +542,6 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 
 
 /**
- * R T _ A R B N _ T E S S
- *
  * "Tessellate" an ARB into an NMG data structure.
  * Purely a mechanical transformation of one faceted object
  * into another.
@@ -815,8 +794,6 @@ fail:
 
 
 /**
- * R T _ A R B N _ I M P O R T
- *
  * Convert from "network" doubles to machine specific.
  * Transform
  */
@@ -893,9 +870,6 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 }
 
 
-/**
- * R T _ A R B N _ E X P O R T
- */
 int
 rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -952,8 +926,6 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 /**
- * R T _ A R B N _ I M P O R T 5
- *
  * Convert from "network" doubles to machine specific.
  * Transform
  */
@@ -1028,9 +1000,6 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 }
 
 
-/**
- * R T _ A R B N _ E X P O R T 5
- */
 int
 rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1080,8 +1049,6 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 /**
- * R T _ A R B N _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1114,8 +1081,6 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
 
 /**
- * R T _ A R B N _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1136,8 +1101,6 @@ rt_arbn_ifree(struct rt_db_internal *ip)
 
 
 /**
- * R T _ A R B N _ G E T
- *
  * Routine to format the parameters of an ARBN primitive for "db get"
  *
  * Legal requested parameters include:
@@ -1193,8 +1156,6 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 /**
- * R T _ A R B N _ A D J U S T
- *
  * Routine to modify an arbn via the "db adjust" command
  *
  * Legal parameters are:
@@ -1303,10 +1264,6 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 
-/**
- * R T _ A R B N _ P A R A M S
- *
- */
 int
 rt_arbn_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

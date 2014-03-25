@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "rtgeom.h"
 #include "wdb.h"
 

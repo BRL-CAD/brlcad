@@ -57,6 +57,8 @@ public:
     string ClassName();
     string Ident();
     string Description();
+    string GetProductName();
+    int GetProductId();
     virtual void Print(int level);
 
     //static methods

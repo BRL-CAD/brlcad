@@ -39,9 +39,6 @@
 #include "plot3.h"
 
 
-/**
- * R T _ N U R B _ P L O T _ S N U R B
- */
 void
 rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
@@ -103,9 +100,6 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ P L O T _ C N U R B
- */
 void
 rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 {

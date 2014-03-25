@@ -60,14 +60,10 @@
 // Note that STEPentity is the same thing as
 // SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
-
-#include "common.h"
-
-#include <sstream>
-#include <map>
-
-#include "G_STEP_internal.h"
+#include "AP_Common.h"
 #include "ON_Brep.h"
+#include "Shape_Definition_Representation.h"
+#include "Default_Geometric_Context.h"
 
 void
 ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
@@ -91,26 +87,29 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 
     // Some trims don't have an associated edge - allow for that
     if (edge) {
-	STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
-	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
-	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(edge->EdgeCurveIndexOf());
+	int ec_index = edge->EdgeCurveIndexOf();
+	if (ec_index < (int)info->edge_curves.size()) {
+	    STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
+	    SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
+	    SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(ec_index);
 
-	oriented_edge->name_("''");
-	oriented_edge->edge_element_((SdaiEdge *)e_curve);
+	    oriented_edge->name_("''");
+	    oriented_edge->edge_element_((SdaiEdge *)e_curve);
 
-	if (trim->m_bRev3d) {
-	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	} else {
-	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    if (trim->m_bRev3d) {
+		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	    } else {
+		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    }
+
+	    // add the edge
+	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
+	    info->oriented_edges.push_back(new_oriented_edge);
+	    i = info->oriented_edges.size() - 1;
+	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 	}
-
-	// add the edge
-	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	info->oriented_edges.push_back(new_oriented_edge);
-	i = info->oriented_edges.size() - 1;
-	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
     }
 }
 
@@ -200,17 +199,61 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
     ON_NurbsSurfaceCV_Finalize_GenericAggregates(info);
 }
 
+//TODO - technically, we'll have to create a full set of STEP
+//objects for the empty brep to be "valid" - currently, the Closed_Shell
+//will warn about invalidity on import.  Not sure if its worth it.
 void
-ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product)
+STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
+{
+    std::cout << "Making empty brep: " << dp->d_namep << std::endl;
+
+    STEPcomplex *context = (STEPcomplex *)sc->default_context;
+    SdaiClosed_shell *closed_shell;
+    SdaiManifold_solid_brep *manifold_solid_brep;
+    SdaiAdvanced_brep_shape_representation *advanced_brep;
+
+
+    // Closed shell that assembles the faces
+    closed_shell = (SdaiClosed_shell *)sc->registry->ObjCreate("CLOSED_SHELL");
+    closed_shell->name_("''");
+    // Solid manifold BRep
+    manifold_solid_brep = (SdaiManifold_solid_brep *)sc->registry->ObjCreate("MANIFOLD_SOLID_BREP");
+    manifold_solid_brep->outer_(closed_shell);
+    manifold_solid_brep->name_("''");
+    advanced_brep= (SdaiAdvanced_brep_shape_representation *)sc->registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+    advanced_brep->name_(str.c_str());
+    EntityAggregate *items = advanced_brep->items_();
+    items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
+    advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
+
+    (*brep_product) = Add_Shape_Definition_Representation(dp, sc, advanced_brep);
+    (*brep_shape) = advanced_brep;
+    (*brep_manifold) = manifold_solid_brep;
+
+    sc->instance_list->Append((STEPentity *)(advanced_brep), completeSE);
+    sc->instance_list->Append((STEPentity *)(manifold_solid_brep), completeSE);
+    sc->instance_list->Append((STEPentity *)(closed_shell), completeSE);
+}
+
+void
+ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
 {
     //ON_wString wstr;
     //ON_TextLog dump(wstr);
     //brep->Dump(dump);
-    //ON_String ss = wstr;
-    //bu_log("Brep:\n %s\n", ss.Array());
+    //ON_String ssw = wstr;
+    //bu_log("Brep:\n %s\n", ssw.Array());
+    if (!brep) {
+	STEP_Empty_BRep(dp, sc, brep_shape, brep_product, brep_manifold);
+	return;
+    }
+
     ON_Brep_Info_AP203 *info = new ON_Brep_Info_AP203();
-    info->registry = registry;
-    info->instance_list = instance_list;
+    info->registry = sc->registry;
+    info->instance_list = sc->instance_list;
     info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
 
     info->cartesian_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
@@ -221,8 +264,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr
     info->surfaces.assign(brep->m_S.Count(), (STEPentity *)0);
     info->faces.assign(brep->m_F.Count(), (STEPentity *)0);
 
-    /* The BRep needs a context - TODO: this can probably be used once for the whole step file... */
-    STEPcomplex *context = Add_Default_Geometric_Context(info->registry, info->instance_list);
+    STEPcomplex *context = (STEPcomplex *)sc->default_context;
 
     // Set up vertices and associated cartesian points
     for (int i = 0; i < brep->m_V.Count(); ++i) {
@@ -480,8 +522,9 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    (*brep_product) = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
+    (*brep_product) = Add_Shape_Definition_Representation(dp, sc, info->advanced_brep);
     (*brep_shape) = info->advanced_brep;
+    (*brep_manifold) = info->manifold_solid_brep;
 
     Populate_Instance_List(info);
 

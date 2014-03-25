@@ -33,7 +33,7 @@
 #define TCLCAD_H
 
 #include "common.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "tcl.h"
 #include "ged.h"
 
@@ -167,7 +167,7 @@ TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp,
  * @return
  * void
  */
-BU_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
+TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
 __END_DECLS
 

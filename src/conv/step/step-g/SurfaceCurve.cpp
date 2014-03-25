@@ -62,7 +62,13 @@ SurfaceCurve::SurfaceCurve(STEPWrapper *sw, int step_id)
 SurfaceCurve::~SurfaceCurve()
 {
     curve_3d = NULL;
-    associated_geometry.clear();
+
+    LIST_OF_PCURVE_OR_SURFACE::iterator i = associated_geometry.begin();
+
+    while (i != associated_geometry.end()) {
+	delete (*i);
+	i = associated_geometry.erase(i);
+    }
 }
 
 bool

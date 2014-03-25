@@ -217,8 +217,6 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * S I Z E _ R E S E T
- *
  * Reset view size and view center so that all solids in the solid table
  * are in view.
  * Caller is responsible for calling new_mats().
@@ -241,8 +239,6 @@ size_reset(void)
 
 
 /*
- * E D I T _ C O M
- *
  * B and e commands use this area as common
  */
 int
@@ -661,8 +657,6 @@ solid_list_callback(void)
 
 
 /*
- * F _ R E G D E B U G
- *
  * Display-manager specific "hardware register" debugging.
  */
 int
@@ -2672,8 +2666,6 @@ mged_zoom(double val)
 
 
 /*
- * F _ Z O O M
- *
  * A scale factor of 2 will increase the view size by a factor of 2,
  * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
@@ -2702,8 +2694,6 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * P A T H _ P A R S E
- *
  * Break up a path string into its constituents.
  *
  * This function has one parameter:  a slash-separated path.
@@ -2892,8 +2882,6 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * U S E J O Y
- *
  * Apply the "joystick" delta rotation to the viewing direction,
  * where the delta is specified in terms of the *viewing* axes.
  * Rotation is performed about the view center, for now.
@@ -2922,8 +2910,6 @@ usejoy(double xangle, double yangle, double zangle)
 
 
 /*
- * S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -2967,8 +2953,6 @@ setview(double a1,
 
 
 /*
- * S L E W V I E W
- *
  * Given a position in view space,
  * make that point the new view center.
  */
@@ -3530,9 +3514,6 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 }
 
 
-/*
- * M G E D _ V R O T
- */
 int
 mged_vrot(char origin, fastf_t *newrot)
 {
@@ -4123,8 +4104,6 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /**
- * C M D _ P O V
- *
  * Process the "pov" command to change the point of view.
  */
 int

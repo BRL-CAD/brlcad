@@ -33,9 +33,6 @@ extern "C" {
     void rt_ell_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
-/**
- * R T _ S U P E R E L L _ B R E P
- */
 extern "C" void
 rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

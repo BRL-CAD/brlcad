@@ -25,7 +25,9 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_realpath(const char *path, char *resolved_path)

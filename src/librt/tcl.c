@@ -30,7 +30,8 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -251,9 +252,6 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 }
 
 
-/**
- *
- */
 int
 rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
@@ -281,9 +279,6 @@ rt_tcl_a_hit(struct application *ap,
 }
 
 
-/**
- *
- */
 int
 rt_tcl_a_miss(struct application *ap)
 {

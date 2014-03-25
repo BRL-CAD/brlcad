@@ -37,6 +37,9 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -556,9 +559,6 @@ Convert_input()
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

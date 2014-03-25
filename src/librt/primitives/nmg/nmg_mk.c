@@ -219,8 +219,6 @@
 
 
 /**
- * n m g _ m m
- *
  * Make Model
  *
  * Create a new model.  The region list is empty.  Creates a new model
@@ -256,8 +254,6 @@ nmg_mm(void)
 
 
 /**
- * n m g _ m m r
- *
  * Make Model and Region.
  *
  * Create a new model, and an "empty" region to go with it.
@@ -295,8 +291,6 @@ nmg_mmr(void)
 
 
 /**
- * n m g _ m r s v
- *
  * Make new region, shell, vertex in model as well as the required
  * "uses".  Create a new region in model consisting of a minimal
  * shell.
@@ -337,8 +331,6 @@ nmg_mrsv(struct model *m)
 
 
 /**
- * n m g _ m v u
- *
  * Make Vertexuse on existing vertex
  *
  * This is a support routine for this module, and is not intended for
@@ -384,8 +376,6 @@ nmg_mvu(struct vertex *v, uint32_t *upptr, struct model *m)
 
 
 /**
- * n m g _ m v v u
- *
  * Make Vertex, Vertexuse
  *
  * This is a support routine for this module, and is not intended for
@@ -418,8 +408,6 @@ nmg_mvvu(uint32_t *upptr, struct model *m)
 
 
 /**
- * n m g _ m s v
- *
  * Make Shell, Vertex Use, Vertex
  *
  * Create a new shell in a specified region.  The shell will consist
@@ -465,8 +453,6 @@ nmg_msv(struct nmgregion *r)
 
 
 /**
- * n m g _ m f
- *
  * Make Face from a wire loop.
  *
  * make a face from a pair of loopuses.  The loopuses must be direct
@@ -548,8 +534,6 @@ nmg_mf(struct loopuse *lu1)
 
 
 /**
- * n m g _ m l v
- *
  * Make a new loop (with specified orientation) and vertex, in a shell
  * or face.
  * XXX - vertex or vertexuse? or both? ctj
@@ -689,8 +673,6 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 
 
 /**
- * n m g _ m e
- *
  * Make wire edge.
  *
  * Make a new edge between a pair of vertices in a shell.
@@ -803,8 +785,6 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 
 
 /**
- * n m g _ m e o n v u
- *
  * Make an edge on vertexuse.
  *
  * The new edge runs from and to that vertex.
@@ -928,8 +908,6 @@ nmg_meonvu(struct vertexuse *vu)
 
 
 /**
- * n m g _ m l
- *
  * Make wire loop from wire edgeuse list
  *
  * Passed a pointer to a shell.  The wire edgeuse child of the shell
@@ -1093,8 +1071,6 @@ nmg_ml(struct shell *s)
 
 
 /**
- * n m g _ k v u
- *
  * Kill vertexuse, and null out parent's vu_p.
  *
  * This routine is not intended for general use by applications,
@@ -1184,8 +1160,6 @@ nmg_kvu(struct vertexuse *vu)
 
 
 /**
- * n m g _ k f g
- *
  * Internal routine to release face geometry when no more faces use
  * it.
  */
@@ -1219,8 +1193,6 @@ nmg_kfg(uint32_t *magic_p)
 
 
 /**
- * n m g _ k f u
- *
  * Kill Faceuse
  *
  * delete a faceuse and its mate from the parent shell.
@@ -1290,8 +1262,6 @@ nmg_kfu(struct faceuse *fu1)
 
 
 /**
- * n m g _ k l u
- *
  * Kill loopuse, loopuse mate, and loop.
  *
  * if the loop contains any edgeuses or vertexuses they are killed
@@ -1377,8 +1347,6 @@ nmg_klu(struct loopuse *lu1)
 
 
 /**
- * n m g _ k e g
- *
  * Internal routine to kill an edge geometry structure (of either
  * type), if all the edgeuses on its list have vanished.  Regardless,
  * the edgeuse's geometry pointer is cleared.
@@ -1434,8 +1402,6 @@ nmg_keg(struct edgeuse *eu)
 
 
 /**
- * n m g _ k e u
- *
  * Delete an edgeuse & its mate from a shell or loop.
  *
  * Returns -
@@ -1570,8 +1536,6 @@ nmg_keu(register struct edgeuse *eu1)
 
 
 /**
- * n m g _ k s
- *
  * Kill a shell and all children
  *
  * Returns -
@@ -1621,8 +1585,6 @@ nmg_ks(struct shell *s)
 
 
 /**
- * n m g _ k r
- *
  * Kill a region and all shells in it.
  *
  * Returns -
@@ -1667,8 +1629,6 @@ nmg_kr(struct nmgregion *r)
 
 
 /**
- * n m g _ k m
- *
  * Kill an entire model.  Nothing is left.
  */
 void
@@ -1703,8 +1663,6 @@ nmg_km(struct model *m)
 
 
 /**
- * n m g _ v e r t e x _ g v
- *
  * Associate point_t ("vector") coordinates with a vertex
  */
 void
@@ -1735,8 +1693,6 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 
 
 /**
- * n m g _ v e r t e x _ g
- *
  * a version that can take x, y, z coords and doesn't need a point
  * array.  Mostly useful for quick and dirty programs.
  */
@@ -1758,8 +1714,6 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 
 
 /**
- * n m g _ v e r t e x u s e _ n v
- *
  * Assign a normal vector to a vertexuse
  */
 void
@@ -1791,8 +1745,6 @@ nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
 
 
 /**
- * n m g _ v e r t e x u s e _ a _ c n u r b
- *
  * Given a vertex with associated geometry in model space which lies
  * on a face_g_snurb surface, it will have a corresponding set of (u,
  * v) or (u, v, w) parameters on that surface.  Build the association
@@ -1829,8 +1781,6 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 
 
 /**
- * n m g _ e d g e _ g
- *
  * Compute the equation of the line formed by the endpoints of the
  * edge.
  *
@@ -1939,8 +1889,6 @@ nmg_edge_g(struct edgeuse *eu)
 
 
 /**
- * n m g _ e d g e _ g _ c n u r b
- *
  * For an edgeuse associated with a face_g_snurb surface, create a
  * spline curve in the parameter space of the snurb which describes
  * the path from the start vertex to the end vertex.
@@ -2050,8 +1998,6 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
 
 
 /**
- * n m g _ e d g e _ g _ c n u r b _ p l i n e a r
- *
  * For an edgeuse associated with a face_g_snurb surface, create a
  * spline "curve" in the parameter space of the snurb which describes
  * a STRAIGHT LINE in parameter space from the u, v parameters of the
@@ -2127,8 +2073,6 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
 
 
 /**
- * n m g _ u s e _ e d g e _ g
- *
  * Associate edgeuse 'eu' with the edge_g_X structure given as
  * 'magic_p'.  If the edgeuse is already associated with some
  * geometry, release that first.  Note that, to start with, the two
@@ -2197,8 +2141,6 @@ nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
 
 
 /**
- * n m g _ l o o p _ g
- *
  * Build the bounding box for a loop.
  *
  * The bounding box is guaranteed never to have zero thickness.
@@ -2285,8 +2227,6 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 
 
 /**
- * n m g _ f a c e _ g
- *
  * Assign plane equation to face.
  * XXX Should probably be called nmg_face_g_plane()
  *
@@ -2335,8 +2275,6 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
 
 
 /**
- * n m g _ f a c e _ n e w _ p l a n e
- *
  * Assign plane equation to this face. If other faces use current
  * geometry for this face, then make a new geometry for this face.
  */
@@ -2396,8 +2334,6 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
 
 
 /**
- * n m g _ f a c e _ g _ s n u r b
- *
  * Create a new NURBS surface to be the geometry for an NMG face.
  *
  * If either of the knot vector arrays or the ctl_points arrays are
@@ -2482,8 +2418,6 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
 
 
 /**
- * n m g _ f a c e _ b b
- *
  * Build the bounding box for a face
  */
 void
@@ -2535,8 +2469,6 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
 
 
 /**
- * n m g _ s h e l l _ a
- *
  * Build the bounding box for a shell
  */
 void
@@ -2619,8 +2551,6 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * n m g _ r e g i o n _ a
- *
  * build attributes/extents for all shells in a region
  *
  */
@@ -2671,8 +2601,6 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
 
 
 /**
- * n m g _ d e m o t e _ l u
- *
  * Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
  *
  * Returns -
@@ -2738,8 +2666,6 @@ nmg_demote_lu(struct loopuse *lu1)
 
 
 /**
- * n m g _ d e m o t e _ e u
- *
  * Demote a wire edge into a pair of self-loop vertices
  *
  *
@@ -2795,8 +2721,6 @@ nmg_demote_eu(struct edgeuse *eu)
 
 
 /**
- * n m g _ m o v e v u
- *
  * Move a vertexuse from an old vertex to a new vertex.  If this was
  * the last use, the old vertex is destroyed.
  *
@@ -2829,8 +2753,6 @@ nmg_movevu(struct vertexuse *vu, struct vertex *v)
 
 
 /**
- * n m g _ j e
- *
  * Move a pair of edgeuses onto a single edge (glue edgeuse).  The
  * edgeuse eusrc and its mate are moved to the edge used by eudst.
  * eusrc is made to be immediately radial to eudst.  if eusrc does not
@@ -2929,8 +2851,6 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 
 
 /**
- * n m g _ u n g l u e e d g e
- *
  * If edgeuse is part of a shared edge (more than one pair of edgeuses
  * on the edge), it and its mate are "unglued" from the edge, and
  * associated with a new edge structure.
@@ -2989,8 +2909,6 @@ nmg_unglueedge(struct edgeuse *eu)
 
 
 /**
- * n m g _ j v
- *
  * Join two vertexes into one.
  *
  * v1 inherits all the vertexuses presently pointing to v2, and v2 is
@@ -3041,8 +2959,6 @@ nmg_jv(register struct vertex *v1, register struct vertex *v2)
 
 
 /**
- * n m g _ j f g
- *
  * Join two faces, so that they share one underlying face geometry.
  * The loops of the two faces remains unchanged.
  *
@@ -3115,8 +3031,6 @@ nmg_jfg(struct face *f1, struct face *f2)
 
 
 /**
- * n m g _ j e g
- *
  * Join two edge geometries.
  *
  * For all edges in the model which refer to 'src_eg', change them to
@@ -3167,8 +3081,6 @@ nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 
 
 /**
- * n m g _ k e u _ z l
- *
  * Kill zero length edgeuse from a shell and
  * return the number of edgeuse killed. If the
  * shell becomes empty, this function will bomb.

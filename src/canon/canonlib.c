@@ -79,9 +79,7 @@ char	*arg_v[MAX_ARGS];
 int	arg_c;
 char *print_queue = "canon";
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
+
 void
 usage(const char *s)
 {
@@ -101,9 +99,7 @@ usage(const char *s)
     bu_exit(1, NULL);
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
+
 int
 parse_args(int ac, char **av)
 {

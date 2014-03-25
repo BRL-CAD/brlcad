@@ -114,8 +114,6 @@ get_args(int argc, char **argv)
 
 
 /*
- * S E P A R A T E
- *
  * Unpack RGB byte triples into three separate arrays of integers.
  * The first and last pixels are replicated twice, to handle border effects.
  *
@@ -169,8 +167,6 @@ separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
 
 
 /*
- * C O M B I N E
- *
  * Combine three separate arrays of integers into a buffer of
  * RGB byte triples
  */
@@ -205,8 +201,6 @@ combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
 
 
 /*
- * R I P P L E
- *
  * Ripple all the scanlines down by one.
  *
  * Barrel shift all the pointers down, with [0] going back to the top.
@@ -225,8 +219,6 @@ ripple(int **array, int num)
 
 
 /*
- * F I L T E R 5
- *
  * Apply a 5x5 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *
@@ -277,8 +269,6 @@ filter5(int *op, int **lines, int num)
 
 
 /*
- * F I L T E R 3
- *
  * Apply a 3x3 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *

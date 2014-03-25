@@ -49,8 +49,8 @@
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"
-#include "dm_xvars.h"
-#include "dm-wgl.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-wgl.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -70,6 +70,7 @@ static void Wgl_colorchange(const struct bu_structparse *, const char *, void *,
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void debug_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void logfile_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void do_fogHint(const struct bu_structparse *, const char *, void *, const char *);
 static void establish_lighting(const struct bu_structparse *, const char *, void *, const char *);
@@ -90,6 +91,7 @@ struct bu_structparse Wgl_vparse[] = {
     {"%d",  1, "has_doublebuffer",	Wgl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "depth",		Wgl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "debug",		Wgl_MV_O(debug),	debug_hook },
+    {"%V",  1, "log",		Wgl_MV_O(log),		logfile_hook, NULL, NULL },
     {"%g",  1, "bound",		Wgl_MV_O(bound),	bound_hook },
     {"%d",  1, "useBound",		Wgl_MV_O(boundFlag),	boundFlag_hook },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
@@ -185,8 +187,6 @@ Wgl_doevent(ClientData clientData,
 
 
 /*
- * W G L _ D M
- *
  * Implement display-manager specific commands, from MGED "dm" command.
  */
 static int
@@ -334,6 +334,14 @@ debug_hook(const struct bu_structparse *UNUSED(sdp),
     DM_DEBUG(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
 
+static void
+logfile_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
+{
+    /*DM_LOGFILE(dmp, bu_vls_addr(&(((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.log)));*/
+}
 
 static void
 bound_hook(const struct bu_structparse *UNUSED(sdp),

@@ -55,11 +55,12 @@ install(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
-include_directories(
+set(isst_dirs
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
   ${X11_INCLUDE_DIR}
   )
+BRLCAD_INCLUDE_DIRS(isst_dirs)
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   if(WIN32)
     BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)

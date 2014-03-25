@@ -198,8 +198,6 @@ pkg_plong(char *buf, unsigned long l)
 
 
 /**
- * _ P K G _ T I M E S T A M P
- *
  * Output a timestamp to the log, suitable for starting each line
  * with.
  *
@@ -231,8 +229,6 @@ _pkg_timestamp(void)
 
 
 /**
- * _ P K G _ E R R L O G
- *
  * Default error logger.  Writes to stderr.
  *
  * This is a private implementation function.
@@ -250,8 +246,6 @@ _pkg_errlog(const char *s)
 
 
 /**
- * _ P K G _ P E R R O R
- *
  * Produce a perror on the error logging output.
  *
  * This is a private implementation function.
@@ -273,8 +267,6 @@ _pkg_perror(void (*errlog)(const char *msg), const char *s)
 
 
 /**
- * _ P K G _ M A K E C O N N
- *
  * Malloc and initialize a pkg_conn structure.  We have already
  * connected to a client or server on the given file descriptor.
  *
@@ -320,8 +312,6 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 
 
 /**
- * _ P K G _ C K _ D E B U G
- *
  * This is a private implementation function.
  */
 static void
@@ -853,8 +843,6 @@ pkg_close(struct pkg_conn *pc)
 
 
 /**
- * P K G _ I N G E T
- *
  * A functional replacement for bu_mread() through the first level
  * input buffer.
  *
@@ -888,8 +876,6 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 
 
 /**
- * _ P K G _ C H E C K I N
- *
  * This routine is called whenever it is necessary to see if there is
  * more input that can be read.  If input is available, it is read
  * into pkc_inbuf[].  If nodelay is set, poll without waiting.
@@ -1293,8 +1279,6 @@ pkg_flush(struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ G E T H D R
- *
  * Get header from a new message.
  *
  * Returns 1 when there is some message to go look at and -1 on fatal
@@ -1512,8 +1496,6 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ D I S P A T C H
- *
  * Given that a whole message has arrived, send it to the appropriate
  * User Handler, or else grouse.  Returns -1 on fatal error, 0 on no
  * handler, 1 if all's well.

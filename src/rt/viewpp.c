@@ -72,8 +72,6 @@ void view_pixel(void) {}
 #define pchar(c) {putc(c, stdout);if (col++==74) {putc('\n', stdout);col=0;}}
 
 /*
- * P K N U M
- *
  * Oddball 5-bits in a char ('@', 'A', ... on up) number packing.
  * Number is written 5 bits at a time, right to left (low to high)
  * until there are no more non-zero bits remaining.
@@ -168,9 +166,6 @@ view_end(void)
     fflush(stdout);
 }
 
-/*
- * V I E W _ I N I T
- */
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {

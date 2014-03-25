@@ -67,7 +67,7 @@
 #include "bn.h"
 #include "db.h"
 #include "raytrace.h"
-#include "bu.h"
+
 
 
 #define ASSEM_EXT ' '

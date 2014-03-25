@@ -32,7 +32,11 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 #include "./vls_internals.h"
 
@@ -95,7 +99,7 @@ bu_vls_vlsinit(void)
 }
 
 
-char *
+const char *
 bu_vls_cstr(const struct bu_vls *vp)
 {
     /* a wrapper for bu_vls_addr, but name is intended to be more intuitive to use */
@@ -210,37 +214,33 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
 
 void
-bu_vls_trunc2(struct bu_vls *vp, int len)
+bu_vls_nibble(struct bu_vls *vp, off_t len)
 {
     BU_CK_VLS(vp);
 
-    if (vp->vls_len <= (size_t)len)
-	return;
-
-    if (len < 0)
-	len = 0;
-    if (len == 0)
-	vp->vls_offset = 0;
-
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
-    vp->vls_len = len;
-}
-
-
-void
-bu_vls_nibble(struct bu_vls *vp, int len)
-{
-    BU_CK_VLS(vp);
-
-    if (len < 0 && (-len) > (ssize_t)vp->vls_offset)
-	len = -vp->vls_offset;
-    if ((size_t)len >= vp->vls_len) {
+    /* if the caller asks to nibble everything, truncate the string */
+    if (len > 0 && (size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
 	return;
     }
 
-    vp->vls_len -= len;
-    vp->vls_offset += len;
+    /* if the caller asks to un-nibble more than we can, we just
+     * unroll to the original beginning of the string
+     */
+    if (len < 0 && (size_t)(-len) > vp->vls_offset) {
+	vp->vls_len += vp->vls_offset;
+	vp->vls_offset = 0;
+	return;
+    }
+
+    /* could be collapsed due to prior, but appease dumb compilers */
+    if (len < 0) {
+	vp->vls_len += (size_t)(-len);
+	vp->vls_offset -= (size_t)(-len);
+    } else {
+	vp->vls_len -= (size_t)len;
+	vp->vls_offset += (size_t)len;
+    }
 }
 
 
@@ -440,6 +440,41 @@ bu_vls_vlscatzap(struct bu_vls *dest, struct bu_vls *src)
 
     bu_vls_vlscat(dest, src);
     bu_vls_trunc(src, 0);
+}
+
+
+void
+bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src, size_t begin, size_t nchars)
+{
+    size_t len;
+    size_t i, end;
+
+    BU_CK_VLS(src);
+    BU_CK_VLS(dest);
+
+    len = src->vls_len;
+    if (UNLIKELY(len == 0))
+	return;
+    if (UNLIKELY(begin > len))
+	return;
+    if (UNLIKELY(nchars == 0))
+	return;
+
+    if (nchars > len)
+	nchars = len;
+
+    bu_vls_trunc(dest, 0);
+    bu_vls_extend(dest, nchars + 1);
+
+    end = begin + nchars;
+    if (end > len)
+	end = len;
+
+    for (i = begin; i < end; ++i)
+	bu_vls_putc(dest, bu_vls_cstr(src)[i]);
+
+    /* ensure we have an end */
+    bu_vls_putc(dest, '\0');
 }
 
 

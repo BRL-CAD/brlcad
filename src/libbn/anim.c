@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "anim.h"
@@ -135,9 +135,9 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     /* assume the smallest possible arc-length from frame to frame */
     for (i=0; i<3; i++) {
 	while ((angle[i] - previous[i]) > M_PI)
-	    angle[i] -= (2.0*M_PI);
+	    angle[i] -= M_2PI;
 	while ((previous[i] - angle[i]) > M_PI)
-	    angle[i] += (2.0*M_PI);
+	    angle[i] += M_2PI;
 	previous[i] = angle[i];
     }
 
@@ -194,9 +194,9 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     /* assume the smallest possible arc-length from frame to frame */
     for (i=0; i<3; i++) {
 	while ((angle[i] - prev_angle[i]) > M_PI)
-	    angle[i] -= (2.0*M_PI);
+	    angle[i] -= M_2PI;
 	while ((prev_angle[i] - angle[i]) > M_PI)
-	    angle[i] += (2.0*M_PI);
+	    angle[i] += M_2PI;
 	prev_angle[i] = angle[i];
     }
 
@@ -350,9 +350,9 @@ anim_y_p_r2mat(mat_t m, double y, double p, double r)
 void
 anim_dy_p_r2mat(mat_t m, double y, double p, double r)
 {
-    fastf_t radian_yaw = y*(M_PI*0.0055555555556);
-    fastf_t radian_pitch = p*(M_PI*0.0055555555556);
-    fastf_t radian_roll = r*(M_PI*0.0055555555556);
+    fastf_t radian_yaw = y*DEG2RAD;
+    fastf_t radian_pitch = p*DEG2RAD;
+    fastf_t radian_roll = r*DEG2RAD;
 
     fastf_t cos_y = cos(radian_yaw);
     fastf_t sin_y = sin(radian_yaw);
@@ -379,9 +379,9 @@ void
 anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
 {
 
-    float ryaw = yaw*(M_PI*0.0055555555556);
-    float rpch = pch*(M_PI*0.0055555555556);
-    float rrll = rll*(M_PI*0.0055555555556);
+    float ryaw = yaw*DEG2RAD;
+    float rpch = pch*DEG2RAD;
+    float rrll = rll*DEG2RAD;
 
     float cos_y = cos(ryaw);
     float sin_y = sin(ryaw);
@@ -435,9 +435,9 @@ anim_dx_y_z2mat(mat_t m, double x, double y, double z)
 {
     fastf_t cosx, cosy, cosz, sinx, siny, sinz;
 
-    x *= (M_PI*0.0055555555556);
-    y *= (M_PI*0.0055555555556);
-    z *= (M_PI*0.0055555555556);
+    x *= DEG2RAD;
+    y *= DEG2RAD;
+    z *= DEG2RAD;
 
     cosx = cos(x);
     sinx = sin(x);
@@ -521,9 +521,9 @@ anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 {
     fastf_t cosx, cosy, cosz, sinx, siny, sinz;
 
-    x *= (M_PI*0.0055555555556);
-    y *= (M_PI*0.0055555555556);
-    z *= (M_PI*0.0055555555556);
+    x *= DEG2RAD;
+    y *= DEG2RAD;
+    z *= DEG2RAD;
 
     cosx = cos(x);
     sinx = sin(x);

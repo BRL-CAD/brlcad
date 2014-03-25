@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -719,9 +718,6 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
     0.93599067f, 0.28901987f, 0.24064290f, 0.63030622f, 0.21702494f, 0.16766900f,
     0.15166367f, 0.76687850f, 0.62507295f, 0.33458056f
 };
-
-
-double bn_sin_scale = BN_SINTABSIZE / (2.0 * M_PI);
 
 
 const float bn_sin_table[BN_SINTABSIZE] = {

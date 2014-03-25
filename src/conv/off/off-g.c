@@ -44,8 +44,6 @@
 static struct bn_tol tol;
 
 /*
- *         R E A D _ F A C E S
- *
  * Reads the geometry from the geometry file and creates the appropriate
  *  vertices and faces.
  */

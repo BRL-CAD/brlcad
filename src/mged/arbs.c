@@ -56,8 +56,8 @@ char *p_rfin[] = {
 };
 
 
-/* F _ R F A R B () :	finds arb8 given.....
- *
+/*
+ * Finds arb8 given:
  * 1. one point
  * 2. 2 coordinates of 3 other points
  * 3. rot and fallback angles

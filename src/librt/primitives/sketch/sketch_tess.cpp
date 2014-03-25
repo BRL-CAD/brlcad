@@ -250,8 +250,6 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
 #define DIST_PT2D_PT2D(_p1, _p2) sqrt(DIST_PT2D_PT2D_SQ(_p1, _p2))
 
 /**
- * R T _ S K E T C H _ S U R F _ A R E A
- *
  * calculate approximate surface area for a sketch primitive by iterating through
  * each curve segment in the sketch, calculating the area of the polygon
  * created by the start and end points of each curve segment, as well as the

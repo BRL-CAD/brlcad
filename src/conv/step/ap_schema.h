@@ -43,6 +43,11 @@
 #  define SCHEMA_NAMESPACE automotive_design
 #endif
 
+#ifdef AP242
+#  define SCHEMA_NAMESPACE ap242_managed_model_based_3d_engineering_mim_lf
+#  include <SdaiAP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF.h>
+#endif
+
 #endif /* CONV_STEP_AP_SCHEMA_H */
 
 /*

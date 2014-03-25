@@ -24,13 +24,9 @@
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
-
-#include "bu.h"
-
-
-
 
 void
 texture_blend_free(struct texture_s *texture) {

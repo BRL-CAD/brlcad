@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -102,7 +102,6 @@ dup_dir_check5(struct db_i *input_dbip,
 
 
 /**
- * G E D _ D I R _ C H E C K
  *@brief
  * Check a name against the global directory.
  */

@@ -48,8 +48,8 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#include "dm-plot.h"
-#include "dm-Null.h"
+#include "dm/dm-plot.h"
+#include "dm/dm-Null.h"
 
 #include "solid.h"
 #include "plot3.h"
@@ -65,8 +65,6 @@ static mat_t plotmat;
 
 
 /**
- * P L O T _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -91,8 +89,6 @@ plot_close(struct dm *dmp)
 
 
 /**
- * P L O T _ P R O L O G
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
@@ -107,9 +103,6 @@ plot_drawBegin(struct dm *dmp)
 }
 
 
-/**
- * P L O T _ E P I L O G
- */
 HIDDEN int
 plot_drawEnd(struct dm *dmp)
 {
@@ -125,8 +118,6 @@ plot_drawEnd(struct dm *dmp)
 
 
 /**
- * P L O T _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by
  * many calls to plot_draw().
  */
@@ -165,8 +156,6 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /**
- * P L O T _ O B J E C T
- *
  * Set up for an object, transformed as indicated, and with an
  * object center as specified.  The ratio of object to screen size
  * is passed in as a convenience.
@@ -317,9 +306,6 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * P L O T _ D R A W
- */
 HIDDEN int
 plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
@@ -341,8 +327,6 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 
 
 /**
- * P L O T _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).  Turns off windowing.
  */
@@ -357,8 +341,6 @@ plot_normal(struct dm *dmp)
 
 
 /**
- * P L O T _ P U T S
- *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
@@ -380,9 +362,6 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 }
 
 
-/**
- * P L O T _ 2 D _ G O T O
- */
 HIDDEN int
 plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
@@ -479,6 +458,24 @@ plot_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+plot_logfile(struct dm *dmp, const char *filename)
+{
+    Tcl_Obj *obj;
+
+    obj = Tcl_GetObjResult(dmp->dm_interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
+
+    Tcl_SetObjResult(dmp->dm_interp, obj);
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -528,6 +525,7 @@ struct dm dm_plot = {
     null_setDepthMask,
     null_setZBuffer,
     plot_debug,
+    plot_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -562,6 +560,7 @@ struct dm dm_plot = {
     VINIT_ZERO,			/* clipmin */
     VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -575,8 +574,6 @@ struct dm dm_plot = {
 
 
 /*
- * P L O T _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */

@@ -25,8 +25,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bu.h"
-
+#include "bu/parse.h"
+#include "bu/str.h"
 
 int
 bu_str_true(const char *str)

@@ -37,8 +37,6 @@
 #include "wdb.h"
 
 /*
- * M K _ A R S
- *
  * The input is an array of pointers to an array of fastf_t values.
  * There is one pointer for each curve.  It is anticipated that there
  * will be pts_per_curve+1 elements per curve, the first point being

@@ -33,7 +33,8 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 #include "./vls_internals.h"
 
@@ -551,14 +552,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 			    if (!f.have_dot) {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%o", &f.fieldlen);
+				    bu_sscanf(fp, "%d", &f.fieldlen);
 				} else {
 				    f.fieldlen = atoi(fp);
 				}
 				f.flags |= FIELDLEN;
 			    } else {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%o", &f.precision);
+				    bu_sscanf(fp, "%d", &f.precision);
 				} else {
 				    f.precision = atoi(fp);
 				}

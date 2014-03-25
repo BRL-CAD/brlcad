@@ -205,7 +205,7 @@ double *end_table = &table[10];
 
 
 /*
- * D O I T --- convert stdin pix file to stdout rasterfile
+ * convert stdin pix file to stdout rasterfile
  */
 void
 doit(void)
@@ -309,8 +309,6 @@ usage(void)
 
 
 /*
- * M A I N
- *
  * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */

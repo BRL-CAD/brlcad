@@ -402,9 +402,6 @@ rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t 
 }
 
 
-/*
- * R E M _ R E A D R E C T
- */
 HIDDEN int
 rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
@@ -435,9 +432,6 @@ rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 }
 
 
-/*
- * R E M _ W R I T E R E C T
- */
 HIDDEN int
 rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
@@ -467,8 +461,6 @@ rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * R E M _ B W R E A D R E C T
- *
  * Issue:  Determining if other end has support for this yet.
  */
 HIDDEN int
@@ -500,9 +492,6 @@ rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 }
 
 
-/*
- * R E M _ B W W R I T E R E C T
- */
 HIDDEN int
 rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
@@ -551,8 +540,6 @@ rem_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 
-/*
- */
 HIDDEN int
 rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
@@ -575,8 +562,6 @@ rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
 
 /*
- * R E M _ S E T C U R S O R
- *
  * Program the "shape" of the cursor.
  *
  * bits[] has xbits*ybits bits in it, rounded up to next largest byte.
@@ -612,8 +597,6 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 }
 
 
-/*
- */
 HIDDEN int
 rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
@@ -632,8 +615,6 @@ rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-/*
- */
 HIDDEN int
 rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
@@ -734,9 +715,6 @@ rem_flush(FBIO *ifp)
 }
 
 
-/*
- * R E M _ H E L P
- */
 HIDDEN int
 rem_help(FBIO *ifp)
 {
@@ -755,8 +733,6 @@ rem_help(FBIO *ifp)
 
 
 /*
- * P K G E R R O R
- *
  * This is where we come on asynchronous error or log messages.  We
  * are counting on the remote machine now to prefix his own name to
  * messages, so we don't touch them ourselves.

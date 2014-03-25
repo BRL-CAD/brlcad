@@ -24,8 +24,10 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 int
 bu_cv_cookie(const char *in)			/* input format */

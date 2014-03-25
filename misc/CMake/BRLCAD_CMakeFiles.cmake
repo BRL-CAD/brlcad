@@ -65,7 +65,7 @@ macro(CMAKEFILES)
       # make sure the file is there.  Normally attempting to ignore
       # a non-existent file is a fatal error, but these keywords
       # don't necessarily refer to files.
-      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED)
+      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE)
       foreach(TARGET_FLAG ${TARGET_FLAGS})
 	if("${TARGET_FLAG}" STREQUAL "${ITEM}")
 	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})

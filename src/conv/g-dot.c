@@ -36,6 +36,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
@@ -314,9 +316,10 @@ main(int ac, char *av[])
 	const char *title[2] = {"title", NULL};
 
 	ged_title(gp, 1, title);
-	bu_vls_printf(&vp, "%V\\n", gp->ged_result_str);
+	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
-	    char *base = bu_basename(av[0]);
+	    char *base = (char *)bu_calloc(strlen(av[0]), sizeof(char), "g-dot base");
+	    bu_basename(base, av[0]);
 	    bu_vls_printf(&vp, "%s ", base);
 	    bu_free(base, "free basename");
 	}

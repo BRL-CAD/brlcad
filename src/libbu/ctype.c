@@ -22,8 +22,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "bu.h"
-
+#include "bu/str.h"
 
 int
 bu_str_isprint(const char *cp)

@@ -51,14 +51,7 @@ CompositeCurve::CompositeCurve(STEPWrapper *sw, int step_id)
 
 CompositeCurve::~CompositeCurve()
 {
-    /*
-      LIST_OF_SEGMENTS::iterator i = segments.begin();
-
-      while(i != segments.end()) {
-      delete (*i);
-      i = segments.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     segments.clear();
 }
 

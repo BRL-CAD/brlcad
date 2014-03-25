@@ -173,7 +173,7 @@ days ( ) {
 	12) _dys=334 ;;
     esac
 
-    echo "`expr \( $_yer \* 365 \) \+ $_dys \+ $_day`"
+    expr \( $_yer \* 365 \) \+ $_dys \+ $_day
     return 0;
 }
 

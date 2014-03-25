@@ -34,6 +34,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"

@@ -293,8 +293,6 @@ struct ga_t {
 
 
 /*
- * C O L L E C T _ G L O B A L _ O B J _ F I L E _ A T T R I B U T E S
- *
  * Collects object file attributes from the libobj library for use by
  * functions called later. Examples of collected attributes are the
  * quantity of each face type, the quantity of each grouping type, the
@@ -394,8 +392,6 @@ collect_global_obj_file_attributes(struct ga_t *ga)
 
 
 /*
- * C L E A N U P _ N A M E
- *
  * Replaces with underscore characters which are invalid for BRL-CAD
  * primitive names and file names.
  */
@@ -422,8 +418,6 @@ cleanup_name(struct bu_vls *outputObjectName_ptr)
 
 
 /*
- * C O M P _ B
- *
  * Compare function used by the function bsearch for
  * sorting and searching an array of numbers.
  */
@@ -438,8 +432,6 @@ comp_b(const void *p1, const void *p2)
 
 
 /*
- * C O M P _ B _ S O R T
- *
  * Compare function used by the function bu_sort for
  * sorting an array of numbers.
  */
@@ -451,8 +443,6 @@ comp_b_sort(const void *p1, const void *p2, void *UNUSED(arg))
 
 
 /*
- * C O M P
- *
  * Compare function used by the function bu_sort for sorting an index
  * into a multi-dimensional array.
  */
@@ -468,8 +458,6 @@ comp(const void *p1, const void *p2, void *arg)
 
 
 /*
- * C O M P _ C
- *
  * Compare function used by the function bu_sort for sorting a 2D array
  * of numbers.
  */
@@ -488,8 +476,6 @@ comp_c(const void *p1, const void *p2, void *UNUSED(arg))
 
 
 /*
- * R E T R I E V E _ C O O R D _ I N D E X
- *
  * For a grouping of faces, retrieve the coordinates and obj file
  * indexes of a specific vertex within a specific face in this
  * grouping. If the face type indicates a type where some return
@@ -608,8 +594,6 @@ retrieve_coord_index(struct ga_t *ga,   /* obj file global attributes */
 
 
 /*
- * F I N D _ L A S T _ U N I Q U E _ V E R T E X
- *
  * Returns the number of vertices in a face where the last vertex in
  * the vertex list is not the same as the first vertex. Essentially
  * this function finds the last unique vertex of the face. If the
@@ -665,8 +649,6 @@ find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
 
 
 /*
- * T E S T _ F A C E
- *
  * Within a given grouping of faces, test an individual face for
  * degenerate conditions such as duplicate vertex indexes or the
  * distance between any pair of vertices of a individual face are
@@ -825,8 +807,6 @@ test_face(struct ga_t *ga,
 
 
 /*
- * R E T E S T _ G R O U P I N G _ F A C E S
- *
  * Within a given grouping of faces, test all the faces for degenerate
  * conditions such as duplicate vertex indexes or the distance between
  * any pair of vertices of a individual face are equal to or less than
@@ -858,8 +838,6 @@ retest_grouping_faces(struct ga_t *ga,
 
 
 /*
- * F R E E _ G F I
- *
  * Releases the memory allocated for the contents of the gfi structure
  * and the gfi structure itself. The gfi structure contains the
  * 'grouping face indices' into the libobj structures (and supporting
@@ -892,8 +870,6 @@ free_gfi(struct gfi_t **gfi)
 
 
 /*
- * C O L L E C T _ G R O U P I N G _ F A C E S _ I N D E X E S
- *
  * Collects the face indexes into the libobj structures for a specific
  * grouping of faces. The grouping_index identifies the grouping to be
  * collected and corresponds to the index of the grouping defined in the obj
@@ -1274,8 +1250,6 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
 
 /*
- * P O P U L A T E _ T R I A N G L E _ I N D E X E S
- *
  * Populate the triangle index structure with the vertex indexes of
  * one or more triangles which represent a single face. This function
  * triangulates a face and places these triangles into the triangle
@@ -1498,8 +1472,6 @@ populate_triangle_indexes(struct ga_t *ga,
 
 
 /*
- * P O P U L A T E _ S O R T _ I N D E X E S
- *
  * Allocate the memory for and populate the sort-indexes used to sort
  * the necessary libobj vertex indexes. The sort-indexes created are
  * determined by the current face_type. Sorting of these indexes is
@@ -1559,8 +1531,6 @@ populate_sort_indexes(struct ti_t *ti)
 
 
 /*
- * S O R T _ I N D E X E S
- *
  * Sort the sort-indexes used to sort the necessary libobj vertex
  * indexes. Sorting of these indexes is necessary as part of the
  * process of creating a unique set of vertices to build a bot
@@ -1589,8 +1559,6 @@ sort_indexes(struct ti_t *ti)
 
 
 /*
- * C R E A T E _ U N I Q U E _ I N D E X E S
- *
  * Create a unique sort-index from a provided non-unique sorted
  * sort-index by removing duplicates in the index. The non-unique
  * sort-indexes are freed when they are no longer needed.
@@ -1710,8 +1678,6 @@ create_unique_indexes(struct ti_t *ti)
 
 
 /*
- * F R E E _ T I
- *
  * Free memory allocated for the contents of the triangle index
  * structure.
  */
@@ -1755,8 +1721,6 @@ free_ti(struct ti_t *ti)
 
 
 /*
- * C R E A T E _ B O T _ F L O A T _ A R R A Y S
- *
  * Create the arrays used by the bot primitive which contain
  * floating-point values. The unique sorted-indexes are used to
  * retrieve the values from the libobj structures.
@@ -1843,8 +1807,6 @@ create_bot_float_arrays(struct ga_t *ga,
 
 
 /*
- * C R E A T E _ B O T _ I N T _ A R R A Y S
- *
  * Create the arrays used by the bot primitive which contain integer
  * values. These integer values are the index values of the triangle
  * vertices and normals within the bot primitive. The unique
@@ -1991,8 +1953,6 @@ create_bot_int_arrays(struct ti_t *ti)
 
 
 /*
- * R E M O V E _ D U P L I C A T E S _ A N D _ S O R T
- *
  * Given a one-dimensional array of numbers of type size_t, the array
  * is sorted and duplicate entries removed, resulting in a sorted list
  * of unique values. For speed, a new list is allocated where the
@@ -2043,8 +2003,6 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
 
 
 /*
- * P O P U L A T E _ F U S E _ M A P
- *
  * Populate the fuse map array which maps vertex indexes to their
  * fused equivalent. This function is a support function for the
  * fuse_vertex function. This function performs the distance compare
@@ -2126,8 +2084,6 @@ populate_fuse_map(struct ga_t *ga,
 
 
 /*
- * F U S E _ V E R T E X
- *
  * Perform a vertex fuse of the given face grouping. Vertices which
  * are close enough together to be considered the same vertex are
  * joined. A mapping is created to convert each vertex index to their
@@ -2407,8 +2363,6 @@ fuse_vertex(struct ga_t *ga,
 
 
 /*
- * T E S T _ C L O S U R E
- *
  * For a grouping of faces, test if the surface is closed. This
  * function returns the number of open edges. Zero open edges
  * indicates a closed surface. This function traverses all the faces
@@ -2605,8 +2559,6 @@ test_closure(struct ga_t *ga,
 
 
 /*
- * O U T P U T _ T O _ B O T
- *
  * For a grouping of faces, write a bot primitive to a BRL-CAD
  * database file (i.e. ".g" file). Texture_mode should be set to
  * IGNR_TEX since the ability to use the obj file texture vertices is
@@ -2770,8 +2722,6 @@ output_to_bot(struct ga_t *ga,
 
 
 /*
- * O U T P U T _ T O _ N M G
- *
  * For a grouping of faces, write a nmg primitive or volume-mode-bot
  * primitive to a BRL-CAD database file (i.e. ".g" file). This
  * function will return a non-zero value if no primitive was output.
@@ -3118,8 +3068,6 @@ output_to_nmg(struct ga_t *ga,
 
 
 /*
- * S T R 2 M M
- *
  * Validate unit string and output conversion factor to millimeters.
  * If the string is not a standard units identifier, the function
  * assumes a custom conversion factor was specified. A valid null
@@ -3158,8 +3106,6 @@ str2mm(const char *units_string, fastf_t *conv_factor)
 
 
 /*
- * P R O C E S S _ B _ M O D E _ O P T I O N
- *
  * This function is executed from main when the user selects mode
  * option 'b' from the command line. (i.e. output to "native bot")
  */
@@ -3192,8 +3138,6 @@ process_b_mode_option(struct ga_t *ga,
 
 
 /*
- * P R O C E S S _ N V _ M O D E _ O P T I O N
- *
  * This function is executed from main when the user selects mode
  * option 'n' or 'v' from the command line. The 'n' indicates output
  * to nmg and 'v' indicates output to volume-mode-bot via nmg. If
