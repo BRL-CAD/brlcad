@@ -1498,6 +1498,12 @@ BREP/NURBS
 NMG/BoT
 -------
 
+* implement conversion of plate-mode BoT into volume-mode BoT,
+  probably as a 'bot' command subcommand.  this basically entails
+  implementing the BoT tessellation callback for plate-mode which will
+  let boolean evaluation succeed as-is.  might require adding a
+  parameter in case we want to dump the mesh as-is.
+
 * ensure robust and fast nmg->bot conversion
 
 * facetize creates BoTs crappily by only looking at first region,
