@@ -527,14 +527,18 @@ osg_getmem(FBIO *ifp)
 #define SHMEM_KEY 42
     int pixsize;
     int size;
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     long psize = sysconf(_SC_PAGESIZE);
+#else
+    long psize = -1;
+#endif
     int i;
     char *sp;
     int new_mem = 0;
 
     errno = 0;
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
+    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC || psize == -1) {
 	/*
 	 * In this mode, only malloc as much memory as is needed.
 	 */
@@ -551,6 +555,7 @@ osg_getmem(FBIO *ifp)
 	goto success;
     }
 
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     /* The shared memory section never changes size */
     SGI(ifp)->mi_memwidth = ifp->if_max_width;
 
@@ -587,6 +592,7 @@ osg_getmem(FBIO *ifp)
 	fb_log("osg_getmem: shmat returned x%x, errno=%d\n", sp, errno);
 	goto fail;
     }
+#endif
 
 success:
     ifp->if_mem = sp;
