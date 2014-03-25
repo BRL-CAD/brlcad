@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2014-XX-XX  Release 7.XX.XX                                    ---
+--- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
 * nirt -h option is now help, old -h is -H - Carl Moore
