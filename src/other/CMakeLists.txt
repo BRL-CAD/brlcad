@@ -339,10 +339,9 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES $
 if(BRLCAD_PNG_BUILD)
   # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
   # scoping of CMake variables - use get_directory_property to recover
-  # the value and place it in the CACHE
+  # the value (which is later put in the CACHE)
 
   get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
-  set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -350,17 +349,17 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
-
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
   # handle it here.
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
-
-  # Newer CMake versions don't automatically put this value in the Cache,
-  # but we need it
-  set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "PNG library" FORCE)
 endif(BRLCAD_PNG_BUILD)
+
+# Make sure this value is in the cache, regardless of
+# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
+set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
+
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng-config)
