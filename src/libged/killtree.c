@@ -48,6 +48,11 @@ struct killtree_data {
 };
 
 
+/* this finds references to 'obj' that are not within the 'topobj'
+ * combination hierarchy, elsewhere in the database.  this is so we
+ * can make sure we don't kill objects that are referenced somewhere
+ * else in the database.
+ */
 HIDDEN int
 find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 {
