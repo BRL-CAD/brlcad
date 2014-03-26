@@ -85,7 +85,7 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 	  </para>
 	</listitem>
       </varlistentry>
-
+  </variablelist>
 
   <para><emphasis remap="B" role="bold">Use this command with
   caution.</emphasis> Killed objects cannot be recovered so
