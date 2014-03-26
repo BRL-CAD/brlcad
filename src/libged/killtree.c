@@ -39,8 +39,8 @@
 struct killtree_data {
     struct ged *gedp;
     int killrefs;
-    int nflag;
-    int fflag;
+    int print;
+    int force;
     const char *top;
     int ac;
     char **av;
@@ -49,9 +49,9 @@ struct killtree_data {
 
 
 HIDDEN int
-find_reference(struct db_i *dbip, const char *top, const char *obj)
+find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 {
-    if (!dbip || !top || !obj)
+    if (!dbip || !topobj || !obj)
 	return 0;
 
     return 0;
@@ -70,7 +70,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     /* don't bother checking for references if the -f or -a flags are
      * presented to force a full kill and all references respectively.
      */
-    if (!gktdp->fflag && !gktdp->killrefs)
+    if (!gktdp->force && !gktdp->killrefs)
 	ref_exists = find_reference(dbip, gktdp->top, dp->d_namep);
 
     /* if a reference exists outside of the subtree we're killing, we
@@ -80,7 +80,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if (ref_exists)
 	return;
 
-    if (gktdp->nflag) {
+    if (gktdp->print) {
 	if (!gktdp->killrefs)
 	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	else {
@@ -148,8 +148,8 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
     gktd.gedp = gedp;
     gktd.killrefs = 0;
-    gktd.nflag = 0;
-    gktd.fflag = 0;
+    gktd.print = 0;
+    gktd.force = 0;
     gktd.ac = 1;
     gktd.top = NULL;
 
@@ -166,12 +166,12 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 		gktd.killrefs = 1;
 		break;
 	    case 'n':
-		gktd.nflag = 1;
+		gktd.print = 1;
 		gktd.av[gktd.ac++] = bu_strdup("-n");
 		gktd.av[gktd.ac] = (char *)0;
 		break;
 	    case 'f':
-		gktd.fflag = 1;
+		gktd.force = 1;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
@@ -184,7 +184,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     argv += (bu_optind - 1);
 
     /* Objects that would be killed are in the first sublist */
-    if (gktd.nflag)
+    if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
 
     for (i = 1; i < argc; i++) {
@@ -206,7 +206,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     /* Close the sublist of would-be killed objects. Also open the
      * sublist of objects that reference the would-be killed objects.
      */
-    if (gktd.nflag)
+    if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "} {");
 
     if (gktd.killrefs && gktd.ac > 1) {
@@ -215,14 +215,14 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_internal_call = 0;
 
 	for (i = 1; i < gktd.ac; i++) {
-	    if (!gktd.nflag)
+	    if (!gktd.print)
 		bu_vls_printf(gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
 	    bu_free((genptr_t)gktd.av[i], "killtree_data");
 	    gktd.av[i] = NULL;
 	}
     }
 
-    if (gktd.nflag)
+    if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "}");
 
     bu_free(gktd.av, "free av");
