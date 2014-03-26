@@ -618,10 +618,9 @@ fail:
 void
 osg_zapmem(void)
 {
-    int shmid;
-    int i;
-
 #if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
+    int i;
+    int shmid;
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
 	fb_log("osg_zapmem shmget failed, errno=%d\n", errno);
 	return;
