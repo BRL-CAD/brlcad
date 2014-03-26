@@ -27,15 +27,25 @@
 
 #ifdef DM_OSG
 
+#include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 
-#include "tk.h"
-#include "tkPlatDecls.h"
+#include <osg/GraphicsContext>
+#if defined(_WIN32)
+#  include <osgViewer/api/Win32/GraphicsWindowWin32>
+#else
+#  include <osgViewer/api/X11/GraphicsWindowX11>
+#endif
 
 extern "C" {
+#include "tcl.h"
+#include "tk.h"
+#include "tkPlatDecls.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

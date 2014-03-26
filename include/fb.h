@@ -176,6 +176,7 @@ FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 extern "C++" {
 #include <osg/GraphicsContext>
 }
+#include "tk.h"
 FB_EXPORT extern int _osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext);
 #  endif
 #endif /*IF_OSG*/
