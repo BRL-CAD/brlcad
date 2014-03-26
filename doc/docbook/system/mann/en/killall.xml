@@ -21,7 +21,8 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>killall</command>
-       <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-n</arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -30,12 +31,15 @@
   <para>Deletes the specified <emphasis>objects</emphasis> from the
   current database and removes all references to them from all
   combinations in the database. Note that the <emphasis>objects
-  </emphasis> are killed immediately. There is no need for a <command>
-  write file</command> command in MGED, and there is no
-  <command>undo</command> command.  <emphasis remap="B"
-  role="bold">Use this command with caution.</emphasis> Other commands
-  that remove objects from the database are <command>kill</command>
-  and <command>killtree </command>.
+  </emphasis> are killed immediately unless the
+  <option>-n</option> flag is passed.  The <option>-n</option>
+  flag causes the command to return a string of the objects that would
+  be killed in a scriptable list format without actually killing
+  them.</para>
+
+  <para><emphasis remap="B" role="bold">Use this command with
+  caution.</emphasis> Killed objects cannot be recovered so
+  <command>keep</command> a backup.
   </para>
 
 </refsection>
@@ -50,7 +54,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>killall group1 region2 shapeb</userinput>		   </term>
+	   <term><prompt>mged&gt;</prompt> <userinput>killall group1 region2 shapeb</userinput></term>
 	   <listitem>
 	     <para>Deletes <emphasis>group1</emphasis>,
 	     <emphasis>region2</emphasis>, and
@@ -62,6 +66,13 @@
     </variablelist>
   </example>
 
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para>
+  <citerefentry><refentrytitle>kill</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+  <citerefentry><refentrytitle>killtree</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>

@@ -19,7 +19,10 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>killtree</command>
-      <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-a</arg>
+    <arg choice="opt" rep="norepeat">-f</arg>
+    <arg choice="opt" rep="norepeat">-n</arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -35,12 +38,50 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
   <emphasis>combination</emphasis>, then all of its members will also
   be destroyed.  This continues recursively until the primitive shapes
   are reached and destroyed. Note that the
-  <emphasis>objects</emphasis> are killed immediately. There is no
-  need for a <command> write file</command> command in MGED, and there
-  is no <command>undo</command> command.  <emphasis remap="B"
-  role="bold">Use this command with extreme caution.</emphasis> Other
-  commands that remove objects from the database are
-  <command>kill</command> and <command> killall</command>.
+  <emphasis>objects</emphasis> are killed immediately unless the
+  <option>-n</option> flag is passed.  The <option>-n</option>
+  flag causes the command to return a string of the objects that would
+  be killed in a scriptable list format without actually killing
+  them.</para>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-a</option> object</term>
+	<listitem>
+	  <para>Kill the specified object or object hierarchy and any
+	  references to that object in the database.  This is
+	  equivalent to <command>killall object</command>.
+          </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-f</option> object</term>
+	<listitem>
+	  <para>By default, an object tree will be killed except any
+	  objects referenced elsewhere in the database will be left
+	  alone.  Passing the <option>-f</option> flag forces the
+	  removal of all objects underneath the
+	  <emphasis>object</emphasis> hierarchy.  Note that this flag
+	  has no useful effect if used in conjunction with the
+	  <option>-a</option> flag (which explicitly kills all
+	  references, so there are none to skip).</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-n</option> object</term>
+	<listitem>
+	  <para>The <option>-n</option> flag causes no objects to be
+	  actually killed.  Instead, a list of objects that would be
+	  killed is returned.  This can be useful for testing or
+	  scripiting.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+
+  <para><emphasis remap="B" role="bold">Use this command with
+  caution.</emphasis> Killed objects cannot be recovered so
+  <command>keep</command> a backup.
   </para>
 
 </refsection>
@@ -68,6 +109,13 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
     </variablelist>
   </example>
 
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para>
+  <citerefentry><refentrytitle>kill</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+  <citerefentry><refentrytitle>killall</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>

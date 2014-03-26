@@ -24,14 +24,15 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">bb</emphasis> calculates a
-      bounding box for an object or set of objects supplied as arguments,
-      and reports information about bounding box dimensions at the MGED
-      command prompt.  It supports various options, most of which control
-      the type of information reported.  It can optionally create an ARB8
-      in a database corresponding to the bounding box of the object(s).
-      By default, an axis-aligned bounding box (AABB) is created, but
-      support for an oriented bounding box (OBB) is available as well.
+      <emphasis remap="I">bb</emphasis> calculates a bounding box for
+      an object or set of objects supplied as arguments, and reports
+      information about bounding box dimensions at the MGED command
+      prompt.  It supports various options, most of which control the
+      type of information reported.  It can optionally create an ARB8
+      in a database corresponding to the bounding box of the
+      object(s).  By default, an axis-aligned bounding box (AABB) is
+      created, but support for an oriented bounding box (OBB) is
+      available as well.
     </para>
 
     <para>
@@ -66,9 +67,18 @@
 	<term><option>-o</option></term>
 	<listitem>
 	  <para>
-           Calculate an oriented bounding box instead of an axis aligned bounding box.  This will
-	   produce tighter bounding volumes if the geometry is not symmetric to the XYZ grid. Uses
-	   the algorithms and code from Barequet and Har-Peled - see the papers <link xlink:href="http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html"> Efficiently Approximating the Minimum-Volume Bounding Box of a Point Set in Three Dimensions </link>(SODA 99) and <link xlink:href="http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html">A Practical Approach for Computing the Diameter of a Point-Set</link> for details.
+           Calculate an oriented bounding box instead of an axis
+           aligned bounding box.  This will produce tighter bounding
+           volumes if the geometry is not symmetric to the XYZ
+           grid. Uses the algorithms and code from Barequet and
+           Har-Peled - see the papers <link
+           xlink:href="http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html">
+           Efficiently Approximating the Minimum-Volume Bounding Box
+           of a Point Set in Three Dimensions </link>(SODA 99) and
+           <link
+           xlink:href="http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html">A
+           Practical Approach for Computing the Diameter of a
+           Point-Set</link> for details.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -179,7 +189,6 @@ havoc_parts_bbox.s:  ARB8
   </refsection>
 
   <refsection xml:id="see_also"><title>SEE ALSO</title>
-
     <para>
     <citerefentry><refentrytitle>make_bb</refentrytitle><manvolnum>nged</manvolnum></citerefentry>.
    </para>
