@@ -35,52 +35,44 @@
 #include "rt/defines.h"
 
 /**
- * Programmatic interface to the find-command style search functionality
- * available in librt for databases.  These functions search the
- * database using a supplied list of filter criteria and return either
- * db_full_path instances or directory pointers (depending on the function).
- * Both types of returns use a bu_ptbl container to hold the set of results.
- *
- * Design notes:
- *
- * * As long as struct db_i retains its pointer back to its parent rt_wdb
- *   structure, and dbip is a parameter in rt_wdb, only one of the two is
- *   needed as a parameter and either will work.  Probably go with rt_wdb,
- *   since it isn't tagged as private within the data structure definition,
- *   but on the other hand some ways db_i would be preferable since it
- *   would allow the search functions to break out cleanly into a
- *   hypothetical libgio/libdb that is separate from the raytracing.
- *   Unfortunately, the need to get to the internal form of some of the
- *   primitives means we do need rt_wdb available for now.  If the ways
- *   search currently is accessing rt_wdb could be avoided with a future
- *   improvement/redesign, then db_i and using the private link to rt_wdb
- *   is justified.  Need to discuss before this API is finalized.
- *
- * * Plan strings are the most intuitive way for humans to spell out a search
- *   pattern - db_search_formplan becomes a behind-the-scenes function that
- *   the user then doesn't have to worry about.  Only counterargument would
- *   be re-using plans already built from a string, and the slight overhead
- *   of rebuilding the plan from a string for repeated search calls isn't
- *   sufficient justification for the added API complexity without hard
- *   evidence that complexity is needed.
- *
- * * Offer simple function calls for the common cases of one path and an
- *   array of paths, and for both input cases support returning either
- *   a db_full_path set or a unique directory pointer set via table.  This
- *   should cover the most common programmatic situations, while still
- *   allowing commands enough flexibility to do what they need to (see,
- *   for example, combining results from search sets (multiple arrays
- *   of paths) in libged's search result consolidation.)
- *
- * * Need to add a plan option for dealing with hidden geometry during the search,
- *   maybe -nohide or something like that...  The traversal by default shouldn't
- *   traverse down anything hidden, but we should be able to override that at user request.
- *
- * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
- * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
- *
- */
+  \brief Search for objects in a geometry database using filters
+
+  The db_search function is a programmatic interface to the find-command
+  style search functionality available in librt for databases.  This
+  function searches the database using a supplied list of filter criteria.
+
+  @param[out] results A bu_ptbl holding the pointers to either db_full_path or directory objects - these are the results of the search process.
+  @param search_flags A bit field (32 bit integer) for setting various search options.
+  @param plan_string  A string defining the filters to be used in the search.
+  @param path_cnt     The number of paths supplied in the paths array.
+  @param paths        The array of directory paths to use for search inputs.  If NULL, db_search will generate a list of all toplevel objects to use.
+  @param dbip         The database instance pointer corresponding to the current geometry database.
+
+  \return Negative return values are an indication of a problem with the search, and non-negative values indicate a successful search.  Non-negative returns will correspond to the number of objects found.
+
+  \retval -2 Return code when db_search is called with a NULL dbip.
+  \retval -1 Return code when the plan search string is invalid.
+  \retval 0  Return code when the search completed successfully but no matches were found.
+  \retval >0 Return code when the search completed successfully and matched one or more objects.
+
+  The following example assumes a database instance pointer (dbip) is available and ready to use.
+
+  @code
+  int i = 0;
+  struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+  struct bu_vls fullpath_str = BU_VLS_INIT_ZERO;
+  const char *plan = "-name *.s -or -name *.r"
+  if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip) > 0) {
+      for (i = (int)BU_PTBL_LEN(&results) - 1; i >= 0; i--) {
+  	bu_vls_trunc(&fullpath_str, 0);
+  	db_fullpath_to_vls(&fullpath_str, (struct db_full_path *)BU_PTBL_GET(&results, i), NULL, 0);
+  	bu_log("%s\n", bu_vls_addr(&fullpath_string));
+      }
+  }
+  db_free_search_tbl(&results);
+  @endcode
+
+  */
 #define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
 #define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
 #define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
@@ -94,7 +86,9 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                int s_flags);
 
 /**
- * Properly free the tables returned by db_search
+ * Properly free the table contents returned by db_search.  The bu_ptbl
+ * itself, if not put on the stack, will need to be freed by the same
+ * calling function that allocated it.
  */
 RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
 
