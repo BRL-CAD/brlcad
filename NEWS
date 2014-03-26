@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* added killtree -f force flag to kill unconditionally - Sean Morrison
+* killtree now defaults to skipping referenced objects - Sean Morrison
 * nirt -h option is now help, old -h is -H - Carl Moore
 * implemented preliminary NURBS geometry Boolean evaluation
 	- Wu Jianbang, Nick Reed, Cliff Yapp
