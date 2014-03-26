@@ -2437,7 +2437,8 @@ DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt)
     for (int i=0; i<2; i++) {
       if (!surf->IsClosed(i))
         continue;
-      dist = fmin(fabs(unwrapped_pt[i] - surf->Domain(i)[0]),fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
+      dist = fabs(unwrapped_pt[i] - surf->Domain(i)[0]);
+      V_MIN(dist,fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
     }
     return dist;
 }
@@ -2492,7 +2493,7 @@ ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
     int seam;
     ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
     ON_2dVector wrap = ON_2dVector::ZeroVector;
-    ON_Interval dom[2] = ON_Interval::EmptyInterval;
+    ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
     double length[2] = { ON_UNSET_VALUE, ON_UNSET_VALUE};
 
     for (int i=0; i<2; i++) {
