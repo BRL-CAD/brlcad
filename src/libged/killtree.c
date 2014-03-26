@@ -67,8 +67,10 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if (dbip == DBI_NULL)
 	return;
 
-    /* pretend no reference exists if the -f flag is presented */
-    if (!gktdp->fflag)
+    /* don't bother checking for references if the -f or -a flags are
+     * presented to force a full kill and all references respectively.
+     */
+    if (!gktdp->fflag && !gktdp->killrefs)
 	ref_exists = find_reference(dbip, gktdp->top, dp->d_namep);
 
     /* if a reference exists outside of the subtree we're killing, we
