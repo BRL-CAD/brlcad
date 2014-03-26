@@ -621,6 +621,7 @@ osg_zapmem(void)
     int shmid;
     int i;
 
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
 	fb_log("osg_zapmem shmget failed, errno=%d\n", errno);
 	return;
@@ -631,6 +632,7 @@ osg_zapmem(void)
 	fb_log("osg_zapmem shmctl failed, errno=%d\n", errno);
 	return;
     }
+#endif
     fb_log("if_osg: shared memory released\n");
 }
 
@@ -1191,12 +1193,14 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
      * remain around until killed by the menu subsystem.
      */
 
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     if ((ifp->if_mode & MODE_2MASK) == MODE_2LINGERING) {
 	/* save parent pid for later signalling */
 	SGI(ifp)->mi_parent = bu_process_id();
 
 	signal(SIGUSR1, sigkid);
     }
+#endif
 
     /* use defaults if invalid width and height specified */
     if (width <= 0)
@@ -1590,9 +1594,12 @@ fb_osg_close(FBIO *ifp)
 extern "C" int
 osg_close_existing(FBIO *ifp)
 {
+#if 0
     if (OSG(ifp)->cursor)
 	XDestroyWindow(OSG(ifp)->dispp, OSG(ifp)->cursor);
+#endif
 
+#if defined(HAVE_SYSCONF) && defined(HAVE_SHMDT) && defined(HAVE_SHMCTL) && defined(HAVE_SHMGET) && defined(HAVE_SHMAT)
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
 	if (SGI(ifp)->mi_shmid != -1) {
@@ -1610,6 +1617,7 @@ osg_close_existing(FBIO *ifp)
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
     }
+#endif
 
     if (OSGL(ifp) != NULL) {
 	(void)free((char *)OSGL(ifp));
@@ -2176,7 +2184,7 @@ osg_wmap(register FBIO *ifp, register const ColorMap *cmp)
 		osg_color_cell[i].blue = CMB(ifp)[i];
 		osg_color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    }
-	    XStoreColors(OSG(ifp)->dispp, OSG(ifp)->xcmap, osg_color_cell, 256);
+	    //XStoreColors(OSG(ifp)->dispp, OSG(ifp)->xcmap, osg_color_cell, 256);
 	}
     }
 
