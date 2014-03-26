@@ -947,16 +947,16 @@ struct BrepTrimPoint
     double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
 };
 
-extern int IsAtSeam(const ON_Surface *surf,double u, double v,double tol = 0.0);
-extern int IsAtSeam(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
-extern ON_2dPoint UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
-extern double DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt);
-extern void SwapUVSeamPoint(const ON_Surface *surf,ON_2dPoint &p);
-extern void ForceToClosestSeam(const ON_Surface *surf,ON_2dPoint &pt,double tol= 0.0);
-extern bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
-extern bool FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
-extern bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *surf,const ON_3dPoint& p,ON_2dPoint& p2d,ON_3dPoint& p3d,int quadrant = 0,double tol = 0.0);
-extern bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double tol,const ON_Interval* interval);
+extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,double u, double v,double tol = 0.0);
+extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
+extern BREP_EXPORT ON_2dPoint UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
+extern BREP_EXPORT double DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt);
+extern BREP_EXPORT void SwapUVSeamPoint(const ON_Surface *surf,ON_2dPoint &p);
+extern BREP_EXPORT void ForceToClosestSeam(const ON_Surface *surf,ON_2dPoint &pt,double tol= 0.0);
+extern BREP_EXPORT bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
+extern BREP_EXPORT bool FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
+extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *surf,const ON_3dPoint& p,ON_2dPoint& p2d,ON_3dPoint& p3d,int quadrant = 0,double tol = 0.0);
+extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double tol,const ON_Interval* interval);
 
 extern BREP_EXPORT PBCData *
 pullback_samples(const brlcad::SurfaceTree *surfacetree,
