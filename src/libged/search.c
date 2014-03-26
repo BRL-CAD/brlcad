@@ -438,7 +438,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
-					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, &(gedp->ged_wdbp->wdb_tol), print_verbose_info);
+					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, print_verbose_info);
 					bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&fullpath_string));
 				    }
 				}
