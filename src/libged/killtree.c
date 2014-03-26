@@ -51,10 +51,19 @@ struct killtree_data {
 HIDDEN int
 find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 {
+    int ret;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
     if (!dbip || !topobj || !obj)
 	return 0;
 
-    return 0;
+    bu_vls_printf(&str, "-not -below \"%s\" -name \"%s\"", topobj, obj);
+
+    ret = db_search(NULL, bu_vls_cstr(&str), 0, NULL, dbip->dbi_wdbp, DB_SEARCH_TREE);
+
+    bu_vls_free(&str);
+
+    return ret;
 }
 
 
