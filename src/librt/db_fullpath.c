@@ -244,6 +244,10 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 	return;
     }
 
+    if ((fp_flags & DB_FP_PRINT_TYPE) && !dbip) {
+	bu_log("Warning - requested object type printing, but dbip is NULL - object types will not be printed!");
+    }
+
     for (i = 0; i < full_path->fp_len; i++) {
 	bu_vls_putc(vls, '/');
 	if (fp_flags & DB_FP_PRINT_BOOL) {
@@ -260,7 +264,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 	    }
 	}
 	bu_vls_strcat(vls, full_path->fp_names[i]->d_namep);
-	if (fp_flags & DB_FP_PRINT_TYPE) {
+	if ((fp_flags & DB_FP_PRINT_TYPE) && dbip) {
 	    struct rt_db_internal intern;
 	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
 		if (intern.idb_meth->ft_label) {
