@@ -27,6 +27,7 @@ set(stepg_SOURCES
   AreaConversionBasedUnit.cpp
   AreaSiUnit.cpp
   AreaUnit.cpp
+  AssemblyComponentUsage.cpp
   Axis1Placement.cpp
   Axis2Placement.cpp
   Axis2Placement2D.cpp
@@ -114,6 +115,7 @@ set(stepg_SOURCES
   MeasureWithUnit.cpp
   MechanicalContext.cpp
   NamedUnit.cpp
+  NextAssemblyUsageOccurrence.cpp
   OffsetCurve2D.cpp
   OffsetCurve3D.cpp
   OffsetSurface.cpp
@@ -145,6 +147,7 @@ set(stepg_SOURCES
   ProductDefinitionFormationWithSpecifiedSource.cpp
   ProductDefinitionRelationship.cpp
   ProductDefinitionShape.cpp
+  ProductDefinitionUsage.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
   PropertyDefinitionRepresentation.cpp
@@ -235,6 +238,7 @@ set(stepg_HDRS
   AreaConversionBasedUnit.h
   AreaSiUnit.h
   AreaUnit.h
+  AssemblyComponentUsage.h
   Axis1Placement.h
   Axis2Placement.h
   Axis2Placement2D.h
@@ -322,6 +326,7 @@ set(stepg_HDRS
   MeasureWithUnit.h
   MechanicalContext.h
   NamedUnit.h
+  NextAssemblyUsageOccurrence.h
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
@@ -352,6 +357,7 @@ set(stepg_HDRS
   ProductDefinitionFormationWithSpecifiedSource.h
   ProductDefinitionRelationship.h
   ProductDefinitionShape.h
+  ProductDefinitionUsage.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
   PropertyDefinitionRepresentation.h

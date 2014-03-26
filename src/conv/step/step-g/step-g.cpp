@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 
     STEPWrapper *step = new STEPWrapper();
 
-    step->setVerbose(verbose);
+    step->Verbose(verbose);
 
     /* load STEP file */
     if (step->load(iflnm)) {

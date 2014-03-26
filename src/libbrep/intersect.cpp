@@ -1967,7 +1967,7 @@ ON_Intersect(const ON_Curve *curveA,
 		interval_v1.m_t[0] -= v_tol;
 		interval_v1.m_t[1] += v_tol;
 		if (interval_u1.Intersection(interval_u2) && interval_v1.Intersection(interval_v2)) {
-		    // If the uv rectangle of them intersects, it's consider overlap.
+		    // If the uv rectangle of them intersects, it's considered overlap.
 		    // need to merge: pending[j] = union(pending[j], overlap[i])
 		    if (overlap[i].m_a[1] > pending.m_a[1]) {
 			pending.m_a[1] = overlap[i].m_a[1];
@@ -2944,6 +2944,99 @@ barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
     return uv;
 }
 
+HIDDEN bool
+join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair &ppair)
+{
+    int polyline_first = (*polyline)[0];
+    int polyline_last = (*polyline)[polyline->Count() - 1];
+
+    if (polyline_first == ppair.indexA) {
+	polyline->Insert(0, ppair.indexB);
+	return true;
+    }
+    if (polyline_first == ppair.indexB){
+	polyline->Insert(0, ppair.indexA);
+	return true;
+    }
+    if (polyline_last == ppair.indexA){
+	polyline->Append(ppair.indexB);
+	return true;
+    }
+    if (polyline_last == ppair.indexB){
+	polyline->Append(ppair.indexA);
+	return true;
+    }
+    return false;
+}
+
+// Algorithm Overview
+//
+// 1) Find overlap intersections (regions where the two surfaces are
+//    flush to one another).
+//    a) Intersect the isocurves of surfA with surfB and vice versa
+//       (any intersection points found are saved for later).
+//    b) We save any overlap intersection curves that appear to be
+//       boundary curves (curves which contain part of the boundary
+//       of the overlap region).
+//       i) If the overlap intersection curve is at the edge of the
+//          surface, it's automatically a boundary curve.
+//      ii) If the surfaces overlap on only one side of the overlap
+//          intersection curve, it's a boundary curve (or at least
+//          contains a boundary curve).
+//    c) Because our boundary test is rather simple, not all of the
+//       saved overlap curves actually overlap the surfaces over their
+//       whole domain, so we do additional processing to get the real
+//       overlaps.
+//       i) The overlap curves are intersected with each other.
+//      ii) The curves are split into subcurves at the points where
+//          they intersect.
+//     iii) We retest the subcurves to see if they are truly part of
+//          the overlap region boundary, discarding those that aren't.
+//      iv) Any overlap curve which is completely contained by another
+//          overlap curve is discarded, hopefully leaving a set of
+//          genuine and unique overlap curves.
+//    d) Overlap curves that share endpoints are merged together.
+//    e) Any of the resulting overlap curves which don't form closed
+//       loops are discarded.
+//    f) The overlap loops are turned into overlap intersection
+//       events, with the orientation of outer and inner loops
+//       adjusted as needed to ensure the overlapping regions are
+//       correctly defined.
+// 2) Find non-overlap intersections.
+//    a) The two surfaces are repeatedly subdivided into subsurfaces
+//       until the MAX_SSI_DEPTH is reached. The subsurface pairs
+//       whose bounding boxes intersect are saved.
+//    b) Each pair of potentially intersecting subsurfaces is
+//       intersected.
+//       i) Each subsurface is approximated by two triangles which
+//          share an edge.
+//      ii) The triangles are intersected.
+//     iii) The Newton solver is used to get the center point of the
+//          intersection, using the averaged center point of the
+//          triangle intersections as the initial guess.
+//    c) The center points of the subsurface intersections are
+//       combined with the isocurve/surface intersection points found
+//       in step 1) above.
+//    d) For surface seams that are closed, additional points are
+//       generated on the seams (3d points near the seams are copied,
+//       and their uv values are adjusted to put them over the seam).
+//    e) The list of intersection points is reduced to just the unique
+//       intersection points that are not inside any overlap regions.
+//    f) Polylines are created from the intersection points.
+//       i) Each point starts as its own polyline, and serves as both
+//          endpoints of the line.
+//      ii) The closest pair of endpoints are joined together, then
+//          the next closest, and so on, growing the length of the
+//          polylines.
+//      iv) Endpoints that are too far apart (distance > max_dist) are
+//          not joined, and some intersection points may remain by
+//          themselves.
+//    g) Intersection curves are generated from the polylines, and are
+//       used to make intersection events.
+//    h) Any single intersection points found in step 2-f-iv) above
+//       that aren't contained by one of the generated intersection
+//       curves are used to make additional point intersection
+//       events.
 int
 ON_Intersect(const ON_Surface *surfA,
 	     const ON_Surface *surfB,
@@ -3658,7 +3751,7 @@ ON_Intersect(const ON_Surface *surfA,
 
 	    // If lineN has more than one point, then joining to
 	    // terminalN has made it an interior point and it must be
-	    // invalidiated as a terminal.
+	    // invalidated as a terminal.
 	    if (line1->Count() >= 2) {
 		polyline_of_terminal[terminal1] = -1;
 	    }
@@ -3683,16 +3776,18 @@ ON_Intersect(const ON_Surface *surfA,
 	    if (!polylines[j]) {
 		continue;
 	    }
+	    ON_SimpleArray<int> &polyline1 = *polylines[i];
+	    ON_SimpleArray<int> &polyline2 = *polylines[j];
 
 	    // find the closest pair of adjacent points between the two polylines
-	    int point_count1 = polylines[i]->Count();
-	    int point_count2 = polylines[j]->Count();
+	    int point_count1 = polyline1.Count();
+	    int point_count2 = polyline2.Count();
 	    PointPair pair;
 	    pair.distance3d = DBL_MAX;
 	    for (int k = 0; k < point_count1; k++) {
 		for (int m = 0; m < point_count2; m++) {
 		    PointPair newpair;
-		    int start = (*polylines[i])[k], end = (*polylines[j])[m];
+		    int start = polyline1[k], end = polyline2[m];
 		    newpair.distance3d = curvept[start].DistanceTo(curvept[end]);
 		    newpair.dist_uA = fabs(curve_uvA[start].x - curve_uvA[end].x);
 		    newpair.dist_vA = fabs(curve_uvA[start].y - curve_uvA[end].y);
@@ -3714,13 +3809,13 @@ ON_Intersect(const ON_Surface *surfA,
 		// TODO: These curve-curve intersections are
 		//       expensive. Is this really necessary?
 		ON_3dPointArray uvA1, uvA2, uvB1, uvB2;
-		for (int k = 0; k < polylines[i]->Count(); k++) {
-		    uvA1.Append(curve_uvA[(*polylines[i])[k]]);
-		    uvB1.Append(curve_uvB[(*polylines[i])[k]]);
+		for (int k = 0; k < polyline1.Count(); k++) {
+		    uvA1.Append(curve_uvA[polyline1[k]]);
+		    uvB1.Append(curve_uvB[polyline1[k]]);
 		}
-		for (int k = 0; k < polylines[j]->Count(); k++) {
-		    uvA2.Append(curve_uvA[(*polylines[j])[k]]);
-		    uvB2.Append(curve_uvB[(*polylines[j])[k]]);
+		for (int k = 0; k < polyline2.Count(); k++) {
+		    uvA2.Append(curve_uvA[polyline2[k]]);
+		    uvB2.Append(curve_uvB[polyline2[k]]);
 		}
 		ON_PolylineCurve curveA1(uvA1), curveA2(uvA2), curveB1(uvB1), curveB2(uvB2);
 		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
@@ -3730,25 +3825,11 @@ ON_Intersect(const ON_Surface *surfA,
 		}
 
 		// If the seaming curve is continuous to polylines[i]
-		// or polylines[j], we can just merge them rather than
-		// generate a new segment.
-		if (pair.indexA == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(pair.indexB);
-		} else if (pair.indexB == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(pair.indexA);
-		} else if (pair.indexA == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, pair.indexB);
-		} else if (pair.indexB == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, pair.indexA);
-		} else if (pair.indexA == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(pair.indexB);
-		} else if (pair.indexB == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(pair.indexA);
-		} else if (pair.indexA == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, pair.indexB);
-		} else if (pair.indexB == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, pair.indexA);
-		} else {
+		// or polylines[j], we can just merge the curve with
+		// the polyline, otherwise we generate a new segment.
+		if (!join_continuous_ppair_to_polyline(polylines[i], pair) &&
+		    !join_continuous_ppair_to_polyline(polylines[j], pair))
+		{
 		    ON_SimpleArray<int> *seam = new ON_SimpleArray<int>;
 		    seam->Append(pair.indexA);
 		    seam->Append(pair.indexB);
@@ -3762,64 +3843,70 @@ ON_Intersect(const ON_Surface *surfA,
     ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
     for (size_t i = 0; i < polylines.size(); i++) {
-	if (polylines[i] != NULL) {
-	    int startpoint = (*polylines[i])[0];
-	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
-
-	    if (polylines[i]->Count() == 1) {
-		single_pts.Append(startpoint);
-		delete polylines[i];
-		continue;
-	    }
-
-	    // curve in 3D space
-	    ON_3dPointArray ptarray;
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ptarray.Append(curvept[(*polylines[i])[j]]);
-	    }
-	    // forms a loop (except seaming curves)
-	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist && i < num_curves) {
-		ptarray.Append(curvept[startpoint]);
-	    }
-	    ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
-	    intersect3d.Append(curve);
-
-	    // curve in UV space (surfA)
-	    ptarray.Empty();
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curve_uvA[(*polylines[i])[j]];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA
-		&& fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA
-		&& i < num_curves) {
-		ON_2dPoint &pt2d = curve_uvA[startpoint];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    curve = new ON_PolylineCurve(ptarray);
-	    curve->ChangeDimension(2);
-	    intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
-
-	    // curve in UV space (surfB)
-	    ptarray.Empty();
-	    for (int j = 0; j < polylines[i]->Count(); j++) {
-		ON_2dPoint &pt2d = curve_uvB[(*polylines[i])[j]];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    // forms a loop (happens rarely compared to 3D)
-	    if (fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB
-		&& fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB
-		&& i < num_curves) {
-		ON_2dPoint &pt2d = curve_uvB[startpoint];
-		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
-	    }
-	    curve = new ON_PolylineCurve(ptarray);
-	    curve->ChangeDimension(2);
-	    intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
-
-	    delete polylines[i];
+	if (polylines[i] == NULL) {
+	    continue;
 	}
+	bool is_seam = (i >= num_curves);
+
+	ON_SimpleArray<int> &polyline = *polylines[i];
+	int startpoint = polyline[0];
+	int endpoint = polyline[polyline.Count() - 1];
+
+	if (polyline.Count() == 1) {
+	    single_pts.Append(startpoint);
+	    delete polylines[i];
+	    continue;
+	}
+
+	// curve in 3D space
+	ON_3dPointArray ptarray;
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ptarray.Append(curvept[polyline[j]]);
+	}
+	// close curve if it forms a loop
+	if (!is_seam && curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dist) {
+	    ptarray.Append(curvept[startpoint]);
+	}
+	ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
+	intersect3d.Append(curve);
+
+	// curve in UV space (surfA)
+	ptarray.Empty();
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvA[polyline[j]];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	// close curve if it forms a loop (happens rarely compared to 3D)
+	if (!is_seam &&
+	    fabs(curve_uvA[startpoint].x - curve_uvA[endpoint].x) < max_dist_uA &&
+	    fabs(curve_uvA[startpoint].y - curve_uvA[endpoint].y) < max_dist_vA)
+	{
+	    ON_2dPoint &pt2d = curve_uvA[startpoint];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	curve = new ON_PolylineCurve(ptarray);
+	curve->ChangeDimension(2);
+	intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
+
+	// curve in UV space (surfB)
+	ptarray.Empty();
+	for (int j = 0; j < polyline.Count(); j++) {
+	    ON_2dPoint &pt2d = curve_uvB[polyline[j]];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	// close curve if it forms a loop (happens rarely compared to 3D)
+	if (!is_seam &&
+	    fabs(curve_uvB[startpoint].x - curve_uvB[endpoint].x) < max_dist_uB &&
+	    fabs(curve_uvB[startpoint].y - curve_uvB[endpoint].y) < max_dist_vB)
+	{
+	    ON_2dPoint &pt2d = curve_uvB[startpoint];
+	    ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	}
+	curve = new ON_PolylineCurve(ptarray);
+	curve->ChangeDimension(2);
+	intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
+
+	delete polylines[i];
     }
 
     if (DEBUG_BREP_INTERSECT) {
@@ -3841,35 +3928,41 @@ ON_Intersect(const ON_Surface *surfA,
 	    event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
 	    event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
 	    event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
-	    // If the normals of all points on the curves have the
-	    // same or opposite direction, the intersection is
-	    // considered tangent.
+	    // If the surfA and surfB normals of all points are
+	    // parallel, the intersection is considered tangent.
+	    bool is_tangent = true;
 	    int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
-	    int j;
-	    for (j = 0; j <= count; j++) {
+	    for (int j = 0; j <= count; ++j) {
 		ON_3dVector normalA, normalB;
 		ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
 		ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
-		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA)
-		      && surfB->EvNormal(pointB.x, pointB.y, normalB)
-		      && normalA.IsParallelTo(normalB))) {
+		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
+		      surfB->EvNormal(pointB.x, pointB.y, normalB) &&
+		      normalA.IsParallelTo(normalB)))
+		{
+		    is_tangent = false;
 		    break;
 		}
 	    }
-	    if (j == count + 1) {
-		// For ssx_transverse events, the 3d curve direction
-		// agrees with SurfaceNormalB x SurfaceNormalA.
-		// For ssx_tangent events, the orientation is random.
+	    if (is_tangent) {
+		// For ssx_tangent events, the 3d curve direction may
+		// not agree with SurfaceNormalA x SurfaceNormalB
 		// (See opennurbs/opennurbs_x.h).
 		ON_3dVector direction = event.m_curve3d->TangentAt(0);
-		ON_3dVector SurfaceNormalA = surfA->NormalAt(event.m_curveA->PointAtStart().x, event.m_curveA->PointAtStart().y);
-		ON_3dVector SurfaceNormalB = surfB->NormalAt(event.m_curveB->PointAtStart().x, event.m_curveB->PointAtStart().y);
+		ON_3dVector SurfaceNormalA = surfA->NormalAt(
+			event.m_curveA->PointAtStart().x,
+			event.m_curveA->PointAtStart().y);
+		ON_3dVector SurfaceNormalB = surfB->NormalAt(
+			event.m_curveB->PointAtStart().x,
+			event.m_curveB->PointAtStart().y);
 		if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
-		    if (!(event.m_curve3d->Reverse()
-			  && event.m_curveA->Reverse()
-			  && event.m_curveB->Reverse()))
+		    if (!(event.m_curve3d->Reverse() &&
+			  event.m_curveA->Reverse() &&
+			  event.m_curveB->Reverse()))
+		    {
 			bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
 			       x.Count() - original_count);
+		    }
 		}
 		event.m_type = ON_SSX_EVENT::ssx_tangent;
 	    } else {
@@ -3883,26 +3976,26 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     for (int i = 0; i < single_pts.Count(); i++) {
-	// check if the single point is duplicated (point-curve intersection)
-	int j;
-	for (j = 0; j < intersect3d.Count(); j++) {
+	bool unique_pt = true;
+	for (int j = 0; j < intersect3d.Count(); ++j) {
 	    ON_ClassArray<ON_PX_EVENT> px_event;
 	    if (ON_Intersect(curvept[single_pts[i]], *intersect3d[j], px_event)) {
+		unique_pt = false;
 		break;
 	    }
 	}
-	if (j == intersect3d.Count()) {
+	if (unique_pt) {
 	    ON_SSX_EVENT event;
 	    event.m_point3d = curvept[single_pts[i]];
 	    event.m_pointA = curve_uvA[single_pts[i]];
 	    event.m_pointB = curve_uvB[single_pts[i]];
-	    // If the normals of all points on the curves have the
-	    // same or opposite direction, the intersection is
-	    // considered tangent.
+	    // If the surfA and surfB normals are parallel, the
+	    // intersection is considered tangent.
 	    ON_3dVector normalA, normalB;
-	    if (surfA->EvNormal(event.m_pointA.x, event.m_pointA.y, normalA)
-		&& surfB->EvNormal(event.m_pointB.x, event.m_pointB.y, normalB)
-		&& normalA.IsParallelTo(normalB)) {
+	    if (surfA->EvNormal(event.m_pointA.x, event.m_pointA.y, normalA) &&
+		surfB->EvNormal(event.m_pointB.x, event.m_pointB.y, normalB) &&
+		normalA.IsParallelTo(normalB))
+	    {
 		event.m_type = ON_SSX_EVENT::ssx_tangent_point;
 	    } else {
 		event.m_type = ON_SSX_EVENT::ssx_transverse_point;

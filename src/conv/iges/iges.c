@@ -2331,14 +2331,14 @@ tgc_to_iges(struct rt_db_internal *ip,
 	    dir_entry[i] = DEFAULT;
 
 	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
-	    /* its an rcc */
+	    /* it's an rcc */
 	    iges_type = 154;
 	    bu_vls_printf(&str, "154, %g, %g, %g, %g, %g, %g, %g, %g" ,
 			  h_len, a_len ,
 			  tgc->v[X], tgc->v[Y], tgc->v[Z] ,
 			  h_dir[X], h_dir[Y], h_dir[Z]);
 	} else {
-	    /* its a trc */
+	    /* it's a trc */
 
 	    fastf_t bigger_r, smaller_r;
 	    vect_t base;

@@ -32,6 +32,7 @@
 #include "sdai.h"
 
 class CharacterizedProductDefinition;
+class ProductDefinition;
 class ShapeDefinition;
 
 class CharacterizedDefinition: virtual public STEPEntity {
@@ -60,7 +61,11 @@ public:
     virtual ~CharacterizedDefinition();
     CharacterizedProductDefinition *GetCharacterizedProductDefinition();
     ShapeDefinition *GetShapeDefinition();
-    string GetProductName();bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    string GetProductName();
+    int GetProductId();
+    ProductDefinition *GetRelatingProductDefinition();
+    ProductDefinition *GetRelatedProductDefinition();
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual CharacterizedDefinition_type CharacterizedDefinitionType()

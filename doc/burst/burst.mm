@@ -612,7 +612,7 @@ then a burst point will be located the absolute value of \fIburst distance\fR
 beyond the exit of the shotline from the component.
 This means that if \fIburst distance\fR is zero,
 the burst point will lie at the \fIburst armor/air\fR interface,
-and if its -5.5,
+and if it's -5.5,
 the burst point will lie 5.5 units inside the air compartment from the
 back surface of the armor.
 .Ce

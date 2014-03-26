@@ -1,4 +1,4 @@
-/*                 ProductDefinitionRelationship.h
+/*                 ProductDefinitionUsage.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -17,56 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/ProductDefinitionRelationship.h
+/** @file step/ProductDefinitionUsage.h
  *
- * Class definition used to convert STEP "ProductDefinitionRelationship" to BRL-CAD BREP
+ * Class definition used to convert STEP "ProductDefinitionUsage" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_PRODUCTDEFINITIONRELATIONSHIP_H
-#define CONV_STEP_STEP_G_PRODUCTDEFINITIONRELATIONSHIP_H
+#ifndef CONV_STEP_STEP_G_PRODUCTDEFINITIONUSAGE_H
+#define CONV_STEP_STEP_G_PRODUCTDEFINITIONUSAGE_H
 
-#include "STEPEntity.h"
+#include "ProductDefinitionRelationship.h"
 
-#include "sdai.h"
-
-// forward declaration of class
-class ON_Brep;
-class ProductDefinition;
-
-class ProductDefinitionRelationship: virtual public STEPEntity
+class ProductDefinitionUsage: public ProductDefinitionRelationship
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    string ident;
-    string name;
-    string description;
-    ProductDefinition *relating_product_definition;
-    ProductDefinition *related_product_definition;
 
 public:
-    ProductDefinitionRelationship();
-    virtual ~ProductDefinitionRelationship();
-    ProductDefinitionRelationship(STEPWrapper *sw, int step_id);
+    ProductDefinitionUsage();
+    virtual ~ProductDefinitionUsage();
+    ProductDefinitionUsage(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
-    string ClassName();
-    string Ident();
-    string Description();
-    string GetName();
-    ProductDefinition *GetRelatingProductDefinition();
-    ProductDefinition *GetRelatedProductDefinition();
     virtual void Print(int level);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_PRODUCTDEFINITIONRELATIONSHIP_H */
+#endif /* CONV_STEP_STEP_G_PRODUCTDEFINITIONUSAGE_H */
 
 /*
  * Local Variables:

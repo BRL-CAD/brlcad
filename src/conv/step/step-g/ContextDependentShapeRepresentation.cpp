@@ -138,6 +138,30 @@ ContextDependentShapeRepresentation::GetTransformItem_2()
     return NULL;
 }
 
+ProductDefinition *
+ContextDependentShapeRepresentation::GetRelatingProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (represented_product_relation) {
+	ret = represented_product_relation->GetRelatingProductDefinition();
+    }
+
+    return ret;
+}
+
+ProductDefinition *
+ContextDependentShapeRepresentation::GetRelatedProductDefinition()
+{
+    ProductDefinition *ret = NULL;
+
+    if (represented_product_relation) {
+	ret = represented_product_relation->GetRelatedProductDefinition();
+    }
+
+    return ret;
+}
+
 bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
@@ -197,7 +221,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    }
 	}
     }
-#ifdef LOAD_REPRESENTED_PRODUCT_RELATION
+
     // currently don't use/need this when loading geometry from STEP
     if (represented_product_relation == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "represented_product_relation");
@@ -208,7 +232,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    return false;
 	}
     }
-#endif
+
     return true;
 }
 

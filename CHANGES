@@ -113,6 +113,11 @@ change involved a removal of a command or function, both the original
 and new names should be listed for reference.
 
 
+7.26
+----
+librt, fast4-g
+	removal of CLINE entity support [deprecated 7.26]
+
 7.24
 ----
 include/bu

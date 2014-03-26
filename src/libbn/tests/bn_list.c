@@ -384,7 +384,7 @@ main(int argc, char *argv[])
 	return -1;
     }
 
-    /* If its a 2D test */
+    /* If it's a 2D test */
     if (*argv[1] == '2') {
 	while (i < (argc-2) && i < MAX_POINTS) {
 	    sscanf(argv[i+2], "%lg,%lg", &x, &y);

@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bu.h"
 
 #include <vector>
 #include <list>
@@ -37,7 +38,6 @@
 #include "poly2tri/poly2tri.h"
 
 #include "vmath.h"
-
 #include "plot3.h"
 #include "brep.h"
 #include "brep_debug.h"
@@ -570,11 +570,20 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 
 
 void
-plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 255, const int green = 218, const int blue = 185)
+plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200)
 {
     register struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
+    fastf_t hsv[3];
+    unsigned char fill_rgb[3];
+
+    VSET(fill_rgb,(unsigned char)red,(unsigned char)green,(unsigned char)blue);
+    bu_rgb_to_hsv(fill_rgb,hsv);
+    // simply fill with 50% lightness/value of outline
+    hsv[2] = hsv[2] * 0.5;
+    bu_hsv_to_rgb(hsv,fill_rgb);
+
 
     vhead = rt_vlblock_find(vbp, red, green, blue);
 
@@ -582,6 +591,11 @@ plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridr
     ON_Interval vdom = surf.Domain(1);
 
     for (int u = 0; u <= gridres; u++) {
+	if (u == 0 || u == gridres) {
+	    vhead = rt_vlblock_find(vbp, red, green, blue);
+	} else {
+	    vhead = rt_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
+	}
 	for (int v = 1; v <= isocurveres; v++) {
 	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)(v-1)/(double)isocurveres));
 	    VMOVE(pt1, p);
@@ -593,6 +607,11 @@ plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridr
     }
 
     for (int v = 0; v <= gridres; v++) {
+	if (v == 0 || v == gridres) {
+	    vhead = rt_vlblock_find(vbp, red, green, blue);
+	} else {
+	    vhead = rt_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
+	}
 	for (int u = 1; u <= isocurveres; u++) {
 	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)(u-1)/(double)isocurveres), vdom.ParameterAt((double)v/(double)gridres));
 	    VMOVE(pt1, p);
@@ -741,7 +760,9 @@ void
 plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
+    ON_3dPoint pointsize(4.0,0,0);
     vhead = rt_vlblock_find(vbp, red, green, blue);
+    RT_ADD_VLIST(vhead, pointsize, BN_VLIST_POINT_SIZE);
     RT_ADD_VLIST(vhead, point, BN_VLIST_POINT_DRAW);
     return;
 }
@@ -1424,6 +1445,37 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    return 0;
+}
+
+
+int
+brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, double u, double v)
+{
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&tl)) {
+	bu_log("brep is NOT valid");
+    }
+
+    if (index == -1) {
+	for (index = 0; index < brep->m_S.Count(); index++) {
+	    ON_Surface *surf = brep->m_S[index];
+	    plotpoint(surf->PointAt(u, v), vbp, GREEN);
+	}
+    } else if (index < brep->m_S.Count()) {
+	ON_Surface *surf = brep->m_S[index];
+	surf->Dump(tl);
+	plotpoint(surf->PointAt(u, v), vbp, GREEN);
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
+
     return 0;
 }
 
@@ -2801,6 +2853,20 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		snprintf(commtag, 64, "_BC_S_");
 		for (int i = startindex; i <= endindex; i++) {
 		    ret = brep_surface_plot(vls, bs, bi, vbp, i, plotres);
+		}
+	    } else if (BU_STR_EQUAL(part, "Suv")) {
+		double u = 0.0;
+		double v = 0.0;
+		if (argc == 7) {
+		    const char *ustr = argv[5];
+		    const char *vstr = argv[6];
+
+		    u = atof(ustr);
+		    v = atof(vstr);
+		}
+		snprintf(commtag, 64, "_BC_Suv_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, i, u, v);
 		}
 	    } else if (BU_STR_EQUAL(part, "I")) {
 		snprintf(commtag, 64, "_BC_I_");

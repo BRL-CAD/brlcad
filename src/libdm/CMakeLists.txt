@@ -120,6 +120,7 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
+  dm-osg.cpp
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c

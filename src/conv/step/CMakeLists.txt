@@ -80,20 +80,27 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
+# AP203
 add_subdirectory(step-g)
 add_subdirectory(g-step)
 
-# Support for AP214 and AP242 is under development and not
+# Support for AP203e2, AP214 and AP242 is under development and not
 # yet functional.  Since the large C++ files generated for these
 # tools take a hideously long time to build on Windows, and are
 # noticable even on other platforms, wrap them with conditionals
 # until they do something useful.  It may be that work in STEPcode
 # to generate multiple files instead of single huge files will
 # help alleviate the issue - something to check into.
+if(BRLCAD_ENABLE_AP203E2)
+  add_subdirectory(g-ap203e2)
+  add_subdirectory(ap203e2-g)
+endif(BRLCAD_ENABLE_AP203E2)
 if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(ap214-g)
   add_subdirectory(g-ap214)
 endif(BRLCAD_ENABLE_AP214)
 if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(ap242-g)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 
@@ -105,6 +112,10 @@ CMAKEFILES(
   ap203_elements.txt
   ap203e2_elements.txt
   ap214e3_elements.txt
+  ap203e2-g
+  ap214-g
+  ap242-g
+  g-ap203e2
   g-ap214
   g-ap242
   )

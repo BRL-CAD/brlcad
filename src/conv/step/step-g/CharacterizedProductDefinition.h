@@ -59,7 +59,11 @@ public:
     virtual ~CharacterizedProductDefinition();
     ProductDefinition *GetProductDefinition();
     ProductDefinitionRelationship *GetProductDefinitionRelationship();
-    string GetProductName();bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    string GetProductName();
+    int GetProductId();
+    ProductDefinition *GetRelatingProductDefinition();
+    ProductDefinition *GetRelatedProductDefinition();
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual CharacterizedProductDefinition_type CharacterizedProductDefinitionType()
