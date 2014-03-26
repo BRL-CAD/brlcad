@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "tk.h"
+#include "tkPlatDecls.h"
 
 extern "C" {
 #include "bu.h"
@@ -739,11 +740,10 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
     // something showing how to handle Cocoa for the Mac, if that's possible
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-#if defined(DM_OSG)  /* Will eventually change to DM_X11 */
+#if defined(_WIN32)
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(Tk_GetHWND(((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win));
+#else
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win);
-#elif defined(DM_WIN32)
-    /* win = ? OSG needs HWND for win... */
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
 #endif
 
     // Setup the traits parameters
