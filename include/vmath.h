@@ -338,7 +338,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether a value is within a specified epsilon
  * distance from zero.
  */
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#ifdef KEITH_WANTS_THIS
+/* this is a proposed change to equality/zero testing.  prior behavior
+ * evaluated as an open set.  this would change the behavior to that
+ * of a closed set so that you can perform exact comparisons against
+ * the tolerance and get a match.  examples that fail with the current
+ * macro: tol=0.1; 1.1 == 1.0 or tol=0; 1==1
+ *
+ * these need to be tested carefully to make sure we pass ALL
+ * regression and integrateion tests, which will require some
+ * concerted effort to coordinate prior to a release.  first step is
+ * to evaluate impact on performance and behavior of our tests.
+ */
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon) || ((val) > epsilon)))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon)) && !(((val) > epsilon)))
+#else
+#  define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#endif
 
 /**
  * Return truthfully whether all elements of a given vector are within
