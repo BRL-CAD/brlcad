@@ -40,18 +40,42 @@ struct killtree_data {
     struct ged *gedp;
     int killrefs;
     int nflag;
+    int fflag;
+    const char *top;
     int ac;
     char **av;
     size_t av_capacity;
 };
 
 
+HIDDEN int
+find_reference(struct db_i *dbip, const char *top, const char *obj)
+{
+    if (!dbip || !top || !obj)
+	return 0;
+
+    return 0;
+}
+
+
 HIDDEN void
 killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
     struct killtree_data *gktdp = (struct killtree_data *)ptr;
+    int ref_exists = 0;
 
     if (dbip == DBI_NULL)
+	return;
+
+    /* pretend no reference exists if the -f flag is presented */
+    if (!gktdp->fflag)
+	ref_exists = find_reference(dbip, gktdp->top, dp->d_namep);
+
+    /* if a reference exists outside of the subtree we're killing, we
+     * don't kill this object or it'll create invalid reference
+     * elsewhere in the database.  do nothing.
+     */
+    if (ref_exists)
 	return;
 
     if (gktdp->nflag) {
@@ -120,11 +144,12 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-
     gktd.gedp = gedp;
     gktd.killrefs = 0;
     gktd.nflag = 0;
+    gktd.fflag = 0;
     gktd.ac = 1;
+    gktd.top = NULL;
 
     gktd.av = (char **)bu_calloc(1, sizeof(char *) * AV_STEP, "alloc av");
     gktd.av_capacity = AV_STEP;
@@ -133,7 +158,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     gktd.av[1] = (char *)0;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "an")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "anf")) != -1) {
 	switch(c) {
 	    case 'a':
 		gktd.killrefs = 1;
@@ -143,6 +168,8 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 		gktd.av[gktd.ac++] = bu_strdup("-n");
 		gktd.av[gktd.ac] = (char *)0;
 		break;
+	    case 'f':
+		gktd.fflag = 1;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
@@ -165,6 +192,9 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	/* ignore phony objects */
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
+
+	/* stash the what's killed so we can find refs elsewhere */
+	gktd.top = argv[i];
 
 	db_functree(gedp->ged_wdbp->dbip, dp,
 		    killtree_callback, killtree_callback,
