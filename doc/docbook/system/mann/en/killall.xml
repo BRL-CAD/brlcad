@@ -11,8 +11,9 @@
 
 <refnamediv xml:id="name">
   <refname>killall</refname>
-  <refpurpose>Deletes the specified <emphasis>objects</emphasis> from the current database and
-	removes all references to them from all combinations in the database.
+  <refpurpose>Deletes the specified <emphasis>objects</emphasis> from
+  the current database and removes all references to them from all
+  combinations in the database.
    </refpurpose>
 </refnamediv>
 
@@ -26,15 +27,24 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Deletes the specified <emphasis>objects</emphasis> from the current database and
-	removes all references to them from all combinations in the database. Note that the
-	<emphasis>objects </emphasis> are killed immediately. There is no need for a <command>	write file</command> command in MGED, and there is no <command>undo</command> command. 	<emphasis remap="B" role="bold">Use this command with caution.</emphasis>  Other commands 	that remove objects from the database are <command>kill</command> and <command>killtree	</command>.
+  <para>Deletes the specified <emphasis>objects</emphasis> from the
+  current database and removes all references to them from all
+  combinations in the database. Note that the <emphasis>objects
+  </emphasis> are killed immediately. There is no need for a <command>
+  write file</command> command in MGED, and there is no
+  <command>undo</command> command.  <emphasis remap="B"
+  role="bold">Use this command with caution.</emphasis> Other commands
+  that remove objects from the database are <command>kill</command>
+  and <command>killtree </command>.
   </para>
+
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>killall</command> command to delete specified objects and to remove all references to them from the database.
+  <para>The example shows the use of the <command>killall</command>
+  command to delete specified objects and to remove all references to
+  them from the database.
   </para>
   <example><title>Delete specified objects and all references to them from the database.</title>
 
@@ -42,8 +52,10 @@
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>killall group1 region2 shapeb</userinput>		   </term>
 	   <listitem>
-	     <para>Deletes <emphasis>group1</emphasis>, <emphasis>region2</emphasis>, and 				     <emphasis>shapeb</emphasis> and removes all references to these objects
-		     from the database.
+	     <para>Deletes <emphasis>group1</emphasis>,
+	     <emphasis>region2</emphasis>, and
+	     <emphasis>shapeb</emphasis> and removes all references to
+	     these objects from the database.
 	     </para>
 	   </listitem>
       </varlistentry>

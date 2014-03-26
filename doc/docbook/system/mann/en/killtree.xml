@@ -25,24 +25,44 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Deletes the specified <emphasis>objects</emphasis> from the current database and
-	recursively deletes all objects referenced by any of those objects. If one of the 	<emphasis>objects</emphasis> listed is a combination, then that <emphasis>combination	</emphasis> as well as any objects that are members of that <emphasis>combination	</emphasis> will be deleted. If a member of that <emphasis>combination</emphasis> is 	itself a <emphasis>combination</emphasis>, then all of its members will also be destroyed. 	This continues recursively until the primitive shapes are reached and destroyed. Note that 	the <emphasis>objects</emphasis> are killed immediately. There is no need for a <command>	write file</command> command in MGED, and there is no <command>undo</command> command.  	<emphasis remap="B" role="bold">Use this command with extreme caution.</emphasis> Other 	commands that remove objects from the database are <command>kill</command> and <command>	killall</command>.
-    </para>
+  <para>Deletes the specified <emphasis>objects</emphasis> from the
+  current database and recursively deletes all objects referenced by
+  any of those objects. If one of the <emphasis>objects</emphasis>
+  listed is a combination, then that <emphasis>combination </emphasis>
+  as well as any objects that are members of that
+  <emphasis>combination </emphasis> will be deleted. If a member of
+  that <emphasis>combination</emphasis> is itself a
+  <emphasis>combination</emphasis>, then all of its members will also
+  be destroyed.  This continues recursively until the primitive shapes
+  are reached and destroyed. Note that the
+  <emphasis>objects</emphasis> are killed immediately. There is no
+  need for a <command> write file</command> command in MGED, and there
+  is no <command>undo</command> command.  <emphasis remap="B"
+  role="bold">Use this command with extreme caution.</emphasis> Other
+  commands that remove objects from the database are
+  <command>kill</command> and <command> killall</command>.
+  </para>
+
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>killtree</command> command to delete specified 	objects and all references to them from the current database.
+  <para>The example shows the use of the <command>killtree</command>
+  command to delete specified objects and all references to them from
+  the current database.
   </para>
+
   <example><title>Delete objects and all references to them from the database.</title>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>killtree group1 region2 shapeb</userinput>			</term>
+	   <term><prompt>mged&gt;</prompt> <userinput>killtree -r group1 region2 shapeb</userinput></term>
 	   <listitem>
-	     <para>Destroys <emphasis>group1</emphasis>, <emphasis>region2</emphasis>, and 					<emphasis>shapeb</emphasis> and removes all references to these objects
-			from the database.
-	     </para>
+	     <para>Destroys <emphasis>group1</emphasis>,
+	     <emphasis>region2</emphasis>, and
+	     <emphasis>shapeb</emphasis> and removes all references to
+	     these objects from the database.
+             </para>
 	   </listitem>
       </varlistentry>
     </variablelist>
