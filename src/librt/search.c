@@ -2046,6 +2046,7 @@ _db_search_full_paths(void *searchplan,        /* search plan */
 	    find_execute_plans(wdbp->dbip, wdbp, searchresults, &curr_node, (struct db_plan_t *)searchplan);
 	}
 	db_free_search_tbl(full_paths);
+	bu_free(full_paths, "free search container");
 
     }
     for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
@@ -2225,6 +2226,7 @@ db_search(struct bu_ptbl *search_results,
 
 	    /* Done with the paths now - we have our answer */
 	    db_free_search_tbl(full_paths);
+	    bu_free(full_paths, "free search container");
 	}
     }
 
@@ -2249,7 +2251,6 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
 	}
 	bu_ptbl_free(search_results);
     }
-    bu_free(search_results, "free search container");
 }
 
 /*

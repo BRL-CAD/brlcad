@@ -422,8 +422,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 			}
 		    }
-		    bu_ptbl_free(search_results);
-		    bu_free(search_results, "free flat search container");
+		    db_free_search_tbl(search_results);
+		    bu_free(search_results, "free search container");
 		} else {
 		    struct directory *curr_path = search->paths[path_cnt];
 		    while (path_cnt < search->path_cnt) {
@@ -456,6 +456,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				break;
 			}
 			db_free_search_tbl(search_results);
+			bu_free(search_results, "free search container");
 			bu_vls_free(&fullpath_string);
 			path_cnt++;
 			curr_path = search->paths[path_cnt];
