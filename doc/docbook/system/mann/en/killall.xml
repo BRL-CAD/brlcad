@@ -30,12 +30,12 @@
 
   <para>Deletes the specified <emphasis>objects</emphasis> from the
   current database and removes all references to them from all
-  combinations in the database. Note that the <emphasis>objects
-  </emphasis> are killed immediately unless the
-  <option>-n</option> flag is passed.  The <option>-n</option>
-  flag causes the command to return a string of the objects that would
-  be killed in a scriptable list format without actually killing
-  them.</para>
+  combinations in the database. Note that the
+  <emphasis>objects</emphasis> are killed immediately unless the
+  <option>-n</option> flag is passed.  The <option>-n</option> flag
+  causes the command to return a string of the objects that would be
+  killed in a scriptable list format without actually killing them.
+  </para>
 
   <para><emphasis remap="B" role="bold">Use this command with
   caution.</emphasis> Killed objects cannot be recovered so

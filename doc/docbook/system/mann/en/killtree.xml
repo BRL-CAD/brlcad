@@ -31,18 +31,26 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
   <para>Deletes the specified <emphasis>objects</emphasis> from the
   current database and recursively deletes all objects referenced by
   any of those objects. If one of the <emphasis>objects</emphasis>
-  listed is a combination, then that <emphasis>combination </emphasis>
-  as well as any objects that are members of that
-  <emphasis>combination </emphasis> will be deleted. If a member of
-  that <emphasis>combination</emphasis> is itself a
-  <emphasis>combination</emphasis>, then all of its members will also
-  be destroyed.  This continues recursively until the primitive shapes
-  are reached and destroyed. Note that the
-  <emphasis>objects</emphasis> are killed immediately unless the
-  <option>-n</option> flag is passed.  The <option>-n</option>
-  flag causes the command to return a string of the objects that would
-  be killed in a scriptable list format without actually killing
-  them.</para>
+  listed is a combination, then that combination as well as any
+  objects that are members of that combination will be deleted. If a
+  member of that combination is itself a combination, then all of its
+  members will also be destroyed.  This continues recursively until
+  the primitive shapes are reached and destroyed.
+  </para>
+
+  <para>If any combination or member of a combination being
+  recursivley deleted is referenced elsewhere in the database, those
+  objects will not be killed by default.  The <option>-f</option> flag
+  forcibly overrides this behavior and may result in dangling
+  references elsewhere in the database.
+  </para>
+
+  <para>Note that the <emphasis>objects</emphasis> are killed
+  immediately unless the <option>-n</option> flag is passed.  The
+  <option>-n</option> flag causes the command to return a string of
+  the objects that would be killed in a scriptable list format without
+  actually killing them.
+  </para>
 
   <variablelist remap="TP">
     <varlistentry>
