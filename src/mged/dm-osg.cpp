@@ -118,7 +118,6 @@ Osg_fb_open()
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
 	    dmp->dm_width, dmp->dm_height,
 	    ((struct osg_vars *)dmp->dm_vars.priv_vars)->graphicsContext);
 }

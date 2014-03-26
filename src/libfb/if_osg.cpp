@@ -177,7 +177,6 @@ struct osginfo {
     int vp_height;		/* actual viewport height */
     struct osg_clip clip;	/* current view clipping */
     Window cursor;
-    XVisualInfo *vip;		/* pointer to info on current visual */
     Colormap xcmap;		/* xstyle color map */
     int use_ext_ctrl;		/* for controlling the Ogl graphics engine externally */
 };
@@ -1360,7 +1359,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
 
 extern "C" int
-_osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext)
+_osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext)
 {
 
     /*XXX for now use private memory */
@@ -1406,7 +1405,6 @@ _osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     OSG(ifp)->dispp = dpy;
     ifp->if_selfd = ConnectionNumber(OSG(ifp)->dispp);
 
-    OSG(ifp)->vip = vip;
     OSG(ifp)->graphicsContext = graphicsContext;
     SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     OSG(ifp)->xcmap = cmap;
@@ -1429,7 +1427,6 @@ osg_open_existing(FBIO *ifp, int argc, const char **argv)
     Display *dpy;
     Window win;
     Colormap cmap;
-    XVisualInfo *vip;
     int width;
     int height;
     //GLXContext glxc;
@@ -1447,19 +1444,16 @@ osg_open_existing(FBIO *ifp, int argc, const char **argv)
     if (sscanf(argv[3], "%p", (void **)&cmap) != 1)
 	return -1;
 
-    if (sscanf(argv[4], "%p", (void **)&vip) != 1)
+    if (sscanf(argv[4], "%d", &width) != 1)
 	return -1;
 
-    if (sscanf(argv[5], "%d", &width) != 1)
+    if (sscanf(argv[5], "%d", &height) != 1)
 	return -1;
 
-    if (sscanf(argv[6], "%d", &height) != 1)
+    if (sscanf(argv[6], "%p", (void **)&graphicsContext) != 1)
 	return -1;
 
-    if (sscanf(argv[7], "%p", (void **)&graphicsContext) != 1)
-	return -1;
-
-    return _osg_open_existing(ifp, dpy, win, cmap, vip, width, height,
+    return _osg_open_existing(ifp, dpy, win, cmap, width, height,
 			      graphicsContext);
 }
 
@@ -2195,7 +2189,6 @@ HIDDEN int
 osg_help(FBIO *ifp)
 {
     struct osg_modeflags *mfp;
-    XVisualInfo *visual = OSG(ifp)->vip;
 
     fb_log("Description: %s\n", ifp->if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -2245,13 +2238,6 @@ osg_help(FBIO *ifp)
 	    break;
     }
 #endif
-    fb_log("\tColormap Size: %d\n", visual->colormap_size);
-    fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
-    fb_log("\tscreen: %d\n", visual->screen);
-    fb_log("\tdepth (total bits per pixel): %d\n", visual->depth);
-    if (visual->depth < 24)
-	fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
-
     return 0;
 }
 

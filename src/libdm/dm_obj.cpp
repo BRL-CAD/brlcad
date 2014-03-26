@@ -195,7 +195,6 @@ dmo_openFb(struct dm_obj *dmop)
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
 			       dmop->dmo_dmp->dm_width,
 			       dmop->dmo_dmp->dm_height,
 			       ((struct osg_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->graphicsContext);
