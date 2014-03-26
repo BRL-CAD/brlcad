@@ -1303,6 +1303,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     Tk_MakeWindowExist(OSG(ifp)->xtkwin);
 
+    //TODO - make wind be an HWND on Win32...
     OSG(ifp)->wind = Tk_WindowId(OSG(ifp)->xtkwin);
 
     Tk_MapWindow(OSG(ifp)->xtkwin);
@@ -1321,8 +1322,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     // something showing how to handle Cocoa for the Mac, if that's possible
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 #if defined(_WIN32)
-    /* win = ? OSG needs HWND for win... */
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(win);
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(Tk_GetHWND(OSG(ifp)->xtkwin));
 #else
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(OSG(ifp)->wind);
 #endif
