@@ -2125,23 +2125,25 @@ db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED
 int
 db_search(struct bu_ptbl *search_results,
 	  int search_flags,
-	  const char *plan_string,
+	  const char *plan_str,
 	  int path_cnt,
 	  struct directory **paths,
 	  struct rt_wdb *wdbp)
 {
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
+
     /* Note that dbplan references strings using memory
      * in the following two objects, so they mustn't be
      * freed until the plan is freed.*/
-    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
-    struct bu_vls plan_string_vls = BU_VLS_INIT_ZERO;
+    char **plan_argv = (char **)bu_calloc(strlen(plan_str) + 1, sizeof(char *), "plan argv");
+
+    /* make a copy so we can mess with it */
+    char *mutable_plan_str = bu_strdup(plan_str);
+
 
     /* get the plan string into an argv array */
-    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
-
-    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    bu_argv_from_string(&plan_argv[0], strlen(plan_str), mutable_plan_str);
     if (!(search_flags & DB_SEARCH_QUIET)) {
 	dbplan = db_search_form_plan(plan_argv, 0);
     } else {
@@ -2149,7 +2151,7 @@ db_search(struct bu_ptbl *search_results,
     }
     /* No plan, no search */
     if (!dbplan) {
-	bu_vls_free(&plan_string_vls);
+	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
 	return 0;
     }
@@ -2157,7 +2159,7 @@ db_search(struct bu_ptbl *search_results,
      * a plan, return success */
     if (!search_results && !paths) {
 	db_search_free_plan((void **)&dbplan);
-	bu_vls_free(&plan_string_vls);
+	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
 	return 1;
     }
@@ -2246,7 +2248,7 @@ db_search(struct bu_ptbl *search_results,
     }
 
     db_search_free_plan((void **)&dbplan);
-    bu_vls_free(&plan_string_vls);
+    bu_free(mutable_plan_str, "free strdup");
     bu_free((char *)plan_argv, "free plan argv");
 
     return result_cnt;
