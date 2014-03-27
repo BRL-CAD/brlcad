@@ -205,7 +205,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_WGL:
 	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
 
 	    /* Mark OK by filling in magic number */
