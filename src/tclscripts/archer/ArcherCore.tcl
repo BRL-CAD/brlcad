@@ -2119,6 +2119,9 @@ namespace eval ArcherCore {
     set typelist {
 	{"BRL-CAD Database" {".g"}}
 	{"STEP" {".stp" ".step"}}
+	{"STL" {".stl"}}
+	{"All mesh files" {".stl"}}
+	{"All CAD files" {".g" ".stp" ".step"}}
 	{"All Files" {*}}
     }
 
