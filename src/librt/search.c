@@ -2020,8 +2020,8 @@ db_free_search_tbl(struct bu_ptbl *search_results)
 
 /* Internal version of deprecated function */
 struct db_full_path_list *
-_db_search_full_paths(void *searchplan,        /* search plan */
-		      struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+_db_search_full_paths(void *searchplan,
+		      struct db_full_path_list *pathnames,
 		      struct db_i *dbip,
 		      struct rt_wdb *wdbp)
 {
@@ -2103,8 +2103,8 @@ _db_search_full_paths(void *searchplan,        /* search plan */
 
 
 struct db_full_path_list *
-db_search_full_paths(void *searchplan,        /* search plan */
-		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+db_search_full_paths(void *searchplan,
+		     struct db_full_path_list *pathnames,
 		     struct db_i *dbip,
 		     struct rt_wdb *wdbp)
 {
@@ -2113,8 +2113,8 @@ db_search_full_paths(void *searchplan,        /* search plan */
 
 
 struct bu_ptbl *
-db_search_unique_objects(void *searchplan,        /* search plan */
-			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+db_search_unique_objects(void *searchplan,
+			 struct db_full_path_list *pathnames,
 			 struct db_i *dbip,
 			 struct rt_wdb *wdbp)
 {
