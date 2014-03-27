@@ -79,11 +79,12 @@
 #define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
 #define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
+                               int search_flags,
                                const char *plan_string,
                                int path_cnt,
                                struct directory **paths,
-                               struct rt_wdb *wdbp,
-                               int s_flags);
+                               struct rt_wdb *wdbp
+);
 
 /**
  * Properly free the table contents returned by db_search.  The bu_ptbl

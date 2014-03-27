@@ -2110,11 +2110,11 @@ db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED
 /* WIP - all-inclusive search function */
 int
 db_search(struct bu_ptbl *search_results,
+	  int search_flags,
 	  const char *plan_string,
 	  int path_cnt,
 	  struct directory **paths,
-	  struct rt_wdb *wdbp,
-	  int s_flags)
+	  struct rt_wdb *wdbp)
 {
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
@@ -2127,7 +2127,7 @@ db_search(struct bu_ptbl *search_results,
     /* get the plan string into an argv array */
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    if (!(s_flags & DB_SEARCH_QUIET)) {
+    if (!(search_flags & DB_SEARCH_QUIET)) {
 	dbplan = db_search_form_plan(plan_argv, 0);
     } else {
 	dbplan = db_search_form_plan(plan_argv, 1);
@@ -2162,12 +2162,12 @@ db_search(struct bu_ptbl *search_results,
 
 	/* Build a set of all full paths under the supplied paths, including the starting
 	 * paths themselves */
-	if (!(s_flags & DB_SEARCH_FLAT)) {
+	if (!(search_flags & DB_SEARCH_FLAT)) {
 	    BU_ALLOC(full_paths, struct bu_ptbl);
 	    BU_PTBL_INIT(full_paths);
 	    lcd.dbip = wdbp->dbip;
 	    lcd.full_paths = full_paths;
-	    lcd.flags = s_flags;
+	    lcd.flags = search_flags;
 	}
 
 	/* If we're doing a flat search, we can handle everything in this loop.
@@ -2178,21 +2178,21 @@ db_search(struct bu_ptbl *search_results,
 	    struct db_full_path *start_path = NULL;
 	    /* If we're doing a flat search, we don't need to store full path versions
 	     * of directory pointers - allocate one that we will re-use */
-	    if (s_flags & DB_SEARCH_FLAT) {
+	    if (search_flags & DB_SEARCH_FLAT) {
 		BU_ALLOC(start_path, struct db_full_path);
 		db_full_path_init(start_path);
 	    }
 	    if (curr_dp != RT_DIR_NULL) {
-		if ((s_flags & DB_SEARCH_HIDDEN) || !(curr_dp->d_flags & RT_DIR_HIDDEN)) {
+		if ((search_flags & DB_SEARCH_HIDDEN) || !(curr_dp->d_flags & RT_DIR_HIDDEN)) {
 		    /* For a flat search, we don't need to build a table of paths -
 		     * just run the filters on the path */
-		    if (s_flags & DB_SEARCH_FLAT) {
+		    if (search_flags & DB_SEARCH_FLAT) {
 			struct db_node_t curr_node;
 			db_add_node_to_full_path(start_path, curr_dp);
 			/* by convention, a top level node is "unioned" into the global database */
 			DB_FULL_PATH_SET_CUR_BOOL(start_path, 2);
 			curr_node.path = start_path;
-			curr_node.flags = s_flags;
+			curr_node.flags = search_flags;
 			curr_node.matched_filters = 0;
 			find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
 			result_cnt += curr_node.matched_filters;
@@ -2213,12 +2213,12 @@ db_search(struct bu_ptbl *search_results,
 	    }
 	}
 
-	if (!(s_flags & DB_SEARCH_FLAT)) {
+	if (!(search_flags & DB_SEARCH_FLAT)) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 		struct db_node_t curr_node;
 		curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
 		curr_node.full_paths = full_paths;
-		curr_node.flags = s_flags;
+		curr_node.flags = search_flags;
 		curr_node.matched_filters = 0;
 		find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
 		result_cnt += curr_node.matched_filters;
