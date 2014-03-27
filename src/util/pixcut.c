@@ -176,6 +176,8 @@ main(int argc, char **argv)
     unsigned char *cp;
     int finish, row, result;
 
+    bu_log("DEPRECATED: pixcut is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
+
     for (i=0;i<SIZEBACK;i++) background[i] = 0;
     background[2] = 1;
 
