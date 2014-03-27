@@ -418,19 +418,23 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><emphasis remap="B" role="bold">-above[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
+	  <term><emphasis remap="B" role="bold">-below[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
 	  <listitem>
 		<para>
-		  The above operator applies the expression to every object above the current
-		  object in the full path to that object, and returns TRUE if one or more of
-		  them satisfies the expression - e.g. -above -name s\* applied to
-		  /component/region.r/start_comb.c/prim1.s would return TRUE for /component and
-		  /component/region.r as both being "above" start_comb.c, but would return FALSE
-		  the deeper objects.
+		  The below operator applies the expression to every
+		  object above the current full path to that object,
+		  and returns TRUE if one or more of them satisfies
+		  the expression.  E.g., searching with -below -name
+		  s\* on /component/region.r/start_comb.c/prim1.s
+		  would return TRUE for /component and
+		  /component/region.r as start_comb.c is below both of
+		  them, but would return FALSE for any deeper objects
+		  (i.e., prim1.s in this example).
 		</para>
 		<para>
-		  Optionally, inequality and equality constraints on depth can be appended to the
-		  operator to limit what relative depths are accepted as matches.
+		  Optionally, inequality and equality constraints on
+		  depth can be appended to the operator to limit what
+		  relative depths are accepted as matches.
 		</para>
 	  </listitem>
 	</varlistentry>
@@ -445,17 +449,21 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><emphasis remap="B" role="bold">-below[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
+	  <term><emphasis remap="B" role="bold">-above[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
 	  <listitem>
 		<para>
-		  The below operator applies the expression to every object below the current
-		  object in the tree hierarchy - in effect it does a "mini-search" of the tree
-		  using the current object path as a starting point and returns TRUE if the
-		  expression is satisfied by one or more objects in the sub-tree.
+		  The above operator applies the expression to every
+		  object below the current object in the tree
+		  hierarchy.  It finds objects that are above a given
+		  expression.  In effect, it does a "mini-search" up
+		  the tree using the current object path as a starting
+		  point and returns TRUE if the expression is
+		  satisfied by one or more objects in the sub-tree.
 		</para>
 		<para>
-		  Optionally, inequality and equality constraints on depth can be appended to the
-		  operator to limit what relative depths are accepted as matches.
+		  Optionally, inequality and equality constraints on
+		  depth can be appended to the operator to limit what
+		  relative depths are accepted as matches.
 		</para>
 	  </listitem>
 	</varlistentry>
@@ -540,7 +548,7 @@
 	  <userinput>search group1 -name *.r</userinput>
 	</para>
 	<para>
-	  Find all objects below group1 in the database that have names ending in ".r"
+	  Find all objects within group1 in the database that have names ending in ".r"
 	  Note that this will return a list of objects, not the full path information
 	  associated with each instance of the objects matched.
 	</para>
@@ -552,7 +560,7 @@
 	  <userinput>search /group1 -name *.r</userinput>
 	</para>
 	<para>
-	  Find all instances of objects below group1 in the database that have names ending in ".r"
+	  Find all instances of objects within group1 in the database that have names ending in ".r"
 	  Note that, unlike the previous example,  this will return the full path information
 	  associated with each instance of the objects matched.
 	</para>
@@ -572,32 +580,36 @@
   <example><title>Finding all Instances of Nested Regions</title>
 
 	<para>
-	  <userinput>search / -type region -above -type region</userinput>
+	  <userinput>search / -type region -below -type region</userinput>
 	</para>
 	<para>
-	  Find all instances of objects of type region that contain a region.  This searches for
-	  regions being used within the subtrees of other regions, which is considered bad practice in BRL-CAD.
+	  Find all instances of objects of type region that contain a
+	  region.  This searches for regions being used within the
+	  subtrees of other regions, which is considered bad practice
+	  in BRL-CAD.
 	</para>
   </example>
 
   <example><title>Finding all Assemblies</title>
 
 	<para>
-	  <userinput>search / -below -type region ! -type region</userinput>
+	  <userinput>search / -above -type region ! -type region</userinput>
 	</para>
 	<para>
-	  Find all instances of objects of type combination that contain regions but are
-	  not themselves regions.  These are regarded as "assemblies" in BRL-CAD.
+	  Find all instances of objects of type combination that
+	  contain regions but are not themselves regions.  These are
+	  regarded as "assemblies" in BRL-CAD.
 	</para>
   </example>
 
   <example><title>Finding all Combinations below Regions</title>
 
 	<para>
-	  <userinput>search / ! ( -below -type region ) ! -type region -type comb</userinput>
+	  <userinput>search / ! ( -above -type region ) ! -type region -type comb</userinput>
 	</para>
 	<para>
-	  Find all instances of combinations that are not regions and do not contain regions.
+	  Find all instances of combinations that are not regions and
+	  do not contain regions.
 	</para>
   </example>
 
@@ -661,14 +673,16 @@
   <example><title>Finding all Non-Subtracted Regions below Regions</title>
 
 	<para>
-	  <userinput>search / -type region -above -type region ! -bool -</userinput>
+	  <userinput>search / -type region -below -type region ! -bool -</userinput>
 	</para>
 	<para>
-	  A more nuanced variation on finding nested regions that adds a check to
-	  make sure that the regions aren't being subtracted.  While not ideal,
-	  using a subtraction does avoid the modeling error of two volumes
-	  claiming the three dimensional space and is arguably acceptable - the
-	  above command finds nested region instances that are definite errors.
+	  A more nuanced variation on finding nested regions that adds
+	  a check to make sure that the regions aren't being
+	  subtracted.  While not ideal, using a subtraction does avoid
+	  the modeling error of two volumes claiming the three
+	  dimensional space and is arguably acceptable - the below
+	  command finds nested region instances that are considered
+	  errors.
 	</para>
   </example>
 
