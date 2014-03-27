@@ -145,7 +145,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     int i;
     int c;
     struct killtree_data gktd;
-    static const char *usage = "[-a|-n] object(s)";
+    static const char *usage = "[-a|-f|-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -174,7 +174,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     gktd.av[1] = (char *)0;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "anf")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "afn")) != -1) {
 	switch(c) {
 	    case 'a':
 		gktd.killrefs = 1;
@@ -186,6 +186,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'f':
 		gktd.force = 1;
+		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
