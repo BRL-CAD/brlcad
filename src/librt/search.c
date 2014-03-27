@@ -2152,8 +2152,10 @@ db_search(struct bu_ptbl *search_results,
 	  struct directory **paths,
 	  struct db_i *dbip)
 {
+    int i = 0;
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
+    struct directory **top_level_objects = NULL;
 
     /* Note that dbplan references strings using memory
      * in the following two objects, so they mustn't be
@@ -2179,17 +2181,20 @@ db_search(struct bu_ptbl *search_results,
     }
     /* If the idea was to test the plan string and we *do* have
      * a plan, return success */
-    if (!paths || !dbip) {
-	/* TODO: do a db_ls of tops */
+    if (!dbip) {
 	db_search_free_plan((void **)&dbplan);
 	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
 	return -2;
     }
 
+    if (!paths) {
+	path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	paths = top_level_objects;
+    }
+
     /* execute the plan */
     {
-	int i = 0;
 	struct bu_ptbl *full_paths = NULL;
 	struct list_client_data_t lcd;
 
@@ -2269,6 +2274,13 @@ db_search(struct bu_ptbl *search_results,
     db_search_free_plan((void **)&dbplan);
     bu_free(mutable_plan_str, "free strdup");
     bu_free((char *)plan_argv, "free plan argv");
+
+    if (paths == top_level_objects) {
+	for (i = 0; i < path_cnt; i++) {
+	    db_dirdelete(dbip, top_level_objects[i]);
+	}
+	bu_free(top_level_objects, "free tops");
+    }
 
     return result_cnt;
 }
