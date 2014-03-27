@@ -32,6 +32,7 @@
 #include <ctype.h>
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 
 HIDDEN int
