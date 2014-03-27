@@ -26,6 +26,7 @@
 #define DM_XVARS_H
 
 #include "common.h"
+#include "bio.h"
 
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
@@ -80,7 +81,6 @@ struct dm_xvars {
     int devbuttonpress;
     int devbuttonrelease;
 };
-
 #endif /* DM_XVARS_H */
 /** @} */
 /*
