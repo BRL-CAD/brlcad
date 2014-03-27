@@ -115,6 +115,8 @@ and new names should be listed for reference.
 
 7.26
 ----
+pixcut, pixpaste
+        copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
 
