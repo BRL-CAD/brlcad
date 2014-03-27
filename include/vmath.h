@@ -346,7 +346,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * macro: tol=0.1; 1.1 == 1.0 or tol=0; 1==1
  *
  * these need to be tested carefully to make sure we pass ALL
- * regression and integrateion tests, which will require some
+ * regression and integration tests, which will require some
  * concerted effort to coordinate prior to a release.  first step is
  * to evaluate impact on performance and behavior of our tests.
  */

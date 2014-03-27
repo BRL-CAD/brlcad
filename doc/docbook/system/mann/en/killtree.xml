@@ -39,7 +39,7 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
   </para>
 
   <para>If any combination or member of a combination being
-  recursivley deleted is referenced elsewhere in the database, those
+  recursively deleted is referenced elsewhere in the database, those
   objects will not be killed by default.  The <option>-f</option> flag
   forcibly overrides this behavior and may result in dangling
   references elsewhere in the database.
@@ -81,7 +81,7 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 	  <para>The <option>-n</option> flag causes no objects to be
 	  actually killed.  Instead, a list of objects that would be
 	  killed is returned.  This can be useful for testing or
-	  scripiting.
+	  scripting.
 	  </para>
 	</listitem>
       </varlistentry>
