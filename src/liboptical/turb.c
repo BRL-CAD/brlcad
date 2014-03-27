@@ -1,22 +1,12 @@
 /*                          T U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1994 Gull Island Consultants, Inc.
- * All rights reserved.
- *
  * This software may be freely distributed without prior notice.
  */
 /** @file liboptical/turb.c
  *
  * Larger noise table for turbulence calculations.
  *
- * Author -
- * Bill Laut
- *
- * Source -
- * Gull Island Consultants, Inc.
- * P.O. Box 627
- * Muskegon, MI 49440
  */
 
 #include "common.h"
