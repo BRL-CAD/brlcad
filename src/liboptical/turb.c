@@ -14,6 +14,11 @@
 
 #include "bu.h"
 
+
+/* TODO: it'd be useful to figure out which random number generator
+ * created this table so we could create a substantially bigger one
+ * while retaining these 20x20x20 values for backwards-compatibility.
+ */
 const fastf_t turb_table[20][20][20] = {
     {{ 0.105489192064851520, -0.203732953406870370, -0.001023580785840750, -0.418433680199086670,
        0.019490496721118689, -0.494057352188974620,  0.379220851697027680, -0.381280504632741210,
