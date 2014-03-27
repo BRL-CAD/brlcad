@@ -62,7 +62,10 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
     if (!dbip || !topobj || !obj)
 	return 0;
 
-    bu_vls_printf(&str, "-not -below \"%s\" -name \"%s\"", topobj, obj);
+    /* FIXME: these should be wrapped in quotes, but need to dewrap
+     * after bu_argv_from_string().
+     */
+    bu_vls_printf(&str, "-not -below -name %s -name %s", topobj, obj);
 
     ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip->dbi_wdbp);
 
