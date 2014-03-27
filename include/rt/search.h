@@ -63,20 +63,19 @@
  *
  * The following example assumes a database instance pointer (dbip) is available and ready to use.
  *
- * @code
- * int i = 0;
- * struct bu_ptbl results = BU_PTBL_INIT_ZERO;
- * struct bu_vls fullpath_str = BU_VLS_INIT_ZERO;
- * const char *plan = "-name *.s -or -name *.r"
- * if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip) > 0) {
- *     for (i = (int)BU_PTBL_LEN(&results) - 1; i >= 0; i--) {
- * 	bu_vls_trunc(&fullpath_str, 0);
- * 	db_fullpath_to_vls(&fullpath_str, (struct db_full_path *)BU_PTBL_GET(&results, i), NULL, 0);
- * 	bu_log("%s\n", bu_vls_addr(&fullpath_string));
- *     }
- * }
- * db_free_search_tbl(&results);
- * @endcode
+ *
+ @code
+  size_t i = 0;
+  struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+  const char *plan = "-name *.s -or -below -type region";
+  int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip);
+  for (i = 0; matches > 0 && i < BU_PTBL_LEN(&results); i++) {
+      char *path_str = db_path_to_string((struct db_full_path *)BU_PTBL_GET(&results, i));
+      bu_log("%s\n", path_str);
+      bu_free(path_str, "free db_fullpath_to_string allocation");
+  }
+  db_free_search_tbl(&results);
+ @endcode
  *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
