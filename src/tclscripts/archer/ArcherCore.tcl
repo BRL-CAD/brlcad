@@ -2113,59 +2113,27 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::openDb {} {
+
+    package require cadwidgets::GeometryLoad
+
     set typelist {
 	{"BRL-CAD Database" {".g"}}
-	{"STEP AP203" {".stp" ".step"}}
+	{"STEP" {".stp" ".step"}}
 	{"All Files" {*}}
     }
 
-    set target [tk_getOpenFile -parent $itk_interior \
+    set input_target [tk_getOpenFile -parent $itk_interior \
 		    -initialdir $mLastSelectedDir \
 		    -title "Open Database" \
 		    -filetypes $typelist]
 
-    if {$target == ""} {
+    if {$input_target == ""} {
 	return
     } else {
-	set mLastSelectedDir [file dirname $target]
+	set mLastSelectedDir [file dirname $input_target]
     }
 
-    switch -- [file extension $target] {
-	".stp"   {
-	    set g_root [file rootname [file tail $target]]
-	    set g_dir [file dirname $target]
-	    set g_file [file join [file dirname $target] "$g_root.g"]
-	    set stepgname [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]]
-            if {[file exists $g_file]} {
-		tk_messageBox -icon error -type ok -title "step-g error" -message "A file named $g_root.g already exists in $g_dir - rename or remove this file before importing $target"
-		return
-	    }
-	    catch {exec $stepgname -o $g_file $target}
-            if {[file exists $stepgname]} {
-	       set target $g_file
-	    } else {
-	       return
-	    }
-	}
-	".step"   {
-	    set g_root [file rootname [file tail $target]]
-	    set g_dir [file dirname $target]
-	    set g_file [file join [file dirname $target] "$g_root.g"]
-	    set stepgname [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]]
-            if {[file exists $g_file]} {
-		tk_messageBox -icon error -type ok -title "step-g error" -message "A file named $g_root.g already exists in $g_dir - rename or remove this file before importing $target"
-		return
-	    }
-	    catch {exec $stepgname -o $g_file $target}
-            if {[file exists $stepgname]} {
-	       set target $g_file
-	    } else {
-	       return
-	    }
-	}
-	default {
-	}
-    }
+    set target [cadwidgets::geom_load $input_target]
 
     ::update
     Load $target

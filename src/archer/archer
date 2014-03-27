@@ -304,47 +304,8 @@ proc main {} {
     }
 
     if {[info exists argv] && $argv != ""} {
-	set target [lindex $argv 0]
-	set ext [file extension $target]
-	switch -- [file extension $target] {
-	    ".stp"   {
-	        set g_root [file rootname [file tail $target]]
-	        set g_dir [file dirname $target]
-	        set g_file [file join [file dirname $target] "$g_root.g"]
-	        set stepgname [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]]
-	        if {[file exists $g_file]} {
-	    	   puts "A file named $g_root.g already exists in $g_dir - rename or remove this file before importing $target"
-	    	exit 1
-	        }
-		puts "Importing STEP file to $g_file"
-	        catch {exec $stepgname -o $g_file $target}
-	        if {[file exists $stepgname]} {
-	           set target $g_file
-	        } else {
-		   exit 1
-	        }
-	    }
-	    ".step"   {
-	        set g_root [file rootname [file tail $target]]
-	        set g_dir [file dirname $target]
-	        set g_file [file join [file dirname $target] "$g_root.g"]
-	        set stepgname [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]]
-	        if {[file exists $g_file]} {
-	    	   puts "A file named $g_root.g already exists in $g_dir - rename or remove this file before importing $target"
-	    	exit 1
-	        }
-		puts "Importing STEP file to $g_file"
-	        catch {exec $stepgname -o $g_file $target}
-	        if {[file exists $stepgname]} {
-	           set target $g_file
-	        } else {
-		   exit 1
-	        }
-	    }
-	    default {
-	    }
-	}
-
+	package require cadwidgets::GeometryLoad
+	set target [cadwidgets::geom_load [lindex $argv 0]]
 	$::ArcherCore::application Load $target
     }
 

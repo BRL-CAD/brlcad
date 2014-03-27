@@ -10,6 +10,7 @@ set(lib_TCLSCRIPTS
 	Dm.tcl
 	Drawable.tcl
 	Ged.tcl
+	GeometryLoad.tcl
 	Help.tcl
 	Legend.tcl
 	Mged.tcl
