@@ -55,8 +55,10 @@ their dimensions can be automatically determined by using programs.</para>
   </refsect1>
 
   <refsect1 xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2012-2014 United States Government as
-  represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+  <para>
+    This software is Copyright (c) 2012-2014 United States Government
+    as represented by the U.S. Army Research Laboratory.
+  </para>
   </refsect1>
 
   <refsect1 xml:id="bug_reports"><title>BUG REPORTS</title>
