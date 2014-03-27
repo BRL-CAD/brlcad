@@ -422,7 +422,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 			}
 		    }
-		    db_free_search_tbl(search_results);
+		    db_search_free(search_results);
 		    bu_free(search_results, "free search container");
 		} else {
 		    struct directory *curr_path = search->paths[path_cnt];
@@ -455,7 +455,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				bu_log("Warning - ignoring unknown search type %d\n", search->search_type);
 				break;
 			}
-			db_free_search_tbl(search_results);
+			db_search_free(search_results);
 			bu_free(search_results, "free search container");
 			bu_vls_free(&fullpath_string);
 			path_cnt++;

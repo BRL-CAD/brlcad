@@ -2001,7 +2001,7 @@ db_search_freeplan(void **vplan) {
 
 
 void
-db_free_search_tbl(struct bu_ptbl *search_results)
+db_search_free(struct bu_ptbl *search_results)
 {
     int i;
     if (!search_results || search_results->l.magic != BU_PTBL_MAGIC)
@@ -2084,7 +2084,7 @@ _db_search_full_paths(void *searchplan,
 	    curr_node.full_paths = full_paths;
 	    find_execute_plans(wdbp->dbip, wdbp, searchresults, &curr_node, (struct db_plan_t *)searchplan);
 	}
-	db_free_search_tbl(full_paths);
+	db_search_free(full_paths);
 	bu_free(full_paths, "free search container");
 
     }
@@ -2181,7 +2181,7 @@ db_search(struct bu_ptbl *search_results,
     }
     /* If the idea was to test the plan string and we *do* have
      * a plan, return success */
-    if (!paths) {
+    if (!paths || !wdbp) {
 	/* TODO: do a db_ls of tops */
 	db_search_free_plan((void **)&dbplan);
 	bu_free(mutable_plan_str, "free strdup");
@@ -2263,7 +2263,7 @@ db_search(struct bu_ptbl *search_results,
 	    }
 
 	    /* Done with the paths now - we have our answer */
-	    db_free_search_tbl(full_paths);
+	    db_search_free(full_paths);
 	    bu_free(full_paths, "free search container");
 	}
     }

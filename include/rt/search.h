@@ -57,9 +57,10 @@
  *
  * @param filter is a string defining search filters to be used.
  *
- * @param paths is a NULL-terminated array of directory paths to be
- * searched.  If paths itself is NULL, it will search all top-level
- * objects.
+ * @param path_c is the count of directory paths to be searched.
+ *
+ * @param path_v is one or more directory paths to be searched.  If
+ * path_v itself is NULL, all top-level objects are searched
  *
  * @param dbip The database instance pointer corresponding to the
  * current geometry database.
@@ -93,8 +94,8 @@
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                int flags,
                                const char *filter,
-                               int path_cnt,
-                               struct directory **paths,
+                               int path_c,
+                               struct directory **path_v,
                                struct rt_wdb *wdbp
 );
 
@@ -110,7 +111,7 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
  * itself, if not put on the stack, will need to be freed by the same
  * calling function that allocated it.
  */
-RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
+RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
 
 
 

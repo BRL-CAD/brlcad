@@ -344,7 +344,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
     if (!BU_PTBL_LEN(regions)) {
-	db_free_search_tbl(regions);
+	db_search_free(regions);
 	if (!(dp->d_flags & RT_DIR_REGION))
 	    return _ged_set_region_flag(gedp, dp);
 	return GED_OK;
@@ -388,7 +388,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 	    }
 	}
     }
-    db_free_search_tbl(regions);
+    db_search_free(regions);
     bu_ptbl_free(combs_outside_of_tree);
     bu_free(combs_outside_of_tree, "free search table container");
 
