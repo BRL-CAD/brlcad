@@ -44,6 +44,14 @@ proc geom_load {input_file} {
     }
 
     switch -- $input_ext {
+	".3dm" {
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] \
+	            -r \
+	            -c \
+		    -o $output_file \
+	    	    $input_file]
+            catch {eval exec $cmd _conv_log}
+	}
 	".stl" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
 	    	    $input_file \

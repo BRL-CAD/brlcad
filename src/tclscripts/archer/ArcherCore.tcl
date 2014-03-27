@@ -2118,6 +2118,7 @@ namespace eval ArcherCore {
 
     set typelist {
 	{"BRL-CAD Database" {".g"}}
+	{"3dm (Rhino)" {".3dm"}}
 	{"STEP" {".stp" ".step"}}
 	{"STL" {".stl"}}
 	{"All mesh files" {".stl"}}
