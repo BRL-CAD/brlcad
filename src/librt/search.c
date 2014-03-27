@@ -163,9 +163,7 @@ print_path_with_bools(struct db_full_path *full_path)
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
 			     void (*traverse_func) (struct db_full_path *path,
-						    struct resource *,
 						    genptr_t),
-			     struct resource *resp,
 			     genptr_t client_data)
 {
     struct directory *dp;
@@ -178,7 +176,6 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
     RT_CK_FULL_PATH(path);
     RT_CHECK_DBI(lcd->dbip);
     RT_CK_TREE(tp);
-    RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 	case OP_UNION:
@@ -188,11 +185,11 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	    if (tp->tr_op == OP_UNION) bool_val = 2;
 	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
 	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;
-	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, resp, client_data);
+	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, client_data);
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, resp, client_data);
+	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -211,7 +208,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 		    if (!cyclic_path(path, NULL)) {
 			/* Keep going */
-			traverse_func(path, resp, client_data);
+			traverse_func(path, client_data);
 		    } else {
 			char *path_string = db_path_to_string(path);
 			bu_log("WARNING: not traversing cyclic path %s\n", path_string);
@@ -238,7 +235,6 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  */
 HIDDEN void
 db_fullpath_list(struct db_full_path *path,
-		     struct resource *resp,
 		     genptr_t client_data)
 {
     struct directory *dp;
@@ -252,10 +248,10 @@ db_fullpath_list(struct db_full_path *path,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, resp) < 0) return;
+	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, &rt_uniresource) < 0) return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	db_fullpath_list_subtree(path, OP_UNION, comb->tree, db_fullpath_list, resp, client_data);
+	db_fullpath_list_subtree(path, OP_UNION, comb->tree, db_fullpath_list, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -2076,7 +2072,7 @@ _db_search_full_paths(void *searchplan,
 	bu_ptbl_ins(full_paths, (long *)start_path);
 	lcd.dbip = dbip;
 	lcd.full_paths = full_paths;
-	db_fullpath_list(start_path, dbip->dbi_wdbp->wdb_resp, (genptr_t *)&lcd);
+	db_fullpath_list(start_path, (genptr_t *)&lcd);
 
 	for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 	    curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
@@ -2249,7 +2245,7 @@ db_search(struct bu_ptbl *search_results,
 		    bu_ptbl_ins(full_paths, (long *)start_path);
 		    /* Use the initial path to tree-walk and build a set of all paths below
 		     * start_path */
-		    db_fullpath_list(start_path, dbip->dbi_wdbp->wdb_resp, (genptr_t *)&lcd);
+		    db_fullpath_list(start_path, (genptr_t *)&lcd);
 		}
 	    }
 	}
