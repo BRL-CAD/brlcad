@@ -348,17 +348,15 @@ find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl
     return state;
 }
 
+
 /*
- * -above expression functions --
+ * -below expression functions --
  *
- * Conduct the test described by expression on all levels
- * above the current level in the tree - in this case meaning
- * following the tree path back to the root, NOT testing all
- * paths at any level above the current object depth that
- * include the current directory.
+ * Find objects above objects matching an expression.  In this case,
+ * this means following the tree path back to the root.
  */
 HIDDEN int
-f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
+f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     int state = 0;
     int distance_above = 0;
@@ -386,21 +384,21 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 HIDDEN int
-c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
+c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    (*resultplan) =  (palloc(N_ABOVE, f_above));
+    (*resultplan) =  (palloc(N_BELOW, f_below));
     return BRLCAD_OK;
 }
 
 
 /*
- * -below expression functions --
+ * -above expression functions --
  *
- * Conduct the test described by expression on all objects
- * below the current object in the tree.
+ * Find objects below objects matching an expression.  Look at all
+ * objects below the current object in the tree.
  */
 HIDDEN int
-f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *UNUSED(results))
+f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *UNUSED(results))
 {
     int i = 0;
     int state = 0;
@@ -433,9 +431,9 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 HIDDEN int
-c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
+c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    (*resultplan) =  (palloc(N_BELOW, f_below));
+    (*resultplan) =  (palloc(N_ABOVE, f_above));
     return BRLCAD_OK;
 }
 
@@ -2142,6 +2140,7 @@ db_search(struct bu_ptbl *search_results,
 
     /* get the plan string into an argv array */
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
     if (!(search_flags & DB_SEARCH_QUIET)) {
 	dbplan = db_search_form_plan(plan_argv, 0);
