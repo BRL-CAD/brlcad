@@ -96,7 +96,7 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                const char *filter,
                                int path_c,
                                struct directory **path_v,
-                               struct rt_wdb *wdbp
+                               struct db_i *dbip
 );
 
 /* These are the possible search flags. */
@@ -129,17 +129,14 @@ struct db_full_path_list {
 DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
 DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
-					  struct db_i *dbip,
-					  struct rt_wdb *wdbp);
+						     struct db_i *dbip);
 DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
 DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
-								struct db_full_path_list *path_list,
-								struct db_i *dbip,
-								struct rt_wdb *wdbp);
+									   struct db_full_path_list *path_list,
+									   struct db_i *dbip);
 DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
-							  struct db_full_path_list *path_list,
-							  struct db_i *dbip,
-							  struct rt_wdb *wdbp);
+								     struct db_full_path_list *path_list,
+								     struct db_i *dbip);
 
 
 #endif /* RT_SEARCH_H*/

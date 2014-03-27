@@ -67,7 +67,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
      */
     bu_vls_printf(&str, "-not -below -name %s -name %s", topobj, obj);
 
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip->dbi_wdbp);
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip->dbi_wdbp->dbip);
 
     bu_vls_free(&str);
 

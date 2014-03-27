@@ -181,7 +181,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
     const char *comb_str = "-name *";
     struct bu_ptbl *tmp_search;
     BU_ALLOC(tmp_search, struct bu_ptbl);
-    (void)db_search(tmp_search, DB_SEARCH_RETURN_UNIQ_DP, comb_str, 1, &path, gedp->ged_wdbp);
+    (void)db_search(tmp_search, DB_SEARCH_RETURN_UNIQ_DP, comb_str, 1, &path, gedp->ged_wdbp->dbip);
     path_cnt = (int)BU_PTBL_LEN(tmp_search);
     (*path_list) = (struct directory **)bu_malloc(sizeof(char *) * (path_cnt+1), "object path array");
     for (j = 0; j < path_cnt; j++) {
@@ -354,7 +354,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* If we have the quiet flag set, check now whether we have a valid plan.  Search will handle
      * an invalid plan string, but it will report why it is invalid.  So in quiet mode,
      * we need to identify the bad string and return now. */
-    if (wflag && !db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL)) {
+    if (wflag && db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL) != -1) {
 	bu_vls_free(&argvls);
 	bu_vls_free(&search_string);
 	bu_free_argv(argc, argv);
@@ -382,7 +382,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    struct directory *curr_path = search->paths[path_cnt];
 	    while (path_cnt < search->path_cnt) {
 		flags |= DB_SEARCH_RETURN_UNIQ_DP;
-		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp);
+		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip);
 		path_cnt++;
 		curr_path = search->paths[path_cnt];
 	    }
@@ -412,7 +412,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			struct directory *dp;
 			for (dp = gedp->ged_wdbp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 			    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->ged_wdbp);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->ged_wdbp->dbip);
 			    }
 			}
 		    }
@@ -433,7 +433,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			bu_ptbl_init(search_results, 8, "initialize search result table");
 			switch(search->search_type) {
 			    case 0:
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip);
 				if (BU_PTBL_LEN(search_results) > 0) {
 				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
@@ -445,7 +445,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip);
 				for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 				    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 				    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);

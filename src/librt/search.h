@@ -81,7 +81,7 @@ enum db_search_ntype {
 
 struct db_plan_t {
     struct db_plan_t *next;			/* next node */
-    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results);
+    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct bu_ptbl *results);
     /* node evaluation function */
 #define F_EQUAL 1 /* [acm]time inum links size */
 #define F_LESSTHAN 2
