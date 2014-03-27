@@ -151,10 +151,6 @@ FB_EXPORT extern FBIO remote_interface;	/* not in list[] */
 FB_EXPORT extern FBIO ogl_interface;
 #endif
 
-#ifdef IF_OSG
-FB_EXPORT extern FBIO osg_interface;
-#endif
-
 #ifdef IF_WGL
 FB_EXPORT extern FBIO wgl_interface;
 #endif
