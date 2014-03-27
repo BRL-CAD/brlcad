@@ -2033,10 +2033,12 @@ _db_search_full_paths(void *searchplan,
     struct db_full_path_list *currentpath = NULL;
     struct db_full_path_list *searchresults_list = NULL;
     struct bu_ptbl *searchresults = NULL;
+
     BU_ALLOC(searchresults_list, struct db_full_path_list);
     BU_LIST_INIT(&(searchresults_list->l));
     BU_ALLOC(searchresults, struct bu_ptbl);
     bu_ptbl_init(searchresults, 8, "initialize searchresults table");
+
     /* If nothing is passed in, try to get the list of toplevel objects */
     if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
 	db_full_path_init(&dfp);
@@ -2057,6 +2059,7 @@ _db_search_full_paths(void *searchplan,
 	}
 	db_free_full_path(&dfp);
     }
+
     for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
 	struct bu_ptbl *full_paths = NULL;
 	struct db_full_path *start_path = NULL;
@@ -2174,15 +2177,16 @@ db_search(struct bu_ptbl *search_results,
     if (!dbplan) {
 	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
-	return 0;
+	return -1;
     }
     /* If the idea was to test the plan string and we *do* have
      * a plan, return success */
-    if (!search_results && !paths) {
+    if (!paths) {
+	/* TODO: do a db_ls of tops */
 	db_search_free_plan((void **)&dbplan);
 	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
-	return 1;
+	return -2;
     }
 
     /* execute the plan */
