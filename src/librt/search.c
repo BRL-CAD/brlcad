@@ -359,25 +359,25 @@ HIDDEN int
 f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     int state = 0;
-    int distance_above = 0;
+    int distance = 0;
     struct db_node_t curr_node;
-    struct db_full_path abovepath;
+    struct db_full_path parent_path;
 
-    db_full_path_init(&abovepath);
-    db_dup_full_path(&abovepath, db_node->path);
-    DB_FULL_PATH_POP(&abovepath);
-    curr_node.path = &abovepath;
-    distance_above = db_node->path->fp_len - abovepath.fp_len;
+    db_full_path_init(&parent_path);
+    db_dup_full_path(&parent_path, db_node->path);
+    DB_FULL_PATH_POP(&parent_path);
+    curr_node.path = &parent_path;
+    distance = db_node->path->fp_len - parent_path.fp_len;
 
-    while ((abovepath.fp_len > 0) && (state == 0) && !(db_node->flags & DB_SEARCH_FLAT)) {
-	distance_above++;
-	if ((distance_above <= plan->max_depth) && (distance_above >= plan->min_depth)) {
+    while ((parent_path.fp_len > 0) && (state == 0) && !(db_node->flags & DB_SEARCH_FLAT)) {
+	distance++;
+	if ((distance <= plan->max_depth) && (distance >= plan->min_depth)) {
 	    state += find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
 	}
-	DB_FULL_PATH_POP(&abovepath);
+	DB_FULL_PATH_POP(&parent_path);
     }
 
-    db_free_full_path(&abovepath);
+    db_free_full_path(&parent_path);
 
     return (state > 0) ? 1 : 0;
 }
