@@ -34,35 +34,47 @@
 
 #include "rt/defines.h"
 
-#define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
-#define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
-#define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
-#define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
-#define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
 
 /**
  * @brief Search for objects in a geometry database using filters
  *
- * The db_search function is a programmatic interface to the find-command
- * style search functionality available in librt for databases.  This
- * function searches the database using a supplied list of filter criteria.
+ * The db_search function is a programmatic find-style interface that
+ * lets you search for objects in a geometry database.  This function
+ * searches the database using a supplied list of filter criteria.
  *
- * @param[out] results A bu_ptbl holding the pointers to either db_full_path or directory objects - these are the results of the search process.
- * @param search_flags A bit field (32 bit integer) for setting various search options.
- * @param plan_string  A string defining the filters to be used in the search.
- * @param path_cnt     The number of paths supplied in the paths array.
- * @param paths        The array of directory paths to use for search inputs.  If NULL, db_search will generate a list of all toplevel objects to use.
- * @param dbip         The database instance pointer corresponding to the current geometry database.
+ * The function returns a count of objects matching the filter
+ * criteria and can provide the resulting matches in binary format as
+ * either db_full_path or directory objects depending on the flags
+ * (i.e., depending on whether this is a flat or hierarchical search).
  *
- * @return Negative return values are an indication of a problem with the search, and non-negative values indicate a successful search.  Non-negative returns will correspond to the number of objects found.
+ * There are a LOT of filter possibilities.  See the search(n) manual
+ * page for details.
+ *
+ * @param[out] results is a bu_ptbl holding either db_full_path or
+ * directory pointers.
+ *
+ * @param flags is a bit field for setting various search options.
+ *
+ * @param filter is a string defining search filters to be used.
+ *
+ * @param paths is a NULL-terminated array of directory paths to be
+ * searched.  If paths itself is NULL, it will search all top-level
+ * objects.
+ *
+ * @param dbip The database instance pointer corresponding to the
+ * current geometry database.
+ *
+ * @return Negative return values indicate a problem with the search,
+ * and non-negative values indicate a successful search.  Non-negative
+ * values correspond with the number of objects found.
  *
  * @retval -2 Return code when db_search is called with a NULL dbip.
  * @retval -1 Return code when the plan search string is invalid.
  * @retval 0  Return code when the search completed successfully but no matches were found.
  * @retval >0 Return code when the search completed successfully and matched one or more objects.
  *
- * The following example assumes a database instance pointer (dbip) is available and ready to use.
- *
+ * The following example assumes a database instance pointer (dbip) is
+ * available and ready to use.
  *
  @code
   size_t i = 0;
@@ -79,12 +91,19 @@
  *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
-                               int search_flags,
-                               const char *plan_string,
+                               int flags,
+                               const char *filter,
                                int path_cnt,
                                struct directory **paths,
                                struct rt_wdb *wdbp
 );
+
+/* These are the possible search flags. */
+#define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
+#define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
+#define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
+#define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
+#define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
 
 /**
  * Properly free the table contents returned by db_search.  The bu_ptbl
