@@ -1,11 +1,12 @@
 /*                          T U R B . C
  * BRL-CAD
  *
- * This software may be freely distributed without prior notice.
+ * This file may be freely distributed without prior notice.
+ * This data is in the public domain.
  */
 /** @file liboptical/turb.c
  *
- * Larger noise table for turbulence calculations.
+ * Noise table for turbulence calculations.
  *
  */
 
