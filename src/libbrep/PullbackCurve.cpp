@@ -1417,8 +1417,8 @@ bool trim_GetClosestPoint3dFirstOrder(
         const ON_3dPoint& p,
         ON_2dPoint& p2d,
         double& t,
-        double tol,
-        const ON_Interval* interval
+        const ON_Interval* interval,
+        double tol
         )
 {
     bool rc = false;
@@ -2149,6 +2149,8 @@ interpolateCurve(ON_2dPointArray &samples)
 
 
 /*
+ *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
+ *  the floating point equality used by openNURBS.
  * rc = 0 Not on seam, 1 on East/West seam(umin/umax), 2 on North/South seam(vmin/vmax), 3 seam on both U/V boundaries
  */
 int
@@ -2168,10 +2170,18 @@ IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
 }
 
 
+/*
+ *  Similar to IsAtSeam(surf,u,v,tol) function but takes a ON_2dPoint
+ *  and unwraps any closed seam extents before passing on IsAtSeam(surf,u,v,tol)
+ */
 int
 IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
-    return IsAtSeam(surf, pt.x, pt.y, tol);
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    rc = IsAtSeam(surf,unwrapped_pt.x,unwrapped_pt.y,tol);
+
+    return rc;
 }
 
 
@@ -2452,32 +2462,35 @@ DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt)
  *  // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
  */
 bool
-ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,ON_2dPoint pt,ON_2dPoint &prev_pt, int &udir, int &vdir)
+ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint pt,const ON_2dPoint &prev_pt, int &udir, int &vdir)
 {
     bool rc = false;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
 
-    ON_Interval dom[2];
-    dom[0] = surf->Domain(0);
-    dom[1] = surf->Domain(1);
-
-    double delta=pt.x-prev_pt.x;
     udir = vdir = 0;
-    if ((surf->IsClosed(0)) && (fabs(delta) > dom[0].Length()/2.0)) {
-	if (delta < 0.0) {
-	    udir = 1; // east bound
-	} else {
-	    udir= 2; // west bound
+    if (surf->IsClosed(0)) {
+	double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
+	if (fabs(delta) > surf->Domain(0).Length()/2.0) {
+	    if (delta < 0.0) {
+		udir = 1; // east bound
+	    } else {
+		udir= 2; // west bound
+	    }
+	    rc = true;
 	}
-	rc = true;
     }
-    delta=pt.y-prev_pt.y;
-    if ((surf->IsClosed(1)) && (fabs(delta) > dom[1].Length()/2.0)) {
-	if (delta < 0.0) {
-	    vdir = 2; // north bound
-	} else {
-	    vdir= 1; // south bound
+
+    if (surf->IsClosed(1)) {
+	double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
+	if (fabs(delta) > surf->Domain(1).Length()/2.0) {
+	    if (delta < 0.0) {
+		vdir = 2; // north bound
+	    } else {
+		vdir= 1; // south bound
+	    }
+	    rc = true;
 	}
-	rc = true;
     }
 
     return rc;
@@ -2750,7 +2763,7 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 		while(seem_not_found) {
 		    double d0 = DistToNearestClosedSeam(surf,p0);
 		    double d1 = DistToNearestClosedSeam(surf,p1);
-		    if ((d0 > 0.0) && (d1 > 0.0)) {
+		    if ((d0 > tol) && (d1 > tol)) {
 			double t = t0 + (t1 - t0)*(d0/(d0+d1));
 			int seam;
 			p = trim.PointAt(t);
