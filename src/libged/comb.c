@@ -226,7 +226,9 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
  *  elsewhere.  For those that are not, remove them.
  */
 HIDDEN int
-_ged_flatten_comb(struct ged *gedp, struct directory *dp) {
+_ged_flatten_comb(struct ged *gedp, struct directory *dp)
+{
+    int j;
     int result_cnt = 0;
     int obj_cnt = 0;
     struct directory **all_paths;
@@ -266,6 +268,9 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
+    for (j = 0; j < obj_cnt; j++) {
+	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
+    }
     bu_free(all_paths, "free db_tops output");
     if (_ged_clear_comb_tree(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
@@ -317,7 +322,8 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
  * flags below in the tree if practical.
  */
 HIDDEN int
-_ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
+_ged_lift_region_comb(struct ged *gedp, struct directory *dp)
+{
     int j;
     int obj_cnt;
     struct directory **all_paths;
@@ -349,6 +355,11 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
     bu_vls_free(&plan_string);
+
+    /* release our db_ls paths */
+    for (j = 0; j < obj_cnt; j++) {
+	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
+    }
     bu_free(all_paths, "free db_tops output");
 
     /* check for entry last node in combs_outside of tree
