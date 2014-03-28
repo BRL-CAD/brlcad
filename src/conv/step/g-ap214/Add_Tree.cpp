@@ -322,7 +322,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * we need a full list of all paths instead of just the unique set of assembly
      * combs - we generate that *after* these results have been vetted) */
 
-    const char *no_nonsub_region_below_region_search = "-type region -above -type region ! -bool -";
+    const char *no_nonsub_region_below_region_search = "-type region -below -type region ! -bool -";
     struct bu_ptbl *problem_regions;
     BU_ALLOC(problem_regions, struct bu_ptbl);
     (void)db_search(problem_regions, no_nonsub_region_below_region_search, 1, &dp, wdbp, DB_SEARCH_TREE);
@@ -341,17 +341,17 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     /* Look for any assembly objects with problems - probably should break this out for reporting purposes... */
     struct bu_ptbl *invalid_assemblies;
     BU_ALLOC(invalid_assemblies, struct bu_ptbl);
-    const char *invalid_assembly_under_region =      "-below -type region ! -type region -above -type region";
+    const char *invalid_assembly_under_region =      "-above -type region ! -type region -below -type region";
     (void)db_search(invalid_assemblies, invalid_assembly_under_region, 1, &dp, wdbp, DB_SEARCH_TREE);
-    const char *invalid_assembly_includes_non_comb = "-below -type region ! -type region -below=1 -type shape";
+    const char *invalid_assembly_includes_non_comb = "-above -type region ! -type region -above=1 -type shape";
     (void)db_search(invalid_assemblies, invalid_assembly_includes_non_comb, 1, &dp, wdbp, DB_SEARCH_TREE);
-    const char *invalid_assembly_below_subtract =    "-below -type region ! -type region -below=1 -bool -";
+    const char *invalid_assembly_below_subtract =    "-above -type region ! -type region -above=1 -bool -";
     (void)db_search(invalid_assemblies, invalid_assembly_below_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
-    const char *invalid_assembly_below_intersect =   "-below -type region ! -type region -below=1 -bool +";
+    const char *invalid_assembly_below_intersect =   "-above -type region ! -type region -above=1 -bool +";
     (void)db_search(invalid_assemblies, invalid_assembly_below_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
-    const char *invalid_assembly_above_subtract =    "-below -type region ! -type region -above -bool -";
+    const char *invalid_assembly_above_subtract =    "-above -type region ! -type region -below -bool -";
     (void)db_search(invalid_assemblies, invalid_assembly_above_subtract, 1, &dp, wdbp, DB_SEARCH_TREE);
-    const char *invalid_assembly_above_intersect =   "-below -type region ! -type region -above -bool +";
+    const char *invalid_assembly_above_intersect =   "-above -type region ! -type region -below -bool +";
     (void)db_search(invalid_assemblies, invalid_assembly_above_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
     if (BU_PTBL_LEN(invalid_assemblies) > 0) {
 	bu_log("Error - found invalid assemblies within the .g file: \n");
@@ -400,7 +400,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     }
 
     /* Get the list of assembly objects */
-    const char *assembly_search = "-below -type region ! -type region";
+    const char *assembly_search = "-above -type region ! -type region";
     struct bu_ptbl *assemblies;
     BU_ALLOC(assemblies, struct bu_ptbl);
     (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);
