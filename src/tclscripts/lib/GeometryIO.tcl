@@ -112,7 +112,6 @@ proc geom_save {input_file output_file db_component} {
 	    for {set i 0} {$i < [llength $tops_list]} {incr i} {
 		append cmd [lindex $tops_list $i] { }
 	    }
-	    puts $cmd
             catch {eval exec $cmd} _conv_log
 	}
 	".stl" {

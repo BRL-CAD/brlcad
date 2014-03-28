@@ -841,6 +841,7 @@ namespace eval ArcherCore {
 	method newDb             {}
 	method openDb            {}
 	method saveDb            {}
+	method exportDb          {}
 	method primaryToolbarAdd        {_type _name {args ""}}
 	method primaryToolbarRemove     {_index}
 
@@ -2114,7 +2115,7 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::openDb {} {
 
-    package require cadwidgets::GeometryLoad
+    package require cadwidgets::GeometryIO
 
     set typelist {
 	{"BRL-CAD Database" {".g"}}
@@ -2171,6 +2172,32 @@ namespace eval ArcherCore {
 
     set mTarget $target
     file copy -force $mTargetCopy $mTarget
+}
+
+::itcl::body ArcherCore::exportDb {} {
+
+    package require cadwidgets::GeometryIO
+
+    set typelist {
+	{"All Files" {*}}
+	{"STL" {".stl"}}
+	{"Wavefront OBJ" {".obj"}}
+    }
+
+    set target [tk_getSaveFile -parent $itk_interior \
+        -initialdir $mLastSelectedDir \
+        -title "Save the Database As..." \
+        -filetypes $typelist]
+
+    # Sanity
+    if {$target == "" ||
+	$mTargetCopy == "" ||
+	$mDbNoCopy} {
+	return
+    }
+
+    set mTarget $target
+    cadwidgets::geom_save $mTargetCopy $mTarget $itk_component(ged)
 }
 
 ::itcl::body ArcherCore::primaryToolbarAdd {type name {args ""}} {
