@@ -290,6 +290,16 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-n</option> <replaceable>value</replaceable></term>
+	<term><option>--height</option> <replaceable>value</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify the height of the generated image in pixels.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-O</option> <replaceable>value</replaceable></term>
 	<term><option>--occlusion</option> <replaceable>value</replaceable></term>
 	<listitem>
@@ -358,6 +368,17 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-w</option> <replaceable>value</replaceable></term>
+	<term><option>--width</option> <replaceable>value</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify the width of the generated image in pixels.
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
   </refsection>
