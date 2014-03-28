@@ -1,4 +1,4 @@
-#               G E O M E T R Y L O A D . T C L
+#               G E O M E T R Y I O . T C L
 # BRL-CAD
 #
 # Copyright (c) 2014 United States Government as represented by
@@ -23,7 +23,7 @@
 #	This calls converters for various types of Geometry.
 #
 
-package provide cadwidgets::GeometryLoad 1.0
+package provide cadwidgets::GeometryIO 1.0
 
 namespace eval cadwidgets {
 proc geom_load {input_file} {
@@ -50,25 +50,25 @@ proc geom_load {input_file} {
 	            -c \
 		    -o $output_file \
 	    	    $input_file]
-            catch {eval exec $cmd _conv_log}
+            catch {eval exec $cmd} _conv_log
 	}
 	".stl" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
 	    	    $input_file \
 		    $output_file]
-            catch {eval exec $cmd _conv_log}
+            catch {eval exec $cmd} _conv_log
 	}
 	".stp" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
 	    	    -o $output_file \
 		    $input_file]
-            catch {eval exec $cmd _conv_log}
+            catch {eval exec $cmd} _conv_log
 	}
 	".step" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
 	    	    -o $output_file \
 		    $input_file]
-            catch {eval exec $cmd _conv_log}
+            catch {eval exec $cmd} _conv_log
 	}
     }
 
@@ -78,6 +78,64 @@ proc geom_load {input_file} {
 	return -code error "Converting $input_file to a .g file failed: $_conv_log"
     }
 }
+
+proc geom_save {input_file output_file db_component} {
+
+    set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]
+
+    set output_filename [file tail $output_file]
+    set output_dir [file dirname $output_file]
+    set output_ext [file extension $output_file]
+
+    # Don't overwrite anything
+    if {[file exists $output_file]} {
+	return -code error "A file named $output_filename already exists in $output_dir - rename or remove this file before saving as $output_file"
+    }
+
+    # Don't do anything except a copy if we're give a file that's already a .g file
+    if {[string compare $output_ext ".g"] == 0} {
+	file copy -force $input_file $output_file
+	if {[file exists $output_file]
+	    return $output_file
+        } else {
+	    return -code error "Error saving as $output_file"
+	}
+    }
+
+    switch -- $output_ext {
+	".obj" {
+	    set tops_list [lsort -dictionary [$db_component tops]]
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-obj]] \
+		    -o $output_file \
+	    	    $input_file]
+            append cmd " " { }
+	    for {set i 0} {$i < [llength $tops_list]} {incr i} {
+		append cmd [lindex $tops_list $i] { }
+	    }
+	    puts $cmd
+            catch {eval exec $cmd} _conv_log
+	}
+	".stl" {
+	    set tops_list [lsort -dictionary [$db_component tops]]
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-stl]] \
+	            -o $output_file \
+	    	    $input_file]
+            append cmd " " { }
+	    for {set i 0} {$i < [llength $tops_list]} {incr i} {
+		append cmd [lindex $tops_list $i] { }
+	    }
+            catch {eval exec $cmd} _conv_log
+	}
+    }
+
+    if {[file exists $output_file]} {
+	return $output_file
+    } else {
+	return -code error "Converting $input_file to a .g file failed: $_conv_log"
+    }
+}
+
+
 }
 
 
