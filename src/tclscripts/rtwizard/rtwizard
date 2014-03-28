@@ -101,8 +101,8 @@ getopt::init {
 	{zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 	{center			""	{::have_center ::RtWizard::wizard_state(x_center) ::RtWizard::wizard_state(y_center) ::RtWizard::wizard_state(z_center)}}
 	{viewsize		""	{::have_viewsize ::RtWizard::wizard_state(viewsize)}}
-	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation)}}
-	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt)}}
+	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation) ...}}
+	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt) ...}}
 	# Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }

@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fixed bug with get_eyemodel info parsing in rtwizard - Cliff Yapp
 * added -s size option for rtwizard image output - Cliff Yapp
 * documented image size options in rtwizard man page - Cliff Yapp
 * added view center specification dialog to rtwizard - Cliff Yapp

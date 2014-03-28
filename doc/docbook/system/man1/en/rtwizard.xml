@@ -215,6 +215,13 @@
 	 are required to correctly define the view.  To get parameters for a given
 	 view, use the Archer command <command>get_eyemodel</command>.
       </para>
+      <para>
+	      The <option>orientation</option> and <option>eye_pt</option> options need to parse
+	      multiple arguments, so any options immediately following either of them need to use
+	      an explicit argument flag - for example, an input .g file needs to be specified with
+	      the <option>-i</option> option and a color geometry object would need to be preceeded
+	      with <option>-c</option>.
+      </para>
       <varlistentry>
 	 <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
 	<listitem>
@@ -241,6 +248,14 @@
     </variablelist>
 
     <variablelist remap="TP"><title>Image Generation Options</title>
+      <para>
+	      The three options that are used to input geometry object lists need to parse
+	      multiple arguments, so any options immediately following either of them need to use
+	      an explicit argument flag to signal termination of the input list to the option 
+	      parser - for example, an input .g file needs to be specified with
+	      the <option>-i</option> if it comes after a list of ghost objects.
+      </para>
+
       <varlistentry>
 	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
 	<term><option>--color-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
