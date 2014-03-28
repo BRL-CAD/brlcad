@@ -45,7 +45,17 @@
     </para>
 
     <para>
-      The following options are recognized.
+	    When specifying options on the command line, it is usually better to fully qualify what a particular item is - for example,
+	    using <option>-i</option> to specifically identify the input file instead of relying on the .g suffix.  There is a limited ability to recoginze
+	    common usage patterns (for example, "<command>rtwizard</command> file.g output_image.png geometry_object" will
+	    generate an image of geometry_object in the file output_image.png) but the potentially general nature of some of the option arguments can
+	    easily result in ambiguous cases.  For example, "<command>rtwizard</command> -c car.g old_car.g car.png" could be interpreted as
+	    "raytrace objects car.g, old_car.g and car.png in an unknown .g file" or "raytrace object car.g in old_car.g and output to car.png".
+	    or even "raytrace old_car.g in car.g and output to car.png, with the -c option being passed an empty list".  In that situation,
+	    the unambiguous "<command>rtwizard</command> -i old_car.g -c car.g -o car.png" is required.
+    </para>
+    <para>
+	    The following options are recognized.
     </para>
     <variablelist remap="TP"><title>Input/Output Options</title>
      <varlistentry>
@@ -54,7 +64,9 @@
 	  <para>
 	    The first argument without an option flag (the leftmost argument is regarded as the first) that
 	    identifies an existing file with a .g suffix will be used to specify the working geometry database,
-	    unless overridden by the <option>i</option> option.
+	    unless overridden by the <option>i</option> option.  Remember that some option flags accept multiple
+	    arguments and can create ambiguities about the meaning of a .g option and in such situations <option>i</option>
+	    should be used.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -77,6 +89,9 @@
 	    valid, unflagged output file name will be used unless overridden by the <option>o</option>.  If the
 	    output filename uses a .png image format extension, the Portable Network Graphics image format
 	    will be used when writing out the file.  Otherwise, a standard BRL-CAD pix image will be generated.
+            Remember that some option flags accept multiple
+	    arguments and can create ambiguities about the meaning of a image name option and in such situations <option>o</option>
+	    should be used.
 	  </para>
 	</listitem>
       </varlistentry>
