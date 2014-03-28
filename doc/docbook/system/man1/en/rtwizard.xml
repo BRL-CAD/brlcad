@@ -212,7 +212,8 @@
     <variablelist remap="TP"><title>Model View Options - Low Level</title>
       <para>
 	 When specifying a low level view model is "all or nothing" - all options
-	 are required to correctly define the view.
+	 are required to correctly define the view.  To get parameters for a given
+	 view, use the Archer command <command>get_eyemodel</command>.
       </para>
       <varlistentry>
 	 <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
