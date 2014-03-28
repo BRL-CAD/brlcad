@@ -325,6 +325,16 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-s</option> <replaceable>value</replaceable></term>
+	<term><option>--size</option> <replaceable>value</replaceable></term>
+	<listitem>
+	  <para>
+		  Specify the width and height of the generated image in pixels.  Width can be overridden by the <option>w</option> option and height by the <option>n</option> option.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-t</option> <replaceable>image_type</replaceable></term>
 	<term><option>--type</option> <replaceable>image_type</replaceable></term>
 	<listitem>

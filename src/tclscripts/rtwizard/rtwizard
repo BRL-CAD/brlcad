@@ -78,6 +78,7 @@ getopt::init {
 	{fbserv-port		p  	{::fbserv_port ::RtWizard::wizard_state(fbserv_port)}}
 	{width 			w	{::have_width ::RtWizard::wizard_state(width)}}
 	{height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
+	{size			s 	{::have_size ::RtWizard::wizard_state(size)}}
 	# Objects to raytrace
 	{color-objects		c	{::have_full_color_objs ::RtWizard::wizard_state(color_objlist) ...}}
 	{ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
@@ -121,6 +122,15 @@ if {[info exists argc]} {
 if {[info exists ::use_gui] && [info exists ::disable_gui]} {
    puts "Warning - both -gui and -no-gui supplied - enabling gui"
    unset ::disable_gui
+}
+
+if {[info exists ::RtWizard::wizard_state(size)]} {
+   if {![info exists ::RtWizard::wizard_state(width)]} {
+       set ::RtWizard::wizard_state(width) $::RtWizard::wizard_state(size)
+   }
+   if {![info exists ::RtWizard::wizard_state(scanlines)]} {
+       set ::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(size)
+   }
 }
 
 # There are three common possibilities for inputs specified without an option flag - the
