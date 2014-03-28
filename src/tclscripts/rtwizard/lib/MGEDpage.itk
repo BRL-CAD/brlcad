@@ -115,6 +115,7 @@ namespace eval RtWizard {
 	    method getElevation {}
 	    method getSize {}
 	    method getPerspective {}
+	    method getCenter {}
 	    method getOrientation
 	    method getEyepoint
 	    method getLineColor {} {return $lineColor}
@@ -161,6 +162,12 @@ namespace eval RtWizard {
 	    method perspectiveDialogOK {}
 	    method perspectiveDialogApply {}
 	    method perspectiveDialogCancel {}
+
+	    method createCenterDialog {parent}
+	    method centerDialogReveal {}
+	    method centerDialogOK {}
+	    method centerDialogApply {}
+	    method centerDialogCancel {}
 
 	    method lineColorChooser {}
 	    method nonLineColorChooser {}
@@ -407,6 +414,7 @@ namespace eval RtWizard {
 	createAzimuthDialog     $itk_interior
 	createSizeDialog        $itk_interior
 	createPerspectiveDialog $itk_interior
+	createCenterDialog $itk_interior
 	createIntensityDialog $itk_interior
 	createOccModeDialog   $itk_interior
 
@@ -519,6 +527,10 @@ namespace eval RtWizard {
 	$w menubar add command .$viewMenu.perspective -label "Perspective..." \
 	    -helpstr "Set view perspective" \
 	    -command "[::itcl::code $this perspectiveDialogReveal]"
+
+	$w menubar add command .$viewMenu.center -label "Center..." \
+	    -helpstr "Set view center" \
+	    -command "[::itcl::code $this centerDialogReveal]"
 
 	#
 	# Do the options menu, callback to the child
@@ -662,6 +674,16 @@ namespace eval RtWizard {
 	return $currentPerspective
     }
 
+    #
+    # getCenter - returns the current view center
+    #
+    itcl::body MGEDpage::getCenter {} {
+	if {$isSelected == "true"} {
+	    set currentCenter [$::mgedObj gedCmd center]
+	}
+	return $currentCenter
+    }
+
     #--------------------#
     #  Private Methods   #
     #--------------------#
@@ -772,6 +794,7 @@ namespace eval RtWizard {
 	getOrientation
 	getEyeModel
 	getPerspective
+	getCenter
 
 	set currentEye [$::mgedObj gedCmd eye]
 	set currentSize [$::mgedObj gedCmd size]
@@ -1239,6 +1262,108 @@ namespace eval RtWizard {
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
+
+    #---------------------#
+    #    Center Control   #
+    #---------------------#
+    #
+    # createCenterDialog - creates a dialog window that allows the user
+    #                         to set the view center
+    #
+    ::itcl::body MGEDpage::createCenterDialog {parent} {
+
+	# Get current Center
+	set currCenter [ getCenter ]
+
+	itk_component add centerDialog {
+	    iwidgets::dialog $parent.#auto -title Center
+	} {
+	    usual
+	}
+
+	set cs [ eval $itk_component(centerDialog) childsite ]
+#
+	# Build the current size indicator
+	#
+	itk_component add centerLabel {
+	    iwidgets::labeledwidget $cs.scl \
+		-labeltext "Center(x y z):" \
+		-labelpos "w"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the size.
+	#
+	itk_component add centerEntry {
+	    iwidgets::entryfield $cs.sze \
+		-labeltext "Center (x y z):" \
+		-labelpos w \
+		-width 30\
+		-command "[::itcl::code $this centerDialogApply]"
+	} {
+	    usual
+	}
+
+	$itk_component(centerDialog) hide Help
+	$itk_component(centerDialog) buttonconfigure OK \
+	    -command "[::itcl::code $this centerDialogOK]"
+	$itk_component(centerDialog) buttonconfigure Apply \
+	    -command "[::itcl::code $this centerDialogApply]"
+	$itk_component(centerDialog) buttonconfigure Cancel \
+	    -command "[::itcl::code $this centerDialogCancel]"
+	pack $itk_component(centerLabel) -anchor c
+	pack $itk_component(centerEntry) -anchor c
+	eval iwidgets::Labeledwidget::alignlabels \
+	    $itk_component(centerLabel) \
+	    $itk_component(centerEntry)
+
+	$itk_component(sizeCurrent) configure -text $currCenter
+	$itk_component(centerDialog) deactivate
+    }
+
+    #
+    # centerDialogReveal - executed when the center dialog window
+    #                       is requested from the menu bar
+    #
+    ::itcl::body MGEDpage::centerDialogReveal {} {
+	set oldCenter [ getCenter ]
+	$itk_component(centerEntry) clear
+	$itk_component(centerEntry) insert 0 $oldCenter
+	$itk_component(centerDialog) activate
+    }
+
+    #
+    # centerDialogOK - executed when the OK button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogOK {} {
+	$::mgedObj gedCmd center [ $itk_component(centerEntry) get]
+	$itk_component(centerDialog) deactivate
+	updateStatus
+    }
+
+    #
+    # centerDialogApply - executed when the apply button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogApply {} {
+	set newCenter [ $itk_component(centerEntry) get]
+	$::mgedObj gedCmd center $newCenter
+	$itk_component(sizeCurrent) configure -text $newCenter
+	updateStatus
+    }
+
+    #
+    # centerDialogCancel - executed when the close button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogCancel {} {
+	set oldCenter [ getCenter ]
+	$::mgedObj gedCmd center $oldCenter
+	$itk_component(centerDialog) deactivate
+	updateStatus
+    }
+
+
 
     #--------------------#
     # Line Color Control #
