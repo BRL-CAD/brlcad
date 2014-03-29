@@ -43,7 +43,7 @@ proc geom_load {input_file} {
 	return -code error "A file named $input_root.g already exists in $input_dir - rename or remove this file before importing $input_file"
     }
 
-    switch -- $input_ext {
+    switch -nocase -- $input_ext {
 	".3dm" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] \
 	            -r \
@@ -69,6 +69,9 @@ proc geom_load {input_file} {
 	    	    -o $output_file \
 		    $input_file]
             catch {eval exec $cmd} _conv_log
+	}
+	default {
+	    return -code error "File format $input_ext is not supported."
 	}
     }
 
