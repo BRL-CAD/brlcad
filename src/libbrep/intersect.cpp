@@ -1203,8 +1203,8 @@ ON_Intersect(const ON_Curve *curveA,
 		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
 		    event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
 			    i->first->m_t.ParameterAt(t_a2));
-		    event.SetBOverlapRange(i->first->m_t.ParameterAt(t_b1),
-			    i->first->m_t.ParameterAt(t_b2));
+		    event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
+			    i->second->m_t.ParameterAt(t_b2));
 		    tmp_x.Append(event.Event());
 		}
 	    } else {
