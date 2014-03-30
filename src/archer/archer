@@ -318,12 +318,13 @@ proc main {} {
 wm withdraw .
 
 # start splash screen
-if { $::argc eq 0 } {
-   createSplashScreen
-} else {
+createSplashScreen
+if { $::argc eq 1 } {
    set argv1 [lindex $argv 0]
    set argv1_ext [file extension $argv1]
-   if {[string compare $argv1_ext ".g"] == 0} {createSplashScreen}
+   if {[string compare $argv1_ext ".g"] != 0} {
+    $::ArcherCore::splash deactivate
+   }
 }
 
 # do main procedure
