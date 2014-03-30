@@ -73,7 +73,7 @@ proc geom_load {input_file gui_feedback} {
 	}
 	".stp" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
-	    	    -o $output_file \
+	    	    -v -o $output_file \
 		    $input_file]
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
@@ -85,7 +85,7 @@ proc geom_load {input_file gui_feedback} {
 	}
 	".step" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
-	    	    -o $output_file \
+	    	    -v -o $output_file \
 		    $input_file]
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
