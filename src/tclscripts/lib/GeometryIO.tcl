@@ -46,53 +46,55 @@ proc geom_load {input_file gui_feedback} {
 
     switch -nocase -- $input_ext {
 	".3dm" {
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] \
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] \
 	            -r \
 	            -c \
 		    -o $output_file \
 	    	    $input_file]
-            if {[string compare $gui_feedback "1"] == 0} {
-               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
-                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
-	       catch {eval exec $gui_cmd} _conv_log
-            } else {
-               catch {eval exec $cmd} _conv_log
+ 		catch {eval exec $cmd} _conv_log
             }
 	}
 	".stl" {
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
-	    	    $input_file \
-		    $output_file]
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
-                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-               catch {eval exec $cmd} _conv_log
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
+	    	    $input_file \
+		    $output_file]
+ 		catch {eval exec $cmd} _conv_log
             }
 	}
 	".stp" {
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
-	    	    -v -o $output_file \
-		    $input_file]
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
-                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-               catch {eval exec $cmd} _conv_log
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	    	    -v -o $output_file \
+		    $input_file]
+
+ 		catch {eval exec $cmd} _conv_log
             }
 	}
 	".step" {
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
-	    	    -v -o $output_file \
-		    $input_file]
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
-                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-               catch {eval exec $cmd} _conv_log
+	       set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	    	    -v -o $output_file \
+		    $input_file]
+
+ 		catch {eval exec $cmd} _conv_log
             }
 	}
 	default {

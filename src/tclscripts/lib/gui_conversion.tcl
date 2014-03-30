@@ -50,8 +50,13 @@ proc run_conversion { cmd logfile } {
 
 set conv_log_id [open $logfile "w"]
 
+# Echo the conversion command to be run
+puts $cmd
+puts $conv_log_id $cmd
+flush $conv_log_id
+
 # Open a pipe
-set conversion_process [open "|$cmd"]
+set conversion_process [open "|$cmd 2>@1"]
 
 # Set up to deliver file events on the pipe
 fconfigure $conversion_process -blocking false
@@ -72,77 +77,158 @@ after 7000
 
 proc stl_options {} {
     set w [frame .[clock seconds]]
-    wm resizable . 600 600
+    wm resizable . 800 600
     wm title . "STeroLithography (STL) File Importer options"
 
     label $w.ofl -text "Output file"
-    entry $w.ofe -textvar $w -bg white
+    entry $w.ofe -textvariable ::output_file -width 40 -bg white
     grid $w.ofl  -column 0  -row 0  -sticky e
     grid $w.ofe  -column 1 -columnspan 2  -row 0  -sticky news
 
     label $w.debugl      -text "Print Debugging Info"
-    checkbutton $w.debuge -variable print_debug_info
+    checkbutton $w.debuge -variable ::print_debug_info
     grid $w.debugl  -column 0  -row 1  -sticky e
     grid $w.debuge  -column 1 -row 1  -sticky news
 
     label $w.binaryl     -text "Binary STL File"
-    checkbutton $w.binarye -variable stl_binary_file
+    checkbutton $w.binarye -variable ::stl_binary_file
     grid $w.binaryl  -column 0  -row 2  -sticky e
     grid $w.binarye  -column 1 -row 2  -sticky news
 
     label $w.mindisttoll -text "Minimum Distance Between Vertices"
-    entry $w.mindisttole -textvar $w -bg white
+    entry $w.mindisttole -textvariable ::min_dist_tol -bg white
     grid $w.mindisttoll  -column 0  -row 3  -sticky e
     grid $w.mindisttole  -column 1 -columnspan 2  -row 3  -sticky news
 
     label $w.objnamel    -text "Object Name"
-    entry $w.objnamee -textvar $w -bg white
+    entry $w.objnamee -textvariable ::object_name -bg white
     grid $w.objnamel  -column 0  -row 4  -sticky e
     grid $w.objnamee  -column 1 -columnspan 2  -row 4  -sticky news
 
     label $w.initregidl  -text "Initial Region Number"
-    entry $w.initregide -textvar $w -bg white
+    entry $w.initregide -textvariable ::initial_region_number -bg white
     grid $w.initregidl  -column 0  -row 5  -sticky e
     grid $w.initregide  -column 1 -columnspan 2  -row 5  -sticky news
 
     label $w.globalidl   -text "Uniform Region Number"
-    entry $w.globalide -textvar $w -bg white
+    entry $w.globalide -textvariable ::uniform_region_number -bg white
     grid $w.globalidl  -column 0  -row 6  -sticky e
     grid $w.globalide  -column 1 -columnspan 2  -row 6  -sticky news
 
     label $w.gmatcodel   -text "Uniform Material Code"
-    entry $w.gmatcodee -textvar $w -bg white
+    entry $w.gmatcodee -textvariable ::uniform_material_code -bg white
     grid $w.gmatcodel  -column 0  -row 7  -sticky e
     grid $w.gmatcodee  -column 1 -columnspan 2  -row 7  -sticky news
 
     label $w.stlunitsl   -text "STL Units"
-    entry $w.stlunitse -textvar $w -bg white
+    entry $w.stlunitse -textvariable ::input_file_units -bg white
     grid $w.stlunitsl  -column 0  -row 8  -sticky e
     grid $w.stlunitse  -column 1 -columnspan 2  -row 8  -sticky news
+
+    label $w.oll -text "Conversion Log file"
+    entry $w.ole -textvariable ::log_file -bg white
+    grid $w.oll  -column 0  -row 9  -sticky e
+    grid $w.ole  -column 1 -columnspan 2  -row 9  -sticky news
+
 
     # Application buttons
     button $w.ok     -text OK     -command {set done 1}
     button $w.c      -text Clear  -command "set $w {}"
     button $w.cancel -text Cancel -command "set $w {}; set done 1"
-    grid $w.ok -column 0 -row 9 -sticky e
-    grid $w.c -column 1 -row 9
-    grid $w.cancel -column 2 -row 9 -sticky w
-    pack $w -expand true -fill both
+    grid $w.ok -column 0 -row 10 -sticky es
+    grid $w.c -column 1 -row 10 -sticky s
+    grid $w.cancel -column 2 -row 10 -sticky w
+
+    grid columnconfigure $w 1 -weight 1
+
+    pack $w -expand true -fill x
     vwait done
     destroy $w
-    set ::$w
 }
 
+# For stl-g, it's options first, then input file, then output file
+proc ::stl_build_cmd {} {
+    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]]
+
+    if {$::print_debug_info == 1} {
+       append cmd " -d" { }
+    }
+    if {$::stl_binary_file == 1} {
+       append cmd " -b" { }
+    }
+    if {[llength "$::min_dist_tol"] > 0} {
+       append cmd " -t $::min_dist_tol" { }
+    }
+    if {[llength "$::object_name"] > 0} {
+       append cmd " -N $::object_name" { }
+    }
+    if {[llength "$::initial_region_number"] > 0} {
+       append cmd " -i $::initial_region_number" { }
+    }
+    if {[llength "$::uniform_region_number"] > 0} {
+       append cmd " -I $::uniform_region_number" { }
+    }
+    if {[llength "$::uniform_material_code"] > 0} {
+       append cmd " -m $::uniform_material_code" { }
+    }
+    if {[llength "$::input_file_units"] > 0} {
+       append cmd " -c $::input_file_units" { }
+    }
+
+    append cmd " $::input_file" { }
+
+    append cmd " $::output_file" { }
+
+    set ::stl_cmd $cmd
+}
+
+
 proc gui_conversion { cmd logfile } {
+#close $::info_id
    package require tkcon
    ::tkcon::Init
    tkcon exec_cmd run_conversion "$cmd" "$logfile"
 }
 
-#::stl_options
-set argv1 [lindex [lindex $argv 0] 0]
-set argv2 [lindex [lindex $argv 1] 0]
-gui_conversion $argv1 $argv2
+#set ::info_id [open /home/cyapp/convdebug.log "w"]
+
+set ::input_file  [lindex $argv 0]
+set ::log_file [lindex $argv 1]
+set ::input_ext [file extension $::input_file]
+set ::input_root [file rootname [file tail $::input_file]]
+set ::input_dir [file dirname $::input_file]
+set ::output_file [file join [file dirname $::input_file] "$input_root.g"]
+if {[llength $::log_file] == 0} {
+   set ::log_file [file join [file dirname $::input_file] "$input_root.log"]
+}
+
+switch -nocase "$::input_ext" {
+    ".3dm" {
+	set rhino3d_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] -r	-c
+	         -o $::output_file $::input_file]
+        gui_conversion $rhino3d_cmd $::log_file
+    }
+    ".stl" {
+	::stl_options
+        ::stl_build_cmd
+        gui_conversion $::stl_cmd $::log_file
+    }
+    ".stp" {
+	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	                    -v -o $::output_file \
+			    $::input_file]
+        gui_conversion $step_cmd $::log_file
+    }
+    ".step" {
+	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	                    -v -o $::output_file \
+			    $::input_file]
+        gui_conversion $step_cmd $::log_file
+    }
+    default {
+	exit 1
+    }
+}
 
 # Local Variables:
 # tab-width: 8
