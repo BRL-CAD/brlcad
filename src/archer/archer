@@ -318,7 +318,13 @@ proc main {} {
 wm withdraw .
 
 # start splash screen
-createSplashScreen
+if { $::argc eq 0 } {
+   createSplashScreen
+} else {
+   set argv1 [lindex $argv 0]
+   set argv1_ext [file extension $argv1]
+   if {[string compare $argv1_ext ".g"] == 0} {createSplashScreen}
+}
 
 # do main procedure
 if { [catch {main} _runnable] } {
