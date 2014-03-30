@@ -91,6 +91,7 @@ set(tclscripts_TCLSCRIPTS
   man_browser.tcl
   menu_override.tcl
   mouse.tcl
+  tkcon.tcl
   vmath.tcl
   )
 BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)

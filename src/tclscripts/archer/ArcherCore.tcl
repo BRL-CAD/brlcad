@@ -2138,7 +2138,7 @@ namespace eval ArcherCore {
 	set mLastSelectedDir [file dirname $input_target]
     }
 
-    set target [cadwidgets::geom_load $input_target]
+    set target [cadwidgets::geom_load $input_target 1]
 
     ::update
     Load $target

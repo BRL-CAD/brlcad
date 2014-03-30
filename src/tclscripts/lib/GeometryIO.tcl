@@ -26,7 +26,7 @@
 package provide cadwidgets::GeometryIO 1.0
 
 namespace eval cadwidgets {
-proc geom_load {input_file} {
+proc geom_load {input_file gui_feedback} {
 
     set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]
 
@@ -34,6 +34,7 @@ proc geom_load {input_file} {
     set input_root [file rootname [file tail $input_file]]
     set input_dir [file dirname $input_file]
     set output_file [file join [file dirname $input_file] "$input_root.g"]
+    set log_file [file join [file dirname $input_file] "$input_root.log"]
 
     # Don't do anything further if we're give a file that's already a .g file
     if {[string compare $input_ext ".g"] == 0} {return $input_file}
@@ -50,25 +51,49 @@ proc geom_load {input_file} {
 	            -c \
 		    -o $output_file \
 	    	    $input_file]
-            catch {eval exec $cmd} _conv_log
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+               catch {eval exec $cmd} _conv_log
+            }
 	}
 	".stl" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
 	    	    $input_file \
 		    $output_file]
-            catch {eval exec $cmd} _conv_log
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+               catch {eval exec $cmd} _conv_log
+            }
 	}
 	".stp" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
 	    	    -o $output_file \
 		    $input_file]
-            catch {eval exec $cmd} _conv_log
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+               catch {eval exec $cmd} _conv_log
+            }
 	}
 	".step" {
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
 	    	    -o $output_file \
 		    $input_file]
-            catch {eval exec $cmd} _conv_log
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "\"$cmd\"" "\"$log_file\""]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+               catch {eval exec $cmd} _conv_log
+            }
 	}
 	default {
 	    return -code error "File format $input_ext is not supported."
@@ -82,6 +107,8 @@ proc geom_load {input_file} {
     }
 }
 
+# TODO - pass in list of object names, not ged object - caller can assemble tops list
+# and may only want a subset.
 proc geom_save {input_file output_file db_component} {
 
     set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]

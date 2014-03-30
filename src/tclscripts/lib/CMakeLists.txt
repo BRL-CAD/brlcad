@@ -26,6 +26,7 @@ set(lib_TCLSCRIPTS
 	ViewAxesControl.tcl
 	cursor.tcl
 	apply_mat.tcl
+	gui_conversion.tcl
 	pattern.tcl
 	pattern_gui.tcl
 )

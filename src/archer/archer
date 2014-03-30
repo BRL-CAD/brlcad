@@ -305,7 +305,7 @@ proc main {} {
 
     if {[info exists argv] && $argv != ""} {
 	package require cadwidgets::GeometryIO
-	set target [cadwidgets::geom_load [lindex $argv 0]]
+	set target [cadwidgets::geom_load [lindex $argv 0] 1]
 	$::ArcherCore::application Load $target
     }
 
