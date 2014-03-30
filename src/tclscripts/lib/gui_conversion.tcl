@@ -75,6 +75,117 @@ after 7000
 ::tkcon::Destroy
 }
 
+#################################################################
+#
+#   Rhinoceros 3D (a.k.a Rhino) / OpenNURBS  3dm specific logic
+#
+#################################################################
+
+proc rhino_options {} {
+    set w [frame .[clock seconds]]
+    wm resizable . 800 600
+    wm title . "Rhinoceros 3D (3dm) File Importer options"
+
+    label $w.ofl -text "Output file"
+    entry $w.ofe -textvariable ::output_file -width 40 -bg white
+    grid $w.ofl  -column 0  -row 0  -sticky e
+    grid $w.ofe  -column 1 -columnspan 2  -row 0  -sticky news
+
+    label $w.debugl      -text "Print Debugging Info"
+    checkbutton $w.debuge -variable ::print_debug_info
+    grid $w.debugl  -column 0  -row 1  -sticky e
+    grid $w.debuge  -column 1 -row 1  -sticky news
+
+    label $w.verbosityl     -text "Printing Verbosity"
+    checkbutton $w.verbositye -variable ::printing_verbosity
+    grid $w.verbosityl  -column 0  -row 2  -sticky e
+    grid $w.verbositye  -column 1 -row 2  -sticky news
+
+    label $w.scalefactorl -text "Scaling Factor"
+    entry $w.scalefactore -textvariable ::scale_factor -bg white
+    grid $w.scalefactorl  -column 0  -row 3  -sticky e
+    grid $w.scalefactore  -column 1 -columnspan 2  -row 3  -sticky news
+
+    label $w.tolerancel    -text "Tolerance"
+    entry $w.tolerancee -textvariable ::tolerance -bg white
+    grid $w.tolerancel  -column 0  -row 4  -sticky e
+    grid $w.tolerancee  -column 1 -columnspan 2  -row 4  -sticky news
+
+    label $w.randomcolorl  -text "Randomize Colors of Imported Objects"
+    checkbutton $w.randomcolore -variable ::randomize_color
+    grid $w.randomcolorl  -column 0  -row 5  -sticky e
+    grid $w.randomcolore  -column 1 -columnspan 2  -row 5  -sticky news
+
+    label $w.uuidl   -text "Use Universally Unique IDentifiers\n(UUIDs) for Object Names"
+    checkbutton $w.uuide -variable ::use_uuids
+    grid $w.uuidl  -column 0  -row 6  -sticky e
+    grid $w.uuide  -column 1 -columnspan 2  -row 6  -sticky news
+
+    label $w.brlcadcompl   -text "Generate BRL-CAD Compliant Names"
+    checkbutton $w.brlcadcompe -variable ::brlcad_names
+    grid $w.brlcadcompl  -column 0  -row 7  -sticky e
+    grid $w.brlcadcompe  -column 1 -columnspan 2  -row 7  -sticky news
+
+    label $w.oll -text "Conversion Log file"
+    entry $w.ole -textvariable ::log_file -bg white
+    grid $w.oll  -column 0  -row 8  -sticky e
+    grid $w.ole  -column 1 -columnspan 2  -row 8  -sticky news
+
+    # Application buttons
+    button $w.ok     -text OK     -command {set done 1}
+    button $w.c      -text Clear  -command "set $w {}"
+    button $w.cancel -text Cancel -command "set $w {}; set done 1"
+    grid $w.ok -column 0 -row 9 -sticky es
+    grid $w.c -column 1 -row 9 -sticky s
+    grid $w.cancel -column 2 -row 9 -sticky w
+
+    grid columnconfigure $w 1 -weight 1
+
+    pack $w -expand true -fill x
+    vwait done
+    destroy $w
+}
+
+# For 3dm-g, it's options first, then output file, then input file
+proc ::rhino_build_cmd {} {
+    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]]
+
+    if {$::print_debug_info == 1} {
+       append cmd " -d" { }
+    }
+    if {[llength "$::printing_verbosity"] > 0} {
+       append cmd " -v $::printing_verbosity" { }
+    }
+    if {[llength "$::scale_factor"] > 0} {
+       append cmd " -s $::scale_factor" { }
+    }
+    if {[llength "$::tolerance"] > 0} {
+       append cmd " -t $::tolerance" { }
+    }
+    if {$::randomize_color == 1} {
+       append cmd " -r" { }
+    }
+    if {$::use_uuids == 1} {
+       append cmd " -u" { }
+    }
+    if {$::brlcad_names == 1} {
+       append cmd " -c" { }
+    }
+
+    append cmd " -o $::output_file" { }
+
+    append cmd " $::input_file" { }
+
+    set ::rhino_cmd $cmd
+}
+
+
+#################################################################
+#
+#            Sterolithography (STL) specific logic
+#
+#################################################################
+
 proc stl_options {} {
     set w [frame .[clock seconds]]
     wm resizable . 800 600
@@ -204,9 +315,9 @@ if {[llength $::log_file] == 0} {
 
 switch -nocase "$::input_ext" {
     ".3dm" {
-	set rhino3d_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] -r	-c
-	         -o $::output_file $::input_file]
-        gui_conversion $rhino3d_cmd $::log_file
+	::rhino_options
+	::rhino_build_cmd
+        gui_conversion $rhino_cmd $::log_file
     }
     ".stl" {
 	::stl_options
