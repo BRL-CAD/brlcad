@@ -70,19 +70,63 @@ after 7000
 ::tkcon::Destroy
 }
 
-proc options_gui {} {
+proc stl_options {} {
     set w [frame .[clock seconds]]
     wm resizable . 600 600
-    wm title . "STEP Importer options"
-    label $w.l -text "Output file"
-    label $w.e -textvar $w -bg white
-    bind $w.e <Return> {set done 1}
+    wm title . "STeroLithography (STL) File Importer options"
+
+    label $w.ofl -text "Output file"
+    entry $w.ofe -textvar $w -bg white
+    grid $w.ofl  -column 0  -row 0  -sticky e
+    grid $w.ofe  -column 1 -columnspan 2  -row 0  -sticky news
+
+    label $w.debugl      -text "Print Debugging Info"
+    checkbutton $w.debuge -variable print_debug_info
+    grid $w.debugl  -column 0  -row 1  -sticky e
+    grid $w.debuge  -column 1 -row 1  -sticky news
+
+    label $w.binaryl     -text "Binary STL File"
+    checkbutton $w.binarye -variable stl_binary_file
+    grid $w.binaryl  -column 0  -row 2  -sticky e
+    grid $w.binarye  -column 1 -row 2  -sticky news
+
+    label $w.mindisttoll -text "Minimum Distance Between Vertices"
+    entry $w.mindisttole -textvar $w -bg white
+    grid $w.mindisttoll  -column 0  -row 3  -sticky e
+    grid $w.mindisttole  -column 1 -columnspan 2  -row 3  -sticky news
+
+    label $w.objnamel    -text "Object Name"
+    entry $w.objnamee -textvar $w -bg white
+    grid $w.objnamel  -column 0  -row 4  -sticky e
+    grid $w.objnamee  -column 1 -columnspan 2  -row 4  -sticky news
+
+    label $w.initregidl  -text "Initial Region Number"
+    entry $w.initregide -textvar $w -bg white
+    grid $w.initregidl  -column 0  -row 5  -sticky e
+    grid $w.initregide  -column 1 -columnspan 2  -row 5  -sticky news
+
+    label $w.globalidl   -text "Uniform Region Number"
+    entry $w.globalide -textvar $w -bg white
+    grid $w.globalidl  -column 0  -row 6  -sticky e
+    grid $w.globalide  -column 1 -columnspan 2  -row 6  -sticky news
+
+    label $w.gmatcodel   -text "Uniform Material Code"
+    entry $w.gmatcodee -textvar $w -bg white
+    grid $w.gmatcodel  -column 0  -row 7  -sticky e
+    grid $w.gmatcodee  -column 1 -columnspan 2  -row 7  -sticky news
+
+    label $w.stlunitsl   -text "STL Units"
+    entry $w.stlunitse -textvar $w -bg white
+    grid $w.stlunitsl  -column 0  -row 8  -sticky e
+    grid $w.stlunitse  -column 1 -columnspan 2  -row 8  -sticky news
+
+    # Application buttons
     button $w.ok     -text OK     -command {set done 1}
     button $w.c      -text Clear  -command "set $w {}"
     button $w.cancel -text Cancel -command "set $w {}; set done 1"
-    grid $w.l  -    -        -sticky news
-    grid $w.e  -    -        -sticky news
-    grid $w.ok $w.c $w.cancel
+    grid $w.ok -column 0 -row 9 -sticky e
+    grid $w.c -column 1 -row 9
+    grid $w.cancel -column 2 -row 9 -sticky w
     pack $w -expand true -fill both
     vwait done
     destroy $w
@@ -95,7 +139,7 @@ proc gui_conversion { cmd logfile } {
    tkcon exec_cmd run_conversion "$cmd" "$logfile"
 }
 
-#::options_gui
+#::stl_options
 set argv1 [lindex [lindex $argv 0] 0]
 set argv2 [lindex [lindex $argv 1] 0]
 gui_conversion $argv1 $argv2
