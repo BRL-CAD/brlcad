@@ -70,13 +70,32 @@ after 7000
 ::tkcon::Destroy
 }
 
+proc options_gui {} {
+    set w [frame .[clock seconds]]
+    wm resizable . 600 600
+    wm title . "STEP Importer options"
+    label $w.l -text "Output file"
+    label $w.e -textvar $w -bg white
+    bind $w.e <Return> {set done 1}
+    button $w.ok     -text OK     -command {set done 1}
+    button $w.c      -text Clear  -command "set $w {}"
+    button $w.cancel -text Cancel -command "set $w {}; set done 1"
+    grid $w.l  -    -        -sticky news
+    grid $w.e  -    -        -sticky news
+    grid $w.ok $w.c $w.cancel
+    pack $w -expand true -fill both
+    vwait done
+    destroy $w
+    set ::$w
+}
+
 proc gui_conversion { cmd logfile } {
-   puts $cmd
    package require tkcon
    ::tkcon::Init
    tkcon exec_cmd run_conversion "$cmd" "$logfile"
 }
 
+#::options_gui
 set argv1 [lindex [lindex $argv 0] 0]
 set argv2 [lindex [lindex $argv 1] 0]
 gui_conversion $argv1 $argv2
