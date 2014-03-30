@@ -64,7 +64,7 @@ vwait ::conversion_complete
 close $conversion_process
 close $conv_log_id
 
-puts "Conversion process complete.  See ??? for a log of this output."
+puts "Conversion process complete.  See $logfile for a log of this output."
 
 after 7000
 ::tkcon::Destroy
