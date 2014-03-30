@@ -1768,6 +1768,10 @@ get_face_intersection_curves(
 
     ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
 
+    // count must equal capacity for array copy to work as expected
+    // when the result of the function is assigned
+    curves_array.SetCount(curves_array.Capacity());
+
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
 	for (int j = 0; j < face_count2; j++) {
@@ -1810,7 +1814,6 @@ get_face_intersection_curves(
 			c2.m_curve = events[k].m_curveB;
 			curves_array[i].Append(c1);
 			curves_array[face_count1 + j].Append(c2);
-			curves_array.SetCount(curves_array.Count() + 2);
 			// Set m_curveA and m_curveB to NULL, in case that they are
 			// deleted by ~ON_SSX_EVENT().
 			events[k].m_curveA = events[k].m_curveB = NULL;

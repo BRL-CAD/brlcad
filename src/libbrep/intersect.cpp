@@ -2684,7 +2684,10 @@ get_overlap_intersection_parameters(
     int count_before = overlaps.Count();
 
     ON_ClassArray<ON_3dPointArray> params(count_before);
-    params.SetCount(count_before);
+
+    // count must equal capacity for array copy to work as expected
+    // when the result of the function is assigned
+    params.SetCount(params.Capacity());
 
     for (int i = 0; i < count_before; i++) {
 	// split the curves from the intersection points between them
