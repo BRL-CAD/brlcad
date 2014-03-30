@@ -29,7 +29,7 @@ proc do_output { channel logID } {
     if { $status != 0 } {
          # Error on the channel
          puts "error reading $channel: $result"
-         set conversion_complete 2
+         set ::conversion_complete 2
     } elseif { $result >= 0 } {
          # Successfully read the channel
          puts "$line"
@@ -37,12 +37,12 @@ proc do_output { channel logID } {
 	 flush $logID
     } elseif { [eof $channel] } {
          # End of file on the channel
-         set conversion_complete 1
+         set ::conversion_complete 1
     } elseif { [fblocked $channel] } {
          # Not right now, come back later...
     } else {
          # Something unexpected just happened...
-         set conversion_complete 3
+         set ::conversion_complete 3
     }
 }
 
@@ -58,7 +58,7 @@ fconfigure $conversion_process -blocking false
 fileevent $conversion_process readable [list do_output $conversion_process $conv_log_id]
 
 # Launch the event loop and wait for the file events to finish
-vwait conversion_complete
+vwait ::conversion_complete
 
 # Close the pipe
 close $conversion_process
