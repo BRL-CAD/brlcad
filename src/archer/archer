@@ -322,7 +322,7 @@ createSplashScreen
 if { $::argc eq 1 } {
    set argv1 [lindex $argv 0]
    set argv1_ext [file extension $argv1]
-   if {[string compare $argv1_ext ".g"] != 0} {
+   if {[string compare -nocase $argv1_ext ".g"] != 0} {
     $::ArcherCore::splash deactivate
    }
 }
