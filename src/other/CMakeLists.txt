@@ -141,6 +141,8 @@ THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES})
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
+SetTargetFolder(example "Third Party Executables")
+SetTargetFolder(minigzip "Third Party Executables")
 
 #-----------------------------------------------------------------------------
 
@@ -233,6 +235,7 @@ endif(NOT COMMAND RE2C_TARGET)
 # src/other/perplex
 set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
 mark_as_advanced(PERPLEX_TEMPLATE)
+SetTargetFolder(perplex_template_cp "Compilation Utilities")
 
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
@@ -282,6 +285,7 @@ SetTargetFolder(xmllint "Compilation Utilities")
 
 SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
+SetTargetFolder(exslt "Third Party Libraries")
 
 # --------------------------------------------------------------------
 # Third Party Sources
@@ -684,6 +688,8 @@ if(BRLCAD_ITCL_BUILD)
   set(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl)
   DISTCLEAN(${CMAKE_BINARY_DIR}/lib/itcl3.4)
+  SetTargetFolder(itcl "Third Party Libraries")
+  SetTargetFolder(itclstub "Third Party Libraries")
 ELSE(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   set(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
@@ -711,6 +717,8 @@ BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
+  SetTargetFolder(itk "Third Party Libraries")
+  SetTargetFolder(itkstub "Third Party Libraries")
   # does not handle C library settings.
   set(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
   set(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
@@ -769,6 +777,8 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tkhtml3.0)
 #CMAKEFILES_IN_DIR(sqlite3_ignore_files sqlite3)
 CMAKEFILES(hv3)
 CMAKEFILES(sqlite3)
+SetTargetFolder(Tkhtml "Third Party Libraries")
+SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
 
 set(tkpng_ALIASES ENABLE_TKPNG)
 set(tkpng_DESCRIPTION "
@@ -800,6 +810,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
 SetTargetFolder(Tktable "Third Party Libraries")
+SetTargetFolder(tktable_header_gen "Compilation Utilities")
 
 #set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
 #set(tktreectrl_DESCRIPTION "
@@ -885,10 +896,12 @@ SetTargetFolder(check-express "Third Party Executables")
 SetTargetFolder(express "Third Party Libraries")
 SetTargetFolder(express_sync_generated_files "Third Party Executables")
 SetTargetFolder(express_verify "Third Party Libraries")
+SetTargetFolder(base "Third Party Libraries")
 SetTargetFolder(stepcore "Third Party Libraries")
 SetTargetFolder(stepdai "Third Party Libraries")
 SetTargetFolder(stepeditor "Third Party Libraries")
 SetTargetFolder(steputils "Third Party Libraries")
+SetTargetFolder(version_string "Compilation Utilities")
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)
@@ -900,6 +913,7 @@ if(BRLCAD_LEVEL2)
   set(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
   mark_as_advanced(CLIPPER_LIBRARY)
   mark_as_advanced(CLIPPER_INCLUDE_DIR)
+  SetTargetFolder(clipper "Third Party Libraries")
 else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
@@ -924,6 +938,10 @@ AUTO.
 ")
 THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ${libvds_ALIASES} FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
+SetTargetFolder(libvds "Third Party Libraries")
+SetTargetFolder(libvds-static "Third Party Libraries")
+SetTargetFolder(stdvds "Third Party Libraries")
+SetTargetFolder(stdvds-static "Third Party Libraries")
 
 # gdiam
 
@@ -938,6 +956,8 @@ AUTO.
 THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ${libgdiam_ALIASES}
   FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
+SetTargetFolder(libgdiam "Third Party Libraries")
+SetTargetFolder(libgdiam-static "Third Party Libraries")
 
 # Bullet is not yet integrated as a src/other subbuild, but there is
 # code that will make use of it if it is available.  If that code
@@ -982,6 +1002,8 @@ CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
 DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile)
 set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+SetTargetFolder(p2t "Third Party Libraries")
+SetTargetFolder(p2t-static "Third Party Libraries")
 mark_as_advanced(P2T_LIBRARY)
 mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)

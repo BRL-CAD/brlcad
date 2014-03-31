@@ -2246,6 +2246,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
   add_executable(printtimestamp misc/CMake/test_srcs/print_timestamp.c)
+  set_target_properties(printtimestamp PROPERTIES FOLDER "Compilation Utilities")
   add_executable(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
   set_target_properties(buildtimestart PROPERTIES FOLDER "Compilation Utilities")
   add_executable(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
@@ -2702,6 +2703,9 @@ endif("${CMAKE_GENERATOR}" MATCHES "Make")
 if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
+
+# Not sure what this is - created automatically by CMake in MSVC?
+SetTargetFolder(core "CMakePredefinedTargets")
 
 # Have touched every file and directory that we are going to touch with the
 # build system - time to write out our lists for future processing.
