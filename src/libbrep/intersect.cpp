@@ -2272,7 +2272,8 @@ add_points_to_closed_seams(
 	double dmin = domain.Min();
 	double dmax = domain.Max();
 
-	for (int j = 0; j < curvept.Count(); ++j) {
+	int orig_count = curvept.Count();
+	for (int j = 0; j < orig_count; ++j) {
 	    ON_2dPoint uvA = curve_uvA[j];
 	    ON_2dPoint uvB = curve_uvB[j];
 	    double &dval = (doA ? uvA : uvB)[dir];
