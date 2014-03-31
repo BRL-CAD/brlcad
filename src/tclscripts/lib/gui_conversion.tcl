@@ -134,7 +134,7 @@ proc rhino_options {} {
     # Application buttons
     button $w.ok     -text OK     -command {set done 1}
     button $w.c      -text Clear  -command "set $w {}"
-    button $w.cancel -text Cancel -command "set $w {}; set done 1"
+    button $w.cancel -text Cancel -command "set $w {}; set ::cancel_process 1; set done 1"
     grid $w.ok -column 0 -row 9 -sticky es
     grid $w.c -column 1 -row 9 -sticky s
     grid $w.cancel -column 2 -row 9 -sticky w
@@ -143,6 +143,7 @@ proc rhino_options {} {
 
     pack $w -expand true -fill x
     vwait done
+
     destroy $w
 }
 
@@ -245,7 +246,7 @@ proc stl_options {} {
     # Application buttons
     button $w.ok     -text OK     -command {set done 1}
     button $w.c      -text Clear  -command "set $w {}"
-    button $w.cancel -text Cancel -command "set $w {}; set done 1"
+    button $w.cancel -text Cancel -command "set $w {}; set ::cancel_process 1; set done 1"
     grid $w.ok -column 0 -row 10 -sticky es
     grid $w.c -column 1 -row 10 -sticky s
     grid $w.cancel -column 2 -row 10 -sticky w
@@ -254,6 +255,7 @@ proc stl_options {} {
 
     pack $w -expand true -fill x
     vwait done
+
     destroy $w
 }
 
@@ -312,16 +314,20 @@ set ::output_file [file join [file dirname $::input_file] "$input_root.g"]
 if {[llength $::log_file] == 0} {
    set ::log_file [file join [file dirname $::input_file] "$input_root.log"]
 }
+set ::cancel_process 0
 
 switch -nocase "$::input_ext" {
     ".3dm" {
 	::rhino_options
 	::rhino_build_cmd
+
+        if {$::cancel_process == 1} {exit 0}
         gui_conversion $rhino_cmd $::log_file
     }
     ".stl" {
 	::stl_options
         ::stl_build_cmd
+        if {$::cancel_process == 1} {exit 0}
         gui_conversion $::stl_cmd $::log_file
     }
     ".stp" {
