@@ -710,6 +710,11 @@ namespace eval ArcherCore {
 	variable mImage_botInter ""
 	variable mImage_botSub ""
 	variable mImage_botUnion ""
+	variable mImage_brep ""
+	variable mImage_brepLabeled ""
+	variable mImage_brepInter ""
+	variable mImage_brepSub ""
+	variable mImage_brepUnion ""
 	variable mImage_dsp ""
 	variable mImage_dspLabeled ""
 	variable mImage_dspInter ""
@@ -1795,6 +1800,12 @@ namespace eval ArcherCore {
     set mImage_botInter [image create photo -file [file join $mImgDir bot_intersect.png]]
     set mImage_botSub [image create photo -file [file join $mImgDir bot_subtract.png]]
     set mImage_botUnion [image create photo -file [file join $mImgDir bot_union.png]]
+
+    set mImage_brep [image create photo -file [file join $mImgDir brep.png]]
+    set mImage_brepLabeled [image create photo -file [file join $mImgDir brep_labeled.png]]
+    set mImage_brepInter [image create photo -file [file join $mImgDir brep_intersect.png]]
+    set mImage_brepSub [image create photo -file [file join $mImgDir brep_subtract.png]]
+    set mImage_brepUnion [image create photo -file [file join $mImgDir brep_union.png]]
 
     set mImage_dsp [image create photo -file [file join $mImgDir dsp.png]]
     set mImage_dspLabeled [image create photo -file [file join $mImgDir dsp_labeled.png]]
@@ -4558,6 +4569,7 @@ namespace eval ArcherCore {
 	arbn -
 	ars -
 	bot -
+	brep -
 	dsp -
 	ehy -
 	ell -
