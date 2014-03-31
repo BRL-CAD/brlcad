@@ -104,6 +104,7 @@ foreach(testfile ${MGED_TESTS})
 	 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mged -c ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} < ${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}
     DEPENDS mged ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} ${test_prev}
     )
+  set_target_properties(regress-mged-${cmd_root} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   set(MGED_TEST_LIST ${MGED_TEST_LIST} regress-mged-${cmd_root})
   set(test_prev regress-mged-${cmd_root})
 endforeach(testfile ${MGED_TESTS})

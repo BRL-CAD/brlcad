@@ -58,10 +58,12 @@
 #    define srand48(seed) (srand(seed))
 #  endif
 
+#if 0
 #  if !defined(__cplusplus) && !defined(HAVE_LRINT)
 #    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
 #    define HAVE_LRINT 1
 #  endif
+#endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 

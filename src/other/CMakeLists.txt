@@ -74,6 +74,12 @@ endif(NOT BRLCAD_ENABLE_TARGETS)
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
 mark_as_advanced(SRC_OTHER_ADDED_DIRS)
 
+macro(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endmacro(SetTargetFolder)
+
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
 include(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
@@ -90,6 +96,8 @@ AUTO.
 ")
 THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ${regex_ALIASES})
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+SetTargetFolder(regex "Third Party Libraries")
+SetTargetFolder(regex-static "Third Party Libraries")
 
 CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
 if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
@@ -131,6 +139,8 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES})
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
+SetTargetFolder(zlib "Third Party Libraries")
+SetTargetFolder(zlib-static "Third Party Libraries")
 
 #-----------------------------------------------------------------------------
 
@@ -193,6 +203,8 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
 if(NOT COMMAND LEMON_TARGET)
   include(${BRLCAD_CMAKE_DIR}/LEMON_Util.cmake)
 endif(NOT COMMAND LEMON_TARGET)
+SetTargetFolder(lemon "Compilation Utilities")
+SetTargetFolder(lempar_cp "Compilation Utilities")
 
 set(re2c_ALIASES ENABLE_RE2C)
 set(re2c_DESCRIPTION "
@@ -203,6 +215,8 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
+SetTargetFolder(re2c "Compilation Utilities")
+SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 
 # Unless some parent logic has already defined the macro, we need to
 # load RE2C_Util to be able to define RE2C targets.
@@ -235,6 +249,7 @@ if(NOT COMMAND PERPLEX_TARGET)
   include(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
 endif(NOT COMMAND PERPLEX_TARGET)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
+SetTargetFolder(perplex "Compilation Utilities")
 
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
@@ -248,6 +263,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Depends on BRLCAD_EXTRADOCS.
 ")
 THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" xsltproc_ALIASES xsltproc_DESCRIPTION)
+SetTargetFolder(xsltproc "Compilation Utilities")
 
 # Used only when validating XML for schema compliance
 # (BRLCAD_EXTRADOCS_VALIDATE must be on to use this, although it is compiled
@@ -262,6 +278,10 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL3" xmllint_ALIASES xmllint_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
+SetTargetFolder(xmllint "Compilation Utilities")
+
+SetTargetFolder(xml "Third Party Libraries")
+SetTargetFolder(xslt "Third Party Libraries")
 
 # --------------------------------------------------------------------
 # Third Party Sources
@@ -349,6 +369,11 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
+  SetTargetFolder(png16 "Third Party Libraries")
+  SetTargetFolder(png16_static "Third Party Libraries")
+  SetTargetFolder(pngtest "Third Party Libraries")
+  SetTargetFolder(pngstest "Third Party Libraries")
+  SetTargetFolder(pngvalid "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
@@ -392,6 +417,8 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(libutahrle UTAHRLE utahrle utahrle_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3
   ALIASES ${utahrle_ALIASES} FLAGS NOSYS)
 if(BRLCAD_UTAHRLE_BUILD)
+  SetTargetFolder(utahrle "Third Party Libraries")
+  SetTargetFolder(utahrle-static "Third Party Libraries")
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
@@ -438,6 +465,9 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES})
 if(BRLCAD_TCL_BUILD)
+  SetTargetFolder(tclsh "Third Party Executables")
+  SetTargetFolder(tcl "Third Party Libraries")
+  SetTargetFolder(tclstub "Third Party Libraries")
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
   set(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
@@ -522,6 +552,9 @@ also depends on BRLCAD_ENABLE_TK being ON.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 if(BRLCAD_TK_BUILD)
+  SetTargetFolder(wish "Third Party Executables")
+  SetTargetFolder(tk "Third Party Libraries") 
+  SetTargetFolder(tkstub "Third Party Libraries") 
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_TK_LIBRARY tk CACHE STRING "TCL_TK_LIBRARY" FORCE)
   set(TCL_TK_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_TK_CONF_PREFIX" FORCE)
@@ -750,6 +783,7 @@ BRLCAD_ENABLE_TK is OFF.
 THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkpng_ALIASES tkpng_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/tkpng0.8)
+SetTargetFolder(tkpng "Third Party Libraries")
 
 set(tktable_ALIASES ENABLE_TKTABLE)
 set(tktable_DESCRIPTION "
@@ -765,6 +799,7 @@ THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCA
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
+SetTargetFolder(Tktable "Third Party Libraries")
 
 #set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
 #set(tktreectrl_DESCRIPTION "
@@ -792,6 +827,8 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
   ${opennurbs_ALIASES} FLAGS NOSYS)
+SetTargetFolder(openNURBS "Third Party Libraries")
+SetTargetFolder(openNURBS-static "Third Party Libraries")
 
 # STEPcode 
 # Need Lemon/Perplex to build STEP - conditionalize
@@ -842,6 +879,16 @@ mark_as_advanced(SC_PYTHON_GENERATOR)
 mark_as_advanced(SC_MEMMGR_ENABLE_CHECKS)
 mark_as_advanced(SC_SDAI_ADDITIONAL_EXES_SRCS)
 mark_as_advanced(SC_TRACE_FPRINTF)
+SetTargetFolder(exp2cxx "Third Party Executables")
+SetTargetFolder(exppp "Third Party Executables")
+SetTargetFolder(check-express "Third Party Executables")
+SetTargetFolder(express "Third Party Libraries")
+SetTargetFolder(express_sync_generated_files "Third Party Executables")
+SetTargetFolder(express_verify "Third Party Libraries")
+SetTargetFolder(stepcore "Third Party Libraries")
+SetTargetFolder(stepdai "Third Party Libraries")
+SetTargetFolder(stepeditor "Third Party Libraries")
+SetTargetFolder(steputils "Third Party Libraries")
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)

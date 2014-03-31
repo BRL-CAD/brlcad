@@ -32,9 +32,6 @@ if(SH_EXEC)
   Regression_Test(red mged)
   Regression_Test(nirt "mged;nirt")
   Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
-  Regression_Test(gnff "mged;g-nff;asc2g")
-  Regression_Test(gdot "mged;g-dot")
-
   #add_custom_target(regress-quote
   #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
   #  DEPENDS test_quote
@@ -55,8 +52,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-comgeom regress-gnff regress-gdot
-    regress-dsp regress-asc2dsp
+    regress-comgeom regress-dsp regress-asc2dsp
     )
 
 endif(SH_EXEC)
