@@ -1181,8 +1181,13 @@ ON_Intersect(const ON_Curve *curveA,
 		    lineB.ClosestPointTo(lineA.from, &startA_on_B);
 		    lineB.ClosestPointTo(lineA.to, &endA_on_B);
 
-		    if (startB_on_A > 1 + t1_tol || endB_on_A < -t1_tol
-			|| startA_on_B > 1 + t2_tol || endA_on_B < -t2_tol) {
+		    // make sure parameters are valid
+		    double min_tA = -t1_tol, max_tA = 1.0 + t1_tol;
+		    double min_tB = -t2_tol, max_tB = 1.0 + t2_tol;
+		    if (startB_on_A < min_tA || startB_on_A > max_tA ||
+			startA_on_B < min_tB || startA_on_B > max_tB ||
+			endB_on_A < min_tA || endB_on_A > max_tA ||
+			endA_on_B < min_tB || endA_on_B > max_tB) {
 			continue;
 		    }
 
