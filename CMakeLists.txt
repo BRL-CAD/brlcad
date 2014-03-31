@@ -2695,6 +2695,9 @@ else("${CMAKE_GENERATOR}" MATCHES "Make")
     COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
     )
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
+if(TARGET distclean)
+  set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
+endif(TARGET distclean)
 
 # Have touched every file and directory that we are going to touch with the
 # build system - time to write out our lists for future processing.
