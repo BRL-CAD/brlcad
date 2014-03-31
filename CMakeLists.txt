@@ -2247,7 +2247,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
   add_executable(printtimestamp misc/CMake/test_srcs/print_timestamp.c)
   add_executable(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+  set_target_properties(buildtimestart PROPERTIES FOLDER "Compilation Utilities")
   add_executable(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
+  set_target_properties(buildtimeend PROPERTIES FOLDER "Compilation Utilities")
   add_custom_command(
     OUTPUT ${BUILD_DELTA_FILE}
     COMMAND buildtimestart
@@ -2259,11 +2261,13 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
     DEPENDS ${BUILD_DELTA_FILE} printtimestamp
     )
+  set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
   add_custom_target(buildtimedelta ALL
     COMMAND buildtimeend
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     DEPENDS buildtimeend
     )
+  set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # We want the timestamp to come first, so make ALL library,

@@ -111,6 +111,7 @@ endforeach(testfile ${MGED_TESTS})
 
 list(SORT MGED_TEST_LIST)
 add_custom_target(regress-mged-cmds DEPENDS ${MGED_TEST_LIST})
+set_target_properties(regress-mged-cmds PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 # Local Variables:
 # tab-width: 8
