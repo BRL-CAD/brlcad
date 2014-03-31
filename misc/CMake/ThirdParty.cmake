@@ -72,7 +72,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
   if(${ARGC} GREATER 3)
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "" "FIND_NAME;FIND_VERSION;FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
   endif(${ARGC} GREATER 3)
   if(NOT ${varname_root}_FIND_NAME)
     set(${varname_root}_FIND_NAME ${varname_root})
