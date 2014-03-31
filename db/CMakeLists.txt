@@ -8,7 +8,6 @@ set(G_BENCHMARK_MODELS
 )
 
 set(G_SAMPLE_MODELS
-  ${G_BENCHMARK_MODELS}
   axis.asc
   boolean-ops.asc
   castle.asc
@@ -37,6 +36,26 @@ set(G_SAMPLE_MODELS
   xmp.asc
 )
 
+macro(ADD_G_TARGET g_model folder)
+  string(REGEX REPLACE "([0-9a-z]*).asc" "\\1" g_model_root "${g_model}")
+  set(output_file ${bin_root}/${DATA_DIR}/db/${g_model_root}.g)
+  add_custom_command(
+    OUTPUT ${output_file}
+    COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${output_file}
+    DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
+  )
+  add_custom_target(${g_model_root}.g ALL DEPENDS ${output_file})
+  set_target_properties(${g_model_root}.g PROPERTIES FOLDER "$folder")
+  if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+    if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL "." AND CMAKE_CONFIGURATION_FILES)
+      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" output_file "${output_file}")
+    endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL "." AND CMAKE_CONFIGURATION_FILES)
+    install(FILES ${output_file} DESTINATION ${DATA_DIR}/db)
+  endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+  set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
+endmacro(ADD_G_TARGET g_model folder)
+
+
 # Get our root path
 if(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
@@ -53,26 +72,17 @@ else(CMAKE_CONFIGURATION_TYPES)
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
 endif(CMAKE_CONFIGURATION_TYPES)
 
-foreach(g_model ${G_SAMPLE_MODELS})
-  string(REGEX REPLACE "([0-9a-z]*).asc" "\\1" g_model_root "${g_model}")
-  set(output_file ${bin_root}/${DATA_DIR}/db/${g_model_root}.g)
-  add_custom_command(
-    OUTPUT ${output_file}
-    COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${output_file}
-    DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
-  )
-  add_custom_target(${g_model_root}.g ALL DEPENDS ${output_file})
-  if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-    if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL "." AND CMAKE_CONFIGURATION_FILES)
-      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" output_file "${output_file}")
-    endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL "." AND CMAKE_CONFIGURATION_FILES)
-    install(FILES ${output_file} DESTINATION ${DATA_DIR}/db)
-  endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-  set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
-endforeach(g_model ${G_SAMPLE_MODELS})
+foreach(g_input ${G_BENCHMARK_MODELS})
+  ADD_G_TARGET(${g_input} "BRLCAD Geometry Models/Benchmark")
+endforeach(g_input ${G_BENCHMARK_MODELS})
+CMAKEFILES(${G_BENCHMARK_MODELS})
+
+foreach(g_input ${G_SAMPLE_MODELS})
+  ADD_G_TARGET(${g_input} "BRLCAD Geometry Models/Sample")
+endforeach(g_input ${G_SAMPLE_MODELS})
 CMAKEFILES(${G_SAMPLE_MODELS})
 
-SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}")
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}")
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
    BRLCAD_ADDDATA(terra.dsp db)
