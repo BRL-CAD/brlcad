@@ -20,7 +20,7 @@ set(ASTYLE_SRCS
   )
 
 add_executable(astyle ${ASTYLE_SRCS})
-set_target_properties(astyle PROPERTIES FOLDER "BRL-CAD Compilation Utilities")
+set_target_properties(astyle PROPERTIES FOLDER "Compilation Utilities")
 
 # Local Variables:
 # tab-width: 8
