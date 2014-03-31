@@ -215,6 +215,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Call standard CMake commands
   add_executable(${execname} ${srcslist})
+  set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables")
   target_link_libraries(${execname} ${libslist})
   VALIDATE_TARGET_STYLE(${execname})
 
@@ -328,6 +329,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
+    set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libs")
     VALIDATE_TARGET_STYLE(${libname})
 
     # Make sure we don't end up with outputs named liblib...
@@ -396,6 +398,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
     add_library(${libname}-static STATIC ${srcslist})
+    set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libs")
     VALIDATE_TARGET_STYLE(${libname}-static)
 
     # Make sure we don't end up with outputs named liblib...
@@ -704,6 +707,7 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
 
   # Define the target and add it to this directories list of data targets
   add_custom_target(${targetname}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel)
+  set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Copying")
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
 
   # Add outputs to the distclean rules - this is consistent regardless of what type the output

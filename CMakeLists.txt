@@ -1218,6 +1218,13 @@ if(BRLCAD_ENABLE_SMP)
 endif(BRLCAD_ENABLE_SMP)
 
 #----------------------------------------------------------------------
+# Some generators in CMake support generating folders in IDEs for
+# organizing build targets.  We want to use them if they are there.
+if(MSVC)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif(MSVC)
+
+#----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
 # to the overall build time.  If necessary BRL-CAD provides its own

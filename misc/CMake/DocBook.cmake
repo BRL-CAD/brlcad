@@ -196,6 +196,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
 
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
@@ -262,6 +263,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
 	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/MAN")
 
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
@@ -334,6 +336,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
 	DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/PDF")
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
       if(CMAKE_CONFIGURATION_TYPES)
