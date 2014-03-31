@@ -1,3 +1,11 @@
+macro(Regression_Test testname depends_list)
+  add_custom_target(regress-${testname}
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS ${depends_list}
+    )
+  set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Testing")
+endmacro(Regression_Test)
+
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
 
@@ -8,98 +16,39 @@ add_subdirectory(step)
 add_subdirectory(mged)
 
 if(SH_EXEC)
-  add_custom_target(regress-mged
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged
-    )
-  add_custom_target(regress-moss
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/moss.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt asc2g pixdiff asc2pix pix-png png-pix
-    )
-  add_custom_target(regress-lights
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/lights.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt asc2g pixdiff asc2pix
-    )
-  add_custom_target(regress-solids
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/solids.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt mged pixdiff asc2pix gencolor
-    )
-  add_custom_target(regress-shaders
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/shaders.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt mged pixdiff asc2pix gencolor
-    )
-  add_custom_target(regress-spdi
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/spdi.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt mged pixdiff asc2pix
-    )
-  add_custom_target(regress-iges
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/iges.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS iges-g g-iges mged asc2g
-    )
-  add_custom_target(regress-weight
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rtweight mged
-    )
-  add_custom_target(regress-gqa
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/gqa.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS g_qa mged
-    )
-  add_custom_target(regress-fastgen
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/fastgen.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS fast4-g g_diff
-    )
-  add_custom_target(regress-bots
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/bots.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged pixdiff rt
-    )
-  add_custom_target(regress-flawfinder
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt
-    )
-  add_custom_target(regress-repository
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt
-    )
-  add_custom_target(regress-red
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged
-    )
-  add_custom_target(regress-nirt
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged nirt
-    )
-  add_custom_target(regress-comgeom
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/comgeom.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged asc2g vdeck comgeom-g
-    )
-  add_custom_target(regress-gnff
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-nff.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged g-nff asc2g
-    )
-  add_custom_target(regress-gdot
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged g-dot
-    )
+  Regression_Test(mged mged)
+  Regression_Test(moss "rt;asc2g;pixdiff;asc2pix;pix-png;png-pix")
+  Regression_Test(lights "rt;asc2g;pixdiff;asc2pix")
+  Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
+  Regression_Test(shaders "rt;mged;pixdiff;asc2pix;gencolor")
+  Regression_Test(spdi "rt;mged;pixdiff;asc2pix")
+  Regression_Test(iges "iges-g;g-iges;mged;asc2g")
+  Regression_Test(weight "rtweight;mged")
+  Regression_Test(gqa "g_qa;mged")
+  Regression_Test(fastgen "fast4-g;g_diff")
+  Regression_Test(bots "mged;pixdiff;rt")
+  Regression_Test(flawfinder rt)
+  Regression_Test(repository rt)
+  Regression_Test(red mged)
+  Regression_Test(nirt "mged;nirt")
+  Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
+  Regression_Test(gnff "mged;g-nff;asc2g")
+  Regression_Test(gdot "mged;g-dot")
+
   #add_custom_target(regress-quote
   #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
   #  DEPENDS test_quote
   #  )
-  add_custom_target(regress-rtwizard
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/rtwizard.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
+
+  set(rtwizard_deps btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
     pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
     rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
     rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
-    lib_pkgIndex.tcl
-    )
-  add_custom_target(regress-dsp
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/dsp.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged cv asc2pix rt pix-bw
-    )
-  add_custom_target(regress-asc2dsp
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS cv asc2pix pix-bw asc2dsp
-    )
+    lib_pkgIndex.tcl)
+  Regression_Test(rtwizard "${rtwizard_deps}")
+
+  Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
+  Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
 
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
