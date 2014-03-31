@@ -2408,6 +2408,7 @@ if(CMAKE_CONFIGURATION_TYPES)
     COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
     )
   add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
   # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
   # to the first target to run - the timestamp printing.
   add_dependencies(timestamp multiconfig_path)

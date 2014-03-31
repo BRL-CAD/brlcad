@@ -75,6 +75,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
     DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_target_properties(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
 
   set(clean_files ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")

@@ -177,8 +177,8 @@ BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;li
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
 if(M_LIBRARY)
   target_link_libraries(libremrt ${M_LIBRARY})
-  set_target_properties(libremrt PROPERTIES FOLDER "BRL-CAD Static Libraries")
 endif(M_LIBRARY)
+set_target_properties(libremrt PROPERTIES FOLDER "BRL-CAD Static Libraries")
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
 set_target_properties(librttherm PROPERTIES LINKER_LANGUAGE C)
