@@ -26,6 +26,11 @@
 package provide cadwidgets::GeometryIO 1.0
 
 namespace eval cadwidgets {
+set ::exe_ext ""
+if {$tcl_platform(platform) == "windows"} {
+    set ::exe_ext ".exe"
+}
+
 proc geom_load {input_file gui_feedback} {
 
     set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]
@@ -47,11 +52,11 @@ proc geom_load {input_file gui_feedback} {
     switch -nocase -- $input_ext {
 	".3dm" {
             if {[string compare $gui_feedback "1"] == 0} {
-               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
                    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]] \
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]] \
 	            -r \
 	            -c \
 		    -o $output_file \
@@ -61,11 +66,11 @@ proc geom_load {input_file gui_feedback} {
 	}
 	".stl" {
             if {[string compare $gui_feedback "1"] == 0} {
-               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
                    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]] \
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]] \
 	    	    $input_file \
 		    $output_file]
  		catch {eval exec $cmd} _conv_log
@@ -73,11 +78,11 @@ proc geom_load {input_file gui_feedback} {
 	}
 	".stp" {
             if {[string compare $gui_feedback "1"] == 0} {
-               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
                    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
 	    	    -v -o $output_file \
 		    $input_file]
 
@@ -86,11 +91,11 @@ proc geom_load {input_file gui_feedback} {
 	}
 	".step" {
             if {[string compare $gui_feedback "1"] == 0} {
-               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish]] \
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
                    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
 	       catch {eval exec $gui_cmd} _conv_log
             } else {
-	       set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	       set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
 	    	    -v -o $output_file \
 		    $input_file]
 
@@ -137,7 +142,7 @@ proc geom_save {input_file output_file db_component} {
     switch -- $output_ext {
 	".obj" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-obj]] \
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-obj$::exe_ext]] \
 		    -o $output_file \
 	    	    $input_file]
             append cmd " " { }
@@ -148,7 +153,7 @@ proc geom_save {input_file output_file db_component} {
 	}
 	".stl" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-stl]] \
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-stl$::exe_ext]] \
 	            -o $output_file \
 	    	    $input_file]
             append cmd " " { }

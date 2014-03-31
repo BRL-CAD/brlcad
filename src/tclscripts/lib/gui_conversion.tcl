@@ -149,7 +149,7 @@ proc rhino_options {} {
 
 # For 3dm-g, it's options first, then output file, then input file
 proc ::rhino_build_cmd {} {
-    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g]]
+    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -261,7 +261,7 @@ proc stl_options {} {
 
 # For stl-g, it's options first, then input file, then output file
 proc ::stl_build_cmd {} {
-    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g]]
+    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -304,7 +304,10 @@ proc gui_conversion { cmd logfile } {
 }
 
 #set ::info_id [open /home/cyapp/convdebug.log "w"]
-
+set ::exe_ext ""
+if {$tcl_platform(platform) == "windows"} {
+    set ::exe_ext ".exe"
+}
 set ::input_file  [lindex $argv 0]
 set ::log_file [lindex $argv 1]
 set ::input_ext [file extension $::input_file]
@@ -331,13 +334,13 @@ switch -nocase "$::input_ext" {
         gui_conversion $::stl_cmd $::log_file
     }
     ".stp" {
-	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
 	                    -v -o $::output_file \
 			    $::input_file]
         gui_conversion $step_cmd $::log_file
     }
     ".step" {
-	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g]] \
+	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
 	                    -v -o $::output_file \
 			    $::input_file]
         gui_conversion $step_cmd $::log_file
