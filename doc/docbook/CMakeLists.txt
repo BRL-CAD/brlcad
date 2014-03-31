@@ -51,25 +51,25 @@ add_subdirectory(system)
 # macros, define convenience targets
 if(BRLCAD_EXTRADOCS_HTML)
   get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
-  add_custom_target(html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
-  set_target_properties(html PROPERTIES FOLDER "DocBook")
+  add_custom_target(doc_html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
+  set_target_properties(doc_html PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_HTML)
 if(BRLCAD_EXTRADOCS_MAN)
   get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
-  add_custom_target(man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
-  set_target_properties(man PROPERTIES FOLDER "DocBook")
+  add_custom_target(doc_man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
+  set_target_properties(doc_man PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_MAN)
 if(BRLCAD_EXTRADOCS_PDF)
   get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
-  add_custom_target(pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
-  set_target_properties(pdf PROPERTIES FOLDER "DocBook")
+  add_custom_target(doc_pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
+  set_target_properties(doc_pdf PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_PDF)
 if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
-  add_custom_target(doc DEPENDS
+  add_custom_target(doc_all DEPENDS
 	${BRLCAD_EXTRADOCS_HTML_TARGETS}
 	${BRLCAD_EXTRADOCS_MAN_TARGETS}
 	${BRLCAD_EXTRADOCS_PDF_TARGETS})
-  set_target_properties(doc PROPERTIES FOLDER "DocBook")
+  set_target_properties(doc_all PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
