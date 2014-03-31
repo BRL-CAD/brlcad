@@ -3,7 +3,7 @@ macro(Regression_Test testname depends_list)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR}
     DEPENDS ${depends_list}
     )
-  set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Testing")
+  set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
 endmacro(Regression_Test)
 
 # Geometry Conversion Regression Tests (experimental)

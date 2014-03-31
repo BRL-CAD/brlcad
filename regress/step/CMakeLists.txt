@@ -28,7 +28,7 @@ macro(STEP_G_TEST testnum_in filename_in md5sum_in comment_in)
     ${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.stp
     )
   add_custom_target(step_g_ap203_${testnum} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/step_g_${testnum}.passed)
-  set_target_properties(step_g_ap203_${testnum} PROPERTIES FOLDER "BRL-CAD Regression Testing")
+  set_target_properties(step_g_ap203_${testnum} PROPERTIES FOLDER "BRL-CAD Regression Tests")
 endmacro(STEP_G_TEST)
 
 STEP_G_TEST("001" "1797609in.stp" "833eeab8c0ef61177aa846c76eaabb31" "ST-ACIS, NIST DPPA Repository")
