@@ -219,7 +219,7 @@
 	      The <option>orientation</option> and <option>eye_pt</option> options need to parse
 	      multiple arguments, so any options immediately following either of them need to use
 	      an explicit argument flag - for example, an input .g file needs to be specified with
-	      the <option>-i</option> option and a color geometry object would need to be preceeded
+	      the <option>-i</option> option and a color geometry object would need to be preceded
 	      with <option>-c</option>.
       </para>
       <varlistentry>
@@ -251,7 +251,7 @@
       <para>
 	      The three options that are used to input geometry object lists need to parse
 	      multiple arguments, so any options immediately following either of them need to use
-	      an explicit argument flag to signal termination of the input list to the option 
+	      an explicit argument flag to signal termination of the input list to the option
 	      parser - for example, an input .g file needs to be specified with
 	      the <option>-i</option> if it comes after a list of ghost objects.
       </para>

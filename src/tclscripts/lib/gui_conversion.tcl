@@ -19,7 +19,7 @@
 #
 ###
 #
-#  These routines provide a pop-up Tk dialog that streams the ouput
+#  These routines provide a pop-up Tk dialog that streams the output
 #  from geometry conversions such as step-g and stl-g.
 #
 
@@ -183,7 +183,7 @@ proc ::rhino_build_cmd {} {
 
 #################################################################
 #
-#            Sterolithography (STL) specific logic
+#            STerolithography (STL) specific logic
 #
 #################################################################
 
