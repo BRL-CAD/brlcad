@@ -45,7 +45,7 @@ macro(ADD_G_TARGET g_model folder)
     DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
   )
   add_custom_target(${g_model_root}.g ALL DEPENDS ${output_file})
-  set_target_properties(${g_model_root}.g PROPERTIES FOLDER "$folder")
+  set_target_properties(${g_model_root}.g PROPERTIES FOLDER "${folder}")
   if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
     if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL "." AND CMAKE_CONFIGURATION_FILES)
       string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" output_file "${output_file}")
