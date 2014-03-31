@@ -132,6 +132,8 @@ WinMain(HINSTANCE hInstance,
 	}
     }
 
+    bu_setprogname(argv[0]);
+
 #ifdef TK_LOCAL_MAIN_HOOK
     TK_LOCAL_MAIN_HOOK(&argc, &argv);
 #endif
