@@ -38,6 +38,8 @@
 	method initGeometry {gdata}
 	method initTranslate {}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
@@ -96,6 +98,32 @@
 	variable mV8x ""
 	variable mV8y ""
 	variable mV8z ""
+
+	# Variables to hold checkpoint state during editing
+	variable cmV1x ""
+	variable cmV1y ""
+	variable cmV1z ""
+	variable cmV2x ""
+	variable cmV2y ""
+	variable cmV2z ""
+	variable cmV3x ""
+	variable cmV3y ""
+	variable cmV3z ""
+	variable cmV4x ""
+	variable cmV4y ""
+	variable cmV4z ""
+	variable cmV5x ""
+	variable cmV5y ""
+	variable cmV5z ""
+	variable cmV6x ""
+	variable cmV6y ""
+	variable cmV6z ""
+	variable cmV7x ""
+	variable cmV7y ""
+	variable cmV7z ""
+	variable cmV8x ""
+	variable cmV8y ""
+	variable cmV8z ""
 
 	variable mCurrentArbFaces ""
 
@@ -411,6 +439,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     set col 0
     grid $itk_component(arb8Type) \
@@ -635,6 +675,21 @@
 	-row $row \
 	-column $col \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -780,8 +835,64 @@
     set mV8z [lindex $_V8 2]
 
     GeometryEditFrame::initGeometry $gdata
+    if {$cmV1x == ""} {checkpointGeometry}
 }
 
+::itcl::body Arb8EditFrame::checkpointGeometry {} {
+    set cmV1x $mV1x
+    set cmV1y $mV1y
+    set cmV1z $mV1z
+    set cmV2x $mV2x
+    set cmV2y $mV2y
+    set cmV2z $mV2z
+    set cmV3x $mV3x
+    set cmV3y $mV3y
+    set cmV3z $mV3z
+    set cmV4x $mV4x
+    set cmV4y $mV4y
+    set cmV4z $mV4z
+    set cmV5x $mV5x
+    set cmV5y $mV5y
+    set cmV5z $mV5z
+    set cmV6x $mV6x
+    set cmV6y $mV6y
+    set cmV6z $mV6z
+    set cmV7x $mV7x
+    set cmV7y $mV7y
+    set cmV7z $mV7z
+    set cmV8x $mV8x
+    set cmV8y $mV8y
+    set cmV8z $mV8z
+}
+
+::itcl::body Arb8EditFrame::revertGeometry {} {
+    set mV1x $cmV1x
+    set mV1y $cmV1y
+    set mV1z $cmV1z
+    set mV2x $cmV2x
+    set mV2y $cmV2y
+    set mV2z $cmV2z
+    set mV3x $cmV3x
+    set mV3y $cmV3y
+    set mV3z $cmV3z
+    set mV4x $cmV4x
+    set mV4y $cmV4y
+    set mV4z $cmV4z
+    set mV5x $cmV5x
+    set mV5y $cmV5y
+    set mV5z $cmV5z
+    set mV6x $cmV6x
+    set mV6y $cmV6y
+    set mV6z $cmV6z
+    set mV7x $cmV7x
+    set mV7y $cmV7y
+    set mV7z $cmV7z
+    set mV8x $cmV8x
+    set mV8y $cmV8y
+    set mV8z $cmV8z
+
+    updateGeometry
+}
 
 ::itcl::body Arb8EditFrame::initTranslate {} {
     switch -- $mEditMode \
@@ -843,6 +954,8 @@
 	V6 [list $mXmax $mYmax $mZmin] \
 	V7 [list $mXmax $mYmax $mZmax] \
 	V8 [list $mXmin $mYmax $mZmax]
+
+    ::itcl::code $this checkpointGeometry
 }
 
 
