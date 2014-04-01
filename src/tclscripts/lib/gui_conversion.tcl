@@ -149,7 +149,7 @@ proc rhino_options {} {
 
 # For 3dm-g, it's options first, then output file, then input file
 proc ::rhino_build_cmd {} {
-    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]]
+    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -261,7 +261,7 @@ proc stl_options {} {
 
 # For stl-g, it's options first, then input file, then output file
 proc ::stl_build_cmd {} {
-    set cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]]
+    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
