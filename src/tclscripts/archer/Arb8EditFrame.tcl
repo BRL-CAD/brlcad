@@ -100,6 +100,7 @@
 	variable mV8z ""
 
 	# Variables to hold checkpoint state during editing
+	variable checkpointed_name ""
 	variable cmV1x ""
 	variable cmV1y ""
 	variable cmV1z ""
@@ -835,10 +836,12 @@
     set mV8z [lindex $_V8 2]
 
     GeometryEditFrame::initGeometry $gdata
-    if {$cmV1x == ""} {checkpointGeometry}
+    set curr_name $itk_option(-geometryObject)
+    if {$cmV1x == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body Arb8EditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
     set cmV1x $mV1x
     set cmV1y $mV1y
     set cmV1z $mV1z
