@@ -1382,7 +1382,11 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     bool removeTrimmed = false;
+#ifndef _USE_LATEST_PULLBACK_
     brlcad::SurfaceTree *st = new brlcad::SurfaceTree((ON_BrepFace *) face, removeTrimmed);
+#else
+    brlcad::SurfaceTree *st = NULL;
+#endif
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
@@ -1400,7 +1404,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	data = pullback_samples(st, curve);
+	data = pullback_samples(st, surface, curve);
 	if (data == NULL) {
 	    continue;
 	}
@@ -1510,7 +1514,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
 		// endpoints don't connect
 		int is;
-		const ON_Surface *surf = data->surftree->getSurface();
+		const ON_Surface *surf = data->surf;
 		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
 		    // insert trim
 		    // insert singular trim along
@@ -1623,7 +1627,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	delete data;
 	curve_pullback_samples.pop_front();
     }
-    delete st;
+    if (st)
+	delete st;
 
     return true;
 }

@@ -933,6 +933,7 @@ typedef struct pbc_data {
     double tolerance;
     double flatness;
     const ON_Curve *curve;
+    const ON_Surface *surf;
     brlcad::SurfaceTree *surftree;
     std::list<ON_2dPointArray *> segments;
     const ON_BrepEdge *edge;
@@ -961,6 +962,7 @@ extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,
 
 extern BREP_EXPORT PBCData *
 pullback_samples(const brlcad::SurfaceTree *surfacetree,
+		 const ON_Surface *surf,
 		 const ON_Curve *curve,
 		 double tolerance = 1.0e-6,
 		 double flatness = 1.0e-3);

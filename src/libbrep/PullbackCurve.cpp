@@ -438,59 +438,77 @@ bool surface_GetClosestPoint3dFirstOrder(
     ON_3dVector T, K;
     bool rc = false;
 
+    static const ON_Surface *prev_surface = NULL;
+    static int u_spancnt = surf->SpanCount(0);
+    static int v_spancnt = surf->SpanCount(1);
+    static double *uspan = new double[u_spancnt + 2];// adding 2 here because going to divide at midpoint
+    static double *vspan = new double[v_spancnt + 2];
+    static double umid = 0.0;
+    static int umid_index = 0;
+    static double vmid = 0.0;
+    static int vmid_index = 0;
+    double current_distance = DBL_MAX;
+
     int prec = std::cerr.precision();
     std::cerr.precision(15);
 
-    int u_spancnt = surf->SpanCount(0);
-    int v_spancnt = surf->SpanCount(1);
-    double *uspan = new double[u_spancnt + 2];// adding 2 here because going to divide at midpoint
-    double *vspan = new double[v_spancnt + 2];
-    double current_distance = DBL_MAX;
 
-    if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
-	ON_3dPoint P;
-	ON_3dVector Ds, Dt, Dss, Dst, Dtt;
-
-	double umid = surf->Domain(0).Mid();
-	int umid_index = u_spancnt/2;
-	for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
-	    if (NEAR_EQUAL(uspan[u_span_index],umid,tol)) {
-		umid_index = u_span_index;
-		break;
-	    } else if (uspan[u_span_index] > umid) {
-		for (u_span_index = u_spancnt + 1; u_span_index > 0;u_span_index--) {
-		    if (uspan[u_span_index-1] < umid) {
-			uspan[u_span_index] = umid;
-			umid_index = u_span_index;
-			u_spancnt++;
-			u_span_index = u_spancnt+1;
-			break;
-		    } else {
-			uspan[u_span_index] = uspan[u_span_index-1];
+    if (prev_surface != surf) {
+	u_spancnt = surf->SpanCount(0);
+	v_spancnt = surf->SpanCount(1);
+	if (uspan)
+	    delete [] uspan;
+	uspan = new double[u_spancnt + 2];
+	if (vspan)
+	    delete [] vspan;
+	vspan = new double[v_spancnt + 2];
+	if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
+	    prev_surface = surf;
+	    umid = surf->Domain(0).Mid();
+	    umid_index = u_spancnt/2;
+	    for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
+		if (NEAR_EQUAL(uspan[u_span_index],umid,tol)) {
+		    umid_index = u_span_index;
+		    break;
+		} else if (uspan[u_span_index] > umid) {
+		    for (u_span_index = u_spancnt + 1; u_span_index > 0;u_span_index--) {
+			if (uspan[u_span_index-1] < umid) {
+			    uspan[u_span_index] = umid;
+			    umid_index = u_span_index;
+			    u_spancnt++;
+			    u_span_index = u_spancnt+1;
+			    break;
+			} else {
+			    uspan[u_span_index] = uspan[u_span_index-1];
+			}
 		    }
 		}
 	    }
-	}
-	double vmid = surf->Domain(1).Mid();
-	int vmid_index = v_spancnt/2;
-	for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
-	    if (NEAR_EQUAL(vspan[v_span_index],vmid,tol)) {
-		vmid_index = v_span_index;
-		break;
-	    } else if (vspan[v_span_index] > vmid) {
-		for (v_span_index = v_spancnt + 1; v_span_index > 0;v_span_index--) {
-		    if (vspan[v_span_index-1] < vmid) {
-			vspan[v_span_index] = vmid;
-			vmid_index = v_span_index;
-			v_spancnt++;
-			v_span_index = v_spancnt+1;
-			break;
-		    } else {
-			vspan[v_span_index] = vspan[v_span_index-1];
+	    vmid = surf->Domain(1).Mid();
+	    vmid_index = v_spancnt/2;
+	    for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
+		if (NEAR_EQUAL(vspan[v_span_index],vmid,tol)) {
+		    vmid_index = v_span_index;
+		    break;
+		} else if (vspan[v_span_index] > vmid) {
+		    for (v_span_index = v_spancnt + 1; v_span_index > 0;v_span_index--) {
+			if (vspan[v_span_index-1] < vmid) {
+			    vspan[v_span_index] = vmid;
+			    vmid_index = v_span_index;
+			    v_spancnt++;
+			    v_span_index = v_spancnt+1;
+			    break;
+			} else {
+			    vspan[v_span_index] = vspan[v_span_index-1];
+			}
 		    }
 		}
 	    }
+	} else {
+	    prev_surface = NULL;
 	}
+    }
+    if (prev_surface == surf) {
 	if (quadrant == 0) {
 	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
 		    u_span_index++) {
@@ -1401,12 +1419,8 @@ bool surface_GetClosestPoint3dFirstOrder(
 		}
 	    }
 	}
-
     }
 cleanup:
-    delete[] uspan;
-    delete[] vspan;
-
     std::cerr.precision(prec);
     return rc;
 }
@@ -2342,68 +2356,147 @@ pullback_samples(PBCData* data,
 		 double t,
 		 double s)
 {
-    const ON_Curve* curve = data->curve;
-    ON_2dPointArray *samples = new ON_2dPointArray();
-    int numKnots = curve->SpanCount();
-    double *knots = new double[numKnots + 1];
-    curve->GetSpanVector(knots);
+    if (!data)
+	return NULL;
 
-    int istart = 0;
-    while (t >= knots[istart])
-	istart++;
+    if (data->surftree) {
+	const ON_Curve* curve = data->curve;
+	ON_2dPointArray *samples = new ON_2dPointArray();
+	int numKnots = curve->SpanCount();
+	double *knots = new double[numKnots + 1];
+	curve->GetSpanVector(knots);
 
-    if (istart > 0) {
-	istart--;
-	knots[istart] = t;
-    }
+	int istart = 0;
+	while (t >= knots[istart])
+	    istart++;
 
-    int istop = numKnots;
-    while (s <= knots[istop])
-	istop--;
+	if (istart > 0) {
+	    istart--;
+	    knots[istart] = t;
+	}
 
-    if (istop < numKnots) {
-	istop++;
-	knots[istop] = s;
-    }
+	int istop = numKnots;
+	while (s <= knots[istop])
+	    istop--;
 
-    int samplesperknotinterval;
-    int degree = curve->Degree();
+	if (istop < numKnots) {
+	    istop++;
+	    knots[istop] = s;
+	}
 
-    if (degree > 1) {
-	samplesperknotinterval = 3 * degree;
-    } else {
-	samplesperknotinterval = 18 * degree;
-    }
-    ON_2dPoint pt;
-    for (int i = istart; i <= istop; i++) {
-	if (i <= numKnots / 2) {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-			samples->Append(pt);
-		    }
-		}
-	    }
-	    if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-		samples->Append(pt);
-	    }
+	int samplesperknotinterval;
+	int degree = curve->Degree();
+
+	if (degree > 1) {
+	    samplesperknotinterval = 3 * degree;
 	} else {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-			samples->Append(pt);
+	    samplesperknotinterval = 18 * degree;
+	}
+	ON_2dPoint pt;
+	for (int i = istart; i <= istop; i++) {
+	    if (i <= numKnots / 2) {
+		if (i > 0) {
+		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		    for (int j = 1; j < samplesperknotinterval; j++) {
+			if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
+			    samples->Append(pt);
+			}
 		    }
 		}
-		if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
+		if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
 		    samples->Append(pt);
+		}
+	    } else {
+		if (i > 0) {
+		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		    for (int j = 1; j < samplesperknotinterval; j++) {
+			if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
+			    samples->Append(pt);
+			}
+		    }
+		    if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
+			samples->Append(pt);
+		    }
 		}
 	    }
 	}
+	delete[] knots;
+	return samples;
+    } else {
+	const ON_Curve* curve = data->curve;
+	const ON_Surface* surf = data->surf;
+	ON_2dPointArray *samples = new ON_2dPointArray();
+	int numKnots = curve->SpanCount();
+	double *knots = new double[numKnots + 1];
+	curve->GetSpanVector(knots);
+
+	int istart = 0;
+	while (t >= knots[istart])
+	    istart++;
+
+	if (istart > 0) {
+	    istart--;
+	    knots[istart] = t;
+	}
+
+	int istop = numKnots;
+	while (s <= knots[istop])
+	    istop--;
+
+	if (istop < numKnots) {
+	    istop++;
+	    knots[istop] = s;
+	}
+
+	int samplesperknotinterval;
+	int degree = curve->Degree();
+
+	if (degree > 1) {
+	    samplesperknotinterval = 3 * degree;
+	} else {
+	    samplesperknotinterval = 18 * degree;
+	}
+	ON_2dPoint pt;
+	ON_3dPoint p = ON_3dPoint::UnsetPoint;
+	ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	for (int i = istart; i <= istop; i++) {
+	    if (i <= numKnots / 2) {
+		if (i > 0) {
+		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		    for (int j = 1; j < samplesperknotinterval; j++) {
+			p = curve->PointAt(knots[i - 1] + j * delta);
+			p3d = ON_3dPoint::UnsetPoint;
+			if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+			    samples->Append(pt);
+			}
+		    }
+		}
+		p = curve->PointAt(knots[i]);
+		p3d = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+		    samples->Append(pt);
+		}
+	    } else {
+		if (i > 0) {
+		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		    for (int j = 1; j < samplesperknotinterval; j++) {
+			p = curve->PointAt(knots[i - 1] + j * delta);
+			p3d = ON_3dPoint::UnsetPoint;
+			if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+			    samples->Append(pt);
+			}
+		    }
+		    p = curve->PointAt(knots[i]);
+		    p3d = ON_3dPoint::UnsetPoint;
+		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+			samples->Append(pt);
+		    }
+		}
+	    }
+	}
+	delete[] knots;
+	return samples;
     }
-    delete[] knots;
-    return samples;
 }
 
 
@@ -2602,7 +2695,7 @@ bool
 Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
 {
     bool rc = true;
-    const ON_Surface *surf = data.surftree->getSurface();
+    const ON_Surface *surf = data.surf;
 
     // quick bail out is surface not closed
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
@@ -2809,202 +2902,382 @@ pullback_samples_from_closed_surface(PBCData* data,
 		 double t,
 		 double s)
 {
-    if (!data || !data->surftree)
+    if (!data)
 	return;
 
-    const ON_Curve* curve= data->curve;
+    if (data->surftree) {
+	if (!data->surf || !data->curve)
+	    return;
 
-    if (!curve)
-	return;
+	const ON_Curve* curve= data->curve;
+	const ON_Surface *surf = data->surf;
+	ON_2dPointArray *samples= new ON_2dPointArray();
+	size_t numKnots = curve->SpanCount();
+	double *knots = new double[numKnots+1];
 
-    const ON_Surface *surf = data->surftree->getSurface();
-    if (!surf)
-	return;
+	curve->GetSpanVector(knots);
 
-    ON_2dPointArray *samples= new ON_2dPointArray();
-    size_t numKnots = curve->SpanCount();
-    double *knots = new double[numKnots+1];
+	size_t istart = 0;
+	while ((istart < (numKnots+1)) && (t >= knots[istart]))
+	    istart++;
 
-    curve->GetSpanVector(knots);
-
-    size_t istart = 0;
-    while ((istart < (numKnots+1)) && (t >= knots[istart]))
-	istart++;
-
-    if (istart > 0) {
-	knots[--istart] = t;
-    }
-
-    size_t istop = numKnots;
-    while ((istop > 0) && (s <= knots[istop]))
-	istop--;
-
-    if (istop < numKnots) {
-	knots[++istop] = s;
-    }
-
-    size_t degree = curve->Degree();
-    size_t samplesperknotinterval=18*degree;
-
-    ON_2dPoint pt;
-    ON_2dPoint prev_pt;
-    double prev_t;
-    double offset = 0.0;
-    double delta;
-    for (size_t i=istart; i<istop; i++) {
-	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
-	if (i <= numKnots/2) {
-	    offset = PBC_FROM_OFFSET;
-	} else {
-	    offset = -PBC_FROM_OFFSET;
+	if (istart > 0) {
+	    knots[--istart] = t;
 	}
-	for (size_t j=0; j<=samplesperknotinterval; j++) {
-	    if ((j == samplesperknotinterval) && (i < istop - 1))
-		continue;
 
-	    double curr_t = knots[i]+j*delta;
-	    if (curr_t < (s-t)/2.0) {
+	size_t istop = numKnots;
+	while ((istop > 0) && (s <= knots[istop]))
+	    istop--;
+
+	if (istop < numKnots) {
+	    knots[++istop] = s;
+	}
+
+	size_t degree = curve->Degree();
+	size_t samplesperknotinterval=18*degree;
+
+	ON_2dPoint pt;
+	ON_2dPoint prev_pt;
+	double prev_t;
+	double offset = 0.0;
+	double delta;
+	for (size_t i=istart; i<istop; i++) {
+	    delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
+	    if (i <= numKnots/2) {
 		offset = PBC_FROM_OFFSET;
 	    } else {
 		offset = -PBC_FROM_OFFSET;
 	    }
-	    if (toUV(*data, pt, curr_t, offset)) {
-		if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
-		    ForceToClosestSeam(surf, pt, PBC_TOL);
+	    for (size_t j=0; j<=samplesperknotinterval; j++) {
+		if ((j == samplesperknotinterval) && (i < istop - 1))
+		    continue;
+
+		double curr_t = knots[i]+j*delta;
+		if (curr_t < (s-t)/2.0) {
+		    offset = PBC_FROM_OFFSET;
+		} else {
+		    offset = -PBC_FROM_OFFSET;
 		}
-		if ((i == istart) && (j == 0)) {
-		    // first point just append and set reference in prev_pt
+		if (toUV(*data, pt, curr_t, offset)) {
+		    if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
+			ForceToClosestSeam(surf, pt, PBC_TOL);
+		    }
+		    if ((i == istart) && (j == 0)) {
+			// first point just append and set reference in prev_pt
+			samples->Append(pt);
+			prev_pt = pt;
+			prev_t = curr_t;
+			continue;
+		    }
+		    int udir= 0;
+		    int vdir= 0;
+		    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
+			if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+			    SwapUVSeamPoint(surf, pt);
+			} else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+			    if (samples->Count() == 1) {
+				samples->Empty();
+				SwapUVSeamPoint(surf, prev_pt);
+				samples->Append(prev_pt);
+			    }
+			} else if (data->curve->IsClosed()) {
+			    ON_2dPoint from,to;
+			    double seam_t;
+			    if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
+				samples->Append(from);
+				data->segments.push_back(samples);
+				samples= new ON_2dPointArray();
+				samples->Append(to);
+				prev_pt = to;
+				prev_t = seam_t;
+			    } else {
+				std::cout << "Can not find seam crossing...." << std::endl;
+			    }
+			}
+		    }
 		    samples->Append(pt);
+
 		    prev_pt = pt;
 		    prev_t = curr_t;
-		    continue;
 		}
-		int udir= 0;
-		int vdir= 0;
-		if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
-		    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
-			SwapUVSeamPoint(surf, pt);
-		    } else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
-			if (samples->Count() == 1) {
-			    samples->Empty();
-			    SwapUVSeamPoint(surf, prev_pt);
-			    samples->Append(prev_pt);
-			}
-		    } else if (data->curve->IsClosed()) {
-			ON_2dPoint from,to;
-			double seam_t;
-			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
-			    samples->Append(from);
-			    data->segments.push_back(samples);
-			    samples= new ON_2dPointArray();
-			    samples->Append(to);
-			    prev_pt = to;
-			    prev_t = seam_t;
+	    }
+	}
+	delete [] knots;
+
+	if (samples != NULL) {
+	    data->segments.push_back(samples);
+
+	    int numsegs = data->segments.size();
+
+	    if (numsegs > 1) {
+		if (curve->IsClosed()) {
+		    ON_2dPointArray *reordered_samples= new ON_2dPointArray();
+		    // must have walked over seam but have closed curve so reorder stitching
+		    int seg = 0;
+		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+			samples = *rit;
+			if (seg < numsegs-1) { // since end points should be repeated
+			    reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
 			} else {
-			    std::cout << "Can not find seam crossing...." << std::endl;
+			    reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+			}
+			data->segments.erase((++rit).base());
+			rit = data->segments.rbegin();
+			delete samples;
+		    }
+		    data->segments.clear();
+		    data->segments.push_back(reordered_samples);
+		} else {
+		    //punt for now
+		}
+	    }
+	}
+
+	return;
+    } else {
+	if (!data->surf || !data->curve)
+	    return;
+
+	const ON_Curve* curve= data->curve;
+	const ON_Surface *surf = data->surf;
+
+	ON_2dPointArray *samples= new ON_2dPointArray();
+	size_t numKnots = curve->SpanCount();
+	double *knots = new double[numKnots+1];
+
+	curve->GetSpanVector(knots);
+
+	size_t istart = 0;
+	while ((istart < (numKnots+1)) && (t >= knots[istart]))
+	    istart++;
+
+	if (istart > 0) {
+	    knots[--istart] = t;
+	}
+
+	size_t istop = numKnots;
+	while ((istop > 0) && (s <= knots[istop]))
+	    istop--;
+
+	if (istop < numKnots) {
+	    knots[++istop] = s;
+	}
+
+	size_t degree = curve->Degree();
+	size_t samplesperknotinterval=18*degree;
+
+	ON_2dPoint pt;
+	ON_2dPoint prev_pt;
+	double prev_t;
+	double offset = 0.0;
+	double delta;
+	for (size_t i=istart; i<istop; i++) {
+	    delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
+	    if (i <= numKnots/2) {
+		offset = PBC_FROM_OFFSET;
+	    } else {
+		offset = -PBC_FROM_OFFSET;
+	    }
+	    for (size_t j=0; j<=samplesperknotinterval; j++) {
+		if ((j == samplesperknotinterval) && (i < istop - 1))
+		    continue;
+
+		double curr_t = knots[i]+j*delta;
+		if (curr_t < (s-t)/2.0) {
+		    offset = PBC_FROM_OFFSET;
+		} else {
+		    offset = -PBC_FROM_OFFSET;
+		}
+		ON_3dPoint p = curve->PointAt(curr_t);
+		ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+		    if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
+			ForceToClosestSeam(surf, pt, PBC_TOL);
+		    }
+		    if ((i == istart) && (j == 0)) {
+			// first point just append and set reference in prev_pt
+			samples->Append(pt);
+			prev_pt = pt;
+			prev_t = curr_t;
+			continue;
+		    }
+		    int udir= 0;
+		    int vdir= 0;
+		    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
+			if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+			    SwapUVSeamPoint(surf, pt);
+			} else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+			    if (samples->Count() == 1) {
+				samples->Empty();
+				SwapUVSeamPoint(surf, prev_pt);
+				samples->Append(prev_pt);
+			    }
+			} else if (data->curve->IsClosed()) {
+			    ON_2dPoint from,to;
+			    double seam_t;
+			    if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
+				samples->Append(from);
+				data->segments.push_back(samples);
+				samples= new ON_2dPointArray();
+				samples->Append(to);
+				prev_pt = to;
+				prev_t = seam_t;
+			    } else {
+				std::cout << "Can not find seam crossing...." << std::endl;
+			    }
 			}
 		    }
-		}
-		samples->Append(pt);
+		    samples->Append(pt);
 
-		prev_pt = pt;
-		prev_t = curr_t;
+		    prev_pt = pt;
+		    prev_t = curr_t;
+		}
 	    }
 	}
-    }
-    delete [] knots;
+	delete [] knots;
 
-    if (samples != NULL) {
-	data->segments.push_back(samples);
+	if (samples != NULL) {
+	    data->segments.push_back(samples);
 
-	int numsegs = data->segments.size();
+	    int numsegs = data->segments.size();
 
-	if (numsegs > 1) {
-	    if (curve->IsClosed()) {
-		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
-		// must have walked over seam but have closed curve so reorder stitching
-		int seg = 0;
-		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
-		    samples = *rit;
-		    if (seg < numsegs-1) { // since end points should be repeated
-			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
-		    } else {
-			reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+	    if (numsegs > 1) {
+		if (curve->IsClosed()) {
+		    ON_2dPointArray *reordered_samples= new ON_2dPointArray();
+		    // must have walked over seam but have closed curve so reorder stitching
+		    int seg = 0;
+		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+			samples = *rit;
+			if (seg < numsegs-1) { // since end points should be repeated
+			    reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
+			} else {
+			    reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+			}
+			data->segments.erase((++rit).base());
+			rit = data->segments.rbegin();
+			delete samples;
 		    }
-		    data->segments.erase((++rit).base());
-		    rit = data->segments.rbegin();
-		    delete samples;
-		}
-		data->segments.clear();
-		data->segments.push_back(reordered_samples);
+		    data->segments.clear();
+		    data->segments.push_back(reordered_samples);
 
-	    } else {
-		//punt for now
+		} else {
+		    //punt for now
+		}
 	    }
 	}
-    }
 
-    return;
+	return;
+    }
 }
+
 
 PBCData *
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
+		 const ON_Surface* surf,
 		 const ON_Curve* curve,
 		 double tolerance,
 		 double flatness)
 {
-    const ON_Surface *surf = NULL;
+    if (surfacetree) {
+	if (!surf)
+	    return NULL;
 
-    if (!surfacetree)
-	return NULL;
+	PBCData *data = new PBCData;
+	data->tolerance = tolerance;
+	data->flatness = flatness;
+	data->curve = curve;
+	data->surf = surf;
+	data->surftree = (brlcad::SurfaceTree*)surfacetree;
 
-    surf = ((brlcad::SurfaceTree *)surfacetree)->getSurface();
-    if (!surf)
-	return NULL;
+	double tmin, tmax;
+	data->curve->GetDomain(&tmin, &tmax);
 
-    PBCData *data = new PBCData;
-    data->tolerance = tolerance;
-    data->flatness = flatness;
-    data->curve = curve;
-    data->surftree = (brlcad::SurfaceTree*)surfacetree;
-
-    double tmin, tmax;
-    data->curve->GetDomain(&tmin, &tmax);
-
-    if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	if ((tmin < 0.0) && (tmax > 0.0)) {
-	    ON_2dPoint uv;
-	    if (toUV(*data, uv, 0.0, PBC_TOL)) {
-		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
-		    if (samples1 != NULL) {
-			data->segments.push_back(samples1);
-		    }
-		    if (samples2 != NULL) {
-			data->segments.push_back(samples2);
+	if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	    if ((tmin < 0.0) && (tmax > 0.0)) {
+		ON_2dPoint uv;
+		if (toUV(*data, uv, 0.0, PBC_TOL)) {
+		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
+			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
+			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+			if (samples1 != NULL) {
+			    data->segments.push_back(samples1);
+			}
+			if (samples2 != NULL) {
+			    data->segments.push_back(samples2);
+			}
+		    } else {
+			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+			if (samples != NULL) {
+			    data->segments.push_back(samples);
+			}
 		    }
 		} else {
-		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-		    if (samples != NULL) {
-			data->segments.push_back(samples);
-		    }
+		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
+		    delete data;
+		    return NULL;
 		}
 	    } else {
-		std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		delete data;
-		return NULL;
+		pullback_samples_from_closed_surface(data, tmin, tmax);
 	    }
 	} else {
-	    pullback_samples_from_closed_surface(data, tmin, tmax);
+	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	    if (samples != NULL) {
+		data->segments.push_back(samples);
+	    }
 	}
+	return data;
     } else {
-	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-	if (samples != NULL) {
-	    data->segments.push_back(samples);
+	if (!surf)
+	    return NULL;
+
+	PBCData *data = new PBCData;
+	data->tolerance = tolerance;
+	data->flatness = flatness;
+	data->curve = curve;
+	data->surf = surf;
+	data->surftree = NULL;
+
+	double tmin, tmax;
+	data->curve->GetDomain(&tmin, &tmax);
+
+	if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	    if ((tmin < 0.0) && (tmax > 0.0)) {
+		ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+		ON_3dPoint p = curve->PointAt(0.0);
+		ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+		int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
+		if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,quadrant,BREP_EDGE_MISS_TOLERANCE)) {
+		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
+			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
+			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+			if (samples1 != NULL) {
+			    data->segments.push_back(samples1);
+			}
+			if (samples2 != NULL) {
+			    data->segments.push_back(samples2);
+			}
+		    } else {
+			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+			if (samples != NULL) {
+			    data->segments.push_back(samples);
+			}
+		    }
+		} else {
+		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
+		    delete data;
+		    return NULL;
+		}
+	    } else {
+		pullback_samples_from_closed_surface(data, tmin, tmax);
+	    }
+	} else {
+	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	    if (samples != NULL) {
+		data->segments.push_back(samples);
+	    }
 	}
+	return data;
     }
-    return data;
 }
 
 
@@ -3273,12 +3546,10 @@ bool
 check_pullback_closed(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if ((*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
+    const ON_Surface *surf = (*d)->surf;
 
     //TODO:
     // 0 = U, 1 = V
@@ -3300,13 +3571,10 @@ bool
 check_pullback_singular_east(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData *>::iterator cs = pbcs.begin();
-    if ((*cs) == NULL || (*cs)->surftree == NULL)
+    if ((*cs) == NULL || (*cs)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*cs)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*cs)->surf;
     double umin, umax;
     ON_2dPoint *prev = NULL;
 
@@ -3346,13 +3614,10 @@ bool
 check_pullback_singular(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if ((*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*d)->surf;
     int cnt = 0;
 
     for (int i = 0; i < 4; i++) {
@@ -3402,13 +3667,10 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << "EndPoints " << str << ":" << std::endl;
 	while (cs != pbcs.end()) {
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
+	    const ON_Surface *surf = data->surf;
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
@@ -3458,13 +3720,10 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << str << ":" << std::endl;
 	while (cs != pbcs.end()) {
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
+	    const ON_Surface *surf = data->surf;
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
@@ -3752,13 +4011,10 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surftree)
+	if (!data || !data->surf)
 	    continue;
 
-	const ON_Surface *surf = data->surftree->getSurface();
-	if (!surf)
-	    continue;
-
+	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	ON_2dPoint *pt = NULL;
 	ON_2dPoint *prev_pt = NULL;
@@ -3795,13 +4051,13 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
 bool
 check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
 {
-    std::list<PBCData*>::iterator cs = pbcs.begin();
 
+    std::list<PBCData*>::iterator cs = pbcs.begin();
     ON_2dPoint *prev_pt = NULL;
     int prev_seam = 0;
     while( cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	const ON_Surface *surf = data->surftree->getSurface();
+	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 	while (seg != data->segments.end()) {
 	    ON_2dPointArray *points = (*seg);
@@ -3849,7 +4105,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
     while( cs != pbcs.end()) {
 	PBCData *data = (*cs++);
 	const ON_Curve *curve = data->curve;
-	const ON_Surface *surf = data->surftree->getSurface();
+	const ON_Surface *surf = data->surf;
 
 	if(cs != pbcs.end()) {
 	    PBCData *nextdata = (*cs);
@@ -3899,13 +4155,10 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	std::list<PBCData*>::iterator cs;
 
 	PBCData *data = pbcs.front();
-	if (!data || !data->surftree)
+	if (!data || !data->surf)
 	    return false;
 
-	const ON_Surface *surf = data->surftree->getSurface();
-	if (!surf)
-	    return false;
-
+	const ON_Surface *surf = data->surf;
 	ON_Interval udom = surf->Domain(0);
 	ON_Interval vdom = surf->Domain(1);
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
@@ -3969,13 +4222,10 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surftree)
+	if (!data || !data->surf)
 	    continue;
 
-	const ON_Surface *surf = data->surftree->getSurface();
-	if (!surf)
-	    continue;
-
+	const ON_Surface *surf = data->surf;
 	ON_Interval udom = surf->Domain(0);
 	double ulength = udom.Length();
 	ON_Interval vdom = surf->Domain(1);
@@ -4040,13 +4290,10 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surftree)
+	if (!data || !data->surf)
 	    continue;
 
-	const ON_Surface *surf = data->surftree->getSurface();
-	if (!surf)
-	    continue;
-
+	const ON_Surface *surf = data->surf;
 	double umin, umax;
 	double vmin, vmax;
 	surf->GetDomain(0, &umin, &umax);
@@ -4143,13 +4390,10 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	    int singularity;
 	    prev = NULL;
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
+	    const ON_Surface *surf = data->surf;
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
@@ -4270,13 +4514,10 @@ check_pullback_data(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
 
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if ((*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*d)->surf;
     bool singular = has_singularity(surf);
     bool closed = is_closed(surf);
 
@@ -4360,6 +4601,7 @@ check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const O
 
 ON_Curve*
 pullback_curve(const brlcad::SurfaceTree* surfacetree,
+	       const ON_Surface* surf,
 	       const ON_Curve* curve,
 	       double tolerance,
 	       double flatness)
@@ -4368,6 +4610,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     data.tolerance = tolerance;
     data.flatness = flatness;
     data.curve = curve;
+    data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
     data.segments.push_back(&samples);
@@ -4391,12 +4634,10 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_2dPoint p1, p2;
 
 #ifdef SHOW_UNUSED
-    if (!data.surftree)
+    if (!data.surf)
 	return NULL;
 
-    const ON_Surface *surf = (data.surftree)->getSurface();
-    if (!surf)
-	return NULL;
+    const ON_Surface *surf = data.surf;
 #endif
 
     if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
@@ -4429,6 +4670,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
 ON_Curve*
 pullback_seam_curve(enum seam_direction seam_dir,
 		    const brlcad::SurfaceTree* surfacetree,
+		    const ON_Surface* surf,
 		    const ON_Curve* curve,
 		    double tolerance,
 		    double flatness)
@@ -4437,6 +4679,7 @@ pullback_seam_curve(enum seam_direction seam_dir,
     data.tolerance = tolerance;
     data.flatness = flatness;
     data.curve = curve;
+    data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
     data.segments.push_back(&samples);
