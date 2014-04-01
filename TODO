@@ -96,6 +96,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Use set_target_properties(target_name PROPERTIES FOLDER "Folder Name")
   in CMake to organize targets into groups (primarily for MSVC)
 
+* document gqa centroid and moments of inertia options
+
 * add support for custom and random views to gqa.  provide an option
   to evaluate every N degrees for all unique az/el pairings, e.g.,
   every 15 degrees.  should automatically discard duplicate views.
