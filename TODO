@@ -93,6 +93,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make gqa (and other apps that initialize similarly via libged or a
+  wdbip) utilize TIE if LIBRT_BOT_MINTIE is set.  it's bypassing
+  rt_dirbuild() so it never gets to where the environment variable is
+  read.  another case for pushing the environment variable check a
+  little lower (or somewhere in the path that gqa currently takes).
+
 * document gqa centroid and moments of inertia options
 
 * add support for custom and random views to gqa.  provide an option
