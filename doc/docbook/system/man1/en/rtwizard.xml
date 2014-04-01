@@ -215,13 +215,6 @@
 	 are required to correctly define the view.  To get parameters for a given
 	 view, use the Archer command <command>get_eyemodel</command>.
       </para>
-      <para>
-	      The <option>orientation</option> and <option>eye_pt</option> options need to parse
-	      multiple arguments, so any options immediately following either of them need to use
-	      an explicit argument flag - for example, an input .g file needs to be specified with
-	      the <option>-i</option> option and a color geometry object would need to be preceded
-	      with <option>-c</option>.
-      </para>
       <varlistentry>
 	 <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
 	<listitem>
@@ -229,7 +222,7 @@
 	</listitem>
 	  </varlistentry>
       <varlistentry>
-	<term><option>--orientation</option> <replaceable>element_1 element_2 element_3 element_4</replaceable> </term>
+	<term><option>--orientation</option> "<replaceable>element_1 element_2 element_3 element_4</replaceable>"</term>
 	<listitem>
 	  <para>
 	    Set view quaternion.
@@ -237,15 +230,20 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>--eye_pt</option> <replaceable>X Y Z</replaceable></term>
+	<term><option>--eye_pt</option> "<replaceable>X Y Z</replaceable>"</term>
 	<listitem>
 	  <para>
 	    Set twist angle.
 	  </para>
 	</listitem>
       </varlistentry>
-
     </variablelist>
+      <para>
+	      Note: The <option>orientation</option> and <option>eye_pt</option> options are
+	      <emphasis remap="I">required</emphasis> to be inside quotation marks - although there are multiple numbers supplied
+	      to each option, the underlying option parsing code expects only one argument
+	      in each case.
+      </para>
 
     <variablelist remap="TP"><title>Image Generation Options</title>
       <para>
