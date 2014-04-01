@@ -2160,9 +2160,6 @@ getEdgePoints(ON_BrepTrim &trim,
     double dist = 1000.0;
 
     const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval dom[2];
-    for(int i=0;i<2;i++)
-	dom[i] = s->Domain(i);
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
@@ -4469,7 +4466,7 @@ rt_brep_process_selection(
 	// surface needs to be duplicated
 	int face_index = (*cv)->face_index;
 	if (face_index < 0 || face_index >= brep->m_F.Count()) {
-	    bu_log("%d is not a valid face index\n");
+	    bu_log("%d is not a valid face index\n",face_index);
 	    return -1;
 	}
 	int surface_index = brep->m_F[face_index].m_si;
