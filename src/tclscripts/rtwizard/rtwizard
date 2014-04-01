@@ -104,7 +104,9 @@ getopt::init {
 	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation)}}
 	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt)}}
 	# Debugging info
-	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
+	{verbose		v 	{::have_verbose ::RtWizard::wizard_state(verbose)}}
+	{pid-file 		"" 	{::have_pid_file ::RtWizard::wizard_state(pid_filename)}}
+	{log-file 		"" 	{::have_log_file ::RtWizard::wizard_state(log_file)}}
 }
 
 # Perform the actual option parsing
@@ -131,6 +133,22 @@ if {[info exists ::RtWizard::wizard_state(size)]} {
    if {![info exists ::RtWizard::wizard_state(scanlines)]} {
        set ::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(size)
    }
+}
+
+if {![info exists ::RtWizard::wizard_state(pid_filename)]} {
+    if {$::tcl_platform(platform) == "windows"} {
+	set ::RtWizard::wizard_state(pid_filename) "NUL"
+    } else {
+	set ::RtWizard::wizard_state(pid_filename) "/dev/null"
+    }
+}
+
+if {![info exists ::RtWizard::wizard_state(log_file)]} {
+    if {$::tcl_platform(platform) == "windows"} {
+	set ::RtWizard::wizard_state(log_file) "NUL"
+    } else {
+	set ::RtWizard::wizard_state(log_file) "/dev/null"
+    }
 }
 
 # There are three common possibilities for inputs specified without an option flag - the
@@ -492,7 +510,10 @@ if {[info exists ::use_gui]} {
        _gamma $::RtWizard::wizard_state(ghosting_intensity) \
        _color_objects  $::RtWizard::wizard_state(color_objlist) \
        _ghost_objects  $::RtWizard::wizard_state(ghost_objlist) \
-       _edge_objects  $::RtWizard::wizard_state(line_objlist) ]
+       _edge_objects  $::RtWizard::wizard_state(line_objlist) \
+       _log_file  $::RtWizard::wizard_state(log_file) \
+       _pid_filename $::RtWizard::wizard_state(pid_filename)
+       ]
 
 
     ::cadwidgets::rtimage $rtimage_dict
