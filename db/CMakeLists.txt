@@ -73,12 +73,12 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 foreach(g_input ${G_BENCHMARK_MODELS})
-  ADD_G_TARGET(${g_input} "BRLCAD Geometry Models/Benchmark")
+  ADD_G_TARGET(${g_input} "BRL-CAD Geometry Models/Benchmark")
 endforeach(g_input ${G_BENCHMARK_MODELS})
 CMAKEFILES(${G_BENCHMARK_MODELS})
 
 foreach(g_input ${G_SAMPLE_MODELS})
-  ADD_G_TARGET(${g_input} "BRLCAD Geometry Models/Sample")
+  ADD_G_TARGET(${g_input} "BRL-CAD Geometry Models/Sample")
 endforeach(g_input ${G_SAMPLE_MODELS})
 CMAKEFILES(${G_SAMPLE_MODELS})
 
