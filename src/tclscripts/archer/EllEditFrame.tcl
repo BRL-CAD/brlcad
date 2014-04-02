@@ -379,6 +379,19 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
+
     grid $itk_component(ellType) \
 	-row $mCurrentGridRow \
 	-column 0 \
@@ -424,6 +437,20 @@
 	$itk_component(ellCUnitsL) \
 	-row $mCurrentGridRow \
 	-sticky nsew
+    incr mCurrentGridRow
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
 
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
@@ -460,33 +487,6 @@
 	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
 	incr row
     }
-
-    itk_component add checkpointButton {
-	::ttk::button $parent.checkpointButton \
-	-text {CheckPoint} \
-	-command "[::itcl::code $this checkpointGeometry]"
-    } {}
-
-    itk_component add revertButton {
-	::ttk::button $parent.revertButton \
-	-text {Revert} \
-	-command "[::itcl::code $this revertGeometry]"
-    } {}
-
-    set col 0
-    grid $itk_component(checkpointButton) \
-	-row $row \
-	-column $col \
-	-columnspan 2 \
-	-sticky nsew
-    incr col
-    incr col
-    grid $itk_component(revertButton) \
-	-row $row \
-	-column $col \
-	-columnspan 2 \
-	-sticky nsew
-
 }
 
 ::itcl::body EllEditFrame::updateGeometryIfMod {} {
