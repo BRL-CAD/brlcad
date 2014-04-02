@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -53,6 +55,17 @@
 	variable mHz ""
 	variable mR_a ""
 	variable mR_h ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmR_a ""
+	variable cmR_h ""
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -195,6 +208,20 @@
 	    -anchor e
     } {}
 
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
+
     set row 0
     grid $itk_component(torType) \
 	-row $row \
@@ -237,6 +264,22 @@
 	$itk_component(torR_hUnitsL) \
 	-row $row \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -297,6 +340,8 @@
     set mR_h [bu_get_value_by_keyword r_h $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body TorusEditFrame::updateGeometry {} {
@@ -312,6 +357,31 @@
 	r_h $mR_h
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body TorusEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx  $mVx
+    set cmVy  $mVy
+    set cmVz  $mVz
+    set cmHx  $mHx
+    set cmHy  $mHy
+    set cmHz  $mHz
+    set cmR_a $mR_a
+    set cmR_h $mR_h
+}
+
+::itcl::body TorusEditFrame::revertGeometry {} {
+    set mVx  $cmVx
+    set mVy  $cmVy
+    set mVz  $cmVz
+    set mHx  $cmHx
+    set mHy  $cmHy
+    set mHz  $cmHz
+    set mR_a $cmR_a
+    set mR_h $cmR_h
+
+    updateGeometry
 }
 
 ::itcl::body TorusEditFrame::createGeometry {obj} {
