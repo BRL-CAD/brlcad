@@ -93,6 +93,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* merge get_eyemodel's functionality  as a "view eyemodel"  
+  sub-command in MGED/Archer.
+
 * make gqa (and other apps that initialize similarly via libged or a
   wdbip) utilize TIE if LIBRT_BOT_MINTIE is set.  it's bypassing
   rt_dirbuild() so it never gets to where the environment variable is
