@@ -97,9 +97,9 @@ proc rhino_options {} {
     grid $w.debuge  -column 1 -row 1  -sticky news
 
     label $w.verbosityl     -text "Printing Verbosity"
-    checkbutton $w.verbositye -variable ::printing_verbosity
+    entry $w.verbositye -textvariable ::printing_verbosity -bg white
     grid $w.verbosityl  -column 0  -row 2  -sticky e
-    grid $w.verbositye  -column 1 -row 2  -sticky news
+    grid $w.verbositye  -column 1 -columnspan 2 -row 2  -sticky news
 
     label $w.scalefactorl -text "Scaling Factor"
     entry $w.scalefactore -textvariable ::scale_factor -bg white
