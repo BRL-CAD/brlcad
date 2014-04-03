@@ -1,4 +1,4 @@
-#                      A R C H E R C O R E . T C L
+#                     A R C H E R C O R E . T C L
 # BRL-CAD
 #
 # Copyright (c) 2002-2014 United States Government as represented by
@@ -6227,7 +6227,7 @@ namespace eval ArcherCore {
     }
 
     set tobjects {}
-    set lsItems [$itk_component(ged) ls -a]
+    set lsItems [$itk_component(ged) ls -a -Q]
     foreach obj $objects {
 	set pdata [split $obj /]
 	set len [llength $pdata]

@@ -172,7 +172,8 @@ vls_long_dpp(struct ged *gedp,
 	     int aflag,		/* print all objects */
 	     int cflag,		/* print combinations */
 	     int rflag,		/* print regions */
-	     int sflag)		/* print solids */
+	     int sflag,		/* print solids */
+	     int Qflag)		/* quote names of objects */
 {
     int i;
     int isComb=0, isRegion=0;
@@ -273,7 +274,12 @@ vls_long_dpp(struct ged *gedp,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
+	    if (Qflag) {
+		bu_vls_printf(gedp->ged_result_str, "\"%s\"", dp->d_namep);
+		bu_vls_spaces(gedp->ged_result_str, (int)(max_nam_len - (strlen(dp->d_namep) + 2)));
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
+	    }
 	    bu_vls_spaces(gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(gedp->ged_result_str, " %s", type);
 	    if (type)
@@ -296,7 +302,8 @@ vls_line_dpp(struct ged *gedp,
 	     int aflag,	/* print all objects */
 	     int cflag,	/* print combinations */
 	     int rflag,	/* print regions */
-	     int sflag)	/* print solids */
+	     int sflag,	/* print solids */
+	     int Qflag) /* quote names in string */
 {
     int i;
     int isComb, isRegion;
@@ -329,7 +336,11 @@ vls_line_dpp(struct ged *gedp,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
+	    if (Qflag) {
+		bu_vls_printf(gedp->ged_result_str,  "\"%s\" ", list_of_names[i]->d_namep);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
+	    }
 	}
     }
 }
@@ -350,6 +361,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     int sflag = 0;		/* print solids */
     int lflag = 0;		/* use long format */
     int qflag = 0;		/* quiet flag - do a quiet lookup */
+    int Qflag = 0;		/* quote flag - surround names of returned objects with quotes */
     int attr_flag = 0;		/* arguments are attribute name/value pairs */
     int or_flag = 0;		/* flag indicating that any one attribute match is sufficient
 				 * default is all attributes must match.
@@ -365,7 +377,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqA")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqAQ")) != -1) {
 	switch (c) {
 	    case 'A':
 		attr_flag = 1;
@@ -381,6 +393,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'q':
 		qflag = 1;
+		break;
+	    case 'Q':
+		Qflag = 1;
 		break;
 	    case 'r':
 		rflag = 1;
@@ -482,9 +497,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (lflag)
-	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
+	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, Qflag);
     else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
+	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, Qflag);
     else
 	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 
