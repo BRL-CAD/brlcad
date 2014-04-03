@@ -1,4 +1,4 @@
-/*                         Q U O T E . C
+/*                       E N C O D E . C
  * BRL-CAD
  *
  * Copyright (c) 2010-2014 United States Government as represented by
