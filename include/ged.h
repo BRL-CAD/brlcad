@@ -578,6 +578,12 @@ struct ged {
     int ged_dm_height;
     int ged_dmp_is_null;
     void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
+
+    /* TODO - add support for setting the language to
+     * use when applying bu_vls_encode to object names
+     * in string results.  0 = no encoding, see ?.h for
+     * other options. */
+    /* int ged_interp_language;*/
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
