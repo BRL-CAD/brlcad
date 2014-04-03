@@ -36,6 +36,8 @@
 	# Override what's in EllEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
     }
 
@@ -45,6 +47,10 @@
 
 	variable mN ""
 	variable mE ""
+
+	# Checkpoint values
+	variable cmN ""
+	variable cmE ""
 
 	# Methods used by the constructor.
 	# Override methods in EllEditFrame.
@@ -101,6 +107,8 @@
     set mE [bu_get_value_by_keyword e $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmN == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body SuperellEditFrame::updateGeometry {} {
@@ -118,6 +126,18 @@
 	e $mE
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body SuperellEditFrame::checkpointGeometry {} {
+    EllEditFrame::checkpointGeometry
+    set cmN $mN
+    set cmE $mE
+}
+
+::itcl::body SuperellEditFrame::revertGeometry {} {
+    EllEditFrame::revertGeometry
+    set mN $cmN
+    set mE $cmE
 }
 
 ::itcl::body SuperellEditFrame::createGeometry {obj} {
@@ -178,23 +198,6 @@
 	::ttk::label $parent.superellEUnitsL \
 	    -anchor e
     } {}
-
-    incr mCurrentGridRow
-    grid $itk_component(superellNL) $itk_component(superellNE) \
-	-row $mCurrentGridRow \
-	-sticky nsew
-    grid $itk_component(superellNUnitsL) \
-	-row $mCurrentGridRow \
-	-column 4 \
-	-sticky nsew
-    incr mCurrentGridRow
-    grid $itk_component(superellEL) $itk_component(superellEE) \
-	-row $mCurrentGridRow \
-	-sticky nsew
-    grid $itk_component(superellEUnitsL) \
-	-row $mCurrentGridRow \
-	-column 4 \
-	-sticky nsew
 
     bind $itk_component(superellNE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(superellEE) <Return> [::itcl::code $this updateGeometryIfMod]

@@ -2077,48 +2077,6 @@ plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurve
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
 
-/*
- *  Simple check to determine if two consecutive points extend over the seam of the closed UV. The assumption here is that
- *  the distance between the consecutive points will be a small fraction of the UV domain unless the points jump over the
- *  closed seam.
- *
- *  // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
- */
-bool
-ConsecutivePointsExtendOverClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir)
-{
-    bool rc = false;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
-    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
-
-    udir = vdir = 0;
-    if (surf->IsClosed(0)) {
-	double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
-	if (fabs(delta) > surf->Domain(0).Length()/2.0) {
-	    if (delta < 0.0) {
-		udir = 1; // east bound
-	    } else {
-		udir= 2; // west bound
-	    }
-	    rc = true;
-	}
-    }
-
-    if (surf->IsClosed(1)) {
-	double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
-	if (fabs(delta) > surf->Domain(1).Length()/2.0) {
-	    if (delta < 0.0) {
-		vdir = 2; // north bound
-	    } else {
-		vdir= 1; // south bound
-	    }
-	    rc = true;
-	}
-    }
-
-    return rc;
-}
-
 
 void
 getEdgePoints(const ON_BrepTrim &trim,
@@ -2172,7 +2130,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	    int vdir=0;
 	    ON_2dPoint start = start_2d;
 	    ON_2dPoint end = end_2d;
-	    if (ConsecutivePointsExtendOverClosedSeam(s,start,end,udir,vdir)) {
+	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir)) {
 		double seam_t;
 		ON_2dPoint from = ON_2dPoint::UnsetPoint;
 		ON_2dPoint to = ON_2dPoint::UnsetPoint;
@@ -2202,9 +2160,6 @@ getEdgePoints(ON_BrepTrim &trim,
     double dist = 1000.0;
 
     const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval dom[2];
-    for(int i=0;i<2;i++)
-	dom[i] = s->Domain(i);
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
@@ -2912,7 +2867,7 @@ number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> 
 
 	int udir=0;
 	int vdir=0;
-	if (ConsecutivePointsExtendOverClosedSeam(surf,p1,p2,udir,vdir)) {
+	if (ConsecutivePointsCrossClosedSeam(surf,p1,p2,udir,vdir)) {
 	    rc++;
 	}
     }
@@ -4511,7 +4466,7 @@ rt_brep_process_selection(
 	// surface needs to be duplicated
 	int face_index = (*cv)->face_index;
 	if (face_index < 0 || face_index >= brep->m_F.Count()) {
-	    bu_log("%d is not a valid face index\n");
+	    bu_log("%d is not a valid face index\n",face_index);
 	    return -1;
 	}
 	int surface_index = brep->m_F[face_index].m_si;

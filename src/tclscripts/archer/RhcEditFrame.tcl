@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -58,6 +60,20 @@
 	variable mBz ""
 	variable mR ""
 	variable mC ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmBx ""
+	variable cmBy ""
+	variable cmBz ""
+	variable cmR ""
+	variable cmC ""
 
 	# Methods used by the constructor.
 	# Override methods in GeometryEditFrame.
@@ -111,6 +127,8 @@
     set mC [bu_get_value_by_keyword c $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body RhcEditFrame::updateGeometry {} {
@@ -127,6 +145,37 @@
 	c $mC
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body RhcEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmHx $mHx
+    set cmHy $mHy
+    set cmHz $mHz
+    set cmBx $mBx
+    set cmBy $mBy
+    set cmBz $mBz
+    set cmR  $mR
+    set cmC  $mC
+}
+
+::itcl::body RhcEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mHx $cmHx
+    set mHy $cmHy
+    set mHz $cmHz
+    set mBx $cmBx
+    set mBy $cmBy
+    set mBz $cmBz
+    set mR  $cmR
+    set mC  $cmC
+
+    updateGeometry
 }
 
 ::itcl::body RhcEditFrame::createGeometry {obj} {
@@ -319,6 +368,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(rhcType) \
 	-row $row \
@@ -373,6 +434,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

@@ -19,35 +19,111 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>killtree</command>
-      <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-a</arg>
+    <arg choice="opt" rep="norepeat">-f</arg>
+    <arg choice="opt" rep="norepeat">-n</arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Deletes the specified <emphasis>objects</emphasis> from the current database and
-	recursively deletes all objects referenced by any of those objects. If one of the 	<emphasis>objects</emphasis> listed is a combination, then that <emphasis>combination	</emphasis> as well as any objects that are members of that <emphasis>combination	</emphasis> will be deleted. If a member of that <emphasis>combination</emphasis> is 	itself a <emphasis>combination</emphasis>, then all of its members will also be destroyed. 	This continues recursively until the primitive shapes are reached and destroyed. Note that 	the <emphasis>objects</emphasis> are killed immediately. There is no need for a <command>	write file</command> command in MGED, and there is no <command>undo</command> command.  	<emphasis remap="B" role="bold">Use this command with extreme caution.</emphasis> Other 	commands that remove objects from the database are <command>kill</command> and <command>	killall</command>.
-    </para>
+  <para>Deletes the specified <emphasis>objects</emphasis> from the
+  current database and recursively deletes all objects referenced by
+  any of those objects. If one of the <emphasis>objects</emphasis>
+  listed is a combination, then that combination as well as any
+  objects that are members of that combination will be deleted. If a
+  member of that combination is itself a combination, then all of its
+  members will also be destroyed.  This continues recursively until
+  the primitive shapes are reached and destroyed.
+  </para>
+
+  <para>If any combination or member of a combination being
+  recursively deleted is referenced elsewhere in the database, those
+  objects will not be killed by default.  The <option>-f</option> flag
+  forcibly overrides this behavior and may result in dangling
+  references elsewhere in the database.
+  </para>
+
+  <para>Note that the <emphasis>objects</emphasis> are killed
+  immediately unless the <option>-n</option> flag is passed.  The
+  <option>-n</option> flag causes the command to return a string of
+  the objects that would be killed in a scriptable list format without
+  actually killing them.
+  </para>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-a</option> object</term>
+	<listitem>
+	  <para>Kill the specified object or object hierarchy and any
+	  references to that object in the database.  This is
+	  equivalent to <command>killall object</command>.
+          </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-f</option> object</term>
+	<listitem>
+	  <para>By default, an object tree will be killed except any
+	  objects referenced elsewhere in the database will be left
+	  alone.  Passing the <option>-f</option> flag forces the
+	  removal of all objects underneath the
+	  <emphasis>object</emphasis> hierarchy.  Note that this flag
+	  has no useful effect if used in conjunction with the
+	  <option>-a</option> flag (which explicitly kills all
+	  references, so there are none to skip).</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-n</option> object</term>
+	<listitem>
+	  <para>The <option>-n</option> flag causes no objects to be
+	  actually killed.  Instead, a list of objects that would be
+	  killed is returned.  This can be useful for testing or
+	  scripting.
+	  </para>
+	</listitem>
+      </varlistentry>
+  </variablelist>
+
+  <para><emphasis remap="B" role="bold">Use this command with
+  caution.</emphasis> Killed objects cannot be recovered so
+  <command>keep</command> a backup.
+  </para>
+
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>killtree</command> command to delete specified 	objects and all references to them from the current database.
+  <para>The example shows the use of the <command>killtree</command>
+  command to delete specified objects and all references to them from
+  the current database.
   </para>
+
   <example><title>Delete objects and all references to them from the database.</title>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>killtree group1 region2 shapeb</userinput>			</term>
+	   <term><prompt>mged&gt;</prompt> <userinput>killtree -r group1 region2 shapeb</userinput></term>
 	   <listitem>
-	     <para>Destroys <emphasis>group1</emphasis>, <emphasis>region2</emphasis>, and 					<emphasis>shapeb</emphasis> and removes all references to these objects
-			from the database.
-	     </para>
+	     <para>Destroys <emphasis>group1</emphasis>,
+	     <emphasis>region2</emphasis>, and
+	     <emphasis>shapeb</emphasis> and removes all references to
+	     these objects from the database.
+             </para>
 	   </listitem>
       </varlistentry>
     </variablelist>
   </example>
 
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para>
+  <citerefentry><refentrytitle>kill</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+  <citerefentry><refentrytitle>killall</refentrytitle><manvolnum>nged</manvolnum></citerefentry>
+</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>

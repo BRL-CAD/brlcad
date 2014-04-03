@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -59,6 +61,22 @@
 	variable mR_1 ""
 	variable mR_2 ""
 	variable mC ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmR_1 ""
+	variable cmR_2 ""
+	variable cmC ""
+
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -113,6 +131,9 @@
     set mC [bu_get_value_by_keyword c $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmC == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
+
 }
 
 ::itcl::body EhyEditFrame::updateGeometry {} {
@@ -130,6 +151,39 @@
 	c $mC
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body EhyEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx  $mVx
+    set cmVy  $mVy
+    set cmVz  $mVz
+    set cmHx  $mHx
+    set cmHy  $mHy
+    set cmHz  $mHz
+    set cmAx  $mAx
+    set cmAy  $mAy
+    set cmAz  $mAz
+    set cmR_1 $mR_1
+    set cmR_2 $mR_2
+    set cmC   $mC
+}
+
+::itcl::body EhyEditFrame::revertGeometry {} {
+    set mVx  $cmVx
+    set mVy  $cmVy
+    set mVz  $cmVz
+    set mHx  $cmHx
+    set mHy  $cmHy
+    set mHz  $cmHz
+    set mAx  $cmAx
+    set mAy  $cmAy
+    set mAz  $cmAz
+    set mR_1 $cmR_1
+    set mR_2 $cmR_2
+    set mC   $cmC
+
+    updateGeometry
 }
 
 ::itcl::body EhyEditFrame::createGeometry {obj} {
@@ -337,6 +391,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(ehyType) \
 	-row $row \
@@ -399,6 +465,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

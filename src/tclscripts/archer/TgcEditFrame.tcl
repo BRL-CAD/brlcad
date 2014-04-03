@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
@@ -77,6 +79,28 @@
 	variable mDx ""
 	variable mDy ""
 	variable mDz ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmBx ""
+	variable cmBy ""
+	variable cmBz ""
+	variable cmCx ""
+	variable cmCy ""
+	variable cmCz ""
+	variable cmDx ""
+	variable cmDy ""
+	variable cmDz ""
+
 
 	# Methods used by the constructor.
 	# Override methods in GeometryEditFrame.
@@ -140,6 +164,8 @@
     set mDz [lindex $_D 2]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body TgcEditFrame::updateGeometry {} {
@@ -157,6 +183,51 @@
 	D [list $mDx $mDy $mDz]
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body TgcEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmHx $mHx
+    set cmHy $mHy
+    set cmHz $mHz
+    set cmAx $mAx
+    set cmAy $mAy
+    set cmAz $mAz
+    set cmBx $mBx
+    set cmBy $mBy
+    set cmBz $mBz
+    set cmCx $mCx
+    set cmCy $mCy
+    set cmCz $mCz
+    set cmDx $mDx
+    set cmDy $mDy
+    set cmDz $mDz
+}
+
+::itcl::body TgcEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mHx $cmHx
+    set mHy $cmHy
+    set mHz $cmHz
+    set mAx $cmAx
+    set mAy $cmAy
+    set mAz $cmAz
+    set mBx $cmBx
+    set mBy $cmBy
+    set mBz $cmBz
+    set mCx $cmCx
+    set mCy $cmCy
+    set mCz $cmCz
+    set mDx $cmDx
+    set mDy $cmDy
+    set mDz $cmDz
+
+    updateGeometry
 }
 
 ::itcl::body TgcEditFrame::createGeometry {obj} {
@@ -482,6 +553,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(tgcType) \
 	-row $row \
@@ -544,6 +627,22 @@
 	$itk_component(tgcDUnitsL) \
 	-row $row \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

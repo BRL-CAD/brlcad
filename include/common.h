@@ -55,7 +55,12 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
-#	 define srand48(seed) (srand(seed))
+#    define srand48(seed) (srand(seed))
+#  endif
+
+#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
+#    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
+#    define HAVE_LRINT 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */

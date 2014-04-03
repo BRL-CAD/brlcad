@@ -124,7 +124,7 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     fastf_t hue, sat, val;
     fastf_t hue_frac;
     fastf_t p, q, t;
-    int hue_int;
+    long int hue_int;
 
     hue = hsv[HUE];
     sat = hsv[SAT];

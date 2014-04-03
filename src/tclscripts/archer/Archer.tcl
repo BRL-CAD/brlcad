@@ -3922,6 +3922,9 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this askToSave] \
 	-state disabled
     $itk_component(${_prefix}filemenu) add command \
+	-label "Export..." \
+	-command [::itcl::code $this exportDb]
+    $itk_component(${_prefix}filemenu) add command \
 	-label "Revert" \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -5448,6 +5451,8 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
+    $itk_component(menubar) menuconfigure .file.export \
+	-command [::itcl::code $this exportDb]
     $itk_component(menubar) menuconfigure .file.revert \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled

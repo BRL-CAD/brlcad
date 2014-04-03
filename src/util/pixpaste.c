@@ -185,6 +185,8 @@ main(int argc, char **argv)
     long int i;
     long int row, result;
 
+    bu_log("DEPRECATED: pixpaste is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
+
     if (!get_args(argc, argv)) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);

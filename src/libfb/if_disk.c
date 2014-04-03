@@ -30,6 +30,7 @@
 
 #include "bu/color.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/str.h"
 #include "fb.h"
 

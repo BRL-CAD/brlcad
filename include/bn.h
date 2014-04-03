@@ -3134,7 +3134,7 @@ BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
  *
  *  Rather than define all of these routines explicitly, we define
  *  2 macros "decompose" and "reconstruct" which embody the structure of
- *  the function (which is common to all of them).  We then instatiate
+ *  the function (which is common to all of them).  We then instantiate
  *  these macros once for each of the data types.  It's ugly, but it
  *  assures that a change to the structure of one operation type
  *  (decompose or reconstruct) occurs for all data types.

@@ -192,7 +192,7 @@ namespace eval RtWizard {
 	itk_component add notebook {
 	    iwidgets::notebook $itk_interior.notebook \
 		-width $DEF_WIDTH \
-		-height 500
+		-height 570
 	} {
 	    usual
 	}

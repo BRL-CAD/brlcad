@@ -70,6 +70,8 @@
 	method childsite {{site upper}}
 
 	method initGeometry {gdata}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method updateGeometry {}
 	method createGeometry {obj}
 
@@ -294,6 +296,12 @@
     if {$itk_option(-geometryChangedCallback) != ""} {
 	catch {eval $itk_option(-geometryChangedCallback)}
     }
+}
+
+::itcl::body GeometryEditFrame::checkpointGeometry {} {
+}
+
+::itcl::body GeometryEditFrame::revertGeometry {} {
 }
 
 ::itcl::body GeometryEditFrame::createGeometry {obj} {

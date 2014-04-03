@@ -36,6 +36,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -57,6 +59,21 @@
 	variable mCz ""
 	variable mR ""
 	variable mR_d ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmNx ""
+	variable cmNy ""
+	variable cmNz ""
+	variable cmCx ""
+	variable cmCy ""
+	variable cmCz ""
+	variable cmR ""
+	variable cmR_d ""
+
 
 	# Methods used by the constructor.
 	# Override methods in GeometryEditFrame.
@@ -111,6 +128,9 @@
     set mR_d [bu_get_value_by_keyword r_d $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
+
 }
 
 ::itcl::body EtoEditFrame::updateGeometry {} {
@@ -127,6 +147,37 @@
 	r_d $mR_d
 
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body EtoEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx  $mVx
+    set cmVy  $mVy
+    set cmVz  $mVz
+    set cmNx  $mNx
+    set cmNy  $mNy
+    set cmNz  $mNz
+    set cmCx  $mCx
+    set cmCy  $mCy
+    set cmCz  $mCz
+    set cmR   $mR
+    set cmR_d $mR_d
+
+}
+::itcl::body EtoEditFrame::revertGeometry {} {
+    set mVx  $cmVx
+    set mVy  $cmVy
+    set mVz  $cmVz
+    set mNx  $cmNx
+    set mNy  $cmNy
+    set mNz  $cmNz
+    set mCx  $cmCx
+    set mCy  $cmCy
+    set mCz  $cmCz
+    set mR   $cmR
+    set mR_d $cmR_d
+
+    updateGeometry
 }
 
 ::itcl::body EtoEditFrame::createGeometry {obj} {
@@ -330,6 +381,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(etoType) \
 	-row $row \
@@ -384,6 +447,21 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

@@ -3594,7 +3594,6 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 	                                 const struct db_full_path *full_path,
 					 const struct db_i *dbip,  /* needed for type determination */
-					 const struct bn_tol *tol, /* needed for arb type determination */
 					 int fp_flags);
 
 

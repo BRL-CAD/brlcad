@@ -121,6 +121,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
 # Local Variables:
 # tab-width: 8

@@ -36,6 +36,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -58,6 +60,22 @@
 	variable mCx ""
 	variable mCy ""
 	variable mCz ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmBx ""
+	variable cmBy ""
+	variable cmBz ""
+	variable cmCx ""
+	variable cmCy ""
+	variable cmCz ""
+
 
 	variable mCurrentGridRow 0
 
@@ -115,6 +133,9 @@
     set mCz [lindex $_C 2]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
+
 }
 
 ::itcl::body EllEditFrame::updateGeometry {} {
@@ -131,6 +152,40 @@
 
     GeometryEditFrame::updateGeometry
 }
+
+::itcl::body EllEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmAx $mAx
+    set cmAy $mAy
+    set cmAz $mAz
+    set cmBx $mBx
+    set cmBy $mBy
+    set cmBz $mBz
+    set cmCx $mCx
+    set cmCy $mCy
+    set cmCz $mCz
+}
+
+::itcl::body EllEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mAx $cmAx
+    set mAy $cmAy
+    set mAz $cmAz
+    set mBx $cmBx
+    set mBy $cmBy
+    set mBz $cmBz
+    set mCx $cmCx
+    set mCy $cmCy
+    set mCz $cmCz
+
+    updateGeometry
+}
+
 
 ::itcl::body EllEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {
@@ -324,6 +379,19 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
+
     grid $itk_component(ellType) \
 	-row $mCurrentGridRow \
 	-column 0 \
@@ -369,6 +437,21 @@
 	$itk_component(ellCUnitsL) \
 	-row $mCurrentGridRow \
 	-sticky nsew
+    incr mCurrentGridRow
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

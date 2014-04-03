@@ -8,6 +8,7 @@ add_custom_command(
   )
 add_custom_target(attr_std_table_xml DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/attr_std_table.xml)
+set_target_properties(attr_std_table_xml PROPERTIES FOLDER "DocBook")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/attr_std_list.xml
@@ -16,6 +17,7 @@ add_custom_command(
   )
 add_custom_target(attr_std_list_xml DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/attr_std_list.xml)
+set_target_properties(attr_std_list_xml PROPERTIES FOLDER "DocBook")
 
 set(docbook_man5_EN
   dsp.xml

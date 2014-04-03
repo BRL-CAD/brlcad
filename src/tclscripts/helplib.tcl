@@ -90,8 +90,8 @@ set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for 
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_keep)		{{[-R] file object(s)} {save named objects in the specified file.  Does not recursively keep objects with the -R option.}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
-set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
-set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}
+set helplib_data(wdb_killall)		{{[-n] <objects>} {kill/delete database objects, removing all references}}
+set helplib_data(wdb_killtree)		{{[-a|-f|-n] <objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}

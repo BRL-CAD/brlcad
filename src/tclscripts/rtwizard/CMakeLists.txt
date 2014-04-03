@@ -71,6 +71,7 @@ endif(WIN32)
 BRLCAD_MANAGE_FILES("rtwizard" ${BIN_DIR} EXEC)
 
 add_custom_target(rtwizard ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard)
+set_target_properties(rtwizard PROPERTIES FOLDER "BRL-CAD Executables")
 add_dependencies(rtwizard bwish rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb)
 if(TARGET tkpng)
   add_dependencies(rtwizard tkpng)

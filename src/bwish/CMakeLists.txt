@@ -41,6 +41,7 @@ if(BRLCAD_ENABLE_TK)
     add_executable(bwish WIN32 cadAppInit.c winMain.c)
     target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib ${ITCL_LIBRARY} ${ITK_LIBRARY})
     install(TARGETS bwish RUNTIME DESTINATION ${BIN_DIR})
+    set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
   else(WIN32)
     # If we're not on Windows, bwish is just btclsh with more libraries and
     # an extra compilation definition

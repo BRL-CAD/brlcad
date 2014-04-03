@@ -304,8 +304,8 @@ proc main {} {
     }
 
     if {[info exists argv] && $argv != ""} {
-	set target [lindex $argv 0]
-	set ext [file extension $target]
+	package require cadwidgets::GeometryIO
+	set target [cadwidgets::geom_load [lindex $argv 0] 1]
 	$::ArcherCore::application Load $target
     }
 
@@ -319,6 +319,13 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
+if { $::argc eq 1 } {
+   set argv1 [lindex $argv 0]
+   set argv1_ext [file extension $argv1]
+   if {[string compare -nocase $argv1_ext ".g"] != 0} {
+    $::ArcherCore::splash deactivate
+   }
+}
 
 # do main procedure
 if { [catch {main} _runnable] } {

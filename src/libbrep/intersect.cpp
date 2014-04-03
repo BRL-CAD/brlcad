@@ -1181,8 +1181,13 @@ ON_Intersect(const ON_Curve *curveA,
 		    lineB.ClosestPointTo(lineA.from, &startA_on_B);
 		    lineB.ClosestPointTo(lineA.to, &endA_on_B);
 
-		    if (startB_on_A > 1 + t1_tol || endB_on_A < -t1_tol
-			|| startA_on_B > 1 + t2_tol || endA_on_B < -t2_tol) {
+		    // make sure parameters are valid
+		    double min_tA = -t1_tol, max_tA = 1.0 + t1_tol;
+		    double min_tB = -t2_tol, max_tB = 1.0 + t2_tol;
+		    if (startB_on_A < min_tA || startB_on_A > max_tA ||
+			startA_on_B < min_tB || startA_on_B > max_tB ||
+			endB_on_A < min_tA || endB_on_A > max_tA ||
+			endA_on_B < min_tB || endA_on_B > max_tB) {
 			continue;
 		    }
 
@@ -1203,8 +1208,8 @@ ON_Intersect(const ON_Curve *curveA,
 		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
 		    event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
 			    i->first->m_t.ParameterAt(t_a2));
-		    event.SetBOverlapRange(i->first->m_t.ParameterAt(t_b1),
-			    i->first->m_t.ParameterAt(t_b2));
+		    event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
+			    i->second->m_t.ParameterAt(t_b2));
 		    tmp_x.Append(event.Event());
 		}
 	    } else {
@@ -2267,7 +2272,8 @@ add_points_to_closed_seams(
 	double dmin = domain.Min();
 	double dmax = domain.Max();
 
-	for (int j = 0; j < curvept.Count(); ++j) {
+	int orig_count = curvept.Count();
+	for (int j = 0; j < orig_count; ++j) {
 	    ON_2dPoint uvA = curve_uvA[j];
 	    ON_2dPoint uvB = curve_uvB[j];
 	    double &dval = (doA ? uvA : uvB)[dir];
@@ -2684,7 +2690,10 @@ get_overlap_intersection_parameters(
     int count_before = overlaps.Count();
 
     ON_ClassArray<ON_3dPointArray> params(count_before);
-    params.SetCount(count_before);
+
+    // count must equal capacity for array copy to work as expected
+    // when the result of the function is assigned
+    params.SetCount(params.Capacity());
 
     for (int i = 0; i < count_before; i++) {
 	// split the curves from the intersection points between them
@@ -2698,11 +2707,27 @@ get_overlap_intersection_parameters(
 		ON_2dPoint uvA, uvB;
 		ON_ClassArray<ON_PX_EVENT> psxA, psxB, pcxA, pcxB;
 
+		ON_3dPoint start_i = x_event[k].m_A[0];
+		ON_3dPoint start_j = x_event[k].m_B[0];
+		ON_3dPoint end_i = x_event[k].m_A[1];
+		ON_3dPoint end_j = x_event[k].m_B[1];
+		double start_ti = x_event[k].m_a[0];
+		double start_tj = x_event[k].m_b[0];
+		double end_ti = x_event[k].m_a[1];
+		double end_tj = x_event[k].m_b[1];
+
+		// the curves may have opposite directions, so make
+		// sure the ends are consistent
+		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap &&
+		    start_i.DistanceTo(start_j) > start_i.DistanceTo(end_j)) {
+		    std::swap(start_j, end_j);
+		    std::swap(start_tj, end_tj);
+		}
 		// ensure that the curve intersection point also
 		// intersects both surfaces (i.e. the point is in the
 		// overlap)
-		if (ON_Intersect(x_event[k].m_A[0], *surfA, psxA, isect_tolA, 0, 0, treeA)
-		    && ON_Intersect(x_event[k].m_B[0], *surfB, psxB, isect_tolB, 0, 0, treeB)) {
+		if (ON_Intersect(start_i, *surfA, psxA, isect_tolA, 0, 0, treeA)
+		    && ON_Intersect(start_j, *surfB, psxB, isect_tolB, 0, 0, treeB)) {
 		    // pull the 3D curve back to the 2D space
 		    uvA = psxA[0].m_b;
 		    uvB = psxB[0].m_b;
@@ -2714,7 +2739,7 @@ get_overlap_intersection_parameters(
 		    // converted to ON_3dPoint with z=0.0.
 		    if (ON_Intersect(uvA, *(overlaps[i]->m_curveA), pcxA, isect_tolA)
 			&& ON_Intersect(uvB, *(overlaps[i]->m_curveB), pcxB, isect_tolB)) {
-			param.x = x_event[k].m_a[0];
+			param.x = start_ti;
 			param.y = pcxA[0].m_b[0];
 			param.z = pcxB[0].m_b[0];
 			params[i].Append(param);
@@ -2724,7 +2749,7 @@ get_overlap_intersection_parameters(
 		    if (ON_Intersect(uvA, *(overlaps[j]->m_curveA), pcxA, isect_tolA)
 			&& ON_Intersect(uvB, *(overlaps[j]->m_curveB), pcxB, isect_tolB)) {
 			// the same routine for overlaps[j]
-			param.x = x_event[k].m_b[0];
+			param.x = start_tj;
 			param.y = pcxA[0].m_b[0];
 			param.z = pcxB[0].m_b[0];
 			params[j].Append(param);
@@ -2734,8 +2759,8 @@ get_overlap_intersection_parameters(
 		    // for overlap, have to do the same with the intersection end points
 		    psxA.SetCount(0);
 		    psxB.SetCount(0);
-		    if (ON_Intersect(x_event[k].m_A[1], *surfA, psxA, isect_tol, 0, 0, treeA)
-			&& ON_Intersect(x_event[k].m_B[1], *surfB, psxB, isect_tol, 0, 0, treeB)) {
+		    if (ON_Intersect(end_i, *surfA, psxA, isect_tol, 0, 0, treeA)
+			&& ON_Intersect(end_j, *surfB, psxB, isect_tol, 0, 0, treeB)) {
 			// pull the 3D curve back to the 2D space
 			uvA = psxA[0].m_b;
 			uvB = psxB[0].m_b;
@@ -2743,7 +2768,7 @@ get_overlap_intersection_parameters(
 			pcxB.SetCount(0);
 			if (ON_Intersect(uvA, *(overlaps[i]->m_curveA), pcxA, isect_tolA)
 			    && ON_Intersect(uvB, *(overlaps[i]->m_curveB), pcxB, isect_tolB)) {
-			    param.x = x_event[k].m_a[1];
+			    param.x = end_ti;
 			    param.y = pcxA[0].m_b[0];
 			    param.z = pcxB[0].m_b[0];
 			    params[i].Append(param);
@@ -2753,7 +2778,7 @@ get_overlap_intersection_parameters(
 			if (ON_Intersect(uvA, *(overlaps[j]->m_curveA), pcxA, isect_tolA)
 			    && ON_Intersect(uvB, *(overlaps[j]->m_curveB), pcxB, isect_tolB)) {
 			    // the same routine for overlaps[j]
-			    param.x = x_event[k].m_b[1];
+			    param.x = end_tj;
 			    param.y = pcxA[0].m_b[0];
 			    param.z = pcxB[0].m_b[0];
 			    params[j].Append(param);

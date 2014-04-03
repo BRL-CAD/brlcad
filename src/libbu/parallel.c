@@ -454,6 +454,11 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     rt_thread_t thread_tbl[MAX_PSW];
     int i;
 #  endif /* SUNOS */
+#  ifdef WIN32
+    int nthreadc = 0;
+    HANDLE hThreadArray[MAX_PSW] = {0};
+    int i;
+#  endif /* WIN32 */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
@@ -656,16 +661,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 
 #  ifdef WIN32
-    /* Win32 Threads */
-
-    thread = 0;
-    nthreadc = 0;
-    DWORD dwThreadIdArray[ncpu];
-    HANDLE hThreadArray[ncpu] = {0};
-
     /* Create the Win32 threads */
 
-    for(int i = 0; i < ncpu; i++) {
+    for (i = 0; i < ncpu; i++) {
+	DWORD pdwThreadId;
 
 	hThreadArray[i] = CreateThread(
 	    NULL,
@@ -673,11 +672,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    (LPVOID)parallel_interface,
 	    &user_thread_data_bu[i],
 	    0,
-	    &dwThreadIdArray[i]);
+	    &pdwThreadId);
 
 	if (hThreadArray[i] == NULL) {
 	    bu_log("bu_parallel(): Error in CreateThread");
-	    bu_exit();
 	}
 
 	nthreadc++;
@@ -692,7 +690,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    bu_log("bu_parallel(): Error closing threads");
 	    x--;
 	}
-	nthreade++;
     }
 #  endif /* end if Win32 threads */
 

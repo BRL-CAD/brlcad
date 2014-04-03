@@ -1214,6 +1214,13 @@ if(BRLCAD_ENABLE_SMP)
 endif(BRLCAD_ENABLE_SMP)
 
 #----------------------------------------------------------------------
+# Some generators in CMake support generating folders in IDEs for
+# organizing build targets.  We want to use them if they are there.
+if(MSVC)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif(MSVC)
+
+#----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
 # to the overall build time.  If necessary BRL-CAD provides its own
@@ -1920,6 +1927,7 @@ BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
 BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
 BRLCAD_FUNCTION_EXISTS(kill HAVE_KILL)
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
+BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT)
 BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
@@ -1991,7 +1999,12 @@ if("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
   check_c_source_compiles("#include <math.h>\nint main() {return lrint(3.14);}" HAVE_LRINT)
   if(HAVE_LRINT)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_LRINT 1\n")
-  endif(HAVE_LRINT)
+  else(HAVE_LRINT)
+    check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\n#include <math.h>\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
+    if(HAVE_WORKING_LRINT_MACRO)
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+    endif(HAVE_WORKING_LRINT_MACRO)
+endif(HAVE_LRINT)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 endif("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
 
@@ -2240,8 +2253,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
   add_executable(printtimestamp misc/CMake/test_srcs/print_timestamp.c)
+  set_target_properties(printtimestamp PROPERTIES FOLDER "Compilation Utilities")
   add_executable(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+  set_target_properties(buildtimestart PROPERTIES FOLDER "Compilation Utilities")
   add_executable(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
+  set_target_properties(buildtimeend PROPERTIES FOLDER "Compilation Utilities")
   add_custom_command(
     OUTPUT ${BUILD_DELTA_FILE}
     COMMAND buildtimestart
@@ -2253,11 +2269,13 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
     DEPENDS ${BUILD_DELTA_FILE} printtimestamp
     )
+  set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
   add_custom_target(buildtimedelta ALL
     COMMAND buildtimeend
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     DEPENDS buildtimeend
     )
+  set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # We want the timestamp to come first, so make ALL library,
@@ -2397,6 +2415,7 @@ if(CMAKE_CONFIGURATION_TYPES)
     COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
     )
   add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
   # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
   # to the first target to run - the timestamp printing.
   add_dependencies(timestamp multiconfig_path)
@@ -2689,6 +2708,12 @@ else("${CMAKE_GENERATOR}" MATCHES "Make")
     COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
     )
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
+if(TARGET distclean)
+  set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
+endif(TARGET distclean)
+
+# Not sure what this is - created automatically by CMake in MSVC?
+SetTargetFolder(core "CMakePredefinedTargets")
 
 # Have touched every file and directory that we are going to touch with the
 # build system - time to write out our lists for future processing.

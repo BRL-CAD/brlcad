@@ -63,6 +63,8 @@
 	method initGeometry {gdata}
 	method initTranslate {}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
@@ -72,8 +74,14 @@
 	variable mDetail
 	variable mMethod ""
 	variable mThreshold ""
-	variable mCurrentPoint 0
 
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmDetail
+	variable cmMethod ""
+	variable cmThreshold ""
+
+	variable mCurrentPoint 0
 	variable mCurrentGridRow 0
 
 	# Methods used by the constructor
@@ -166,8 +174,10 @@
 
     GeometryEditFrame::initGeometry $gdata
     set mInitGeometry 0
-
     metaballPointSelectCallback [expr {$mCurrentPoint - 1}]
+
+    set curr_name $itk_option(-geometryObject)
+    if {$cmMethod == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 
@@ -201,6 +211,22 @@
     GeometryEditFrame::updateGeometry
 }
 
+::itcl::body MetaballEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    array unset cmDetail
+    array set cmDetail [array get mDetail]
+    set cmMethod    $mMethod
+    set cmThreshold $mThreshold
+}
+
+::itcl::body MetaballEditFrame::revertGeometry {} {
+    array unset mDetail
+    array set mDetail [array get cmDetail]
+    set mMethod    $cmMethod
+    set mThreshold $cmThreshold
+
+    updateGeometry
+}
 
 ::itcl::body MetaballEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {
@@ -295,6 +321,18 @@
     # Set width of column 0
     $itk_component(detailTab) width 0 3
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(methodL) -row $row -column 0 -sticky ne
     grid $itk_component(methodF) -row $row -column 1 -sticky nsew
@@ -305,6 +343,19 @@
     grid $itk_component(detailTab) -row $row -column 0 -columnspan 2 -sticky nsew
 
     grid rowconfigure $parent $row -weight 1
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-sticky nsew
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
 }
 
