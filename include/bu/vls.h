@@ -417,6 +417,26 @@ BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *sr
  *   BU_ENCODE_OCTAL
  *   BU_ENCODE_XML
  *
+ * More thoughts on encode/decode - the nature of "quoting" is going to
+ * vary depending on the usage context and the language.  For some
+ * applications, HEX or BASE64 may be appropriate.  For others (like
+ * the problems with arbitrary strings in Tcl which initially motivated
+ * these functions) such wholesale encoding is not needed and it is just
+ * a subset of characters that must be escaped or otherwise identified.
+ *
+ * Given the large set of possible scenarios, it definitely makes sense
+ * to allow an encoding specifiying variable, and probably other optional
+ * variables (which may be NULL, depending on the encoding type) specifying
+ * active characters (that need quoting) and an escape character (or
+ * characters?  does it take more than one in some scenarios?  perhaps start
+ * and end of escape strings would be the most general?)
+ *
+ * This probably makes sense as its own header (encoding.h) given that is
+ * is really a feature on top of vls rather than something integral to
+ * vls itself - it would be workable (maybe even practical, if the final
+ * length of the encoded data can be pre-determined) to just work with
+ * char arrays.
+ *
  * the behavior of this routine is subject to change but should remain
  * a reversible operation when used in conjunction with
  * bu_vls_decode().
