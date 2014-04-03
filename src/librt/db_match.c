@@ -56,10 +56,10 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 	    if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		continue;
 	    if (num == 0)
-		bu_vls_strcat(dest, dp->d_namep);
+		bu_vls_sprintf(dest, "\"%s\"", dp->d_namep);
 	    else {
 		bu_vls_strcat(dest, " ");
-		bu_vls_strcat(dest, dp->d_namep);
+		bu_vls_printf(dest, "\"%s\"", dp->d_namep);
 	    }
 	    ++num;
 	}
