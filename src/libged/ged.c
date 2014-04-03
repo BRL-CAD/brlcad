@@ -590,7 +590,7 @@ _ged_print_node(struct ged *gedp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j = 0; j < pathpos+1; j++)
