@@ -1,4 +1,4 @@
-/*                    T E S T _ Q U O T E . C
+/*                    T E S T _ E N C O D E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2014 United States Government as represented by
@@ -34,7 +34,7 @@
  *
  */
 int
-test_quote(const char *str)
+test_encode(const char *str)
 {
     int status = 0;
     int len_s = str ? strlen(str) : 0;
@@ -92,51 +92,51 @@ main(int ac, char *av[])
 
     switch (test_num) {
 	case 1:
-	    return test_quote(NULL);
+	    return test_encode(NULL);
 	case 2:
-	    return test_quote("");
+	    return test_encode("");
 	case 3:
-	    return test_quote(" ");
+	    return test_encode(" ");
 	case 4:
-	    return test_quote("hello");
+	    return test_encode("hello");
 	case 5:
-	    return test_quote("\"");
+	    return test_encode("\"");
 	case 6:
-	    return test_quote("\'");
+	    return test_encode("\'");
 	case 7:
-	    return test_quote("\\");
+	    return test_encode("\\");
 	case 8:
-	    return test_quote("\\\"");
+	    return test_encode("\\\"");
 	case 9:
-	    return test_quote("\\\\");
+	    return test_encode("\\\\");
 	case 10:
-	    return test_quote("\"hello\"");
+	    return test_encode("\"hello\"");
 	case 11:
-	    return test_quote("\'hello\'");
+	    return test_encode("\'hello\'");
 	case 12:
-	    return test_quote("\\hello");
+	    return test_encode("\\hello");
 	case 13:
-	    return test_quote("\\hello\"");
+	    return test_encode("\\hello\"");
 	case 14:
-	    return test_quote("hello\\\\");
+	    return test_encode("hello\\\\");
 	case 15:
-	    return test_quote("\"hello\'\"");
+	    return test_encode("\"hello\'\"");
 	case 16:
-	    return test_quote("\"hello\'");
+	    return test_encode("\"hello\'");
 	case 17:
-	    return test_quote("\'hello\'");
+	    return test_encode("\'hello\'");
 	case 18:
-	    return test_quote("\'hello\"");
+	    return test_encode("\'hello\"");
 	case 19:
-	    return test_quote("\"\"hello\"");
+	    return test_encode("\"\"hello\"");
 	case 20:
-	    return test_quote("\'\'hello\'\'");
+	    return test_encode("\'\'hello\'\'");
 	case 21:
-	    return test_quote("\'\"hello\"\'");
+	    return test_encode("\'\"hello\"\'");
 	case 22:
-	    return test_quote("\"\"hello\"\"");
+	    return test_encode("\"\"hello\"\"");
 	case 23:
-	    return test_quote("\"\"\"hello\"\"\"");
+	    return test_encode("\"\"\"hello\"\"\"");
     }
 
     return 1;
