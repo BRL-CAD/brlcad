@@ -1472,7 +1472,7 @@ main(int argc, char *argv[])
 		 * database file name.
 		 */
 		if (argc >= 1)
-		    bu_vls_printf(&vls, "set argv %s; source %s", argv[0], archer);
+		    bu_vls_printf(&vls, "set argc %d; set argv %s; source %s", argc, argv[0], archer);
 		else
 		    bu_vls_printf(&vls, "source %s", archer);
 	    }
