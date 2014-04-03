@@ -31,6 +31,7 @@ set(LIBBU_SOURCES
   dirname.c
   date-time.c
   dlfcn.c
+  encode.c
   endian.c
   escape.c
   fchmod.c
@@ -64,7 +65,6 @@ set(LIBBU_SOURCES
   process.c
   progname.c
   ptbl.c
-  quote.c
   rb_create.c
   rb_delete.c
   rb_diag.c
