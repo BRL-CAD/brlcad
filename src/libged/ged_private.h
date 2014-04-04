@@ -463,15 +463,7 @@ extern int _ged_do_tra(struct ged *gedp,
 		       int (*func)());
 
 /* defined in ged_util.c */
-extern int _ged_results_append_str(struct ged *gedp,
-				   char *result_string);
-
-extern int _ged_results_append_vls(struct ged *gedp,
-				   struct bu_vls *result_vls);
-
-extern int _ged_results_clear(struct ged *gedp);
-
-/* For this version, deliberately not adding a separate
+/* Deliberately not adding a separate
  * vls function for API simplicity - just us bu_vls_addr
  * and call this function */
 extern int _ged_results_add(struct ged_results *results, char *result_string);
