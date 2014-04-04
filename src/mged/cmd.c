@@ -560,6 +560,23 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+
+/* This code is for debugging/testing the new ged return mechanism */
+#if 0
+    {
+    int r_loop = 0;
+    size_t result_cnt = 0;
+
+    result_cnt = ged_results_count(gedp->ged_results);
+    if (result_cnt > 0) {
+	bu_log("Results container holds results(%d):\n", result_cnt);
+	for (r_loop = 0; r_loop < (int)result_cnt; r_loop++) {
+	    bu_log("%s\n", ged_results_get(gedp->ged_results, r_loop));
+	}
+    }
+    }
+#endif
+
     if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);

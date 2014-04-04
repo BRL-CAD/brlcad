@@ -150,6 +150,11 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_log, struct bu_vls);
     }
 
+    if (gedp->ged_results) {
+	ged_results_free(gedp->ged_results);
+	BU_PUT(gedp->ged_results, struct ged_results);
+    }
+
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
@@ -172,6 +177,10 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
 
+    BU_GET(gedp->ged_results, struct ged_results);
+    (void)_ged_results_init(gedp->ged_results);
+
+    /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 

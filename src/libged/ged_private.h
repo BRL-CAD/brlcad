@@ -462,11 +462,20 @@ extern int _ged_do_tra(struct ged *gedp,
 		       vect_t tvec,
 		       int (*func)());
 
+/* Internal implementation of ged_results - since the
+ * details of the struct are not for public access,
+ * the real definition of the struct goes here.  The public
+ * header has only the notion of a ged_results structure.*/
+struct ged_results {
+        struct bu_ptbl *results_tbl;
+};
+
 /* defined in ged_util.c */
+extern int _ged_results_init(struct ged_results *results);
 /* Deliberately not adding a separate
  * vls function for API simplicity - just us bu_vls_addr
  * and call this function */
-extern int _ged_results_add(struct ged_results *results, char *result_string);
+extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
 /* defined in track.c */
 extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
