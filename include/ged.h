@@ -548,7 +548,16 @@ struct ged {
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    /** for setting results */
+    /* TODO: add support for returning an array of objects, not just a
+     * simple string.
+     *
+     * the calling application needs to be able to distinguish the
+     * individual object names from the "ls" command without resorting
+     * to quirky string encoding or format-specific quote wrapping.
+     *
+     * want to consider whether we need a json-style dictionary, but
+     * probably a literal null-terminated array will suffice here.
+     */
     struct bu_vls		*ged_result_str;
 
     struct ged_drawable		*ged_gdp;
@@ -579,11 +588,6 @@ struct ged {
     int ged_dmp_is_null;
     void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
 
-    /* TODO - add support for setting the language to
-     * use when applying bu_vls_encode to object names
-     * in string results.  0 = no encoding, see ?.h for
-     * other options. */
-    /* int ged_interp_language;*/
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
