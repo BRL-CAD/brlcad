@@ -625,7 +625,7 @@ struct ged_results {
  * internals of ged_results, which are not guaranteed
  * to stay the same.
  * defined in ged_util.c */
-GED_EXPORT extern char *ged_results_string(struct ged_results *results);
+GED_EXPORT extern char *ged_results_string(struct ged_results *results);  /* Note - this function is iffy - it is intended to provide the same functionality as the current results string, but is that needed?  Or should the calling function build its own string via iterating with count and get functions? */
 GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
 GED_EXPORT extern char *ged_results_get(struct ged_results *results, size_t index);
 GED_EXPORT extern char *ged_results_free(struct ged_results *results);
