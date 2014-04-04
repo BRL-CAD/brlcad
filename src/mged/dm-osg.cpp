@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #include "dm/dm_xvars.h"
+#include "fbio.h"
 }
 #include "dm/dm-osg.h"
 
