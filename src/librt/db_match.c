@@ -50,23 +50,20 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 {
     register int i, num;
     register struct directory *dp;
-    struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
 
     for (i = num = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		continue;
 	    if (num == 0)
-		bu_vls_sprintf(dest, "%s", bu_vls_encode(&tmp_str, dp->d_namep));
+		bu_vls_strcat(dest, dp->d_namep);
 	    else {
 		bu_vls_strcat(dest, " ");
-		bu_vls_printf(dest, "%s", bu_vls_encode(&tmp_str, dp->d_namep));
+		bu_vls_strcat(dest, dp->d_namep);
 	    }
 	    ++num;
-	    bu_vls_trunc(&tmp_str, 0);
 	}
     }
-    bu_vls_free(&tmp_str);
 
     return num;
 }
