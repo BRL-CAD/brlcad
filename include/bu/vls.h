@@ -431,11 +431,11 @@ BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *sr
  * characters?  does it take more than one in some scenarios?  perhaps start
  * and end of escape strings would be the most general?)
  *
- * This probably makes sense as its own header (encoding.h) given that is
- * is really a feature on top of vls rather than something integral to
- * vls itself - it would be workable (maybe even practical, if the final
+ * This probably makes sense as its own header given that is is really
+ * a feature on top of vls rather than something integral to vls
+ * itself - it would be workable (maybe even practical, if the final
  * length of the encoded data can be pre-determined) to just work with
- * char arrays.
+ * char arrays: see bu_str_escape()
  *
  * the behavior of this routine is subject to change but should remain
  * a reversible operation when used in conjunction with
