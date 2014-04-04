@@ -471,10 +471,17 @@ struct ged_results {
 };
 
 /* defined in ged_util.c */
+
+/* Called by ged_init */
 extern int _ged_results_init(struct ged_results *results);
-/* Deliberately not adding a separate
- * vls function for API simplicity - just us bu_vls_addr
- * and call this function */
+
+/* This function adds a copy of result_string into the results container.
+ * To dupicate a VLS string, use bu_vls_addr to wrap the vls before
+ * passing it to _ged_results_add, e.g.:
+ *
+ * _ged_results_add(gedp->ged_results, bu_vls_addr(my_vls_ptr));
+ *
+ */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
 /* defined in track.c */
