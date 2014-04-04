@@ -471,6 +471,11 @@ extern int _ged_results_append_vls(struct ged *gedp,
 
 extern int _ged_results_clear(struct ged *gedp);
 
+/* For this version, deliberately not adding a separate
+ * vls function for API simplicity - just us bu_vls_addr
+ * and call this function */
+extern int _ged_results_add(struct ged_results *results, char *result_string);
+
 /* defined in track.c */
 extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 

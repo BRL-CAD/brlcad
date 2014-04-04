@@ -540,6 +540,7 @@ struct ged_view {
 
 
 struct ged_cmd;
+struct ged_results;
 
 struct ged {
     struct bu_list		l;
@@ -559,6 +560,7 @@ struct ged {
      * probably a literal null-terminated array will suffice here.
      */
     struct bu_vls		*ged_result_str;
+    struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
@@ -610,6 +612,23 @@ struct ged_cmd {
     void (*unload)(struct ged *);
     int (*exec)(struct ged *, int, const char *[]);
 };
+
+/**
+ * holds the results of ged commmands
+ */
+struct ged_results {
+    struct bu_ptbl *result_tbl;
+};
+
+/* accessor functions for ged_results - calling
+ * applications should not work directly with the
+ * internals of ged_results, which are not guaranteed
+ * to stay the same.
+ * defined in ged_util.c */
+GED_EXPORT extern char *ged_results_string(struct ged_results *results);
+GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
+GED_EXPORT extern char *ged_results_get(struct ged_results *results, size_t index);
+GED_EXPORT extern char *ged_results_free(struct ged_results *results);
 
 
 /* defined in adc.c */
