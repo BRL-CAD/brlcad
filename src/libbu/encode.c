@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "bu/vls.h"
+#include "bu/log.h"
 
 
 static const char SPACE = ' ';
@@ -35,6 +36,9 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 {
     static const char *empty = "";
     int skip = 0;
+    const char *escape_chars = "\" {}\\$[]\0";
+    const char *ec = NULL;
+    int needs_escaping = 0;
 
     if (UNLIKELY(!str))
 	return empty;
@@ -43,25 +47,22 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 
     skip = bu_vls_strlen(vp);
 
-    if (strchr(str, SPACE) == NULL) {
-	/* no spaces, just watch for quotes */
-	for (; *str != '\0'; str++) {
-	    if (*str == DQUOTE) {
-		bu_vls_putc(vp, ESCAPE);
-	    }
-	    if (*str == ESCAPE) {
-		bu_vls_putc(vp, ESCAPE);
-	    }
-	    bu_vls_putc(vp, *str);
-	}
-    } else {
-	/* argv elements has spaces, quote it */
+    ec = escape_chars;
+    while (*ec != '\0') {
+	if (strchr(str, *ec) != NULL) needs_escaping = 1;
+	ec++;
+    }
+
+    if (needs_escaping) {
 	bu_vls_putc(vp, DQUOTE);
 	for (; *str != '\0'; str++) {
-	    if (*str == DQUOTE) {
-		bu_vls_putc(vp, ESCAPE);
+	    int needs_escape = 0;
+	    ec = escape_chars;
+	    while (*ec != '\0') {
+		if (*str == *ec) needs_escape = 1;
+		ec++;
 	    }
-	    if (*str == ESCAPE) {
+	    if (needs_escape) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
 	    bu_vls_putc(vp, *str);

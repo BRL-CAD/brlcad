@@ -137,6 +137,8 @@ main(int ac, char *av[])
 	    return test_encode("\"\"hello\"\"");
 	case 23:
 	    return test_encode("\"\"\"hello\"\"\"");
+	case 24:
+	    return test_encode("\"\"\"[exec join $hello {world}]\"\"\"");
     }
 
     return 1;
