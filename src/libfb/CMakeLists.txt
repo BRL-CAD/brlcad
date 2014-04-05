@@ -44,8 +44,9 @@ if(BRLCAD_ENABLE_OSG)
   set(FBOSGDEFS "-DIF_OSG")
   set(OSG_LIBRARIES
     ${OSGVIEWER_LIBRARY}
-    ${OSGTEXT_LIBRARY}
-    ${OSG_LIBRARY}
+    #${OSGTEXT_LIBRARY}
+    #${OSG_LIBRARY}
+    #${OPENTHREADS_LIBRARY}
     )
   set(LINKLIBS ${LINKLIBS} ${OSG_LIBRARIES})
   set(fbosg_srcs if_osg.cpp)
