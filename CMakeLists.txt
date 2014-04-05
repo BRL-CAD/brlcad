@@ -1587,6 +1587,10 @@ endif(APPLE)
 # misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
 CHECK_C_INLINE(C_INLINE)
 
+# Need to stop ld from using --no-as-needed by default on ubuntu
+set(NO_AS_NEEDED_FLAG "-Wl,--no-as-needed")
+ADD_NEW_FLAG(SHARED_LINKER NO_AS_NEEDED_FLAG ALL)
+
 # If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
 # compile-time best-practice error checking on certain libc functions
 # (e.g., memcpy), and provides run-time checks on buffer lengths and
