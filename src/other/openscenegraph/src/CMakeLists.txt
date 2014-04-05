@@ -5,12 +5,12 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/OpenThreads/include
   )
 
+add_subdirectory(osgViewer)
 add_subdirectory(osg)
 add_subdirectory(osgUtil)
 add_subdirectory(osgDB)
 add_subdirectory(osgGA)
 add_subdirectory(osgText)
-add_subdirectory(osgViewer)
 add_subdirectory(osgPlugins)
 
 # Test application

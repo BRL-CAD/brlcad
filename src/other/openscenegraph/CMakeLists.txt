@@ -38,6 +38,7 @@ if(MINGW)
   set(OSG_PLUGIN_PREFIX "mingw_")
 endif()
 
+#set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 
 # We want to build SONAMES shared libraries
 set(OPENSCENEGRAPH_SONAMES TRUE)

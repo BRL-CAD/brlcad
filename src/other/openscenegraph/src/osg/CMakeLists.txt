@@ -193,7 +193,7 @@ set(OSG_SRCS
 )
 
 add_library(osg ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${OSG_SRCS})
-target_link_libraries(osg OpenThreads ${CMAKE_THREAD_LIBS_INIT}
+target_link_libraries(osg osgViewer OpenThreads ${CMAKE_THREAD_LIBS_INIT}
   ${OPENGL_gl_LIBRARY} ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY})
 
 

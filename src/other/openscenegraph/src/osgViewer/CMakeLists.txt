@@ -163,7 +163,7 @@ if(MINGW OR CYGWIN)
 endif()
 
 add_library(osgViewer ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${LIB_COMMON_FILES})
-target_link_libraries(osgViewer osgGA osgText osgDB osgUtil osg OpenThreads ${CMAKE_THREAD_LIBS_INIT}
+target_link_libraries(osgViewer OpenThreads ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY} ${TARGET_EXTERNAL_LIBRARIES})
 
 # Local Variables:
