@@ -57,6 +57,8 @@
 #include <osg/GraphicsContext>
 #include <osg/Timer>
 
+#include <osgViewer/Viewer>
+
 #if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
 #else
@@ -1325,6 +1327,12 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 #else
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(OSG(ifp)->wind);
 #endif
+
+    // Although we are not making direct use of osgViewer currently, we need its
+    // initialization to make sure we have all the libraries we need loaded and
+    // ready.
+    osgViewer::Viewer *viewer = new osgViewer::Viewer();
+    delete viewer;
 
     // Setup the traits parameters
     traits->x = 0;

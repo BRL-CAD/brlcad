@@ -71,12 +71,9 @@ endif(BRLCAD_ENABLE_QT)
 if(BRLCAD_ENABLE_OSG)
   list(APPEND libdm_DEFINES DM_OSG IF_OSG)
   set(dmosg_srcs dm-osg.cpp)
-  #set(OSG_LIBRARIES
-  #  ${OSGVIEWER_LIBRARY}
-  #  ${OSGTEXT_LIBRARY}
-  #  ${OSG_LIBRARY}
-  #  ${OPENTHREADS_LIBRARY}
-  #  )
+  set(OSG_LIBRARIES
+    ${OSGVIEWER_LIBRARY}
+    )
 endif(BRLCAD_ENABLE_OSG)
 
 

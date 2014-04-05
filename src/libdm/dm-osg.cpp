@@ -34,6 +34,8 @@
 #include <math.h>
 
 #include <osg/GraphicsContext>
+#include <osgViewer/Viewer>
+
 #if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
 #else
@@ -755,6 +757,12 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 #else
     osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win);
 #endif
+
+    // Although we are not making direct use of osgViewer currently, we need its
+    // initialization to make sure we have all the libraries we need loaded and
+    // ready.
+    osgViewer::Viewer *viewer = new osgViewer::Viewer();
+    delete viewer;
 
     // Setup the traits parameters
     traits->x = 0;
