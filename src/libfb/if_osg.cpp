@@ -1101,6 +1101,31 @@ is_linear_cmap(register FBIO *ifp)
 }
 
 
+// make a stab at a framebuffer update handler... not clear
+// this approach will work, as this logic is currently
+// implemented.
+class FramebufferEventHandler : public osgGA::GUIEventHandler
+{
+    public:
+	FramebufferEventHandler(FBIO *ifp):
+	    _ifp(ifp) {}
+
+	virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter&)
+	{
+	    switch(ea.getEventType())
+	    {
+		case(osgGA::GUIEventAdapter::FRAME):
+		    osg_do_event(_ifp);
+		    return true;
+		default:
+		    return false;
+	    }
+	}
+
+	FBIO *_ifp;
+};
+
+
 HIDDEN int
 fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 {
