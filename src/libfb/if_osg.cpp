@@ -944,10 +944,10 @@ osg_do_event(FBIO *ifp)
 	}
     }
 #endif
-    if (0 < OSG(ifp)->alive && BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", 0), "1")) {
-	Tcl_SetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", "0", 0);
+//    if (0 < OSG(ifp)->alive && BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", 0), "1")) {
+//	Tcl_SetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", "0", 0);
 	expose_callback(ifp);
-    }
+ //   }
 }
 
 #if 0
@@ -1123,22 +1123,6 @@ class FramebufferEventHandler : public osgGA::GUIEventHandler
 
 	FBIO *_ifp;
 };
-
-
-static Tk_GenericProc osgfb_updateview;
-static int
-osgfb_updateview(ClientData clientData, XEvent *eventPtr)
-{
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	osg_do_event((FBIO *)clientData);
-
-	/* no further processing of this event */
-	return TCL_RETURN;
-    }
-
-    /* allow further processing of this event */
-    return TCL_OK;
-}
 
 
 HIDDEN int
@@ -1351,12 +1335,10 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     Tk_MapWindow(OSG(ifp)->xtkwin);
 
-    Tk_CreateGenericHandler((int (*)(void*, XEvent*))osgfb_updateview, (ClientData)ifp);
-
     /* Set Tk variables to handle Window behavior */
-    //Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
-    //Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
-    //Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
+    Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
+    Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
+    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
