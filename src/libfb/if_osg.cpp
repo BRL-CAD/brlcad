@@ -1125,6 +1125,22 @@ class FramebufferEventHandler : public osgGA::GUIEventHandler
 };
 
 
+static Tk_GenericProc osgfb_updateview;
+static int
+osgfb_updateview(ClientData clientData, XEvent *eventPtr)
+{
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	osg_do_event((FBIO *)clientData);
+
+	/* no further processing of this event */
+	return TCL_RETURN;
+    }
+
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+
+
 HIDDEN int
 fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 {
@@ -1335,13 +1351,12 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     Tk_MapWindow(OSG(ifp)->xtkwin);
 
+    Tk_CreateGenericHandler((int (*)(void*, XEvent*))osgfb_updateview, (ClientData)ifp);
+
     /* Set Tk variables to handle Window behavior */
-    Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
-    Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
-    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
-    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Expose> {set WM_EXPOSE_EVENT \"1\"}");
-    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Motion> {set WM_EXPOSE_EVENT \"1\"}");
-    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Configure> {set WM_EXPOSE_EVENT \"1\"}");
+    //Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
+    //Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
+    //Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
@@ -1385,8 +1400,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     OSG(ifp)->firstTime = 1;
 
     /* Loop through events until first exposure event is processed */
-    while (OSG(ifp)->firstTime == 1)
-	osg_do_event(ifp);
+    //while (OSG(ifp)->firstTime == 1)
+	//osg_do_event(ifp);
 
 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
