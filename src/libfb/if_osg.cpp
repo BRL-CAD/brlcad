@@ -1381,9 +1381,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
 
-    /* Loop through events until first exposure event is processed */
-    //while (OSG(ifp)->firstTime == 1)
-	//osg_do_event(ifp);
+    /* make sure we're set up to render */
+    osg_do_event(ifp);
 
 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
