@@ -58,6 +58,7 @@
 #include <osg/Timer>
 
 #include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
 
 #if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
@@ -161,6 +162,7 @@ struct sgiinfo {
  * Per window state information particular to the OpenGL interface
  */
 struct osginfo {
+    osg::ref_ptr<osgViewer::Viewer>    viewer;
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     Display *dispp;		/* pointer to X display connection */
     Window wind;		/* Window identifier */
@@ -1331,8 +1333,8 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     // Although we are not making direct use of osgViewer currently, we need its
     // initialization to make sure we have all the libraries we need loaded and
     // ready.
-    osgViewer::Viewer *viewer = new osgViewer::Viewer();
-    delete viewer;
+    OSG(ifp)->viewer = new osgViewer::Viewer();
+    //delete viewer;
 
     // Setup the traits parameters
     traits->x = 0;
@@ -1340,6 +1342,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     traits->width = width;
     traits->height = height;
     traits->depth = 24;
+    //traits->windowDecoration = true;
     traits->windowDecoration = false;
     traits->doubleBuffer = true;
     traits->sharedContext = 0;
@@ -1352,6 +1355,16 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     OSG(ifp)->graphicsContext->realize();
     OSG(ifp)->graphicsContext->makeCurrent();
+
+    OSG(ifp)->viewer->getCamera()->setGraphicsContext(OSG(ifp)->graphicsContext.get());
+    OSG(ifp)->viewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,width,0,height));
+
+    OSG(ifp)->viewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    OSG(ifp)->viewer->getCamera()->setViewMatrix(osg::Matrix::identity());
+
+    OSG(ifp)->viewer->getCamera()->setViewport(0,width,0,height);
+
+    OSG(ifp)->viewer->addEventHandler(new osgViewer::WindowSizeHandler());
 
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
