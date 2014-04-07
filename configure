@@ -190,6 +190,10 @@ do
                                   shift;;
      --disable-openscenegraph)                options="$options -DBRLCAD_OSG=SYSTEM";
                                   shift;;
+     --enable-openscenegraph)                options="$options -DBRLCAD_GLFW=BUNDLED";
+                                  shift;;
+     --disable-openscenegraph)                options="$options -DBRLCAD_GLFW=SYSTEM";
+                                  shift;;
      --enable-gdiam)                options="$options -DBRLCAD_GDIAM=BUNDLED";
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_GDIAM=SYSTEM";

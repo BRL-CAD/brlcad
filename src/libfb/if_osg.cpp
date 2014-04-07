@@ -69,6 +69,8 @@
 #include <osgText/Font>
 #include <osgText/Text>
 
+#include <GLFW/glfw3.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>	/* for getpagesize and sysconf */
 #endif
@@ -162,7 +164,9 @@ struct sgiinfo {
  * Per window state information particular to the OpenGL interface
  */
 struct osginfo {
+    GLFWwindow 			       *glfw;
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
+    int context_type;		/* 0 is osg, 1 is glfw */
     Display *dispp;		/* pointer to X display connection */
     Window wind;		/* Window identifier */
     Tcl_Interp *fbinterp;
@@ -710,6 +714,24 @@ osg_clipper(register FBIO *ifp)
 
 }
 
+/* new window size */
+void reshape(int width, int height)
+{
+    GLfloat h = (GLfloat) height / (GLfloat) width;
+    GLfloat xmax, znear, zfar;
+
+    znear = 5.0f;
+    zfar  = 30.0f;
+    xmax  = znear * 0.5f;
+
+    glViewport( 0, 0, (GLint) width, (GLint) height );
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    glFrustum( -xmax, xmax, -xmax*h, xmax*h, znear, zfar );
+    glMatrixMode( GL_MODELVIEW );
+    glLoadIdentity();
+    glTranslatef( 0.0, 0.0, -20.0 );
+}
 
 HIDDEN void
 expose_callback(FBIO *ifp)
@@ -717,7 +739,11 @@ expose_callback(FBIO *ifp)
     struct osg_clip *clp;
 
     if (CJDEBUG) fb_log("entering expose_callback()\n");
-    OSG(ifp)->graphicsContext->makeCurrent();
+    if(OSG(ifp)->context_type) {
+	OSG(ifp)->graphicsContext->makeCurrent();
+    } else {
+	glfwMakeContextCurrent(OSG(ifp)->glfw);
+    }
     if (OSG(ifp)->firstTime) {
 
 	OSG(ifp)->firstTime = 0;
@@ -749,8 +775,17 @@ expose_callback(FBIO *ifp)
 	    OSG(ifp)->copy_flag = 0;
 	}
 
-	OSG(ifp)->win_width = Tk_Width(OSG(ifp)->xtkwin);
-	OSG(ifp)->win_height = Tk_Height(OSG(ifp)->xtkwin);
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->win_width = Tk_Width(OSG(ifp)->xtkwin);
+	    OSG(ifp)->win_height = Tk_Height(OSG(ifp)->xtkwin);
+	} else {
+	    int glfw_width = 0;
+	    int glfw_height = 0;
+	    glfwGetFramebufferSize(OSG(ifp)->glfw, &glfw_width, &glfw_height);
+	    OSG(ifp)->win_width = glfw_width;
+	    OSG(ifp)->win_height = glfw_height;
+	    reshape(glfw_width, glfw_height);
+	}
 
 	/* clear entire window */
 	glViewport(0, 0, OSG(ifp)->win_width, OSG(ifp)->win_height);
@@ -809,7 +844,11 @@ expose_callback(FBIO *ifp)
     osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 
     if (SGI(ifp)->mi_doublebuffer) {
-	OSG(ifp)->graphicsContext->swapBuffers();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->swapBuffers();
+	} else {
+	    glfwSwapBuffers(OSG(ifp)->glfw);
+	}
     } else if (OSG(ifp)->copy_flag) {
 	backbuffer_to_screen(ifp, -1);
     }
@@ -829,7 +868,9 @@ expose_callback(FBIO *ifp)
     }
 
     /* unattach context for other threads to use */
-    OSG(ifp)->graphicsContext->releaseContext();
+    if(OSG(ifp)->context_type) {
+	OSG(ifp)->graphicsContext->releaseContext();
+    }
 }
 
 
@@ -860,12 +901,12 @@ osg_configureWindow(FBIO *ifp, int width, int height)
 HIDDEN void
 osg_do_event(FBIO *ifp)
 {
-    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+    //Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 
-    if (BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", 0), "1")) {
+    //if (BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", 0), "1")) {
 	OSG(ifp)->alive = 0;
-	printf("Close Window event\n");
-    }
+//	printf("Close Window event\n");
+ //   }
 
 #if 0
     XEvent event;
@@ -1125,6 +1166,20 @@ class FramebufferEventHandler : public osgGA::GUIEventHandler
 };
 
 
+void glfw_key( GLFWwindow* window, int k, int UNUSED(s), int action, int UNUSED(mods) )
+{
+    if( action != GLFW_PRESS ) return;
+
+    switch (k) {
+	case GLFW_KEY_ESCAPE:
+	    glfwSetWindowShouldClose(window, GL_TRUE);
+	    break;
+	default:
+	    return;
+    }
+}
+
+
 HIDDEN int
 fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 {
@@ -1301,40 +1356,18 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     // TODO - replace X window creation below with Tk window creation here.  See osg_open in
     // libdm for pointers.
+    OSG(ifp)->context_type = 0;
 
-    struct bu_vls if_pathName;
-    struct bu_vls if_tkName;
-    struct bu_vls if_dName;
-    bu_vls_init(&if_pathName);
-    bu_vls_init(&if_tkName);
-    bu_vls_init(&if_dName);
-    Tk_Window tkwin = (Tk_Window)NULL;
+    glfwInit();
+    GLFWwindow *glfw = glfwCreateWindow(width, height, "osg", NULL, NULL);
 
-    bu_vls_sprintf(&if_pathName, ".if_osg%d", osg_nwindows);
-    osg_nwindows++;
-    bu_vls_strcpy(&if_dName, ":0.0");
+    OSG(ifp)->glfw = glfw;
 
-    OSG(ifp)->fbinterp = Tcl_CreateInterp();
-    Tcl_Init(OSG(ifp)->fbinterp);
-    Tcl_Eval(OSG(ifp)->fbinterp, "package require Tk");
+    glfwSetKeyCallback(glfw, glfw_key);
 
-    tkwin = Tk_MainWindow(OSG(ifp)->fbinterp);
+    glfwSwapInterval( 1 );
 
-    //OSG(ifp)->xtkwin = Tk_CreateWindowFromPath(OSG(ifp)->fbinterp, tkwin, bu_vls_addr(&if_pathName), bu_vls_addr(&if_dName));
-    OSG(ifp)->xtkwin = tkwin;
-
-    bu_vls_printf(&if_tkName, "%s", (char *)Tk_Name(OSG(ifp)->xtkwin));
-
-    OSG(ifp)->dispp = Tk_Display(tkwin);
-
-    Tk_GeometryRequest(OSG(ifp)->xtkwin, width, height);
-
-    Tk_MakeWindowExist(OSG(ifp)->xtkwin);
-
-    OSG(ifp)->wind = Tk_WindowId(OSG(ifp)->xtkwin);
-
-    Tk_MapWindow(OSG(ifp)->xtkwin);
-
+#if 0
     /* Set Tk variables to handle Window behavior */
     Tcl_SetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", "0", 0);
     Tcl_Eval(OSG(ifp)->fbinterp, "wm protocol . WM_DELETE_WINDOW {set WM_DELETE_WINDOW \"1\"}");
@@ -1377,6 +1410,9 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     OSG(ifp)->graphicsContext->realize();
     OSG(ifp)->graphicsContext->makeCurrent();
+#endif
+
+    glfwMakeContextCurrent(OSG(ifp)->glfw);
 
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
@@ -1384,8 +1420,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     /* make sure we're set up to render */
     osg_do_event(ifp);
 
-
-    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+    //while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     return 0;
 }
 
@@ -1396,6 +1431,9 @@ _osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, int width
 
     /*XXX for now use private memory */
     ifp->if_mode = MODE_1MALLOC;
+
+    /* Pre-existing contexts will use osg, not glfw */
+    OSG(ifp)->context_type = 0;
 
     /*
      * Allocate extension memory sections,
@@ -1540,23 +1578,35 @@ HIDDEN int
 osg_flush(FBIO *ifp)
 {
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
-	OSG(ifp)->graphicsContext->makeCurrent();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->makeCurrent();
+	} else {
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	}
+
 
 	/* Send entire in-memory buffer to the screen, all at once */
 	osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	if (SGI(ifp)->mi_doublebuffer) {
-	    OSG(ifp)->graphicsContext->swapBuffers();
+	    if(OSG(ifp)->context_type) {
+		OSG(ifp)->graphicsContext->swapBuffers();
+	    } else {
+		glfwSwapBuffers(OSG(ifp)->glfw);
+	    }
 	} else if (OSG(ifp)->copy_flag) {
 	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use, also flushes */
-	OSG(ifp)->graphicsContext->releaseContext();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->releaseContext();
+	}
     }
     //XFlush(OSG(ifp)->dispp);
     glFlush();
     return 0;
 }
+
 
 
 HIDDEN int
@@ -1598,18 +1648,31 @@ fb_osg_close(FBIO *ifp)
      */
     fclose(stdin);
 
-    while (0 < OSG(ifp)->alive) {
-	osg_do_event(ifp);
+    if(OSG(ifp)->context_type) {
+	while (0 < OSG(ifp)->alive) {
+	    osg_do_event(ifp);
+	}
+    } else {
+	while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
+	{
+	    glfwSwapBuffers(OSG(ifp)->glfw);
+	    glfwPollEvents();
+	}
     }
 
-    {
+    if(OSG(ifp)->context_type) {
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-
 	OSG(ifp)->graphicsContext->makeCurrent();
 	OSG(ifp)->graphicsContext->releaseContext();
+
 	bu_vls_sprintf(&tcl_cmd, "destroy %s", (char *)Tk_Name(OSG(ifp)->xtkwin));
 	Tcl_Eval(OSG(ifp)->fbinterp, bu_vls_addr(&tcl_cmd));
 	bu_vls_free(&tcl_cmd);
+
+    } else {
+	glfwMakeContextCurrent(OSG(ifp)->glfw);
+	glfwDestroyWindow(OSG(ifp)->glfw);
+	glfwTerminate();
     }
 
     return 0;
@@ -1700,7 +1763,11 @@ osg_clear(FBIO *ifp, unsigned char *pp)
 
     if (CJDEBUG) printf("entering osg_clear\n");
 
-    OSG(ifp)->graphicsContext->makeCurrent();
+    if(OSG(ifp)->context_type) {
+	OSG(ifp)->graphicsContext->makeCurrent();
+    } else {
+	glfwMakeContextCurrent(OSG(ifp)->glfw);
+    }
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
@@ -1747,14 +1814,20 @@ osg_clear(FBIO *ifp, unsigned char *pp)
 	} else {
 	    glClear(GL_COLOR_BUFFER_BIT);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		OSG(ifp)->graphicsContext->swapBuffers();
+		if(OSG(ifp)->context_type) {
+		    OSG(ifp)->graphicsContext->swapBuffers();
+		} else {
+		    glfwSwapBuffers(OSG(ifp)->glfw);
+		}
 	    }
 	}
 
     }
 
     /* unattach context for other threads to use */
-    OSG(ifp)->graphicsContext->releaseContext();
+    if(OSG(ifp)->context_type) {
+	OSG(ifp)->graphicsContext->releaseContext();
+    }
 
     return 0;
 }
@@ -1793,7 +1866,11 @@ osg_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (OSG(ifp)->use_ext_ctrl) {
 	osg_clipper(ifp);
     } else {
-	OSG(ifp)->graphicsContext->makeCurrent();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->makeCurrent();
+	} else {
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	}
 
 	/* Set clipping matrix and zoom level */
 	glMatrixMode(GL_PROJECTION);
@@ -1817,13 +1894,19 @@ osg_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	} else {
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		OSG(ifp)->graphicsContext->swapBuffers();
+		if(OSG(ifp)->context_type) {
+		    OSG(ifp)->graphicsContext->swapBuffers();
+		} else {
+		    glfwSwapBuffers(OSG(ifp)->glfw);
+		}
 	    }
 	}
 	glFlush();
 
 	/* unattach context for other threads to use */
-	OSG(ifp)->graphicsContext->releaseContext();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->releaseContext();
+	}
     }
 
     return 0;
@@ -1983,12 +2066,20 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
     if (!OSG(ifp)->use_ext_ctrl) {
 
-	OSG(ifp)->graphicsContext->makeCurrent();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->makeCurrent();
+	} else {
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	}
 
 	if (xstart + count < (size_t)ifp->if_width) {
 	    osg_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		OSG(ifp)->graphicsContext->swapBuffers();
+		if(OSG(ifp)->context_type) {
+		    OSG(ifp)->graphicsContext->swapBuffers();
+		} else {
+		    glfwSwapBuffers(OSG(ifp)->glfw);
+		}
 	    } else if (OSG(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
 		backbuffer_to_screen(ifp, ybase);
@@ -1998,7 +2089,11 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    if (SGI(ifp)->mi_doublebuffer) {
 		/* refresh whole screen */
 		osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-		OSG(ifp)->graphicsContext->swapBuffers();
+		if(OSG(ifp)->context_type) {
+		    OSG(ifp)->graphicsContext->swapBuffers();
+		} else {
+		    glfwSwapBuffers(OSG(ifp)->glfw);
+		}
 	    } else {
 		/* just write rectangle */
 		osg_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
@@ -2010,7 +2105,9 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	glFlush();
 
 	/* unattach context for other threads to use */
-	OSG(ifp)->graphicsContext->releaseContext();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->releaseContext();
+	}
     }
 
     return ret;
@@ -2058,12 +2155,20 @@ osg_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	return width*height;
 
     if (!OSG(ifp)->use_ext_ctrl) {
-	OSG(ifp)->graphicsContext->makeCurrent();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->makeCurrent();
+	} else {
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	}
 
 	if (SGI(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    OSG(ifp)->graphicsContext->swapBuffers();
+	    if(OSG(ifp)->context_type) {
+		OSG(ifp)->graphicsContext->swapBuffers();
+	    } else {
+		glfwSwapBuffers(OSG(ifp)->glfw);
+	    }
 	} else {
 	    /* just write rectangle*/
 	    osg_xmit_scanlines(ifp, ymin, height, xmin, width);
@@ -2073,7 +2178,9 @@ osg_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	}
 
 	/* unattach context for other threads to use */
-	OSG(ifp)->graphicsContext->releaseContext();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->releaseContext();
+	}
     }
 
     return width*height;
@@ -2120,12 +2227,20 @@ osg_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return width*height;
 
     if (!OSG(ifp)->use_ext_ctrl) {
-	OSG(ifp)->graphicsContext->makeCurrent();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->makeCurrent();
+	} else {
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	}
 
 	if (SGI(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    OSG(ifp)->graphicsContext->swapBuffers();
+	    if(OSG(ifp)->context_type) {
+		OSG(ifp)->graphicsContext->swapBuffers();
+	    } else {
+		glfwSwapBuffers(OSG(ifp)->glfw);
+	    }
 	} else {
 	    /* just write rectangle*/
 	    osg_xmit_scanlines(ifp, ymin, height, xmin, width);
@@ -2135,7 +2250,9 @@ osg_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	}
 
 	/* unattach context for other threads to use */
-	OSG(ifp)->graphicsContext->releaseContext();
+	if(OSG(ifp)->context_type) {
+	    OSG(ifp)->graphicsContext->releaseContext();
+	}
     }
 
     return width*height;
@@ -2187,17 +2304,27 @@ osg_wmap(register FBIO *ifp, register const ColorMap *cmp)
 
 	    /* Software color mapping, trigger a repaint */
 
-	    OSG(ifp)->graphicsContext->makeCurrent();
+	    if(OSG(ifp)->context_type) {
+		OSG(ifp)->graphicsContext->makeCurrent();
+	    } else {
+		glfwMakeContextCurrent(OSG(ifp)->glfw);
+	    }
 
 	    osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    if (SGI(ifp)->mi_doublebuffer) {
-		OSG(ifp)->graphicsContext->swapBuffers();
+		if(OSG(ifp)->context_type) {
+		    OSG(ifp)->graphicsContext->swapBuffers();
+		} else {
+		    glfwSwapBuffers(OSG(ifp)->glfw);
+		}
 	    } else if (OSG(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
 
 	    /* unattach context for other threads to use, also flushes */
-	    OSG(ifp)->graphicsContext->releaseContext();
+	    if(OSG(ifp)->context_type) {
+		OSG(ifp)->graphicsContext->releaseContext();
+	    }
 	} else {
 	    /* Send color map to hardware */
 	    /* This code has yet to be tested */
