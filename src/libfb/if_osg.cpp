@@ -1358,7 +1358,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     // Although we are not making direct use of osgViewer currently, we need its
     // initialization to make sure we have all the libraries we need loaded and
     // ready.
-    OSG(ifp)->viewer = new osgViewer::Viewer();
+    osgViewer::Viewer *viewer = new osgViewer::Viewer();
     delete viewer;
 
     // Setup the traits parameters
