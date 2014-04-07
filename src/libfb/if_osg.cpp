@@ -162,7 +162,6 @@ struct sgiinfo {
  * Per window state information particular to the OpenGL interface
  */
 struct osginfo {
-    osg::ref_ptr<osgViewer::Viewer>    viewer;
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     Display *dispp;		/* pointer to X display connection */
     Window wind;		/* Window identifier */
@@ -1342,6 +1341,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Button-3>  {set WM_DELETE_WINDOW \"1\"}");
     Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Expose> {set WM_EXPOSE_EVENT \"1\"}");
     Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Motion> {set WM_EXPOSE_EVENT \"1\"}");
+    Tcl_Eval(OSG(ifp)->fbinterp, "bind . <Configure> {set WM_EXPOSE_EVENT \"1\"}");
 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
@@ -1359,7 +1359,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     // initialization to make sure we have all the libraries we need loaded and
     // ready.
     OSG(ifp)->viewer = new osgViewer::Viewer();
-    //delete viewer;
+    delete viewer;
 
     // Setup the traits parameters
     traits->x = 0;
@@ -1380,16 +1380,6 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     OSG(ifp)->graphicsContext->realize();
     OSG(ifp)->graphicsContext->makeCurrent();
-
-    OSG(ifp)->viewer->getCamera()->setGraphicsContext(OSG(ifp)->graphicsContext.get());
-    OSG(ifp)->viewer->getCamera()->setProjectionMatrix(osg::Matrix::ortho2D(0,width,0,height));
-
-    OSG(ifp)->viewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    OSG(ifp)->viewer->getCamera()->setViewMatrix(osg::Matrix::identity());
-
-    OSG(ifp)->viewer->getCamera()->setViewport(0,width,0,height);
-
-    OSG(ifp)->viewer->addEventHandler(new osgViewer::WindowSizeHandler());
 
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
