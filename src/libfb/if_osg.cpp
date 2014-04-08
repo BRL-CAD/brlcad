@@ -904,7 +904,7 @@ osg_do_event(FBIO *ifp)
     //Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 
     //if (BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_DELETE_WINDOW", 0), "1")) {
-	OSG(ifp)->alive = 0;
+//	OSG(ifp)->alive = 0;
 //	printf("Close Window event\n");
  //   }
 
@@ -1365,6 +1365,7 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
 
     glfwSetKeyCallback(glfw, glfw_key);
 
+    glfwMakeContextCurrent(glfw);
     glfwSwapInterval( 1 );
 
 #if 0
@@ -1411,8 +1412,6 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     OSG(ifp)->graphicsContext->realize();
     OSG(ifp)->graphicsContext->makeCurrent();
 #endif
-
-    glfwMakeContextCurrent(OSG(ifp)->glfw);
 
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
@@ -1655,6 +1654,35 @@ fb_osg_close(FBIO *ifp)
     } else {
 	while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
 	{
+	    glfwMakeContextCurrent(OSG(ifp)->glfw);
+	    printf("got here\n");
+	    float ratio;
+	    int width, height;
+
+	    glfwGetFramebufferSize(OSG(ifp)->glfw, &width, &height);
+	    printf("width: %d height: %d\n", width, height);
+	    ratio = width / (float) height;
+
+	    glViewport(0, 0, width, height);
+	    glClear(GL_COLOR_BUFFER_BIT);
+
+	    glMatrixMode(GL_PROJECTION);
+	    glLoadIdentity();
+	    glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+	    glMatrixMode(GL_MODELVIEW);
+
+	    glLoadIdentity();
+	    glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
+
+	    glBegin(GL_TRIANGLES);
+	    glColor3f(1.f, 0.f, 0.f);
+	    glVertex3f(-0.6f, -0.4f, 0.f);
+	    glColor3f(0.f, 1.f, 0.f);
+	    glVertex3f(0.6f, -0.4f, 0.f);
+	    glColor3f(0.f, 0.f, 1.f);
+	    glVertex3f(0.f, 0.6f, 0.f);
+	    glEnd();
+
 	    glfwSwapBuffers(OSG(ifp)->glfw);
 	    glfwPollEvents();
 	}
