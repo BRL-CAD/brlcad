@@ -717,20 +717,11 @@ osg_clipper(register FBIO *ifp)
 /* new window size */
 void reshape(int width, int height)
 {
-    GLfloat h = (GLfloat) height / (GLfloat) width;
-    GLfloat xmax, znear, zfar;
-
-    znear = 5.0f;
-    zfar  = 30.0f;
-    xmax  = znear * 0.5f;
-
     glViewport( 0, 0, (GLint) width, (GLint) height );
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    glFrustum( -xmax, xmax, -xmax*h, xmax*h, znear, zfar );
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
-    glTranslatef( 0.0, 0.0, -20.0 );
 }
 
 HIDDEN void
@@ -1361,9 +1352,14 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     glfwInit();
     GLFWwindow *glfw = glfwCreateWindow(width, height, "osg", NULL, NULL);
 
+    int major, minor, rev;
+    glfwGetVersion(&major, &minor, &rev);
+    printf("\n\nOpenGL Version %d.%d.%d\n\n", major, minor, rev);
+
     OSG(ifp)->glfw = glfw;
 
     glfwSetKeyCallback(glfw, glfw_key);
+    glViewport(-1, -1, 1, 1);
 
     glfwMakeContextCurrent(glfw);
     glfwSwapInterval( 1 );
@@ -1654,33 +1650,37 @@ fb_osg_close(FBIO *ifp)
     } else {
 	while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
 	{
-	    glfwMakeContextCurrent(OSG(ifp)->glfw);
-	    printf("got here\n");
-	    float ratio;
-	    int width, height;
-
-	    glfwGetFramebufferSize(OSG(ifp)->glfw, &width, &height);
-	    printf("width: %d height: %d\n", width, height);
-	    ratio = width / (float) height;
-
-	    glViewport(0, 0, width, height);
+	    glViewport(0, 0, OSG(ifp)->win_width, OSG(ifp)->win_height);
 	    glClear(GL_COLOR_BUFFER_BIT);
+	    int glfw_width = 0;
+	    int glfw_height = 0;
+	    glfwGetFramebufferSize(OSG(ifp)->glfw, &glfw_width, &glfw_height);
 
 	    glMatrixMode(GL_PROJECTION);
 	    glLoadIdentity();
-	    glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+	    //glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
 	    glMatrixMode(GL_MODELVIEW);
-
 	    glLoadIdentity();
-	    glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
-
-	    glBegin(GL_TRIANGLES);
+/*	    glBegin(GL_TRIANGLES);
 	    glColor3f(1.f, 0.f, 0.f);
 	    glVertex3f(-0.6f, -0.4f, 0.f);
 	    glColor3f(0.f, 1.f, 0.f);
 	    glVertex3f(0.6f, -0.4f, 0.f);
 	    glColor3f(0.f, 0.f, 1.f);
 	    glVertex3f(0.f, 0.6f, 0.f);
+	    glEnd();
+	    */
+	    glBegin(GL_TRIANGLE_STRIP);
+
+	    glColor3f(1.f, 0.f, 0.f);
+	    glVertex3f(-1, -1, 0);
+	    glColor3f(0.f, 1.f, 0.f);
+	    glVertex3f(-1, 1, 0);
+	    glColor3f(0.f, 1.f, 0.f);
+	    glVertex3f(1, -1, 0);
+	    glColor3f(0.f, 0.f, 1.f);
+	    glVertex3f(1, 1, 0);
+
 	    glEnd();
 
 	    glfwSwapBuffers(OSG(ifp)->glfw);
