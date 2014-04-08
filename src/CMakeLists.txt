@@ -34,6 +34,7 @@ set(level_1_dirs
   libsysv
   libbrep
   librt
+  libwdb
   )
 
 # Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
@@ -58,7 +59,6 @@ endif(BRLCAD_ENABLE_RTSERVER)
 set(level_2_dirs
   libpkg
   libfb
-  libwdb
   libgcv
   libanalyze
   libged
