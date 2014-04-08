@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mirror -y old new reportedly not working (sometimes).  creates the
+  mirror, but sometimes also crashes mged.
+
 * gqa bypasses rt_dirbuild() so it never sets rt_bot_mintie nor uses
   TIE when the environment variable is set.
 
