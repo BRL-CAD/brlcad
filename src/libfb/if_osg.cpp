@@ -110,6 +110,24 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     return 0;
 }
 
+HIDDEN void
+_display(FBIO *ifp)
+{
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 1);
+    glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 0);
+    glVertex3f(0, ifp->if_height, 0);
+    glTexCoord2d(1, 1);
+    glVertex3f(ifp->if_width, -1, 0);
+    glTexCoord2d(1, 0);
+    glVertex3f(ifp->if_width, ifp->if_height, 0);
+
+    glEnd();
+
+    glfwSwapBuffers(OSG(ifp)->glfw);
+}
 
 HIDDEN int
 osg_close(FBIO *ifp)
@@ -121,24 +139,7 @@ osg_close(FBIO *ifp)
 
     while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
     {
-	glBegin(GL_TRIANGLE_STRIP);
-
-	//glColor3f(1.f, 0.f, 0.f);
-	glTexCoord2d(0, 0);
-	glVertex3f(0, 0, 0);
-	//glColor3f(0.f, 1.f, 0.f);
-	glTexCoord2d(0, 1);
-	glVertex3f(0, ifp->if_height, 0);
-	//glColor3f(0.f, 1.f, 0.f);
-	glTexCoord2d(1, 0);
-	glVertex3f(ifp->if_width, -1, 0);
-	//glColor3f(0.f, 0.f, 1.f);
-	glTexCoord2d(1, 1);
-	glVertex3f(ifp->if_width, ifp->if_height, 0);
-
-	glEnd();
-
-	glfwSwapBuffers(OSG(ifp)->glfw);
+	_display(ifp);
 	glfwPollEvents();
     }
 
@@ -167,7 +168,7 @@ osg_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp),
 }
 
 
-    HIDDEN ssize_t
+HIDDEN ssize_t
 osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
@@ -210,7 +211,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 	scanline = &(((unsigned char *)OSG(ifp)->texture_data)[(y*ifp->if_width+x)*3]);
 
-	memcpy(scanline, pixelp, scan_count);
+	memcpy(scanline, pixelp, scan_count*3);
 
 	ret += scan_count;
 	pix_count -= scan_count;
@@ -219,8 +220,12 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    break;
     }
 
-    //glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
-    //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+    /* Hmm - this doesn't actually update the window */
+    glfwMakeContextCurrent(OSG(ifp)->glfw);
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+    _display(ifp);
+    glFlush();
 
     return ret;
 }
