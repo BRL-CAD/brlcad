@@ -442,7 +442,7 @@ struct FunctionGrammar : public boost::spirit::classic::grammar<FunctionGrammar,
 		>> boost::spirit::classic::lazy_p(*funcdef.expr)
 		   [
 			/* add node to the stack */
-			push_bakc(self.stack, \
+			push_back(self.stack, \
 				new_<FuncDefNode>(
 					*find_symbol(var(self.functions), funcdef.name), \
 					construct_<UserFuncExpression>(funcdef.args, funcdef.localvars, arg1)))

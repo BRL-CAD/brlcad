@@ -668,7 +668,7 @@ SCHEMA Ap242_managed_model_based_3d_engineering_mim_LF;
   TYPE box_width = positive_ratio_measure;
   END_TYPE;
 
-  TYPE camera_model_d3_multi_clipping_interection_select = SELECT
+  TYPE camera_model_d3_multi_clipping_intersection_select = SELECT
     ( camera_model_d3_multi_clipping_union,
      plane );
   END_TYPE;
@@ -953,7 +953,7 @@ SCHEMA Ap242_managed_model_based_3d_engineering_mim_LF;
      simultaneous_constraint_group );
   END_TYPE;
 
-  TYPE constructive_geometry_representation_or_shape_represenation = SELECT
+  TYPE constructive_geometry_representation_or_shape_representation = SELECT
     ( constructive_geometry_representation,
      shape_representation );
   END_TYPE;
@@ -5176,12 +5176,12 @@ SCHEMA Ap242_managed_model_based_3d_engineering_mim_LF;
 
   ENTITY camera_model_d3_multi_clipping
     SUBTYPE OF ( camera_model_d3 );
-      shape_clipping  : SET [1 : ?] OF camera_model_d3_multi_clipping_interection_select;
+      shape_clipping  : SET [1 : ?] OF camera_model_d3_multi_clipping_intersection_select;
   END_ENTITY;
 
   ENTITY camera_model_d3_multi_clipping_intersection
     SUBTYPE OF ( geometric_representation_item );
-      shape_clipping  : SET [2 : ?] OF camera_model_d3_multi_clipping_interection_select;
+      shape_clipping  : SET [2 : ?] OF camera_model_d3_multi_clipping_intersection_select;
   END_ENTITY;
 
   ENTITY camera_model_d3_multi_clipping_union
@@ -6387,7 +6387,7 @@ SCHEMA Ap242_managed_model_based_3d_engineering_mim_LF;
 
   ENTITY constructive_geometry_representation_relationship
     SUBTYPE OF ( representation_relationship );
-      SELF\representation_relationship.rep_1 : constructive_geometry_representation_or_shape_represenation;
+      SELF\representation_relationship.rep_1 : constructive_geometry_representation_or_shape_representation;
       SELF\representation_relationship.rep_2 : constructive_geometry_representation;
     WHERE
       wr1: ( ( SELF.rep_1.context_of_items :=: SELF.rep_2.context_of_items ) AND (
