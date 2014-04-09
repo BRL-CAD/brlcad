@@ -220,13 +220,6 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    break;
     }
 
-    /* Hmm - this doesn't actually update the window */
-    glfwMakeContextCurrent(OSG(ifp)->glfw);
-    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
-    _display(ifp);
-    glFlush();
-
     return ret;
 }
 
