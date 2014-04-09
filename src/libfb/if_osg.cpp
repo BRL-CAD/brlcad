@@ -42,6 +42,8 @@
 
 struct osginfo {
     GLFWwindow 		*glfw;
+    GLuint		texture_name;
+    void		*texture_data;
 };
 
 #define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
@@ -61,7 +63,6 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 	ifp->if_width = width;
     if (height > 0)
 	ifp->if_height = height;
-
 
     // Although we are not making direct use of osgViewer currently, we need its
     // initialization to make sure we have all the libraries we need loaded and
@@ -84,6 +85,27 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     glfwSwapInterval( 1 );
 
     glfwMakeContextCurrent(glfw);
+    glClearColor (0.0, 0.0, 0.0, 1);
+    glViewport(0, 0, width, height);
+    glViewport(0,0,width, height);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, width, height, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    /* Set up the texture that will hold the raytrace results */
+    glGenTextures(1, &(OSG(ifp)->texture_name));
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    OSG(ifp)->texture_data = calloc(1, width * height * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
 
     return 0;
 }
@@ -94,28 +116,25 @@ osg_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
 
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+
     while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
     {
-	glClear(GL_COLOR_BUFFER_BIT);
-	int glfw_width = 0;
-	int glfw_height = 0;
-	glfwGetFramebufferSize(OSG(ifp)->glfw, &glfw_width, &glfw_height);
-	glViewport(0, 0, glfw_width, glfw_height);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 	glBegin(GL_TRIANGLE_STRIP);
 
-	glColor3f(1.f, 0.f, 0.f);
-	glVertex3f(-1, -1, 0);
-	glColor3f(0.f, 1.f, 0.f);
-	glVertex3f(-1, 1, 0);
-	glColor3f(0.f, 1.f, 0.f);
-	glVertex3f(1, -1, 0);
-	glColor3f(0.f, 0.f, 1.f);
-	glVertex3f(1, 1, 0);
+	//glColor3f(1.f, 0.f, 0.f);
+	glTexCoord2d(0, 0);
+	glVertex3f(0, 0, 0);
+	//glColor3f(0.f, 1.f, 0.f);
+	glTexCoord2d(0, 1);
+	glVertex3f(0, ifp->if_height, 0);
+	//glColor3f(0.f, 1.f, 0.f);
+	glTexCoord2d(1, 0);
+	glVertex3f(ifp->if_width, -1, 0);
+	//glColor3f(0.f, 0.f, 1.f);
+	glTexCoord2d(1, 1);
+	glVertex3f(ifp->if_width, ifp->if_height, 0);
 
 	glEnd();
 
@@ -148,12 +167,62 @@ osg_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp),
 }
 
 
-HIDDEN ssize_t
-osg_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+    HIDDEN ssize_t
+osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
+    register int x;
+    register int y;
+    size_t scan_count;  /* # pix on this scanline */
+    size_t pix_count;   /* # pixels to send */
+    int ybase;
+    ssize_t ret;
+    register unsigned char *cp;
+
+
     FB_CK_FBIO(ifp);
 
-    return count;
+    /* fast exit cases */
+    pix_count = count;
+    if (pix_count == 0)
+	return 0;       /* OK, no pixels transferred */
+
+    x = xstart;
+    ybase = y = ystart;
+
+    if (x < 0 || x >= ifp->if_width ||
+	    y < 0 || y >= ifp->if_height)
+	return -1;
+
+    ret = 0;
+
+    cp = (unsigned char *)(pixelp);
+
+    while (pix_count) {
+	void *scanline;
+
+	if (y >= ifp->if_height)
+	    break;
+
+	if (pix_count >= (size_t)(ifp->if_width-x))
+	    scan_count = (size_t)(ifp->if_width-x);
+	else
+	    scan_count = pix_count;
+
+	scanline = &(((unsigned char *)OSG(ifp)->texture_data)[(y*ifp->if_width+x)*3]);
+
+	memcpy(scanline, pixelp, scan_count);
+
+	ret += scan_count;
+	pix_count -= scan_count;
+	x = 0;
+	if (++y >= ifp->if_height)
+	    break;
+    }
+
+    //glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+
+    return ret;
 }
 
 
