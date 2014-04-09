@@ -843,7 +843,7 @@ const fastf_t turb_table[20][20][20] = {
       0.086334267631173134, -0.203569611534476280, -0.487269689328968520,  0.336935559287667270},
 
      /* FIXME: The following array of numbers has only 16 entries!
-      * Are the Remaining 4 intialized to zero?  Is that
+      * Are the Remaining 4 initialized to zero?  Is that
       * intentional? */
      {-0.299386323429644110,  0.432286161929368970,  0.484158257488161330, -0.180591955780982970,
       -0.471683348063379530,  0.256541807204484940, -0.160706320777535440,  0.273074500262737270,

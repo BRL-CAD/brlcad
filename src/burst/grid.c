@@ -569,7 +569,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    if (bp == PT_NULL && ! reqburstair
 			&&	findIdents(regp->reg_regionid,
 					   &armorids)) {
-			/* Bursting on armor/void (ouchh). */
+			/* Bursting on armor/void (ouch). */
 			bp = pp;
 			VMOVE(burstnorm, exitnorm);
 		    }

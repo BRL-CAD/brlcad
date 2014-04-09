@@ -4378,7 +4378,7 @@ void ASFormatter::formatRunIn()
 }
 
 /**
- * remove whitepace and add indentation for an array run-in.
+ * remove whitespace and add indentation for an array run-in.
  */
 void ASFormatter::formatArrayRunIn()
 {

@@ -51,7 +51,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>buid_region abc 1 2</userinput></term>
+	  <term><prompt>mged&gt;</prompt> <userinput>build_region abc 1 2</userinput></term>
 	  <listitem>
 	    <para>Creates a region named "abc.r1" consisting of:
 	    <simplelist type="vert">

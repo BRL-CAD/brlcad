@@ -220,7 +220,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    outfp = fopen(outputfile, "w");
     }
 
-    /* initialize all possibile material types to a negative value.
+    /* initialize all possible material types to a negative value.
      * (Do this even for density[0], which is used for material types
      * for which we have no density information.)
      */

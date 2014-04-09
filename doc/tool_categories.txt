@@ -396,7 +396,7 @@ terrain
 tire
 torii
 tube
-vegitation
+vegetation
 wdb_example
 window
 window_frame

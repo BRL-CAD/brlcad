@@ -146,7 +146,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Find the max dist fron emanation plane to end of model
+    /* Find the max dist from emanation plane to end of model
      * space.  This can be twice the radius of the bounding
      * sphere.
      */

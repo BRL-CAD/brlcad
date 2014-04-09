@@ -192,7 +192,7 @@ rt_free_rti(struct rt_i *rtip)
 /**
  * This routine should be called just before the first call to
  * rt_shootray().  It should only be called ONCE per execution, unless
- * rt_clean() is called inbetween.
+ * rt_clean() is called in between.
  *
  * Because this can be called from rt_shootray(), it may potentially
  * be called ncpu times, hence the critical section.

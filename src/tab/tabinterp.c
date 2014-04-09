@@ -516,7 +516,7 @@ linear_interpolate(struct chan *chp, fastf_t *times)
     int i;		/* input time index */
 
     if (chp->c_ilen < 2) {
-	bu_log("lienar_interpolate:  need at least 2 points\n");
+	bu_log("linear_interpolate:  need at least 2 points\n");
 	return;
     }
 
@@ -752,7 +752,7 @@ spline(struct chan *chp, fastf_t *times)
     double a;
     int end;
     double corr;
-    double konst = 0.0;		/* derriv. at endpts, non-periodic */
+    double konst = 0.0;		/* deriv. at endpts, non-periodic */
     double *diag = (double *)0;
     double *rrr = (double *)0;
     int i;

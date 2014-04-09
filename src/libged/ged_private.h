@@ -476,7 +476,7 @@ struct ged_results {
 extern int _ged_results_init(struct ged_results *results);
 
 /* This function adds a copy of result_string into the results container.
- * To dupicate a VLS string, use bu_vls_addr to wrap the vls before
+ * To duplicate a VLS string, use bu_vls_addr to wrap the vls before
  * passing it to _ged_results_add, e.g.:
  *
  * _ged_results_add(gedp->ged_results, bu_vls_addr(my_vls_ptr));

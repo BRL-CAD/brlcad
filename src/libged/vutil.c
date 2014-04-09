@@ -247,7 +247,7 @@ ged_persp_mat(mat_t m,
 
 /**
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
+ * with the actual eye position (not at Z=+1) specified in viewing
  * coords, into a related space where the eye has been sheared onto
  * the Z axis and repositioned at Z=(0, 0, 1), with the same
  * perspective field of view as before.

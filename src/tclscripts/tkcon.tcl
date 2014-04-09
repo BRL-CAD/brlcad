@@ -67,8 +67,8 @@ exec wish "$0" ${1+"$@"}
 #
 #    set ::tkcon::PRIV(proxy) wwwproxy:8080
 #
-# If you want to be prompted for proxy authentication details (eg for
-# an NT proxy server) make the second element of this variable non-nil - eg:
+# If you want to be prompted for proxy authentication details (e.g. for
+# an NT proxy server) make the second element of this variable non-nil - e.g.:
 #
 #    set ::tkcon::PRIV(proxy) {wwwproxy:8080 1}
 #
@@ -1021,7 +1021,7 @@ proc ::tkcon::Eval {w} {
 # ARGS:	w	- console text widget
 # 	cmd	- the command to evaluate
 # Calls:	::tkcon::Prompt
-# Outputs:	result of command to stdout (or stderr if error occured)
+# Outputs:	result of command to stdout (or stderr if error occurred)
 # Returns:	next event number
 ##
 proc ::tkcon::EvalCmd {w cmd} {

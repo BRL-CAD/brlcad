@@ -88,7 +88,7 @@ add_subdirectory(g-step)
 # Support for AP203e2, AP214 and AP242 is under development and not
 # yet functional.  Since the large C++ files generated for these
 # tools take a hideously long time to build on Windows, and are
-# noticable even on other platforms, wrap them with conditionals
+# noticeable even on other platforms, wrap them with conditionals
 # until they do something useful.  It may be that work in STEPcode
 # to generate multiple files instead of single huge files will
 # help alleviate the issue - something to check into.
