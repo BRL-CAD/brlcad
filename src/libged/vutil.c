@@ -36,6 +36,9 @@ ged_view_update(struct ged_view *gvp)
     vect_t work, work1;
     vect_t temp, temp1;
 
+    if (!gvp)
+	return;
+
     bn_mat_mul(gvp->gv_model2view,
 	       gvp->gv_rotation,
 	       gvp->gv_center);
