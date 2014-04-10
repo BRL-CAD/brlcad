@@ -181,6 +181,8 @@ struct osginfo {
     Window cursor;
     Colormap xcmap;		/* xstyle color map */
     int use_ext_ctrl;		/* for controlling the Ogl graphics engine externally */
+    GLuint		texture_name;
+    void		*texture_data;
 };
 
 
@@ -360,8 +362,9 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
  * rectangle of the frame buffer
  */
 HIDDEN void
-osg_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npix)
+osg_xmit_scanlines(register FBIO *ifp, int UNUSED(ybase), int UNUSED(nlines), int UNUSED(xbase), int UNUSED(npix))
 {
+#if 0
     register int y;
     register int n;
     int sw_cmap;	/* !0 => needs software color map */
@@ -476,6 +479,25 @@ osg_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 		     (const GLvoid *) ifp->if_mem);
     }
+#endif
+
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 0);
+    glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 1);
+    glVertex3f(0, ifp->if_height, 0);
+    glTexCoord2d(1, 0);
+    glVertex3f(ifp->if_width, -1, 0);
+    glTexCoord2d(1, 1);
+    glVertex3f(ifp->if_width, ifp->if_height, 0);
+
+    glEnd();
+
+
 }
 
 
@@ -726,7 +748,7 @@ expose_callback(FBIO *ifp)
 	 */
 
 	if (!SGI(ifp)->mi_doublebuffer) {
-	    glDrawBuffer(GL_FRONT);
+	    glDrawBuffer(GL_FRONT_AND_BACK);
 	}
 
 	if ((ifp->if_mode & MODE_4MASK) == MODE_4NODITH) {
@@ -806,26 +828,6 @@ expose_callback(FBIO *ifp)
 
     /* repaint entire image */
     osg_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-
-    if (SGI(ifp)->mi_doublebuffer) {
-	OSG(ifp)->graphicsContext->swapBuffers();
-    } else if (OSG(ifp)->copy_flag) {
-	backbuffer_to_screen(ifp, -1);
-    }
-
-    if (CJDEBUG) {
-	int dbb, db, view[4], getster, getaux;
-	glGetIntegerv(GL_VIEWPORT, view);
-	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
-	glGetIntegerv(GL_DRAW_BUFFER, &db);
-	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
-	       view[1], view[2], view[3]);
-	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
-	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
-	glGetIntegerv(GL_STEREO, &getster);
-	glGetIntegerv(GL_AUX_BUFFERS, &getaux);
-	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
-    }
 
     /* unattach context for other threads to use */
     OSG(ifp)->graphicsContext->releaseContext();
@@ -945,8 +947,8 @@ osg_do_event(FBIO *ifp)
 #endif
     if (0 < OSG(ifp)->alive && BU_STR_EQUAL(Tcl_GetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", 0), "1")) {
 	Tcl_SetVar(OSG(ifp)->fbinterp, "WM_EXPOSE_EVENT", "0", 0);
-	expose_callback(ifp);
     }
+    expose_callback(ifp);
 }
 
 #if 0
@@ -1356,6 +1358,29 @@ fb_osg_open(FBIO *ifp, const char *file, int width, int height)
     OSG(ifp)->alive = 1;
     OSG(ifp)->firstTime = 1;
 
+    glClearColor (0.0, 0.0, 0.0, 1);
+    glViewport(0, 0, width, height);
+    glViewport(0,0,width, height);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, width, height, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    /* Set up the texture that will hold the raytrace results */
+    glGenTextures(1, &(OSG(ifp)->texture_name));
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    OSG(ifp)->texture_data = calloc(1, width * height * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+
+
     /* Loop through events until first exposure event is processed */
     while (OSG(ifp)->firstTime == 1)
 	osg_do_event(ifp);
@@ -1538,6 +1563,8 @@ osg_flush(FBIO *ifp)
 HIDDEN int
 fb_osg_close(FBIO *ifp)
 {
+    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
 
     osg_flush(ifp);
 
@@ -1875,6 +1902,7 @@ osg_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 HIDDEN ssize_t
 osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
+#if 0
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
     ssize_t ret;
@@ -1953,6 +1981,58 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	if (++y >= ifp->if_height)
 	    break;
     }
+#endif
+
+    register int x;
+    register int y;
+    size_t scan_count;  /* # pix on this scanline */
+    size_t pix_count;   /* # pixels to send */
+    int ybase;
+    ssize_t ret;
+    register unsigned char *cp;
+
+
+    FB_CK_FBIO(ifp);
+
+    /* fast exit cases */
+    pix_count = count;
+    if (pix_count == 0)
+	return 0;       /* OK, no pixels transferred */
+
+    x = xstart;
+    ybase = y = ystart;
+
+    if (x < 0 || x >= ifp->if_width ||
+	    y < 0 || y >= ifp->if_height)
+	return -1;
+
+    ret = 0;
+
+    cp = (unsigned char *)(pixelp);
+
+    while (pix_count) {
+	void *scanline;
+
+	if (y >= ifp->if_height)
+	    break;
+
+	if (pix_count >= (size_t)(ifp->if_width-x))
+	    scan_count = (size_t)(ifp->if_width-x);
+	else
+	    scan_count = pix_count;
+
+	scanline = &(((unsigned char *)OSG(ifp)->texture_data)[(y*ifp->if_width+x)*3]);
+
+	memcpy(scanline, pixelp, scan_count*3);
+
+	ret += scan_count;
+	pix_count -= scan_count;
+	x = 0;
+	if (++y >= ifp->if_height)
+	    break;
+    }
+
+
 
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
 	return ret;
