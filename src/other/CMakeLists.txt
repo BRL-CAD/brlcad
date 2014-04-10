@@ -982,6 +982,27 @@ else(BRLCAD_OSG_BUILD)
 endif(BRLCAD_OSG_BUILD)
 
 
+# GLFW Libraries
+set(glfw_ALIASES ENABLE_OPENSCENEGRAPH)
+set(glfw_DESCRIPTION "
+Option for enabling and disabling compilation of the GLFW
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(glfw GLFW glfw glfw_DESCRIPTION
+  ALIASES ${glfw_ALIASES} FLAGS NOSYS)
+if(BRLCAD_GLFW_BUILD)
+  set(GLFW_LIBRARY glfw CACHE STRING "libglfw" FORCE)
+  set(GLFW_INCLUDE_DIR
+    ${BRLCAD_SOURCE_DIR}/src/other/glfw/include
+    CACHE STRING "GLFW include dirs" FORCE
+    )
+  set(GLFW_INCLUDE_DIR "${GLFW_INCLUDE_DIR}" CACHE STRING "Directory containing GLFW headers." FORCE)
+else(BRLCAD_GLFW_BUILD)
+  find_package(OpenThreads)
+endif(BRLCAD_GLFW_BUILD)
+
 # gdiam
 
 set(libgdiam_ALIASES ENABLE_GDIAM)
