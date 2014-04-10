@@ -760,9 +760,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
     // Although we are not making direct use of osgViewer currently, we need its
     // initialization to make sure we have all the libraries we need loaded and
-    // ready.  TODO Investigate whether GraphicsWindowEmbedded (specifically the version
-    // that takes osg::GraphicsContext::Traits *traits as an argument) would work
-    // better than a raw createGraphicsContext.
+    // ready.
     osgViewer::Viewer *viewer = new osgViewer::Viewer();
     delete viewer;
 
