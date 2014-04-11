@@ -9818,6 +9818,8 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (bu_cmd(wdb_newcmds, argc-1, argv+1, 0, (ClientData)&ged, &ret) == BRLCAD_OK) {
 	Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
 	ged_free(&ged);
+	/* unsuppress bu_log output */
+	bu_log_hook_restore_all(&save_hook_list);
 	return ret;
     }
 
