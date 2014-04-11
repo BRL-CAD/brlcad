@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* made the rcodes cmd messages a little more informative - Cliff Yapp
 * fixed inside command for ellipsoid primitives - Cliff Yapp
 * fixed loss of MGED bu_log output after running wdb_cmd - Cliff Yapp
 * fixed mged -c crash running view-modifying commands - Sean Morrison
