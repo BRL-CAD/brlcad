@@ -670,17 +670,14 @@ torin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 }
 
 
-/* finds inside ellg */
+/* finds inside ell */
 static int
-ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
+ellin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 {
     struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
-    int i, j, k, order[3];
+    int i;
     fastf_t mag[3], nmag[3];
-    fastf_t ratio;
 
-    if (thick[0] <= 0.0)
-	return 0;
     thick[2] = thick[1] = thick[0];	/* uniform thickness */
 
     RT_ELL_CK_MAGIC(ell);
@@ -688,26 +685,21 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     mag[1] = MAGNITUDE(ell->b);
     mag[2] = MAGNITUDE(ell->c);
 
-    for (i = 0; i < 3; i++) {
-	order[i] = i;
+    if (thick[0] > 0 && (mag[0] < thick[0] + RT_LEN_TOL)){
+	bu_vls_printf(gedp->ged_result_str, "Magnitude of ell->a (%.2f) is too small for an inside thickness of %.2f \n", mag[0], thick[0]);
+	return GED_ERROR;
+    }
+    if (thick[1] > 0 && (mag[1] < thick[1] + RT_LEN_TOL)){
+	bu_vls_printf(gedp->ged_result_str, "Magnitude of ell->b (%.2f) is too small for an inside thickness of %.2f \n", mag[1], thick[1]);
+	return GED_ERROR;
+    }
+    if (thick[2] > 0 && (mag[2] < thick[2] + RT_LEN_TOL)){
+	bu_vls_printf(gedp->ged_result_str, "Magnitude of ell->c (%.2f) is too small for an inside thickness of %.2f \n", mag[2], thick[2]);
+	return GED_ERROR;
     }
 
-    for (i = 0; i < 2; i++) {
-	k = i + 1;
-	for (j = k; j < 3; j++) {
-	    if (mag[i] < mag[j])
-		order[i] = j;
-	}
-    }
-
-    if ((ratio = mag[order[1]] / mag[order[0]]) < .8)
-	thick[order[1]] = thick[order[1]]/(1.016447*pow(ratio, .071834));
-    if ((ratio = mag[order[2]] / mag[order[1]]) < .8)
-	thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio, .071834));
-
     for (i = 0; i < 3; i++) {
-	if ((nmag[i] = mag[i] - thick[i]) <= 0.0)
-	    bu_vls_printf(gedp->ged_result_str, "Warning: new vector [%d] length <= 0 \n", i);
+	nmag[i] = mag[i] - thick[i];
     }
     VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
     VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
@@ -1026,7 +1018,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    ++arg;
 
-	    if (ellgin(gedp, ip, thick))
+	    if (ellin(gedp, ip, thick))
 		return GED_ERROR;
 	    break;
 
