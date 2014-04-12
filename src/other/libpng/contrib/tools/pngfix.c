@@ -1,8 +1,8 @@
 /* pngfix.c
  *
- * Copyright (c) 2013 John Cunningham Bowler
+ * Copyright (c) 2014 John Cunningham Bowler
  *
- * Last changed in libpng 1.6.3 [July 18, 2013]
+ * Last changed in libpng 1.6.10 [March 6, 2014]
  *
  * This code is released under the libpng license.
  * For conditions of distribution and use, see the disclaimer
@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -31,7 +32,6 @@
 #  define FIX_GCC volatile
 #else
 #  define FIX_GCC
-#  error not tested
 #endif
 
 #define PROGRAM_NAME "pngfix"
@@ -49,8 +49,31 @@
 #  error "pngfix will not work with libpng prior to 1.6.3"
 #endif
 
-#ifdef PNG_READ_SUPPORTED
+#if defined(PNG_READ_SUPPORTED) && defined(PNG_EASY_ACCESS_SUPPORTED)
+/* zlib.h defines the structure z_stream, an instance of which is included
+ * in this structure and is required for decompressing the LZ compressed
+ * data in PNG files.
+ */
+#ifndef ZLIB_CONST
+   /* We must ensure that zlib uses 'const' in declarations. */
+#  define ZLIB_CONST
+#endif
 #include <zlib.h>
+#ifdef const
+   /* zlib.h sometimes #defines const to nothing, undo this. */
+#  undef const
+#endif
+
+/* zlib.h has mediocre z_const use before 1.2.6, this stuff is for compatibility
+ * with older builds.
+ */
+#if ZLIB_VERNUM < 0x1260
+#  define PNGZ_MSG_CAST(s) png_constcast(char*,s)
+#  define PNGZ_INPUT_CAST(b) png_constcast(png_bytep,b)
+#else
+#  define PNGZ_MSG_CAST(s) (s)
+#  define PNGZ_INPUT_CAST(b) (b)
+#endif
 
 #ifndef PNG_MAXIMUM_INFLATE_WINDOW
 #  error "pngfix not supported in this libpng version"
@@ -117,6 +140,11 @@
 
 /* Is it safe to copy? */
 #define SAFE_TO_COPY(chunk) (((chunk) & PNG_U32(0,0,0,32)) != 0)
+
+/* Fix ups for builds with limited read support */
+#ifndef PNG_ERROR_TEXT_SUPPORTED
+#  define png_error(a,b) png_err(a)
+#endif
 
 /********************************* UTILITIES **********************************/
 /* UNREACHED is a value to cause an assert to fail. Because of the way the
@@ -885,10 +913,10 @@ emit_string(const char *str, FILE *out)
     */
 {
    for (; *str; ++str)
-      if (isgraph(*str))
+      if (isgraph(UCHAR_MAX & *str))
          putc(*str, out);
 
-      else if (isspace(*str))
+      else if (isspace(UCHAR_MAX & *str))
          putc('_', out);
    
       else
@@ -1546,7 +1574,7 @@ chunk_end(struct chunk **chunk_var)
 }
 
 static void
-chunk_init(struct chunk *chunk, struct file *file)
+chunk_init(struct chunk * const chunk, struct file * const file)
    /* When a chunk is initialized the file length/type/pos are copied into the
     * corresponding chunk fields and the new chunk is registered in the file
     * structure.  There can only be one chunk at a time.
@@ -1755,7 +1783,7 @@ IDAT_end(struct IDAT **idat_var)
 }
 
 static void
-IDAT_init(struct IDAT *idat, struct file *file)
+IDAT_init(struct IDAT * const idat, struct file * const file)
    /* When the chunk is png_IDAT instantiate an IDAT control structure in place
     * of a chunk control structure.  The IDAT will instantiate a chunk control
     * structure using the file alloc routine.
@@ -2636,7 +2664,7 @@ zlib_check(struct file *file, png_uint_32 offset)
 
          case ZLIB_OK:
             /* Truncated stream; unrecoverable, gets converted to ZLIB_FATAL */
-            zlib.z.msg = png_constcast(char*, "[truncated]");
+            zlib.z.msg = PNGZ_MSG_CAST("[truncated]");
             zlib_message(&zlib, 0/*expected*/);
             /* FALL THROUGH */
 
@@ -2675,7 +2703,7 @@ zlib_check(struct file *file, png_uint_32 offset)
 
                      /* Output the error that wasn't output before: */
                      if (zlib.z.msg == NULL)
-                        zlib.z.msg = png_constcast(char*,
+                        zlib.z.msg = PNGZ_MSG_CAST(
                            "invalid distance too far back");
                      zlib_message(&zlib, 0/*stream error*/);
                      zlib_end(&zlib);
@@ -3131,13 +3159,13 @@ read_chunk(struct file *file)
 /* This returns a file* from a png_struct in an implementation specific way. */
 static struct file *get_control(png_const_structrp png_ptr);
 
-static void
+static void PNGCBAPI
 error_handler(png_structp png_ptr, png_const_charp message)
 {
    stop(get_control(png_ptr),  LIBPNG_ERROR_CODE, message);
 }
 
-static void
+static void PNGCBAPI
 warning_handler(png_structp png_ptr, png_const_charp message)
 {
    struct file *file = get_control(png_ptr);
@@ -3149,7 +3177,7 @@ warning_handler(png_structp png_ptr, png_const_charp message)
 /* Read callback - this is where the work gets done to check the stream before
  * passing it to libpng
  */
-static void
+static void PNGCBAPI
 read_callback(png_structp png_ptr, png_bytep buffer, size_t count)
    /* Return 'count' bytes to libpng in 'buffer' */
 {
@@ -3294,6 +3322,8 @@ read_callback(png_structp png_ptr, png_bytep buffer, size_t count)
 
             else
             {
+               assert(chunk != NULL);
+
                /* Set up for write, notice that repositioning the input stream
                 * is only necessary if something is to be read from it.  Also
                 * notice that for the IDAT stream this must only happen once -
@@ -3307,6 +3337,8 @@ read_callback(png_structp png_ptr, png_bytep buffer, size_t count)
             /* FALL THROUGH */
 
          default:
+            assert(chunk != NULL);
+
             /* NOTE: the arithmetic below overflows and gives a large positive
              * png_uint_32 value until the whole chunk data has been written.
              */
@@ -3512,22 +3544,14 @@ allocate(struct file *file, int allocate_idat)
 
    if (allocate_idat)
    {
-      struct IDAT *idat;
-
       assert(file->idat == NULL);
-      idat = &control->idat;
-      IDAT_init(idat, file);
-      file->idat = idat;
+      IDAT_init(&control->idat, file);
    }
 
    else /* chunk */
    {
-      struct chunk *chunk;
-
       assert(file->chunk == NULL);
-      chunk = &control->chunk;
-      chunk_init(chunk, file);
-      file->chunk = chunk;
+      chunk_init(&control->chunk, file);
    }
 }
 
@@ -3620,7 +3644,7 @@ read_png(struct control *control)
    return rc;
 }
 
-static void
+static int
 one_file(struct global *global, const char *file_name, const char *out_name)
 {
    int rc;
@@ -3639,6 +3663,8 @@ one_file(struct global *global, const char *file_name, const char *out_name)
       rc = read_png(&control);
 
    rc |= control_end(&control);
+
+   return rc;
 }
 
 static void
@@ -4007,4 +4033,4 @@ main(void)
    fprintf(stderr, "pngfix does not work without read support\n");
    return 77;
 }
-#endif /* PNG_READ_SUPPORTED */
+#endif /* PNG_READ_SUPPORTED && PNG_EASY_ACCESS_SUPPORTED */
