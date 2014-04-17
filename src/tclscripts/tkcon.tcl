@@ -1663,8 +1663,6 @@ proc ::tkcon::InitMenus {w title} {
     foreach m [list [menu $w.help] [menu $w.pop.help]] {
 	$m add command -label "About " -underline 0 -accel $PRIV(ACC)A \
 		-command ::tkcon::About
-	$m add command -label "Retrieve Latest Version" -underline 0 \
-		-command ::tkcon::Retrieve
 	if {![catch {package require ActiveTcl} ver]} {
 	    set cmd ""
 	    if {$tcl_platform(platform) == "windows"} {
@@ -6261,100 +6259,6 @@ proc ::tkcon::RetrieveAuthentication {} {
     }
     unset [namespace current]::conf_passwd
     return $result
-}
-
-proc ::tkcon::Retrieve {} {
-    # A little bit'o'magic to grab the latest tkcon from CVS and
-    # save it locally.  It doesn't support proxies though...
-    variable PRIV
-
-    set defExt ""
-    if {[string match "windows" $::tcl_platform(platform)]} {
-	set defExt ".tcl"
-    }
-    set file [tk_getSaveFile -title "Save Latest tkcon to ..." \
-	    -defaultextension $defExt \
-	    -initialdir  [file dirname $PRIV(SCRIPT)] \
-	    -initialfile [file tail $PRIV(SCRIPT)] \
-	    -parent $PRIV(root) \
-	    -filetypes {{"Tcl Files" {.tcl .tk}} {"All Files" {*.*}}}]
-    if {[string compare $file ""]} {
-	package require http 2
-	set headers {}
-	if {[info exists PRIV(proxy)]} {
-	    ::http::config -proxyfilter [namespace origin RetrieveFilter]
-	    if {[lindex $PRIV(proxy) 1] != {}} {
-		set headers [RetrieveAuthentication]
-	    }
-	}
-	set token [::http::geturl $PRIV(HEADURL) \
-		-headers $headers -timeout 30000]
-	::http::wait $token
-	set code [catch {
-	    set ncode [::http::ncode $token]
-	    set i 0
-	    while {(($ncode >= 301) && ($ncode <= 307)) && [incr i] < 5} {
-		# redirect to meta Location
-		array set meta [::http::meta $token]
-		::http::cleanup $token
-		if {![info exists meta(Location)]} { break }
-		set url $meta(Location)
-		if {![string match "http*" $url]
-		    && [regexp {https?://[^/]+} $PRIV(HEADURL) srvr]} {
-		    # attach the same http server info
-		    set url $srvr/$url
-		}
-		set token [::http::geturl $url -headers $headers -timeout 30000]
-		::http::wait $token
-		set ncode [::http::ncode $token]
-	    }
-	    if {$ncode != 200} {
-		return "expected http return code 200, received $ncode"
-	    }
-	    set status [::http::status $token]
-	    if {$status == "ok"} {
-		set data [::http::data $token]
-		regexp {Id: tkcon.tcl,v (\d+\.\d+)} $data -> rcsVersion
-		regexp {VERSION\s+"(\d+\.\d+[^\"]*)"} $data -> tkconVersion
-		if {(![info exists rcsVersion] || ![info exists tkconVersion])
-		    && [tk_messageBox -type yesno -icon warning \
-			    -parent $PRIV(root) \
-			    -title "Invalid tkcon source code" \
-			    -message "Source code retrieved does not appear\
-			to be correct.\nContinue with save to \"$file\"?"] \
-			== "no"} {
-		    return "invalid tkcon source code retrieved"
-		}
-		set fid [open $file w]
-		# We don't want newline mode to change
-		fconfigure $fid -translation binary
-		puts -nonewline $fid $data
-		close $fid
-	    } else {
-		return "expected http status ok, received $status"
-	    }
-	} err]
-	::http::cleanup $token
-	if {$code == 2} {
-	    tk_messageBox -type ok -icon info -parent $PRIV(root) \
-		    -title "Failed to retrieve source" \
-		    -message "Failed to retrieve latest tkcon source:\n$err\n$PRIV(HEADURL)"
-	} elseif {$code} {
-	    return -code error $err
-	} else {
-	    if {![info exists rcsVersion]}   { set rcsVersion   "UNKNOWN" }
-	    if {![info exists tkconVersion]} { set tkconVersion "UNKNOWN" }
-	    if {[tk_messageBox -type yesno -icon info -parent $PRIV(root) \
-		    -title "Retrieved tkcon v$tkconVersion, RCS $rcsVersion" \
-		    -message "Successfully retrieved tkcon v$tkconVersion,\
-		    RCS $rcsVersion.  Shall I resource (not restart) this\
-		    version now?"] == "yes"} {
-		set PRIV(SCRIPT) $file
-		set PRIV(version) $tkconVersion.$rcsVersion
-		::tkcon::Resource
-	    }
-	}
-    }
 }
 
 ## 'send' package that handles multiple communication variants
