@@ -173,6 +173,15 @@ foreach(test_num RANGE 1 23)
 endforeach()
 
 #
+#  ************ b64.c tests *************
+#
+# The testing of encoding and de-coding is tested at once in a "round trip"
+# approach - the tests below all test both bu_b64_encode and bu_b64_decode.
+BRLCAD_ADDEXEC(tester_bu_b64 bu_b64.c libbu NO_INSTALL)
+add_test("bu_b64_test" tester_bu_b64)
+
+
+#
 #  ************ rb_*.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_redblack bu_redblack.c libbu NO_INSTALL)

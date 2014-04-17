@@ -369,6 +369,23 @@ BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);
 
+
+/** @file libbu/b64.c
+ *
+ * A base64 encoding algorithm
+ * For details, see http://sourceforge.net/projects/libb64
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+BU_EXPORT extern char *bu_b64_encode(const char *input);
+
+BU_EXPORT extern char *bu_b64_encode_block(const char* input, int length_in);
+
+BU_EXPORT extern char *bu_b64_decode(const char *input);
+
+BU_EXPORT extern char *bu_b64_decode_block(const char* input, int length_in);
+
 /** @} */
 
 /* TODO - make a "deprecated.h" file to stuff deprecated things in */

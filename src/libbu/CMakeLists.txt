@@ -14,6 +14,7 @@ set(LIBBU_SOURCES
   affinity.c
   argv.c
   avs.c
+  b64.c
   backtrace.c
   badmagic.c
   basename.c
