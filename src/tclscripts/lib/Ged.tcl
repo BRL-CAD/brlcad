@@ -5761,7 +5761,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::get_rgb_color {_color} {
     switch -- $_color {
 	"Grey" {
-	    return "64 64 64"
+	    return "128 128 128"
 	}
 	"Black" {
 	    return "0 0 0"
