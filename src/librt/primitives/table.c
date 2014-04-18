@@ -1857,7 +1857,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	sizeof(struct rt_brep_internal),
 	RT_BREP_INTERNAL_MAGIC,
-	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_GET_CAST(rt_brep_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	NULL,

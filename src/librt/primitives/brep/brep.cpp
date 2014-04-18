@@ -43,6 +43,7 @@
 
 #include "vmath.h"
 
+#include "bu/cv.h"
 #include "brep.h"
 #include "dvec.h"
 
@@ -84,6 +85,7 @@ extern "C" {
     int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr); 
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
@@ -4073,6 +4075,45 @@ RT_MemoryArchive::Flush()
     return true;
 }
 
+int
+rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+{
+    struct rt_brep_internal *bi=(struct rt_brep_internal *)intern->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    if (attr == (char *)NULL) {
+	bu_vls_sprintf(logstr, "brep");
+	/* Create the serialized version for encoding */
+	RT_MemoryArchive archive;
+	ONX_Model model;
+	{
+	    ON_Layer default_layer;
+	    default_layer.SetLayerIndex(0);
+	    default_layer.SetLayerName("Default");
+	    model.m_layer_table.Reserve(1);
+	    model.m_layer_table.Append(default_layer);
+	}
+	ONX_Model_Object& mo = model.m_object_table.AppendNew();
+	mo.m_object = bi->brep;
+	mo.m_attributes.m_layer_index = 0;
+	mo.m_attributes.m_name = "brep";
+	mo.m_attributes.m_uuid = ON_opennurbs4_id;
+	model.m_properties.m_RevisionHistory.NewRevision();
+	model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
+	model.Polish();
+	ON_TextLog err(stderr);
+	bool ok = model.Write(archive, 4, "export5", &err);
+	if (ok) {
+	    void *archive_cp = archive.CreateCopy();
+	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
+	    bu_vls_printf(logstr, " %s", brep64);
+	    bu_free(archive_cp, "free archive copy");
+	    bu_free(brep64, "free encoded brep string");
+	    return 0;
+	}
+    }
+    return -1;
+}    
 
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
