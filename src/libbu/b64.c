@@ -225,7 +225,7 @@ char *
 bu_b64_encode_block(const char *input, int len)
 {
     /* Calculate size of output needed and calloc the memory */
-    char *output = (char *)bu_malloc(((floor(4*len/3)) + 4) * sizeof(char), "Malloc b64 buffer");
+    char *output = (char *)bu_malloc((((int)(4*len/3)) + 4) * 8, "Malloc b64 buffer");
     char *c = output;
     int cnt = 0;
     bu_b64_encodestate s;
@@ -260,7 +260,7 @@ char *
 bu_b64_decode_block(const char *input, int len)
 {
     /* Calculate size of output needed and calloc the memory */
-    char *output = (char *)bu_malloc((floor(3*len/4) + 4) * sizeof(char), "Malloc b64 decoding buffer");
+    char *output = (char *)bu_malloc(((int)(3*len/4) + 4) * 8, "Malloc b64 decoding buffer");
     char* c = output;
     int cnt = 0;
     bu_b64_decodestate s;
