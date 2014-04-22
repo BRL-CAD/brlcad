@@ -426,8 +426,9 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * separator may be.  It is assumed that all file and directory names
  * in the path will not contain a path separator, even if escaped.
  *
- * It is the caller's responsibility allocate basename with
- * strlen(path).
+ * It is the caller's responsibility to allocate basename with
+ * enough memory to hold a string with length strlen(path), since
+ * that is the maximum possible size of bu_basename's output.
  *
  * Examples of strings returned:
  *
