@@ -3977,15 +3977,19 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 	    NMG_GET_FU_PLANE(plane, fu);
 
 	    new_fu = nmg_mk_new_face_from_loop(lu);
-	    nmg_face_g(new_fu, plane);
+	    if (new_fu) {
 
-	    for (idx=0; idx<BU_PTBL_END(&inside_loops); idx++) {
-		lu1 = (struct loopuse *)BU_PTBL_GET(&inside_loops, idx);
-		nmg_move_lu_between_fus(new_fu, fu, lu1);
-		otopp_loops--;
+		nmg_face_g(new_fu, plane);
+
+		for (idx=0; idx<BU_PTBL_END(&inside_loops); idx++) {
+		    lu1 = (struct loopuse *)BU_PTBL_GET(&inside_loops, idx);
+		    nmg_move_lu_between_fus(new_fu, fu, lu1);
+		    otopp_loops--;
+		}
+		nmg_face_bb(new_fu->f_p, tol);
+		bu_ptbl_reset(&inside_loops);
 	    }
-	    nmg_face_bb(new_fu->f_p, tol);
-	    bu_ptbl_reset(&inside_loops);
+
 	    otsame_loops--;
 	    lu = lu_next;
 	}
@@ -4012,8 +4016,10 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 		    NMG_GET_FU_PLANE(plane, fu->fumate_p);
 		}
 		new_fu = nmg_mk_new_face_from_loop(lu);
-		nmg_face_g(new_fu, plane);
-		nmg_face_bb(new_fu->f_p, tol);
+		if (new_fu) {
+		    nmg_face_g(new_fu, plane);
+		    nmg_face_bb(new_fu->f_p, tol);
+		}
 	    }
 
 	    lu = next_lu;
@@ -6111,6 +6117,10 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 
 	/* make the new face from the new loop */
 	new_fu = nmg_mk_new_face_from_loop(lu);
+	if (!new_fu) {
+	    edge_no++;
+	    continue;
+	}
 
 	/* update the intersect_fus structs (probably not necessary at this point) */
 	j_fus->fu[0] = new_fu;
