@@ -2024,6 +2024,81 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     return trimmed_faces;
 }
 
+HIDDEN void
+standardize_loop_orientations(ON_Brep *brep)
+{
+#define LOOP_DIRECTION_CCW  1
+#define LOOP_DIRECTION_CW  -1
+#define LOOP_DIRECTION_NONE 0
+    std::map<int, int> reversed_curve2d, reversed_edge;
+    for (int face_idx = 0; face_idx < brep->m_F.Count(); ++face_idx) {
+	const ON_BrepFace &eb_face = brep->m_F[face_idx];
+
+	for (int loop_idx = 0; loop_idx < eb_face.LoopCount(); ++loop_idx) {
+	    const ON_BrepLoop &face_loop = brep->m_L[eb_face.m_li[loop_idx]];
+	    if (face_loop.m_type != ON_BrepLoop::outer &&
+		face_loop.m_type != ON_BrepLoop::inner) {
+		continue;
+	    }
+
+	    int loop_direction = brep->LoopDirection(face_loop);
+	    if ((loop_direction == LOOP_DIRECTION_CCW && face_loop.m_type == ON_BrepLoop::inner) ||
+		(loop_direction == LOOP_DIRECTION_CW && face_loop.m_type == ON_BrepLoop::outer))
+	    {
+		// found reversed loop
+		int brep_li = eb_face.m_li[loop_idx];
+		ON_BrepLoop &reversed_loop = brep->m_L[brep_li];
+
+		// reverse all the loop's curves
+		for (int trim_idx = 0; trim_idx < reversed_loop.TrimCount(); ++trim_idx) {
+		    ON_BrepTrim *trim = reversed_loop.Trim(trim_idx);
+
+		    // Replace trim curve2d with a reversed copy.
+		    // We'll use a previously made curve, or else
+		    // make a new one.
+		    if (reversed_curve2d.find(trim->m_c2i) != reversed_curve2d.end()) {
+			trim->ChangeTrimCurve(reversed_curve2d[trim->m_c2i]);
+		    } else {
+			ON_Curve *curve_copy = trim->TrimCurveOf()->DuplicateCurve();
+			int copy_c2i = brep->AddTrimCurve(curve_copy);
+
+			reversed_curve2d[trim->m_c2i] = copy_c2i;
+
+			trim->ChangeTrimCurve(copy_c2i);
+			trim->Reverse();
+		    }
+		    // Replace trim edge with a reversed copy.
+		    // We'll use a previously made edge, or else
+		    // make a new one.
+		    if (reversed_edge.find(trim->m_ei) != reversed_edge.end()) {
+			trim->RemoveFromEdge(false, false);
+			trim->AttachToEdge(reversed_edge[trim->m_ei], trim->m_bRev3d);
+		    } else {
+			ON_BrepEdge *edge = trim->Edge();
+			ON_BrepVertex &v_start = *edge->Vertex(0);
+			ON_BrepVertex &v_end = *edge->Vertex(1);
+			ON_Interval dom = edge->ProxyCurveDomain();
+
+			ON_Curve *curve_copy = trim->EdgeCurveOf()->DuplicateCurve();
+			int copy_c3i = brep->AddEdgeCurve(curve_copy);
+			ON_BrepEdge &edge_copy = brep->NewEdge(v_start,
+				v_end, copy_c3i, &dom, edge->m_tolerance);
+
+			reversed_edge[trim->m_ei] = copy_c3i;
+
+			trim->RemoveFromEdge(false, false);
+			trim->AttachToEdge(edge_copy.m_edge_index, trim->m_bRev3d);
+			trim->Edge()->Reverse();
+		    }
+		}
+		// need to reverse the order of trims in the loop
+		// too so they appear continuous
+		reversed_loop.m_ti.Reverse();
+	    }
+	}
+    }
+}
+
 int
 ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
@@ -2102,6 +2177,7 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 
     evaluated_brep->ShrinkSurfaces();
     evaluated_brep->Compact();
+    standardize_loop_orientations(evaluated_brep);
 
     // Check IsValid() and output the message.
     ON_wString ws;
