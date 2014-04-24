@@ -95,7 +95,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate the possibility of allowing functions to define
   their own custom filters for some version of the db_search API.
-  If we can figure out a programattic approach of some kind, why
+  If we can figure out a programmatic approach of some kind, why
   not allow code to define their own "filters" that don't have
   a corresponding mapping to the MGED command string?  As long
   as the functions satisfy the API templates used by the db_plan
