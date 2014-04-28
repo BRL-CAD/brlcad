@@ -147,10 +147,10 @@ int log_2 (unsigned long x)
 static char *usage[] = {
     "Usage: 'g_lint [options] model.g object ...'\n",
     "Options (defaults in parentheses):\n",
-    "  -a azim      View target from azimuth of azim (0.0 degrees)\n",
+    "  -a azim      View target from azimuth of azim, in degrees (0.0)\n",
     "  -c           Fire rays from center of grid cell (random point)\n",
-    "  -e elev      View target from elevation of elev (0.0 degrees)\n",
-    "  -g gridsize  Use grid-cell spacing of gridsize (100.0 mm)\n",
+    "  -e elev      View target from elevation of elev, in degrees (0.0)\n",
+    "  -g gridsize  Use grid-cell spacing of gridsize, in mm (100.0)\n",
     "  -o           Include ray-origin on each line\n",
     "  -p           Produce plot3(5) output\n",
     "  -r bits      Set report-specification flag=bits...\n",
@@ -161,7 +161,7 @@ static char *usage[] = {
     "                 16  air last on shotlines\n",
     "                 32  vacuums\n",
     "  -s           Sort overlaps (report without sorting)\n",
-    "  -t tol       Ignore overlaps/voids of length < tol (0.0 mm)\n",
+    "  -t tol       Ignore overlaps/voids of length < tol, in mm (0.0)\n",
     "  -u           Report on air (overlaps only)\n",
     "  -x bits      Set diagnostic flag=bits\n",
     0
