@@ -1446,7 +1446,6 @@ bool trim_GetClosestPoint3dFirstOrder(
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
     std::vector<ON_BoundingBox> bbox;
-    ON_2dPoint origp2d = p2d;
     std::cerr.precision(15);
 
     ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
@@ -1481,7 +1480,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 	}
     }
     if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,quadrant,tol)) {
-	ON_3dPoint test2dp = surf->PointAt(p2d.x,p2d.y);
 	ON_BezierCurve B;
 	bool bGrowBox = false;
 	ON_3dVector d1,d2;
@@ -2938,7 +2936,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;
-	double prev_t;
+	double prev_t = knots[istart];
 	double offset = 0.0;
 	double delta;
 	for (size_t i=istart; i<istop; i++) {
@@ -3068,7 +3066,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;
-	double prev_t;
+	double prev_t = knots[istart];
 	double offset = 0.0;
 	double delta;
 	for (size_t i=istart; i<istop; i++) {
