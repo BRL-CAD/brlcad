@@ -379,9 +379,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * merge conv-vg2g into dbupgrade
 
-* add the ability for search to filter objects based on whether they
-  are being unioned, intersected, or subtracted from a parent
-
 * add option to rtedge to also show back-facing hidden edges
 
 * add option to push/xpush to stop at the region level, to stop before
