@@ -2002,9 +2002,21 @@ if("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
     if(HAVE_WORKING_LRINT_MACRO)
       CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
     endif(HAVE_WORKING_LRINT_MACRO)
-endif(HAVE_LRINT)
+  endif(HAVE_LRINT)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 endif("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
+
+# test for tgamma
+BRLCAD_FUNCTION_EXISTS(tgamma HAVE_TGAMMA)
+if("${HAVE_TGAMMA}" MATCHES "^${HAVE_TGAMMA}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
+  check_c_source_compiles("#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}" HAVE_TGAMMA)
+  if(HAVE_TGAMMA)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TGAMMA 1\n")
+  endif(HAVE_TGAMMA)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+endif("${HAVE_TGAMMA}" MATCHES "^${HAVE_TGAMMA}$")
 
 #-----------------------------------------------------------------------
 # check C99 and POSIX 200112L missing functions with a more
