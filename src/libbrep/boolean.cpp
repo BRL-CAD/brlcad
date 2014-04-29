@@ -1584,6 +1584,45 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     return pt_no_dup.Count() % 2 != 0;
 }
 
+ON_2dPoint
+get_point_inside_trimmed_face(const TrimmedFace *tface)
+{
+    const int try_count = 10;
+
+    ON_PolyCurve polycurve;
+    if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
+	throw InvalidGeometry("face_brep_location(): invalid outerloop.\n");
+    }
+    ON_BoundingBox bbox =  polycurve.BoundingBox();
+    ON_2dPoint test_pt2d;
+    ON_RandomNumberGenerator rng;
+    bool found = false;
+    for (int i = 0; i < try_count; i++) {
+	// Get a random point inside the outerloop's bounding box.
+	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
+	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
+	test_pt2d = ON_2dPoint(x, y);
+	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
+	    // The test point should not be inside an innerloop
+	    size_t j = 0;
+	    for (; j < tface->m_innerloop.size(); ++j) {
+		if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
+		    break;
+		}
+	    }
+	    if (j == tface->m_innerloop.size()) {
+		// We find a valid test point
+		found = true;
+		break;
+	    }
+	}
+    }
+    if (!found) {
+	throw AlgorithmError("Cannot find a point inside this trimmed face. Aborted.\n");
+    }
+    return test_pt2d;
+}
+
 enum {
     OUTSIDE_BREP,
     INSIDE_BREP,
@@ -1622,41 +1661,9 @@ face_brep_location(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray
     if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
 	throw InvalidGeometry("face_brep_location(): invalid outerloop.\n");
     }
-
-    // Get a point inside the TrimmedFace, and then call is_point_inside_brep().
-    // First, try the center of its 2D domain.
-    const int try_count = 10;
-    ON_BoundingBox bbox =  polycurve.BoundingBox();
-    bool found = false;
-    ON_2dPoint test_pt2d;
-    ON_RandomNumberGenerator rng;
-
-    for (int i = 0; i < try_count; i++) {
-	// Get a random point inside the outerloop's bounding box.
-	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
-	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
-	test_pt2d = ON_2dPoint(x, y);
-	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
-	    unsigned int j = 0;
-	    // The test point should not be inside an innerloop
-	    for (j = 0; j < tface->m_innerloop.size(); j++) {
-		if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
-		    break;
-		}
-	    }
-	    if (j == tface->m_innerloop.size()) {
-		// We find a valid test point
-		found = true;
-		break;
-	    }
-	}
-    }
-
-    if (!found) {
-	throw AlgorithmError("Cannot find a point inside this trimmed face. Aborted.\n");
-    }
-
+    ON_2dPoint test_pt2d = get_point_inside_trimmed_face(tface);
     ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
+
     if (DEBUG_BREP_BOOLEAN) {
 	bu_log("valid test point: (%g, %g, %g)\n", test_pt3d.x, test_pt3d.y, test_pt3d.z);
     }
@@ -1932,9 +1939,9 @@ categorize_trimmed_faces(
 	    splitted[j]->m_rev = false;
 	    switch (face_location) {
 		case INSIDE_BREP:
-		    if (operation == BOOLEAN_INTERSECT
-			|| operation == BOOLEAN_XOR
-			|| (operation == BOOLEAN_DIFF && i >= face_count1))
+		    if (operation == BOOLEAN_INTERSECT ||
+			operation == BOOLEAN_XOR ||
+			(operation == BOOLEAN_DIFF && i >= face_count1))
 		    {
 			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		    }
@@ -1943,16 +1950,54 @@ categorize_trimmed_faces(
 		    }
 		    break;
 		case OUTSIDE_BREP:
-		    if (operation == BOOLEAN_UNION
-			|| operation == BOOLEAN_XOR
-			|| (operation == BOOLEAN_DIFF && i < face_count1))
+		    if (operation == BOOLEAN_UNION ||
+			operation == BOOLEAN_XOR ||
+			(operation == BOOLEAN_DIFF && i < face_count1))
 		    {
 			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		    }
 		    break;
 		case ON_BREP_SURFACE:
-		    if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT) {
-			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		    // get a 3d point on the face
+		    ON_2dPoint face_pt2d = get_point_inside_trimmed_face(splitted[j]);
+		    ON_3dPoint face_pt3d = splitted[j]->m_face->PointAt(face_pt2d.x, face_pt2d.y);
+
+		    // find the matching point on the other brep
+		    ON_3dPoint brep_pt2d;
+		    const ON_Surface *brep_surf;
+		    bool found = false;
+		    for (int fi = 0; fi < another_brep->m_F.Count(); ++fi) {
+			const ON_BrepFace &face = another_brep->m_F[fi];
+			brep_surf = face.SurfaceOf();
+			ON_ClassArray<ON_PX_EVENT> px_event;
+
+			if (ON_Intersect(face_pt3d, *brep_surf, px_event,
+				    INTERSECTION_TOL, 0, 0, surf_tree[face.m_si]))
+			{
+			    found = true;
+			    brep_pt2d = px_event[0].m_b;
+			    break;
+			}
+		    }
+		    if (found) {
+			// compare normals of surfaces at shared point
+			ON_3dVector brep_norm, face_norm;
+			brep_surf->EvNormal(brep_pt2d.x, brep_pt2d.y, brep_norm);
+			splitted[j]->m_face->SurfaceOf()->EvNormal(face_pt2d.x, face_pt2d.y, face_norm);
+
+			double dot = ON_DotProduct(brep_norm, face_norm);
+			bool same_direction = false;
+			if (dot > 0) {
+			    // normals appear to have same direction
+			    same_direction = true;
+			}
+
+			if ((operation == BOOLEAN_UNION && same_direction) ||
+			    (operation == BOOLEAN_INTERSECT && same_direction) ||
+			    (operation == BOOLEAN_DIFF && !same_direction && i < face_count1))
+			{
+			    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+			}
 		    }
 		    // TODO: Actually only one of them is needed in the final brep structure
 	    }
