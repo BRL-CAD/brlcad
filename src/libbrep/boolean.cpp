@@ -655,9 +655,19 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 
     // 3. Merge the intervals and get the final result.
     try {
-	ON_Interval merged_interval1 = union_intervals(intervals1);
-	ON_Interval merged_interval2 = union_intervals(intervals2);
-	ON_Interval shared_interval = intersect_intervals(merged_interval1, merged_interval2);
+	ON_Interval merged_interval1, merged_interval2, shared_interval;
+
+	if (intervals1.Count() > 0 && intervals2.Count() > 0) {
+	    merged_interval1 = union_intervals(intervals1);
+	    merged_interval2 = union_intervals(intervals2);
+	    shared_interval = intersect_intervals(merged_interval1, merged_interval2);
+	} else if (intervals1.Count() > 0) {
+	    shared_interval = union_intervals(intervals1);
+	} else if (intervals2.Count() > 0) {
+	    shared_interval = union_intervals(intervals2);
+	} else {
+	    return -1;
+	}
 
 	if (DEBUG_BREP_BOOLEAN) {
 	    bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
