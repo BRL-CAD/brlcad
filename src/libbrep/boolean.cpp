@@ -411,7 +411,9 @@ is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyC
 	    }
 	}
     }
-    if (ret && polycurve->PointAtStart().DistanceTo(polycurve->PointAtEnd()) >= ON_ZERO_TOLERANCE) {
+    if (ret && (polycurve->PointAtStart().DistanceTo(polycurve->PointAtEnd()) >= ON_ZERO_TOLERANCE ||
+	!polycurve->IsClosed()))
+    {
 	bu_log("The input loop is not closed.\n");
 	ret = false;
     }
