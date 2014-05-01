@@ -1762,6 +1762,17 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 DOCUMENTATION
 -------------
 
+* break up library headers into subheaders so includes can be more
+  specific (and help speed up compilation) and locally documented, but
+  prevent subheaders from being directly included outside of our
+  compilation (we don't want subdir filenames to become public API)
+
+* move our public library headers into subdirs, e.g. include/bu/bu.h,
+  so it's clear when you're using headers from another library and
+  breaking encapsulation.
+
+* make our C headers C++-convenient with proper extern "C" wrapping.
+
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
     3dm-g
@@ -1927,21 +1938,9 @@ DOCUMENTATION
     doc/docbook/presentations/en/intro-to-tcltk.xml
     doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
 
-* group public library headers into subdirs, e.g. include/bu/bu.h, so
-  it's clear when you're using headers from another library and
-  breaking encapsulation.
-
-* make our C headers C++-convenient with proper extern "C" wrapping.
-
-* reorganize the header files in include so it is clear which headers
-  pertain to which libraries.
-
 * improve rtedge documentation, explain how it computes its "centroid"
   (as it's not exactly the center of bounding box of all objects -- it
   depends on the booleans).
-
-* break up library headers into subheaders so includes can be more
-  specific (and help speed up compilation) and locally documented.
 
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
