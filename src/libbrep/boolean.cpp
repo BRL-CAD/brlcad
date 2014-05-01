@@ -483,7 +483,7 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     ON_PolyCurve polycurve;
     if (!is_loop_valid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
-	throw InvalidGeometry("is_ponit_on_loop() given invalid loop\n");
+	throw InvalidGeometry("is_point_on_loop() given invalid loop\n");
     }
 
     ON_ClassArray<ON_PX_EVENT> px_event;
