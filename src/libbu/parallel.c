@@ -480,6 +480,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     libbu_affinity = getenv("LIBBU_AFFINITY");
     if (libbu_affinity)
 	affinity = (int)strtol(libbu_affinity, NULL, 0x10);
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
+	if (affinity)
+	    bu_log("CPU affinity enabled. (LIBBU_AFFINITY=%d)\n", affinity);
+	else
+	    bu_log("CPU affinity disabled.\n", affinity);
+    }
 
     user_thread_data_bu = (struct thread_data *)bu_calloc(ncpu, sizeof(*user_thread_data_bu), "struct thread_data *user_thread_data_bu");
 
