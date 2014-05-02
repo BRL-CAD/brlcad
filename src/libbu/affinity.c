@@ -67,7 +67,7 @@ parallel_set_affinity(int cpu)
 
     /* Clear CPU set and assign our number */
     CPU_ZERO(&set_of_cpus);
-    CPU_SET(cpu & bu_avail_cpus(), &set_of_cpus);
+    CPU_SET(cpu % bu_avail_cpus(), &set_of_cpus);
 
     /* set affinity mask of current thread */
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
