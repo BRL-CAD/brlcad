@@ -353,8 +353,12 @@ parallel_interface_arg(struct thread_data *user_thread_data)
     thread_set_cpu(user_thread_data->cpu_id);
 
     if (user_thread_data->affinity) {
+	int ret;
 	/* lock us onto a core corresponding to our parallel ID number */
-	parallel_set_affinity(user_thread_data->cpu_id);
+	ret = parallel_set_affinity(user_thread_data->cpu_id);
+	if (ret) {
+	    bu_log("WARNING: encountered unexpected problem setting CPU affinity\n");
+	}
     }
 
     if (!user_thread_data->counted) {
