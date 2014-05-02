@@ -71,12 +71,8 @@ parallel_set_affinity(int cpu)
 
     /* set affinity mask of current thread */
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
-    if (ret != 0) {
-	/* Error in setting affinity mask */
-	return -1;
-    }
 
-    return 0;
+    return ret;
 
 #elif defined(HAVE_MACH_THREAD_POLICY_H)
 
