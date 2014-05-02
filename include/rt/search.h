@@ -87,7 +87,7 @@
       bu_log("%s\n", path_str);
       bu_free(path_str, "free db_fullpath_to_string allocation");
   }
-  db_free_search_tbl(&results);
+  db_search_free(&results);
  @endcode
  *
  */
