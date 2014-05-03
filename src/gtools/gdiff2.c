@@ -96,6 +96,7 @@ void
 result_free_ptbl(struct bu_ptbl *results_table)
 {
     int i = 0;
+    if (!results_table) return;
     for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
 	struct result_container *result = (struct result_container *)BU_PTBL_GET(results_table, i);
 	result_free((void *)result);
@@ -529,7 +530,11 @@ main(int argc, char **argv)
 	    bu_ptbl_reset(results.changed);
 	    bu_ptbl_cat(results.changed, &changed_filtered);
 	} else {
-	    result_free_ptbl(results.changed);
+	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
+		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
+		result_free((void *)result);
+	    }
+	    bu_ptbl_reset(results.changed);
 	}
 	if (BU_PTBL_LEN(results.changed_dbip1) > 0) {
 	    db_search_free(&changed_filtered_dbip1);
