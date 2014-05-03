@@ -90,6 +90,13 @@
   db_search_free(&results);
  @endcode
  *
+ * !!! WARNING !!!
+ * Be aware that if you are using db_search to filter pre-built lists of paths,
+ * you need to check that your generated path list is NOT empty before calling
+ * db_search.  If you accidentally send an empty path list into db_search,
+ * it will assume you wanted a tops list and unexpected results (such as mysteriously
+ * invalid directory pointers) may follow.
+ *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                int flags,
