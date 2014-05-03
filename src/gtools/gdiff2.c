@@ -423,6 +423,11 @@ main(int argc, char **argv)
 	}
     }
 
+    if (output_mode == 109) {
+	bu_log("Error - mged script generation not yet implemented\n");
+	bu_exit(EXIT_FAILURE, NULL);
+    }
+
     if (return_added == -1 && return_removed == -1 && return_changed == -1 && return_unchanged == 0) {
 	return_added = 1; return_removed = 1; return_changed = 1;
     }
