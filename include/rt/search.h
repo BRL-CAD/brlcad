@@ -97,6 +97,9 @@
  * it will assume you wanted a tops list and unexpected results (such as mysteriously
  * invalid directory pointers) may follow.
  *
+ * TODO - check if the above is a consequence of some incorrect assumtion about what
+ * needs to be freed after using db_ls
+ *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                int flags,
