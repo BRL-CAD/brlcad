@@ -38,7 +38,7 @@
 /* private */
 #include "./nirt.h"
 #include "./usrfmt.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /* bleh */

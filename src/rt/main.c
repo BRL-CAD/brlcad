@@ -47,7 +47,7 @@
 /* private */
 #include "./rtuif.h"
 #include "./ext.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 extern void application_init();

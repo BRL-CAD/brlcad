@@ -48,6 +48,7 @@
 
 /* private */
 #include "./iges.h"
+#include "brlcad_ident.h"
 #include "brlcad_version.h"
 
 

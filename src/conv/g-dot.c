@@ -36,7 +36,7 @@
 #include "bio.h"
 
 /* interface headers */
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 #include "raytrace.h"
 #include "ged.h"
 

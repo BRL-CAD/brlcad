@@ -79,7 +79,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 #ifndef COMMAND_LINE_EDITING
 #  define COMMAND_LINE_EDITING 1
