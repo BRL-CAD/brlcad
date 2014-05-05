@@ -73,7 +73,7 @@ static const int BRLCAD_COUNT = BRLCAD_COMPILE_COUNT;
  * Provides the release identifier details along with basic
  * configuration and compilation information.
  */
-static inline const char *
+static const char *
 brlcad_ident(const char *title)
 {
     static char ident[1024] = {0};
