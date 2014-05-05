@@ -64,6 +64,7 @@ changes made.  See document footer for additional details.
 * added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
 * allow search to see hidden combs with the -a flag - Cliff Yapp
 * added comb -l lift option to change region designation - Cliff Yapp
+* improved NURBS ray tracing grazing hit behavior - Keith Bowman
 * print current grid information in gqa output - Cliff Yapp
 * added -f option for flattening combs to 'comb' command - Cliff Yapp
 * added support for boolean op filtering in search - Cliff Yapp
