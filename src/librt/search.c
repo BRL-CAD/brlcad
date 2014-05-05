@@ -2271,11 +2271,8 @@ db_search(struct bu_ptbl *search_results,
     bu_free(mutable_plan_str, "free strdup");
     bu_free((char *)plan_argv, "free plan argv");
 
-    if (paths == top_level_objects) {
-	for (i = 0; i < path_cnt; i++) {
-	    db_dirdelete(dbip, top_level_objects[i]);
-	}
-	bu_free(top_level_objects, "free tops");
+    if (top_level_objects) {
+	bu_free((void *)top_level_objects, "free tops");
     }
 
     return result_cnt;
