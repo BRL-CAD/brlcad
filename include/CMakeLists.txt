@@ -82,6 +82,7 @@ install(FILES ${include_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 set(noinst_HEADERS
   bin.h
   bio.h
+  brlcad_ident.h
   brlcad_version.h
   bselect.h
   conf.h
