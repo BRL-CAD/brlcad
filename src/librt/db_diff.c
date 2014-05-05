@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
 #include "bio.h"
 
 #include "tcl.h"
@@ -130,12 +131,42 @@ db_diff(const struct db_i *dbip1,
 
 
 HIDDEN int
-avpp_val_compare(const char *val1, const char *val2)
+avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
 {
+    /* We need to look for numbers to do tolerance based comparisons */
+    int num_compare = 1;
+    int pnt_compare = 1;
+    double dval1, dval2;
+    float p1val1, p1val2, p1val3;
+    float p2val1, p2val2, p2val3;
+    char *endptr;
+
+    /* First, check for individual numbers */
+    errno = 0;
+    dval1 = strtod(val1, &endptr);
+    if (errno != EINVAL || *endptr != '\0') num_compare--;
+    errno = 0;
+    dval2 = strtod(val2, &endptr);
+    if (errno != EINVAL || *endptr != '\0') num_compare--;
+
+    /* If we didn't find numbers, try for points (3 floating point numbers) */
+    if (num_compare != 1) {
+	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
+	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
+    }
+
+    if (num_compare == 1) {
+	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
+    }
+    if (pnt_compare == 1) {
+	vect_t v1, v2;
+	VSET(v1, p1val1, p1val2, p1val3);
+	VSET(v2, p2val1, p2val2, p2val3);
+	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
+    }
     return BU_STR_EQUAL(val1, val2);
 }
 
-/* TODO - is this appropriate for libbu? */
 HIDDEN int
 bu_avs_diff(struct bu_attribute_value_set *shared,
 	struct bu_attribute_value_set *orig_only,
@@ -143,7 +174,8 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 	struct bu_attribute_value_set *orig_diff,
 	struct bu_attribute_value_set *new_diff,
 	const struct bu_attribute_value_set *avs1,
-	const struct bu_attribute_value_set *avs2)
+	const struct bu_attribute_value_set *avs2,
+	const struct bn_tol *diff_tol)
 {
     int have_diff = 0;
     struct bu_attribute_value_pair *avp;
@@ -158,7 +190,7 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 	    bu_avs_add(orig_only, avp->name, avp->value);
 	    have_diff++;
 	} else {
-	    if (avpp_val_compare(avp->value, val2)) {
+	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
 		bu_avs_add(shared, avp->name, avp->value);
 	    } else {
 		bu_avs_add(orig_diff, avp->name, avp->value);
@@ -237,10 +269,12 @@ db_compare(const struct rt_db_internal *left_obj,
 	   struct bu_attribute_value_set *removed,
 	   struct bu_attribute_value_set *changed_left,
 	   struct bu_attribute_value_set *changed_right,
-	   struct bu_attribute_value_set *unchanged)
+	   struct bu_attribute_value_set *unchanged,
+	   struct bn_tol *diff_tol)
 {
     int do_all = 0;
     int has_diff = 0;
+    int type_change = 0;
 
     if (!left_obj || !right_obj || !added || !removed || !changed_left || !changed_right || !unchanged) return -1;
     if (!BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
@@ -269,7 +303,7 @@ db_compare(const struct rt_db_internal *left_obj,
 	if (left_obj->idb_minor_type != right_obj->idb_minor_type) {
 	    bu_avs_add(changed_left, "object type", left_obj->idb_meth->ft_label);
 	    bu_avs_add(changed_right, "object type", right_obj->idb_meth->ft_label);
-	    has_diff += 1;
+	    type_change = 1;
 	} else {
 	    if (left_obj->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
 		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
@@ -278,7 +312,7 @@ db_compare(const struct rt_db_internal *left_obj,
 		if (arb_type_1 != arb_type_2) {
 		    bu_avs_add(changed_left, "object type", arb_type_to_str(arb_type_1));
 		    bu_avs_add(changed_right, "object type", arb_type_to_str(arb_type_2));
-		    has_diff += 1;
+		    type_change = 1;
 		}
 	    }
 	}
@@ -301,7 +335,7 @@ db_compare(const struct rt_db_internal *left_obj,
 	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
 	}
 	if (have_tcl1 && have_tcl2) {
-	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &avs1, &avs2);
+	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &avs1, &avs2, diff_tol);
 	}
 
 	bu_avs_free(&avs1);
@@ -312,7 +346,7 @@ db_compare(const struct rt_db_internal *left_obj,
     if (flags == DB_COMPARE_ATTRS || do_all) {
 
 	if (left_obj->idb_avs.magic == BU_AVS_MAGIC && right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &left_obj->idb_avs, &right_obj->idb_avs);
+	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &left_obj->idb_avs, &right_obj->idb_avs, diff_tol);
 	} else {
 	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {
 		bu_avs_merge(removed, &left_obj->idb_avs);
@@ -326,6 +360,7 @@ db_compare(const struct rt_db_internal *left_obj,
 
     }
 
+    if (type_change) return 1;
     return (has_diff) ? 1 : 0;
 }
 

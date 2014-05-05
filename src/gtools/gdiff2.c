@@ -105,6 +105,7 @@ result_free_ptbl(struct bu_ptbl *results_table)
 }
 
 struct results {
+    float diff_tolerance;
     struct bu_ptbl *added;     /* directory pointers */
     struct bu_ptbl *removed;   /* directory pointers */
     struct bu_ptbl *unchanged; /* directory pointers */
@@ -157,8 +158,10 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 {
     struct results *results;
     struct result_container *result;
+    struct bn_tol diff_tol = {BN_TOL_MAGIC, VUNITIZE_TOL, 0.0, 0.0, 0.0};
     if (!left || !right || !before || !after|| !data) return -1;
     results = (struct results *)data;
+    diff_tol.dist = results->diff_tolerance;
     if (!BU_PTBL_IS_INITIALIZED(results->changed)) BU_PTBL_INIT(results->changed);
     if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip1)) BU_PTBL_INIT(results->changed_dbip1);
     if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip2)) BU_PTBL_INIT(results->changed_dbip2);
@@ -167,7 +170,6 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
     result = (struct result_container *)bu_calloc(1, sizeof(struct result_container), "diff result struct");
     result_init(result);
-    bu_ptbl_ins(results->changed, (long *)result);
 
     result->dp_orig = before;
     result->dp_new = after;
@@ -184,12 +186,19 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
     result->internal_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_PARAM,
 	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-	    &(result->internal_new_diff), &(result->internal_shared));
+	    &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
 
     result->attribute_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_ATTRS,
 	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
-	    &(result->additional_new_diff), &(result->additional_shared));
+	    &(result->additional_new_diff), &(result->additional_shared), &diff_tol);
 
+    if (result->internal_diff || result->attribute_diff) {
+	bu_ptbl_ins(results->changed, (long *)result);
+    } else {
+	if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
+	bu_ptbl_ins(results->unchanged, (long *)before);
+	result_free(result);
+    }
     return 0;
 }
 
@@ -384,6 +393,7 @@ main(int argc, char **argv)
     int output_mode = 0;
     int have_diff = 0;
     int have_search_filter = 0;
+    float diff_tolerance = VUNITIZE_TOL;
     struct results results;
     struct db_i *dbip1 = DBI_NULL;
     struct db_i *dbip2 = DBI_NULL;
@@ -391,7 +401,7 @@ main(int argc, char **argv)
     const char *diff_prog_name = argv[0];
     struct bu_vls search_filter = BU_VLS_INIT_ZERO;
 
-    while ((c = bu_getopt(argc, argv, "acF:mruv:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "acF:mrt:uv:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		return_added = 1;
@@ -411,6 +421,13 @@ main(int argc, char **argv)
 		break;
 	    case 'm':   /* mged readable */
 		output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
+		break;
+	    case 't':   /* distance tolerance for same/different decisions (VUNITIZE_TOL is default) */
+		if(sscanf(bu_optarg, "%f", &diff_tolerance) != 1) {
+		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
+		    gdiff_usage(diff_prog_name);
+		    bu_exit (1, NULL);
+		}
 		break;
 	    case 'v':   /* verbosity (2 is default) */
 		if(sscanf(bu_optarg, "%d", &verbosity) != 1) {
@@ -467,6 +484,8 @@ main(int argc, char **argv)
 	db_close(dbip2);
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
     }
+
+    results.diff_tolerance = diff_tolerance;
 
     BU_GET(results.added, struct bu_ptbl);
     BU_GET(results.removed, struct bu_ptbl);

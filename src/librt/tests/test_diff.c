@@ -153,6 +153,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 {
     struct results *results;
     struct result_container *result;
+    struct bn_tol diff_tol = {BN_TOL_MAGIC, 0.0, 0.0, 0.0, 0.0};
     if (!left || !right || !before || !after|| !data) return -1;
     results = (struct results *)data;
     if (!BU_PTBL_IS_INITIALIZED(&results->changed)) BU_PTBL_INIT(&results->changed);
@@ -176,11 +177,11 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
     result->internal_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_PARAM,
 	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-	    &(result->internal_new_diff), &(result->internal_shared));
+	    &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
 
     result->attribute_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_ATTRS,
 	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
-	    &(result->additional_new_diff), &(result->additional_shared));
+	    &(result->additional_new_diff), &(result->additional_shared), &diff_tol);
 
     return 0;
 }

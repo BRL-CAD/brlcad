@@ -89,7 +89,8 @@ db_compare(const struct rt_db_internal *left_obj,
 	   struct bu_attribute_value_set *removed,
 	   struct bu_attribute_value_set *changed_left,
 	   struct bu_attribute_value_set *changed_right,
-	   struct bu_attribute_value_set *unchanged);
+	   struct bu_attribute_value_set *unchanged,
+	   struct bn_tol *diff_tol);
 
 
 /*
