@@ -158,13 +158,21 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 {
     struct results *results;
     struct result_container *result;
-    struct bn_tol diff_tol = {BN_TOL_MAGIC, RT_LEN_TOL, 0.0, 0.0, 0.0};
-    if (!left || !right || !before || !after|| !data) return -1;
+    struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
+
+    if (!left || !right || !before || !after|| !data)
+	return -1;
+
     results = (struct results *)data;
     diff_tol.dist = results->diff_tolerance;
-    if (!BU_PTBL_IS_INITIALIZED(results->changed)) BU_PTBL_INIT(results->changed);
-    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip1)) BU_PTBL_INIT(results->changed_dbip1);
-    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip2)) BU_PTBL_INIT(results->changed_dbip2);
+
+    if (!BU_PTBL_IS_INITIALIZED(results->changed))
+	BU_PTBL_INIT(results->changed);
+    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip1))
+	BU_PTBL_INIT(results->changed_dbip1);
+    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip2))
+	BU_PTBL_INIT(results->changed_dbip2);
+
     bu_ptbl_ins(results->changed_dbip1, (long *)before);
     bu_ptbl_ins(results->changed_dbip2, (long *)after);
 
@@ -199,6 +207,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 	bu_ptbl_ins(results->unchanged, (long *)before);
 	result_free(result);
     }
+
     return 0;
 }
 
@@ -211,6 +220,7 @@ params_summary(struct bu_vls *attr_log, struct result_container *result)
     struct bu_attribute_value_set *new_only = &result->internal_new_only;
     struct bu_attribute_value_set *orig_diff = &result->internal_orig_diff;
     struct bu_attribute_value_set *new_diff = &result->internal_new_diff;
+
     if (orig_only->count > 0) {
 	bu_vls_printf(attr_log, "   Parameters removed:\n");
 	for (BU_AVS_FOR(avpp, orig_only)) {
@@ -240,6 +250,7 @@ attrs_summary(struct bu_vls *attr_log, struct result_container *result)
     struct bu_attribute_value_set *new_only = &result->additional_new_only;
     struct bu_attribute_value_set *orig_diff = &result->additional_orig_diff;
     struct bu_attribute_value_set *new_diff = &result->additional_new_diff;
+
     if (orig_only->count > 0) {
 	bu_vls_printf(attr_log, "   Attributes removed:\n");
 	for (BU_AVS_FOR(avpp, orig_only)) {
@@ -264,12 +275,15 @@ int
 print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct directory *dp, int line_len)
 {
     int local_line_len = line_len;
+
     if (local_line_len + strlen(dp->d_namep) > 80) {
 	bu_vls_printf(diff_log, "\n");
 	local_line_len = 0;
     }
+
     bu_vls_printf(diff_log, "%s", dp->d_namep);
     local_line_len += strlen(dp->d_namep);
+
     if (local_line_len > 79 || (cnt+1) == (int)BU_PTBL_LEN(dptable)) {
 	bu_vls_printf(diff_log, "\n");
 	local_line_len = 0;
@@ -277,6 +291,7 @@ print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct
 	bu_vls_printf(diff_log, ", ");
 	local_line_len += 2;
     }
+
     return local_line_len;
 }
 
