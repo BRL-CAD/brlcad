@@ -50,6 +50,7 @@ changes made.  See document footer for additional details.
 --- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
 * added attribute sorting option to the 'attr' command - Tom Browder
 * changed 'bwfilter' tool offset option from -o to -O - Mohit Daga
