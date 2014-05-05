@@ -236,13 +236,13 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
 
 void
-params_summary(struct bu_vls *attr_log, struct result_container *result)
+params_summary(struct bu_vls *attr_log, const struct result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
-    struct bu_attribute_value_set *orig_only = &result->internal_orig_only;
-    struct bu_attribute_value_set *new_only = &result->internal_new_only;
-    struct bu_attribute_value_set *orig_diff = &result->internal_orig_diff;
-    struct bu_attribute_value_set *new_diff = &result->internal_new_diff;
+    const struct bu_attribute_value_set *orig_only = &result->internal_orig_only;
+    const struct bu_attribute_value_set *new_only = &result->internal_new_only;
+    const struct bu_attribute_value_set *orig_diff = &result->internal_orig_diff;
+    const struct bu_attribute_value_set *new_diff = &result->internal_new_diff;
 
     if (orig_only->count > 0) {
 	bu_vls_printf(attr_log, "   Parameters removed:\n");
@@ -266,13 +266,13 @@ params_summary(struct bu_vls *attr_log, struct result_container *result)
 
 
 void
-attrs_summary(struct bu_vls *attr_log, struct result_container *result)
+attrs_summary(struct bu_vls *attr_log, const struct result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
-    struct bu_attribute_value_set *orig_only = &result->additional_orig_only;
-    struct bu_attribute_value_set *new_only = &result->additional_new_only;
-    struct bu_attribute_value_set *orig_diff = &result->additional_orig_diff;
-    struct bu_attribute_value_set *new_diff = &result->additional_new_diff;
+    const struct bu_attribute_value_set *orig_only = &result->additional_orig_only;
+    const struct bu_attribute_value_set *new_only = &result->additional_new_only;
+    const struct bu_attribute_value_set *orig_diff = &result->additional_orig_diff;
+    const struct bu_attribute_value_set *new_diff = &result->additional_new_diff;
 
     if (orig_only->count > 0) {
 	bu_vls_printf(attr_log, "   Attributes removed:\n");
@@ -296,7 +296,7 @@ attrs_summary(struct bu_vls *attr_log, struct result_container *result)
 
 
 int
-print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct directory *dp, int line_len)
+print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, const struct directory *dp, const int line_len)
 {
     int local_line_len = line_len;
 
@@ -321,7 +321,7 @@ print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct
 
 
 void
-diff_summarize(struct bu_vls *diff_log, struct results *results, int verbosity, int r_added, int r_removed, int r_changed, int r_unchanged)
+diff_summarize(struct bu_vls *diff_log, const struct results *results, const int verbosity, const int r_added, const int r_removed, const int r_changed, const int r_unchanged)
 {
     int i = 0;
 
