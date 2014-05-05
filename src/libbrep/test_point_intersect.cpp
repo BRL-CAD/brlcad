@@ -30,15 +30,18 @@
 
 #include "brep.h"
 
-void
+static void
 test_ppi(ON_3dPoint &p1, ON_3dPoint &p2)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_ClassArray<ON_PX_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(p1, p2, x);
+
     bu_log("(%f,%f,%f) and (%f,%f,%f):\n", p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
+
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
     } else {
@@ -50,12 +53,14 @@ test_ppi(ON_3dPoint &p1, ON_3dPoint &p2)
     bu_log("\n\n");
 }
 
-void
+
+static void
 test_pci(ON_3dPoint &p, ON_Curve &c)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_ClassArray<ON_PX_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(p, c, x);
 
@@ -74,12 +79,14 @@ test_pci(ON_3dPoint &p, ON_Curve &c)
     bu_log("\n\n");
 }
 
-void
+
+static void
 test_psi(ON_3dPoint &p, ON_Surface &s)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_ClassArray<ON_PX_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(p, s, x);
 
@@ -96,12 +103,14 @@ test_psi(ON_3dPoint &p, ON_Surface &s)
     bu_log("\n\n");
 }
 
-double
+
+static double
 rand_f(double min, double max)
 {
     double f = (double)rand() / RAND_MAX;
     return min + f * (max - min);
 }
+
 
 int
 main(int, char**)
