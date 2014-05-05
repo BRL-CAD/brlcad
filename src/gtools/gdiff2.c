@@ -338,7 +338,7 @@ diff_summarize(struct bu_vls *diff_log, const struct results *results, const int
     changed = results->changed;
     unchanged = results->unchanged;
 
-    if(verbosity == 1) {
+    if (verbosity == 1) {
 	int line_len = 0;
 	if (r_added > 0) {
 	    if ((int)BU_PTBL_LEN(added) > 0) {
@@ -383,7 +383,7 @@ diff_summarize(struct bu_vls *diff_log, const struct results *results, const int
 	}
 
     }
-    if(verbosity > 1) {
+    if (verbosity > 1) {
 	if (r_added > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
 		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
@@ -472,14 +472,14 @@ main(int argc, char **argv)
 		output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
 		break;
 	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
-		if(sscanf(bu_optarg, "%f", &diff_tolerance) != 1) {
+		if (sscanf(bu_optarg, "%f", &diff_tolerance) != 1) {
 		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'v':   /* verbosity (2 is default) */
-		if(sscanf(bu_optarg, "%d", &verbosity) != 1) {
+		if (sscanf(bu_optarg, "%d", &verbosity) != 1) {
 		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
