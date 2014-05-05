@@ -50,6 +50,7 @@
 #include "bu/getopt.h"
 /* private */
 #include "./iges.h"
+#include "brlcad_ident.h"
 #include "brlcad_version.h"
 
 

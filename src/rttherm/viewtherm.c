@@ -57,7 +57,7 @@
 /* private */
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 extern int viewshade(struct application *app,

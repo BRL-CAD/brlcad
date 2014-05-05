@@ -34,161 +34,79 @@
 
 #include "common.h"
 
-/* for snprintf */
-#include <stdio.h>
-/* for strlen */
-#include <string.h>
 
-
-/* FIXED VALUES */
+/**************************************************/
+/* Compile-time version information (discouraged) */
+/**************************************************/
 
 /**
- * MAJOR.minor.patch version number
+ * Compile-time macro for testing whether the current compilation
+ * matches or precedes a given version triplet.  Returns false if the
+ * triplet come after the current compilation version, true otherwise.
+ * Conventional use allows calling code to support multiple API
+ * versions simultaneously, particularly with respect to deprecation
+ * changes (see CHANGES).
  *
- * should be an unquoted integer
- */
-#ifndef BRLCAD_MAJOR
-static const int BRLCAD_MAJOR =
-#include "conf/MAJOR"
--0; /* in case file is empty */
+ @code
+#if BRLCAD_API(7,24,6)
+... code that worked in 7.24.6 API and prior ...
+#else
+... current API ...
 #endif
+ @endcode
+ */
+#define BRLCAD_API(_major, _minor, _patch) \
+    (((_major) < BRLCAD_VERSION_MAJOR) || \
+     ((_major) == BRLCAD_VERSION_MAJOR && (_minor) < BRLCAD_VERSION_MINOR) || \
+     ((_major) == BRLCAD_VERSION_MAJOR && (_minor) == BRLCAD_VERSION_MINOR && (_patch) <= BRLCAD_VERSION_PATCH))
+
+
+/*********************************************/
+/* Run-time version information (encouraged) */
+/*********************************************/
 
 /**
- * major.MINOR.patch version number
- *
- * should be an unquoted integer
+ * Run-time integer of the MAJOR.minor.patch version number.
  */
-#ifndef BRLCAD_MINOR
-static const int BRLCAD_MINOR =
-#include "conf/MINOR"
--0; /* in case file is empty */
-#endif
+static const int BRLCAD_MAJOR = BRLCAD_VERSION_MAJOR;
+
 
 /**
- * major.minor.PATCH version number
- *
- * should be an unquoted integer
+ * Run-time integer of the major.MINOR.patch version number.
  */
-#ifndef BRLCAD_PATCH
-static const int BRLCAD_PATCH =
-#include "conf/PATCH"
--0; /* in case file is empty */
-#endif
+static const int BRLCAD_MINOR = BRLCAD_VERSION_MINOR;
 
-
-/* DYNAMIC VALUES */
 
 /**
- * compilation count, updated every time a build pass occurs
- *
- * should be an unquoted integer
+ * Run-time integer of the major.minor.PATCH version number.
  */
-#ifndef BRLCAD_COUNT
-static const int BRLCAD_COUNT =
-#include "conf/COUNT"
--0; /* in case file is empty */
-#endif
+static const int BRLCAD_PATCH = BRLCAD_VERSION_PATCH;
+
+
+/* helper macros to turn a preprocessor value into a string */
+
+#define NUMHASH(x) #x
+#define NUM2STR(x) NUMHASH(x)
 
 /**
- * compilation date, updated every time a build pass occurs
- *
- * should be a quoted value
+ * Run-time string of the "MAJOR.MINOR.PATCH" version number.
  */
-#ifndef BRLCAD_DATE
-static const char BRLCAD_DATE[256] = {
-#include "conf/DATE"
-};
-#endif
+static char BRLCAD_VERSION[32] = NUM2STR(BRLCAD_VERSION_MAJOR) "." NUM2STR(BRLCAD_VERSION_MINOR) "." NUM2STR(BRLCAD_VERSION_PATCH);
 
-/**
- * compilation host, updated every time a build pass occurs
- *
- * should be a quoted value
- */
-#ifndef BRLCAD_HOST
-static const char BRLCAD_HOST[256] = {
-#include "conf/HOST"
-};
-#endif
-
-/**
- * configured installation path, updated every time a build pass
- * occurs.  should be a quoted value
- */
-#ifndef BRLCAD_PATH
-static const char BRLCAD_PATH[256] = {
-#include "conf/PATH"
-};
-#endif
-
-/**
- * compilation user, updated every time a build pass occurs.
- * should be a quoted value
- */
-#ifndef BRLCAD_USER
-static const char BRLCAD_USER[256] = {
-#include "conf/USER"
-};
-#endif
 
 __BEGIN_DECLS
 
-static const char *brlcad_ident(const char *title);
-
 /**
- * provides the version string in MAJOR.MINOR.PATCH triplet form.
+ * Provides the version string in MAJOR.MINOR.PATCH triplet form.
  */
-static const char *
+static inline const char *
 brlcad_version(void)
 {
-    static char version[32] = {0};
-
-    if (version[0] == 0) {
-	snprintf(version, 32, "%d.%d.%d", BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH);
-
-	/* quell use warning, does nothing useful except initialize
-	 * the brlcad_ident string. it MUST come after setting version
-	 */
-	(void)brlcad_ident(NULL);
-    }
-
-    return version;
-}
-
-
-/**
- * provides the release identifier details along with basic
- * configuration and compilation information.
- */
-static const char *
-brlcad_ident(const char *title)
-{
-    static char ident[1024] = {0};
-
-    if (ident[0] == 0) {
-	/* header */
-	size_t isize = 0;
-	snprintf(ident, 1024, "BRL-CAD Release %s", brlcad_version());
-
-	/* optional title */
-	isize = strlen(ident);
-	if (title)
-	    snprintf(ident + isize, 1024 - isize, "  %s\n", title);
-
-	/* compile info */
-	isize = strlen(ident);
-	snprintf(ident + isize, 1024 - isize,
-		 "    %s, Compilation %d\n"
-		 "    %s@%s:%s\n",
-		 BRLCAD_DATE, BRLCAD_COUNT,
-		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
-	    );
-    }
-
-    return ident;
+    return BRLCAD_VERSION;
 }
 
 __END_DECLS
+
 
 #endif /* BRLCAD_VERSION_H */
 

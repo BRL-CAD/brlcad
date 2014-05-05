@@ -229,21 +229,20 @@ include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_CMakeFiles.cmake)
 # won't linger in the list
 set(BRLCAD_LIBS "" CACHE STRING "BRL-CAD libraries" FORCE)
 
+
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
 # See HACKING for details on how to properly update the version
 
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
-string(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
-string(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
-string(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_VERSION_MAJOR)
+string(STRIP ${BRLCAD_VERSION_MAJOR} BRLCAD_VERSION_MAJOR)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_VERSION_MINOR)
+string(STRIP ${BRLCAD_VERSION_MINOR} BRLCAD_VERSION_MINOR)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_VERSION_PATCH)
+string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
 
-set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
-# Create an integer corresponding to the BRL-CAD version to simplify
-# comparisons - format is MMmmpp (e.g., 72400)
-math(EXPR BRLCAD_VERSION_NUMBER "${BRLCAD_MAJOR_VERSION} * 10000 + ${BRLCAD_MINOR_VERSION} * 100 + ${BRLCAD_PATCH_VERSION}")
+set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -697,9 +696,12 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_NUMBER ${BRLCAD_VERSION_NUMBER}\n")
+
+# Write out our version information
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MINOR ${BRLCAD_VERSION_MINOR}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
+
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
@@ -2172,6 +2174,138 @@ else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # *******************************************************************
+# ***        Output and Summarize Results - Stage 9 of 9          ***
+# *******************************************************************
+
+#---------------------------------------------------------------------
+# Record compile-time information we may want to report at run-time.
+# Generate the include/conf files.
+
+# COUNT - Count how many times the configuration has changed.  Currently
+# we are detecting a configuration change by looking at the previous version
+# of the CMakeCache.txt file and looking for changes between values stored
+# there and settings in the current environment.  This has the disadvantage
+# of not spotting completely new variables in the current environment, but
+# the internal CMake variable list is too noisy so at the moment this looks
+# like the best alternative we have.
+
+if(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+  include(${BRLCAD_CMAKE_DIR}/DiffCache.cmake)
+  DIFF_CACHE_file()
+  if(INCREMENT_COUNT_FILE)
+    file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT buildCounter_raw)
+    string(STRIP ${buildCounter_raw} buildCounter)
+    math(EXPR buildCounter "${buildCounter} + 1")
+    file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+  endif(INCREMENT_COUNT_FILE)
+else(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+  set(buildCounter 0)
+  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+endif(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+
+# DATE - Increment this when we increment the COUNT, to avoid triggering
+# excessive relinking (an RFC2822 timestamp changes every second).
+file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
+string(STRIP ${DATESTAMP} DATESTAMP)
+if(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
+  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp "\"${DATESTAMP}\"\n")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp ${BRLCAD_BINARY_DIR}/include/conf/DATE)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp)
+endif(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/DATE)
+
+# HOST
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
+if(NOT MSVC)
+  TRY_RUN(TIME_RESULT TIME_COMPILED
+    ${CMAKE_BINARY_DIR}/CMakeTmp
+    ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
+    OUTPUT_VARIABLE COMPILEMESSAGES)
+else(NOT MSVC)
+  set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
+  TRY_RUN(TIME_RESULT TIME_COMPILED
+    ${CMAKE_BINARY_DIR}/CMakeTmp
+    ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
+    OUTPUT_VARIABLE COMPILEMESSAGES
+    CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
+endif(NOT MSVC)
+# Let CMake give us the proper newline character(s) for the current platform
+file(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp "\n")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp ${BRLCAD_BINARY_DIR}/include/conf/HOST)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/HOST)
+
+# USER
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+# Let CMake give us the proper newline character(s) for the current platform
+file(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp "\n")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp ${BRLCAD_BINARY_DIR}/include/conf/USER)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/USER)
+
+# PATH
+if(CMAKE_CONFIGURATION_TYPES)
+
+  # if we have stale cmake_install.cmake.orig files around, clear them now.
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
+  if(ALL_CMAKE_INSTALL_FILES_ORIG)
+    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
+  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
+  # need a build target for this one - install directory may be dependent on configuration, but that won't
+  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
+  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
+  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  add_custom_command(
+    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    )
+  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
+  # to the first target to run - the timestamp printing.
+  add_dependencies(timestamp multiconfig_path)
+
+else(CMAKE_CONFIGURATION_TYPES)
+
+  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
+
+endif(CMAKE_CONFIGURATION_TYPES)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
+
+# Write out version and compilation information
+
+file(READ ${BRLCAD_BINARY_DIR}/include/conf/DATE BRLCAD_COMPILE_DATE)
+file(READ ${BRLCAD_BINARY_DIR}/include/conf/HOST BRLCAD_COMPILE_HOST)
+file(READ ${BRLCAD_BINARY_DIR}/include/conf/PATH BRLCAD_COMPILE_PATH)
+file(READ ${BRLCAD_BINARY_DIR}/include/conf/USER BRLCAD_COMPILE_USER)
+file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT BRLCAD_COMPILE_COUNT)
+
+string(STRIP ${BRLCAD_COMPILE_DATE} BRLCAD_COMPILE_DATE)
+string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
+string(STRIP ${BRLCAD_COMPILE_PATH} BRLCAD_COMPILE_PATH)
+string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
+string(STRIP ${BRLCAD_COMPILE_COUNT} BRLCAD_COMPILE_COUNT)
+
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_PATH ${BRLCAD_COMPILE_PATH}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
 
 # If we're building on Windows, use config_win.h file
 if(WIN32)
@@ -2213,10 +2347,6 @@ set(toplevel_DOCFILES
   README
   )
 BRLCAD_ADDDATA(toplevel_DOCFILES ".")
-
-# *******************************************************************
-# ***                     Summarize Results                       ***
-# *******************************************************************
 
 # Now that everything is configured, print a summary of the build
 # settings.
@@ -2352,127 +2482,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# Generate the include/conf files
-
-# HOST (note gethostname is NOT a c89 function)
-configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
-if(NOT MSVC)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    ${CMAKE_BINARY_DIR}/CMakeTmp
-    ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-    OUTPUT_VARIABLE COMPILEMESSAGES
-    )
-else(NOT MSVC)
-  set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    ${CMAKE_BINARY_DIR}/CMakeTmp
-    ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-    OUTPUT_VARIABLE COMPILEMESSAGES
-    CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
-endif(NOT MSVC)
-
-# test results
-if(NOT TIME_COMPILED)
-  message(INFO ${COMPILEMESSAGES})
-  message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to compile")
-endif()
-if(TIME_RESULT)
-  message(INFO ${COMPILEMESSAGES})
-  message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to run")
-endif()
-
-# Let CMake give us the proper newline character(s) for the current platform
-file(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp "\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp ${BRLCAD_BINARY_DIR}/include/conf/HOST)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/HOST)
-
-# USER
-configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
-TRY_RUN(TIME_RESULT TIME_COMPILED
-  ${CMAKE_BINARY_DIR}/CMakeTmp
-  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
-  OUTPUT_VARIABLE COMPILEMESSAGES)
-# Let CMake give us the proper newline character(s) for the current platform
-file(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp "\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp ${BRLCAD_BINARY_DIR}/include/conf/USER)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/USER)
-
-# PATH
-if(CMAKE_CONFIGURATION_TYPES)
-
-  # if we have stale cmake_install.cmake.orig files around, clear them now.
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  if(ALL_CMAKE_INSTALL_FILES_ORIG)
-    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
-  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-  # need a build target for this one - install directory may be dependent on configuration, but that won't
-  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
-  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
-  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    )
-  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
-  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
-  # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
-  # to the first target to run - the timestamp printing.
-  add_dependencies(timestamp multiconfig_path)
-
-else(CMAKE_CONFIGURATION_TYPES)
-
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
-
-endif(CMAKE_CONFIGURATION_TYPES)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
-
-# COUNT - Count how many times the configuration has changed.  Currently
-# we are detecting a configuration change by looking at the previous version
-# of the CMakeCache.txt file and looking for changes between values stored
-# there and settings in the current environment.  This has the disadvantage
-# of not spotting completely new variables in the current environment, but
-# the internal CMake variable list is too noisy so at the moment this looks
-# like the best alternative we have.
-
-if(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-  include(${BRLCAD_CMAKE_DIR}/DiffCache.cmake)
-  DIFF_CACHE_file()
-  if(INCREMENT_COUNT_FILE)
-    file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT buildCounter_raw)
-    string(STRIP ${buildCounter_raw} buildCounter)
-    math(EXPR buildCounter "${buildCounter} + 1")
-    file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
-  endif(INCREMENT_COUNT_FILE)
-else(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-  set(buildCounter 0)
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
-endif(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-
-# DATE - Increment this when we increment the COUNT, to avoid triggering
-# excessive relinking (an RFC2822 timestamp changes every second).
-file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
-string(STRIP ${DATESTAMP} DATESTAMP)
-if(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp "\"${DATESTAMP}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp ${BRLCAD_BINARY_DIR}/include/conf/DATE)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp)
-endif(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/DATE)
-
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
 if(NOT BRLCAD_IS_SUBBUILD)
@@ -2482,9 +2491,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
   set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_SOURCE_DIR}/README)
   set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
-  set(CPACK_PACKAGE_VERSION_MAJOR ${BRLCAD_MAJOR_VERSION})
-  set(CPACK_PACKAGE_VERSION_MINOR ${BRLCAD_MINOR_VERSION})
-  set(CPACK_PACKAGE_VERSION_PATCH ${BRLCAD_PATCH_VERSION})
+  set(CPACK_PACKAGE_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR})
+  set(CPACK_PACKAGE_VERSION_MINOR ${BRLCAD_VERSION_MINOR})
+  set(CPACK_PACKAGE_VERSION_PATCH ${BRLCAD_VERSION_PATCH})
   if(BRLCAD_VERSIONED_RPM_NAME)
     set(CPACK_RPM_PACKAGE_NAME "BRL-CAD_${BRLCAD_VERSION}")
   endif(BRLCAD_VERSIONED_RPM_NAME)
@@ -2517,7 +2526,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       set(CPACK_GENERATOR ${CPACK_GENERATOR} RPM)
       set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
       set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
-      #set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_MAJOR_VERSION}_${BRLCAD_MINOR_VERSION}_${BRLCAD_PATCH_VERSION}")
+      #set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
       #if(EXISTS /etc/redhat-release)
       #	file(READ /etc/redhat-release REDHAT_RELEASE)
       #	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})

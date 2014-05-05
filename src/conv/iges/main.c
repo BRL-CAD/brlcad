@@ -30,7 +30,7 @@
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 int do_projection = 1;

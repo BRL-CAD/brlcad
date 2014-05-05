@@ -71,7 +71,7 @@
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 #ifndef HAVE_VFORK

@@ -44,7 +44,7 @@
 #include "gcv.h"
 
 /* private headers */
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 #include "./dxf.h"
 
 
