@@ -50,7 +50,7 @@ struct result_container {
 };
 
 
-HIDDEN void
+static void
 result_init(struct result_container *result)
 {
     result->status = 0;
@@ -75,7 +75,7 @@ result_init(struct result_container *result)
 }
 
 
-HIDDEN void
+static void
 result_free(void *result)
 {
     struct result_container *curr_result = (struct result_container *)result;
@@ -98,7 +98,7 @@ result_free(void *result)
 }
 
 
-HIDDEN void
+static void
 result_free_ptbl(struct bu_ptbl *results_table)
 {
     int i = 0;
@@ -235,7 +235,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 }
 
 
-HIDDEN void
+static void
 params_summary(struct bu_vls *attr_log, const struct result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
@@ -265,7 +265,7 @@ params_summary(struct bu_vls *attr_log, const struct result_container *result)
 }
 
 
-HIDDEN void
+static void
 attrs_summary(struct bu_vls *attr_log, const struct result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
@@ -295,7 +295,7 @@ attrs_summary(struct bu_vls *attr_log, const struct result_container *result)
 }
 
 
-HIDDEN int
+static int
 print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, const struct directory *dp, const int line_len)
 {
     int local_line_len = line_len;
@@ -320,7 +320,7 @@ print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, 
 }
 
 
-HIDDEN void
+static void
 diff_summarize(struct bu_vls *diff_log, const struct results *results, const int verbosity, const int r_added, const int r_removed, const int r_changed, const int r_unchanged)
 {
     int i = 0;
@@ -422,7 +422,7 @@ diff_summarize(struct bu_vls *diff_log, const struct results *results, const int
 }
 
 
-HIDDEN void
+static void
 gdiff_usage(const char *str) {
     bu_log("Usage: %s [-acmrv] file1.g file2.g\n", str);
     bu_exit(1, NULL);

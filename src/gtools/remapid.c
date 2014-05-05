@@ -719,7 +719,7 @@ write_assignment(void *v, int UNUSED(depth))
 }
 
 
-HIDDEN void
+static void
 tankill_reassign(char *db_name)
 {
     FILE *fd_in;
