@@ -158,7 +158,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 {
     struct results *results;
     struct result_container *result;
-    struct bn_tol diff_tol = {BN_TOL_MAGIC, VUNITIZE_TOL, 0.0, 0.0, 0.0};
+    struct bn_tol diff_tol = {BN_TOL_MAGIC, RT_LEN_TOL, 0.0, 0.0, 0.0};
     if (!left || !right || !before || !after|| !data) return -1;
     results = (struct results *)data;
     diff_tol.dist = results->diff_tolerance;
@@ -393,7 +393,7 @@ main(int argc, char **argv)
     int output_mode = 0;
     int have_diff = 0;
     int have_search_filter = 0;
-    float diff_tolerance = VUNITIZE_TOL;
+    float diff_tolerance = RT_LEN_TOL;
     struct results results;
     struct db_i *dbip1 = DBI_NULL;
     struct db_i *dbip2 = DBI_NULL;
@@ -422,7 +422,7 @@ main(int argc, char **argv)
 	    case 'm':   /* mged readable */
 		output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
 		break;
-	    case 't':   /* distance tolerance for same/different decisions (VUNITIZE_TOL is default) */
+	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
 		if(sscanf(bu_optarg, "%f", &diff_tolerance) != 1) {
 		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
