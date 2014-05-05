@@ -28,6 +28,7 @@
 #include "raytrace.h"
 #include "db_diff.h"
 
+
 struct result_container {
     int status;
     const struct directory *dp_orig;
@@ -47,6 +48,7 @@ struct result_container {
     struct bu_attribute_value_set additional_orig_diff;
     struct bu_attribute_value_set additional_new_diff;
 };
+
 
 void
 result_init(struct result_container *result)
@@ -72,11 +74,14 @@ result_init(struct result_container *result)
     BU_AVS_INIT(&result->additional_new_diff);
 }
 
+
 void
 result_free(void *result)
 {
     struct result_container *curr_result = (struct result_container *)result;
-    if (!result) return;
+
+    if (!result)
+	return;
 
     rt_db_free_internal(curr_result->intern_orig);
     rt_db_free_internal(curr_result->intern_new);
@@ -92,17 +97,22 @@ result_free(void *result)
     bu_avs_free(&curr_result->additional_new_diff);
 }
 
+
 void
 result_free_ptbl(struct bu_ptbl *results_table)
 {
     int i = 0;
-    if (!results_table) return;
+
+    if (!results_table)
+	return;
+
     for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
 	struct result_container *result = (struct result_container *)BU_PTBL_GET(results_table, i);
 	result_free((void *)result);
     }
     bu_ptbl_free(results_table);
 }
+
 
 struct results {
     float diff_tolerance;
@@ -114,11 +124,15 @@ struct results {
     struct bu_ptbl *changed_dbip2;   /* directory pointers */
 };
 
+
 int
 diff_added(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *added, void *data)
 {
     struct results *results;
-    if (!data || !added) return -1;
+
+    if (!data || !added)
+	return -1;
+
     results = (struct results *)data;
     if (!BU_PTBL_IS_INITIALIZED(results->added)) BU_PTBL_INIT(results->added);
 
@@ -127,11 +141,15 @@ diff_added(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), co
     return 0;
 }
 
+
 int
 diff_removed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *removed, void *data)
 {
     struct results *results;
-    if (!data || !removed) return -1;
+
+    if (!data || !removed)
+	return -1;
+
     results = (struct results *)data;
     if (!BU_PTBL_IS_INITIALIZED(results->removed)) BU_PTBL_INIT(results->removed);
 
@@ -140,11 +158,15 @@ diff_removed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), 
     return 0;
 }
 
+
 int
 diff_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *unchanged, void *data)
 {
     struct results *results;
-    if (!data || !unchanged) return -1;
+
+    if (!data || !unchanged)
+	return -1;
+
     results = (struct results *)data;
     if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
 
@@ -152,6 +174,7 @@ diff_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right)
 
     return 0;
 }
+
 
 int
 diff_changed(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data)
@@ -193,12 +216,12 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     }
 
     result->internal_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_PARAM,
-	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-	    &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
+				       &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
+				       &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
 
     result->attribute_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_ATTRS,
-	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
-	    &(result->additional_new_diff), &(result->additional_shared), &diff_tol);
+					&(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
+					&(result->additional_new_diff), &(result->additional_shared), &diff_tol);
 
     if (result->internal_diff || result->attribute_diff) {
 	bu_ptbl_ins(results->changed, (long *)result);
@@ -271,6 +294,7 @@ attrs_summary(struct bu_vls *attr_log, struct result_container *result)
     }
 }
 
+
 int
 print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct directory *dp, int line_len)
 {
@@ -295,105 +319,115 @@ print_dp(struct bu_vls *diff_log, struct bu_ptbl *dptable, int cnt, const struct
     return local_line_len;
 }
 
+
 void
 diff_summarize(struct bu_vls *diff_log, struct results *results, int verbosity, int r_added, int r_removed, int r_changed, int r_unchanged)
 {
-    if(verbosity >= 1) {
-	int i = 0;
-	struct bu_ptbl *added = results->added;
-	struct bu_ptbl *removed = results->removed;
-	struct bu_ptbl *changed = results->changed;
-	struct bu_ptbl *unchanged = results->unchanged;
+    int i = 0;
 
-	if(verbosity == 1) {
-	    int line_len = 0;
-	    if (r_added > 0) {
-		if ((int)BU_PTBL_LEN(added) > 0) {
-		    bu_vls_printf(diff_log, "\nObjects added:\n");
-		}
-		for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
-		    line_len = print_dp(diff_log, added, i, dp, line_len);
-		}
-	    }
-	    line_len = 0;
-	    if (r_removed > 0) {
-		if ((int)BU_PTBL_LEN(removed) > 0) {
-		    bu_vls_printf(diff_log, "\nObjects removed:\n");
-		}
-		for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
-		    line_len = print_dp(diff_log, removed, i, dp, line_len);
-		}
-	    }
-	    line_len = 0;
-	    if (r_changed > 0) {
-		if ((int)BU_PTBL_LEN(changed) > 0) {
-		    bu_vls_printf(diff_log, "\nObjects changed:\n");
-		}
-		for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
-		    struct result_container *result = (struct result_container *)BU_PTBL_GET(changed, i);
-		    const struct directory *dp = result->dp_orig;
-		    if (!dp) dp = result->dp_new;
-		    line_len = print_dp(diff_log, changed, i, dp, line_len);
-		}
-	    }
-	    line_len = 0;
-	    if (r_unchanged > 0) {
-		if ((int)BU_PTBL_LEN(unchanged) > 0) {
-		    bu_vls_printf(diff_log, "\nObjects unchanged:\n");
-		}
-		for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
-		    line_len = print_dp(diff_log, unchanged, i, dp, line_len);
-		}
-	    }
+    struct bu_ptbl *added;
+    struct bu_ptbl *removed;
+    struct bu_ptbl *changed;
+    struct bu_ptbl *unchanged;
 
+    if (verbosity < 1 || !results)
+	return;
+
+    added = results->added;
+    removed = results->removed;
+    changed = results->changed;
+    unchanged = results->unchanged;
+
+    if(verbosity == 1) {
+	int line_len = 0;
+	if (r_added > 0) {
+	    if ((int)BU_PTBL_LEN(added) > 0) {
+		bu_vls_printf(diff_log, "\nObjects added:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
+		line_len = print_dp(diff_log, added, i, dp, line_len);
+	    }
 	}
-	if(verbosity > 1) {
-	    if (r_added > 0) {
-		for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
-		    bu_vls_printf(diff_log, "%s was added.\n\n", dp->d_namep);
-		}
+	line_len = 0;
+	if (r_removed > 0) {
+	    if ((int)BU_PTBL_LEN(removed) > 0) {
+		bu_vls_printf(diff_log, "\nObjects removed:\n");
 	    }
-
-	    if (r_removed > 0) {
-		for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
-		    bu_vls_printf(diff_log, "%s was removed.\n\n", dp->d_namep);
-		}
+	    for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
+		line_len = print_dp(diff_log, removed, i, dp, line_len);
 	    }
-
-	    if (r_changed > 0) {
-		for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
-		    struct result_container *result = (struct result_container *)BU_PTBL_GET(changed, i);
-		    const struct directory *dp = result->dp_orig;
-		    if (!dp) dp = result->dp_new;
-		    bu_vls_printf(diff_log, "%s was changed:\n", dp->d_namep);
-		    params_summary(diff_log, result);
-		    attrs_summary(diff_log, result);
-		    bu_vls_printf(diff_log, "\n");
-		}
-	    }
-	    if (r_unchanged > 0) {
-		for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
-		    struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
-		    bu_vls_printf(diff_log, "%s was unchanged.\n\n", dp->d_namep);
-		}
-	    }
-
-
 	}
-	bu_vls_printf(diff_log, "\n");
+	line_len = 0;
+	if (r_changed > 0) {
+	    if ((int)BU_PTBL_LEN(changed) > 0) {
+		bu_vls_printf(diff_log, "\nObjects changed:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
+		struct result_container *result = (struct result_container *)BU_PTBL_GET(changed, i);
+		const struct directory *dp = result->dp_orig;
+		if (!dp) dp = result->dp_new;
+		line_len = print_dp(diff_log, changed, i, dp, line_len);
+	    }
+	}
+	line_len = 0;
+	if (r_unchanged > 0) {
+	    if ((int)BU_PTBL_LEN(unchanged) > 0) {
+		bu_vls_printf(diff_log, "\nObjects unchanged:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
+		line_len = print_dp(diff_log, unchanged, i, dp, line_len);
+	    }
+	}
+
     }
+    if(verbosity > 1) {
+	if (r_added > 0) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
+		bu_vls_printf(diff_log, "%s was added.\n\n", dp->d_namep);
+	    }
+	}
+
+	if (r_removed > 0) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
+		bu_vls_printf(diff_log, "%s was removed.\n\n", dp->d_namep);
+	    }
+	}
+
+	if (r_changed > 0) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
+		struct result_container *result = (struct result_container *)BU_PTBL_GET(changed, i);
+		const struct directory *dp = result->dp_orig;
+		if (!dp) dp = result->dp_new;
+		bu_vls_printf(diff_log, "%s was changed:\n", dp->d_namep);
+		params_summary(diff_log, result);
+		attrs_summary(diff_log, result);
+		bu_vls_printf(diff_log, "\n");
+	    }
+	}
+	if (r_unchanged > 0) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
+		bu_vls_printf(diff_log, "%s was unchanged.\n\n", dp->d_namep);
+	    }
+	}
+
+
+    }
+    bu_vls_printf(diff_log, "\n");
 }
+
 
 void
 gdiff_usage(const char *str) {
     bu_log("Usage: %s [-acmrv] file1.g file2.g\n", str);
     bu_exit(1, NULL);
 }
+
 
 int
 main(int argc, char **argv)
@@ -555,7 +589,7 @@ main(int argc, char **argv)
 	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
 		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
 		if ((result->dp_orig && bu_ptbl_locate(&changed_filtered_dbip1, (long *)result->dp_orig) != -1) ||
-			(result->dp_new && bu_ptbl_locate(&changed_filtered_dbip2, (long *)result->dp_new) != -1)) {
+		    (result->dp_new && bu_ptbl_locate(&changed_filtered_dbip2, (long *)result->dp_new) != -1)) {
 		    bu_ptbl_ins(&changed_filtered, (long *)result);
 		} else {
 		    result_free((void *)result);
@@ -619,6 +653,7 @@ main(int argc, char **argv)
     db_close(dbip2);
     return diff_return;
 }
+
 
 /*
  * Local Variables:
