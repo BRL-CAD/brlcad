@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdiff21'>
+<refmeta>
+    <refentrytitle>GDIFF2
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gdiff2</refname>
+<refpurpose>a BRL-CAD differential geometry comparator</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+    <command>gdiff2</command>
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-r </arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-F </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>model1.g</replaceable></arg>
+    <arg choice='plain'><replaceable>model2.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>gdiff2</emphasis>
+	compares the two BRL-CAD models specified on the command line.</para>
+<para>The program returns 0 if the files being compared have no differences and the total number of differing objects satisfying the supplied options otherwise (defaulting to all changed objects.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLES</title>
+<para>The command</para>
+
+<!-- .in +5 -->
+<para><emphasis remap='I'>gdiff2 -m uncle.g aunt.g &gt; mged.script</emphasis></para>
+<!-- .in &bsol;-5 -->
+
+<para>will create a file named "mged.script" that may be sourced in mged(1) to change
+uncle.g into aunt.g.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>search</refentrytitle><manvolnum>n</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

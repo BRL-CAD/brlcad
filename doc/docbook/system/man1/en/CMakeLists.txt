@@ -108,6 +108,7 @@ set(docbook_man1_EN
   g2asc.xml
   g_diff.xml
   g_lint.xml
+  gdiff2.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
