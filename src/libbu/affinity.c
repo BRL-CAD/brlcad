@@ -69,30 +69,8 @@ parallel_set_affinity(int cpu)
 
     CPU_ZERO(&set_of_cpus);
 
-    if (ncpus % 4 == 0 && (ncpus / 4) % 2 == 0 && ncpus > 4) {
-	/* Set affinity in fours to allow thread movement but keeping
-	 * threads near the same cache, hopefully on the same core.
-	 * Assumes multi-core (quad or octo) architecture.
-	 */
-	CPU_SET((((cpu / 4) * 4) + 0) % ncpus, &set_of_cpus);
-	CPU_SET((((cpu / 4) * 4) + 1) % ncpus, &set_of_cpus);
-	CPU_SET((((cpu / 4) * 4) + 2) % ncpus, &set_of_cpus);
-	CPU_SET((((cpu / 4) * 4) + 3) % ncpus, &set_of_cpus);
-	bu_log("Setting affinity of %d to (%d, %d, %d, %d)\n", cpu, (((cpu / 4) * 4) + 0) % ncpus, (((cpu / 4) * 4) + 1) % ncpus, (((cpu / 4) * 4) + 2) % ncpus, (((cpu / 4) * 4) + 3) % ncpus);
-    } else if (ncpus % 2 == 0 && ncpus > 2) {
-	/* Set affinity in pairs to allow thread movement but keeping
-	 * threads near the same cache, hopefully on the same core.
-	 * Assumes multi-core (dual or hexa) architecture.
-	 */
-	CPU_SET((((cpu / 2) * 2) + 0) % ncpus, &set_of_cpus);
-	CPU_SET((((cpu / 2) * 2) + 1) % ncpus, &set_of_cpus);
-	bu_log("Setting affinity of %d to (%d, %d)\n", cpu, (((cpu / 2) * 2) + 0) % ncpus, (((cpu / 2) * 2) + 1) % ncpus);
-    } else {
-	/* Set affinity to a single CPU core */
-	CPU_SET(cpu % ncpus, &set_of_cpus);
-    }
-
-    /* set affinity mask of current thread */
+    /* Set affinity to a single CPU core */
+    CPU_SET(cpu % ncpus, &set_of_cpus);
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
 
     return ret;
