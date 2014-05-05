@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __BRLCAD_IDENT_H__
-#define __BRLCAD_IDENT_H__
+#ifndef BRLCAD_IDENT_H
+#define BRLCAD_IDENT_H
 
 #include "common.h"
 
@@ -100,7 +100,7 @@ brlcad_ident(const char *title)
 }
 
 
-#endif /* __BRLCAD_IDENT_H__ */
+#endif /* BRLCAD_IDENT_H */
 
 /*
  * Local Variables:
