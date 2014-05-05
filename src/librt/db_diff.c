@@ -144,10 +144,10 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
     /* First, check for individual numbers */
     errno = 0;
     dval1 = strtod(val1, &endptr);
-    if (errno != EINVAL || *endptr != '\0') num_compare--;
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
     errno = 0;
     dval2 = strtod(val2, &endptr);
-    if (errno != EINVAL || *endptr != '\0') num_compare--;
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
 
     /* If we didn't find numbers, try for points (3 floating point numbers) */
     if (num_compare != 1) {
