@@ -221,7 +221,7 @@
 	</listitem>
 	  </varlistentry>
       <varlistentry>
-	<term><option>--orientation</option> <replaceable>element_1 element_2 element_3 element_4</replaceable> </term>
+	<term><option>--orientation</option> "<replaceable>element_1 element_2 element_3 element_4</replaceable>"</term>
 	<listitem>
 	  <para>
 	    Set view quaternion.
@@ -229,15 +229,20 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>--eye_pt</option> <replaceable>X Y Z</replaceable></term>
+	<term><option>--eye_pt</option> "<replaceable>X Y Z</replaceable>"</term>
 	<listitem>
 	  <para>
 	    Set twist angle.
 	  </para>
 	</listitem>
       </varlistentry>
-
     </variablelist>
+      <para>
+	      Note: The <option>orientation</option> and <option>eye_pt</option> options are
+	      <emphasis remap="I">required</emphasis> to be inside quotation marks - although there are multiple numbers supplied
+	      to each option, the underlying option parsing code expects only one argument
+	      in each case.
+      </para>
 
     <variablelist remap="TP"><title>Image Generation Options</title>
       <varlistentry>
