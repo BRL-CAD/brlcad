@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* added -s size option for rtwizard image output - Cliff Yapp
+* documented image size options in rtwizard man page - Cliff Yapp
 * added view center specification dialog to rtwizard - Cliff Yapp
 * increased rtwizard window size for button visibility - Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
