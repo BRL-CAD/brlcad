@@ -37,6 +37,8 @@ int
 ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
+    int g_changed = 0;
+    int invalid_file = 1;
     char name[RT_MAXLINE];
     char line[RT_MAXLINE];
     char *cp;
@@ -99,6 +101,9 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
+	/* By the time we make it here, we've got something */
+	invalid_file = 0;
+
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* make the changes */
@@ -132,9 +137,19 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	}
+	g_changed += changed;
 
     }
     fclose(fp);
+
+    if(invalid_file){
+	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" contained no valid lines.\n", argv[1]);
+	return GED_ERROR;
+    }
+
+    if(g_changed) {
+	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" applied - %d regions updated.\n", argv[1], g_changed);
+    }
 
     return GED_OK;
 }
