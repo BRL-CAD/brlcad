@@ -141,12 +141,6 @@ static int parallel_nthreads_started = 0;
 /* # threads properly finished */
 static int parallel_nthreads_finished = 0;
 
-/* User's arg to his threads */
-static genptr_t parallel_arg;
-
-/* user function to run in parallel */
-static void (*parallel_func)(int, genptr_t);
-
 
 int
 bu_parallel_id(void)
@@ -435,8 +429,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     }
     parallel_nthreads_started = 0;
     parallel_nthreads_finished = 0;
-    parallel_func = func;
-    parallel_arg = arg;
 
     libbu_affinity = getenv("LIBBU_AFFINITY");
     if (libbu_affinity)
