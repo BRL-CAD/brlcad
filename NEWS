@@ -20,6 +20,7 @@ changes made.  See document footer for additional details.
 * documented image size options in rtwizard man page - Cliff Yapp
 * added view center specification dialog to rtwizard - Cliff Yapp
 * increased rtwizard window size for button visibility - Cliff Yapp
+* upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
 * added attribute sorting option to the 'attr' command - Tom Browder
@@ -53,7 +54,6 @@ changes made.  See document footer for additional details.
 * pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
 * added ebm centroid 'analyze' command reporting - Michael Huang
 * improved help option consistency across numerous tools - Carl Moore
-* upgraded libpng to 1.6.3 - Erik Greenwald
 
 
 ----------------------------------------------------------------------
