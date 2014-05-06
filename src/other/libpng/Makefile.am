@@ -7,10 +7,20 @@ PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 ACLOCAL_AMFLAGS = -I scripts
 
 # test programs - run on make check, make distcheck
-check_PROGRAMS= pngtest pngunknown pngstest pngvalid
+check_PROGRAMS= pngtest pngunknown pngstest pngvalid pngimage
 
 # Utilities - installed
 bin_PROGRAMS= pngfix png-fix-itxt
+
+# This ensures that pnglibconf.h gets built at the start of 'make all' or
+# 'make check', but it does not add dependencies to the individual programs,
+# this is done below.
+#
+# IMPORTANT: always add the object modules of new programs to the list below
+# because otherwise the sequence 'configure; make new-program' will *sometimes*
+# result in the installed (system) pnglibconf.h being used and the result is
+# always wrong and always very confusing.
+BUILT_SOURCES = pnglibconf.h
 
 pngtest_SOURCES = pngtest.c
 pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
@@ -23,6 +33,9 @@ pngstest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 
 pngunknown_SOURCES = contrib/libtests/pngunknown.c
 pngunknown_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+
+pngimage_SOURCES = contrib/libtests/pngimage.c
+pngimage_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 
 pngfix_SOURCES = contrib/tools/pngfix.c
 pngfix_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
@@ -49,7 +62,8 @@ TESTS =\
    tests/pngstest-4a16 tests/pngstest-6a08 tests/pngstest-6a16\
    tests/pngstest-error tests/pngunknown-IDAT\
    tests/pngunknown-discard tests/pngunknown-if-safe tests/pngunknown-sAPI\
-   tests/pngunknown-sTER tests/pngunknown-save tests/pngunknown-vpAg
+   tests/pngunknown-sTER tests/pngunknown-save tests/pngunknown-vpAg\
+   tests/pngimage-quick tests/pngimage-full
 
 # These tests are expected, and required, to fail:
 XFAIL_TESTS = tests/pngstest-error
@@ -72,7 +86,7 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngerror.c\
 
 if PNG_ARM_NEON
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES += arm/arm_init.c\
-	arm/filter_neon.S
+	arm/filter_neon.S arm/filter_neon_intrinsics.c
 endif
 
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = pnglibconf.h
@@ -194,9 +208,22 @@ $(srcdir)/scripts/pnglibconf.h.prebuilt:
 
 # The following is necessary to ensure that the local pnglibconf.h is used, not
 # an installed one (this can happen immediately after on a clean system if
-# 'make test' is the first thing the user does.)
-pngstest.o pngvalid.o pngtest.o pngunknown.o timepng.o: pnglibconf.h
-pngfix.o png-fix-itxt.o: pnglibconf.h
+# 'make test' is the first thing the user does.)  Only files which include
+# one of the png source files (typically png.h or pngpriv.h) need to be listed
+# here:
+pngtest.o: pnglibconf.h
+
+contrib/libtests/makepng.o: pnglibconf.h
+contrib/libtests/pngstest.o: pnglibconf.h
+contrib/libtests/pngunknown.o: pnglibconf.h
+contrib/libtests/pngimage.o: pnglibconf.h
+contrib/libtests/pngvalid.o: pnglibconf.h
+contrib/libtests/readpng.o: pnglibconf.h
+contrib/libtests/tarith.o: pnglibconf.h
+contrib/libtests/timepng.o: pnglibconf.h
+
+contrib/tools/makesRGB.o: pnglibconf.h
+contrib/tools/pngfix.o: pnglibconf.h
 
 # We must use -DPNG_NO_USE_READ_MACROS here even when the library may actually
 # be built with PNG_USE_READ_MACROS; this prevents the read macros from
@@ -265,40 +292,76 @@ check: scripts/symbols.chk
 dist-hook:
 	cd '$(top_distdir)'; rm -f $(SCRIPT_CLEANFILES)
 
-# install the .../include headers as links to the new ones
-install-data-hook:
-	cd '$(DESTDIR)$(includedir)'; rm -f png.h pngconf.h pnglibconf.h
-	cd '$(DESTDIR)$(includedir)'; $(LN_S) $(PNGLIB_BASENAME)/png.h png.h
-	cd '$(DESTDIR)$(includedir)'; $(LN_S) $(PNGLIB_BASENAME)/pngconf.h \
-		pngconf.h
-	cd '$(DESTDIR)$(includedir)'; $(LN_S) $(PNGLIB_BASENAME)/pnglibconf.h \
-		pnglibconf.h
-	cd '$(DESTDIR)$(pkgconfigdir)'; rm -f libpng.pc
-	cd '$(DESTDIR)$(pkgconfigdir)'; $(LN_S) $(PNGLIB_BASENAME).pc libpng.pc
+# Make links between installed files with release-specific names and the generic
+# file names.  If this install rule is run the generic names will be deleted and
+# recreated - this has obvious issues for systems with multiple installations.
 
-# do evil things to libpng to cause libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@ to be used
-install-exec-hook:
-	cd '$(DESTDIR)$(bindir)'; rm -f libpng-config
-	cd '$(DESTDIR)$(bindir)';\
-	   $(LN_S) $(PNGLIB_BASENAME)-config libpng-config
-	@set -x;\
-	cd '$(DESTDIR)$(libdir)';\
-	for ext in a la so so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@\
-	   sl dylib dll.a; do\
-		rm -f libpng.$$ext;\
-                if test -f $(PNGLIB_BASENAME).$$ext; then\
-                       $(LN_S) $(PNGLIB_BASENAME).$$ext libpng.$$ext;\
-                fi;\
+install-header-links:
+	@set -ex; cd '$(DESTDIR)$(includedir)'; for f in $(HEADERS); do \
+	   rm -f "$$f"; $(LN_S) "$(PNGLIB_BASENAME)/$$f" "$$f"; done
+
+uninstall-header-links:
+	cd '$(DESTDIR)$(includedir)'; rm -f $(HEADERS)
+
+install-libpng-pc:
+	@set -ex; cd '$(DESTDIR)$(pkgconfigdir)'; rm -f libpng.pc; \
+	   $(LN_S) '$(PNGLIB_BASENAME).pc' libpng.pc
+
+uninstall-libpng-pc:
+	rm -f '$(DESTDIR)$(pkgconfigdir)/libpng.pc'
+
+# EXT_LIST is a list of the possibly library directory extensions, this exists
+# because we can't find a good way of discovering the file extensions that are
+# actually installed on a given system, so instead we check for every extension
+# we have seen.
+
+EXT_LIST = a dll.a so so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@ la sl dylib
+
+install-library-links:
+	@set -x; cd '$(DESTDIR)$(libdir)';\
+	for ext in $(EXT_LIST); do\
+	   rm -f "libpng.$$ext";\
+           if test -f "$(PNGLIB_BASENAME).$$ext"; then\
+              $(LN_S) "$(PNGLIB_BASENAME).$$ext" "libpng.$$ext" || exit 1;\
+           fi;\
 	done
 
-uninstall-hook:
-	cd '$(DESTDIR)$(includedir)'; rm -f png.h pngconf.h pnglibconf.h
-	rm -f '$(DESTDIR)$(pkgconfigdir)/libpng.pc'
+uninstall-library-links:
+	@set -x; cd '$(DESTDIR)$(libdir)'; for ext in $(EXT_LIST); do\
+	   rm -f "libpng.$$ext"; done
+
+install-libpng-config:
+	@set -ex; cd '$(DESTDIR)$(bindir)'; rm -f libpng-config; \
+	   $(LN_S) '$(PNGLIB_BASENAME)-config' libpng-config
+
+uninstall-libpng-config:
 	rm -f '$(DESTDIR)$(bindir)/libpng-config'
-	rm -f '$(DESTDIR)$(libdir)/libpng.a'
-	rm -f '$(DESTDIR)$(libdir)/libpng.la'
-	rm -f '$(DESTDIR)$(libdir)/libpng.so'
-	rm -f '$(DESTDIR)$(libdir)/libpng.so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@'
-	rm -f '$(DESTDIR)$(libdir)/libpng.sl'
-	rm -f '$(DESTDIR)$(libdir)/libpng.dylib'
-	rm -f '$(DESTDIR)$(libdir)/libpng.dll.a'
+
+if DO_INSTALL_LINKS
+# If --enable-unversioned-links is specified the header and lib file links
+# will be automatically made on a 'make install':
+
+install-data-hook: install-header-links
+uninstall-hook: uninstall-header-links
+install-exec-hook: install-library-links
+uninstall-hook: uninstall-library-links
+endif
+
+if DO_INSTALL_LIBPNG_PC
+# Likewise, --install-pc causes libpng.pc to be constructed:
+
+install-data-hook: install-libpng-pc
+uninstall-hook: uninstall-libpng-pc
+endif
+
+if DO_INSTALL_LIBPNG_CONFIG
+# And --install-config:
+
+install-exec-hook: install-libpng-config
+uninstall-hook: uninstall-libpng-config
+endif
+
+# The following addition ensures that 'make all' always builds the test programs
+# too.  It used to, but some change either in libpng or configure stopped this
+# working.
+all-am: $(check_PROGRAMS)

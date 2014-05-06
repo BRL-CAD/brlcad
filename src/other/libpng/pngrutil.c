@@ -1,8 +1,8 @@
 
 /* pngrutil.c - utilities to read a PNG file
  *
- * Last changed in libpng 1.6.3 [July 18, 2013]
- * Copyright (c) 1998-2013 Glenn Randers-Pehrson
+ * Last changed in libpng 1.6.10 [March 6, 2014]
+ * Copyright (c) 1998-2014 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -227,10 +227,7 @@ png_crc_finish(png_structrp png_ptr, png_uint_32 skip)
       }
 
       else
-      {
-         png_chunk_benign_error(png_ptr, "CRC error");
-         return (0);
-      }
+         png_chunk_error(png_ptr, "CRC error");
 
       return (1);
    }
@@ -278,6 +275,10 @@ png_crc_error(png_structrp png_ptr)
       return (0);
 }
 
+#if defined(PNG_READ_iCCP_SUPPORTED) || defined(PNG_READ_iTXt_SUPPORTED) ||\
+    defined(PNG_READ_pCAL_SUPPORTED) || defined(PNG_READ_sCAL_SUPPORTED) ||\
+    defined(PNG_READ_sPLT_SUPPORTED) || defined(PNG_READ_tEXt_SUPPORTED) ||\
+    defined(PNG_READ_zTXt_SUPPORTED) || defined(PNG_SEQUENTIAL_READ_SUPPORTED)
 /* Manage the read buffer; this simply reallocates the buffer if it is not small
  * enough (or if it is not allocated).  The routine returns a pointer to the
  * buffer; if an error occurs and 'warn' is set the routine returns NULL, else
@@ -310,21 +311,17 @@ png_read_buffer(png_structrp png_ptr, png_alloc_size_t new_size, int warn)
 
       else if (warn < 2) /* else silent */
       {
-#ifdef PNG_WARNINGS_SUPPORTED
          if (warn)
              png_chunk_warning(png_ptr, "insufficient memory to read chunk");
+
          else
-#endif
-         {
-#ifdef PNG_ERROR_TEXT_SUPPORTED
              png_chunk_error(png_ptr, "insufficient memory to read chunk");
-#endif
-         }
       }
    }
 
    return buffer;
 }
+#endif /* PNG_READ_iCCP|iTXt|pCAL|sCAL|sPLT|tEXt|zTXt|SEQUENTIAL_READ */
 
 /* png_inflate_claim: claim the zstream for some nefarious purpose that involves
  * decompression.  Returns Z_OK on success, else a zlib error code.  It checks
@@ -981,22 +978,15 @@ png_handle_PLTE(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
       if (!(png_ptr->flags & PNG_FLAG_CRC_ANCILLARY_USE))
       {
          if (png_ptr->flags & PNG_FLAG_CRC_ANCILLARY_NOWARN)
-         {
-            png_chunk_benign_error(png_ptr, "CRC error");
-         }
+            return;
 
          else
-         {
-            png_chunk_warning(png_ptr, "CRC error");
-            return;
-         }
+            png_chunk_error(png_ptr, "CRC error");
       }
 
       /* Otherwise, we (optionally) emit a warning and use the chunk. */
       else if (!(png_ptr->flags & PNG_FLAG_CRC_ANCILLARY_NOWARN))
-      {
          png_chunk_warning(png_ptr, "CRC error");
-      }
    }
 #endif
 
@@ -1107,12 +1097,11 @@ png_handle_gAMA(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
 void /* PRIVATE */
 png_handle_sBIT(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
 {
-   unsigned int truelen;
+   unsigned int truelen, i;
+   png_byte sample_depth;
    png_byte buf[4];
 
    png_debug(1, "in png_handle_sBIT");
-
-   buf[0] = buf[1] = buf[2] = buf[3] = 0;
 
    if (!(png_ptr->mode & PNG_HAVE_IHDR))
       png_chunk_error(png_ptr, "missing IHDR");
@@ -1132,10 +1121,16 @@ png_handle_sBIT(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
    }
 
    if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+   {
       truelen = 3;
+      sample_depth = 8;
+   }
 
    else
+   {
       truelen = png_ptr->channels;
+      sample_depth = png_ptr->bit_depth;
+   }
 
    if (length != truelen || length > 4)
    {
@@ -1144,10 +1139,18 @@ png_handle_sBIT(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
       return;
    }
 
+   buf[0] = buf[1] = buf[2] = buf[3] = sample_depth;
    png_crc_read(png_ptr, buf, truelen);
 
    if (png_crc_finish(png_ptr, 0))
       return;
+
+   for (i=0; i<truelen; ++i)
+      if (buf[i] == 0 || buf[i] > sample_depth)
+      {
+         png_chunk_benign_error(png_ptr, "invalid");
+         return;
+      }
 
    if (png_ptr->color_type & PNG_COLOR_MASK_COLOR)
    {
@@ -1418,7 +1421,7 @@ png_handle_iCCP(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
                               (sizeof local_buffer), &length,
                               profile + (sizeof profile_header), &size, 0);
 
-                           /* Still expect a a buffer error because we expect
+                           /* Still expect a buffer error because we expect
                             * there to be some tag data!
                             */
                            if (size == 0)
@@ -2932,9 +2935,8 @@ png_handle_unknown(png_structrp png_ptr, png_inforp info_ptr,
          }
 #     endif
       }
-#  else /* no store support! */
+#  else /* no store support: the chunk must be handled by the user callback */
       PNG_UNUSED(info_ptr)
-#     error untested code (reading unknown chunks with no store support)
 #  endif
 
    /* Regardless of the error handling below the cached data (if any) can be
@@ -3872,7 +3874,6 @@ png_read_filter_row_paeth_multibyte_pixel(png_row_infop row_info, png_bytep row,
       if (pb < pa) pa = pb, a = b;
       if (pc < pa) a = c;
 
-      c = b;
       a += *row;
       *row++ = (png_byte)a;
    }
@@ -3880,7 +3881,8 @@ png_read_filter_row_paeth_multibyte_pixel(png_row_infop row_info, png_bytep row,
 
 static void
 png_init_filter_functions(png_structrp pp)
-   /* This function is called once for every PNG image to set the
+   /* This function is called once for every PNG image (except for PNG images
+    * that only use PNG_FILTER_VALUE_NONE for all rows) to set the
     * implementations required to reverse the filtering of PNG rows.  Reversing
     * the filter is the first transformation performed on the row data.  It is
     * performed in place, therefore an implementation can be selected based on
@@ -3922,10 +3924,13 @@ png_read_filter_row(png_structrp pp, png_row_infop row_info, png_bytep row,
     * PNG_FILTER_OPTIMIZATIONS to a function that overrides the generic
     * implementations.  See png_init_filter_functions above.
     */
-   if (pp->read_filter[0] == NULL)
-      png_init_filter_functions(pp);
    if (filter > PNG_FILTER_VALUE_NONE && filter < PNG_FILTER_VALUE_LAST)
+   {
+      if (pp->read_filter[0] == NULL)
+         png_init_filter_functions(pp);
+
       pp->read_filter[filter-1](row_info, row, prev_row);
+   }
 }
 
 #ifdef PNG_SEQUENTIAL_READ_SUPPORTED
