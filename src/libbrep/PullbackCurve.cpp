@@ -1584,7 +1584,8 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    t0 = span_interval[span_index].Mid();
 	    bool closestfound = false;
 	    bool notdone = true;
-	    double distance, previous_distance = DBL_MAX;
+	    double distance = DBL_MAX;
+	    double previous_distance = DBL_MAX;
 	    ON_3dVector firstDervative, secondDervative;
 	    while (notdone
 		    && trim.Ev2Der(t0, point, firstDervative, secondDervative)
