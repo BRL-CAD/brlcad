@@ -50,6 +50,7 @@ changes made.  See document footer for additional details.
 --- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
 * added attribute sorting option to the 'attr' command - Tom Browder
@@ -83,7 +84,6 @@ changes made.  See document footer for additional details.
 * pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
 * added ebm centroid 'analyze' command reporting - Michael Huang
 * improved help option consistency across numerous tools - Carl Moore
-* upgraded libpng to 1.6.3 - Erik Greenwald
 
 
 ----------------------------------------------------------------------
