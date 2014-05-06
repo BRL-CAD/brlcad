@@ -636,7 +636,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	hThreadArray[i] = CreateThread(
 	    NULL,
 	    0,
-	    (LPTHREAD_START_ROUTINE)&parallel_interface_arg,
+	    (LPTHREAD_START_ROUTINE)parallel_interface_arg,
 	    &user_thread_data_bu[i],
 	    0,
 	    &pdwThreadId);
