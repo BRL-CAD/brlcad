@@ -377,49 +377,6 @@ parallel_interface_arg(struct thread_data *user_thread_data)
 }
 
 
-/**
- * Interface layer between bu_parallel and the user's function.
- * Necessary so that we can provide unique thread numbers as a
- * parameter to the user's function, and to decrement the global
- * counter when the user's function returns to us (as opposed to
- * dumping core or longjmp'ing too far).
- *
- * Note that not all architectures can pass an argument (e.g. the
- * pointer to the user's function), so we depend on using a global
- * variable to communicate this.  This is no problem, since only one
- * copy of bu_parallel() may be active at any one time.
- */
-HIDDEN void
-parallel_interface(void)
-{
-    struct thread_data user_thread_data_pi;
-    char *libbu_affinity = NULL;
-
-    /* OFF by default until linux issue is debugged */
-    int affinity = 0;
-
-    user_thread_data_pi.user_func = parallel_func;
-    user_thread_data_pi.user_arg  = parallel_arg;
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    user_thread_data_pi.cpu_id = parallel_nthreads_started++;
-    bu_semaphore_release(BU_SEM_SYSCALL);
-
-    libbu_affinity = getenv("LIBBU_AFFINITY");
-    if (libbu_affinity)
-	affinity = (int)strtol(libbu_affinity, NULL, 0x10);
-
-    user_thread_data_pi.counted = 1;
-    user_thread_data_pi.affinity = affinity;
-
-    parallel_interface_arg(&user_thread_data_pi);
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    parallel_nthreads_finished++;
-    bu_semaphore_release(BU_SEM_SYSCALL);
-}
-
-
 #endif /* PARALLEL */
 
 
@@ -679,7 +636,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	hThreadArray[i] = CreateThread(
 	    NULL,
 	    0,
-	    (LPVOID)parallel_interface,
+	    (LPTHREAD_START_ROUTINE)&parallel_interface_arg,
 	    &user_thread_data_bu[i],
 	    0,
 	    &pdwThreadId);
