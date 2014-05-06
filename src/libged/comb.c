@@ -483,7 +483,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     int flatten_comb = 0;
     int lift_region_comb = 0;
     int alter_existing = 1;
-    static const char *usage = "[-c/-r] [-w/-f/-l] [-S] comb_name [<operation object>]";
+    static const char *usage = "[-c|-r] [-w|-f|-l] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
