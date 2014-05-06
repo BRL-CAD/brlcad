@@ -179,7 +179,7 @@ static void
 dot_footer(FILE *outfp)
 {
     if (!outfp)
-	bu_exit(1, "INTERNAL ERROR: unable to write out .dot footer\n");
+	bu_exit(1, "%s\n", brlcad_ident("BRL-CAD to Graphviz DOT Exporter"));
 
     fprintf(outfp, "}\n\n");
 }
