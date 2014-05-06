@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed inside command for ellipsoid primitives - Cliff Yapp
 * fixed loss of MGED bu_log output after running wdb_cmd - Cliff Yapp
 * added -s size option for rtwizard image output - Cliff Yapp
 * documented image size options in rtwizard man page - Cliff Yapp
