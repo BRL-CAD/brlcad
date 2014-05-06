@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* increased rtwizard window size for button visibility - Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
 * added attribute sorting option to the 'attr' command - Tom Browder
