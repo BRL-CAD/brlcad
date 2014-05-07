@@ -89,7 +89,15 @@ data2uchar(const icv_image_t *bif)
 
     if (ZERO(bif->gamma_corr)) {
 	while(size--) {
-	    *char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
+	    long longval = lrint((*double_p)*255.0);
+
+	    if (longval > 255)
+		*char_p = 255;
+	    else if (longval < 0)
+		*char_p = 0;
+	    else
+		*char_p = (unsigned char)longval;
+
 	    char_p++;
 	    double_p++;
 	}
