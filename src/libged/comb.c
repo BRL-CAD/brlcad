@@ -559,12 +559,13 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     /* Get target combination info */
     comb_name = (char *)argv[1];
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
-        if ((dp != RT_DIR_NULL) && !alter_existing) {
+        if (!alter_existing) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
 	    return GED_ERROR;
         }
