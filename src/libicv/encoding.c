@@ -48,7 +48,7 @@ uchar2double(unsigned char *data, size_t size)
     double *double_data, *double_p;
     unsigned char *char_p;
 
-    if(size == 0 )
+    if (size == 0)
 	return NULL;
 
     char_p = data;
@@ -108,6 +108,7 @@ data2uchar(const icv_image_t *bif)
 
     return uchar_data;
 }
+
 
 /*
  * Local Variables:
