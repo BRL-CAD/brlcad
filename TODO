@@ -278,6 +278,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
+* the 'comb' command both updates and creates combinations.  this is a
+  problem because it's not possible to infer an intended result from
+  the command string alone.  it should either append to an existing
+  combination and fail if it doesn't exist (with flag to create) OR it
+  should create a combination and fail if there is an existing
+  combination (with flag to append).
+
 * Update the comb "region lift" capability to handle automatic duplication
   and substitution of the duplicate into the tree of combs who can't have
   their definitions changed without impacting other geometry in the .g file.
