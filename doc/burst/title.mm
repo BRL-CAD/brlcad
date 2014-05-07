@@ -4,11 +4,7 @@
 "\fIGary S. Moss"
 .sp
 .ce 4
-"\fRVulnerability Methodology Branch"
-"Vulnerability/Lethality Division"
-"USA Ballistic Research Laboratory"
-"SLCBR-VL-V"
-"Aberdeen Proving Ground, MD  21005-5066"
+"\fRBRL-CAD Open Source"
 .sp
 .ce
 "moss@vmb.brl.mil"
