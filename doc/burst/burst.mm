@@ -85,7 +85,7 @@ the screen is divided into sections of one or more rows (lines) of text.
 The top line,
 referred to as line 1,
 is reserved for
-.SM CPU
+CPU
 usage statistics.
 Starting on line 2,
 the hierarchical menu region spans 12 lines of the screen.
