@@ -122,12 +122,14 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		VSETALLN(crv_pt, 0.0, coords);
 		rt_nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
-		    /* FIXME: gcc 4.8.1 reports error here (rel build):
+		    /* FIXME: gcc 4.8.1 reports error here (rel build) without the if statement verifying that coords is greater than zero:
 /disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_misc.c:128:42: error: array subscript is below array bounds [-Werror=array-bounds]
        VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 					  ^
+			Question is, when/why might coords be zero here - is there some deeper problem?
 		    */
-		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
+		    if (coords > 0)
+			VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
 		    VMOVE(pts[edge_no], crv_pt);
 		}
