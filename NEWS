@@ -69,7 +69,7 @@ changes made.  See document footer for additional details.
 * improved NURBS ray tracing grazing hit behavior - Keith Bowman
 * print current grid information in gqa output - Cliff Yapp
 * added -f option for flattening combs to 'comb' command - Cliff Yapp
-* added support for boolean op filtering in search - Cliff Yapp
+* added support for -bool operation filtering in search - Cliff Yapp
 * added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
 * improved g-stl usage and documentation - Jon Engbert
 * added -c and -r region flag options to the comb command - Cliff Yapp
