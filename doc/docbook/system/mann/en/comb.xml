@@ -27,6 +27,9 @@
         <arg choice="opt" rep="norepeat">-f</arg>
         <arg choice="opt" rep="norepeat">-l</arg>
       </group>
+      <group choice="opt" rep="norepeat">
+        <arg choice="opt" rep="norepeat">-S</arg>
+      </group>
       <arg choice="req" rep="norepeat"><replaceable>combination_name</replaceable> </arg>
       <arg choice="opt" rep="repeat"><replaceable>&lt;operator object_name&gt;</replaceable> </arg>
     </cmdsynopsis>
@@ -142,7 +145,16 @@
         </listitem>
       </varlistentry>
 
-     </variablelist>
+      <varlistentry>
+        <term><option>-S</option></term>
+        <listitem>
+          <para>
+            Stop if the combination object already exists.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
   </refsection>
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
