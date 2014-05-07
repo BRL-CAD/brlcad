@@ -74,18 +74,6 @@ extern ON_Curve*
 refit_edge(const ON_BrepEdge* edge,
 	   double tolerance);
 
-extern ON_Curve*
-test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance = 1.0e-6,
-		     double flatness = 1.0e-3);
-
-extern ON_Curve*
-test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance = 1.0e-6,
-		     double flatness = 1.0e-3);
-
 extern int
 check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
