@@ -566,6 +566,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
         if ((dp != RT_DIR_NULL) && !alter_existing) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
+	    return GED_ERROR;
         }
     }
 
