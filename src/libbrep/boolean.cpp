@@ -84,17 +84,18 @@ public:
 
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
-    int m_seg;		// which curve of the loop
     double m_t;		// param on the loop curve
-    int m_type;		// which intersection curve
+    int m_outerloop_seg;// which curve of the loop
+    int m_ssx_curve;	// which intersection curve
     int m_rank;		// rank on the chain
     double m_t_for_rank;// param on the SSI curve
     enum {
 	UNSET,
 	IN,
 	OUT
-    } m_in_out;		// dir is going inside/outside
-    int m_pos;		// between curve[m_pos] and curve[m_pos+1]
+    } m_dir;		// dir is going inside/outside
+    int m_split_li;	// between clx_points[m_split_li] and
+			// clx_points[m_split_li+1]
 			// after the outerloop is split
 };
 
@@ -339,8 +340,8 @@ HIDDEN int
 compare_t(const IntersectPoint *p1, const IntersectPoint *p2)
 {
     // Use for sorting an array. Use strict FP comparison.
-    if (p1->m_seg != p2->m_seg) {
-	return p1->m_seg - p2->m_seg;
+    if (p1->m_outerloop_seg != p2->m_outerloop_seg) {
+	return p1->m_outerloop_seg - p2->m_outerloop_seg;
     }
     return p1->m_t > p2->m_t ? 1 : (p1->m_t < p2->m_t ? -1 : 0);
 }
@@ -814,7 +815,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
 // work or would scale to complex cases, but it may be worth thinking about.
 HIDDEN ON_SimpleArray<TrimmedFace *>
-split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
+split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx_curves)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -824,41 +825,42 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
      * Chains.
      */
     ON_SimpleArray<TrimmedFace *> out;
-    if (curves.Count() == 0) {
+    if (ssx_curves.Count() == 0) {
 	// No curve, no splitting
-	out.Append(in->Duplicate());
+	out.Append(orig_face->Duplicate());
 	return out;
     }
 
     // Get the intersection points between the SSI curves and the outerloop.
-    ON_SimpleArray<IntersectPoint> intersect;
-    ON_SimpleArray<bool> have_intersect(curves.Count());
-    for (int i = 0; i < curves.Count(); i++) {
-	have_intersect[i] = false;
+    ON_SimpleArray<IntersectPoint> clx_points;
+    ON_SimpleArray<bool> intersects_outerloop(ssx_curves.Count());
+    for (int i = 0; i < ssx_curves.Count(); i++) {
+	intersects_outerloop[i] = false;
     }
 
-    for (int i = 0; i < in->m_outerloop.Count(); i++) {
-	for (int j = 0; j < curves.Count(); j++) {
-	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(in->m_outerloop[i], curves[j].Curve(), x_event, INTERSECTION_TOL);
-	    for (int k = 0; k < x_event.Count(); k++) {
+    for (int i = 0; i < orig_face->m_outerloop.Count(); i++) {
+	for (int j = 0; j < ssx_curves.Count(); j++) {
+	    ON_SimpleArray<ON_X_EVENT> x_events;
+	    ON_Intersect(orig_face->m_outerloop[i], ssx_curves[j].Curve(),
+		    x_events, INTERSECTION_TOL);
+
+	    for (int k = 0; k < x_events.Count(); k++) {
 		IntersectPoint tmp_pt;
-		tmp_pt.m_pt = x_event[k].m_A[0];
-		tmp_pt.m_seg = i;
-		tmp_pt.m_t = x_event[k].m_a[0];
-		tmp_pt.m_type = j;
-		tmp_pt.m_t_for_rank = x_event[k].m_b[0];
-		intersect.Append(tmp_pt);
-		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap) {
-		    tmp_pt.m_pt = x_event[k].m_A[1];
-		    // tmp_pt.m_seg = i;
-		    tmp_pt.m_t = x_event[k].m_a[1];
-		    // tmp_pt.m_type = j;
-		    tmp_pt.m_t_for_rank = x_event[k].m_b[1];
-		    intersect.Append(tmp_pt);
+		tmp_pt.m_pt = x_events[k].m_A[0];
+		tmp_pt.m_t = x_events[k].m_a[0];
+		tmp_pt.m_t_for_rank = x_events[k].m_b[0];
+		tmp_pt.m_outerloop_seg = i;
+		tmp_pt.m_ssx_curve = j;
+		clx_points.Append(tmp_pt);
+
+		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
+		    tmp_pt.m_pt = x_events[k].m_A[1];
+		    tmp_pt.m_t = x_events[k].m_a[1];
+		    tmp_pt.m_t_for_rank = x_events[k].m_b[1];
+		    clx_points.Append(tmp_pt);
 		}
-		if (x_event.Count()) {
-		    have_intersect[j] = true;
+		if (x_events.Count()) {
+		    intersects_outerloop[j] = true;
 		}
 	    }
 	}
@@ -866,21 +868,27 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 
     // deal with the situations where there is no intersection
     std::vector<ON_SimpleArray<ON_Curve *> > innerloops;
-    for (int i = 0; i < curves.Count(); i++) {
-	if (!have_intersect[i]) {
+    for (int i = 0; i < ssx_curves.Count(); i++) {
+	if (!intersects_outerloop[i]) {
 	    // The start point cannot be on the boundary of the loop, because
-	    // there is no intersections between curves[i] and the loop.
+	    // there is no intersections between ssx_curves[i] and the loop.
 	    try {
-		if (point_loop_location(curves[i].PointAtStart(), in->m_outerloop) == INSIDE_OR_ON_LOOP) {
-		    if (curves[i].IsClosed()) {
-			ON_SimpleArray<ON_Curve *> index_loop;
-			curves[i].AppendCurvesToArray(index_loop);
-			innerloops.push_back(index_loop);
-			TrimmedFace *new_face = new TrimmedFace();
-			new_face->m_face = in->m_face;
-			curves[i].AppendCurvesToArray(new_face->m_outerloop);
-			out.Append(new_face);
-		    }
+		int curve_start_location = point_loop_location(
+			ssx_curves[i].PointAtStart(), orig_face->m_outerloop);
+
+		if (curve_start_location == INSIDE_OR_ON_LOOP &&
+		    ssx_curves[i].IsClosed())
+		{
+		    // curve is innerloop of original face
+		    ON_SimpleArray<ON_Curve *> loop_curves;
+		    ssx_curves[i].AppendCurvesToArray(loop_curves);
+		    innerloops.push_back(loop_curves);
+
+		    // curve is outerloop of new face
+		    TrimmedFace *new_face = new TrimmedFace();
+		    new_face->m_face = orig_face->m_face;
+		    ssx_curves[i].AppendCurvesToArray(new_face->m_outerloop);
+		    out.Append(new_face);
 		}
 	    } catch (InvalidGeometry &e) {
 		bu_log("%s", e.what());
@@ -889,32 +897,33 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
     }
 
     // rank these intersection points
-    // during the time using pts_on_curves(), must make sure that
-    // the capacity of intersect[] never change.
-    ON_ClassArray<ON_SimpleArray<IntersectPoint *> > pts_on_curves(curves.Count());
-    for (int i = 0; i < intersect.Count(); i++) {
-	pts_on_curves[intersect[i].m_type].Append(&(intersect[i]));
+    // during the time using pts_on_curve(), must make sure that
+    // the capacity of clx_points[] never changes.
+    ON_ClassArray<ON_SimpleArray<IntersectPoint *> > pts_on_curve(ssx_curves.Count());
+    for (int i = 0; i < clx_points.Count(); i++) {
+	pts_on_curve[clx_points[i].m_ssx_curve].Append(&(clx_points[i]));
     }
-    for (int i = 0; i < curves.Count(); i++) {
-	pts_on_curves[i].QuickSort(compare_for_rank);
-	for (int j = 0; j < pts_on_curves[i].Count(); j++) {
-	    pts_on_curves[i][j]->m_rank = j;
+    for (int i = 0; i < ssx_curves.Count(); i++) {
+	pts_on_curve[i].QuickSort(compare_for_rank);
+
+	for (int j = 0; j < pts_on_curve[i].Count(); j++) {
+	    pts_on_curve[i][j]->m_rank = j;
 	}
     }
 
-    ON_SimpleArray<IntersectPoint> intersect_append;
+    ON_SimpleArray<IntersectPoint> new_pts;
 
-    // Determine whether it's going inside or outside (IntersectPoint::m_in_out).
-    for (int i = 0; i < curves.Count(); i++) {
-	for (int j = 0;  j < pts_on_curves[i].Count(); j++) {
-	    IntersectPoint *ipt = pts_on_curves[i][j];
-	    if (pts_on_curves[i].Count() < 2) {
-		ipt->m_in_out = IntersectPoint::UNSET;
+    // Determine whether it's going inside or outside (IntersectPoint::m_dir).
+    for (int i = 0; i < ssx_curves.Count(); i++) {
+	for (int j = 0;  j < pts_on_curve[i].Count(); j++) {
+	    IntersectPoint *ipt = pts_on_curve[i][j];
+	    if (pts_on_curve[i].Count() < 2) {
+		ipt->m_dir = IntersectPoint::UNSET;
 	    } else {
-		ON_3dPoint left = j == 0 ? curves[i].PointAtStart() :
-				  curves[i].PointAt((ipt->m_t_for_rank + pts_on_curves[i][j - 1]->m_t_for_rank) * 0.5);
-		ON_3dPoint right = j == pts_on_curves[i].Count() - 1 ? curves[i].PointAtEnd() :
-				   curves[i].PointAt((ipt->m_t_for_rank + pts_on_curves[i][j + 1]->m_t_for_rank) * 0.5);
+		ON_3dPoint left = j == 0 ? ssx_curves[i].PointAtStart() :
+				  ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j - 1]->m_t_for_rank) * 0.5);
+		ON_3dPoint right = j == pts_on_curve[i].Count() - 1 ? ssx_curves[i].PointAtEnd() :
+				   ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j + 1]->m_t_for_rank) * 0.5);
 		// If the point is on the boundary, we treat it with the same
 		// way as it's outside.
 		// For example, the left side is inside, and the right's on
@@ -923,67 +932,67 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 		// Other cases are similar.
 		int left_in, right_in;
 		try {
-		    left_in = is_point_inside_loop(left, in->m_outerloop);
-		    right_in = is_point_inside_loop(right, in->m_outerloop);
+		    left_in = is_point_inside_loop(left, orig_face->m_outerloop);
+		    right_in = is_point_inside_loop(right, orig_face->m_outerloop);
 		} catch (InvalidGeometry &e) {
 		    bu_log("%s", e.what());
 		    // not a loop
-		    ipt->m_in_out = IntersectPoint::UNSET;
+		    ipt->m_dir = IntersectPoint::UNSET;
 		    continue;
 		}
-		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Min())) {
-		    ipt->m_in_out = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		} else if (j == pts_on_curves[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
-		    ipt->m_in_out = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
+		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Min())) {
+		    ipt->m_dir = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
+		} else if (j == pts_on_curve[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Max())) {
+		    ipt->m_dir = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
 		} else {
 		    if (left_in && right_in) {
 			// tangent point, both sides in, duplicate that point
-			intersect_append.Append(*ipt);
-			intersect_append.Last()->m_in_out = IntersectPoint::IN;
-			intersect_append.Last()->m_rank = ipt->m_rank + 1;
-			for (int k = j + 1; k < pts_on_curves[i].Count(); k++) {
-			    pts_on_curves[i][k]->m_rank++;
+			new_pts.Append(*ipt);
+			new_pts.Last()->m_dir = IntersectPoint::IN;
+			new_pts.Last()->m_rank = ipt->m_rank + 1;
+			for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
+			    pts_on_curve[i][k]->m_rank++;
 			}
-			ipt->m_in_out = IntersectPoint::OUT;
+			ipt->m_dir = IntersectPoint::OUT;
 		    } else if (!left_in && !right_in) {
 			// tangent point, both sides out, useless
-			ipt->m_in_out = IntersectPoint::UNSET;
+			ipt->m_dir = IntersectPoint::UNSET;
 		    } else if (left_in && !right_in) {
 			// transversal point, going outside
-			ipt->m_in_out = IntersectPoint::OUT;
+			ipt->m_dir = IntersectPoint::OUT;
 		    } else {
 			// transversal point, going inside
-			ipt->m_in_out = IntersectPoint::IN;
+			ipt->m_dir = IntersectPoint::IN;
 		    }
 		}
 	    }
 	}
     }
 
-    intersect.Append(intersect_append.Count(), intersect_append.Array());
-    intersect.QuickSort(compare_t);
+    clx_points.Append(new_pts.Count(), new_pts.Array());
+    clx_points.QuickSort(compare_t);
 
     // Split the outer loop.
     ON_SimpleArray<ON_Curve *> outerloop;   // segments of the outerloop
-    int isect_iter = 0;
-    for (int i = 0; i < in->m_outerloop.Count(); i++) {
-	ON_Curve *curve_on_loop = in->m_outerloop[i]->Duplicate();
+    int clx_i = 0;
+    for (int loop_seg = 0; loop_seg < orig_face->m_outerloop.Count(); loop_seg++) {
+	ON_Curve *curve_on_loop = orig_face->m_outerloop[loop_seg]->Duplicate();
 	if (curve_on_loop == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
 	    continue;
 	}
-	for (; isect_iter < intersect.Count() && intersect[isect_iter].m_seg == i; isect_iter++) {
-	    const IntersectPoint &isect_pt = intersect[isect_iter];
+	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_outerloop_seg == loop_seg; clx_i++) {
+	    const IntersectPoint &ipt = clx_points[clx_i];
 	    ON_Curve *left = NULL;
 	    bool split_called = false;
 	    if (curve_on_loop) {
-		if (ON_NearZero(isect_pt.m_t - curve_on_loop->Domain().Max())) {
+		if (ON_NearZero(ipt.m_t - curve_on_loop->Domain().Max())) {
 		    // Don't call Split(), which may fail when the point is
 		    // at the ends.
 		    left = curve_on_loop;
 		    curve_on_loop = NULL;
-		} else if (!ON_NearZero(isect_pt.m_t - curve_on_loop->Domain().Min())) {
-		    curve_on_loop->Split(isect_pt.m_t, left, curve_on_loop);
+		} else if (!ON_NearZero(ipt.m_t - curve_on_loop->Domain().Min())) {
+		    curve_on_loop->Split(ipt.m_t, left, curve_on_loop);
 		    split_called = true;
 		}
 	    }
@@ -993,10 +1002,10 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 		bu_log("Split failed.\n");
 		if (curve_on_loop) {
 		    bu_log("Domain: [%f, %f]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
-		    bu_log("m_t: %f\n", isect_pt.m_t);
+		    bu_log("m_t: %f\n", ipt.m_t);
 		}
 	    }
-	    intersect[isect_iter].m_pos = outerloop.Count() - 1;
+	    clx_points[clx_i].m_split_li = outerloop.Count() - 1;
 	}
 	if (curve_on_loop) {
 	    outerloop.Append(curve_on_loop);
@@ -1004,10 +1013,10 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
     }
 
     // Append the first element at the last to handle some special cases.
-    if (intersect.Count()) {
-	intersect.Append(intersect[0]);
-	intersect.Last()->m_seg += in->m_outerloop.Count();
-	for (int i = 0; i <= intersect[0].m_pos; i++) {
+    if (clx_points.Count()) {
+	clx_points.Append(clx_points[0]);
+	clx_points.Last()->m_outerloop_seg += orig_face->m_outerloop.Count();
+	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
 	    ON_Curve *dup = outerloop[i]->Duplicate();
 	    if (dup != NULL) {
 		outerloop.Append(dup);
@@ -1016,19 +1025,19 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 		outerloop.Append(NULL);
 	    }
 	}
-	intersect.Last()->m_pos = outerloop.Count() - 1;
+	clx_points.Last()->m_split_li = outerloop.Count() - 1;
     }
 
     if (DEBUG_BREP_BOOLEAN)
-	for (int i = 0; i < intersect.Count(); i++) {
-	    bu_log("intersect[%d](count = %d): m_type = %d, m_rank = %d, m_in_out = %d\n", i, intersect.Count(), intersect[i].m_type, intersect[i].m_rank, intersect[i].m_in_out);
+	for (int i = 0; i < clx_points.Count(); i++) {
+	    bu_log("clx_points[%d](count = %d): m_ssx_curve = %d, m_rank = %d, m_dir = %d\n", i, clx_points.Count(), clx_points[i].m_ssx_curve, clx_points[i].m_rank, clx_points[i].m_dir);
 	}
 
     std::stack<int> s;
 
-    for (int i = 0; i < intersect.Count(); i++) {
+    for (int i = 0; i < clx_points.Count(); i++) {
 	// Ignore UNSET IntersectPoints.
-	if (intersect[i].m_in_out == IntersectPoint::UNSET) {
+	if (clx_points[i].m_dir == IntersectPoint::UNSET) {
 	    continue;
 	}
 
@@ -1037,23 +1046,23 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 	    continue;
 	}
 
-	const IntersectPoint &p = intersect[s.top()];
-	const IntersectPoint &q = intersect[i];
+	const IntersectPoint &p = clx_points[s.top()];
+	const IntersectPoint &q = clx_points[i];
 
-	if (compare_t(&p, &q) > 0 || q.m_pos < p.m_pos) {
+	if (compare_t(&p, &q) > 0 || q.m_split_li < p.m_split_li) {
 	    bu_log("stack error or sort failure.\n");
 	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
-	    bu_log("p->m_pos = %d, q->m_pos = %d\n", p.m_pos, q.m_pos);
-	    bu_log("p->m_seg = %d, q->m_seg = %d\n", p.m_seg, q.m_seg);
+	    bu_log("p->m_split_li = %d, q->m_split_li = %d\n", p.m_split_li, q.m_split_li);
+	    bu_log("p->m_outerloop_seg = %d, q->m_outerloop_seg = %d\n", p.m_outerloop_seg, q.m_outerloop_seg);
 	    bu_log("p->m_t = %g, q->m_t = %g\n", p.m_t, q.m_t);
 	    continue;
 	}
-	if (q.m_type != p.m_type) {
+	if (q.m_ssx_curve != p.m_ssx_curve) {
 	    s.push(i);
 	    continue;
-	} else if (q.m_rank - p.m_rank == 1 && q.m_in_out == IntersectPoint::OUT && p.m_in_out == IntersectPoint::IN) {
+	} else if (q.m_rank - p.m_rank == 1 && q.m_dir == IntersectPoint::OUT && p.m_dir == IntersectPoint::IN) {
 	    s.pop();
-	} else if (p.m_rank - q.m_rank == 1 && p.m_in_out == IntersectPoint::OUT && q.m_in_out == IntersectPoint::IN) {
+	} else if (p.m_rank - q.m_rank == 1 && p.m_dir == IntersectPoint::OUT && q.m_dir == IntersectPoint::IN) {
 	    s.pop();
 	} else {
 	    s.push(i);
@@ -1062,14 +1071,14 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve *> newloop;
-	int curve_count = q.m_pos - p.m_pos;
-	for (int j = p.m_pos + 1; j <= q.m_pos; j++) {
+	int curve_count = q.m_split_li - p.m_split_li;
+	for (int j = p.m_split_li + 1; j <= q.m_split_li; j++) {
 	    // No need to duplicate the curve, because the pointer
 	    // in the array 'outerloop' will be moved out later.
 	    newloop.Append(outerloop[j]);
 	}
 
-	if (p.m_type != q.m_type) {
+	if (p.m_ssx_curve != q.m_ssx_curve) {
 	    bu_log("Error: p->type != q->type\n");
 	    continue;
 	}
@@ -1082,7 +1091,7 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 	    std::swap(t1, t2);
 	    need_reverse = false;
 	}
-	ON_Curve *seg_on_SSI = curves[p.m_type].SubCurve(t1, t2);
+	ON_Curve *seg_on_SSI = ssx_curves[p.m_ssx_curve].SubCurve(t1, t2);
 	if (seg_on_SSI == NULL) {
 	    bu_log("sub_curve() failed.\n");
 	    continue;
@@ -1101,18 +1110,18 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 	    continue;
 	} else {
 	    // Update the outerloop
-	    outerloop[p.m_pos + 1] = rev_seg_on_SSI;
-	    int k = p.m_pos + 2;
-	    for (int j = q.m_pos + 1; j < outerloop.Count(); j++) {
+	    outerloop[p.m_split_li + 1] = rev_seg_on_SSI;
+	    int k = p.m_split_li + 2;
+	    for (int j = q.m_split_li + 1; j < outerloop.Count(); j++) {
 		outerloop[k++] = outerloop[j];
 	    }
 	    while (k < outerloop.Count()) {
 		outerloop[outerloop.Count() - 1] = NULL;
 		outerloop.Remove();
 	    }
-	    // Update m_pos
-	    for (int j = i + 1; j < intersect.Count(); j++) {
-		intersect[j].m_pos -= curve_count - 1;
+	    // Update m_split_li
+	    for (int j = i + 1; j < clx_points.Count(); j++) {
+		clx_points[j].m_split_li -= curve_count - 1;
 	    }
 	}
 
@@ -1120,7 +1129,7 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 	// Don't add a face if the outerloop is not valid (e.g. degenerated).
 	if (is_loop_valid(newloop, ON_ZERO_TOLERANCE)) {
 	    TrimmedFace *new_face = new TrimmedFace();
-	    new_face->m_face = in->m_face;
+	    new_face->m_face = orig_face->m_face;
 	    new_face->m_outerloop.Append(newloop.Count(), newloop.Array());
 	    out.Append(new_face);
 	} else {
@@ -1131,8 +1140,8 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
     }
 
     // Remove the duplicated segments before the first intersection point.
-    if (intersect.Count()) {
-	for (int i = 0; i <= intersect[0].m_pos; i++) {
+    if (clx_points.Count()) {
+	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
 	    delete outerloop[0];
 	    outerloop[0] = NULL;
 	    outerloop.Remove(0);
@@ -1140,20 +1149,20 @@ split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
     }
 
     if (out.Count() == 0) {
-	out.Append(in->Duplicate());
+	out.Append(orig_face->Duplicate());
     } else {
 	// The remaining part after splitting some parts out.
 	if (is_loop_valid(outerloop, ON_ZERO_TOLERANCE)) {
 	    TrimmedFace *new_face = new TrimmedFace();
-	    new_face->m_face = in->m_face;
+	    new_face->m_face = orig_face->m_face;
 	    new_face->m_outerloop = outerloop;
 	    // First copy the array with pointers, and then change
 	    // the pointers into copies.
-	    new_face->m_innerloop = in->m_innerloop;
-	    for (unsigned int i = 0; i < in->m_innerloop.size(); i++)
-		for (int j = 0; j < in->m_innerloop[i].Count(); j++)
-		    if (in->m_innerloop[i][j]) {
-			new_face->m_innerloop[i][j] = in->m_innerloop[i][j]->Duplicate();
+	    new_face->m_innerloop = orig_face->m_innerloop;
+	    for (unsigned int i = 0; i < orig_face->m_innerloop.size(); i++)
+		for (int j = 0; j < orig_face->m_innerloop[i].Count(); j++)
+		    if (orig_face->m_innerloop[i][j]) {
+			new_face->m_innerloop[i][j] = orig_face->m_innerloop[i][j]->Duplicate();
 		    }
 	    new_face->m_innerloop.insert(new_face->m_innerloop.end(), innerloops.begin(), innerloops.end());
 	    out.Append(new_face);
