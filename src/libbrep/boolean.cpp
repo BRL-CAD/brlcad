@@ -949,30 +949,34 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 		ipt->m_dir = IntersectPoint::UNSET;
 		continue;
 	    }
-	    if (j == 0 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Min())) {
+	    double curve_min_t = ssx_curves[i].Domain().Min();
+	    if (j == 0 && ON_NearZero(curve_t - curve_min_t)) {
 		ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
-	    } else if (j == pts_on_curve[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Max())) {
+		continue;
+	    }
+	    double curve_max_t = ssx_curves[i].Domain().Max();
+	    if (j == (pts_on_curve[i].Count() - 1) && ON_NearZero(curve_t - curve_max_t)) {
 		ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
-	    } else {
-		if (prev_in && next_in) {
-		    // tangent point, both sides in, duplicate that point
-		    new_pts.Append(*ipt);
-		    new_pts.Last()->m_dir = IntersectPoint::IN;
-		    new_pts.Last()->m_rank = ipt->m_rank + 1;
-		    for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
-			pts_on_curve[i][k]->m_rank++;
-		    }
-		    ipt->m_dir = IntersectPoint::OUT;
-		} else if (!prev_in && !next_in) {
-		    // tangent point, both sides out, useless
-		    ipt->m_dir = IntersectPoint::UNSET;
-		} else if (prev_in && !next_in) {
-		    // transversal point, going outside
-		    ipt->m_dir = IntersectPoint::OUT;
-		} else {
-		    // transversal point, going inside
-		    ipt->m_dir = IntersectPoint::IN;
+		continue;
+	    }
+	    if (prev_in && next_in) {
+		// tangent point, both sides in, duplicate that point
+		new_pts.Append(*ipt);
+		new_pts.Last()->m_dir = IntersectPoint::IN;
+		new_pts.Last()->m_rank = ipt->m_rank + 1;
+		for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
+		    pts_on_curve[i][k]->m_rank++;
 		}
+		ipt->m_dir = IntersectPoint::OUT;
+	    } else if (!prev_in && !next_in) {
+		// tangent point, both sides out, useless
+		ipt->m_dir = IntersectPoint::UNSET;
+	    } else if (prev_in && !next_in) {
+		// transversal point, going outside
+		ipt->m_dir = IntersectPoint::OUT;
+	    } else {
+		// transversal point, going inside
+		ipt->m_dir = IntersectPoint::IN;
 	    }
 	}
     }
