@@ -153,32 +153,41 @@ macro(CXX_NO_STRICT cxx_srcslist)
   endif(NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
+macro(ADD_STYLE_TEST srcfile test_name)
+  # Generated files won't conform to our style guidelines
+  get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
+  if(NOT IS_GENERATED)
+    get_filename_component(root_name ${srcfile} NAME_WE)
+    string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+    set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
+    set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+    set(stampfile_tmp "${stampfile}")
+    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in ${outfiles_root}.cmake @ONLY)
+    add_custom_command(
+      OUTPUT ${outfiles_root}.checked
+      COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
+      DEPENDS ${srcfile} ${${test_name}_test_deps}
+      COMMENT "Validating style of ${srcfile}"
+      )
+    set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+  endif(NOT IS_GENERATED)
+endmacro(ADD_STYLE_TEST srcfile test_name)
+
 # BRL-CAD style checking test
 macro(VALIDATE_STYLE srcslist)
 if(BRLCAD_STYLE_VALIDATE)
+  include(${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake)
   make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
-  foreach(srcfile ${srcslist})
-    # Generated files won't conform to our style guidelines
-    get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
-    if(NOT IS_GENERATED)
-      get_filename_component(root_name ${srcfile} NAME_WE)
-      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
-      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(stampfile_tmp "${stampfile}")
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
-      add_custom_command(
-	OUTPUT ${outfiles_root}.checked
-	COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
-	COMMENT "Validating style of ${srcfile}"
-	)
-      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
-    endif(NOT IS_GENERATED)
-  endforeach(srcfile ${srcslist})
+  foreach(test_name ${BRLCAD_STYLE_TESTS})
+    foreach(srcfile ${srcslist})
+      ADD_STYLE_TEST(${srcfile} ${test_name})
+    endforeach(srcfile ${srcslist})
+  endforeach(test_name ${BRLCAD_STYLE_TESTS})
 endif(BRLCAD_STYLE_VALIDATE)
 endmacro(VALIDATE_STYLE)
 
+# For this to work, any test which can cause the validation to fail must
+# create a <some_filename>.invalid stamp file in the appropriate directory.
 macro(VALIDATE_TARGET_STYLE targetname)
   if(BRLCAD_STYLE_VALIDATE)
       configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake @ONLY)
