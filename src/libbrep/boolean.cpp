@@ -923,26 +923,26 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	    IntersectPoint *ipt = pts_on_curve[i][j];
 	    double curve_t = ipt->m_t_for_rank;
 
-	    ON_3dPoint left = ssx_curves[i].PointAtStart();
+	    ON_3dPoint prev = ssx_curves[i].PointAtStart();
 	    if (j > 0) {
 		double prev_curve_t = pts_on_curve[i][j - 1]->m_t_for_rank;
-		left = ssx_curves[i].PointAt((curve_t + prev_curve_t) * .5);
+		prev = ssx_curves[i].PointAt((curve_t + prev_curve_t) * .5);
 	    }
-	    ON_3dPoint right = ssx_curves[i].PointAtEnd();
+	    ON_3dPoint next = ssx_curves[i].PointAtEnd();
 	    if (j < (pts_on_curve[i].Count() - 1)) {
 		double next_curve_t = pts_on_curve[i][j + 1]->m_t_for_rank;
-		right = ssx_curves[i].PointAt((curve_t + next_curve_t) * .5);
+		next = ssx_curves[i].PointAt((curve_t + next_curve_t) * .5);
 	    }
 	    // If the point is on the boundary, we treat it with the same
 	    // way as it's outside.
-	    // For example, the left side is inside, and the right's on
+	    // For example, the prev side is inside, and the next's on
 	    // boundary, that point should be IntersectPoint::OUT, the
-	    // same as the right's outside the loop.
+	    // same as the next's outside the loop.
 	    // Other cases are similar.
-	    int left_in, right_in;
+	    bool prev_in, next_in;
 	    try {
-		left_in = is_point_inside_loop(left, orig_face->m_outerloop);
-		right_in = is_point_inside_loop(right, orig_face->m_outerloop);
+		prev_in = is_point_inside_loop(prev, orig_face->m_outerloop);
+		next_in = is_point_inside_loop(next, orig_face->m_outerloop);
 	    } catch (InvalidGeometry &e) {
 		bu_log("%s", e.what());
 		// not a loop
@@ -950,11 +950,11 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 		continue;
 	    }
 	    if (j == 0 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Min())) {
-		ipt->m_dir = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
+		ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
 	    } else if (j == pts_on_curve[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Max())) {
-		ipt->m_dir = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
+		ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
 	    } else {
-		if (left_in && right_in) {
+		if (prev_in && next_in) {
 		    // tangent point, both sides in, duplicate that point
 		    new_pts.Append(*ipt);
 		    new_pts.Last()->m_dir = IntersectPoint::IN;
@@ -963,10 +963,10 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 			pts_on_curve[i][k]->m_rank++;
 		    }
 		    ipt->m_dir = IntersectPoint::OUT;
-		} else if (!left_in && !right_in) {
+		} else if (!prev_in && !next_in) {
 		    // tangent point, both sides out, useless
 		    ipt->m_dir = IntersectPoint::UNSET;
-		} else if (left_in && !right_in) {
+		} else if (prev_in && !next_in) {
 		    // transversal point, going outside
 		    ipt->m_dir = IntersectPoint::OUT;
 		} else {
