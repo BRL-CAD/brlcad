@@ -85,6 +85,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Teach CMake to respect and use user-defined CMAKE_C_FLAGS and
+  other options supplied at the command line and in environment
+  variables.  See whether we can pass a variable into CMAKE_C_FLAGS
+  that will allow specification of build flags at make time.
+
 * investigate the possibility of allowing functions to define
   their own custom filters for some version of the db_search API.
   If we can figure out a programmatic approach of some kind, why
