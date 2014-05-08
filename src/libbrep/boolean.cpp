@@ -920,16 +920,19 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	    continue;
 	}
 	for (int j = 0; j < pts_on_curve[i].Count(); j++) {
+	    bool first_pt = (j == 0);
+	    bool last_pt = (j == (pts_on_curve[i].Count() - 1));
+
 	    IntersectPoint *ipt = pts_on_curve[i][j];
 	    double curve_t = ipt->m_t_for_rank;
 
 	    ON_3dPoint prev = ssx_curves[i].PointAtStart();
-	    if (j > 0) {
+	    if (!first_pt) {
 		double prev_curve_t = pts_on_curve[i][j - 1]->m_t_for_rank;
 		prev = ssx_curves[i].PointAt((curve_t + prev_curve_t) * .5);
 	    }
 	    ON_3dPoint next = ssx_curves[i].PointAtEnd();
-	    if (j < (pts_on_curve[i].Count() - 1)) {
+	    if (!last_pt) {
 		double next_curve_t = pts_on_curve[i][j + 1]->m_t_for_rank;
 		next = ssx_curves[i].PointAt((curve_t + next_curve_t) * .5);
 	    }
@@ -950,12 +953,12 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 		continue;
 	    }
 	    double curve_min_t = ssx_curves[i].Domain().Min();
-	    if (j == 0 && ON_NearZero(curve_t - curve_min_t)) {
+	    if (first_pt && ON_NearZero(curve_t - curve_min_t)) {
 		ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
 		continue;
 	    }
 	    double curve_max_t = ssx_curves[i].Domain().Max();
-	    if (j == (pts_on_curve[i].Count() - 1) && ON_NearZero(curve_t - curve_max_t)) {
+	    if (last_pt && ON_NearZero(curve_t - curve_max_t)) {
 		ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
 		continue;
 	    }
