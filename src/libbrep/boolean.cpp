@@ -991,39 +991,38 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
     ON_SimpleArray<ON_Curve *> outerloop;   // segments of the outerloop
     int clx_i = 0;
     for (int loop_seg = 0; loop_seg < orig_face->m_outerloop.Count(); loop_seg++) {
-	ON_Curve *curve_on_loop = orig_face->m_outerloop[loop_seg]->Duplicate();
-	if (curve_on_loop == NULL) {
+	ON_Curve *seg_curve = orig_face->m_outerloop[loop_seg]->Duplicate();
+	if (seg_curve == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
 	    continue;
 	}
 	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_outerloop_seg == loop_seg; clx_i++) {
-	    const IntersectPoint &ipt = clx_points[clx_i];
+	    IntersectPoint &ipt = clx_points[clx_i];
 	    ON_Curve *left = NULL;
-	    bool split_called = false;
-	    if (curve_on_loop) {
-		if (ON_NearZero(ipt.m_t - curve_on_loop->Domain().Max())) {
-		    // Don't call Split(), which may fail when the point is
-		    // at the ends.
-		    left = curve_on_loop;
-		    curve_on_loop = NULL;
-		} else if (!ON_NearZero(ipt.m_t - curve_on_loop->Domain().Min())) {
-		    curve_on_loop->Split(ipt.m_t, left, curve_on_loop);
-		    split_called = true;
+	    if (seg_curve) {
+		double seg_min_t = seg_curve->Domain().Min();
+		double seg_max_t = seg_curve->Domain().Max();
+		if (ON_NearZero(ipt.m_t - seg_max_t)) {
+		    // Can't call Split() if ipt is at start (that
+		    // case is handled by the initialization) or ipt
+		    // is at end (handled here).
+		    left = seg_curve;
+		    seg_curve = NULL;
+		} else if (!ON_NearZero(ipt.m_t - seg_min_t)) {
+		    if (!seg_curve->Split(ipt.m_t, left, seg_curve)) {
+			bu_log("Split failed.\n");
+			bu_log("Domain: [%f, %f]\n", seg_max_t, seg_min_t);
+			bu_log("m_t: %f\n", ipt.m_t);
+		    }
+		}
+		if (left != NULL) {
+		    outerloop.Append(left);
 		}
 	    }
-	    if (left != NULL) {
-		outerloop.Append(left);
-	    } else if (split_called) {
-		bu_log("Split failed.\n");
-		if (curve_on_loop) {
-		    bu_log("Domain: [%f, %f]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
-		    bu_log("m_t: %f\n", ipt.m_t);
-		}
-	    }
-	    clx_points[clx_i].m_split_li = outerloop.Count() - 1;
+	    ipt.m_split_li = outerloop.Count() - 1;
 	}
-	if (curve_on_loop) {
-	    outerloop.Append(curve_on_loop);
+	if (seg_curve) {
+	    outerloop.Append(seg_curve);
 	}
     }
 
