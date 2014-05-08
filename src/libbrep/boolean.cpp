@@ -1032,34 +1032,32 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	clx_points.Last()->m_outerloop_seg += orig_face->m_outerloop.Count();
 	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
 	    ON_Curve *dup = outerloop[i]->Duplicate();
-	    if (dup != NULL) {
-		outerloop.Append(dup);
-	    } else {
+	    if (dup == NULL) {
 		bu_log("ON_Curve::Duplicate() failed.\n");
-		outerloop.Append(NULL);
 	    }
+	    outerloop.Append(dup);
 	}
 	clx_points.Last()->m_split_li = outerloop.Count() - 1;
     }
 
-    if (DEBUG_BREP_BOOLEAN)
+    if (DEBUG_BREP_BOOLEAN) {
 	for (int i = 0; i < clx_points.Count(); i++) {
-	    bu_log("clx_points[%d](count = %d): m_ssx_curve = %d, m_rank = %d, m_dir = %d\n", i, clx_points.Count(), clx_points[i].m_ssx_curve, clx_points[i].m_rank, clx_points[i].m_dir);
+	    IntersectPoint &ipt = clx_points[i];
+	    bu_log("clx_points[%d](count = %d): ", i, clx_points.Count());
+	    bu_log("m_ssx_curve = %d, m_rank = %d, m_dir = %d\n",
+		    ipt.m_ssx_curve, ipt.m_rank, ipt.m_dir);
 	}
+    }
 
     std::stack<int> s;
-
     for (int i = 0; i < clx_points.Count(); i++) {
-	// Ignore UNSET IntersectPoints.
 	if (clx_points[i].m_dir == IntersectPoint::UNSET) {
 	    continue;
 	}
-
 	if (s.empty()) {
 	    s.push(i);
 	    continue;
 	}
-
 	const IntersectPoint &p = clx_points[s.top()];
 	const IntersectPoint &q = clx_points[i];
 
