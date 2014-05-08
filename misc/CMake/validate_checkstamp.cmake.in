@@ -1,0 +1,15 @@
+set(STRICT_MODE @BRLCAD_ENABLE_STRICT@)
+if(NOT EXISTS "@outfiles_root@.valid")
+  if(STRICT_MODE)
+    message(FATAL_ERROR "Compilation failure due to @test_name@ style errors: @srcfile_tmp@")
+  else(STRICT_MODE)
+    message("Warning - @test_name@ style errors in source code: @srcfile_tmp@")
+  endif(STRICT_MODE)
+endif(NOT EXISTS "@outfiles_root@.valid")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

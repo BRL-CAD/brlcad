@@ -154,9 +154,14 @@ macro(CXX_NO_STRICT cxx_srcslist)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
 macro(ADD_STYLE_TEST srcfile test_name)
+
   # Generated files won't conform to our style guidelines
   get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
   if(NOT IS_GENERATED)
+
+    # Set up the test scripts and tie them to the object file output
+    # produced by compiling this particular source file.  This hooks
+    # in the "integrated" style checking
     get_filename_component(root_name ${srcfile} NAME_WE)
     string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
     set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
@@ -170,6 +175,23 @@ macro(ADD_STYLE_TEST srcfile test_name)
       COMMENT "Validating style of ${srcfile}"
       )
     set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+
+    # Define the individual and per-test-type build targets (if need be)
+    # and associate the individual test with the test-type target.  This
+    # allows the style tests to be run as their own build targets, independent
+    # of the primary build.
+    if(NOT TARGET regress-${root_name}_${path_md5}_${test_name})
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${outfiles_root}_validate.cmake @ONLY)
+      add_custom_target(regress-${root_name}_${path_md5}_${test_name}
+	${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${outfiles_root}_validate.cmake
+	DEPENDS ${outfiles_root}.checked
+	)
+    endif(NOT TARGET regress-${root_name}_${path_md5}_${test_name})
+    if(NOT TARGET regress-${test_name})
+      add_custom_target(regress-${test_name})
+    endif(NOT TARGET regress-${test_name})
+    add_dependencies(regress-${test_name} regress-${root_name}_${path_md5}_${test_name})
+
   endif(NOT IS_GENERATED)
 endmacro(ADD_STYLE_TEST srcfile test_name)
 
