@@ -915,55 +915,55 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 
     // Determine whether it's going inside or outside (IntersectPoint::m_dir).
     for (int i = 0; i < ssx_curves.Count(); i++) {
+	if (pts_on_curve[i].Count() == 1) {
+	    pts_on_curve[i][0]->m_dir = IntersectPoint::UNSET;
+	    continue;
+	}
 	for (int j = 0;  j < pts_on_curve[i].Count(); j++) {
 	    IntersectPoint *ipt = pts_on_curve[i][j];
-	    if (pts_on_curve[i].Count() < 2) {
+	    ON_3dPoint left = j == 0 ? ssx_curves[i].PointAtStart() :
+			      ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j - 1]->m_t_for_rank) * 0.5);
+	    ON_3dPoint right = j == pts_on_curve[i].Count() - 1 ? ssx_curves[i].PointAtEnd() :
+			       ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j + 1]->m_t_for_rank) * 0.5);
+	    // If the point is on the boundary, we treat it with the same
+	    // way as it's outside.
+	    // For example, the left side is inside, and the right's on
+	    // boundary, that point should be IntersectPoint::OUT, the
+	    // same as the right's outside the loop.
+	    // Other cases are similar.
+	    int left_in, right_in;
+	    try {
+		left_in = is_point_inside_loop(left, orig_face->m_outerloop);
+		right_in = is_point_inside_loop(right, orig_face->m_outerloop);
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
+		// not a loop
 		ipt->m_dir = IntersectPoint::UNSET;
+		continue;
+	    }
+	    if (j == 0 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Min())) {
+		ipt->m_dir = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
+	    } else if (j == pts_on_curve[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Max())) {
+		ipt->m_dir = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
 	    } else {
-		ON_3dPoint left = j == 0 ? ssx_curves[i].PointAtStart() :
-				  ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j - 1]->m_t_for_rank) * 0.5);
-		ON_3dPoint right = j == pts_on_curve[i].Count() - 1 ? ssx_curves[i].PointAtEnd() :
-				   ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j + 1]->m_t_for_rank) * 0.5);
-		// If the point is on the boundary, we treat it with the same
-		// way as it's outside.
-		// For example, the left side is inside, and the right's on
-		// boundary, that point should be IntersectPoint::OUT, the
-		// same as the right's outside the loop.
-		// Other cases are similar.
-		int left_in, right_in;
-		try {
-		    left_in = is_point_inside_loop(left, orig_face->m_outerloop);
-		    right_in = is_point_inside_loop(right, orig_face->m_outerloop);
-		} catch (InvalidGeometry &e) {
-		    bu_log("%s", e.what());
-		    // not a loop
-		    ipt->m_dir = IntersectPoint::UNSET;
-		    continue;
-		}
-		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Min())) {
-		    ipt->m_dir = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		} else if (j == pts_on_curve[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - ssx_curves[i].Domain().Max())) {
-		    ipt->m_dir = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
-		} else {
-		    if (left_in && right_in) {
-			// tangent point, both sides in, duplicate that point
-			new_pts.Append(*ipt);
-			new_pts.Last()->m_dir = IntersectPoint::IN;
-			new_pts.Last()->m_rank = ipt->m_rank + 1;
-			for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
-			    pts_on_curve[i][k]->m_rank++;
-			}
-			ipt->m_dir = IntersectPoint::OUT;
-		    } else if (!left_in && !right_in) {
-			// tangent point, both sides out, useless
-			ipt->m_dir = IntersectPoint::UNSET;
-		    } else if (left_in && !right_in) {
-			// transversal point, going outside
-			ipt->m_dir = IntersectPoint::OUT;
-		    } else {
-			// transversal point, going inside
-			ipt->m_dir = IntersectPoint::IN;
+		if (left_in && right_in) {
+		    // tangent point, both sides in, duplicate that point
+		    new_pts.Append(*ipt);
+		    new_pts.Last()->m_dir = IntersectPoint::IN;
+		    new_pts.Last()->m_rank = ipt->m_rank + 1;
+		    for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
+			pts_on_curve[i][k]->m_rank++;
 		    }
+		    ipt->m_dir = IntersectPoint::OUT;
+		} else if (!left_in && !right_in) {
+		    // tangent point, both sides out, useless
+		    ipt->m_dir = IntersectPoint::UNSET;
+		} else if (left_in && !right_in) {
+		    // transversal point, going outside
+		    ipt->m_dir = IntersectPoint::OUT;
+		} else {
+		    // transversal point, going inside
+		    ipt->m_dir = IntersectPoint::IN;
 		}
 	    }
 	}
