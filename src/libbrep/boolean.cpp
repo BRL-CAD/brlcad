@@ -919,12 +919,20 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	    pts_on_curve[i][0]->m_dir = IntersectPoint::UNSET;
 	    continue;
 	}
-	for (int j = 0;  j < pts_on_curve[i].Count(); j++) {
+	for (int j = 0; j < pts_on_curve[i].Count(); j++) {
 	    IntersectPoint *ipt = pts_on_curve[i][j];
-	    ON_3dPoint left = j == 0 ? ssx_curves[i].PointAtStart() :
-			      ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j - 1]->m_t_for_rank) * 0.5);
-	    ON_3dPoint right = j == pts_on_curve[i].Count() - 1 ? ssx_curves[i].PointAtEnd() :
-			       ssx_curves[i].PointAt((ipt->m_t_for_rank + pts_on_curve[i][j + 1]->m_t_for_rank) * 0.5);
+	    double curve_t = ipt->m_t_for_rank;
+
+	    ON_3dPoint left = ssx_curves[i].PointAtStart();
+	    if (j > 0) {
+		double prev_curve_t = pts_on_curve[i][j - 1]->m_t_for_rank;
+		left = ssx_curves[i].PointAt((curve_t + prev_curve_t) * .5);
+	    }
+	    ON_3dPoint right = ssx_curves[i].PointAtEnd();
+	    if (j < (pts_on_curve[i].Count() - 1)) {
+		double next_curve_t = pts_on_curve[i][j + 1]->m_t_for_rank;
+		right = ssx_curves[i].PointAt((curve_t + next_curve_t) * .5);
+	    }
 	    // If the point is on the boundary, we treat it with the same
 	    // way as it's outside.
 	    // For example, the left side is inside, and the right's on
