@@ -203,12 +203,23 @@ void diff_results_free(struct diff_results *results){
 
 struct diff3_results {
     float diff_tolerance;
-    struct bu_ptbl *added;     /* directory pointers */
-    struct bu_ptbl *removed;   /* directory pointers */
+    struct bu_ptbl *added_dbip1;     /* directory pointers */
+    struct bu_ptbl *added_dbip2;     /* directory pointers */
+    struct bu_ptbl *removed_dbip1;   /* directory pointers */
+    struct bu_ptbl *removed_dbip2;   /* directory pointers */
     struct bu_ptbl *unchanged; /* directory pointers */
-    struct bu_ptbl *changed;   /* result containers */
-    struct bu_ptbl *conflicts_added;   /* result containers */
-    struct bu_ptbl *conflicts_changed;   /* result containers */
+    struct bu_ptbl *changed_dbip1;   /* result containers */
+    struct bu_ptbl *changed_dbip2;   /* result containers */
+    struct bu_ptbl *changed_dbip1_ancestor;   /* directory pointers */
+    struct bu_ptbl *changed_dbip1_new;   /* directory pointers */
+    struct bu_ptbl *changed_dbip2_ancestor;   /* directory pointers */
+    struct bu_ptbl *changed_dbip2_new;   /* directory pointers */
+
+    struct bu_ptbl *added_both;     /* directory pointers */
+    struct bu_ptbl *changed_both;     /* directory pointers */
+    struct bu_ptbl *removed_both;     /* directory pointers */
+    struct bu_ptbl *added_conflicts;   /* result containers */
+    struct bu_ptbl *changed_conflicts;   /* result containers */
 };
 
 void diff3_results_init(struct diff3_results *UNUSED(results)){
@@ -635,7 +646,9 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     int have_diff_1 = 0;
     int have_diff_2 = 0;
     //int diff_return = 0;
-    //struct diff3_results *results;
+    struct diff3_results *results;
+
+    BU_GET(results, struct diff3_results);
 
     diff_results_init(&dbip1_results);
     have_diff_1 = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)(&dbip1_results));
@@ -694,19 +707,29 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     unchanged_dbip1.erase(added_dbip2.begin(), added_dbip2.end());
     unchanged_dbip1.erase(removed_dbip2.begin(), removed_dbip2.end());
     unchanged_dbip1.erase(changed_dbip2.begin(), changed_dbip2.end());
+    BU_PTBL_INIT(results->unchanged);
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.unchanged); i++) {
+	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.unchanged, i);
+	if (unchanged_dbip1.find(dp->d_namep) != unchanged_dbip1.end()) {
+	    bu_ptbl_ins(results->unchanged, (long *)dp);
+	}
+    }
 
     /* If the same object was added in both files, we have a conflict
      * unless the objects are identical. */
 
 
-    /* If the same object was changed in both files, we have a conflict
-     * unless the changes are identical. */
+    /* If the same object was changed in both files, we have a *potential* conflict
+     * unless the changes are identical. Whether it is always a conflict revolves
+     * around whether we try to merge changes below the object level. A possible
+     * middle ground is to try and resolve attributes but not tangle with primitive
+     * parameters, which avoids thorny issues such as when are comb trees mergable? */
 
+    /* The real work begins when we have two changed objects with different changes -
+     * are the changes such that they can be combined (i.e. two different attributes changed/added)
+     * or are they incompatible changes to the same object attribute? */
 
-    std::set<std::string> added_conflict;
-    std::set<std::string> removed_conflict;
-    std::set<std::string> changed_conflict;
-
+    BU_PUT(results, struct diff3_results);
 
     bu_log("TODO - implement diff3");
     return 0;
