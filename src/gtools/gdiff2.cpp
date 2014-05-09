@@ -20,9 +20,6 @@
 
 #include "common.h"
 
-#include <set>
-#include <string>
-
 extern "C" {
 #include <string.h>
 
@@ -222,11 +219,78 @@ struct diff3_results {
     struct bu_ptbl *changed_conflicts;   /* result containers */
 };
 
-void diff3_results_init(struct diff3_results *UNUSED(results)){
+void diff3_results_init(struct diff3_results *results){
+    BU_GET(results->added_dbip1, struct bu_ptbl);
+    BU_GET(results->added_dbip2, struct bu_ptbl);
+    BU_GET(results->removed_dbip1, struct bu_ptbl);
+    BU_GET(results->removed_dbip2, struct bu_ptbl);
+    BU_GET(results->unchanged, struct bu_ptbl);
+    BU_GET(results->changed_dbip1, struct bu_ptbl);
+    BU_GET(results->changed_dbip2, struct bu_ptbl);
+    BU_GET(results->changed_dbip1_ancestor, struct bu_ptbl);
+    BU_GET(results->changed_dbip1_new, struct bu_ptbl);
+    BU_GET(results->changed_dbip2_ancestor, struct bu_ptbl);
+    BU_GET(results->changed_dbip2_new, struct bu_ptbl);
+
+    BU_GET(results->added_both, struct bu_ptbl);
+    BU_GET(results->changed_both, struct bu_ptbl);
+    BU_GET(results->added_conflicts, struct bu_ptbl);
+    BU_GET(results->changed_conflicts, struct bu_ptbl);
+
+    BU_PTBL_INIT(results->added_dbip1);
+    BU_PTBL_INIT(results->added_dbip2);
+    BU_PTBL_INIT(results->removed_dbip1);
+    BU_PTBL_INIT(results->removed_dbip2);
+    BU_PTBL_INIT(results->unchanged);
+    BU_PTBL_INIT(results->changed_dbip1);
+    BU_PTBL_INIT(results->changed_dbip2);
+    BU_PTBL_INIT(results->changed_dbip1_ancestor);
+    BU_PTBL_INIT(results->changed_dbip1_new);
+    BU_PTBL_INIT(results->changed_dbip2_ancestor);
+    BU_PTBL_INIT(results->changed_dbip2_new);
+
+    BU_PTBL_INIT(results->added_both);
+    BU_PTBL_INIT(results->changed_both);
+    BU_PTBL_INIT(results->added_conflicts);
+    BU_PTBL_INIT(results->changed_conflicts);
 }
 
 
-void diff3_results_free(struct diff3_results *UNUSED(results)){
+void diff3_results_free(struct diff3_results *results){
+    bu_ptbl_free(results->added_dbip1);
+    bu_ptbl_free(results->added_dbip2);
+    bu_ptbl_free(results->removed_dbip1);
+    bu_ptbl_free(results->removed_dbip2);
+    bu_ptbl_free(results->unchanged);
+    bu_ptbl_free(results->changed_dbip1);
+    bu_ptbl_free(results->changed_dbip2);
+    bu_ptbl_free(results->changed_dbip1_ancestor);
+    bu_ptbl_free(results->changed_dbip1_new);
+    bu_ptbl_free(results->changed_dbip2_ancestor);
+    bu_ptbl_free(results->changed_dbip2_new);
+
+    bu_ptbl_free(results->added_both);
+    bu_ptbl_free(results->changed_both);
+    bu_ptbl_free(results->added_conflicts);
+    bu_ptbl_free(results->changed_conflicts);
+
+    BU_PUT(results->added_dbip1, struct bu_ptbl);
+    BU_PUT(results->added_dbip2, struct bu_ptbl);
+    BU_PUT(results->removed_dbip1, struct bu_ptbl);
+    BU_PUT(results->removed_dbip2, struct bu_ptbl);
+    BU_PUT(results->unchanged, struct bu_ptbl);
+    BU_PUT(results->changed_dbip1, struct bu_ptbl);
+    BU_PUT(results->changed_dbip2, struct bu_ptbl);
+    BU_PUT(results->changed_dbip1_ancestor, struct bu_ptbl);
+    BU_PUT(results->changed_dbip1_new, struct bu_ptbl);
+    BU_PUT(results->changed_dbip2_ancestor, struct bu_ptbl);
+    BU_PUT(results->changed_dbip2_new, struct bu_ptbl);
+
+    BU_PUT(results->added_both, struct bu_ptbl);
+    BU_PUT(results->changed_both, struct bu_ptbl);
+    BU_PUT(results->added_conflicts, struct bu_ptbl);
+    BU_PUT(results->changed_conflicts, struct bu_ptbl);
+
 }
 
 
@@ -639,10 +703,37 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
 }
 
 static int
+dp_ptbl_find(struct bu_ptbl *table, const char *name)
+{
+    int i = 0;
+    int found = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(table); i++) {
+	struct directory *dp = (struct directory *)BU_PTBL_GET(table, i);
+	if (BU_STR_EQUAL(name, dp->d_namep)) found = 1;
+    }
+
+    return found;
+}
+
+static int
+rc_ptbl_find(struct bu_ptbl *table, const char *name)
+{
+    int i = 0;
+    int found = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(table); i++) {
+	struct diff_result_container *rc = (struct diff_result_container *)BU_PTBL_GET(table, i);
+	const struct directory *dp = rc->dp_orig;
+	if (BU_STR_EQUAL(name, dp->d_namep)) found = 1;
+    }
+
+    return found;
+}
+
+static int
 do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_dbip_2, struct diff_state *UNUSED(state)) {
     int i = 0;
-    struct diff_results dbip1_results;
-    struct diff_results dbip2_results;
+    struct diff_results *dbip1_results;
+    struct diff_results *dbip2_results;
     int have_diff_1 = 0;
     int have_diff_2 = 0;
     //int diff_return = 0;
@@ -650,68 +741,36 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 
     BU_GET(results, struct diff3_results);
 
-    diff_results_init(&dbip1_results);
-    have_diff_1 = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)(&dbip1_results));
+    diff3_results_init(results);
 
-    diff_results_init(&dbip2_results);
-    have_diff_2 = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)(&dbip2_results));
+    BU_GET(dbip1_results, struct diff_results);
+    BU_GET(dbip2_results, struct diff_results);
+
+    diff_results_init(dbip1_results);
+    have_diff_1 = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip1_results);
+
+    diff_results_init(dbip2_results);
+    have_diff_2 = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
 
     /* Now we know what changed from the ancestor file to each of the two new files.
      * We now need to categorize the results according to three-way merging needs. The
      * directory pointers in the tables aren't adequate for this, as the same object
      * will have different pointers in each table. */
-    std::set<std::string> added_dbip1;
-    std::set<std::string> removed_dbip1;
-    std::set<std::string> changed_dbip1;
-    std::set<std::string> unchanged_dbip1;
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.added); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.added, i);
-	added_dbip1.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.removed); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.removed, i);
-	removed_dbip1.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.changed); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.changed, i);
-	changed_dbip1.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.unchanged); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.unchanged, i);
-	unchanged_dbip1.insert(dp->d_namep);
-    }
-    std::set<std::string> added_dbip2;
-    std::set<std::string> removed_dbip2;
-    std::set<std::string> changed_dbip2;
-    std::set<std::string> unchanged_dbip2;
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results.added); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results.added, i);
-	added_dbip2.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results.removed); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results.removed, i);
-	removed_dbip2.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results.changed); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results.changed, i);
-	changed_dbip2.insert(dp->d_namep);
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results.unchanged); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results.unchanged, i);
-	unchanged_dbip2.insert(dp->d_namep);
-    }
 
     /* To get a true "unchanged" set, one of the unchanged sets needs
      * to have any of the objects present in the other diff's results
      * removed, since they are not unchanged in the move */
-    unchanged_dbip1.erase(added_dbip2.begin(), added_dbip2.end());
-    unchanged_dbip1.erase(removed_dbip2.begin(), removed_dbip2.end());
-    unchanged_dbip1.erase(changed_dbip2.begin(), changed_dbip2.end());
     BU_PTBL_INIT(results->unchanged);
-    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results.unchanged); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results.unchanged, i);
-	if (unchanged_dbip1.find(dp->d_namep) != unchanged_dbip1.end()) {
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results->unchanged); i++) {
+	int changed = 0;
+	struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results->unchanged, i);
+	changed += dp_ptbl_find(dbip2_results->added, dp->d_namep);
+	changed += dp_ptbl_find(dbip2_results->removed, dp->d_namep);
+	changed += rc_ptbl_find(dbip2_results->changed, dp->d_namep);
+	if (!changed) {
 	    bu_ptbl_ins(results->unchanged, (long *)dp);
+	} else {
+	    bu_log("unchanged in one, but changed in the other: %s\n", dp->d_namep);
 	}
     }
 
@@ -729,7 +788,10 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
      * are the changes such that they can be combined (i.e. two different attributes changed/added)
      * or are they incompatible changes to the same object attribute? */
 
+    diff3_results_free(results);
     BU_PUT(results, struct diff3_results);
+    BU_PUT(dbip1_results, struct diff_results);
+    BU_PUT(dbip2_results, struct diff_results);
 
     bu_log("TODO - implement diff3");
     return 0;
