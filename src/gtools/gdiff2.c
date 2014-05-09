@@ -558,38 +558,48 @@ main(int argc, char **argv)
 	struct bu_ptbl added_filtered = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl removed_filtered = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl unchanged_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl changed_filtered_dbip1 = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl changed_filtered_dbip2 = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl changed_filtered = BU_PTBL_INIT_ZERO;
+
+	/* In order to respect search filters involving depth, we have to build "allowed"
+	 * sets of objects from both databases based on straight-up search filtering of
+	 * the original databases.  We then check the filtered diff results against the
+	 * search-filtered original databases to make sure they are valid for the final
+	 * results. */
+	struct bu_ptbl dbip1_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl dbip2_filtered = BU_PTBL_INIT_ZERO;
+	(void)db_search(&dbip1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, dbip1);
+	(void)db_search(&dbip2_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, dbip2);
 
 	/* Filter added objects */
 	if (BU_PTBL_LEN(results.added) > 0) {
-	    (void)db_search(&added_filtered, DB_SEARCH_FLAT, (const char *)bu_vls_addr(&search_filter), BU_PTBL_LEN(results.added), (struct directory **)results.added->buffer, dbip2);
+	    bu_ptbl_cat(&added_filtered, results.removed);
 	    bu_ptbl_reset(results.added);
-	    bu_ptbl_cat(results.added, &added_filtered);
-	    db_search_free(&added_filtered);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&added_filtered); i++) {
+		if (bu_ptbl_locate(&dbip2_filtered, (long *)BU_PTBL_GET(&added_filtered, i)) != -1) {
+		    bu_ptbl_ins(results.added, (long *)BU_PTBL_GET(&added_filtered, i));
+		}
+	    }
+	    bu_ptbl_free(&added_filtered);
 	}
 
 	/* Filter removed objects */
 	if (BU_PTBL_LEN(results.removed) > 0) {
-	    (void)db_search(&removed_filtered, DB_SEARCH_FLAT, (const char *)bu_vls_addr(&search_filter), BU_PTBL_LEN(results.removed), (struct directory **)results.removed->buffer, dbip1);
+	    bu_ptbl_cat(&removed_filtered, results.removed);
 	    bu_ptbl_reset(results.removed);
-	    bu_ptbl_cat(results.removed, &removed_filtered);
-	    db_search_free(&removed_filtered);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&removed_filtered); i++) {
+		if (bu_ptbl_locate(&dbip1_filtered, (long *)BU_PTBL_GET(&removed_filtered, i)) != -1) {
+		    bu_ptbl_ins(results.removed, (long *)BU_PTBL_GET(&removed_filtered, i));
+		}
+	    }
+	    bu_ptbl_free(&removed_filtered);
 	}
 
 	/* Filter changed objects */
-	if (BU_PTBL_LEN(results.changed_dbip1) > 0) {
-	    (void)db_search(&changed_filtered_dbip1, DB_SEARCH_FLAT, (const char *)bu_vls_addr(&search_filter), BU_PTBL_LEN(results.changed_dbip1), (struct directory **)results.changed_dbip1->buffer, dbip1);
-	}
-	if (BU_PTBL_LEN(results.changed_dbip2) > 0) {
-	    (void)db_search(&changed_filtered_dbip2, DB_SEARCH_FLAT, (const char *)bu_vls_addr(&search_filter), BU_PTBL_LEN(results.changed_dbip2), (struct directory **)results.changed_dbip2->buffer, dbip2);
-	}
-	if (BU_PTBL_LEN(&changed_filtered_dbip1) > 0 || BU_PTBL_LEN(&changed_filtered_dbip2) > 0) {
+	if (BU_PTBL_LEN(results.changed_dbip1) > 0 || BU_PTBL_LEN(results.changed_dbip2) > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
 		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
-		if ((result->dp_orig && bu_ptbl_locate(&changed_filtered_dbip1, (long *)result->dp_orig) != -1) ||
-		    (result->dp_new && bu_ptbl_locate(&changed_filtered_dbip2, (long *)result->dp_new) != -1)) {
+		if ((result->dp_orig && bu_ptbl_locate(&dbip1_filtered, (long *)result->dp_orig) != -1) ||
+			(result->dp_new && bu_ptbl_locate(&dbip2_filtered, (long *)result->dp_orig) != -1)) {
 		    bu_ptbl_ins(&changed_filtered, (long *)result);
 		} else {
 		    result_free((void *)result);
@@ -597,6 +607,7 @@ main(int argc, char **argv)
 	    }
 	    bu_ptbl_reset(results.changed);
 	    bu_ptbl_cat(results.changed, &changed_filtered);
+	    bu_ptbl_free(&changed_filtered);
 	} else {
 	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
 		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
@@ -604,20 +615,20 @@ main(int argc, char **argv)
 	    }
 	    bu_ptbl_reset(results.changed);
 	}
-	if (BU_PTBL_LEN(results.changed_dbip1) > 0) {
-	    db_search_free(&changed_filtered_dbip1);
-	}
-	if (BU_PTBL_LEN(results.changed_dbip2) > 0) {
-	    db_search_free(&changed_filtered_dbip2);
-	}
 
 	/* Filter unchanged objects */
 	if (BU_PTBL_LEN(results.unchanged) > 0) {
-	    (void)db_search(&unchanged_filtered, DB_SEARCH_FLAT, (const char *)bu_vls_addr(&search_filter), BU_PTBL_LEN(results.unchanged), (struct directory **)results.unchanged->buffer, dbip1);
+	    bu_ptbl_cat(&unchanged_filtered, results.unchanged);
 	    bu_ptbl_reset(results.unchanged);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&unchanged_filtered); i++) {
+		if (bu_ptbl_locate(&dbip1_filtered, (long *)BU_PTBL_GET(&unchanged_filtered, i)) != -1) {
+		    bu_ptbl_ins(results.unchanged, (long *)BU_PTBL_GET(&unchanged_filtered, i));
+		}
+	    }
 	    bu_ptbl_cat(results.unchanged, &unchanged_filtered);
-	    db_search_free(&unchanged_filtered);
 	}
+	db_search_free(&dbip1_filtered);
+	db_search_free(&dbip2_filtered);
     }
 
     if (verbosity) {
