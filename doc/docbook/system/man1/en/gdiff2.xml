@@ -61,7 +61,7 @@
 			</varlistentry>
 			<varlistentry>
 				<term><option>-F "filter_string"</option></term>
-				<listitem><para>Apply filters to the diff output, using the same set of filters available in the <command>search</command> command's flat search.  See the <command>search</command> manual page for more details.</para></listitem>
+				<listitem><para>Apply filters to the diff output, using the same set of filters available in the <command>search</command> command's search.  See the <command>search</command> manual page for more details.</para></listitem>
 			</varlistentry>
 		</variablelist>
 
