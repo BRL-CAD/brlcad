@@ -64,8 +64,8 @@ void diff_state_init(struct diff_state *state) {
 void diff_state_free(struct diff_state *state) {
     bu_vls_free(state->diff_log);
     bu_vls_free(state->search_filter);
-    bu_free(state->diff_log, "free vls container");
-    bu_free(state->search_filter, "free vls container");
+    BU_PUT(state->diff_log, struct bu_vls);
+    BU_PUT(state->search_filter, struct bu_vls);
 }
 
 
@@ -179,6 +179,7 @@ void diff_results_init(struct diff_results *results){
     BU_PTBL_INIT(results->changed_ancestor_dbip);
     BU_PTBL_INIT(results->changed_new_dbip_1);
     BU_PTBL_INIT(results->unchanged);
+
 }
 
 
@@ -189,13 +190,14 @@ void diff_results_free(struct diff_results *results){
     bu_ptbl_free(results->unchanged);
     bu_ptbl_free(results->changed_ancestor_dbip);
     bu_ptbl_free(results->changed_new_dbip_1);
-    bu_free(results->added, "free table");
-    bu_free(results->removed, "free table");
-    bu_free(results->unchanged, "free table");
     diff_result_free_ptbl(results->changed);
-    bu_free(results->changed, "free table");
-    bu_free(results->changed_ancestor_dbip, "free_table");
-    bu_free(results->changed_new_dbip_1, "free_table");
+
+    BU_PUT(results->added, struct bu_ptbl);
+    BU_PUT(results->removed, struct bu_ptbl);
+    BU_PUT(results->changed, struct bu_ptbl);
+    BU_PUT(results->changed_ancestor_dbip, struct bu_ptbl);
+    BU_PUT(results->changed_new_dbip_1, struct bu_ptbl);
+    BU_PUT(results->unchanged, struct bu_ptbl);
 
 }
 
@@ -620,6 +622,7 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
     }
 
     diff_results_free(results);
+    BU_PUT(results, struct diff_results);
 
     return diff_return;
 }
@@ -839,7 +842,7 @@ main(int argc, char **argv)
 	diff_return = do_diff3(ancestor_dbip, new_dbip_1, new_dbip_2, state);
 
     diff_state_free(state);
-    bu_free(state, "free state container");
+    BU_PUT(state, struct diff_state);
 
     db_close(ancestor_dbip);
     db_close(new_dbip_1);
