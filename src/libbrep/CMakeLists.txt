@@ -22,7 +22,6 @@ set(LIBBREP_SOURCES
   BBNode.cpp
   boolean.cpp
   BRNode.cpp
-  debug_plot.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
