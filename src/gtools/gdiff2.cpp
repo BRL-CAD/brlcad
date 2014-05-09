@@ -740,9 +740,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     int i = 0;
     struct diff_results *dbip1_results;
     struct diff_results *dbip2_results;
-    int have_diff_1 = 0;
-    int have_diff_2 = 0;
-    //int diff_return = 0;
+    int diff_return = 0;
     struct diff3_results *results;
 
     BU_GET(results, struct diff3_results);
@@ -753,10 +751,16 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     BU_GET(dbip2_results, struct diff_results);
 
     diff_results_init(dbip1_results);
-    have_diff_1 = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip1_results);
+    diff_return = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip1_results);
+    if (diff_return < 0) {
+	return diff_return;
+    }
 
     diff_results_init(dbip2_results);
-    have_diff_2 = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
+    diff_return = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
+    if (diff_return < 0) {
+	return diff_return;
+    }
 
     /* Now we know what changed from the ancestor file to each of the two new files.
      * We now need to categorize the results according to three-way merging needs. The
