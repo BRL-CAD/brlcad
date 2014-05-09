@@ -159,6 +159,41 @@ struct results {
     struct bu_ptbl *changed_new_dbip_1;   /* directory pointers */
 };
 
+void results_init(struct results *results){
+
+    BU_GET(results->added, struct bu_ptbl);
+    BU_GET(results->removed, struct bu_ptbl);
+    BU_GET(results->changed, struct bu_ptbl);
+    BU_GET(results->changed_ancestor_dbip, struct bu_ptbl);
+    BU_GET(results->changed_new_dbip_1, struct bu_ptbl);
+    BU_GET(results->unchanged, struct bu_ptbl);
+
+    BU_PTBL_INIT(results->added);
+    BU_PTBL_INIT(results->removed);
+    BU_PTBL_INIT(results->changed);
+    BU_PTBL_INIT(results->changed_ancestor_dbip);
+    BU_PTBL_INIT(results->changed_new_dbip_1);
+    BU_PTBL_INIT(results->unchanged);
+}
+
+
+void results_free(struct results *results){
+
+    bu_ptbl_free(results->added);
+    bu_ptbl_free(results->removed);
+    bu_ptbl_free(results->unchanged);
+    bu_ptbl_free(results->changed_ancestor_dbip);
+    bu_ptbl_free(results->changed_new_dbip_1);
+    bu_free(results->added, "free table");
+    bu_free(results->removed, "free table");
+    bu_free(results->unchanged, "free table");
+    result_free_ptbl(results->changed);
+    bu_free(results->changed, "free table");
+    bu_free(results->changed_ancestor_dbip, "free_table");
+    bu_free(results->changed_new_dbip_1, "free_table");
+
+}
+
 
 int
 diff_added(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *added, void *data)
@@ -462,19 +497,7 @@ do_diff(struct results *results, struct db_i *ancestor_dbip, struct db_i *new_db
     int have_diff = 0;
     int diff_return = 0;
 
-    BU_GET(results->added, struct bu_ptbl);
-    BU_GET(results->removed, struct bu_ptbl);
-    BU_GET(results->changed, struct bu_ptbl);
-    BU_GET(results->changed_ancestor_dbip, struct bu_ptbl);
-    BU_GET(results->changed_new_dbip_1, struct bu_ptbl);
-    BU_GET(results->unchanged, struct bu_ptbl);
-
-    BU_PTBL_INIT(results->added);
-    BU_PTBL_INIT(results->removed);
-    BU_PTBL_INIT(results->changed);
-    BU_PTBL_INIT(results->changed_ancestor_dbip);
-    BU_PTBL_INIT(results->changed_new_dbip_1);
-    BU_PTBL_INIT(results->unchanged);
+    results_init(results);
 
     have_diff = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)results);
 
@@ -572,18 +595,7 @@ do_diff(struct results *results, struct db_i *ancestor_dbip, struct db_i *new_db
 	if (state->return_unchanged > 0) diff_return += BU_PTBL_LEN(results->unchanged);
     }
 
-    bu_ptbl_free(results->added);
-    bu_ptbl_free(results->removed);
-    bu_ptbl_free(results->unchanged);
-    bu_ptbl_free(results->changed_ancestor_dbip);
-    bu_ptbl_free(results->changed_new_dbip_1);
-    bu_free(results->added, "free table");
-    bu_free(results->removed, "free table");
-    bu_free(results->unchanged, "free table");
-    result_free_ptbl(results->changed);
-    bu_free(results->changed, "free table");
-    bu_free(results->changed_ancestor_dbip, "free_table");
-    bu_free(results->changed_new_dbip_1, "free_table");
+    results_free(results);
 
     return diff_return;
 }
