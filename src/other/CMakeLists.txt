@@ -969,16 +969,18 @@ SetTargetFolder(libgdiam-static "Third Party Libraries")
 
 # Bullet physics library
 if(BRLCAD_LEVEL2)
-  find_package(Bullet)
-  if(BULLET_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-  endif(BULLET_FOUND)
-  # Let the rest of the package know the results
-  set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
-  set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
-  mark_as_advanced(BULLET_INCLUDE_DIR)
-  mark_as_advanced(BULLET_FOUND)
-  mark_as_advanced(BULLET_LIBRARIES)
+  if (BRLCAD_ENABLE_BULLET)
+    find_package(Bullet)
+    if(BULLET_FOUND)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
+    endif(BULLET_FOUND)
+    # Let the rest of the package know the results
+    set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
+    set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
+    mark_as_advanced(BULLET_INCLUDE_DIR)
+    mark_as_advanced(BULLET_FOUND)
+    mark_as_advanced(BULLET_LIBRARIES)
+  endif (BRLCAD_ENABLE_BULLET)
 endif(BRLCAD_LEVEL2)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
