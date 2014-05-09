@@ -2144,14 +2144,16 @@ int
 db_search(struct bu_ptbl *search_results,
 	  int search_flags,
 	  const char *plan_str,
-	  int path_cnt,
-	  struct directory **paths,
+	  int input_path_cnt,
+	  struct directory **input_paths,
 	  struct db_i *dbip)
 {
     int i = 0;
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
     struct directory **top_level_objects = NULL;
+    struct directory **paths = input_paths;
+    int path_cnt = input_path_cnt;
 
     /* Note that dbplan references strings using memory
      * in the following two objects, so they mustn't be
