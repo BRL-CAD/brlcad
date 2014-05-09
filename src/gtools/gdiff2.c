@@ -28,6 +28,41 @@
 #include "raytrace.h"
 #include "db_diff.h"
 
+struct diff_state {
+    int return_added;
+    int return_removed;
+    int return_changed;
+    int return_unchanged;
+    int have_search_filter;
+    int verbosity;
+    int output_mode;
+    float diff_tolerance;
+    struct bu_vls *diff_log;
+    struct bu_vls *search_filter;
+};
+
+void diff_state_init(struct diff_state *state) {
+    state->return_added = -1;
+    state->return_removed = -1;
+    state->return_changed = -1;
+    state->return_unchanged = 0;
+    state->have_search_filter = 0;
+    state->verbosity = 2;
+    state->output_mode = 0;
+    state->diff_tolerance = RT_LEN_TOL;
+    BU_GET(state->diff_log, struct bu_vls);
+    BU_GET(state->search_filter, struct bu_vls);
+    bu_vls_init(state->diff_log);
+    bu_vls_init(state->search_filter);
+}
+
+void diff_state_free(struct diff_state *state) {
+    bu_vls_free(state->diff_log);
+    bu_vls_free(state->search_filter);
+    bu_free(state->diff_log, "free vls container");
+    bu_free(state->search_filter, "free vls container");
+}
+
 
 struct result_container {
     int status;
@@ -421,6 +456,143 @@ diff_summarize(struct bu_vls *diff_log, const struct results *results, const int
     bu_vls_printf(diff_log, "\n");
 }
 
+static int
+do_diff(struct results *results, struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *state) {
+
+    int have_diff = 0;
+    int diff_return = 0;
+
+    BU_GET(results->added, struct bu_ptbl);
+    BU_GET(results->removed, struct bu_ptbl);
+    BU_GET(results->changed, struct bu_ptbl);
+    BU_GET(results->changed_ancestor_dbip, struct bu_ptbl);
+    BU_GET(results->changed_new_dbip_1, struct bu_ptbl);
+    BU_GET(results->unchanged, struct bu_ptbl);
+
+    BU_PTBL_INIT(results->added);
+    BU_PTBL_INIT(results->removed);
+    BU_PTBL_INIT(results->changed);
+    BU_PTBL_INIT(results->changed_ancestor_dbip);
+    BU_PTBL_INIT(results->changed_new_dbip_1);
+    BU_PTBL_INIT(results->unchanged);
+
+    have_diff = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)results);
+
+    /* Now we have our diff results, time to filter (if applicable) and report them */
+    if (state->have_search_filter) {
+	int i = 0;
+	struct bu_ptbl added_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl removed_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl unchanged_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl changed_filtered = BU_PTBL_INIT_ZERO;
+
+	/* In order to respect search filters involving depth, we have to build "allowed"
+	 * sets of objects from both databases based on straight-up search filtering of
+	 * the original databases.  We then check the filtered diff results against the
+	 * search-filtered original databases to make sure they are valid for the final
+	 * results-> */
+	struct bu_ptbl ancestor_dbip_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl new_dbip_1_filtered = BU_PTBL_INIT_ZERO;
+	(void)db_search(&ancestor_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, ancestor_dbip);
+	(void)db_search(&new_dbip_1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, new_dbip_1);
+
+	/* Filter added objects */
+	if (BU_PTBL_LEN(results->added) > 0) {
+	    bu_ptbl_cat(&added_filtered, results->removed);
+	    bu_ptbl_reset(results->added);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&added_filtered); i++) {
+		if (bu_ptbl_locate(&new_dbip_1_filtered, (long *)BU_PTBL_GET(&added_filtered, i)) != -1) {
+		    bu_ptbl_ins(results->added, (long *)BU_PTBL_GET(&added_filtered, i));
+		}
+	    }
+	    bu_ptbl_free(&added_filtered);
+	}
+
+	/* Filter removed objects */
+	if (BU_PTBL_LEN(results->removed) > 0) {
+	    bu_ptbl_cat(&removed_filtered, results->removed);
+	    bu_ptbl_reset(results->removed);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&removed_filtered); i++) {
+		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&removed_filtered, i)) != -1) {
+		    bu_ptbl_ins(results->removed, (long *)BU_PTBL_GET(&removed_filtered, i));
+		}
+	    }
+	    bu_ptbl_free(&removed_filtered);
+	}
+
+	/* Filter changed objects */
+	if (BU_PTBL_LEN(results->changed_ancestor_dbip) > 0 || BU_PTBL_LEN(results->changed_new_dbip_1) > 0) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
+		struct result_container *result = (struct result_container *)BU_PTBL_GET(results->changed, i);
+		if ((result->dp_orig && bu_ptbl_locate(&ancestor_dbip_filtered, (long *)result->dp_orig) != -1) ||
+			(result->dp_new && bu_ptbl_locate(&new_dbip_1_filtered, (long *)result->dp_orig) != -1)) {
+		    bu_ptbl_ins(&changed_filtered, (long *)result);
+		} else {
+		    result_free((void *)result);
+		}
+	    }
+	    bu_ptbl_reset(results->changed);
+	    bu_ptbl_cat(results->changed, &changed_filtered);
+	    bu_ptbl_free(&changed_filtered);
+	} else {
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
+		struct result_container *result = (struct result_container *)BU_PTBL_GET(results->changed, i);
+		result_free((void *)result);
+	    }
+	    bu_ptbl_reset(results->changed);
+	}
+
+	/* Filter unchanged objects */
+	if (BU_PTBL_LEN(results->unchanged) > 0) {
+	    bu_ptbl_cat(&unchanged_filtered, results->unchanged);
+	    bu_ptbl_reset(results->unchanged);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&unchanged_filtered); i++) {
+		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&unchanged_filtered, i)) != -1) {
+		    bu_ptbl_ins(results->unchanged, (long *)BU_PTBL_GET(&unchanged_filtered, i));
+		}
+	    }
+	    bu_ptbl_cat(results->unchanged, &unchanged_filtered);
+	}
+	db_search_free(&ancestor_dbip_filtered);
+	db_search_free(&new_dbip_1_filtered);
+    }
+
+    if (state->verbosity) {
+	if (!have_diff) {
+	    bu_log("No differences found.\n");
+	} else {
+	    diff_summarize(state->diff_log, results, state->verbosity, state->return_added, state->return_removed, state->return_changed, state->return_unchanged);
+	    bu_log("%s", bu_vls_addr(state->diff_log));
+	}
+    }
+    if (have_diff) {
+	if (state->return_added > 0) diff_return += BU_PTBL_LEN(results->added);
+	if (state->return_removed > 0) diff_return += BU_PTBL_LEN(results->removed);
+	if (state->return_changed > 0) diff_return += BU_PTBL_LEN(results->changed);
+	if (state->return_unchanged > 0) diff_return += BU_PTBL_LEN(results->unchanged);
+    }
+
+    bu_ptbl_free(results->added);
+    bu_ptbl_free(results->removed);
+    bu_ptbl_free(results->unchanged);
+    bu_ptbl_free(results->changed_ancestor_dbip);
+    bu_ptbl_free(results->changed_new_dbip_1);
+    bu_free(results->added, "free table");
+    bu_free(results->removed, "free table");
+    bu_free(results->unchanged, "free table");
+    result_free_ptbl(results->changed);
+    bu_free(results->changed, "free table");
+    bu_free(results->changed_ancestor_dbip, "free_table");
+    bu_free(results->changed_new_dbip_1, "free_table");
+
+    return diff_return;
+}
+
+static int
+do_diff3() {
+    bu_log("TODO - implement diff3");
+    return 0;
+}
 
 static void
 gdiff_usage(const char *str) {
@@ -433,53 +605,47 @@ int
 main(int argc, char **argv)
 {
     int c;
-    int return_added = -1;
-    int return_removed = -1;
-    int return_changed = -1;
-    int return_unchanged = 0;
     int diff_return = 0;
-    int verbosity = 2;
-    int output_mode = 0;
-    int have_diff = 0;
-    int have_search_filter = 0;
-    float diff_tolerance = RT_LEN_TOL;
+    struct diff_state *state;
     struct results results;
     struct db_i *ancestor_dbip = DBI_NULL;
     struct db_i *new_dbip_1 = DBI_NULL;
-    struct bu_vls diff_log = BU_VLS_INIT_ZERO;
+    struct db_i *new_dbip_2 = DBI_NULL;
     const char *diff_prog_name = argv[0];
-    struct bu_vls search_filter = BU_VLS_INIT_ZERO;
+
+    BU_GET(state, struct diff_state);
+    diff_state_init(state);
 
     while ((c = bu_getopt(argc, argv, "acF:mrt:uv:h?")) != -1) {
 	switch (c) {
 	    case 'a':
-		return_added = 1;
+		state->return_added = 1;
 		break;
 	    case 'r':
-		return_removed = 1;
+		state->return_removed = 1;
 		break;
 	    case 'c':
-		return_changed = 1;
+		state->return_changed = 1;
 		break;
 	    case 'u':
-		return_unchanged = 1;
+		state->return_unchanged = 1;
 		break;
 	    case 'F':
-		have_search_filter = 1;
-		bu_vls_sprintf(&search_filter, "%s", bu_optarg);
+		state->have_search_filter = 1;
+		bu_vls_sprintf(state->search_filter, "%s", bu_optarg);
 		break;
 	    case 'm':   /* mged readable */
-		output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
+		state->output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
 		break;
 	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
-		if (sscanf(bu_optarg, "%f", &diff_tolerance) != 1) {
+		if (sscanf(bu_optarg, "%f", &(state->diff_tolerance)) != 1) {
 		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'v':   /* verbosity (2 is default) */
-		if (sscanf(bu_optarg, "%d", &verbosity) != 1) {
+		if (sscanf(bu_optarg, "%d", &(state->verbosity)) != 1) {
 		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
@@ -490,20 +656,20 @@ main(int argc, char **argv)
 	}
     }
 
-    if (output_mode == 109) {
+    if (state->output_mode == 109) {
 	bu_log("Error - mged script generation not yet implemented\n");
 	bu_exit(EXIT_FAILURE, NULL);
     }
 
-    if (return_added == -1 && return_removed == -1 && return_changed == -1 && return_unchanged == 0) {
-	return_added = 1; return_removed = 1; return_changed = 1;
+    if (state->return_added == -1 && state->return_removed == -1 && state->return_changed == -1 && state->return_unchanged == 0) {
+	state->return_added = 1; state->return_removed = 1; state->return_changed = 1;
     }
 
     argc -= bu_optind;
     argv += bu_optind;
 
-    if (argc != 2) {
-	bu_log("Error - please specify two .g files\n");
+    if (argc != 2 && argc != 3) {
+	bu_log("Error - please specify either two or three .g files\n");
 	bu_exit(EXIT_FAILURE, NULL);
     }
 
@@ -513,6 +679,10 @@ main(int argc, char **argv)
 
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_exit(1, "Cannot stat file %s\n", argv[1]);
+    }
+
+    if (argc == 3 && !bu_file_exists(argv[2], NULL)) {
+	bu_exit(1, "Cannot stat file %s\n", argv[2]);
     }
 
     if ((ancestor_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
@@ -534,134 +704,33 @@ main(int argc, char **argv)
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
     }
 
-    results.diff_tolerance = diff_tolerance;
-
-    BU_GET(results.added, struct bu_ptbl);
-    BU_GET(results.removed, struct bu_ptbl);
-    BU_GET(results.changed, struct bu_ptbl);
-    BU_GET(results.changed_ancestor_dbip, struct bu_ptbl);
-    BU_GET(results.changed_new_dbip_1, struct bu_ptbl);
-    BU_GET(results.unchanged, struct bu_ptbl);
-
-    BU_PTBL_INIT(results.added);
-    BU_PTBL_INIT(results.removed);
-    BU_PTBL_INIT(results.changed);
-    BU_PTBL_INIT(results.changed_ancestor_dbip);
-    BU_PTBL_INIT(results.changed_new_dbip_1);
-    BU_PTBL_INIT(results.unchanged);
-
-    have_diff = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)&results);
-
-    /* Now we have our diff results, time to filter (if applicable) and report them */
-    if (have_search_filter) {
-	int i = 0;
-	struct bu_ptbl added_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl removed_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl unchanged_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl changed_filtered = BU_PTBL_INIT_ZERO;
-
-	/* In order to respect search filters involving depth, we have to build "allowed"
-	 * sets of objects from both databases based on straight-up search filtering of
-	 * the original databases.  We then check the filtered diff results against the
-	 * search-filtered original databases to make sure they are valid for the final
-	 * results. */
-	struct bu_ptbl ancestor_dbip_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl new_dbip_1_filtered = BU_PTBL_INIT_ZERO;
-	(void)db_search(&ancestor_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, ancestor_dbip);
-	(void)db_search(&new_dbip_1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, new_dbip_1);
-
-	/* Filter added objects */
-	if (BU_PTBL_LEN(results.added) > 0) {
-	    bu_ptbl_cat(&added_filtered, results.removed);
-	    bu_ptbl_reset(results.added);
-	    for (i = 0; i < (int)BU_PTBL_LEN(&added_filtered); i++) {
-		if (bu_ptbl_locate(&new_dbip_1_filtered, (long *)BU_PTBL_GET(&added_filtered, i)) != -1) {
-		    bu_ptbl_ins(results.added, (long *)BU_PTBL_GET(&added_filtered, i));
-		}
-	    }
-	    bu_ptbl_free(&added_filtered);
+    /* If we have three files, we're doing a 3 way diff and maybe a 3 way merge */
+    if (argc == 3) {
+	if ((new_dbip_2 = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
 	}
-
-	/* Filter removed objects */
-	if (BU_PTBL_LEN(results.removed) > 0) {
-	    bu_ptbl_cat(&removed_filtered, results.removed);
-	    bu_ptbl_reset(results.removed);
-	    for (i = 0; i < (int)BU_PTBL_LEN(&removed_filtered); i++) {
-		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&removed_filtered, i)) != -1) {
-		    bu_ptbl_ins(results.removed, (long *)BU_PTBL_GET(&removed_filtered, i));
-		}
-	    }
-	    bu_ptbl_free(&removed_filtered);
-	}
-
-	/* Filter changed objects */
-	if (BU_PTBL_LEN(results.changed_ancestor_dbip) > 0 || BU_PTBL_LEN(results.changed_new_dbip_1) > 0) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
-		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
-		if ((result->dp_orig && bu_ptbl_locate(&ancestor_dbip_filtered, (long *)result->dp_orig) != -1) ||
-			(result->dp_new && bu_ptbl_locate(&new_dbip_1_filtered, (long *)result->dp_orig) != -1)) {
-		    bu_ptbl_ins(&changed_filtered, (long *)result);
-		} else {
-		    result_free((void *)result);
-		}
-	    }
-	    bu_ptbl_reset(results.changed);
-	    bu_ptbl_cat(results.changed, &changed_filtered);
-	    bu_ptbl_free(&changed_filtered);
-	} else {
-	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
-		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
-		result_free((void *)result);
-	    }
-	    bu_ptbl_reset(results.changed);
-	}
-
-	/* Filter unchanged objects */
-	if (BU_PTBL_LEN(results.unchanged) > 0) {
-	    bu_ptbl_cat(&unchanged_filtered, results.unchanged);
-	    bu_ptbl_reset(results.unchanged);
-	    for (i = 0; i < (int)BU_PTBL_LEN(&unchanged_filtered); i++) {
-		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&unchanged_filtered, i)) != -1) {
-		    bu_ptbl_ins(results.unchanged, (long *)BU_PTBL_GET(&unchanged_filtered, i));
-		}
-	    }
-	    bu_ptbl_cat(results.unchanged, &unchanged_filtered);
-	}
-	db_search_free(&ancestor_dbip_filtered);
-	db_search_free(&new_dbip_1_filtered);
-    }
-
-    if (verbosity) {
-	if (!have_diff) {
-	    bu_log("No differences found.\n");
-	} else {
-	    diff_summarize(&diff_log, &results, verbosity, return_added, return_removed, return_changed, return_unchanged);
-	    bu_log("%s", bu_vls_addr(&diff_log));
+	RT_CK_DBI(new_dbip_2);
+	if (db_dirbuild(new_dbip_2) < 0) {
+	    db_close(ancestor_dbip);
+	    db_close(new_dbip_2);
+	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
     }
-    if (have_diff) {
-	if (return_added > 0) diff_return += BU_PTBL_LEN(results.added);
-	if (return_removed > 0) diff_return += BU_PTBL_LEN(results.removed);
-	if (return_changed > 0) diff_return += BU_PTBL_LEN(results.changed);
-	if (return_unchanged > 0) diff_return += BU_PTBL_LEN(results.unchanged);
-    }
 
-    bu_ptbl_free(results.added);
-    bu_ptbl_free(results.removed);
-    bu_ptbl_free(results.unchanged);
-    bu_ptbl_free(results.changed_ancestor_dbip);
-    bu_ptbl_free(results.changed_new_dbip_1);
-    bu_free(results.added, "free table");
-    bu_free(results.removed, "free table");
-    bu_free(results.unchanged, "free table");
-    result_free_ptbl(results.changed);
-    bu_free(results.changed, "free table");
-    bu_free(results.changed_ancestor_dbip, "free_table");
-    bu_free(results.changed_new_dbip_1, "free_table");
-    bu_vls_free(&search_filter);
+    results.diff_tolerance = state->diff_tolerance;
+
+    if (argc == 2)
+	diff_return = do_diff(&results, ancestor_dbip, new_dbip_1, state);
+
+    if (argc == 3)
+	diff_return = do_diff3();
+
+    diff_state_free(state);
+    bu_free(state, "free state container");
 
     db_close(ancestor_dbip);
     db_close(new_dbip_1);
+    if (argc == 3) db_close(new_dbip_2);
     return diff_return;
 }
 
