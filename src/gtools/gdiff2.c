@@ -120,8 +120,8 @@ struct results {
     struct bu_ptbl *removed;   /* directory pointers */
     struct bu_ptbl *unchanged; /* directory pointers */
     struct bu_ptbl *changed;   /* result containers */
-    struct bu_ptbl *changed_dbip1;   /* directory pointers */
-    struct bu_ptbl *changed_dbip2;   /* directory pointers */
+    struct bu_ptbl *changed_ancestor_dbip;   /* directory pointers */
+    struct bu_ptbl *changed_new_dbip_1;   /* directory pointers */
 };
 
 
@@ -191,13 +191,13 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
     if (!BU_PTBL_IS_INITIALIZED(results->changed))
 	BU_PTBL_INIT(results->changed);
-    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip1))
-	BU_PTBL_INIT(results->changed_dbip1);
-    if (!BU_PTBL_IS_INITIALIZED(results->changed_dbip2))
-	BU_PTBL_INIT(results->changed_dbip2);
+    if (!BU_PTBL_IS_INITIALIZED(results->changed_ancestor_dbip))
+	BU_PTBL_INIT(results->changed_ancestor_dbip);
+    if (!BU_PTBL_IS_INITIALIZED(results->changed_new_dbip_1))
+	BU_PTBL_INIT(results->changed_new_dbip_1);
 
-    bu_ptbl_ins(results->changed_dbip1, (long *)before);
-    bu_ptbl_ins(results->changed_dbip2, (long *)after);
+    bu_ptbl_ins(results->changed_ancestor_dbip, (long *)before);
+    bu_ptbl_ins(results->changed_new_dbip_1, (long *)after);
 
     result = (struct result_container *)bu_calloc(1, sizeof(struct result_container), "diff result struct");
     result_init(result);
@@ -444,8 +444,8 @@ main(int argc, char **argv)
     int have_search_filter = 0;
     float diff_tolerance = RT_LEN_TOL;
     struct results results;
-    struct db_i *dbip1 = DBI_NULL;
-    struct db_i *dbip2 = DBI_NULL;
+    struct db_i *ancestor_dbip = DBI_NULL;
+    struct db_i *new_dbip_1 = DBI_NULL;
     struct bu_vls diff_log = BU_VLS_INIT_ZERO;
     const char *diff_prog_name = argv[0];
     struct bu_vls search_filter = BU_VLS_INIT_ZERO;
@@ -515,22 +515,22 @@ main(int argc, char **argv)
 	bu_exit(1, "Cannot stat file %s\n", argv[1]);
     }
 
-    if ((dbip1 = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
+    if ((ancestor_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
     }
-    RT_CK_DBI(dbip1);
-    if (db_dirbuild(dbip1) < 0) {
-	db_close(dbip1);
+    RT_CK_DBI(ancestor_dbip);
+    if (db_dirbuild(ancestor_dbip) < 0) {
+	db_close(ancestor_dbip);
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
     }
 
-    if ((dbip2 = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
+    if ((new_dbip_1 = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
     }
-    RT_CK_DBI(dbip2);
-    if (db_dirbuild(dbip2) < 0) {
-	db_close(dbip1);
-	db_close(dbip2);
+    RT_CK_DBI(new_dbip_1);
+    if (db_dirbuild(new_dbip_1) < 0) {
+	db_close(ancestor_dbip);
+	db_close(new_dbip_1);
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
     }
 
@@ -539,18 +539,18 @@ main(int argc, char **argv)
     BU_GET(results.added, struct bu_ptbl);
     BU_GET(results.removed, struct bu_ptbl);
     BU_GET(results.changed, struct bu_ptbl);
-    BU_GET(results.changed_dbip1, struct bu_ptbl);
-    BU_GET(results.changed_dbip2, struct bu_ptbl);
+    BU_GET(results.changed_ancestor_dbip, struct bu_ptbl);
+    BU_GET(results.changed_new_dbip_1, struct bu_ptbl);
     BU_GET(results.unchanged, struct bu_ptbl);
 
     BU_PTBL_INIT(results.added);
     BU_PTBL_INIT(results.removed);
     BU_PTBL_INIT(results.changed);
-    BU_PTBL_INIT(results.changed_dbip1);
-    BU_PTBL_INIT(results.changed_dbip2);
+    BU_PTBL_INIT(results.changed_ancestor_dbip);
+    BU_PTBL_INIT(results.changed_new_dbip_1);
     BU_PTBL_INIT(results.unchanged);
 
-    have_diff = db_diff(dbip1, dbip2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)&results);
+    have_diff = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)&results);
 
     /* Now we have our diff results, time to filter (if applicable) and report them */
     if (have_search_filter) {
@@ -565,17 +565,17 @@ main(int argc, char **argv)
 	 * the original databases.  We then check the filtered diff results against the
 	 * search-filtered original databases to make sure they are valid for the final
 	 * results. */
-	struct bu_ptbl dbip1_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl dbip2_filtered = BU_PTBL_INIT_ZERO;
-	(void)db_search(&dbip1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, dbip1);
-	(void)db_search(&dbip2_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, dbip2);
+	struct bu_ptbl ancestor_dbip_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl new_dbip_1_filtered = BU_PTBL_INIT_ZERO;
+	(void)db_search(&ancestor_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, ancestor_dbip);
+	(void)db_search(&new_dbip_1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(&search_filter), 0, NULL, new_dbip_1);
 
 	/* Filter added objects */
 	if (BU_PTBL_LEN(results.added) > 0) {
 	    bu_ptbl_cat(&added_filtered, results.removed);
 	    bu_ptbl_reset(results.added);
 	    for (i = 0; i < (int)BU_PTBL_LEN(&added_filtered); i++) {
-		if (bu_ptbl_locate(&dbip2_filtered, (long *)BU_PTBL_GET(&added_filtered, i)) != -1) {
+		if (bu_ptbl_locate(&new_dbip_1_filtered, (long *)BU_PTBL_GET(&added_filtered, i)) != -1) {
 		    bu_ptbl_ins(results.added, (long *)BU_PTBL_GET(&added_filtered, i));
 		}
 	    }
@@ -587,7 +587,7 @@ main(int argc, char **argv)
 	    bu_ptbl_cat(&removed_filtered, results.removed);
 	    bu_ptbl_reset(results.removed);
 	    for (i = 0; i < (int)BU_PTBL_LEN(&removed_filtered); i++) {
-		if (bu_ptbl_locate(&dbip1_filtered, (long *)BU_PTBL_GET(&removed_filtered, i)) != -1) {
+		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&removed_filtered, i)) != -1) {
 		    bu_ptbl_ins(results.removed, (long *)BU_PTBL_GET(&removed_filtered, i));
 		}
 	    }
@@ -595,11 +595,11 @@ main(int argc, char **argv)
 	}
 
 	/* Filter changed objects */
-	if (BU_PTBL_LEN(results.changed_dbip1) > 0 || BU_PTBL_LEN(results.changed_dbip2) > 0) {
+	if (BU_PTBL_LEN(results.changed_ancestor_dbip) > 0 || BU_PTBL_LEN(results.changed_new_dbip_1) > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(results.changed); i++) {
 		struct result_container *result = (struct result_container *)BU_PTBL_GET(results.changed, i);
-		if ((result->dp_orig && bu_ptbl_locate(&dbip1_filtered, (long *)result->dp_orig) != -1) ||
-			(result->dp_new && bu_ptbl_locate(&dbip2_filtered, (long *)result->dp_orig) != -1)) {
+		if ((result->dp_orig && bu_ptbl_locate(&ancestor_dbip_filtered, (long *)result->dp_orig) != -1) ||
+			(result->dp_new && bu_ptbl_locate(&new_dbip_1_filtered, (long *)result->dp_orig) != -1)) {
 		    bu_ptbl_ins(&changed_filtered, (long *)result);
 		} else {
 		    result_free((void *)result);
@@ -621,14 +621,14 @@ main(int argc, char **argv)
 	    bu_ptbl_cat(&unchanged_filtered, results.unchanged);
 	    bu_ptbl_reset(results.unchanged);
 	    for (i = 0; i < (int)BU_PTBL_LEN(&unchanged_filtered); i++) {
-		if (bu_ptbl_locate(&dbip1_filtered, (long *)BU_PTBL_GET(&unchanged_filtered, i)) != -1) {
+		if (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)BU_PTBL_GET(&unchanged_filtered, i)) != -1) {
 		    bu_ptbl_ins(results.unchanged, (long *)BU_PTBL_GET(&unchanged_filtered, i));
 		}
 	    }
 	    bu_ptbl_cat(results.unchanged, &unchanged_filtered);
 	}
-	db_search_free(&dbip1_filtered);
-	db_search_free(&dbip2_filtered);
+	db_search_free(&ancestor_dbip_filtered);
+	db_search_free(&new_dbip_1_filtered);
     }
 
     if (verbosity) {
@@ -649,19 +649,19 @@ main(int argc, char **argv)
     bu_ptbl_free(results.added);
     bu_ptbl_free(results.removed);
     bu_ptbl_free(results.unchanged);
-    bu_ptbl_free(results.changed_dbip1);
-    bu_ptbl_free(results.changed_dbip2);
+    bu_ptbl_free(results.changed_ancestor_dbip);
+    bu_ptbl_free(results.changed_new_dbip_1);
     bu_free(results.added, "free table");
     bu_free(results.removed, "free table");
     bu_free(results.unchanged, "free table");
     result_free_ptbl(results.changed);
     bu_free(results.changed, "free table");
-    bu_free(results.changed_dbip1, "free_table");
-    bu_free(results.changed_dbip2, "free_table");
+    bu_free(results.changed_ancestor_dbip, "free_table");
+    bu_free(results.changed_new_dbip_1, "free_table");
     bu_vls_free(&search_filter);
 
-    db_close(dbip1);
-    db_close(dbip2);
+    db_close(ancestor_dbip);
+    db_close(new_dbip_1);
     return diff_return;
 }
 
