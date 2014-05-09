@@ -702,6 +702,12 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
     return diff_return;
 }
 
+
+/* TODO - may need to bu_sort the ptbl contents by name
+ * so we can do a binary lookup for these two functions instead
+ * of looking at every entry every time - potentially expensive in
+ * the worst cases. */
+
 static int
 dp_ptbl_find(struct bu_ptbl *table, const char *name)
 {
