@@ -39,6 +39,7 @@ struct diff_state {
     int return_removed;
     int return_changed;
     int return_unchanged;
+    int return_conflicts;
     int have_search_filter;
     int verbosity;
     int output_mode;
@@ -609,6 +610,105 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, stru
     bu_vls_printf(diff_log, "\n");
 }
 
+static void
+diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, struct diff_state *state)
+{
+    int i = 0;
+
+    if (state->verbosity < 1 || !results)
+	return;
+
+    /* Temporarily, only do verbosity == 1 */
+    if (state->verbosity >= 1) {
+	int line_len = 0;
+	if (state->return_added > 0) {
+	    if ((int)BU_PTBL_LEN(results->added_dbip1) > 0) {
+		bu_vls_printf(diff_log, "\nObjects added in dbip1:\n"); /* TODO - capture input filenames for this */
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->added_dbip1); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->added_dbip1, i);
+		line_len = print_dp(diff_log, results->added_dbip1, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	    if ((int)BU_PTBL_LEN(results->added_dbip2) > 0) {
+		bu_vls_printf(diff_log, "\nObjects added in dbip2:\n"); /* TODO - capture input filenames for this */
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->added_dbip2); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->added_dbip2, i);
+		line_len = print_dp(diff_log, results->added_dbip2, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	    if ((int)BU_PTBL_LEN(results->added_both) > 0) {
+		bu_vls_printf(diff_log, "\nObjects added in both:\n"); /* TODO - capture input filenames for this */
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->added_both); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->added_both, i);
+		line_len = print_dp(diff_log, results->added_both, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	}
+	line_len = 0;
+	if (state->return_removed > 0) {
+	    if ((int)BU_PTBL_LEN(results->removed_dbip1) > 0) {
+		bu_vls_printf(diff_log, "\nObjects removed from dbip1 only:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->removed_dbip1); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->removed_dbip1, i);
+		line_len = print_dp(diff_log, results->removed_dbip1, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	    if ((int)BU_PTBL_LEN(results->removed_dbip2) > 0) {
+		bu_vls_printf(diff_log, "\nObjects removed from dbip2 only:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->removed_dbip2); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->removed_dbip2, i);
+		line_len = print_dp(diff_log, results->removed_dbip2, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	    if ((int)BU_PTBL_LEN(results->removed_both) > 0) {
+		bu_vls_printf(diff_log, "\nObjects removed from both:\n");
+	    }
+	    for (i = 0; i < (int)BU_PTBL_LEN(results->removed_both); i++) {
+		struct directory *dp = (struct directory *)BU_PTBL_GET(results->removed_both, i);
+		line_len = print_dp(diff_log, results->removed_both, i, dp, line_len);
+	    }
+	    bu_vls_printf(diff_log, "\n");
+	}
+	line_len = 0;
+	if (state->return_changed > 0) {
+	    if ((int)BU_PTBL_LEN(results->changed_dbip1_new) > 0) {
+		bu_vls_printf(diff_log, "\nObjects changed in dbip1 only: %d\n", (int)BU_PTBL_LEN(results->changed_dbip1_new));
+	    }
+	    if ((int)BU_PTBL_LEN(results->changed_dbip2_new) > 0) {
+		bu_vls_printf(diff_log, "\nObjects changed in dbip2 only: %d\n", (int)BU_PTBL_LEN(results->changed_dbip2_new));
+	    }
+	    if ((int)BU_PTBL_LEN(results->changed_both) > 0) {
+		bu_vls_printf(diff_log, "\nObjects changed in both: %d\n", (int)BU_PTBL_LEN(results->changed_both));
+	    }
+	}
+	line_len = 0;
+	if (state->return_conflicts > 0) {
+	    if ((int)BU_PTBL_LEN(results->added_conflicts) > 0) {
+		bu_vls_printf(diff_log, "\n%d conflicts in objects added to dbip1 and dbip2\n", (int)BU_PTBL_LEN(results->added_conflicts));
+	    }
+	    if ((int)BU_PTBL_LEN(results->changed_conflicts) > 0) {
+		bu_vls_printf(diff_log, "\n%d conflicts in objects changed in both dbip1 and dbip2\n", (int)BU_PTBL_LEN(results->changed_conflicts));
+	    }
+	
+	}
+	line_len = 0;
+	if (state->return_unchanged > 0) {
+	    if ((int)BU_PTBL_LEN(results->unchanged) > 0) {
+		bu_vls_printf(diff_log, "\nObjects unchanged: %d\n", (int)BU_PTBL_LEN(results->unchanged));
+	    }
+	}
+
+    }
+    bu_vls_printf(diff_log, "\n");
+}
+
+
+
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
 /*******************************************************************/
@@ -808,10 +908,12 @@ compare_dps(const struct directory *dp1, struct db_i *dbip1, const struct direct
 static int
 do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_dbip_2, struct diff_state *state) {
     int i = 0;
+    int have_diff = 0;
     struct diff_results *dbip1_results;
     struct diff_results *dbip2_results;
     int diff_return_1 = 0;
     int diff_return_2 = 0;
+    int diff_return = 0;
     struct diff3_results *results;
     struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
 
@@ -830,6 +932,8 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     diff_return_2 = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
     if (diff_return_1 < 0 && diff_return_2 < 0) {
 	return diff_return_1;
+    } else {
+	have_diff = 1;
     }
 
     /* Now we know what changed from the ancestor file to each of the two new files.
@@ -983,12 +1087,34 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 	}
     }
 
+    if (state->verbosity) {
+	if (!have_diff) {
+	    bu_log("No differences found.\n");
+	} else {
+	    diff3_summarize(state->diff_log, results, state);
+	    bu_log("%s", bu_vls_addr(state->diff_log));
+	}
+    }
+    if (have_diff) {
+	if (state->return_added > 0) diff_return += BU_PTBL_LEN(results->added_dbip1);
+	if (state->return_added > 0) diff_return += BU_PTBL_LEN(results->added_dbip2);
+	if (state->return_added > 0) diff_return += BU_PTBL_LEN(results->added_both);
+	if (state->return_removed > 0) diff_return += BU_PTBL_LEN(results->removed_dbip1);
+	if (state->return_removed > 0) diff_return += BU_PTBL_LEN(results->removed_dbip2);
+	if (state->return_removed > 0) diff_return += BU_PTBL_LEN(results->removed_both);
+	if (state->return_changed > 0) diff_return += BU_PTBL_LEN(results->changed_dbip1_new);
+	if (state->return_changed > 0) diff_return += BU_PTBL_LEN(results->changed_dbip2_new);
+	if (state->return_changed > 0) diff_return += BU_PTBL_LEN(results->changed_both);
+	if (state->return_conflicts > 0) diff_return += BU_PTBL_LEN(results->added_conflicts);
+	if (state->return_conflicts > 0) diff_return += BU_PTBL_LEN(results->changed_conflicts);
+	if (state->return_unchanged > 0) diff_return += BU_PTBL_LEN(results->unchanged);
+    }
+
     diff3_results_free(results);
     BU_PUT(results, struct diff3_results);
     BU_PUT(dbip1_results, struct diff_results);
     BU_PUT(dbip2_results, struct diff_results);
 
-    bu_log("TODO - implement diff3");
     return 0;
 }
 
@@ -1015,7 +1141,7 @@ main(int argc, char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "acF:mrt:uv:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "aC:cF:mrt:uv:xh?")) != -1) {
 	switch (c) {
 	    case 'a':
 		state->return_added = 1;
@@ -1045,6 +1171,13 @@ main(int argc, char **argv)
 		break;
 	    case 'v':   /* verbosity (2 is default) */
 		if (sscanf(bu_optarg, "%d", &(state->verbosity)) != 1) {
+		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
+		    gdiff_usage(diff_prog_name);
+		    bu_exit (1, NULL);
+		}
+		break;
+	    case 'C':   /* conflict reporting (1 is default) */
+		if (sscanf(bu_optarg, "%d", &(state->return_conflicts)) != 1) {
 		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
