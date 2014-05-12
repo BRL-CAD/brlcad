@@ -216,14 +216,6 @@ void diff_results_free(struct diff_results *results){
 /* Structures and memory management for the containers specific to
  * diff3 results */
 /*******************************************************************/
-struct diff3_container {
-    const struct db_i *dbip_orig;
-    const struct db_i *dbip1;
-    const struct db_i *dbip2;
-    const struct directory *dp_orig;
-    const struct directory *dp1;
-    const struct directory *dp2;
-};
 
 struct diff3_results {
     float diff_tolerance;
@@ -1019,14 +1011,14 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		case 1:
 		case 2:
 		case 3:
-		    struct diff3_container *new_conflict;
-		    BU_GET(new_conflict, diff3_container);
-		    new_conflict->dbip_orig = DBI_NULL;
-		    new_conflict->dbip1 = new_dbip_1;
-		    new_conflict->dbip2 = new_dbip_2;
-		    new_conflict->dp_orig = RT_DIR_NULL;
-		    new_conflict->dp1 = dp;
-		    new_conflict->dp2 = dp2;
+		    struct diff_result_container *new_conflict;
+		    BU_GET(new_conflict, diff_result_container);
+		    new_conflict->dbip_ancestor = DBI_NULL;
+		    new_conflict->dbip_orig = new_dbip_1;
+		    new_conflict->dbip_new = new_dbip_2;
+		    new_conflict->dp_ancestor = RT_DIR_NULL;
+		    new_conflict->dp_orig = dp;
+		    new_conflict->dp_new = dp2;
 		    bu_ptbl_ins(results->added_conflicts, (long *)new_conflict);
 		    break;
 		default:
@@ -1098,14 +1090,14 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		case 1:
 		case 2:
 		case 3:
-		    struct diff3_container *new_conflict;
-		    BU_GET(new_conflict, struct diff3_container);
-		    new_conflict->dbip_orig = ancestor_dbip;
-		    new_conflict->dbip1 = new_dbip_1;
-		    new_conflict->dbip2 = new_dbip_2;
-		    new_conflict->dp_orig = (struct directory *)BU_PTBL_GET(dbip1_results->changed_ancestor_dbip, i);
-		    new_conflict->dp1 = dp;
-		    new_conflict->dp2 = dp2;
+		    struct diff_result_container *new_conflict;
+		    BU_GET(new_conflict, struct diff_result_container);
+		    new_conflict->dbip_ancestor = ancestor_dbip;
+		    new_conflict->dbip_orig = new_dbip_1;
+		    new_conflict->dbip_new = new_dbip_2;
+		    new_conflict->dp_ancestor = (struct directory *)BU_PTBL_GET(dbip1_results->changed_ancestor_dbip, i);
+		    new_conflict->dp_orig = dp;
+		    new_conflict->dp_new = dp2;
 		    bu_ptbl_ins(results->changed_conflicts, (long *)new_conflict);
 		    break;
 		default:
