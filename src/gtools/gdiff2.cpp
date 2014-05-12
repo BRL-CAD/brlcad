@@ -302,6 +302,7 @@ void diff3_results_free(struct diff3_results *results){
 
     BU_PUT(results->added_both, struct bu_ptbl);
     BU_PUT(results->changed_both, struct bu_ptbl);
+    BU_PUT(results->removed_both, struct bu_ptbl);
     BU_PUT(results->added_conflicts, struct bu_ptbl);
     BU_PUT(results->changed_conflicts, struct bu_ptbl);
 
