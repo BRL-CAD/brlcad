@@ -227,87 +227,101 @@ struct diff3_conflict {
 
 struct diff3_results {
     float diff_tolerance;
+
     struct bu_ptbl *added_dbip1;     	/* directory pointers */
     struct bu_ptbl *added_dbip2;     	/* directory pointers */
+    struct bu_ptbl *added_both;     	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two added objects *without* conflict, we need to use a container)*/
+    struct bu_ptbl *added_conflicts;    /* result containers */
+
     struct bu_ptbl *removed_dbip1;   	/* directory pointers */
     struct bu_ptbl *removed_dbip2;   	/* directory pointers */
-    struct bu_ptbl *unchanged; 		/* directory pointers (dbip1)*/
+    struct bu_ptbl *removed_both;     	/* directory pointers (dbip1) */
+
     struct bu_ptbl *changed_ancestor;   /* directory pointers */
     struct bu_ptbl *changed_dbip1_new;	/* directory pointers */
     struct bu_ptbl *changed_dbip2_new;	/* directory pointers */
+    struct bu_ptbl *changed_both;	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two changed objects *without* conflict, we need to use a container) */
+    struct bu_ptbl *changed_conflicts;  /* result containers */
 
-    struct bu_ptbl *added_both;     /* directory pointers */
-    struct bu_ptbl *changed_both;     /* directory pointers */
-    struct bu_ptbl *removed_both;     /* directory pointers */
-    struct bu_ptbl *added_conflicts;   /* result containers */
-    struct bu_ptbl *changed_conflicts;   /* result containers */
+    struct bu_ptbl *unchanged; 		/* directory pointers (ancestor)*/
 };
 
 void diff3_results_init(struct diff3_results *results){
+
     BU_GET(results->added_dbip1, struct bu_ptbl);
     BU_GET(results->added_dbip2, struct bu_ptbl);
+    BU_GET(results->added_both, struct bu_ptbl);
+    BU_GET(results->added_conflicts, struct bu_ptbl);
+
     BU_GET(results->removed_dbip1, struct bu_ptbl);
     BU_GET(results->removed_dbip2, struct bu_ptbl);
-    BU_GET(results->unchanged, struct bu_ptbl);
+    BU_GET(results->removed_both, struct bu_ptbl);
+
     BU_GET(results->changed_ancestor, struct bu_ptbl);
     BU_GET(results->changed_dbip1_new, struct bu_ptbl);
     BU_GET(results->changed_dbip2_new, struct bu_ptbl);
-
-    BU_GET(results->added_both, struct bu_ptbl);
     BU_GET(results->changed_both, struct bu_ptbl);
-    BU_GET(results->removed_both, struct bu_ptbl);
-    BU_GET(results->added_conflicts, struct bu_ptbl);
     BU_GET(results->changed_conflicts, struct bu_ptbl);
+
+    BU_GET(results->unchanged, struct bu_ptbl);
 
     BU_PTBL_INIT(results->added_dbip1);
     BU_PTBL_INIT(results->added_dbip2);
+    BU_PTBL_INIT(results->added_both);
+    BU_PTBL_INIT(results->added_conflicts);
+
     BU_PTBL_INIT(results->removed_dbip1);
     BU_PTBL_INIT(results->removed_dbip2);
-    BU_PTBL_INIT(results->unchanged);
+    BU_PTBL_INIT(results->removed_both);
+
     BU_PTBL_INIT(results->changed_ancestor);
     BU_PTBL_INIT(results->changed_dbip1_new);
     BU_PTBL_INIT(results->changed_dbip2_new);
-
-    BU_PTBL_INIT(results->added_both);
     BU_PTBL_INIT(results->changed_both);
-    BU_PTBL_INIT(results->added_conflicts);
     BU_PTBL_INIT(results->changed_conflicts);
+
+    BU_PTBL_INIT(results->unchanged);
 }
 
 
 void diff3_results_free(struct diff3_results *results){
+
     bu_ptbl_free(results->added_dbip1);
     bu_ptbl_free(results->added_dbip2);
+    bu_ptbl_free(results->added_both);
+
     bu_ptbl_free(results->removed_dbip1);
     bu_ptbl_free(results->removed_dbip2);
-    bu_ptbl_free(results->unchanged);
+    bu_ptbl_free(results->removed_both);
+
     bu_ptbl_free(results->changed_ancestor);
     bu_ptbl_free(results->changed_dbip1_new);
     bu_ptbl_free(results->changed_dbip2_new);
-
-    bu_ptbl_free(results->added_both);
     bu_ptbl_free(results->changed_both);
-    bu_ptbl_free(results->removed_both);
+
+    bu_ptbl_free(results->unchanged);
 
     /* TODO - properly free the allocated containers with BU_PUT */
     bu_ptbl_free(results->added_conflicts);
     bu_ptbl_free(results->changed_conflicts);
 
+
     BU_PUT(results->added_dbip1, struct bu_ptbl);
     BU_PUT(results->added_dbip2, struct bu_ptbl);
+    BU_PUT(results->added_both, struct bu_ptbl);
+    BU_PUT(results->added_conflicts, struct bu_ptbl);
+
     BU_PUT(results->removed_dbip1, struct bu_ptbl);
     BU_PUT(results->removed_dbip2, struct bu_ptbl);
-    BU_PUT(results->unchanged, struct bu_ptbl);
+    BU_PUT(results->removed_both, struct bu_ptbl);
+
     BU_PUT(results->changed_ancestor, struct bu_ptbl);
     BU_PUT(results->changed_dbip1_new, struct bu_ptbl);
     BU_PUT(results->changed_dbip2_new, struct bu_ptbl);
-
-    BU_PUT(results->added_both, struct bu_ptbl);
     BU_PUT(results->changed_both, struct bu_ptbl);
-    BU_PUT(results->removed_both, struct bu_ptbl);
-    BU_PUT(results->added_conflicts, struct bu_ptbl);
     BU_PUT(results->changed_conflicts, struct bu_ptbl);
 
+    BU_PUT(results->unchanged, struct bu_ptbl);
 }
 
 /*******************************************************************/
