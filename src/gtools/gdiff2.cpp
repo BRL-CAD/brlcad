@@ -509,7 +509,7 @@ print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, 
 
 
 static void
-diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, const int verbosity, const int r_added, const int r_removed, const int r_changed, const int r_unchanged)
+diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, struct diff_state *state)
 {
     int i = 0;
 
@@ -518,7 +518,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
     struct bu_ptbl *changed;
     struct bu_ptbl *unchanged;
 
-    if (verbosity < 1 || !results)
+    if (state->verbosity < 1 || !results)
 	return;
 
     added = results->added;
@@ -526,9 +526,9 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
     changed = results->changed;
     unchanged = results->unchanged;
 
-    if (verbosity == 1) {
+    if (state->verbosity == 1) {
 	int line_len = 0;
-	if (r_added > 0) {
+	if (state->return_added > 0) {
 	    if ((int)BU_PTBL_LEN(added) > 0) {
 		bu_vls_printf(diff_log, "\nObjects added:\n");
 	    }
@@ -538,7 +538,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
 	    }
 	}
 	line_len = 0;
-	if (r_removed > 0) {
+	if (state->return_removed > 0) {
 	    if ((int)BU_PTBL_LEN(removed) > 0) {
 		bu_vls_printf(diff_log, "\nObjects removed:\n");
 	    }
@@ -548,7 +548,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
 	    }
 	}
 	line_len = 0;
-	if (r_changed > 0) {
+	if (state->return_changed > 0) {
 	    if ((int)BU_PTBL_LEN(changed) > 0) {
 		bu_vls_printf(diff_log, "\nObjects changed:\n");
 	    }
@@ -560,7 +560,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
 	    }
 	}
 	line_len = 0;
-	if (r_unchanged > 0) {
+	if (state->return_unchanged > 0) {
 	    if ((int)BU_PTBL_LEN(unchanged) > 0) {
 		bu_vls_printf(diff_log, "\nObjects unchanged:\n");
 	    }
@@ -571,22 +571,22 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
 	}
 
     }
-    if (verbosity > 1) {
-	if (r_added > 0) {
+    if (state->verbosity > 1) {
+	if (state->return_added > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
 		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
 		bu_vls_printf(diff_log, "%s was added.\n\n", dp->d_namep);
 	    }
 	}
 
-	if (r_removed > 0) {
+	if (state->return_removed > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
 		struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
 		bu_vls_printf(diff_log, "%s was removed.\n\n", dp->d_namep);
 	    }
 	}
 
-	if (r_changed > 0) {
+	if (state->return_changed > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
 		struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(changed, i);
 		const struct directory *dp = result->dp_orig;
@@ -597,7 +597,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
 		bu_vls_printf(diff_log, "\n");
 	    }
 	}
-	if (r_unchanged > 0) {
+	if (state->return_unchanged > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
 		struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
 		bu_vls_printf(diff_log, "%s was unchanged.\n\n", dp->d_namep);
@@ -707,7 +707,7 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
 	if (!have_diff) {
 	    bu_log("No differences found.\n");
 	} else {
-	    diff_summarize(state->diff_log, results, state->verbosity, state->return_added, state->return_removed, state->return_changed, state->return_unchanged);
+	    diff_summarize(state->diff_log, results, state);
 	    bu_log("%s", bu_vls_addr(state->diff_log));
 	}
     }
@@ -733,6 +733,15 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
  * so we can do a binary lookup for these two functions instead
  * of looking at every entry every time - potentially expensive in
  * the worst cases. */
+
+#if 0
+static void
+diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, struct diff_state *state)
+{
+    bu_vls_printf(diff_log, "\n");
+}
+#endif
+
 
 static const struct directory *
 dp_ptbl_find(struct bu_ptbl *table, const char *name)
