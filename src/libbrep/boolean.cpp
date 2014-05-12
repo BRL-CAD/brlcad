@@ -1090,11 +1090,6 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	    newloop.Append(outerloop_segs[j]);
 	}
 
-	if (p.m_ssx_curve != q.m_ssx_curve) {
-	    bu_log("Error: p->type != q->type\n");
-	    continue;
-	}
-
 	// The curves on the outer loop is from p to q, so the curves on the
 	// SSI curve should be from q to p (to form a loop)
 	double t1 = p.m_curve_t, t2 = q.m_curve_t;
