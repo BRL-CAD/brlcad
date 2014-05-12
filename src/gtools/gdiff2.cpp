@@ -198,6 +198,15 @@ void diff_results_free(struct diff_results *results){
 
 }
 
+struct diff3_conflict {
+    const struct db_i *dbip_orig;
+    const struct db_i *dbip1;
+    const struct db_i *dbip2;
+    const struct directory *dp_orig;
+    const struct directory *dp1;
+    const struct directory *dp2;
+};
+
 struct diff3_results {
     float diff_tolerance;
     struct bu_ptbl *added_dbip1;     	/* directory pointers */
@@ -259,6 +268,8 @@ void diff3_results_free(struct diff3_results *results){
 
     bu_ptbl_free(results->added_both);
     bu_ptbl_free(results->changed_both);
+
+    /* TODO - properly free the allocated containers with BU_PUT */
     bu_ptbl_free(results->added_conflicts);
     bu_ptbl_free(results->changed_conflicts);
 
@@ -721,17 +732,51 @@ rc_ptbl_find(struct bu_ptbl *table, const char *name)
 }
 
 static int
+compare_dps(const struct directory *dp1, struct db_i *dbip1, const struct directory *dp2, struct db_i *dbip2, struct bn_tol *diff_tol)
+{
+    /* Compare the two objects */
+    struct rt_db_internal *intern_1 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_1");
+    struct rt_db_internal *intern_2 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_2");
+    int internal_diff = 1;
+    int attr_diff = 1;
+    int bad_internals = -2;
+    RT_DB_INTERNAL_INIT(intern_1);
+    RT_DB_INTERNAL_INIT(intern_2);
+
+    /* Get the internal objects */
+    if (rt_db_get_internal(intern_1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	bad_internals++;
+    }
+    if (rt_db_get_internal(intern_2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	bad_internals++;
+    }
+    if (!bad_internals) {
+	internal_diff = db_compare(intern_1, intern_2, DB_COMPARE_PARAM, NULL, NULL, NULL, NULL, NULL, diff_tol);
+	attr_diff = db_compare(intern_1, intern_2, DB_COMPARE_ATTRS, NULL, NULL, NULL, NULL, NULL, diff_tol);
+    }
+
+    rt_db_free_internal(intern_1);
+    rt_db_free_internal(intern_2);
+
+    if (bad_internals) return -1;
+    if (!internal_diff && !attr_diff) return 0;
+    if (!internal_diff && attr_diff)  return 1;
+    if (internal_diff && !attr_diff)  return 2;
+    if (internal_diff && attr_diff)   return 3;
+    return -1;  /* Shouldn't get here */
+}
+
+static int
 do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_dbip_2, struct diff_state *state) {
     int i = 0;
     struct diff_results *dbip1_results;
     struct diff_results *dbip2_results;
-    int diff_return = 0;
+    int diff_return_1 = 0;
+    int diff_return_2 = 0;
     struct diff3_results *results;
     struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
 
     diff_tol.dist = state->diff_tolerance;
-
-
 
     BU_GET(results, struct diff3_results);
 
@@ -741,15 +786,11 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     BU_GET(dbip2_results, struct diff_results);
 
     diff_results_init(dbip1_results);
-    diff_return = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip1_results);
-    if (diff_return < 0) {
-	return diff_return;
-    }
-
+    diff_return_1 = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip1_results);
     diff_results_init(dbip2_results);
-    diff_return = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
-    if (diff_return < 0) {
-	return diff_return;
+    diff_return_2 = db_diff(ancestor_dbip, new_dbip_2, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)dbip2_results);
+    if (diff_return_1 < 0 && diff_return_2 < 0) {
+	return diff_return_1;
     }
 
     /* Now we know what changed from the ancestor file to each of the two new files.
@@ -759,7 +800,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 
     /* To get a true "unchanged" set, one of the unchanged sets needs
      * to have any of the objects present in the other diff's results
-     * removed, since they are not unchanged in the move */
+     * removed, since they are not unchanged in the final merged output */
     BU_PTBL_INIT(results->unchanged);
     for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results->unchanged); i++) {
 	int changed = 0;
@@ -778,44 +819,72 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
      * unless the objects are identical. (Maybe not structly true -
      * could attrs be merged if the sets are fully compatible?) */
     BU_PTBL_INIT(results->added_dbip1);
+    BU_PTBL_INIT(results->added_both);
+    BU_PTBL_INIT(results->added_conflicts);
     for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results->added); i++) {
-	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results->unchanged, i);
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results->added, i);
 	const struct directory *dp2 = dp_ptbl_find(dbip2_results->added, dp->d_namep);
-	if (!(dp2 == RT_DIR_NULL)) {
+	if (dp2 == RT_DIR_NULL) {
 	    bu_ptbl_ins(results->added_dbip1, (long *)dp);
 	} else {
-	    /* Compare the two objects */
-	    struct rt_db_internal *intern_1 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_1");
-	    struct rt_db_internal *intern_2 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_2");
-	    int internal_diff = 1;
-	    int attr_diff = 1;
-	    int bad_internals = -2;
-	    RT_DB_INTERNAL_INIT(intern_1);
-	    RT_DB_INTERNAL_INIT(intern_2);
-
-	    /* Get the internal objects */
-	    if (rt_db_get_internal(intern_1, dp, new_dbip_1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-		bad_internals++;
-	    }
-	    if (rt_db_get_internal(intern_2, dp2, new_dbip_2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-		bad_internals++;
-	    }
-	    if (!bad_internals) {
-		internal_diff = db_compare(intern_1, intern_2, DB_COMPARE_PARAM, NULL, NULL, NULL, NULL, NULL, &diff_tol);
-		attr_diff = db_compare(intern_1, intern_2, DB_COMPARE_ATTRS, NULL, NULL, NULL, NULL, NULL, &diff_tol);
-	    }
-	    if (internal_diff || attr_diff) {
-		bu_ptbl_ins(results->added_conflicts, (long *)dp);
-	    } else {
-		bu_ptbl_ins(results->added_both, (long *)dp);
+	    int c = compare_dps(dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
+	    switch (c) {
+		case -1:
+		    break;
+		case 0:
+		    bu_ptbl_ins(results->added_both, (long *)dp);
+		    break;
+		case 1:
+		case 2:
+		case 3:
+		    struct diff3_conflict *new_conflict;
+		    BU_GET(new_conflict, diff3_conflict);
+		    new_conflict->dbip_orig = DBI_NULL;
+		    new_conflict->dbip1 = new_dbip_1;
+		    new_conflict->dbip2 = new_dbip_2;
+		    new_conflict->dp_orig = RT_DIR_NULL;
+		    new_conflict->dp1 = dp;
+		    new_conflict->dp2 = dp2;
+		    bu_ptbl_ins(results->added_conflicts, (long *)new_conflict);
+		    break;
+		default:
+		    bu_log("error - unknown return code %d from directory object comparison\n", c);
 	    }
 
-	    rt_db_free_internal(intern_1);
-	    rt_db_free_internal(intern_2);
 	}
     }
+    BU_PTBL_INIT(results->added_dbip2);
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results->added); i++) {
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results->added, i);
+	const struct directory *dp1 = dp_ptbl_find(dbip1_results->added, dp->d_namep);
+	if (dp1 == RT_DIR_NULL) {
+	    bu_ptbl_ins(results->added_dbip2, (long *)dp);
+	}
+	/* We already got all the common objects when we iterated through dbip1_results->added */
+    }
 
-
+    /* If the same object was removed in both files, we make a note
+     * of that to allow for more informative reporting */
+    BU_PTBL_INIT(results->removed_dbip1);
+    BU_PTBL_INIT(results->removed_both);
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results->removed); i++) {
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results->removed, i);
+	const struct directory *dp2 = dp_ptbl_find(dbip2_results->removed, dp->d_namep);
+	if (dp2 == RT_DIR_NULL) {
+	    bu_ptbl_ins(results->removed_dbip1, (long *)dp);
+	} else {
+	    bu_ptbl_ins(results->removed_both, (long *)dp);
+	}
+    }
+    BU_PTBL_INIT(results->removed_dbip2);
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results->removed); i++) {
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results->removed, i);
+	const struct directory *dp1 = dp_ptbl_find(dbip1_results->removed, dp->d_namep);
+	if (dp1 == RT_DIR_NULL) {
+	    bu_ptbl_ins(results->removed_dbip2, (long *)dp);
+	}
+	/* We already got all the common objects when we iterated through dbip1_results->removed */
+    }
 
 
     /* If the same object was changed in both files, we have a *potential* conflict
@@ -823,10 +892,57 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
      * around whether we try to merge changes below the object level. A possible
      * middle ground is to try and resolve attributes but not tangle with primitive
      * parameters, which avoids thorny issues such as when are comb trees mergable? */
-
-    /* The real work begins when we have two changed objects with different changes -
-     * are the changes such that they can be combined (i.e. two different attributes changed/added)
-     * or are they incompatible changes to the same object attribute? */
+    BU_PTBL_INIT(results->changed_ancestor);
+    BU_PTBL_INIT(results->changed_dbip1_new);
+    BU_PTBL_INIT(results->changed_dbip2_new);
+    BU_PTBL_INIT(results->changed_both);
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip1_results->changed_ancestor_dbip); i++) {
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip1_results->changed_new_dbip_1, i);
+	const struct directory *dp2 = (struct directory *)BU_PTBL_GET(dbip2_results->changed_new_dbip_1, i);
+	bu_ptbl_ins_unique(results->changed_ancestor, (long *)BU_PTBL_GET(dbip1_results->changed_ancestor_dbip, i));
+	if (dp2 == RT_DIR_NULL) {
+	    bu_ptbl_ins(results->changed_dbip1_new, (long *)dp);
+	} else {
+	    /* Same situation as adding, in some respects - did we end up in the same
+	     * place or not?  This should be more sophisticated, but for now do the
+	     * simple thing and don't try to merge attrs. */
+	    int c = compare_dps(dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
+	    switch (c) {
+		case -1:
+		    break;
+		case 0:
+		    bu_ptbl_ins(results->changed_both, (long *)dp);
+		    break;
+		case 1:
+		case 2:
+		case 3:
+		    struct diff3_conflict *new_conflict;
+		    BU_GET(new_conflict, struct diff3_conflict);
+		    new_conflict->dbip_orig = ancestor_dbip;
+		    new_conflict->dbip1 = new_dbip_1;
+		    new_conflict->dbip2 = new_dbip_2;
+		    new_conflict->dp_orig = (struct directory *)BU_PTBL_GET(dbip1_results->changed_ancestor_dbip, i);
+		    new_conflict->dp1 = dp;
+		    new_conflict->dp2 = dp2;
+		    bu_ptbl_ins(results->changed_conflicts, (long *)new_conflict);
+		    break;
+		default:
+		    bu_log("error - unknown return code %d from directory object comparison\n", c);
+	    }
+	}
+    }
+    for (i = 0; i < (int)BU_PTBL_LEN(dbip2_results->changed_ancestor_dbip); i++) {
+	const struct directory *dp = (struct directory *)BU_PTBL_GET(dbip2_results->changed_new_dbip_1, i);
+	const struct directory *dp1 = (struct directory *)BU_PTBL_GET(dbip1_results->changed_new_dbip_1, i);
+	bu_ptbl_ins_unique(results->changed_ancestor, (long *)BU_PTBL_GET(dbip2_results->changed_ancestor_dbip, i));
+	if (dp1 == RT_DIR_NULL) {
+	    bu_ptbl_ins(results->changed_dbip2_new, (long *)dp);
+	} else {
+	    /* The real work begins when we have two changed objects with different changes -
+	     * are the changes such that they can be combined (i.e. two different attributes changed/added)
+	     * or are they incompatible changes to the same object attribute? */
+	}
+    }
 
     diff3_results_free(results);
     BU_PUT(results, struct diff3_results);
