@@ -200,17 +200,14 @@ void diff_results_free(struct diff_results *results){
 
 struct diff3_results {
     float diff_tolerance;
-    struct bu_ptbl *added_dbip1;     /* directory pointers */
-    struct bu_ptbl *added_dbip2;     /* directory pointers */
-    struct bu_ptbl *removed_dbip1;   /* directory pointers */
-    struct bu_ptbl *removed_dbip2;   /* directory pointers */
-    struct bu_ptbl *unchanged; /* directory pointers */
-    struct bu_ptbl *changed_dbip1;   /* result containers */
-    struct bu_ptbl *changed_dbip2;   /* result containers */
-    struct bu_ptbl *changed_dbip1_ancestor;   /* directory pointers */
-    struct bu_ptbl *changed_dbip1_new;   /* directory pointers */
-    struct bu_ptbl *changed_dbip2_ancestor;   /* directory pointers */
-    struct bu_ptbl *changed_dbip2_new;   /* directory pointers */
+    struct bu_ptbl *added_dbip1;     	/* directory pointers */
+    struct bu_ptbl *added_dbip2;     	/* directory pointers */
+    struct bu_ptbl *removed_dbip1;   	/* directory pointers */
+    struct bu_ptbl *removed_dbip2;   	/* directory pointers */
+    struct bu_ptbl *unchanged; 		/* directory pointers (dbip1)*/
+    struct bu_ptbl *changed_ancestor;   /* directory pointers */
+    struct bu_ptbl *changed_dbip1_new;	/* directory pointers */
+    struct bu_ptbl *changed_dbip2_new;	/* directory pointers */
 
     struct bu_ptbl *added_both;     /* directory pointers */
     struct bu_ptbl *changed_both;     /* directory pointers */
@@ -225,11 +222,8 @@ void diff3_results_init(struct diff3_results *results){
     BU_GET(results->removed_dbip1, struct bu_ptbl);
     BU_GET(results->removed_dbip2, struct bu_ptbl);
     BU_GET(results->unchanged, struct bu_ptbl);
-    BU_GET(results->changed_dbip1, struct bu_ptbl);
-    BU_GET(results->changed_dbip2, struct bu_ptbl);
-    BU_GET(results->changed_dbip1_ancestor, struct bu_ptbl);
+    BU_GET(results->changed_ancestor, struct bu_ptbl);
     BU_GET(results->changed_dbip1_new, struct bu_ptbl);
-    BU_GET(results->changed_dbip2_ancestor, struct bu_ptbl);
     BU_GET(results->changed_dbip2_new, struct bu_ptbl);
 
     BU_GET(results->added_both, struct bu_ptbl);
@@ -242,11 +236,8 @@ void diff3_results_init(struct diff3_results *results){
     BU_PTBL_INIT(results->removed_dbip1);
     BU_PTBL_INIT(results->removed_dbip2);
     BU_PTBL_INIT(results->unchanged);
-    BU_PTBL_INIT(results->changed_dbip1);
-    BU_PTBL_INIT(results->changed_dbip2);
-    BU_PTBL_INIT(results->changed_dbip1_ancestor);
+    BU_PTBL_INIT(results->changed_ancestor);
     BU_PTBL_INIT(results->changed_dbip1_new);
-    BU_PTBL_INIT(results->changed_dbip2_ancestor);
     BU_PTBL_INIT(results->changed_dbip2_new);
 
     BU_PTBL_INIT(results->added_both);
@@ -262,11 +253,8 @@ void diff3_results_free(struct diff3_results *results){
     bu_ptbl_free(results->removed_dbip1);
     bu_ptbl_free(results->removed_dbip2);
     bu_ptbl_free(results->unchanged);
-    bu_ptbl_free(results->changed_dbip1);
-    bu_ptbl_free(results->changed_dbip2);
-    bu_ptbl_free(results->changed_dbip1_ancestor);
+    bu_ptbl_free(results->changed_ancestor);
     bu_ptbl_free(results->changed_dbip1_new);
-    bu_ptbl_free(results->changed_dbip2_ancestor);
     bu_ptbl_free(results->changed_dbip2_new);
 
     bu_ptbl_free(results->added_both);
@@ -279,11 +267,8 @@ void diff3_results_free(struct diff3_results *results){
     BU_PUT(results->removed_dbip1, struct bu_ptbl);
     BU_PUT(results->removed_dbip2, struct bu_ptbl);
     BU_PUT(results->unchanged, struct bu_ptbl);
-    BU_PUT(results->changed_dbip1, struct bu_ptbl);
-    BU_PUT(results->changed_dbip2, struct bu_ptbl);
-    BU_PUT(results->changed_dbip1_ancestor, struct bu_ptbl);
+    BU_PUT(results->changed_ancestor, struct bu_ptbl);
     BU_PUT(results->changed_dbip1_new, struct bu_ptbl);
-    BU_PUT(results->changed_dbip2_ancestor, struct bu_ptbl);
     BU_PUT(results->changed_dbip2_new, struct bu_ptbl);
 
     BU_PUT(results->added_both, struct bu_ptbl);
