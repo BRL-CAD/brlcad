@@ -217,6 +217,23 @@ void diff_results_free(struct diff_results *results){
  * diff3 results */
 /*******************************************************************/
 
+struct diff3_result_container {
+    struct diff_result_container *ancestor_dbip1;
+    struct diff_result_container *ancestor_dbip2;
+    struct diff_result_container *dbip1_dbip2;
+    int internal_diff;
+    int attribute_diff;
+    struct bu_attribute_value_set *additional_unchanged;
+    struct bu_attribute_value_set *additional_added;
+    struct bu_attribute_value_set *additional_added_conflicting_dbip1;
+    struct bu_attribute_value_set *additional_added_conflicting_dbip2;
+    struct bu_attribute_value_set *additional_removed;
+    struct bu_attribute_value_set *additional_changed;
+    struct bu_attribute_value_set *additional_changed_conflicting_dbip1;
+    struct bu_attribute_value_set *additional_changed_conflicting_dbip2;
+
+};
+
 struct diff3_results {
     float diff_tolerance;
 
@@ -899,15 +916,6 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
  * so we can do a binary lookup for these two functions instead
  * of looking at every entry every time - potentially expensive in
  * the worst cases. */
-
-#if 0
-static void
-diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, struct diff_state *state)
-{
-    bu_vls_printf(diff_log, "\n");
-}
-#endif
-
 
 static const struct directory *
 dp_ptbl_find(struct bu_ptbl *table, const char *name)
