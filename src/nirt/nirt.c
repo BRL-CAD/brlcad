@@ -108,9 +108,9 @@ void printusage(void)
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
     bu_log(" -T n       set rt_bot_mintie=n\n");
-/*  bu_log(" -E         WHAT IS -E USED FOR?\n"); */
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
     bu_log(" -L         list output formatting options\n");
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -O action  handle overlap claims via action\n");
