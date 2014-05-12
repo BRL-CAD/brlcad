@@ -216,7 +216,7 @@ void diff_results_free(struct diff_results *results){
 /* Structures and memory management for the containers specific to
  * diff3 results */
 /*******************************************************************/
-struct diff3_conflict {
+struct diff3_container {
     const struct db_i *dbip_orig;
     const struct db_i *dbip1;
     const struct db_i *dbip2;
@@ -231,7 +231,7 @@ struct diff3_results {
     struct bu_ptbl *added_dbip1;     	/* directory pointers */
     struct bu_ptbl *added_dbip2;     	/* directory pointers */
     struct bu_ptbl *added_both;     	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two added objects *without* conflict, we need to use a container)*/
-    struct bu_ptbl *added_conflicts;    /* result containers */
+    struct bu_ptbl *added_conflicts;    /* containers */
 
     struct bu_ptbl *removed_dbip1;   	/* directory pointers */
     struct bu_ptbl *removed_dbip2;   	/* directory pointers */
@@ -241,7 +241,7 @@ struct diff3_results {
     struct bu_ptbl *changed_dbip1_new;	/* directory pointers */
     struct bu_ptbl *changed_dbip2_new;	/* directory pointers */
     struct bu_ptbl *changed_both;	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two changed objects *without* conflict, we need to use a container) */
-    struct bu_ptbl *changed_conflicts;  /* result containers */
+    struct bu_ptbl *changed_conflicts;  /* containers */
 
     struct bu_ptbl *unchanged; 		/* directory pointers (ancestor)*/
 };
@@ -995,8 +995,8 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		case 1:
 		case 2:
 		case 3:
-		    struct diff3_conflict *new_conflict;
-		    BU_GET(new_conflict, diff3_conflict);
+		    struct diff3_container *new_conflict;
+		    BU_GET(new_conflict, diff3_container);
 		    new_conflict->dbip_orig = DBI_NULL;
 		    new_conflict->dbip1 = new_dbip_1;
 		    new_conflict->dbip2 = new_dbip_2;
@@ -1074,8 +1074,8 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		case 1:
 		case 2:
 		case 3:
-		    struct diff3_conflict *new_conflict;
-		    BU_GET(new_conflict, struct diff3_conflict);
+		    struct diff3_container *new_conflict;
+		    BU_GET(new_conflict, struct diff3_container);
 		    new_conflict->dbip_orig = ancestor_dbip;
 		    new_conflict->dbip1 = new_dbip_1;
 		    new_conflict->dbip2 = new_dbip_2;
