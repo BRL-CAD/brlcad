@@ -31,7 +31,7 @@ extern "C" {
 }
 
 /*******************************************************************/
-/* Structure and memory management for state managment - this holds
+/* Structure and memory management for state management - this holds
  * user supplied options and output logs */
 /*******************************************************************/
 struct diff_state {
@@ -846,7 +846,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     }
 
     /* If the same object was added in both files, we have a conflict
-     * unless the objects are identical. (Maybe not structly true -
+     * unless the objects are identical. (Maybe not strictly true -
      * could attrs be merged if the sets are fully compatible?) */
     BU_PTBL_INIT(results->added_dbip1);
     BU_PTBL_INIT(results->added_both);
@@ -921,7 +921,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
      * unless the changes are identical. Whether it is always a conflict revolves
      * around whether we try to merge changes below the object level. A possible
      * middle ground is to try and resolve attributes but not tangle with primitive
-     * parameters, which avoids thorny issues such as when are comb trees mergable? */
+     * parameters, which avoids thorny issues such as when are comb trees mergeable? */
     BU_PTBL_INIT(results->changed_ancestor);
     BU_PTBL_INIT(results->changed_dbip1_new);
     BU_PTBL_INIT(results->changed_dbip2_new);
