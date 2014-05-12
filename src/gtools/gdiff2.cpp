@@ -30,6 +30,10 @@ extern "C" {
 #include "db_diff.h"
 }
 
+/*******************************************************************/
+/* Structure and memory management for state managment - this holds
+ * user supplied options and output logs */
+/*******************************************************************/
 struct diff_state {
     int return_added;
     int return_removed;
@@ -65,7 +69,10 @@ void diff_state_free(struct diff_state *state) {
     BU_PUT(state->search_filter, struct bu_vls);
 }
 
-
+/*******************************************************************/
+/* Structure and memory management for the container used to hold
+ * diff results for pairs of differing objects */
+/*******************************************************************/
 struct diff_result_container {
     int status;
     const struct directory *dp_orig;
@@ -150,6 +157,10 @@ diff_result_free_ptbl(struct bu_ptbl *results_table)
     bu_ptbl_free(results_table);
 }
 
+/*******************************************************************/
+/* Structure and memory management for the container used to hold
+ * diff results */
+/*******************************************************************/
 
 struct diff_results {
     float diff_tolerance;
@@ -198,6 +209,11 @@ void diff_results_free(struct diff_results *results){
 
 }
 
+
+/*******************************************************************/
+/* Structures and memory management for the containers specific to
+ * diff3 results */
+/*******************************************************************/
 struct diff3_conflict {
     const struct db_i *dbip_orig;
     const struct db_i *dbip1;
@@ -289,7 +305,9 @@ void diff3_results_free(struct diff3_results *results){
 
 }
 
-
+/*******************************************************************/
+/* Callback functions for db_compare */
+/*******************************************************************/
 int
 diff_added(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *added, void *data)
 {
@@ -399,7 +417,9 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     return 0;
 }
 
-
+/*******************************************************************/
+/* Output generators for diff log */
+/*******************************************************************/
 static void
 params_summary(struct bu_vls *attr_log, const struct diff_result_container *result)
 {
@@ -586,6 +606,9 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, cons
     bu_vls_printf(diff_log, "\n");
 }
 
+/*******************************************************************/
+/* Primary function for basic diff operation on two .g files */
+/*******************************************************************/
 static int
 do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *state) {
     int have_diff = 0;
@@ -698,6 +721,10 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
     return diff_return;
 }
 
+
+/*******************************************************************/
+/* Functions for 3-way diff3 set building (supports 3-way merge)  */
+/*******************************************************************/
 
 /* TODO - may need to bu_sort the ptbl contents by name
  * so we can do a binary lookup for these two functions instead
@@ -952,6 +979,8 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
     bu_log("TODO - implement diff3");
     return 0;
 }
+
+
 
 static void
 gdiff_usage(const char *str) {
