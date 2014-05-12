@@ -52,6 +52,7 @@ void diff_state_init(struct diff_state *state) {
     state->return_added = -1;
     state->return_removed = -1;
     state->return_changed = -1;
+    state->return_conflicts = 1;
     state->return_unchanged = 0;
     state->have_search_filter = 0;
     state->verbosity = 2;
