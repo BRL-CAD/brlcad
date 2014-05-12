@@ -253,6 +253,7 @@ void diff3_results_init(struct diff3_results *results){
 
     BU_GET(results->added_both, struct bu_ptbl);
     BU_GET(results->changed_both, struct bu_ptbl);
+    BU_GET(results->removed_both, struct bu_ptbl);
     BU_GET(results->added_conflicts, struct bu_ptbl);
     BU_GET(results->changed_conflicts, struct bu_ptbl);
 
@@ -284,6 +285,7 @@ void diff3_results_free(struct diff3_results *results){
 
     bu_ptbl_free(results->added_both);
     bu_ptbl_free(results->changed_both);
+    bu_ptbl_free(results->removed_both);
 
     /* TODO - properly free the allocated containers with BU_PUT */
     bu_ptbl_free(results->added_conflicts);
