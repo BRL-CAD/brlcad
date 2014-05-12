@@ -77,10 +77,12 @@ void diff_state_free(struct diff_state *state) {
 /*******************************************************************/
 struct diff_result_container {
     int status;
+    struct db_i *dbip_ancestor;
+    struct db_i *dbip_orig;
+    struct db_i *dbip_new;
+    const struct directory *dp_ancestor;
     const struct directory *dp_orig;
     const struct directory *dp_new;
-    struct rt_db_internal *intern_orig;
-    struct rt_db_internal *intern_new;
     int internal_diff;
     struct bu_attribute_value_set internal_shared;
     struct bu_attribute_value_set internal_orig_only;
@@ -102,12 +104,12 @@ diff_result_init(struct diff_result_container *result)
     result->status = 0;
     result->internal_diff = 0;
     result->attribute_diff = 0;
-    result->dp_orig = NULL;
-    result->dp_new = NULL;
-    result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
-    result->intern_new = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_new");
-    RT_DB_INTERNAL_INIT(result->intern_orig);
-    RT_DB_INTERNAL_INIT(result->intern_new);
+    result->dbip_ancestor = DBI_NULL;
+    result->dbip_orig = DBI_NULL;
+    result->dbip_new = DBI_NULL;
+    result->dp_ancestor = RT_DIR_NULL;
+    result->dp_orig = RT_DIR_NULL;
+    result->dp_new = RT_DIR_NULL;
     BU_AVS_INIT(&result->internal_shared);
     BU_AVS_INIT(&result->internal_orig_only);
     BU_AVS_INIT(&result->internal_new_only);
@@ -129,8 +131,6 @@ diff_result_free(void *result)
     if (!result)
 	return;
 
-    rt_db_free_internal(curr_result->intern_orig);
-    rt_db_free_internal(curr_result->intern_new);
     bu_avs_free(&curr_result->internal_shared);
     bu_avs_free(&curr_result->internal_orig_only);
     bu_avs_free(&curr_result->internal_new_only);
@@ -377,6 +377,81 @@ diff_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right)
     return 0;
 }
 
+static int
+compare_dps(struct diff_result_container *result, const struct directory *dp1, const struct db_i *dbip1, const struct directory *dp2, const struct db_i *dbip2, struct bn_tol *diff_tol)
+{
+    /* Compare the two objects */
+    struct rt_db_internal *intern_1 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_1");
+    struct rt_db_internal *intern_2 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_2");
+    struct bu_attribute_value_set *ino = NULL;
+    struct bu_attribute_value_set *ioo = NULL;
+    struct bu_attribute_value_set *iod = NULL;
+    struct bu_attribute_value_set *ind = NULL;
+    struct bu_attribute_value_set *ins = NULL;
+    struct bu_attribute_value_set *ano = NULL;
+    struct bu_attribute_value_set *aoo = NULL;
+    struct bu_attribute_value_set *aod = NULL;
+    struct bu_attribute_value_set *avsnd = NULL;
+    struct bu_attribute_value_set *ans = NULL;
+
+    int internal_diff = 1;
+    int attr_diff = 1;
+    int bad_internal_1 = 0;
+    int bad_internal_2 = 0;
+    RT_DB_INTERNAL_INIT(intern_1);
+    RT_DB_INTERNAL_INIT(intern_2);
+
+    if (result) {
+	result->dp_orig = dp1;
+	result->dp_new = dp2;
+    }
+
+    /* Get the internal objects */
+    if (rt_db_get_internal(intern_1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	bad_internal_1++;
+    }
+    if (rt_db_get_internal(intern_2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	bad_internal_2++;
+    }
+
+    /* If we have a result structure, uses its bu_avs containers */
+    if (result) {
+	ino = &(result->internal_new_only); 
+	ioo = &(result->internal_orig_only); 
+	iod = &(result->internal_orig_diff);
+	ind = &(result->internal_new_diff);
+	ins = &(result->internal_shared);
+	ano = &(result->additional_new_only); 
+	aoo = &(result->additional_orig_only); 
+	aod = &(result->additional_orig_diff);
+	avsnd = &(result->additional_new_diff);
+	ans = &(result->additional_shared);
+    }
+    if (bad_internal_1 || bad_internal_2) {
+	if (!bad_internal_1) rt_db_free_internal(intern_1);
+	if (!bad_internal_2) rt_db_free_internal(intern_2);
+	if (result) result->status = 1;
+	return -1;
+    }
+
+    internal_diff = db_compare(intern_1, intern_2, DB_COMPARE_PARAM, ino, ioo, iod, ind, ins, diff_tol);
+    attr_diff = db_compare(intern_1, intern_2, DB_COMPARE_ATTRS, ano, aoo, aod, avsnd, ans, diff_tol);
+
+    if (result) {
+	result->internal_diff = internal_diff;
+	result->attribute_diff = attr_diff;
+    }
+
+    rt_db_free_internal(intern_1);
+    rt_db_free_internal(intern_2);
+
+    if (!internal_diff && !attr_diff) return 0;
+    if (!internal_diff && attr_diff)  return 1;
+    if (internal_diff && !attr_diff)  return 2;
+    if (internal_diff && attr_diff)   return 3;
+    return -1;  /* Shouldn't get here */
+}
+
 
 int
 diff_changed(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data)
@@ -404,26 +479,10 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     result = (struct diff_result_container *)bu_calloc(1, sizeof(struct diff_result_container), "diff result struct");
     diff_result_init(result);
 
-    result->dp_orig = before;
-    result->dp_new = after;
-
-    /* Get the internal objects */
-    if (rt_db_get_internal(result->intern_orig, before, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (compare_dps(result, before, left, after, right, &diff_tol) == -1) {
 	result->status = 1;
 	return -1;
     }
-    if (rt_db_get_internal(result->intern_new, after, right, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	result->status = 1;
-	return -1;
-    }
-
-    result->internal_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_PARAM,
-				       &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-				       &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
-
-    result->attribute_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_ATTRS,
-					&(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
-					&(result->additional_new_diff), &(result->additional_shared), &diff_tol);
 
     if (result->internal_diff || result->attribute_diff) {
 	bu_ptbl_ins(results->changed, (long *)result);
@@ -886,41 +945,6 @@ rc_ptbl_find(struct bu_ptbl *table, const char *name)
 }
 
 static int
-compare_dps(const struct directory *dp1, struct db_i *dbip1, const struct directory *dp2, struct db_i *dbip2, struct bn_tol *diff_tol)
-{
-    /* Compare the two objects */
-    struct rt_db_internal *intern_1 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_1");
-    struct rt_db_internal *intern_2 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_2");
-    int internal_diff = 1;
-    int attr_diff = 1;
-    int bad_internals = -2;
-    RT_DB_INTERNAL_INIT(intern_1);
-    RT_DB_INTERNAL_INIT(intern_2);
-
-    /* Get the internal objects */
-    if (rt_db_get_internal(intern_1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internals++;
-    }
-    if (rt_db_get_internal(intern_2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internals++;
-    }
-    if (!bad_internals) {
-	internal_diff = db_compare(intern_1, intern_2, DB_COMPARE_PARAM, NULL, NULL, NULL, NULL, NULL, diff_tol);
-	attr_diff = db_compare(intern_1, intern_2, DB_COMPARE_ATTRS, NULL, NULL, NULL, NULL, NULL, diff_tol);
-    }
-
-    rt_db_free_internal(intern_1);
-    rt_db_free_internal(intern_2);
-
-    if (bad_internals) return -1;
-    if (!internal_diff && !attr_diff) return 0;
-    if (!internal_diff && attr_diff)  return 1;
-    if (internal_diff && !attr_diff)  return 2;
-    if (internal_diff && attr_diff)   return 3;
-    return -1;  /* Shouldn't get here */
-}
-
-static int
 do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_dbip_2, struct diff_state *state) {
     int i = 0;
     int have_diff = 0;
@@ -985,7 +1009,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 	if (dp2 == RT_DIR_NULL) {
 	    bu_ptbl_ins(results->added_dbip1, (long *)dp);
 	} else {
-	    int c = compare_dps(dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
+	    int c = compare_dps(NULL, dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
 	    switch (c) {
 		case -1:
 		    break;
@@ -1064,7 +1088,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 	    /* Same situation as adding, in some respects - did we end up in the same
 	     * place or not?  This should be more sophisticated, but for now do the
 	     * simple thing and don't try to merge attrs. */
-	    int c = compare_dps(dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
+	    int c = compare_dps(NULL, dp, new_dbip_1, dp2, new_dbip_2, &diff_tol);
 	    switch (c) {
 		case -1:
 		    break;
