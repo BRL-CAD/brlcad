@@ -46,7 +46,7 @@
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
 #define MAXPIX 512		/* Maximum number of pixels is (512*512).  */
-#define MAXARR 12000		/* Maximum number of pixels that are the
+#define MAXARR 65536		/* Maximum number of pixels that are the
 				 * same color.  */
 #define MAXCOL 128		/* Maximum number of colors.  */
 #define EXTRA 1			/* For colors where there are a lot of
@@ -113,7 +113,9 @@ main(void)
     unsigned char c;		/* Used to write pix file.  */
     int ret;
 
-    struct colstr array[MAXCOL + EXTRA];	/* Array for color information.  */
+    struct colstr *array = NULL;	/* Array for color information.  */
+
+    array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 
     /* Get file name to be read.  */
     printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
@@ -654,11 +656,15 @@ main(void)
 			(void)fflush(stdout);
 		    }					/* END # 1.  */
 
+		    bu_free(array, "free colstr array");
 		    return 0;
 		}
 		break;
 	}
     }
+
+    bu_free(array, "free colstr array");
+    return 0;
 }
 
 
