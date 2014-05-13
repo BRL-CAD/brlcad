@@ -133,15 +133,15 @@ Skip(void)					/* skip over raster data */
     if ((c = getc(gfp)) == EOF)
 	Fatal(fbp, "Error reading code size");
 
-    while ((c = getc(gfp)) != 0)
+    while ((c = getc(gfp)) != 0) {
 	if (c == EOF) {
 	    Fatal(fbp, "Error reading block byte count");
 	}
 	do {
 	    if (getc(gfp) == EOF)
 		Fatal(fbp, "Error reading data byte");
-	}
-	while (--c > 0);
+	} while (--c > 0);
+    }
 }
 
 
@@ -303,8 +303,9 @@ Expand(int c)
 
     PutPixel(k = c);		/* first atom in string */
 
-    while (bp > exp_buffer)
+    while (bp > exp_buffer) {
 	PutPixel((int)*--bp);
+    }
 }
 
 
@@ -350,7 +351,7 @@ LZW(void)
     next_code = compress_code;	/* empty chain-code table */
     w = -1;				/* we use -1 for "nil" */
 
-    while ((c = GetCode()) != eoi_code)
+    while ((c = GetCode()) != eoi_code) {
 	if (c == clear_code) {
 	    /* Reinitialize LZW parameters. */
 
@@ -370,8 +371,10 @@ LZW(void)
 
 		Expand(w);	/* sets `k' */
 		PutPixel(k);
-	    } else		/* normal case */
+	    } else {
+		/* normal case */
 		Expand(c);	/* sets `k' */
+	    }
 
 	    if (w >= 0 && next_code < 1 << 12) {
 		table[next_code].pfx = w;
@@ -386,16 +389,18 @@ LZW(void)
 
 	    w = c;
 	}
+    }
 
     /* EOI code encountered. */
 
     if (bytecnt > 0) {
 	Message("Warning: unused raster data present");
 
-	do
-	    if ((c = getc(gfp)) == EOF)
+	do {
+	    if ((c = getc(gfp)) == EOF) {
 		Fatal(fbp, "Error reading extra raster data");
-	while (--bytecnt > 0);
+	    }
+	} while (--bytecnt > 0);
     }
 
     /* Strange data format in the GIF spec! */
@@ -461,7 +466,7 @@ main(int argc, char **argv)
 
     	errors = argc == 1 && isatty(fileno(stdin));
 
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
+	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1) {
 	    switch (c) {
 		default:	/* '?': invalid option */
 		    errors = 1;
@@ -490,6 +495,7 @@ main(int argc, char **argv)
 		    do_zoom = 1;
 		    break;
 	    }
+	}
 
 	if (errors)
 	    Fatal(fbp, USAGE);
