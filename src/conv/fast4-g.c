@@ -889,6 +889,10 @@ Add_stragglers_to_groups(void)
 	/* visit node */
 	CK_TREE_MAGIC(ptr);
 
+	/* FIXME: should not be manually recreating the wmember list
+	 * when extending it.  just use a null-terminated list and
+	 * realloc as needed...
+	 */
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
 
