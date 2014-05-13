@@ -6,11 +6,11 @@ set(RAW_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES RAW_INCLUDE_DIRS)
 include_directories(${RAW_INCLUDE_DIRS})
 
-if (MSVC)
+if(MSVC)
   add_definitions(
     -DON_DLL_IMPORTS
     )
-endif (MSVC)
+endif(MSVC)
 
 set(rawg_SRCS
   Bot.cpp

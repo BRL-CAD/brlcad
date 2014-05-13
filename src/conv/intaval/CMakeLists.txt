@@ -6,11 +6,11 @@ set(INTAVAL_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
 include_directories(${INTAVAL_INCLUDE_DIRS})
 
-if (MSVC)
+if(MSVC)
   add_definitions(
     -DON_DLL_IMPORTS
     )
-endif (MSVC)
+endif(MSVC)
 
 set(tgf_SRCS
   read_dra.cpp
