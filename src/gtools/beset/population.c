@@ -443,7 +443,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    BU_LIST_INIT(&node->l);
 	    chosen_node = NULL;
 
-	    do{
+	    do {
 		num_nodes = 0;
 		crossover_parent = &parent1->tree;
 		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
@@ -473,7 +473,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 			}
 		    }
 		}
-	    }while(chosen_node == NULL);
+	    } while (chosen_node == NULL);
 
 
 	    /* cross trees */
