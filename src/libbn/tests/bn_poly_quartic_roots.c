@@ -84,18 +84,19 @@ poly_init(void)
     return;
 }
 
+
 /* tests the polynomials to make sure bn_poly_mul() works properly. */
 int
 test_bn_poly_qua_rts(void)
 {
     int val, val1[4], val2[4];/* variables get results for comparisons */
-    bn_complex_t r1,r2[4],r3[4];
+    bn_complex_t r1, r2[4], r3[4];
 
     int i, j, ind1 = 1, ind2 = 5; /* creates array indexes for rts */
 
-    bn_poly_quartic_roots(&r1,&input[0]);
-    bn_poly_quartic_roots(r2,&input[1]);
-    bn_poly_quartic_roots(r3,&input[2]);
+    bn_poly_quartic_roots(&r1, &input[0]);
+    bn_poly_quartic_roots(r2, &input[1]);
+    bn_poly_quartic_roots(r3, &input[2]);
 
     /* loop moves through arrays for roots and output comparing variables. */
     for (i = 0; i < 4; i++) {
@@ -121,16 +122,17 @@ test_bn_poly_qua_rts(void)
 	}
     }
 
-    if (!EQUAL(val,0))
+    if (!EQUAL(val, 0))
 	return -1;
 
     for (i = 0; i < 4; i++) {
-	if (!EQUAL(val1[i],val2[i]) && !EQUAL(val1[i], 0))
+	if (!EQUAL(val1[i], val2[i]) && !EQUAL(val1[i], 0))
 	    return -1;
     }
 
     return 0;
 }
+
 
 int
 main(void)

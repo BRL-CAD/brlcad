@@ -963,7 +963,7 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 	    bu_log("ptol=%g\n", ptol);
 	}
 
- 	if (NEAR_ZERO(dist[0], ptol))
+	if (NEAR_ZERO(dist[0], ptol))
 	    dist[0] = 0.0;
 	else if (NEAR_EQUAL(dist[0], 1.0, ptol))
 	    dist[0] = 1.0;

@@ -260,7 +260,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	       || math_func == MATH_FUNC_VOID_CAST(bn_mat_trn)) {
 	mat_t o, a;
 	/* need new math func pointer of correct signature */
-        void (*_math_func)(mat_t, register const mat_t);
+	void (*_math_func)(mat_t, register const mat_t);
 	/* cast math_func to new func pointer */
 	_math_func = (void (*)(mat_t, register const mat_t))math_func;
 
@@ -435,7 +435,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	mat_t o;
 	double s, c;
 	/* need new math func pointer of correct signature */
-        void (*_math_func)(fastf_t *, double, double);
+	void (*_math_func)(fastf_t *, double, double);
 	/* cast math_func to new func pointer */
 	_math_func = (void (*)(fastf_t *, double, double))math_func;
 
@@ -464,7 +464,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	       || math_func == MATH_FUNC_VOID_CAST(bn_vec_perp)) {
 	vect_t ov, vec;
 	/* need new math func pointer of correct signature */
-        void (*_math_func)(vect_t, const vect_t);
+	void (*_math_func)(vect_t, const vect_t);
 	/* cast math_func to new func pointer */
 	_math_func = (void (*)(vect_t, const vect_t))math_func;
 
@@ -559,7 +559,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	       || math_func == MATH_FUNC_VOID_CAST(quat_bisect)
 	       || math_func == MATH_FUNC_VOID_CAST(quat_make_nearest)) {
 	quat_t oqot, q1, q2;
-        void (*_math_func)(fastf_t *, const fastf_t *, const fastf_t *);
+	void (*_math_func)(fastf_t *, const fastf_t *, const fastf_t *);
 	/* cast math_func to new func pointer */
 	_math_func = (void (*)(fastf_t *, const fastf_t *, const fastf_t *))math_func;
 
@@ -603,7 +603,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	       || math_func == MATH_FUNC_VOID_CAST(quat_log)) {
 	quat_t qout, qin;
 	/* need new math func pointer of correct signature */
-        void (*_math_func)(fastf_t *, const fastf_t *);
+	void (*_math_func)(fastf_t *, const fastf_t *);
 	/* cast math_func to new func pointer */
 	_math_func = (void (*)(fastf_t *, const fastf_t *))math_func;
 

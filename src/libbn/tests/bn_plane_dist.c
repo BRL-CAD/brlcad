@@ -64,7 +64,7 @@ test_bn_dist_pt3_line3(int argc, char **argv)
 
     return (expected_return != actual_return
 	    && !NEAR_EQUAL(expected_dist,actual_dist, BN_TOL_DIST)
- 	    && !NEAR_EQUAL(expected_pca[X], actual_pca[X], BN_TOL_DIST)
+	    && !NEAR_EQUAL(expected_pca[X], actual_pca[X], BN_TOL_DIST)
 	    && !NEAR_EQUAL(expected_pca[Y], actual_pca[Y], BN_TOL_DIST)
 	    && !NEAR_EQUAL(expected_pca[Z], actual_pca[Z], BN_TOL_DIST));
 }
@@ -103,7 +103,7 @@ test_bn_dist_pt3_lseg3(int argc, char **argv)
 
     return (expected_return != actual_return
 	    && !NEAR_EQUAL(expected_dist,actual_dist, BN_TOL_DIST)
- 	    && !NEAR_EQUAL(expected_pca[X], actual_pca[X], BN_TOL_DIST)
+	    && !NEAR_EQUAL(expected_pca[X], actual_pca[X], BN_TOL_DIST)
 	    && !NEAR_EQUAL(expected_pca[Y], actual_pca[Y], BN_TOL_DIST)
 	    && !NEAR_EQUAL(expected_pca[Z], actual_pca[Z], BN_TOL_DIST));
 }
@@ -150,11 +150,11 @@ main(int argc, char *argv[])
 	function_num = 0;
 
     switch (function_num) {
-        case 1:
+	case 1:
 	    return test_bn_dist_pt3_line3(argc, argv);
-        case 2:
+	case 2:
 	    return test_bn_dist_pt3_lseg3(argc, argv);
-        case 3:
+	case 3:
 	    return test_bn_dist_pt3_pt3(argc, argv);
     }
     return 1;

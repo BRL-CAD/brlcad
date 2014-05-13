@@ -58,32 +58,32 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
     V2MOVE(D[top], polyline[2]);
     V2MOVE(D[bot], D[top]);
     if (isLeft(polyline[0], polyline[1], polyline[2]) > 0) {
-        V2MOVE(D[bot+1],polyline[0]);
-        V2MOVE(D[bot+2],polyline[1]);   /* ccw vertices are: 2,0,1,2 */
+	V2MOVE(D[bot+1],polyline[0]);
+	V2MOVE(D[bot+2],polyline[1]);   /* ccw vertices are: 2,0,1,2 */
     }
     else {
-        V2MOVE(D[bot+1],polyline[1]);
-        V2MOVE(D[bot+2],polyline[0]);   /* ccw vertices are: 2,1,0,2 */
+	V2MOVE(D[bot+1],polyline[1]);
+	V2MOVE(D[bot+2],polyline[0]);   /* ccw vertices are: 2,1,0,2 */
     }
 
     /* compute the hull on the deque D[] */
     for (i = 3; i < n; i++) {   /* process the rest of vertices */
-        /* test if next vertex is inside the deque hull */
-        if ((isLeft(D[bot], D[bot+1], polyline[i]) > 0) &&
-            (isLeft(D[top-1], D[top], polyline[i]) > 0) )
-                 continue;         /* skip an interior vertex */
+	/* test if next vertex is inside the deque hull */
+	if ((isLeft(D[bot], D[bot+1], polyline[i]) > 0) &&
+	    (isLeft(D[top-1], D[top], polyline[i]) > 0) )
+		 continue;         /* skip an interior vertex */
 
-        /* incrementally add an exterior vertex to the deque hull
-           get the rightmost tangent at the deque bot */
-        while (isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
-            bot = bot + 1;                      /* remove bot of deque */
-        V2MOVE(D[bot-1],polyline[i]);    /* insert P[i] at bot of deque */
+	/* incrementally add an exterior vertex to the deque hull
+	   get the rightmost tangent at the deque bot */
+	while (isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
+	    bot = bot + 1;                      /* remove bot of deque */
+	V2MOVE(D[bot-1],polyline[i]);    /* insert P[i] at bot of deque */
 	bot = bot - 1;
 
-        /* get the leftmost tangent at the deque top */
-        while (isLeft(D[top-1], D[top], polyline[i]) <= 0)
-            top = top - 1;                      /* pop top of deque */
-        V2MOVE(D[top+1],polyline[i]);    /* push P[i] onto top of deque */
+	/* get the leftmost tangent at the deque top */
+	while (isLeft(D[top-1], D[top], polyline[i]) <= 0)
+	    top = top - 1;                      /* pop top of deque */
+	V2MOVE(D[top+1],polyline[i]);    /* push P[i] onto top of deque */
 	top = top + 1;
     }
 
@@ -91,7 +91,7 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 
     (*hull) = (point2d_t *)bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
     for (h=0; h <= (top-bot); h++)
-        V2MOVE((*hull)[h],D[bot + h]);
+	V2MOVE((*hull)[h],D[bot + h]);
 
     bu_free(D, "free queue");
     return h-1;
@@ -167,4 +167,3 @@ bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
