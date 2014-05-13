@@ -63,6 +63,7 @@ changes made.  See document footer for additional details.
 * improved bwrect to handle redirected input and output - Mohit Daga
 * fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
 * fixed pixscale and bwscale to not output ioctl error - Mohit Daga
+* improved fast4-g import of numerous region groups - Richard Weiss
 * fixed archer hidden line edit getting redrawn as shaded - Nick Reed
 * fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
 * fixed fast4-g importer parsing of blank input lines - Richard Weiss
