@@ -166,7 +166,7 @@ main(int argc, char **argv)
 #endif
     fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
-    length = 187. * inches2mm;
+    length = 187.0 * inches2mm;
 #ifdef never
     spacing = 100.;			/* mm per sample */
     nsamples = ceil(length/spacing);
