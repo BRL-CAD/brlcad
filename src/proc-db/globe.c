@@ -36,9 +36,10 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-char *progname;
 
-void usage(void)
+
+static void
+usage(const char *progname)
 {
     fprintf(stderr, "Usage: %s db_file.g [stepSize [finalSize [initialSize]]]\n", progname);
     bu_exit(-1, NULL);
@@ -63,10 +64,10 @@ main(int ac, char *av[])
     char solidName[256]="";
     char prevSolid[256]="";
     char shaderparams[256]="";
+    char *progname = *av;
 
-    progname = *av;
-
-    if (ac < 2) usage();
+    if (ac < 2)
+	usage(progname);
 
     if ((db_fp = wdb_fopen(av[1])) == NULL) {
 	perror(av[1]);
