@@ -815,7 +815,9 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
 // work or would scale to complex cases, but it may be worth thinking about.
 HIDDEN ON_SimpleArray<TrimmedFace *>
-split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx_curves)
+split_at_innerloops_and_unclosed_curves(
+    const TrimmedFace *orig_face,
+    ON_ClassArray<LinkedCurve> &ssx_curves)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -1208,6 +1210,25 @@ split_trimmed_face(const TrimmedFace *orig_face, ON_ClassArray<LinkedCurve> &ssx
 	    }
 	}
     }
+
+    return out;
+}
+
+HIDDEN ON_SimpleArray<TrimmedFace *>
+split_trimmed_face(
+    const TrimmedFace *orig_face,
+    ON_ClassArray<LinkedCurve> &ssx_curves)
+{
+    ON_SimpleArray<TrimmedFace *> out;
+    if (ssx_curves.Count() == 0) {
+	// No curve, no splitting
+	out.Append(orig_face->Duplicate());
+	return out;
+    }
+    ON_SimpleArray<TrimmedFace *> out2 =
+	split_at_innerloops_and_unclosed_curves(orig_face, ssx_curves);
+    out.Append(out2.Count(), out2.Array());
+    out2.Empty();
 
     return out;
 }
