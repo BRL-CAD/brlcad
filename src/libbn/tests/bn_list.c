@@ -46,7 +46,7 @@ initialise_buffers(char *expected_buf)
 
     temp = bu_temp_file(NULL, 0);
 
-    if(temp == NULL)
+    if (temp == NULL)
 	return 0;
 
     rewind(temp);

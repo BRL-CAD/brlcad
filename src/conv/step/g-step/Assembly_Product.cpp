@@ -313,7 +313,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    child_shape = sc->solid_to_step_shape->find(curr_dp)->second;
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
-	if(curr_matrix) {
+	if (curr_matrix) {
 	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    //bn_mat_print(curr_dp->d_namep, curr_matrix);

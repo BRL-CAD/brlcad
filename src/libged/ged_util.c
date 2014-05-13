@@ -36,7 +36,7 @@
 int
 _ged_results_init(struct ged_results *results)
 {
-    if(UNLIKELY(!results))
+    if (UNLIKELY(!results))
 	return GED_ERROR;
     BU_ALLOC(results->results_tbl, struct bu_ptbl);
     BU_PTBL_INIT(results->results_tbl);
@@ -48,15 +48,15 @@ int
 _ged_results_add(struct ged_results *results, const char *result_string)
 {
     /* If there isn't a string, we can live with that */
-    if(UNLIKELY(!result_string))
+    if (UNLIKELY(!result_string))
 	return GED_OK;
 
     /* If we have nowhere to insert into and we *do* have a string, trouble */
-    if(UNLIKELY(!results))
+    if (UNLIKELY(!results))
 	return GED_ERROR;
-    if(UNLIKELY(!(results->results_tbl)))
+    if (UNLIKELY(!(results->results_tbl)))
 	return GED_ERROR;
-    if(UNLIKELY(!(BU_PTBL_IS_INITIALIZED(results->results_tbl))))
+    if (UNLIKELY(!(BU_PTBL_IS_INITIALIZED(results->results_tbl))))
 	return GED_ERROR;
 
     /* We're good to go - copy the string and stuff it in. */
@@ -68,8 +68,8 @@ _ged_results_add(struct ged_results *results, const char *result_string)
 size_t
 ged_results_count(struct ged_results *results)
 {
-    if(UNLIKELY(!results)) return 0;
-    if(UNLIKELY(!(results->results_tbl))) return 0;
+    if (UNLIKELY(!results)) return 0;
+    if (UNLIKELY(!(results->results_tbl))) return 0;
     return (size_t)BU_PTBL_LEN(results->results_tbl);
 }
 
@@ -83,8 +83,8 @@ void
 ged_results_clear(struct ged_results *results)
 {
     int i = 0;
-    if(UNLIKELY(!results)) return;
-    if(UNLIKELY(!(results->results_tbl))) return;
+    if (UNLIKELY(!results)) return;
+    if (UNLIKELY(!(results->results_tbl))) return;
 
     /* we clean up everything except the ged_results structure itself */
     for (i = (int)BU_PTBL_LEN(results->results_tbl) - 1; i >= 0; i--) {
@@ -97,8 +97,8 @@ ged_results_clear(struct ged_results *results)
 
 void
 ged_results_free(struct ged_results *results) {
-    if(UNLIKELY(!results)) return;
-    if(UNLIKELY(!(results->results_tbl))) return;
+    if (UNLIKELY(!results)) return;
+    if (UNLIKELY(!(results->results_tbl))) return;
 
     ged_results_clear(results);
     bu_ptbl_free(results->results_tbl);

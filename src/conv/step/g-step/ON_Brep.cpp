@@ -432,15 +432,15 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
 	     * surface composites do not offer a hook that is compatible with the C++
 	     * surface_form_ method.*/
 	    /*
-	    if(rev_surface->IsPlanar()) {
+	    if (rev_surface->IsPlanar()) {
 	    }
-	    if(rev_surface->IsSphere()) {
+	    if (rev_surface->IsSphere()) {
 	    }
-	    if(rev_surface->IsCylinder()) {
+	    if (rev_surface->IsCylinder()) {
 	    }
-	    if(rev_surface->IsCone()) {
+	    if (rev_surface->IsCone()) {
 	    }
-	    if(rev_surface->IsTorus()) {
+	    if (rev_surface->IsTorus()) {
 	    }*/
 	    /* If none of the other conditions are satisfied, by definition we still have
 	     * a surface of revolution...*/

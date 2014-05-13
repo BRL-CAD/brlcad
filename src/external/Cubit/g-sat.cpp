@@ -493,7 +493,7 @@ describe_tree(  tree *tree,
 
     BU_CK_VLS(str);
 
-    if( !tree )
+    if ( !tree )
     {
 	/* this tree has no members */
 	bu_vls_strcat( str, "{empty}" );
@@ -588,7 +588,7 @@ primitive_func( db_tree_state *tsp,
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
-    if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+    if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
 	switch( ip->idb_minor_type )
 	{
 	    /* most commonly used primitives */
@@ -1104,7 +1104,7 @@ output_triangles( nmgregion *r,
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
@@ -1115,7 +1115,7 @@ output_triangles( nmgregion *r,
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
@@ -1168,7 +1168,7 @@ make_bot( nmgregion *r,
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
@@ -1179,7 +1179,7 @@ make_bot( nmgregion *r,
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
@@ -1316,7 +1316,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tl == 0 || !tl->tr_d.td_r) {
 	if (tr == 0 || !tr->tr_d.td_r)
 	    return 0;
-	if( op == ADD )
+	if ( op == ADD )
 	    return tr;
 	/* For sub and intersect, if lhs is 0, result is null */
 	//db_free_tree(tr);
@@ -1327,7 +1327,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tr == 0 || !tr->tr_d.td_r) {
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
-	if( op == ISECT )  {
+	if ( op == ISECT )  {
 	    db_free_tree(tl, resp);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
@@ -1336,8 +1336,8 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if ( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if ( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;

@@ -142,12 +142,12 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     }
     fclose(fp);
 
-    if(invalid_file){
+    if (invalid_file){
 	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" contained no valid lines.\n", argv[1]);
 	return GED_ERROR;
     }
 
-    if(g_changed) {
+    if (g_changed) {
 	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" applied - %d regions updated.\n", argv[1], g_changed);
     }
 

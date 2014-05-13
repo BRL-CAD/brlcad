@@ -229,7 +229,7 @@ main(int argc, char **argv)
 		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
     }
 
-    if(WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
+    if (WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
 	bu_exit(1, "Bad height info in GIF header\n");
 
     interlaced = (Im.IH_Flags>>6)&0x01;
@@ -279,7 +279,7 @@ main(int argc, char **argv)
 	int ih_height = WORD(Im.IH_Height);
 	int ih_width = WORD(Im.IH_Width);
 
-	if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
 	    bu_exit(1, "Invalid height in GIF Header\n");
 
 	/*

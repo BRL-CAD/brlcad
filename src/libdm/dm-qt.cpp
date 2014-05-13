@@ -502,7 +502,7 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
-    if(privars->pix == NULL)
+    if (privars->pix == NULL)
 	return TCL_ERROR;
     privars->pix->fill(privars->bg);
 

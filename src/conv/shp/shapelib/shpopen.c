@@ -305,7 +305,7 @@ static void	SwapWord( int length, void * wordP )
 static void * SfRealloc( void * pMem, int nNewSize )
 
 {
-    if( pMem == NULL )
+    if ( pMem == NULL )
 	return( (void *) malloc(nNewSize) );
     else
 	return( (void *) realloc(pMem,nNewSize) );
@@ -344,52 +344,52 @@ void SHPWriteHeader( SHPHandle psSHP )
 
     i32 = psSHP->nFileSize/2;				/* file size */
     ByteCopy( &i32, abyHeader+24, 4 );
-    if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+    if ( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
     i32 = 1000;						/* version */
     ByteCopy( &i32, abyHeader+28, 4 );
-    if( bBigEndian ) SwapWord( 4, abyHeader+28 );
+    if ( bBigEndian ) SwapWord( 4, abyHeader+28 );
 
     i32 = psSHP->nShapeType;				/* shape type */
     ByteCopy( &i32, abyHeader+32, 4 );
-    if( bBigEndian ) SwapWord( 4, abyHeader+32 );
+    if ( bBigEndian ) SwapWord( 4, abyHeader+32 );
 
     dValue = psSHP->adBoundsMin[0];			/* set bounds */
     ByteCopy( &dValue, abyHeader+36, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+36 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+36 );
 
     dValue = psSHP->adBoundsMin[1];
     ByteCopy( &dValue, abyHeader+44, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+44 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+44 );
 
     dValue = psSHP->adBoundsMax[0];
     ByteCopy( &dValue, abyHeader+52, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+52 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+52 );
 
     dValue = psSHP->adBoundsMax[1];
     ByteCopy( &dValue, abyHeader+60, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+60 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+60 );
 
     dValue = psSHP->adBoundsMin[2];			/* z */
     ByteCopy( &dValue, abyHeader+68, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+68 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+68 );
 
     dValue = psSHP->adBoundsMax[2];
     ByteCopy( &dValue, abyHeader+76, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+76 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+76 );
 
     dValue = psSHP->adBoundsMin[3];			/* m */
     ByteCopy( &dValue, abyHeader+84, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+84 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+84 );
 
     dValue = psSHP->adBoundsMax[3];
     ByteCopy( &dValue, abyHeader+92, 8 );
-    if( bBigEndian ) SwapWord( 8, abyHeader+92 );
+    if ( bBigEndian ) SwapWord( 8, abyHeader+92 );
 
 /* -------------------------------------------------------------------- */
 /*      Write .shp file header.                                         */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 0 ) != 0
+    if ( psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 0 ) != 0
 	|| psSHP->sHooks.FWrite( abyHeader, 100, 1, psSHP->fpSHP ) != 1 )
     {
 	psSHP->sHooks.Error( "Failure writing .shp header" );
@@ -403,9 +403,9 @@ void SHPWriteHeader( SHPHandle psSHP )
     i32 = (psSHP->nRecords * 2 * sizeof(int32) + 100)/2; */
     i32 =  psSHP->nRecords * sizeof(int32) + 50;   /* file size */
     ByteCopy( &i32, abyHeader+24, 4 );
-    if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+    if ( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
-    if( psSHP->sHooks.FSeek( psSHP->fpSHX, 0, 0 ) != 0
+    if ( psSHP->sHooks.FSeek( psSHP->fpSHX, 0, 0 ) != 0
 	|| psSHP->sHooks.FWrite( abyHeader, 100, 1, psSHP->fpSHX ) != 1 )
     {
 	psSHP->sHooks.Error( "Failure writing .shx header" );
@@ -421,11 +421,11 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 	panSHX[i*2  ] = psSHP->panRecOffset[i]/2;
 	panSHX[i*2+1] = psSHP->panRecSize[i]/2;
-	if( !bBigEndian ) SwapWord( 4, panSHX+i*2 );
-	if( !bBigEndian ) SwapWord( 4, panSHX+i*2+1 );
+	if ( !bBigEndian ) SwapWord( 4, panSHX+i*2 );
+	if ( !bBigEndian ) SwapWord( 4, panSHX+i*2+1 );
     }
 
-    if( (int)psSHP->sHooks.FWrite( panSHX, sizeof(int32)*2, psSHP->nRecords, psSHP->fpSHX )
+    if ( (int)psSHP->sHooks.FWrite( panSHX, sizeof(int32)*2, psSHP->nRecords, psSHP->fpSHX )
 	!= psSHP->nRecords )
     {
 	psSHP->sHooks.Error( "Failure writing .shx contents" );
@@ -478,7 +478,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /*      ensure the result string indicates binary to avoid common       */
 /*      problems on Windows.                                            */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
+    if ( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
 	|| strcmp(pszAccess,"r+") == 0 )
 	pszAccess = "r+b";
     else
@@ -488,7 +488,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /*	Establish the byte order on this machine.			*/
 /* -------------------------------------------------------------------- */
     i = 1;
-    if( *((uchar *) &i) == 1 )
+    if ( *((uchar *) &i) == 1 )
 	bBigEndian = FALSE;
     else
 	bBigEndian = TRUE;
@@ -512,7 +512,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
 
-    if( pszBasename[i] == '.' )
+    if ( pszBasename[i] == '.' )
 	pszBasename[i] = '\0';
 
 /* -------------------------------------------------------------------- */
@@ -522,13 +522,13 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     pszFullname = (char *) malloc(strlen(pszBasename) + 5);
     sprintf( pszFullname, "%s.shp", pszBasename ) ;
     psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess );
-    if( psSHP->fpSHP == NULL )
+    if ( psSHP->fpSHP == NULL )
     {
 	sprintf( pszFullname, "%s.SHP", pszBasename );
 	psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess );
     }
 
-    if( psSHP->fpSHP == NULL )
+    if ( psSHP->fpSHP == NULL )
     {
 #ifdef USE_CPL
 	CPLError( CE_Failure, CPLE_OpenFailed,
@@ -543,13 +543,13 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     sprintf( pszFullname, "%s.shx", pszBasename );
     psSHP->fpSHX =  psSHP->sHooks.FOpen(pszFullname, pszAccess );
-    if( psSHP->fpSHX == NULL )
+    if ( psSHP->fpSHX == NULL )
     {
 	sprintf( pszFullname, "%s.SHX", pszBasename );
 	psSHP->fpSHX = psSHP->sHooks.FOpen(pszFullname, pszAccess );
     }
 
-    if( psSHP->fpSHX == NULL )
+    if ( psSHP->fpSHX == NULL )
     {
 #ifdef USE_CPL
 	CPLError( CE_Failure, CPLE_OpenFailed,
@@ -580,7 +580,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHX ) != 1
+    if ( psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHX ) != 1
 	|| pabyBuf[0] != 0
 	|| pabyBuf[1] != 0
 	|| pabyBuf[2] != 0x27
@@ -602,7 +602,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     psSHP->nShapeType = pabyBuf[32];
 
-    if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 )
+    if ( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 )
     {
 	char szError[200];
 
@@ -622,35 +622,35 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Read the bounds.                                                */
 /* -------------------------------------------------------------------- */
-    if( bBigEndian ) SwapWord( 8, pabyBuf+36 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+36 );
     memcpy( &dValue, pabyBuf+36, 8 );
     psSHP->adBoundsMin[0] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+44 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+44 );
     memcpy( &dValue, pabyBuf+44, 8 );
     psSHP->adBoundsMin[1] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+52 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+52 );
     memcpy( &dValue, pabyBuf+52, 8 );
     psSHP->adBoundsMax[0] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+60 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+60 );
     memcpy( &dValue, pabyBuf+60, 8 );
     psSHP->adBoundsMax[1] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+68 );		/* z */
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+68 );		/* z */
     memcpy( &dValue, pabyBuf+68, 8 );
     psSHP->adBoundsMin[2] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+76 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+76 );
     memcpy( &dValue, pabyBuf+76, 8 );
     psSHP->adBoundsMax[2] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+84 );		/* z */
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+84 );		/* z */
     memcpy( &dValue, pabyBuf+84, 8 );
     psSHP->adBoundsMin[3] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+92 );
+    if ( bBigEndian ) SwapWord( 8, pabyBuf+92 );
     memcpy( &dValue, pabyBuf+92, 8 );
     psSHP->adBoundsMax[3] = dValue;
 
@@ -688,7 +688,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	return( NULL );
     }
 
-    if( (int) psSHP->sHooks.FRead( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )
+    if ( (int) psSHP->sHooks.FRead( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )
 			!= psSHP->nRecords )
     {
 	char szError[200];
@@ -721,10 +721,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	int32		nOffset, nLength;
 
 	memcpy( &nOffset, pabyBuf + i * 8, 4 );
-	if( !bBigEndian ) SwapWord( 4, &nOffset );
+	if ( !bBigEndian ) SwapWord( 4, &nOffset );
 
 	memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
-	if( !bBigEndian ) SwapWord( 4, &nLength );
+	if ( !bBigEndian ) SwapWord( 4, &nLength );
 
 	psSHP->panRecOffset[i] = nOffset*2;
 	psSHP->panRecSize[i] = nLength*2;
@@ -744,13 +744,13 @@ void SHPAPI_CALL
 SHPClose(SHPHandle psSHP )
 
 {
-    if( psSHP == NULL )
+    if ( psSHP == NULL )
 	return;
 
 /* -------------------------------------------------------------------- */
 /*	Update the header if we have modified anything.			*/
 /* -------------------------------------------------------------------- */
-    if( psSHP->bUpdated )
+    if ( psSHP->bUpdated )
 	SHPWriteHeader( psSHP );
 
 /* -------------------------------------------------------------------- */
@@ -763,7 +763,7 @@ SHPClose(SHPHandle psSHP )
 	psSHP->sHooks.FClose( psSHP->fpSHX );
     psSHP->sHooks.FClose( psSHP->fpSHP );
 
-    if( psSHP->pabyRec != NULL )
+    if ( psSHP->pabyRec != NULL )
     {
 	free( psSHP->pabyRec );
     }
@@ -784,20 +784,20 @@ SHPGetInfo(SHPHandle psSHP, int * pnEntities, int * pnShapeType,
 {
     int		i;
 
-    if( psSHP == NULL )
+    if ( psSHP == NULL )
 	return;
 
-    if( pnEntities != NULL )
+    if ( pnEntities != NULL )
 	*pnEntities = psSHP->nRecords;
 
-    if( pnShapeType != NULL )
+    if ( pnShapeType != NULL )
 	*pnShapeType = psSHP->nShapeType;
 
     for( i = 0; i < 4; i++ )
     {
-	if( padfMinBound != NULL )
+	if ( padfMinBound != NULL )
 	    padfMinBound[i] = psSHP->adBoundsMin[i];
-	if( padfMaxBound != NULL )
+	if ( padfMaxBound != NULL )
 	    padfMaxBound[i] = psSHP->adBoundsMax[i];
     }
 }
@@ -842,7 +842,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /*      Establish the byte order on this system.                        */
 /* -------------------------------------------------------------------- */
     i = 1;
-    if( *((uchar *) &i) == 1 )
+    if ( *((uchar *) &i) == 1 )
 	bBigEndian = FALSE;
     else
 	bBigEndian = TRUE;
@@ -858,7 +858,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
 
-    if( pszBasename[i] == '.' )
+    if ( pszBasename[i] == '.' )
 	pszBasename[i] = '\0';
 
 /* -------------------------------------------------------------------- */
@@ -867,7 +867,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     pszFullname = (char *) malloc(strlen(pszBasename) + 5);
     sprintf( pszFullname, "%s.shp", pszBasename );
     fpSHP = psHooks->FOpen(pszFullname, "wb" );
-    if( fpSHP == NULL )
+    if ( fpSHP == NULL )
     {
 	psHooks->Error( "Failed to create file .shp file." );
 	free( pszBasename );
@@ -876,7 +876,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 
     sprintf( pszFullname, "%s.shx", pszBasename );
     fpSHX = psHooks->FOpen(pszFullname, "wb" );
-    if( fpSHX == NULL )
+    if ( fpSHX == NULL )
     {
 	psHooks->Error( "Failed to create file .shx file." );
 	free( pszBasename );
@@ -897,15 +897,15 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 
     i32 = 50;						/* file size */
     ByteCopy( &i32, abyHeader+24, 4 );
-    if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+    if ( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
     i32 = 1000;						/* version */
     ByteCopy( &i32, abyHeader+28, 4 );
-    if( bBigEndian ) SwapWord( 4, abyHeader+28 );
+    if ( bBigEndian ) SwapWord( 4, abyHeader+28 );
 
     i32 = nShapeType;					/* shape type */
     ByteCopy( &i32, abyHeader+32, 4 );
-    if( bBigEndian ) SwapWord( 4, abyHeader+32 );
+    if ( bBigEndian ) SwapWord( 4, abyHeader+32 );
 
     dValue = 0.0;					/* set bounds */
     ByteCopy( &dValue, abyHeader+36, 8 );
@@ -916,7 +916,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Write .shp file header.                                         */
 /* -------------------------------------------------------------------- */
-    if( psHooks->FWrite( abyHeader, 100, 1, fpSHP ) != 1 )
+    if ( psHooks->FWrite( abyHeader, 100, 1, fpSHP ) != 1 )
     {
 	psHooks->Error( "Failed to write .shp header." );
 	return NULL;
@@ -927,9 +927,9 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     i32 = 50;						/* file size */
     ByteCopy( &i32, abyHeader+24, 4 );
-    if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+    if ( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
-    if( psHooks->FWrite( abyHeader, 100, 1, fpSHX ) != 1 )
+    if ( psHooks->FWrite( abyHeader, 100, 1, fpSHX ) != 1 )
     {
 	psHooks->Error( "Failed to write .shx header." );
 	return NULL;
@@ -959,7 +959,7 @@ static void	_SHPSetBounds( uchar * pabyRec, SHPObject * psShape )
     ByteCopy( &(psShape->dfXMax), pabyRec + 16, 8 );
     ByteCopy( &(psShape->dfYMax), pabyRec + 24, 8 );
 
-    if( bBigEndian )
+    if ( bBigEndian )
     {
 	SwapWord( 8, pabyRec + 0 );
 	SwapWord( 8, pabyRec + 8 );
@@ -984,7 +984,7 @@ SHPComputeExtents( SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Build extents for this object.                                  */
 /* -------------------------------------------------------------------- */
-    if( psObject->nVertices > 0 )
+    if ( psObject->nVertices > 0 )
     {
 	psObject->dfXMin = psObject->dfXMax = psObject->padfX[0];
 	psObject->dfYMin = psObject->dfYMax = psObject->padfY[0];
@@ -1031,7 +1031,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 /* -------------------------------------------------------------------- */
 /*	Establish whether this shape type has M, and Z values.		*/
 /* -------------------------------------------------------------------- */
-    if( nSHPType == SHPT_ARCM
+    if ( nSHPType == SHPT_ARCM
 	|| nSHPType == SHPT_POINTM
 	|| nSHPType == SHPT_POLYGONM
 	|| nSHPType == SHPT_MULTIPOINTM )
@@ -1039,7 +1039,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 	bHasM = TRUE;
 	bHasZ = FALSE;
     }
-    else if( nSHPType == SHPT_ARCZ
+    else if ( nSHPType == SHPT_ARCZ
 	     || nSHPType == SHPT_POINTZ
 	     || nSHPType == SHPT_POLYGONZ
 	     || nSHPType == SHPT_MULTIPOINTZ
@@ -1058,7 +1058,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 /*      Capture parts.  Note that part type is optional, and            */
 /*      defaults to ring.                                               */
 /* -------------------------------------------------------------------- */
-    if( nSHPType == SHPT_ARC || nSHPType == SHPT_POLYGON
+    if ( nSHPType == SHPT_ARC || nSHPType == SHPT_POLYGON
 	|| nSHPType == SHPT_ARCM || nSHPType == SHPT_POLYGONM
 	|| nSHPType == SHPT_ARCZ || nSHPType == SHPT_POLYGONZ
 	|| nSHPType == SHPT_MULTIPATCH )
@@ -1070,7 +1070,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 	psObject->panPartType = (int *)
 	    malloc(sizeof(int) * psObject->nParts);
 
-	if(psObject->panPartStart == NULL || psObject->panPartType == NULL)
+	if (psObject->panPartStart == NULL || psObject->panPartType == NULL)
 	    bu_bomb("Failed to allocate memory for object");
 
 	psObject->panPartStart[0] = 0;
@@ -1078,23 +1078,23 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 
 	for( i = 0; i < nParts; i++ )
 	{
-	    if( psObject->panPartStart != NULL )
+	    if ( psObject->panPartStart != NULL )
 		psObject->panPartStart[i] = panPartStart[i];
 
-	    if( panPartType != NULL )
+	    if ( panPartType != NULL )
 		psObject->panPartType[i] = panPartType[i];
 	    else
 		psObject->panPartType[i] = SHPP_RING;
 	}
 
-	if( psObject->panPartStart[0] != 0 )
+	if ( psObject->panPartStart[0] != 0 )
 	    psObject->panPartStart[0] = 0;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Capture vertices.  Note that X, Y, Z and M are optional.        */
 /* -------------------------------------------------------------------- */
-    if( nVertices > 0 )
+    if ( nVertices > 0 )
     {
 	psObject->padfX = (double *) calloc(sizeof(double),nVertices);
 	psObject->padfY = (double *) calloc(sizeof(double),nVertices);
@@ -1103,16 +1103,16 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 
 	for( i = 0; i < nVertices; i++ )
 	{
-	    if( padfX != NULL )
+	    if ( padfX != NULL )
 		psObject->padfX[i] = padfX[i];
-	    if( padfY != NULL )
+	    if ( padfY != NULL )
 		psObject->padfY[i] = padfY[i];
-	    if( padfZ != NULL && bHasZ )
+	    if ( padfZ != NULL && bHasZ )
 		psObject->padfZ[i] = padfZ[i];
-	    if( padfM != NULL && bHasM )
+	    if ( padfM != NULL && bHasM )
 		psObject->padfM[i] = padfM[i];
 	}
-	if( padfM != NULL && bHasM )
+	if ( padfM != NULL && bHasM )
 	    psObject->bMeasureIsUsed = TRUE;
     }
 
@@ -1175,13 +1175,13 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     assert( nShapeId == -1
 	    || (nShapeId >= 0 && nShapeId < psSHP->nRecords) );
 
-    if( nShapeId != -1 && nShapeId >= psSHP->nRecords )
+    if ( nShapeId != -1 && nShapeId >= psSHP->nRecords )
 	nShapeId = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Add the new entity to the in memory index.                      */
 /* -------------------------------------------------------------------- */
-    if( nShapeId == -1 && psSHP->nRecords+1 > psSHP->nMaxRecords )
+    if ( nShapeId == -1 && psSHP->nRecords+1 > psSHP->nMaxRecords )
     {
 	psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
 
@@ -1200,7 +1200,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*  Extract vertices for a Polygon or Arc.				*/
 /* -------------------------------------------------------------------- */
-    if( psObject->nSHPType == SHPT_POLYGON
+    if ( psObject->nSHPType == SHPT_POLYGON
 	|| psObject->nSHPType == SHPT_POLYGONZ
 	|| psObject->nSHPType == SHPT_POLYGONM
 	|| psObject->nSHPType == SHPT_ARC
@@ -1215,8 +1215,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
 	_SHPSetBounds( pabyRec + 12, psObject );
 
-	if( bBigEndian ) SwapWord( 4, &nPoints );
-	if( bBigEndian ) SwapWord( 4, &nParts );
+	if ( bBigEndian ) SwapWord( 4, &nPoints );
+	if ( bBigEndian ) SwapWord( 4, &nParts );
 
 	ByteCopy( &nPoints, pabyRec + 40 + 8, 4 );
 	ByteCopy( &nParts, pabyRec + 36 + 8, 4 );
@@ -1230,20 +1230,20 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 		  4 * psObject->nParts );
 	for( i = 0; i < psObject->nParts; i++ )
 	{
-	    if( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*i );
+	    if ( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*i );
 	    nRecordSize += 4;
 	}
 
 	/*
 	 * Write multipatch part types if needed.
 	 */
-	if( psObject->nSHPType == SHPT_MULTIPATCH )
+	if ( psObject->nSHPType == SHPT_MULTIPATCH )
 	{
 	    memcpy( pabyRec + nRecordSize, psObject->panPartType,
 		    4*psObject->nParts );
 	    for( i = 0; i < psObject->nParts; i++ )
 	    {
-		if( bBigEndian ) SwapWord( 4, pabyRec + nRecordSize );
+		if ( bBigEndian ) SwapWord( 4, pabyRec + nRecordSize );
 		nRecordSize += 4;
 	    }
 	}
@@ -1256,10 +1256,10 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	    ByteCopy( psObject->padfX + i, pabyRec + nRecordSize, 8 );
 	    ByteCopy( psObject->padfY + i, pabyRec + nRecordSize + 8, 8 );
 
-	    if( bBigEndian )
+	    if ( bBigEndian )
 		SwapWord( 8, pabyRec + nRecordSize );
 
-	    if( bBigEndian )
+	    if ( bBigEndian )
 		SwapWord( 8, pabyRec + nRecordSize + 8 );
 
 	    nRecordSize += 2 * 8;
@@ -1268,22 +1268,22 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	/*
 	 * Write the Z coordinates (if any).
 	 */
-	if( psObject->nSHPType == SHPT_POLYGONZ
+	if ( psObject->nSHPType == SHPT_POLYGONZ
 	    || psObject->nSHPType == SHPT_ARCZ
 	    || psObject->nSHPType == SHPT_MULTIPATCH )
 	{
 	    ByteCopy( &(psObject->dfZMin), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    ByteCopy( &(psObject->dfZMax), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    for( i = 0; i < psObject->nVertices; i++ )
 	    {
 		ByteCopy( psObject->padfZ + i, pabyRec + nRecordSize, 8 );
-		if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+		if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 		nRecordSize += 8;
 	    }
 	}
@@ -1291,7 +1291,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	/*
 	 * Write the M values, if any.
 	 */
-	if( psObject->bMeasureIsUsed
+	if ( psObject->bMeasureIsUsed
 	    && (psObject->nSHPType == SHPT_POLYGONM
 	    || psObject->nSHPType == SHPT_ARCM
 #ifndef DISABLE_MULTIPATCH_MEASURE
@@ -1301,17 +1301,17 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	    || psObject->nSHPType == SHPT_ARCZ) )
 	{
 	    ByteCopy( &(psObject->dfMMin), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    ByteCopy( &(psObject->dfMMax), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    for( i = 0; i < psObject->nVertices; i++ )
 	    {
 		ByteCopy( psObject->padfM + i, pabyRec + nRecordSize, 8 );
-		if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+		if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 		nRecordSize += 8;
 	    }
 	}
@@ -1320,7 +1320,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*  Extract vertices for a MultiPoint.					*/
 /* -------------------------------------------------------------------- */
-    else if( psObject->nSHPType == SHPT_MULTIPOINT
+    else if ( psObject->nSHPType == SHPT_MULTIPOINT
 	     || psObject->nSHPType == SHPT_MULTIPOINTZ
 	     || psObject->nSHPType == SHPT_MULTIPOINTM )
     {
@@ -1330,7 +1330,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
 	_SHPSetBounds( pabyRec + 12, psObject );
 
-	if( bBigEndian ) SwapWord( 4, &nPoints );
+	if ( bBigEndian ) SwapWord( 4, &nPoints );
 	ByteCopy( &nPoints, pabyRec + 44, 4 );
 
 	for( i = 0; i < psObject->nVertices; i++ )
@@ -1338,46 +1338,46 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	    ByteCopy( psObject->padfX + i, pabyRec + 48 + i*16, 8 );
 	    ByteCopy( psObject->padfY + i, pabyRec + 48 + i*16 + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, pabyRec + 48 + i*16 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + 48 + i*16 + 8 );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + 48 + i*16 );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + 48 + i*16 + 8 );
 	}
 
 	nRecordSize = 48 + 16 * psObject->nVertices;
 
-	if( psObject->nSHPType == SHPT_MULTIPOINTZ )
+	if ( psObject->nSHPType == SHPT_MULTIPOINTZ )
 	{
 	    ByteCopy( &(psObject->dfZMin), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    ByteCopy( &(psObject->dfZMax), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    for( i = 0; i < psObject->nVertices; i++ )
 	    {
 		ByteCopy( psObject->padfZ + i, pabyRec + nRecordSize, 8 );
-		if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+		if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 		nRecordSize += 8;
 	    }
 	}
 
-	if( psObject->bMeasureIsUsed
+	if ( psObject->bMeasureIsUsed
 	    && (psObject->nSHPType == SHPT_MULTIPOINTZ
 	    || psObject->nSHPType == SHPT_MULTIPOINTM) )
 	{
 	    ByteCopy( &(psObject->dfMMin), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    ByteCopy( &(psObject->dfMMax), pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 
 	    for( i = 0; i < psObject->nVertices; i++ )
 	    {
 		ByteCopy( psObject->padfM + i, pabyRec + nRecordSize, 8 );
-		if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+		if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 		nRecordSize += 8;
 	    }
 	}
@@ -1386,31 +1386,31 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write point.							*/
 /* -------------------------------------------------------------------- */
-    else if( psObject->nSHPType == SHPT_POINT
+    else if ( psObject->nSHPType == SHPT_POINT
 	     || psObject->nSHPType == SHPT_POINTZ
 	     || psObject->nSHPType == SHPT_POINTM )
     {
 	ByteCopy( psObject->padfX, pabyRec + 12, 8 );
 	ByteCopy( psObject->padfY, pabyRec + 20, 8 );
 
-	if( bBigEndian ) SwapWord( 8, pabyRec + 12 );
-	if( bBigEndian ) SwapWord( 8, pabyRec + 20 );
+	if ( bBigEndian ) SwapWord( 8, pabyRec + 12 );
+	if ( bBigEndian ) SwapWord( 8, pabyRec + 20 );
 
 	nRecordSize = 28;
 
-	if( psObject->nSHPType == SHPT_POINTZ )
+	if ( psObject->nSHPType == SHPT_POINTZ )
 	{
 	    ByteCopy( psObject->padfZ, pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 	}
 
-	if( psObject->bMeasureIsUsed
+	if ( psObject->bMeasureIsUsed
 	    && (psObject->nSHPType == SHPT_POINTZ
 	    || psObject->nSHPType == SHPT_POINTM) )
 	{
 	    ByteCopy( psObject->padfM, pabyRec + nRecordSize, 8 );
-	    if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+	    if ( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
 	    nRecordSize += 8;
 	}
     }
@@ -1418,7 +1418,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Not much to do for null geometries.                             */
 /* -------------------------------------------------------------------- */
-    else if( psObject->nSHPType == SHPT_NULL )
+    else if ( psObject->nSHPType == SHPT_NULL )
     {
 	nRecordSize = 12;
     }
@@ -1434,10 +1434,10 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /*      rewriting and existing record, and it will fit, then put it     */
 /*      back where the original came from.  Otherwise write at the end. */
 /* -------------------------------------------------------------------- */
-    if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
+    if ( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
 	unsigned int nExpectedSize = psSHP->nFileSize + nRecordSize;
-	if( nExpectedSize < psSHP->nFileSize ) /* due to unsigned int overflow */
+	if ( nExpectedSize < psSHP->nFileSize ) /* due to unsigned int overflow */
 	{
 	    char str[128];
 	    sprintf( str, "Failed to write shape object. "
@@ -1448,7 +1448,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	    return -1;
 	}
 
-	if( nShapeId == -1 )
+	if ( nShapeId == -1 )
 	    nShapeId = psSHP->nRecords++;
 
 	psSHP->panRecOffset[nShapeId] = nRecordOffset = psSHP->nFileSize;
@@ -1465,27 +1465,27 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /*      Set the shape type, record number, and record size.             */
 /* -------------------------------------------------------------------- */
     i32 = nShapeId+1;					/* record # */
-    if( !bBigEndian ) SwapWord( 4, &i32 );
+    if ( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec, 4 );
 
     i32 = (nRecordSize-8)/2;				/* record size */
-    if( !bBigEndian ) SwapWord( 4, &i32 );
+    if ( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec + 4, 4 );
 
     i32 = psObject->nSHPType;				/* shape type */
-    if( bBigEndian ) SwapWord( 4, &i32 );
+    if ( bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec + 8, 4 );
 
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
+    if ( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
     {
 	psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() while writing object to .shp file." );
 	free( pabyRec );
 	return -1;
     }
-    if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
+    if ( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
     {
 	psSHP->sHooks.Error( "Error in psSHP->sHooks.Fwrite() while writing object to .shp file." );
 	free( pabyRec );
@@ -1497,12 +1497,12 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
 /* -------------------------------------------------------------------- */
-    if( ZERO(psSHP->adBoundsMin[0])
+    if ( ZERO(psSHP->adBoundsMin[0])
 	&& ZERO(psSHP->adBoundsMax[0])
 	&& ZERO(psSHP->adBoundsMin[1])
 	&& ZERO(psSHP->adBoundsMax[1]))
     {
-	if( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
+	if ( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
 	{
 	    psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = 0.0;
 	    psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = 0.0;
@@ -1551,14 +1551,14 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Validate the record/entity number.                              */
 /* -------------------------------------------------------------------- */
-    if( hEntity < 0 || hEntity >= psSHP->nRecords )
+    if ( hEntity < 0 || hEntity >= psSHP->nRecords )
 	return( NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Ensure our record buffer is large enough.                       */
 /* -------------------------------------------------------------------- */
     nEntitySize = psSHP->panRecSize[hEntity]+8;
-    if( nEntitySize > psSHP->nBufSize )
+    if ( nEntitySize > psSHP->nBufSize )
     {
 	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
 	if (psSHP->pabyRec == NULL)
@@ -1588,7 +1588,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 )
+    if ( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 )
     {
 	/*
 	 * TODO - mloskot: Consider detailed diagnostics of shape file,
@@ -1603,7 +1603,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	return NULL;
     }
 
-    if( psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP ) != 1 )
+    if ( psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP ) != 1 )
     {
 	/*
 	 * TODO - mloskot: Consider detailed diagnostics of shape file,
@@ -1635,12 +1635,12 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     }
     memcpy( &psShape->nSHPType, psSHP->pabyRec + 8, 4 );
 
-    if( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
+    if ( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
 /* ==================================================================== */
-    if( psShape->nSHPType == SHPT_POLYGON || psShape->nSHPType == SHPT_ARC
+    if ( psShape->nSHPType == SHPT_POLYGON || psShape->nSHPType == SHPT_ARC
 	|| psShape->nSHPType == SHPT_POLYGONZ
 	|| psShape->nSHPType == SHPT_POLYGONM
 	|| psShape->nSHPType == SHPT_ARCZ
@@ -1666,10 +1666,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( &(psShape->dfXMax), psSHP->pabyRec + 8 + 20, 8 );
 	memcpy( &(psShape->dfYMax), psSHP->pabyRec + 8 + 28, 8 );
 
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfXMin) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfYMin) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfXMax) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfYMax) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfXMin) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfYMin) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfXMax) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfYMax) );
 
 /* -------------------------------------------------------------------- */
 /*      Extract part/point count, and build vertex and part arrays      */
@@ -1678,8 +1678,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( &nPoints, psSHP->pabyRec + 40 + 8, 4 );
 	memcpy( &nParts, psSHP->pabyRec + 36 + 8, 4 );
 
-	if( bBigEndian ) SwapWord( 4, &nPoints );
-	if( bBigEndian ) SwapWord( 4, &nParts );
+	if ( bBigEndian ) SwapWord( 4, &nPoints );
+	if ( bBigEndian ) SwapWord( 4, &nParts );
 
 	if (nPoints < 0 || nParts < 0 ||
 	    nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000)
@@ -1701,7 +1701,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	{
 	    nRequiredSize += 16 + 8 * nPoints;
 	}
-	if( psShape->nSHPType == SHPT_MULTIPATCH )
+	if ( psShape->nSHPType == SHPT_MULTIPATCH )
 	{
 	    nRequiredSize += 4 * nParts;
 	}
@@ -1748,7 +1748,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( psShape->panPartStart, psSHP->pabyRec + 44 + 8, 4 * nParts );
 	for( i = 0; i < nParts; i++ )
 	{
-	    if( bBigEndian ) SwapWord( 4, psShape->panPartStart+i );
+	    if ( bBigEndian ) SwapWord( 4, psShape->panPartStart+i );
 
 	    /* We check that the offset is inside the vertex array */
 	    if (psShape->panPartStart[i] < 0 ||
@@ -1775,12 +1775,12 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If this is a multipatch, we will also have parts types.         */
 /* -------------------------------------------------------------------- */
-	if( psShape->nSHPType == SHPT_MULTIPATCH )
+	if ( psShape->nSHPType == SHPT_MULTIPATCH )
 	{
 	    memcpy( psShape->panPartType, psSHP->pabyRec + nOffset, 4*nParts );
 	    for( i = 0; i < nParts; i++ )
 	    {
-		if( bBigEndian ) SwapWord( 4, psShape->panPartType+i );
+		if ( bBigEndian ) SwapWord( 4, psShape->panPartType+i );
 	    }
 
 	    nOffset += 4*nParts;
@@ -1799,8 +1799,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 		   psSHP->pabyRec + nOffset + i * 16 + 8,
 		   8 );
 
-	    if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
-	    if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfX + i );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfY + i );
 	}
 
 	nOffset += 16*nPoints;
@@ -1808,21 +1808,21 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-	if( psShape->nSHPType == SHPT_POLYGONZ
+	if ( psShape->nSHPType == SHPT_POLYGONZ
 	    || psShape->nSHPType == SHPT_ARCZ
 	    || psShape->nSHPType == SHPT_MULTIPATCH )
 	{
 	    memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
 	    memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
 
 	    for( i = 0; i < nPoints; i++ )
 	    {
 		memcpy( psShape->padfZ + i,
 			psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-		if( bBigEndian ) SwapWord( 8, psShape->padfZ + i );
+		if ( bBigEndian ) SwapWord( 8, psShape->padfZ + i );
 	    }
 
 	    nOffset += 16 + 8*nPoints;
@@ -1834,19 +1834,19 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-	if( nEntitySize >= nOffset + 16 + 8*nPoints )
+	if ( nEntitySize >= nOffset + 16 + 8*nPoints )
 	{
 	    memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
 	    memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
 
 	    for( i = 0; i < nPoints; i++ )
 	    {
 		memcpy( psShape->padfM + i,
 			psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-		if( bBigEndian ) SwapWord( 8, psShape->padfM + i );
+		if ( bBigEndian ) SwapWord( 8, psShape->padfM + i );
 	    }
 	    psShape->bMeasureIsUsed = TRUE;
 	}
@@ -1855,7 +1855,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* ==================================================================== */
 /*  Extract vertices for a MultiPoint.					*/
 /* ==================================================================== */
-    else if( psShape->nSHPType == SHPT_MULTIPOINT
+    else if ( psShape->nSHPType == SHPT_MULTIPOINT
 	     || psShape->nSHPType == SHPT_MULTIPOINTM
 	     || psShape->nSHPType == SHPT_MULTIPOINTZ )
     {
@@ -1872,7 +1872,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	}
 	memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
 
-	if( bBigEndian ) SwapWord( 4, &nPoints );
+	if ( bBigEndian ) SwapWord( 4, &nPoints );
 
 	if (nPoints < 0 || nPoints > 50 * 1000 * 1000)
 	{
@@ -1884,7 +1884,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	}
 
 	nRequiredSize = 48 + nPoints * 16;
-	if( psShape->nSHPType == SHPT_MULTIPOINTZ )
+	if ( psShape->nSHPType == SHPT_MULTIPOINTZ )
 	{
 	    nRequiredSize += 16 + nPoints * 8;
 	}
@@ -1921,8 +1921,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	    memcpy(psShape->padfX+i, psSHP->pabyRec + 48 + 16 * i, 8 );
 	    memcpy(psShape->padfY+i, psSHP->pabyRec + 48 + 16 * i + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
-	    if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfX + i );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfY + i );
 	}
 
 	nOffset = 48 + 16*nPoints;
@@ -1935,27 +1935,27 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( &(psShape->dfXMax), psSHP->pabyRec + 8 + 20, 8 );
 	memcpy( &(psShape->dfYMax), psSHP->pabyRec + 8 + 28, 8 );
 
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfXMin) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfYMin) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfXMax) );
-	if( bBigEndian ) SwapWord( 8, &(psShape->dfYMax) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfXMin) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfYMin) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfXMax) );
+	if ( bBigEndian ) SwapWord( 8, &(psShape->dfYMax) );
 
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-	if( psShape->nSHPType == SHPT_MULTIPOINTZ )
+	if ( psShape->nSHPType == SHPT_MULTIPOINTZ )
 	{
 	    memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
 	    memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
 
 	    for( i = 0; i < nPoints; i++ )
 	    {
 		memcpy( psShape->padfZ + i,
 			psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-		if( bBigEndian ) SwapWord( 8, psShape->padfZ + i );
+		if ( bBigEndian ) SwapWord( 8, psShape->padfZ + i );
 	    }
 
 	    nOffset += 16 + 8*nPoints;
@@ -1967,19 +1967,19 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-	if( nEntitySize >= nOffset + 16 + 8*nPoints )
+	if ( nEntitySize >= nOffset + 16 + 8*nPoints )
 	{
 	    memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
 	    memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
-	    if( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
+	    if ( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
 
 	    for( i = 0; i < nPoints; i++ )
 	    {
 		memcpy( psShape->padfM + i,
 			psSHP->pabyRec + nOffset + 16 + i*8, 8 );
-		if( bBigEndian ) SwapWord( 8, psShape->padfM + i );
+		if ( bBigEndian ) SwapWord( 8, psShape->padfM + i );
 	    }
 	    psShape->bMeasureIsUsed = TRUE;
 	}
@@ -1988,7 +1988,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* ==================================================================== */
 /*      Extract vertices for a point.                                   */
 /* ==================================================================== */
-    else if( psShape->nSHPType == SHPT_POINT
+    else if ( psShape->nSHPType == SHPT_POINT
 	     || psShape->nSHPType == SHPT_POINTM
 	     || psShape->nSHPType == SHPT_POINTZ )
     {
@@ -2011,19 +2011,19 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( psShape->padfX, psSHP->pabyRec + 12, 8 );
 	memcpy( psShape->padfY, psSHP->pabyRec + 20, 8 );
 
-	if( bBigEndian ) SwapWord( 8, psShape->padfX );
-	if( bBigEndian ) SwapWord( 8, psShape->padfY );
+	if ( bBigEndian ) SwapWord( 8, psShape->padfX );
+	if ( bBigEndian ) SwapWord( 8, psShape->padfY );
 
 	nOffset = 20 + 8;
 
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-	if( psShape->nSHPType == SHPT_POINTZ )
+	if ( psShape->nSHPType == SHPT_POINTZ )
 	{
 	    memcpy( psShape->padfZ, psSHP->pabyRec + nOffset, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, psShape->padfZ );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfZ );
 
 	    nOffset += 8;
 	}
@@ -2034,11 +2034,11 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-	if( nEntitySize >= nOffset + 8 )
+	if ( nEntitySize >= nOffset + 8 )
 	{
 	    memcpy( psShape->padfM, psSHP->pabyRec + nOffset, 8 );
 
-	    if( bBigEndian ) SwapWord( 8, psShape->padfM );
+	    if ( bBigEndian ) SwapWord( 8, psShape->padfM );
 	    psShape->bMeasureIsUsed = TRUE;
 	}
 
@@ -2153,21 +2153,21 @@ void SHPAPI_CALL
 SHPDestroyObject( SHPObject * psShape )
 
 {
-    if( psShape == NULL )
+    if ( psShape == NULL )
 	return;
 
-    if( psShape->padfX != NULL )
+    if ( psShape->padfX != NULL )
 	free( psShape->padfX );
-    if( psShape->padfY != NULL )
+    if ( psShape->padfY != NULL )
 	free( psShape->padfY );
-    if( psShape->padfZ != NULL )
+    if ( psShape->padfZ != NULL )
 	free( psShape->padfZ );
-    if( psShape->padfM != NULL )
+    if ( psShape->padfM != NULL )
 	free( psShape->padfM );
 
-    if( psShape->panPartStart != NULL )
+    if ( psShape->panPartStart != NULL )
 	free( psShape->panPartStart );
-    if( psShape->panPartType != NULL )
+    if ( psShape->panPartType != NULL )
 	free( psShape->panPartType );
 
     free( psShape );
@@ -2189,12 +2189,12 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Do nothing if this is not a polygon object.                     */
 /* -------------------------------------------------------------------- */
-    if( psObject->nSHPType != SHPT_POLYGON
+    if ( psObject->nSHPType != SHPT_POLYGON
 	&& psObject->nSHPType != SHPT_POLYGONZ
 	&& psObject->nSHPType != SHPT_POLYGONM )
 	return 0;
 
-    if( psObject->nVertices == 0 || psObject->nParts == 0 )
+    if ( psObject->nVertices == 0 || psObject->nParts == 0 )
 	return 0;
 
 /* -------------------------------------------------------------------- */
@@ -2227,12 +2227,12 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 	{
 	    int iEdge;
 
-	    if( iCheckRing == iOpRing )
+	    if ( iCheckRing == iOpRing )
 		continue;
 
 	    nVertStart = psObject->panPartStart[iCheckRing];
 
-	    if( iCheckRing == psObject->nParts-1 )
+	    if ( iCheckRing == psObject->nParts-1 )
 		nVertCount = psObject->nVertices
 		    - psObject->panPartStart[iCheckRing];
 	    else
@@ -2243,7 +2243,7 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 	    {
 		int iNext;
 
-		if( iEdge < nVertCount-1 )
+		if ( iEdge < nVertCount-1 )
 		    iNext = iEdge+1;
 		else
 		    iNext = 0;
@@ -2280,7 +2280,7 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 	nVertStart = psObject->panPartStart[iOpRing];
 
-	if( iOpRing == psObject->nParts-1 )
+	if ( iOpRing == psObject->nParts-1 )
 	    nVertCount = psObject->nVertices - psObject->panPartStart[iOpRing];
 	else
 	    nVertCount = psObject->panPartStart[iOpRing+1]
@@ -2300,7 +2300,7 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Reverse if necessary.                                           */
 /* -------------------------------------------------------------------- */
-	if( (dfSum < 0.0 && bInner) || (dfSum > 0.0 && !bInner) )
+	if ( (dfSum < 0.0 && bInner) || (dfSum > 0.0 && !bInner) )
 	{
 	    int   i;
 
@@ -2322,7 +2322,7 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 		psObject->padfY[nVertStart+nVertCount-i-1] = dfSaved;
 
 		/* Swap Z */
-		if( psObject->padfZ )
+		if ( psObject->padfZ )
 		{
 		    dfSaved = psObject->padfZ[nVertStart+i];
 		    psObject->padfZ[nVertStart+i] =
@@ -2331,7 +2331,7 @@ SHPRewindObject( SHPHandle UNUSED(hSHP), SHPObject * psObject )
 		}
 
 		/* Swap M */
-		if( psObject->padfM )
+		if ( psObject->padfM )
 		{
 		    dfSaved = psObject->padfM[nVertStart+i];
 		    psObject->padfM[nVertStart+i] =

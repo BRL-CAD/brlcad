@@ -510,7 +510,7 @@ mged_setup(Tcl_Interp **interpreter)
 		 */
 		Tcl_DeleteCommand(*interpreter, "::itcl::class");
 		nsp = Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0);
-		if(nsp)
+		if (nsp)
 		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }

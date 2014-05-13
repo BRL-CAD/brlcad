@@ -117,7 +117,7 @@ class UVKeyComp {
 public:
     bool operator()(const UVKey& key1, const UVKey& key2)
     {
-	if(key1.getKey().compare(key2.getKey()) < 0) {
+	if (key1.getKey().compare(key2.getKey()) < 0) {
 	    return true;
 	} else {
 	    return false;
@@ -190,7 +190,7 @@ void QuadNode::AppendKeys(std::set<UVKey, UVKeyComp> *newkeys, int MAX_TREE_DEPT
 	counting++;
 	ints_to_key(&keystring, PU[i], PV[i], MAX_TREE_DEPTH);
 	item = newkeys->find(keystring);
-	if(item == newkeys->end()) {
+	if (item == newkeys->end()) {
 	    point = new UVKey(keystring);
 	    /* FIXME: newkeys was keys, but shadows member data.
 	     * which were we inserting into here?
@@ -442,7 +442,7 @@ UVKeyQuadTree::UVKeyQuadTree(std::set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPT
 	std::cout << root->PU[i] << ", " << root->PV[i] << "\n";
 	ints_to_key(&keynum, root->PU[i], root->PV[i], MAX_TREE_DEPTH);
 	item = keys->find(keynum);
-	if(item == keys->end()) {
+	if (item == keys->end()) {
 	    point = new UVKey(keynum);
 	    keys->insert(*point);
 	}
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
     int matsize;
     time_t t0, t1;
     int MAX_TREE_DEPTH, tdiff;
-    if(argc == 1) {
+    if (argc == 1) {
 	MAX_TREE_DEPTH = 2;
     } else {
 	MAX_TREE_DEPTH = atoi(argv[1]);

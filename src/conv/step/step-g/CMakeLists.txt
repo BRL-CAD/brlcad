@@ -451,7 +451,7 @@ list(APPEND stepg_LIBS ${stepg_LIBS})
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 
-if(MSVC)
+if (MSVC)
   set(stepg_IMPORTS
     BU_DLL_IMPORTS
     RT_DLL_IMPORTS
@@ -463,7 +463,7 @@ if(MSVC)
     )
   list(APPEND stepg_IMPORTS ${stepg_IMPORTS})
   set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${stepg_IMPORTS}")
-endif(MSVC)
+endif (MSVC)
 
 # Local Variables:
 # tab-width: 8

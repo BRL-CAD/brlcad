@@ -70,19 +70,19 @@ gcv_compute_intervals_isectline(struct face_s *f,
 			    point_t *isectpoint0, point_t *isectpoint1,
 			    const struct bn_tol *tol)
 {
-    if(D0D1>0.0f)
+    if (D0D1>0.0f)
 	/* here we know that D0D2<=0.0 */
 	/* that is D0, D1 are on the same side, D2 on the other or on the plane */
 	gcv_fisect2(f->vert[2], f->vert[0], f->vert[1], VV2, VV0, VV1, D2, D0, D1, isect0, isect1, isectpoint0, isectpoint1);
-    else if(D0D2>0.0f)
+    else if (D0D2>0.0f)
 	/* here we know that d0d1<=0.0 */
 	gcv_fisect2(f->vert[1], f->vert[0], f->vert[2], VV1, VV0, VV2, D1, D0, D2, isect0, isect1, isectpoint0, isectpoint1);
-    else if(D1*D2>0.0f || !NEAR_ZERO(D0, tol->dist))
+    else if (D1*D2>0.0f || !NEAR_ZERO(D0, tol->dist))
 	/* here we know that d0d1<=0.0 or that D0!=0.0 */
 	gcv_fisect2(f->vert[0], f->vert[1], f->vert[2], VV0, VV1, VV2, D0, D1, D2, isect0, isect1, isectpoint0, isectpoint1);
-    else if(!NEAR_ZERO(D1, tol->dist))
+    else if (!NEAR_ZERO(D1, tol->dist))
 	gcv_fisect2(f->vert[1], f->vert[0], f->vert[2], VV1, VV0, VV2, D1, D0, D2, isect0, isect1, isectpoint0, isectpoint1);
-    else if(!NEAR_ZERO(D2, tol->dist))
+    else if (!NEAR_ZERO(D2, tol->dist))
 	gcv_fisect2(f->vert[2], f->vert[0], f->vert[1], VV2, VV0, VV1, D2, D0, D1, isect0, isect1, isectpoint0, isectpoint1);
     else
 	/* triangles are coplanar */
@@ -121,11 +121,11 @@ gcv_edge_against_tri_edges(point_t V0, point_t V1, point_t U0, point_t U1, point
     Ax=V1[i0]-V0[i0];
     Ay=V1[i1]-V0[i1];
     /* test edge U0, U1 against V0, V1 */
-    if(gcv_edge_edge_test(V0, U0, U1, Ax, Ay, i0, i1)) return 1;
+    if (gcv_edge_edge_test(V0, U0, U1, Ax, Ay, i0, i1)) return 1;
     /* test edge U1, U2 against V0, V1 */
-    if(gcv_edge_edge_test(V0, U1, U2, Ax, Ay, i0, i1)) return 1;
+    if (gcv_edge_edge_test(V0, U1, U2, Ax, Ay, i0, i1)) return 1;
     /* test edge U2, U1 against V0, V1 */
-    if(gcv_edge_edge_test(V0, U2, U0, Ax, Ay, i0, i1)) return 1;
+    if (gcv_edge_edge_test(V0, U2, U0, Ax, Ay, i0, i1)) return 1;
     return 0;
 }
 
@@ -150,8 +150,8 @@ gcv_point_in_tri(point_t V0, point_t U0, point_t U1, point_t U2, int i0, int i1)
     b=-(U0[i0]-U2[i0]);
     c=-a*U2[i0]-b*U2[i1];
     d2=a*V0[i0]+b*V0[i1]+c;
-    if(d0*d1>0.0)
-	if(d0*d2>0.0) return 1;
+    if (d0*d1>0.0)
+	if (d0*d2>0.0) return 1;
     return 0;
 }
 
@@ -166,8 +166,8 @@ gcv_coplanar_tri_tri(vect_t N, vect_t V0, vect_t V1, vect_t V2, vect_t U0, vect_
     A[0]=fabs(N[0]);
     A[1]=fabs(N[1]);
     A[2]=fabs(N[2]);
-    if(A[0]>A[1]) {
-	if(A[0]>A[2]) {
+    if (A[0]>A[1]) {
+	if (A[0]>A[2]) {
 	    i0=1;      /* A[0] is greatest */
 	    i1=2;
 	} else {
@@ -175,7 +175,7 @@ gcv_coplanar_tri_tri(vect_t N, vect_t V0, vect_t V1, vect_t V2, vect_t U0, vect_
 	    i1=1;
 	}
     } else {  /* A[0]<=A[1] */
-	if(A[2]>A[1]) {
+	if (A[2]>A[1]) {
 	    i0=0;      /* A[2] is greatest */
 	    i1=1;
 	} else {
@@ -185,13 +185,13 @@ gcv_coplanar_tri_tri(vect_t N, vect_t V0, vect_t V1, vect_t V2, vect_t U0, vect_
     }
 
     /* test all edges of triangle 1 against the edges of triangle 2 */
-    if(gcv_edge_against_tri_edges(V0, V1, U0, U1, U2, i0, i1))return 1;
-    if(gcv_edge_against_tri_edges(V1, V2, U0, U1, U2, i0, i1))return 1;
-    if(gcv_edge_against_tri_edges(V2, V0, U0, U1, U2, i0, i1))return 1;
+    if (gcv_edge_against_tri_edges(V0, V1, U0, U1, U2, i0, i1))return 1;
+    if (gcv_edge_against_tri_edges(V1, V2, U0, U1, U2, i0, i1))return 1;
+    if (gcv_edge_against_tri_edges(V2, V0, U0, U1, U2, i0, i1))return 1;
 
     /* finally, test if tri1 is totally contained in tri2 or vice versa */
-    if(gcv_point_in_tri(V0, U0, U1, U2, i0, i1))return 1;
-    if(gcv_point_in_tri(U0, V0, V1, V2, i0, i1))return 1;
+    if (gcv_point_in_tri(V0, U0, U1, U2, i0, i1))return 1;
+    if (gcv_point_in_tri(U0, V0, V1, V2, i0, i1))return 1;
 
     return 0;
 }
@@ -216,7 +216,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
     du0du1=du0*du1;
     du0du2=du0*du2;
 
-    if(du0du1>0.0f && du0du2>0.0f) /* same sign on all of them + not equal 0 ? */
+    if (du0du1>0.0f && du0du2>0.0f) /* same sign on all of them + not equal 0 ? */
 	return 0;                    /* no intersection occurs */
 
     /* compute plane of triangle (rf->vert[0], rf->vert[1], rf->vert[2]) */
@@ -231,7 +231,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
     dv0dv1=dv0*dv1;
     dv0dv2=dv0*dv2;
 
-    if(dv0dv1>0.0f && dv0dv2>0.0f) /* same sign on all of them + not equal 0 ? */
+    if (dv0dv1>0.0f && dv0dv2>0.0f) /* same sign on all of them + not equal 0 ? */
 	return 0;                    /* no intersection occurs */
 
     /* compute direction of intersection line */
@@ -242,8 +242,8 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
     i=0;
     b=fabs(D[1]);
     c=fabs(D[2]);
-    if(b>max) max=b, i=1;
-    if(c>max) max=c, i=2;
+    if (b>max) max=b, i=1;
+    if (c>max) max=c, i=2;
 
     /* this is the simplified projection onto L*/
     vp0=lf->vert[0][i];
@@ -256,7 +256,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
 
     /* compute interval for triangle 1 */
     *coplanar=gcv_compute_intervals_isectline(lf, vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, &isect1[0], &isect1[1], &isectpointA1, &isectpointA2, tol);
-    if(*coplanar)
+    if (*coplanar)
 	return gcv_coplanar_tri_tri(lf->plane, lf->vert[0], lf->vert[1], lf->vert[2], rf->vert[0], rf->vert[1], rf->vert[2]);
 
     /* compute interval for triangle 2 */
@@ -264,12 +264,12 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
 
     /* sort so that a<=b */
     smallest1 = smallest2 = 0;
-#define SORT2(a, b, smallest) if(a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
+#define SORT2(a, b, smallest) if (a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
     SORT2(isect1[0], isect1[1], smallest1);
     SORT2(isect2[0], isect2[1], smallest2);
 #undef SORT2
 
-    if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
+    if (isect1[1]<isect2[0] || isect2[1]<isect1[0])
 	return 0;
 
     /* at this point, we know that the triangles intersect */

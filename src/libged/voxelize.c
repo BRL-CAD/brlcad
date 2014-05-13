@@ -151,7 +151,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &threshold) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
@@ -187,7 +187,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
      * that the user wants included in the ray trace.
      */
     while(argc > 0) {
-	if(rt_gettree(rtip,argv[0]) < 0) {
+	if (rt_gettree(rtip,argv[0]) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", argv[1]);
 	    return GED_ERROR;
 	}

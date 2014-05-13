@@ -228,7 +228,7 @@ main( int argc, char *argv[] )
     }
     fprintf( stderr, "...\n" );
 
-    if( do_plot ) {
+    if ( do_plot ) {
 	result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
 	for ( i=0; i<grid_size; i++ ) {
 	    result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
@@ -238,7 +238,7 @@ main( int argc, char *argv[] )
     cell_size = model_size[X] / grid_size;
     gettimeofday( &startTime, NULL );
     for ( i=0; i<grid_size; i++ ) {
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "shooting row %d\n", i );
 	}
 	for ( j=0; j<grid_size; j++ ) {
@@ -255,7 +255,7 @@ main( int argc, char *argv[] )
 	    ap->a_ray.index = ap->a_user;
 	    VSET( ap->a_ray.r_dir, 0, 1, 0 );
 	    rts_shootray(ap);
-	    if( do_plot ) {
+	    if ( do_plot ) {
 		hitCount = countHits((struct bu_vlb *)ap->a_uptr);
 		if ( hitCount == 0 ) {
 		    result_map[i][j] = ' ';
@@ -273,7 +273,7 @@ main( int argc, char *argv[] )
     diff = endTime.tv_sec - startTime.tv_sec + (endTime.tv_usec - startTime.tv_usec) / 1000000.0;
     fprintf( stderr, "time for %d individual rays: %g second\n", job_count, diff );
 
-    if(do_plot) {
+    if (do_plot) {
 	for ( i=grid_size-1; i>=0; i-- ) {
 	    fprintf( stderr, "%s\n", result_map[i] );
 	}

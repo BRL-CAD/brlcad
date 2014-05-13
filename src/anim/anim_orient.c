@@ -95,7 +95,7 @@ parse_args(int argc, char **argv)
     output_inv = 0;
     length = 4;
 
-    if(*argv[1] == 'h' || *argv[1] == '?')
+    if (*argv[1] == 'h' || *argv[1] == '?')
 	usage();
 
     if (argc > 2) {

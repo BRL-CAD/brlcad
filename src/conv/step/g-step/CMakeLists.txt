@@ -44,7 +44,7 @@ list(APPEND gstep_LIBS ${gstep_LIBS})
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 
-if(MSVC)
+if (MSVC)
   set(gstep_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -57,7 +57,7 @@ if(MSVC)
     )
   list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif(MSVC)
+endif (MSVC)
 
 set(IGNORE_FILES
   AP203.h
@@ -76,9 +76,9 @@ CMAKEFILES(${IGNORE_FILES})
 
 set(list_elements_srcs ${express_srcs} list_elements.cpp)
 BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
-if(MSVC)
+if (MSVC)
   set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif(MSVC)
+endif (MSVC)
 
 # Local Variables:
 # tab-width: 8

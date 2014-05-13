@@ -571,7 +571,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	return GED_ERROR;
     }
 
-    if(db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);

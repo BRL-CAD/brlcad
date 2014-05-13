@@ -7,12 +7,12 @@ set(IGES_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES IGES_INCLUDE_DIRS)
 include_directories(${IGES_INCLUDE_DIRS})
 
-if(MSVC)
+if (MSVC)
   set(WIN32LIBS ${WINSOCK_LIB} Rpcrt4.lib)
   add_definitions(
     -DON_DLL_IMPORTS
     )
-endif(MSVC)
+endif (MSVC)
 
 #add_executable(iges
 #    BrepHandler.cpp

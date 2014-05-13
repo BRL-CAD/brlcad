@@ -2871,14 +2871,14 @@ exec_start :
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		|| (args[0] = strtok(input_ln, " \t")) == NULL
 		) {
-		if(stashed_args)
+		if (stashed_args)
 		    free(stashed_args);
 		return -1;
 	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
 	} else {
-	    if(stashed_args)
+	    if (stashed_args)
 		free(stashed_args);
 	    return -1;
 	}
@@ -2913,7 +2913,7 @@ exec_start :
 	}
 	(void) f_Redraw();
     }
-    if(stashed_args)
+    if (stashed_args)
 	free(stashed_args);
     return 1;
 }
@@ -3392,7 +3392,7 @@ pars_Argv(int argc, char **argv)
 	   != EOF
 	)
     {
-    	if(bu_optopt == '?') c='h';
+    	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'h' :
 		return 0;

@@ -69,7 +69,7 @@ OSLRenderer::AddShader(ShaderGroupInfo &group_info)
 	for(size_t i = 0; i < sh_info.mparam.size(); i++)
 	    shadingsys->Parameter(sh_info.mparam[i].first.c_str(), TypeDesc::TypeMatrix, &(sh_info.mparam[i].second));
 
-	if(sh_info.layername == "")
+	if (sh_info.layername == "")
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
 	else
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), sh_info.layername.c_str());
@@ -96,7 +96,7 @@ OSLRenderer::AddShader(ShaderGroupInfo &group_info)
 Color3
 OSLRenderer::QueryColor(RenderInfo *info) const
 {
-    if(info->depth >= 5) {
+    if (info->depth >= 5) {
 	return Color3(0.0f);
     }
 
@@ -117,8 +117,8 @@ OSLRenderer::QueryColor(RenderInfo *info) const
 
 // Ray-tracing (local illumination)
 
-    if(prim) {
-	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
+    if (prim) {
+	if (prim->category() == OSL::ClosurePrimitive::BSDF) {
 	    // sample BSDF closure
 	    BSDFClosure *bsdf = (BSDFClosure*)prim;
 	    Vec3 omega_in, zero(0.0f);
@@ -129,12 +129,12 @@ OSLRenderer::QueryColor(RenderInfo *info) const
 					  erand48(Xi), erand48(Xi),
 					  omega_in, zero, zero, pdf, eval);
 
-	    if(ulabel == OSL::Labels::REFLECT)
+	    if (ulabel == OSL::Labels::REFLECT)
 		info->out_ray_type |= RAY_REFLECT;
-	    else if(ulabel == OSL::Labels::TRANSMIT)
+	    else if (ulabel == OSL::Labels::TRANSMIT)
 		info->out_ray_type |= RAY_TRANSMIT;
 
-	    if(pdf != 0.0f) {
+	    if (pdf != 0.0f) {
 		OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
 
 		OSLRenderer::Vec3toPoint_t(omega_in, info->out_ray.dir);
@@ -142,13 +142,13 @@ OSLRenderer::QueryColor(RenderInfo *info) const
 		return weight*eval/pdf;
 	    }
 	}
-	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
+	else if (prim->category() == OSL::ClosurePrimitive::Emissive) {
 	    // evaluate emissive closure
 	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
 	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
 	    return l;
 	}
-	else if(prim->category() == OSL::ClosurePrimitive::Background) {
+	else if (prim->category() == OSL::ClosurePrimitive::Background) {
 	    // background closure just returns weight
 	    return weight;
 	}
@@ -206,7 +206,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const
 
 const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const ClosureColor *closure, float r) const {
 
-    if(closure) {
+    if (closure) {
 	const ClosurePrimitive *prim = NULL;
 	float totw = 0.0f;
 
@@ -220,18 +220,18 @@ const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const Clos
 void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3& r_weight, const ClosureColor *closure,
 					 const Color3& weight, float& totw, float& r) const {
 
-    if(closure->type == ClosureColor::COMPONENT) {
+    if (closure->type == ClosureColor::COMPONENT) {
 
 	ClosureComponent *comp = (ClosureComponent*)closure;
 	ClosurePrimitive *prim = (ClosurePrimitive*)comp->data();
 	float p, w = fabsf(weight[0]) + fabsf(weight[1]) + fabsf(weight[2]);
 
-	if(w == 0.0f)
+	if (w == 0.0f)
 	    return;
 
 	totw += w;
 
-	if(!r_prim) {
+	if (!r_prim) {
 	    // no primitive was found yet, so use this
 	    r_prim = prim;
 	    r_weight = weight/w;
@@ -240,7 +240,7 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
 
 	    p = w/totw;
 
-	    if(r < p) {
+	    if (r < p) {
 		// pick other primitive
 		r_prim = prim;
 		r_weight = weight/w;
@@ -253,12 +253,12 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
 	    }
 	}
     }
-    else if(closure->type == ClosureColor::MUL) {
+    else if (closure->type == ClosureColor::MUL) {
 	ClosureMul *mul = (ClosureMul*)closure;
 
 	SamplePrimitiveRecurse(r_prim, r_weight, mul->closure, mul->weight * weight, totw, r);
     }
-    else if(closure->type == ClosureColor::ADD) {
+    else if (closure->type == ClosureColor::ADD) {
 	ClosureAdd *add = (ClosureAdd*)closure;
 
 	SamplePrimitiveRecurse(r_prim, r_weight, add->closureA, weight, totw, r);

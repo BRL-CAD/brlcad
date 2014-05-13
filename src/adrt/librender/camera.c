@@ -75,7 +75,7 @@ render_camera_init(render_camera_t *camera, int threads)
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
 
-    if(shaders == NULL) {
+    if (shaders == NULL) {
 #define REGISTER(x) render_shader_register((const char *)#x, render_##x##_init);
 	REGISTER(component);
 	REGISTER(cut);
@@ -601,7 +601,7 @@ render_shader_load_plugin(const char *filename)
 	return NULL;
     }
     name = (char *)bu_dlsym(lh, "name");
-    if(name == NULL) {
+    if (name == NULL) {
 	bu_log("Faulty plugin %s: No name\n", filename);
 	bu_dlclose(lh);
 	return NULL;
@@ -609,7 +609,7 @@ render_shader_load_plugin(const char *filename)
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
     init_val = bu_dlsym(lh, "init");
     init = (int (*) (render_t *, const char *))(intptr_t)init_val;
-    if(init == NULL) {
+    if (init == NULL) {
 	bu_log("Faulty plugin %s: No init\n", filename);
 	bu_dlclose(lh);
 	return NULL;
@@ -629,12 +629,12 @@ render_shader_unload_plugin(render_t *r, const char *name)
 {
 #ifdef HAVE_DLFCN_H
     struct render_shader_s *t, *s = shaders, *meh;
-    if(!bu_strncmp(s->name, name, 8)) {
+    if (!bu_strncmp(s->name, name, 8)) {
 	t = s->next;
-	if(r && r->shader && !bu_strncmp(r->shader, name, 8)) {
+	if (r && r->shader && !bu_strncmp(r->shader, name, 8)) {
 	    meh = s->next;
 	    while(meh) {
-		if(render_shader_init(r, meh->name, NULL) != -1)
+		if (render_shader_init(r, meh->name, NULL) != -1)
 		    goto LOADED;
 		meh = meh->next;
 	    }
@@ -642,7 +642,7 @@ render_shader_unload_plugin(render_t *r, const char *name)
 	}
 LOADED:
 
-	if(s->dlh)
+	if (s->dlh)
 	    bu_dlclose(s->dlh);
 	bu_free(s, "unload first shader");
 	shaders = t;
@@ -650,10 +650,10 @@ LOADED:
     }
 
     while(s->next) {
-	if(!bu_strncmp(s->next->name, name, 8)) {
-	    if(r)
+	if (!bu_strncmp(s->next->name, name, 8)) {
+	    if (r)
 		render_shader_init(r, s->name, NULL);
-	    if(s->next->dlh)
+	    if (s->next->dlh)
 		bu_dlclose(s->next->dlh);
 	    t = s->next;
 	    s->next = s->next->next;
@@ -675,7 +675,7 @@ render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
     while(s) {
-	if(!bu_strncmp(s->name, name, 8)) {
+	if (!bu_strncmp(s->name, name, 8)) {
 	    s->init(r, buf);
 	    r->shader = s->name;
 	    return 0;

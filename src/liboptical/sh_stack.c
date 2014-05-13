@@ -280,7 +280,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
     int ret_status = 0;
     char tmp[128];
 
-    if(sp == NULL) {
+    if (sp == NULL) {
 	bu_log("sh_stk_render: Null pointer\n");
 	return 0;
     }
@@ -313,7 +313,7 @@ sh_stk_print(register struct region *rp, genptr_t dp)
 	(struct stk_specific *)dp;
     int i;
 
-    if(sp == NULL) {
+    if (sp == NULL) {
 	bu_log("sh_stk_print: Null pointer\n");
 	return;
     }
@@ -340,7 +340,7 @@ sh_stk_free(genptr_t cp)
 	(struct stk_specific *)cp;
     int i;
 
-    if(sp == NULL)
+    if (sp == NULL)
 	return;
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {

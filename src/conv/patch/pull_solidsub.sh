@@ -77,7 +77,7 @@ function inside_cyl(m,n)
 		b_del[1] = by2 - by
 		b_del[2] = bz2 - bz
 
-		if( shorter( b_del, a_del ) &&
+		if ( shorter( b_del, a_del ) &&
 			between(bx,ax,ax2) &&
 			between(by,ay,ay2) && between(bz,az,az2) )
 
@@ -91,14 +91,14 @@ function inside_cyl(m,n)
 # 0 otherwise
 function shorter(a,b)
 {
-	if( (amag=mag(a)) > (bmag=mag(b)) ) {
+	if ( (amag=mag(a)) > (bmag=mag(b)) ) {
 		return 0
 	}
 
 	adotb = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 	cosab = adotb / ( amag * bmag )
 
-	if( cosab >= 0.9999 && cosab <= 1.0001 )
+	if ( cosab >= 0.9999 && cosab <= 1.0001 )
 		return 1
 	else
 		return 0
@@ -117,11 +117,11 @@ function mag(a)
 # b and c do not have to be in any order ( b and c are the base and top )
 function between(a,b,c)
 {
-	if( a == b && a == c )
+	if ( a == b && a == c )
 		return 1
-	else if( b <= c && a >= b && a < c )
+	else if ( b <= c && a >= b && a < c )
 		return 1
-	else if( a > c && a <= b )
+	else if ( a > c && a <= b )
 		return 1
 	else
 		return 0
@@ -130,7 +130,7 @@ function between(a,b,c)
 # abs: returns the absolute value of x
 function abs(x)
 {
-	if( x >= 0 )
+	if ( x >= 0 )
 		return x
 	else
 		return -x
@@ -139,7 +139,7 @@ function abs(x)
 
 # main loop
 {
-	if( NR == 1 ) {
+	if ( NR == 1 ) {
 		comp[nl=1] = $0
 		prev_cc = substr($0,32,4)
 	}
@@ -158,7 +158,7 @@ function abs(x)
 	prev_stype = substr( comp[1],28,1 )
 	for( i=2 ; i <= nl ; i++ ) {
 
-		if( prev_stype >= 5 && prev_stype <=8 ) {
+		if ( prev_stype >= 5 && prev_stype <=8 ) {
 			begini = i - 1
 			stype = substr( comp[i],28,1 )
 			while( i <= nl && stype == prev_stype ) {
@@ -166,23 +166,23 @@ function abs(x)
 				i++
 			}
 
-			if( prev_stype == 5 && (i - begini) > 4 ) {
+			if ( prev_stype == 5 && (i - begini) > 4 ) {
 				printf "component #%s - wedge\n",substr(comp[begini],32,4)
 				for( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
-			else if( prev_stype == 6 && (i - begini) > 2 ) {
+			else if ( prev_stype == 6 && (i - begini) > 2 ) {
 				printf "component #%s - sphere\n",substr(comp[begini],32,4)
 				for( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
-			else if( prev_stype == 7 && (i - begini) > 4 ) {
+			else if ( prev_stype == 7 && (i - begini) > 4 ) {
 				printf "component #%s - box\n",substr(comp[begini],32,4)
 				for( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
-			else if( prev_stype == 8 && (i - begini) > 3 ) {
-				if( inside_cyl( begini,i ) ) {
+			else if ( prev_stype == 8 && (i - begini) > 3 ) {
+				if ( inside_cyl( begini,i ) ) {
 					printf "component #%s - cylinder\n",substr(comp[begini],32,4)
 					for( j = begini; j < i; j++ )
 						printf "%s\n", comp[j]

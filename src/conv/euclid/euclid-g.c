@@ -396,11 +396,11 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 	return 2;
     }
 
-    if(reg_id <= -INT_MAX) {
+    if (reg_id <= -INT_MAX) {
 	bu_log("ERROR: Magnitude of negative region_id too large.\n");
 	return 3;
     }
-    if(reg_id >= INT_MAX) {
+    if (reg_id >= INT_MAX) {
 	bu_log("region_id too large.\n");
 	return 4;
     }

@@ -43,7 +43,7 @@ nawk '
 BEGIN {
 	while(getline < ARGV[1]) {
 		for(i=2; i<ARGC; i++) {
-			if((substr($0, 32, 4)+0) == ARGV[i])
+			if ((substr($0, 32, 4)+0) == ARGV[i])
 				print $0
 		}
 	}

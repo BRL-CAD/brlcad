@@ -86,7 +86,7 @@ render_flos_init(render_t *render, const char *frag_pos)
     struct render_flos_s *d;
     double scan[3];
 
-    if(frag_pos == NULL)
+    if (frag_pos == NULL)
 	return -1;
 
     render->work = render_flos_work;

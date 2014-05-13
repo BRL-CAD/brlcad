@@ -237,7 +237,7 @@ list(APPEND ap242g_LIBS ${ap242g_LIBS})
 BRLCAD_ADDEXEC(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT)
 add_dependencies(ap242-g step-express-${SCHEMA_NAME}-ap242g)
 
-if(MSVC)
+if (MSVC)
   set(ap242g_IMPORTS
     BU_DLL_IMPORTS
     RT_DLL_IMPORTS
@@ -249,7 +249,7 @@ if(MSVC)
     )
   list(APPEND ap242g_IMPORTS ${ap242g_IMPORTS})
   set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${ap242g_IMPORTS}")
-endif(MSVC)
+endif (MSVC)
 
 # Local Variables:
 # tab-width: 8

@@ -860,7 +860,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* must be double for import and export */
     double hec[ELEMENTS_PER_VECT*4 + 1];
 
-    if(dbip) RT_CK_DBI(dbip);
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -879,7 +879,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_cv_ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
 
     /* Apply modelling transformations */
-    if(mat == NULL) mat = bn_mat_identity;
+    if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(hip->v, mat, &hec[0*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->xdir, mat, &hec[1*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->ydir, mat, &hec[2*ELEMENTS_PER_VECT]);

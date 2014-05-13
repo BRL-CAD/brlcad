@@ -32,17 +32,17 @@ bu_simd_level()
     int b=0;
     __asm__ volatile("cpuid":"=b"(b),"=c"(c),"=d"(d):"a"(0x1));
 # endif
-    if(c & 0x100000)
+    if (c & 0x100000)
 	return BU_SIMD_SSE4_2;
-    if(c & 0x080000)
+    if (c & 0x080000)
 	return BU_SIMD_SSE4_1;
-    if(c & 0x1)
+    if (c & 0x1)
 	return BU_SIMD_SSE3;
-    if(d & 0x1<<26)
+    if (d & 0x1<<26)
 	return BU_SIMD_SSE2;
-    if(d & 0x1<<25)
+    if (d & 0x1<<25)
 	return BU_SIMD_SSE;
-    if(d & 0x1<<24)
+    if (d & 0x1<<24)
 	return BU_SIMD_MMX;
 #endif
     return BU_SIMD_NONE;
@@ -53,7 +53,7 @@ bu_simd_supported(int level)
 {
     int l;
 
-    if(level == 4)
+    if (level == 4)
 	return 0;
 
     l = bu_simd_level();

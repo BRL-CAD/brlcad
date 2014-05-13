@@ -201,7 +201,7 @@ const wchar_t* Utf8ToWideChar( const char *pszFilename )
 
     nMulti = strlen(pszFilename) + 1;
     nWide = MultiByteToWideChar( CP_UTF8, 0, pszFilename, nMulti, 0, 0);
-    if( nWide == 0 )
+    if ( nWide == 0 )
     {
 	return NULL;
     }
@@ -210,7 +210,7 @@ const wchar_t* Utf8ToWideChar( const char *pszFilename )
     {
 	return NULL;
     }
-    if( MultiByteToWideChar( CP_UTF8, 0, pszFilename, nMulti, pwszFileName, nWide ) == 0 )
+    if ( MultiByteToWideChar( CP_UTF8, 0, pszFilename, nMulti, pwszFileName, nWide ) == 0 )
     {
 	free( pwszFileName );
 	return NULL;
@@ -228,7 +228,7 @@ SAFile SAUtf8WFOpen( const char *pszFilename, const char *pszAccess )
     const wchar_t *pwszFileName, *pwszAccess;
     pwszFileName = Utf8ToWideChar( pszFilename );
     pwszAccess = Utf8ToWideChar( pszAccess );
-    if( pwszFileName != NULL && pwszFileName != NULL)
+    if ( pwszFileName != NULL && pwszFileName != NULL)
     {
 	file = (SAFile) _wfopen( pwszFileName, pwszAccess );
     }
@@ -245,7 +245,7 @@ int SAUtf8WRemove( const char *pszFilename )
 {
     const wchar_t *pwszFileName = Utf8ToWideChar( pszFilename );
     int rc = -1;
-    if( pwszFileName != NULL )
+    if ( pwszFileName != NULL )
     {
 	rc = _wremove( pwszFileName );
     }

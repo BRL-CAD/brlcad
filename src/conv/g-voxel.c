@@ -109,7 +109,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;

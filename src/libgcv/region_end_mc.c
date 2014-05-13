@@ -100,13 +100,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    if(tsp->ts_rtip == NULL)
+    if (tsp->ts_rtip == NULL)
 	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
     count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 
     /* empty region? */
-    if(count == 0) {
+    if (count == 0) {
 	bu_log("Region %s appears to be empty.\n", db_path_to_string(pathp));
 	return TREE_NULL;
     }

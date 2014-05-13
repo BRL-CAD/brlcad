@@ -1834,7 +1834,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    f_quit((ClientData)NULL, INTERP, 1, av);
 	}
 
-	if(buf[0] == '\0')
+	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
 
 #ifdef TRY_STDIN_INPUT_HACK

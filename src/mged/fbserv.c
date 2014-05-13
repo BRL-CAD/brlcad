@@ -472,7 +472,7 @@ fbserv_set_port(void)
 void
 rfbunknown(struct pkg_conn *pcp, char *buf)
 {
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbunknown: null buffer\n");
 	return;
     }
@@ -490,7 +490,7 @@ rfbopen(struct pkg_conn *pcp, char *buf)
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbopen: null buffer\n");
 	return;
     }
@@ -553,7 +553,7 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -578,7 +578,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -617,7 +617,7 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -646,7 +646,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -688,7 +688,7 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -720,7 +720,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbbwreadrect: null buffer\n");
 	return;
     }
@@ -762,7 +762,7 @@ rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbbwwriterect: null buffer\n");
 	return;
     }
@@ -790,7 +790,7 @@ rfbcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -830,7 +830,7 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -858,7 +858,7 @@ rfbscursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbopen: null buffer\n");
 	return;
     }
@@ -880,7 +880,7 @@ rfbwindow(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -901,7 +901,7 @@ rfbzoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -922,7 +922,7 @@ rfbview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -991,7 +991,7 @@ rfbwmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwmap: null buffer\n");
 	return;
     }
@@ -1047,7 +1047,7 @@ rfbhelp(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }

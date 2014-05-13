@@ -151,23 +151,23 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     RT_CHECK_COMB(rci);
 
     /* abort cases, no fast loading. */
-    if(rci->tree == NULL)
+    if (rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF )
+    if ( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
-    if((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
+    if ((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
 	printf("Lookup failed: %s\n", rci->tree->tr_l.tl_name);
 	return 0;
     }
-    if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
+    if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-    if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
 
-    if(dir->d_minor_type == ID_NMG)
+    if (dir->d_minor_type == ID_NMG)
 	return 0;
 
     /* FIXME: where is this released? */
@@ -186,7 +186,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
-    if(intern.idb_minor_type == ID_NMG) {
+    if (intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {

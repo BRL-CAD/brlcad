@@ -359,7 +359,7 @@ main(int argc, char **argv)
     {
 	static char default_macro_file[MAX_LN];
 	char *home;
-	if((home = getenv("HOME")) != NULL) {
+	if ((home = getenv("HOME")) != NULL) {
 	    snprintf(default_macro_file, MAX_LN, "%s/.fbed_macros", home);
 	} else {
 	    bu_strlcpy(default_macro_file, ".fbed_macros", sizeof(default_macro_file));

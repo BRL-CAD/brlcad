@@ -342,7 +342,7 @@ rts_clean( int sessionid)
     bu_free( (char *)rts_geometry, "rts_geometry" );
     rts_geometry = NULL;
 
-    if(title != NULL) {
+    if (title != NULL) {
 	bu_free(title, "title");
 	title = NULL;
     }
@@ -353,12 +353,12 @@ rts_clean( int sessionid)
 	ap = (struct application *)BU_PTBL_GET( &apps, i);
 
 	vlb = (struct bu_vlb *)ap->a_uptr;
-	if(vlb != NULL) {
+	if (vlb != NULL) {
 	    bu_vlb_free(vlb);
 	    bu_free(vlb, "vlb");
 	}
 
-	if( ap->a_resource != NULL ) {
+	if ( ap->a_resource != NULL ) {
 	    rt_clean_resource_complete(NULL, ap->a_resource);
 	    bu_free(ap->a_resource, "resource");
 	}
@@ -436,7 +436,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rts_geometry = NULL;
     }
 
-    if( !BU_PTBL_TEST(&apps) ) {
+    if ( !BU_PTBL_TEST(&apps) ) {
 	bu_ptbl_init( &apps, 8, "application structure list" );
     }
 
@@ -530,13 +530,13 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
 	    Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
-	    if( !newPtr ) {
-		if( verbose ) {
+	    if ( !newPtr ) {
+		if ( verbose ) {
 		    bu_log( "Already have an entry for region %s\n", rtip->Regions[regno]->reg_name);
 		}
 		continue;
 	    }
-	    if( verbose ) {
+	    if ( verbose ) {
 		bu_log( "Setting hash table for key %s to %d\n", rtip->Regions[regno]->reg_name, regno);
 	    }
 	    Tcl_SetHashValue(entry, (ClientData)regno );
@@ -566,7 +566,7 @@ rts_miss( struct application *ap )
 
     /* get the results pointer from the application structure */
     vlb = (struct bu_vlb *)ap->a_uptr;
-    if(vlb != NULL) {
+    if (vlb != NULL) {
 	unsigned char buffer[SIZEOF_NETWORK_LONG];
 	*(uint32_t *)buffer = htonl(numPartitions);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
@@ -646,9 +646,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* calculate the entrance and exit obliquities */
 	dot = VDOT( reverse_ray_dir, enterNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	inObl = acos(dot);
@@ -660,9 +660,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	dot = VDOT( ap->a_ray.r_dir, exitNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	outObl = acos(dot);

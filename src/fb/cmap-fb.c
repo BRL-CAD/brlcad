@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdin;
-	if(isatty(fileno(fp)))
+	if (isatty(fileno(fp)))
 	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 

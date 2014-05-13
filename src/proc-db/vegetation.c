@@ -199,7 +199,7 @@ findIntersectors(const growthSegment_t * const segment, const structure_t * cons
     for (i=0; i < structure->subStructureCount; i++) {
 	segList = findIntersectors(segment, structure->subStructure[i], exemptList);
 
-	if(segList == NULL) {
+	if (segList == NULL) {
 	    bu_log("segList is null?\n");
 	    return NULL;
 	}

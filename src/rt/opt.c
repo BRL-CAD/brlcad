@@ -249,14 +249,14 @@ get_args(int argc, const char *argv[])
 
 		do_kut_plane = 1;
 		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
-		if( i != 4 ) {
+		if ( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
 		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );
-		if( f <= SMALL ) {
+		if ( f <= SMALL ) {
 		    bu_exit( EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f );
 		}
 		f = 1.0 /f;

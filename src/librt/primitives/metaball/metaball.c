@@ -912,7 +912,7 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     const char *pend;
     double thresh;
 
-    if(argc != 3)  {
+    if (argc != 3)  {
 	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);
 	return BRLCAD_ERROR;
     }
@@ -921,7 +921,7 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     mb = (struct rt_metaball_internal *)intern->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
 
-    if( strlen(*argv) != 1 || (**argv < '0' || **argv > '2') ) {
+    if ( strlen(*argv) != 1 || (**argv < '0' || **argv > '2') ) {
 	bu_vls_printf(logstr, "Invalid method type, must be one of 0, 1, or 2.");
 	return BRLCAD_ERROR;
     }
@@ -941,17 +941,17 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 	const point_t *locp = (const point_t *)&loc;
 
 	while( pts < pend && *pts != '{' ) ++pts;
-	if(pts >= pend) break;
+	if (pts >= pend) break;
 	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &fldstr, &goo);
 	VMOVE(loc, xyz);
 
-	if(len == EOF) break;
-	if(len != 5) {
+	if (len == EOF) break;
+	if (len != 5) {
 	    bu_vls_printf(logstr, "Failed to parse point information: \"%s\"", pts);
 	    return BRLCAD_ERROR;
 	}
 	pts++;
-	if(rt_metaball_add_point (mb, locp, fldstr, goo)) {
+	if (rt_metaball_add_point (mb, locp, fldstr, goo)) {
 	    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
 	    return BRLCAD_ERROR;
 	}

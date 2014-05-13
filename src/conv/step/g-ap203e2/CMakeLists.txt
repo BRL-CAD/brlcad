@@ -44,7 +44,7 @@ list(APPEND gap203e2_LIBS ${gap203e2_LIBS})
 BRLCAD_ADDEXEC(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT)
 add_dependencies(g-ap203e2 step-express-${SCHEMA_NAME}-gap203e2)
 
-if(MSVC)
+if (MSVC)
   set(gap203e2_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -57,7 +57,7 @@ if(MSVC)
     )
   list(APPEND gap203e2_IMPORTS ${gap203e2_IMPORTS})
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gap203e2_IMPORTS}")
-endif(MSVC)
+endif (MSVC)
 
 set(IGNORE_FILES
   AP203e2.h

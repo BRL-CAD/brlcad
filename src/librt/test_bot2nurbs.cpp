@@ -604,8 +604,8 @@ construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > 
 		std::set<size_t>::iterator cf_it;
 		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		    if(faces->find((*cf_it)) != faces->end()) {
-			if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		    if (faces->find((*cf_it)) != faces->end()) {
+			if (ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			    face_queue.push((*cf_it));
 			    faces->erase((*cf_it));
 			}
@@ -645,8 +645,8 @@ split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map<
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num_1)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		if (faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
+		    if (ON_DotProduct( *(*info).face_normals.At((int)(start_face_num_1)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue_1.push((*cf_it));
 			faces->erase((*cf_it));
 		    }
@@ -662,8 +662,8 @@ split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map<
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
-		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		if (faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
+		    if (ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue_2.push((*cf_it));
 			faces->erase((*cf_it));
 		    }
@@ -869,7 +869,7 @@ bot_partition(struct Manifold_Info *info)
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[info->face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[info->face_to_plane[(*cf_it)]].end()) {
 			    if (info->face_to_plane[(*cf_it)] == current_plane) {
-				//	if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+				//	if (ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
 				// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
 				// patches are flat.
 				if (patches[info->patch_cnt].size() > info->patch_size_threshold) {
@@ -1180,7 +1180,7 @@ find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loo
             }
 	}
 	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
-	    if((*l_it).first != *outer_loop) {
+	    if ((*l_it).first != *outer_loop) {
 		(*inner_loops).insert((*l_it).first);
 	    }
 	}
@@ -1211,14 +1211,14 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
 	ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
-	if(vert_prev != -1) {
+	if (vert_prev != -1) {
 	    if (vert_prev == edge.m_vi[0]) {
 		trim_rev = false;
 	    } else {
 		trim_rev = true;
 	    }
 	}
-	if(trim_rev) {
+	if (trim_rev) {
 	    vert_prev = edge.m_vi[0];
 	} else {
 	    vert_prev = edge.m_vi[1];
@@ -1237,13 +1237,13 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
         int istart = 1;
 
 	size_t pullback_failures;
-	if(loop_it == loop_edges->begin()) {
+	if (loop_it == loop_edges->begin()) {
 	    pullback_failures = 0;
 	    prev_trim_rev = trim_rev;
 	    int found_first_pt = 0;
 	    while(!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+		if (get_closest_point(pt_2d, &face, pt_3d, st)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			loop_anchor = pt_2d;
@@ -1262,10 +1262,10 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	}
 	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
 	// surface may not contain points sought by curve
-	if(!trim_rev) {
+	if (!trim_rev) {
 	    for (int i = istart; i < 50; i++) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		if (get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
@@ -1278,7 +1278,7 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	} else {
 	    for (int i = 50; i > istart; i--) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		if (get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
@@ -1290,10 +1290,10 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    }
 	}
         // For final curve, doesn't matter what last pullback is - we MUST force the loop to close.
-	if(loop_it+1 == loop_edges->end()) {
+	if (loop_it+1 == loop_edges->end()) {
 	    curve_pnts_2d.Append(loop_anchor);
 	}
-	//if(trim_rev) {curve_pnts_2d.Reverse();}
+	//if (trim_rev) {curve_pnts_2d.Reverse();}
 	ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
 	int c2i = info->brep->AddTrimCurve(trim_curve);
 	ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
@@ -1347,7 +1347,7 @@ find_loops(struct Manifold_Info *info)
 		edge_queue.pop();
 		loops[curr_loop].push_back(curr_edge);
 		ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
-                if(vert_to_match == edge.m_vi[0]) {
+                if (vert_to_match == edge.m_vi[0]) {
 		    vert_to_match = edge.m_vi[1];
                 } else {
 		    vert_to_match = edge.m_vi[0];
@@ -1377,7 +1377,7 @@ find_loops(struct Manifold_Info *info)
 	size_t outer_loop;
         std::set<size_t> inner_loops;
 	find_outer_loop(&loops, &outer_loop, &inner_loops, info);
-	if(loops.size() > 1) {
+	if (loops.size() > 1) {
 	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
 	}
 

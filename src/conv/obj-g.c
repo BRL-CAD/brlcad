@@ -2796,7 +2796,7 @@ output_to_nmg(struct ga_t *ga,
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
 
     m = nmg_mm();
-    if(m == NULL)
+    if (m == NULL)
 	return -1;
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);

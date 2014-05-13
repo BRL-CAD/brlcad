@@ -3049,7 +3049,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 	    eu1 = NULL;
 	    for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 		struct line_seg * lseg;
-		if(eu == eu1) {
+		if (eu == eu1) {
 		    continue;
 		} else {
 		    eu1 = eu->eumate_p;
@@ -3060,7 +3060,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 		lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
 		lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
-		if(verbose) {
+		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
 			   lseg->end, V3ARGS(&vr->the_array[lseg->end]));
@@ -3328,7 +3328,7 @@ main(int argc, char *argv[])
 
 	    sprintf(name, "sketch.%d", i);
 	    skt = nmg_wire_edges_to_sketch(layers[i]->m);
-	    if(skt != NULL) {
+	    if (skt != NULL) {
 		mk_sketch(out_fp, name, skt);
 		(void) mk_addmember(name, &head, NULL, WMOP_UNION);
 		rt_curve_free(&skt->curve);

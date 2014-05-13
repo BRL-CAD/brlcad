@@ -180,9 +180,9 @@ light_cvt_visible(const struct bu_structparse *sdp,
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
-    if(sdp->sp_offset == LIGHT_O(lt_invisible)) {
+    if (sdp->sp_offset == LIGHT_O(lt_invisible)) {
 	lsp->lt_visible = !lsp->lt_invisible;
-    } else if(sdp->sp_offset == LIGHT_O(lt_visible)) {
+    } else if (sdp->sp_offset == LIGHT_O(lt_visible)) {
 	lsp->lt_invisible = !lsp->lt_visible;
     }
 }

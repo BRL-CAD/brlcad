@@ -5227,7 +5227,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     RT_BOT_CK_MAGIC(bot);
 
     *volume = 0.0;
-    if(bot->mode == RT_BOT_SURFACE)
+    if (bot->mode == RT_BOT_SURFACE)
 	return;
 
     /* allocate pts array, 3 vertices per bot face */
@@ -5324,7 +5324,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		if (a == b)
 		    continue; /* can't check against own face */
 		/* if both vertices are equal, a and b have a common edge, so it can't be an exterior edge, so the variable is set to 0(false) */
-		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
 		    a_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
 		    a_is_exterior_edge = 0;
@@ -5336,7 +5336,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    a_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
 		    a_is_exterior_edge = 0;
-		if(EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
 		    b_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    b_is_exterior_edge = 0;
@@ -5348,7 +5348,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    b_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    b_is_exterior_edge = 0;
-		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
 		    c_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    c_is_exterior_edge = 0;

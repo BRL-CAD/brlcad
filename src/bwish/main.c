@@ -133,7 +133,7 @@ Cad_AppInit(Tcl_Interp *interp)
 		 */
 		Tcl_DeleteCommand(interp, "::itcl::class");
 		nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
-		if(nsp != NULL)
+		if (nsp != NULL)
 		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }

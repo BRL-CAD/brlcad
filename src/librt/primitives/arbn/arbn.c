@@ -1352,7 +1352,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     *cent[1] = 0.0;
     *cent[2] = 0.0;
 
-    if(cent == NULL)
+    if (cent == NULL)
 	return;
 
     /* allocate array of face structs */

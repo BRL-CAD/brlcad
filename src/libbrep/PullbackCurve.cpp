@@ -1521,7 +1521,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	  span_interval[span_index].m_t[1] = ((N.m_knot[span_index + N.m_order-1]) > interval->m_t[1 -i]) ? interval->m_t[1 -i] : (N.m_knot[span_index + N.m_order-1]);
 	  ON_3dPoint d1sq(d1.x*d1.x,d1.y*d1.y,0.0),d2sq(d2.x*d2.x,d2.y*d2.y,0.0);
 	  double distancesq;
-	  if(d1sq.x < d2sq.x) {
+	  if (d1sq.x < d2sq.x) {
 	    if (d1sq.y < d2sq.y) {
 		if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
 		    distancesq = d1sq.x + d2sq.y;
@@ -3979,7 +3979,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 	const ON_Curve *curve = data->curve;
 	const ON_Surface *surf = data->surf;
 
-	if(cs != pbcs.end()) {
+	if (cs != pbcs.end()) {
 	    PBCData *nextdata = (*cs);
 	    next_curve = nextdata->curve;
 	}

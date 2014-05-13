@@ -330,14 +330,14 @@ solveSparseLinearSystemLQ (Eigen::SparseMatrix<double>* A, Eigen::MatrixXd* b, E
 
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
     solver.compute(AtA);
-    if(solver.info()!=Eigen::Success) {
+    if (solver.info()!=Eigen::Success) {
 	// decomposition failed
 	std::cout << "decomposition failed\n";
     }
 
     (*x) = solver.solve(Atb);
 
-    if(solver.info()!=Eigen::Success) {
+    if (solver.info()!=Eigen::Success) {
 	std::cout << "solver failed: " << solver.info() << "\n";
 	return false;
     } else {
@@ -367,7 +367,7 @@ NurbsSolve::solve ()
     }
 
     bool success = solveSparseLinearSystemLQ (&m_Ksparse, &e_m_feig, &e_m_xeig);
-    if(!success) {
+    if (!success) {
 	std::cout << "solver failed!\n";
 	return false;
     }

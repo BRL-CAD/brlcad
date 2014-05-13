@@ -456,7 +456,7 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
 
     bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
 
-    if(dp->d_flags & RT_DIR_SOLID) {
+    if (dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
 
 	/* Check if this solid is in the objects list. */
@@ -667,7 +667,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	struct bu_hash_entry *prev = NULL;
 	unsigned long idx;
 	struct bu_hash_entry *hsh_entry = bu_hash_tbl_find(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
-	if(hsh_entry) {
+	if (hsh_entry) {
 #if defined LIBAVOID_LATEST_API
 	  Box bbox = (*it)->polygon().offsetBoundingBox(0);
 	  minX = bbox.min[LIBX];
@@ -680,7 +680,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	    prev = NULL;
 	    struct bu_hash_entry *hsh_entry_type = bu_hash_tbl_find(dag->object_types, hsh_entry->value,
 								      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
-	    if(hsh_entry_type) {
+	    if (hsh_entry_type) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
 			      minY, maxX, maxY);
 	    }

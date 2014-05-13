@@ -1800,7 +1800,7 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
     struct partition *p = NULL, *c = NULL, *pp;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	if(p) {
+	if (p) {
 	    BU_ALLOC(c->pt_forw, struct partition);
 	    c->pt_forw->pt_back = c;
 	    c = c->pt_forw;

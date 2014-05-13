@@ -52,7 +52,7 @@ const int faces_per_page = 4096 / sizeof(struct face_s);
 int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
-    if(i>=s->nfaces) {
+    if (i>=s->nfaces) {
 	bu_log("trying to remove a nonexistent face? %lu/%lu\n", i, s->nfaces);
 	bu_bomb("Asploding\n");
     }
@@ -72,12 +72,12 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
     VCROSS(x, e1, e2);
 
     /* grow face array if needed */
-    if(s->nfaces >= s->maxfaces)
+    if (s->nfaces >= s->maxfaces)
 	s->faces = (struct face_s *)bu_realloc(s->faces, (s->maxfaces += faces_per_page) * sizeof(struct face_s), "bot soup faces");
     f = s->faces + s->nfaces;
 
     VMOVE(f->vert[0], a);
-    if(VDOT(x, d) <= 0) {
+    if (VDOT(x, d) <= 0) {
 	VMOVE(f->vert[1], b);
 	VMOVE(f->vert[2], c);
     } else {
@@ -129,7 +129,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /****** START hoistable ******/
     for(i=0;i<2;i++) for(j=0;j<3;j++) {
-	if(isv[i] == 0) {
+	if (isv[i] == 0) {
 	    fastf_t dist;
 
 	    switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
@@ -145,17 +145,17 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     /*** test if intersect is middle of face ***/
     for(i=0;i<2;i++)
 	/* test for face in plane */
-	if(isv[i] == 0)	/* assume that the isectpt is necessarily on the vert, line or
+	if (isv[i] == 0)	/* assume that the isectpt is necessarily on the vert, line or
 			   face... if it's not seen on the vert or line, it must be face.
 			   This should probably be a real check. */
 	    isv[i] = FACE_INT;
 
-    if(isv[0] == 0 || isv[1] == 0) {
+    if (isv[0] == 0 || isv[1] == 0) {
 	bu_log("Something real bad %x %x\n", isv[0], isv[1]);
 	return -1;
     }
 
-    if((isv[0]&ALL_INT) > (isv[1]&ALL_INT)) {
+    if ((isv[0]&ALL_INT) > (isv[1]&ALL_INT)) {
 	int tmpi;
 	point_t tmpp;
 	VMOVE(tmpp, isectpt[0]);
@@ -170,17 +170,17 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* test if both ends of the intersect line are on vertices */
     /* if VERT+VERT, abort */
-    if((isv[0]&VERT_INT) && (isv[1]&VERT_INT)) {
+    if ((isv[0]&VERT_INT) && (isv[1]&VERT_INT)) {
 	return 1;
     }
 
     a = isv[0]&~ALL_INT;
-    if( a != 0 && a != 1 && a != 2) {
+    if ( a != 0 && a != 1 && a != 2) {
 	bu_log("Bad a value: %d\n", a);
 	bu_bomb("Exploding\n");
     }
     /* if VERT+LINE, break into 2 */
-    if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
+    if (isv[0]&VERT_INT && isv[1]&LINE_INT) {
 	vect_t muh;
 	int meh;
 
@@ -194,12 +194,12 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
-    if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
+    if (isv[0]&LINE_INT && isv[1]&LINE_INT) {
 	return 1;
     }
 
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
-    if(isv[0]&VERT_INT ) {
+    if (isv[0]&VERT_INT ) {
 	soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
@@ -208,7 +208,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if LINE+FACE, break into 4 */
-    if(isv[0]&LINE_INT ) {
+    if (isv[0]&LINE_INT ) {
 	soup_add_face_precomputed(s, f->vert[a], isectpt[0], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], isectpt[1], isectpt[0], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], f->vert[a==0?2:a-1], isectpt[1], f->plane, 0);
@@ -218,11 +218,11 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if FACE+FACE, break into 3 */
-    if(isv[0]&FACE_INT ) {
+    if (isv[0]&FACE_INT ) {
 	/* extend intersect line to triangle edges, could be 2 or 3? */
 
 	/* make sure isectpt[0] is closest to vert[0] */
-	if(DIST_PT_PT_SQ(f->vert[0], isectpt[0]) > DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
+	if (DIST_PT_PT_SQ(f->vert[0], isectpt[0]) > DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
 	    point_t tmp;
 	    VMOVE(tmp, isectpt[1]);
 	    VMOVE(isectpt[1], isectpt[0]);
@@ -259,11 +259,11 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     rf = right->faces+right_face;
 
     splitz++;
-    if(gcv_tri_tri_intersect_with_isectline(left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) != 0 && !VNEAR_EQUAL(isectpt[0], isectpt[1], tol->dist)) {
+    if (gcv_tri_tri_intersect_with_isectline(left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) != 0 && !VNEAR_EQUAL(isectpt[0], isectpt[1], tol->dist)) {
 	splitty++;
 
-	if(split_face_single(left, left_face, isectpt, &right->faces[right_face], tol) > 1) r|=0x1;
-	if(split_face_single(right, right_face, isectpt, &left->faces[left_face], tol) > 1) r|=0x2;
+	if (split_face_single(left, left_face, isectpt, &right->faces[right_face], tol) > 1) r|=0x1;
+	if (split_face_single(right, right_face, isectpt, &left->faces[left_face], tol) > 1) r|=0x2;
     }
 
     return r;
@@ -278,7 +278,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if(bot->orientation != RT_BOT_CCW)
+    if (bot->orientation != RT_BOT_CCW)
 	bu_bomb("Bad orientation out of nmg_bot\n");
 
     BU_ALLOC(s, struct soup_s);
@@ -296,9 +296,9 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
 void
 free_soup(struct soup_s *s) {
-    if(s == NULL)
+    if (s == NULL)
 	bu_bomb("null soup");
-    if(s->faces)
+    if (s->faces)
 	bu_free(s->faces, "bot soup faces");
     bu_free(s, "bot soup");
     return;
@@ -312,7 +312,7 @@ invert(union tree *tree)
     unsigned long int i;
 
     RT_CK_TREE(tree);
-    if(tree->tr_op != OP_NMG_TESS) {
+    if (tree->tr_op != OP_NMG_TESS) {
 	bu_log("Erm, this isn't an nmg tess\n");
 	return tree;
     }
@@ -357,14 +357,14 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 	for(j=0;j<r->nfaces;j++) {
 	    rf = r->faces+j;
 	    /* quick bounding box test */
-	    if(lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
+	    if (lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
 	       lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
 	       lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
 	    ret = split_face(l, i, r, j, tol);
-	    if(ret&0x1) i--;
-	    if(ret&0x2) j--;
+	    if (ret&0x1) i--;
+	    if (ret&0x2) j--;
 	}
     }
 }
@@ -538,7 +538,7 @@ gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;
 
-    if(db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, nmg_booltree_leaf_tess, NULL) < 0)
+    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, nmg_booltree_leaf_tess, NULL) < 0)
 	bu_log("gcv_bottess: db_walk_tree failure\n");
 
     return NULL;

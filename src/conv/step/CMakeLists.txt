@@ -92,18 +92,18 @@ add_subdirectory(g-step)
 # until they do something useful.  It may be that work in STEPcode
 # to generate multiple files instead of single huge files will
 # help alleviate the issue - something to check into.
-if(BRLCAD_ENABLE_AP203E2)
+if (BRLCAD_ENABLE_AP203E2)
   add_subdirectory(g-ap203e2)
   add_subdirectory(ap203e2-g)
-endif(BRLCAD_ENABLE_AP203E2)
-if(BRLCAD_ENABLE_AP214)
+endif (BRLCAD_ENABLE_AP203E2)
+if (BRLCAD_ENABLE_AP214)
   add_subdirectory(ap214-g)
   add_subdirectory(g-ap214)
-endif(BRLCAD_ENABLE_AP214)
-if(BRLCAD_ENABLE_AP242)
+endif (BRLCAD_ENABLE_AP214)
+if (BRLCAD_ENABLE_AP242)
   add_subdirectory(ap242-g)
   add_subdirectory(g-ap242)
-endif(BRLCAD_ENABLE_AP242)
+endif (BRLCAD_ENABLE_AP242)
 
 CMAKEFILES(
   AP_Common.h

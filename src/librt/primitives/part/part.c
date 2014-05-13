@@ -298,7 +298,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
-    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+    if (rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
 	/* Compute bounding sphere*/

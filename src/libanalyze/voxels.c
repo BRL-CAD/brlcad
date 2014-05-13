@@ -221,7 +221,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 	    /* output results via a call-back supplied by user*/
 	    for (k = 0; k < numVoxel[0]; ++k) {
-		if(voxelHits.regionList[k].regionName == NULL)
+		if (voxelHits.regionList[k].regionName == NULL)
 		    /* an air voxel */
 		    create_boxes(callBackData, k, j, i, NULL, 0.);
 		else {
