@@ -501,8 +501,8 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     el = el * -DEG2RAD + y;
 
     /* clamp to sane values */
-    while(az > M_2PI) az -= M_2PI;
-    while(az < 0) az += M_2PI;
+    while (az > M_2PI) az -= M_2PI;
+    while (az < 0) az += M_2PI;
     if (el>M_PI_2) el=M_PI_2 - 0.001;
     if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
@@ -517,8 +517,8 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	el = el * -DEG2RAD + y;
 
 	/* clamp to sane values */
-	while(az > M_2PI) az -= M_2PI;
-	while(az < 0) az += M_2PI;
+	while (az > M_2PI) az -= M_2PI;
+	while (az < 0) az += M_2PI;
 	if (el>M_PI_2) el=M_PI_2 - 0.001;
 	if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 

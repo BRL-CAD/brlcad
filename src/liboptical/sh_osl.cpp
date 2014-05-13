@@ -158,7 +158,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     sh_info.shadername = "../shaders/" + std::string(item);
 
     /* Check for parameters */
-    while((item = strtok(NULL, "#")) != NULL) {
+    while ((item = strtok(NULL, "#")) != NULL) {
 
 	/* Setting layer name, in case we're doing a shader group */
 	if (BU_STR_EQUAL(item, "layername")) {

@@ -148,7 +148,7 @@ function abs(x)
 		comp[++nl] = $0
 	}
 
-	while( getline && ((cc=substr($0,32,4)) == prev_cc ))
+	while ( getline && ((cc=substr($0,32,4)) == prev_cc ))
 		comp[++nl] = $0
 	prev_line = $0
 	prev_cc = substr($0,32,4)
@@ -161,7 +161,7 @@ function abs(x)
 		if ( prev_stype >= 5 && prev_stype <=8 ) {
 			begini = i - 1
 			stype = substr( comp[i],28,1 )
-			while( i <= nl && stype == prev_stype ) {
+			while ( i <= nl && stype == prev_stype ) {
 				stype = substr(comp[i],28,1)
 				i++
 			}

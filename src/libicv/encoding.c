@@ -54,7 +54,7 @@ uchar2double(unsigned char *data, size_t size)
     char_p = data;
     double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
 
-    while(size--) {
+    while (size--) {
 	*double_p = ICV_CONV_8BIT(*char_p);
 	double_p++;
 	char_p++;
@@ -88,7 +88,7 @@ data2uchar(const icv_image_t *bif)
     double_p = bif->data;
 
     if (ZERO(bif->gamma_corr)) {
-	while(size--) {
+	while (size--) {
 	    long longval = lrint((*double_p)*255.0);
 
 	    if (longval > 255)
@@ -107,7 +107,7 @@ data2uchar(const icv_image_t *bif)
 	double ex = 1.0/bif->gamma_corr;
 	bn_rand_init(rand_p, 0);
 
-	while(size--) {
+	while (size--) {
 	    *char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
 	    char_p++;
 	    double_p++;

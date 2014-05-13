@@ -84,7 +84,7 @@ struct poly_face
 
 #define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
-#define ADD_PT(face, pt) do { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; } while(0)
+#define ADD_PT(face, pt) do { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; } while (0)
 
 /* structures and subroutines for analyze pretty printing */
 

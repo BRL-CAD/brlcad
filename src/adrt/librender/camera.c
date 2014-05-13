@@ -633,7 +633,7 @@ render_shader_unload_plugin(render_t *r, const char *name)
 	t = s->next;
 	if (r && r->shader && !bu_strncmp(r->shader, name, 8)) {
 	    meh = s->next;
-	    while(meh) {
+	    while (meh) {
 		if (render_shader_init(r, meh->name, NULL) != -1)
 		    goto LOADED;
 		meh = meh->next;
@@ -649,7 +649,7 @@ LOADED:
 	return 0;
     }
 
-    while(s->next) {
+    while (s->next) {
 	if (!bu_strncmp(s->next->name, name, 8)) {
 	    if (r)
 		render_shader_init(r, s->name, NULL);
@@ -674,7 +674,7 @@ int
 render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
-    while(s) {
+    while (s) {
 	if (!bu_strncmp(s->name, name, 8)) {
 	    s->init(r, buf);
 	    r->shader = s->name;

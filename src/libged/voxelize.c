@@ -186,7 +186,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
-    while(argc > 0) {
+    while (argc > 0) {
 	if (rt_gettree(rtip,argv[0]) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", argv[1]);
 	    return GED_ERROR;

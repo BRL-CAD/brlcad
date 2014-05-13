@@ -191,7 +191,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
      * access */
     ((STEPentity *)op3d)->ResetAttributes();
     STEPattribute * attr = ((STEPentity *)op3d)->NextAttribute();
-    while( attr != 0 ) {
+    while ( attr != 0 ) {
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
 	attr = ((STEPentity *)op3d)->NextAttribute();

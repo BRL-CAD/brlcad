@@ -2942,7 +2942,7 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	for (i=0; i < numpoints; i++) {
 	    p = brep_loop_points[i].p2d;
 	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
-		while(++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
+		while (++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
 		    ON_2dPoint n = brep_loop_points[i].p2d;
 		    if ((seam=IsAtSeam(surf, n, BREP_SAME_POINT_TOLERANCE)) <= 0) {
 			break;

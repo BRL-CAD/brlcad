@@ -386,7 +386,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
     /* walk back out of the solid */
-    while(rt_metaball_point_value(cp, mb) >= mb->threshold) {
+    while (rt_metaball_point_value(cp, mb) >= mb->threshold) {
 #if SHOOTALGO == 2
 	fhin = -1;
 #endif
@@ -933,14 +933,14 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     pts = argv[2];
     pend = pts + strlen(pts);
 
-    while(1) {
+    while (1) {
 	int len;
 	double xyz[3];
 	double fldstr, goo;
 	point_t loc;
 	const point_t *locp = (const point_t *)&loc;
 
-	while( pts < pend && *pts != '{' ) ++pts;
+	while ( pts < pend && *pts != '{' ) ++pts;
 	if (pts >= pend) break;
 	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &fldstr, &goo);
 	VMOVE(loc, xyz);

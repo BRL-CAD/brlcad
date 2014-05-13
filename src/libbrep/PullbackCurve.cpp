@@ -2606,7 +2606,7 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double offset,double 
 		    SwapUVSeamPoint(surf, from);
 		} else { // crosses the seam somewhere in between the two points
 		    bool seem_not_found = true;
-		    while(seem_not_found) {
+		    while (seem_not_found) {
 			double d0 = DistToNearestClosedSeam(surf,p0);
 			double d1 = DistToNearestClosedSeam(surf,p1);
 			if ((d0 > 0.0) && (d1 > 0.0)) {
@@ -2725,7 +2725,7 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 		SwapUVSeamPoint(surf, from);
 	    } else { // crosses the seam somewhere in between the two points
 		bool seem_not_found = true;
-		while(seem_not_found) {
+		while (seem_not_found) {
 		    double d0 = DistToNearestClosedSeam(surf,p0);
 		    double d1 = DistToNearestClosedSeam(surf,p1);
 		    if ((d0 > tol) && (d1 > tol)) {
@@ -3927,7 +3927,7 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs = pbcs.begin();
     ON_2dPoint *prev_pt = NULL;
     int prev_seam = 0;
-    while( cs != pbcs.end()) {
+    while ( cs != pbcs.end()) {
 	PBCData *data = (*cs);
 	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
@@ -3974,7 +3974,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
     std::map<const ON_Curve *,int> map;
     std::list<PBCData*>::iterator cs = pbcs.begin();
 
-    while( cs != pbcs.end()) {
+    while ( cs != pbcs.end()) {
 	PBCData *data = (*cs++);
 	const ON_Curve *curve = data->curve;
 	const ON_Surface *surf = data->surf;

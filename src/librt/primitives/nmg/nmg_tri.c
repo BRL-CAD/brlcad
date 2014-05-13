@@ -2934,7 +2934,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 	hit_cnt = 0;
 	done = 0;
 	eu2 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	while(!done) {
+	while (!done) {
 	    if (BU_LIST_IS_HEAD(eu2, &lu->down_hd)) {
 		done = 1;
 	    } else {
@@ -3451,7 +3451,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
      */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     vert_count = 0;
-    while(BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+    while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
 	cut = 0;
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {

@@ -83,7 +83,7 @@ bu_hook_save_all(struct bu_hook_list *hlp, struct bu_hook_list *save_hlp)
 {
     struct bu_hook_list *cur = hlp;
 
-    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
 
 	/* append what was on hlp to save_hlp */
@@ -97,7 +97,7 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 {
     struct bu_hook_list *cur = hlp;
 
-    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
 	BU_PUT(cur, struct bu_hook_list);
     }
@@ -113,7 +113,7 @@ bu_hook_restore_all(struct bu_hook_list *hlp, struct bu_hook_list *restore_hlp)
     bu_hook_delete_all(hlp);
 
     /* restore using restore_hlp */
-    while(BU_LIST_WHILE(cur, bu_hook_list, &restore_hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &restore_hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
 
 	/* append what was on the restore list to hlp */

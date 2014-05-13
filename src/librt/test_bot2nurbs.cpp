@@ -587,7 +587,7 @@ static void
 construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     if (faces->size() > 0) {
-	while(faces->size() > 0) {
+	while (faces->size() > 0) {
 	    info->patch_cnt++;
 	    size_t new_patch = info->patch_cnt;
 	    std::queue<size_t> face_queue;
@@ -1241,7 +1241,7 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    pullback_failures = 0;
 	    prev_trim_rev = trim_rev;
 	    int found_first_pt = 0;
-	    while(!found_first_pt && istart < 50) {
+	    while (!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
 		if (get_closest_point(pt_2d, &face, pt_3d, st)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {

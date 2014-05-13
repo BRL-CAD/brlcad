@@ -64,7 +64,7 @@ void PrintEntity( STEPentity * ent ) {
     ent->ResetAttributes();    // start us walking at the top of the list
 
     STEPattribute * attr = ent->NextAttribute();
-    while( attr != 0 ) {
+    while ( attr != 0 ) {
         const AttrDescriptor * attrDesc = attr->aDesc;
         cout << "     " << attrDesc->Name() << "[" << attrDesc->TypeName() << "]\n";
         attr = ent->NextAttribute();

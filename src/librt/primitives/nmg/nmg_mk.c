@@ -3102,7 +3102,7 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
     eu_killed = 0;
     empty_shell = 0;
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-    while(BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation != OT_SAME) {
 	    fu = BU_LIST_PNEXT(faceuse, fu);
@@ -3110,14 +3110,14 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 	}
 	empty_face = 0;
 	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	while(BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+	while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 		bu_bomb("loopuse does not contains edgeuse\n");
 	    }
 	    empty_loop = 0;
 	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    while(BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
+	    while (BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
 		     bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,

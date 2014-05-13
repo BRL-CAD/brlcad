@@ -1940,7 +1940,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     jNameArray = (*env)->NewObjectArray( env, region_count, (*env)->FindClass(env, "java/lang/String"), (jobject)NULL);
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
-    while( entry != NULL ) {
+    while ( entry != NULL ) {
 	region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
 	region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
 	(*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);

@@ -1472,7 +1472,7 @@ bracecnt(char *line)
     int cnt = 0;
 
     start = line;
-    while(*start != '\0') {
+    while (*start != '\0') {
 	if (*start == '{') {
 	    cnt++;
 	} else if (*start == '}') {
