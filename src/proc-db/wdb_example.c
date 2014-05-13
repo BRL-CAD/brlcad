@@ -41,7 +41,6 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-static const char usage[] = "Usage: wdb_example db_file.g\n";
 
 int
 main(int ac, char *av[])
@@ -52,28 +51,30 @@ main(int ac, char *av[])
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
 
-    if (ac < 2)
-	bu_exit(1, usage);
-
-    if ((db_fp = wdb_fopen(av[1])) == NULL) {
-	perror(av[1]);
-	return 1;
+    if (ac != 2) {
+	bu_exit(1, "Usage: %s db_file.g\n", av[0]);
     }
 
-    mk_id(db_fp, "My Database"); /* create the database header record */
+    /* Open/Create the database file for writing. */
+    if ((db_fp = wdb_fopen(av[1])) == NULL) {
+	perror(av[1]);
+	return 2;
+    }
 
-    /* all units in the database file are stored in millimeters.  This
-     * constrains the arguments to the mk_* routines to also be in
-     * millimeters.
+    /* Set a database title and what units to use when displaying
+     * values.  All values are stored as millimeters regardless of
+     * this display units setting.  The arguments to the mk_*()
+     * routines in following expect millimeter values.
      */
+    mk_id_units(db_fp, "My Database", "m");
 
-
-    /* make a sphere centered at 1.0, 2.0, 3.0 with radius .75 */
+    /* Make a sphere centered around x=1.0, y=2.0, and z=3.0 with a
+     * radius of 0.75 millimeters.
+     */
     VSET(p1, 1.0, 2.0, 3.0);
     mk_sph(db_fp, "ball.s", p1, 0.75);
 
-
-    /* make an rpp under the sphere (partly overlapping).  Note that
+    /* Make an rpp under the sphere (partly overlapping).  Note that
      * this really makes an arb8, but gives us a shortcut for
      * specifying the parameters.
      */
@@ -81,7 +82,7 @@ main(int ac, char *av[])
     VSET(p2, 2.0, 4.0, 2.5);
     mk_rpp(db_fp, "box.s", p1, p2);
 
-    /* make a region that is the union of these two objects. To
+    /* Make a region that is the union of these two objects.  To
      * accomplish this, we need to create a linked list of the items
      * that make up the combination.  The wm_hd structure serves as
      * the head of the list of items.
@@ -98,43 +99,42 @@ main(int ac, char *av[])
      * have passed the matrix in to mk_addmember as an argument or we
      * could add the following code:
      *
-     memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
+     * memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
      *
      * Remember that values in the database are stored in millimeters.
      * so the values in the matrix must take this into account.
      */
 
-    /* add the second member to the database
-     *
-     * Note that there is nothing which checks to make sure that
-     * "ball.s" exists in the database when you create the wmember
-     * structure OR when you create the combination.  So mis-typing
-     * the name of a sub-element for a region/combination can be a
-     * problem.
+    /* Add the second member to the database.  Note that there is
+     * nothing which checks to make sure that "ball.s" exists in the
+     * database when you create the wmember structure OR when you
+     * create the combination.  So mis-typing the name of a
+     * sub-element for a region/combination can be a problem.
      */
-
     (void)mk_addmember("ball.s", &wm_hd.l, NULL, WMOP_UNION);
 
-    /* Create the combination
-     * In this case we are going to make it a region (hence the
-     * is_region flag is set, and we provide shader parameter information.
+    /* Create the combination.  In this case we are going to make it a
+     * region (hence the is_region flag is set, and we provide shader
+     * parameter information.
      *
      * When making a combination that is NOT a region, the region flag
      * argument is 0, and the strings for optical shader, and shader
      * parameters should (in general) be null pointers.
      */
     is_region = 1;
-    VSET(rgb, 64, 180, 96); /* a nice green */
+    VSET(rgb, 64, 180, 96);  /* a nice green */
     mk_lcomb(db_fp,
-	     "box_n_ball.r",	/* Name of the db element created */
-	     &wm_hd,		/* list of elements & boolean operations */
-	     is_region,	/* Flag:  This is a region */
-	     "plastic",	/* optical shader */
-	     "di=.8 sp=.2", /* shader parameters */
-	     rgb,		/* item color */
-	     0);		/* inherit (override) flag */
+	     "box_n_ball.r", /* Name of the db element created */
+	     &wm_hd,         /* list of elements & boolean operations */
+	     is_region,      /* Flag:  This is a region */
+	     "plastic",      /* optical shader */
+	     "di=.8 sp=.2",  /* shader parameters */
+	     rgb,            /* item color */
+	     0);             /* inherit (override) flag */
 
+    /* Close the database file. */
     wdb_close(db_fp);
+
     return 0;
 }
 
