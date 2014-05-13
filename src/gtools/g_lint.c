@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <limits.h> /* home of INT_MAX a/k/a MAXINT */
+#include <limits.h> /* home of INT_MAX aka MAXINT */
 #include "bio.h"
 
 #include "bu.h"

@@ -343,7 +343,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	    "rti_sol_by_type[]");
 	rtip->rti_nsol_by_type[i] = 0;
     }
-    /* Fill in the array and rebuild the count (a/k/a index) */
+    /* Fill in the array and rebuild the count (aka index) */
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	register int id;
 	id = stp->st_id;

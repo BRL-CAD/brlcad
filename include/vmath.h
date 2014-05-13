@@ -1803,7 +1803,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 /**
- * Macros for dealing with 3-D "extents", a/k/a bounding boxes, that are
+ * Macros for dealing with 3-D "extents", aka bounding boxes, that are
  * represented as axis-aligned right parallelepipeds (RPPs).  This is
  * stored as two points: a min point, and a max point.  RPP 1 is
  * defined by lo1, hi1, RPP 2 by lo2, hi2.

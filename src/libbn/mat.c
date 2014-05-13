@@ -612,9 +612,9 @@ bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_t
     vect_t w_prime;		/* image of "to" ("w") in Qt */
 
     VMOVE(unit_from, from);
-    VUNITIZE(unit_from);		/* a/k/a "v" */
+    VUNITIZE(unit_from);		/* aka "v" */
     VMOVE(unit_to, to);
-    VUNITIZE(unit_to);		/* a/k/a "w" */
+    VUNITIZE(unit_to);		/* aka "w" */
 
     /* If from and to are the same or opposite, special handling is
      * needed, because the cross product isn't defined.  asin(0.00001)

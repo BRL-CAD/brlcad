@@ -136,7 +136,7 @@ namespace eval ::hv3::request {
 
     # Expected size of the resource being requested. This is used
     # for displaying a progress bar when saving remote resources
-    # to the local filesystem (a/k/a downloadin').
+    # to the local filesystem (aka downloadin').
     #
     set O(-expectedsize) ""
 

@@ -1654,7 +1654,7 @@ class BSpline {
 public:
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (a/k/a number of control points)
+    int n; // num_samples-1 (aka number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;
