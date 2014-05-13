@@ -3547,7 +3547,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    switch(dsp_ip->dsp_datasrc) {
+    switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_V4_FILE:
 	    if (!dsp_ip->dsp_mp) {

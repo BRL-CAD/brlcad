@@ -306,9 +306,9 @@ static void * SfRealloc( void * pMem, int nNewSize )
 
 {
     if ( pMem == NULL )
-	return( (void *) malloc(nNewSize) );
+	return ( (void *) malloc(nNewSize) );
     else
-	return( (void *) realloc(pMem,nNewSize) );
+	return ( (void *) realloc(pMem,nNewSize) );
 }
 
 /************************************************************************/
@@ -538,7 +538,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	free( psSHP );
 	free( pszBasename );
 	free( pszFullname );
-	return( NULL );
+	return ( NULL );
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
@@ -560,7 +560,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	free( psSHP );
 	free( pszBasename );
 	free( pszFullname );
-	return( NULL );
+	return ( NULL );
     }
 
     free( pszFullname );
@@ -591,7 +591,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	psSHP->sHooks.FClose( psSHP->fpSHX );
 	free( psSHP );
 
-	return( NULL );
+	return ( NULL );
     }
 
     psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
@@ -616,7 +616,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	free( psSHP );
 	free(pabyBuf);
 
-	return( NULL );
+	return ( NULL );
     }
 
 /* -------------------------------------------------------------------- */
@@ -685,7 +685,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	if (psSHP->panRecSize) free( psSHP->panRecSize );
 	if (pabyBuf) free( pabyBuf );
 	free( psSHP );
-	return( NULL );
+	return ( NULL );
     }
 
     if ( (int) psSHP->sHooks.FRead( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )
@@ -706,7 +706,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 	free( pabyBuf );
 	free( psSHP );
 
-	return( NULL );
+	return ( NULL );
     }
 
     /* In read-only mode, we can close the SHX now */
@@ -731,7 +731,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     }
     free( pabyBuf );
 
-    return( psSHP );
+    return ( psSHP );
 }
 
 /************************************************************************/
@@ -871,7 +871,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     {
 	psHooks->Error( "Failed to create file .shp file." );
 	free( pszBasename );
-	return( NULL );
+	return ( NULL );
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
@@ -880,7 +880,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     {
 	psHooks->Error( "Failed to create file .shx file." );
 	free( pszBasename );
-	return( NULL );
+	return ( NULL );
     }
 
     free( pszFullname );
@@ -941,7 +941,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     psHooks->FClose( fpSHP );
     psHooks->FClose( fpSHX );
 
-    return( SHPOpenLL( pszLayer, "r+b", psHooks ) );
+    return ( SHPOpenLL( pszLayer, "r+b", psHooks ) );
 }
 
 /************************************************************************/
@@ -1122,7 +1122,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
     psObject->nVertices = nVertices;
     SHPComputeExtents( psObject );
 
-    return( psObject );
+    return ( psObject );
 }
 
 /************************************************************************/
@@ -1138,7 +1138,7 @@ SHPCreateSimpleObject( int nSHPType, int nVertices,
 		       const double * padfZ )
 
 {
-    return( SHPCreateObject( nSHPType, -1, 0, NULL, NULL,
+    return ( SHPCreateObject( nSHPType, -1, 0, NULL, NULL,
 			     nVertices, padfX, padfY, padfZ, NULL ) );
 }
 
@@ -1530,7 +1530,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
     }
 
-    return( nShapeId  );
+    return ( nShapeId  );
 }
 
 /************************************************************************/
@@ -1552,7 +1552,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      Validate the record/entity number.                              */
 /* -------------------------------------------------------------------- */
     if ( hEntity < 0 || hEntity >= psSHP->nRecords )
-	return( NULL );
+	return ( NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Ensure our record buffer is large enough.                       */
@@ -2052,7 +2052,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	psShape->dfMMin = psShape->dfMMax = psShape->padfM[0];
     }
 
-    return( psShape );
+    return ( psShape );
 }
 
 /************************************************************************/
@@ -2063,7 +2063,7 @@ const char SHPAPI_CALL1(*)
 SHPTypeName( int nSHPType )
 
 {
-    switch( nSHPType )
+    switch ( nSHPType )
     {
       case SHPT_NULL:
 	return "NullShape";
@@ -2120,7 +2120,7 @@ const char SHPAPI_CALL1(*)
 SHPPartTypeName( int nPartType )
 
 {
-    switch( nPartType )
+    switch ( nPartType )
     {
       case SHPP_TRISTRIP:
 	return "TriangleStrip";

@@ -543,7 +543,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
-    switch(hitp->hit_surfno) {
+    switch (hitp->hit_surfno) {
 	case HYP_NORM_BODY:
 	    /* v = (z + Hmag) / (2*Hmag) */
 	    uvp->uv_v = (hitp->hit_vpriv[Z] + hyp->hyp_Hmag) / (2.0 * hyp->hyp_Hmag);

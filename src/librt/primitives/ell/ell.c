@@ -1816,7 +1816,7 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	/* split segment */
 	return ell_angle(mpt, a, b, dtol, ntol);
     } else
-	return(acos(VDOT(p0, p1)
+	return (acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
 }
 

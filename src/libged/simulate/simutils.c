@@ -763,7 +763,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	    cmd_args[2] = (char *)0;
 	    argc = 2;
 
-	    switch(rb->bt_manifold[i].num_contacts) {
+	    switch (rb->bt_manifold[i].num_contacts) {
 		case 1:
 		    bu_log("1 contact got, no manifold drawn");
 		    break;

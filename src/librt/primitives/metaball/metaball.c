@@ -138,7 +138,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 		VSUB2(d, mbpt2->coord, mbpt->coord);
 		mag = MAGNITUDE(d) + dist;
 
-		switch(mb->method) {
+		switch (mb->method) {
 		    case METABALL_METABALL:
 			break;
 		    case METABALL_ISOPOTENTIAL:
@@ -803,7 +803,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
     metaball_count = 0;
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
-	switch(mb->method) {
+	switch (mb->method) {
 	    case METABALL_ISOPOTENTIAL:
 		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g)\n",
 			 ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));

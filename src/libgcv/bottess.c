@@ -132,7 +132,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	if (isv[i] == 0) {
 	    fastf_t dist;
 
-	    switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
+	    switch ( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
 		case -2: case -1: continue;
 		case 1: isv[i] = VERT_INT|j; break;
 		case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
@@ -415,7 +415,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 {
     RT_CK_TREE(tr);
 
-    switch(tr->tr_op) {
+    switch (tr->tr_op) {
 	case OP_NOP:
 	    return tr;
 	case OP_NMG_TESS:
@@ -467,7 +467,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	    bu_bomb("bottess evaluate(): bad op (first pass)\n");
     }
 
-    switch(tr->tr_op) {
+    switch (tr->tr_op) {
 	case OP_UNION:
 	    return compose(tr->tr_b.tb_left, tr->tr_b.tb_right, OUTSIDE, SAME, OUTSIDE);
 	case OP_INTERSECT:

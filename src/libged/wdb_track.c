@@ -69,7 +69,7 @@ wdb_track_cmd(void *data,
 	bu_log("%s", bu_vls_addr(&log_str));
     }
 
-    switch(retval) {
+    switch (retval) {
 	case GED_OK:
 	    return TCL_OK;
 	case GED_ERROR:

@@ -145,7 +145,7 @@ bn_unif_double_fill(struct bn_unif *p)
     test = A*(work_seed % Q) - R*(work_seed / Q);
     p->msr_seed = (test < 0) ? test+M : test;
 
-    return((p->msr_seed - M/2) * 1.0/DM);
+    return ((p->msr_seed - M/2) * 1.0/DM);
 }
 
 /*	bn_unif_free	free random number table

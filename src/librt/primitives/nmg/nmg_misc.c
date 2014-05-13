@@ -1963,7 +1963,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    NMG_CK_LOOPUSE(fu2lu);
 	    NMG_CK_LOOP(fu2lu->l_p);
 
-	    switch(fu2lu->orientation) {
+	    switch (fu2lu->orientation) {
 		case OT_BOOLPLACE:
 		    /*  If this loop is destined for removal
 		     *  by sanitize(), skip it.
@@ -4837,7 +4837,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
     vg = new_v->vg_p;
     NMG_CK_VERTEX_G(vg);
 
-    switch(BU_PTBL_END(faces)) {
+    switch (BU_PTBL_END(faces)) {
 	struct face *fp1, *fp2, *fp3;
 	plane_t pl1;
 	fastf_t vert_move_len;
@@ -7328,7 +7328,7 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 	vect_t edge_vec;
 
 	for (i  = 0; i < nused; i++) {
-	    switch(vp->cmd[i]) {
+	    switch (vp->cmd[i]) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_TRI_MOVE:
@@ -8829,7 +8829,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     VMOVE(start, i_start);
     VMOVE(center, i_center);
     VMOVE(end, i_end);
-    switch(point_type) {
+    switch (point_type) {
 	case RT_NURB_PT_XY:
 	case RT_NURB_PT_UV:
 	    ncoords = 3;
@@ -9236,7 +9236,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
 	goto not_arb;
 
     /* which type of arb is this?? */
-    switch(BU_PTBL_END(tab)) {
+    switch (BU_PTBL_END(tab)) {
 	case 4:		/* each face must have 3 vertices */
 	    if (three_verts != 4 || four_verts != 0)
 		goto not_arb;
@@ -9311,7 +9311,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     if (BU_LIST_NEXT_NOT_HEAD(&s->l, &r->s_hd))
 	return 0;
 
-    switch(Shell_is_arb(s, &tab)) {
+    switch (Shell_is_arb(s, &tab)) {
 	case 0:
 	    ret_val = 0;
 	    break;
@@ -10982,7 +10982,7 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch(*cmd) {
+	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
 		    VMOVE(pt2, *pt);

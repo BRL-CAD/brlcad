@@ -507,7 +507,7 @@ describe_tree(  tree *tree,
      * the first four are the most common types, and are typically
      * the only ones found in a BRL-CAD database.
      */
-    switch( tree->tr_op )
+    switch ( tree->tr_op )
     {
 	case OP_DB_LEAF:	/* leaf node, this is a member */
 	    /* Note: tree->tr_l.tl_mat is a pointer to a
@@ -589,7 +589,7 @@ primitive_func( db_tree_state *tsp,
 
     /* handle each type of primitive (see h/rtgeom.h) */
     if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-	switch( ip->idb_minor_type )
+	switch ( ip->idb_minor_type )
 	{
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
@@ -1064,7 +1064,7 @@ primitive_func( db_tree_state *tsp,
 	}
     }
     else {
-	switch( ip->idb_major_type ) {
+	switch ( ip->idb_major_type ) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
 	    {
 		/* not actually a primitive, just a block of storage for data
@@ -1287,7 +1287,7 @@ booltree_evaluate( tree *tp, resource *resp )
 
     RT_CK_TREE(tp);
 
-    switch(tp->tr_op) {
+    switch (tp->tr_op) {
 	case OP_NOP:
 	    return 0;
 	case OP_DB_LEAF:

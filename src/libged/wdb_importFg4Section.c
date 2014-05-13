@@ -183,7 +183,7 @@ rt_mk_bot(
 				 * otherwise thickness is centered about hit point
 				 */
 {
-    return(rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
+    return (rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
 			       faces, thickness, face_mode, 0, NULL, NULL));
 }
 

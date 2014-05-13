@@ -166,7 +166,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Variable-precision "fastf_t" floating point */
 		len = ip->sp_count * sizeof(fastf_t);
 		CKMEM(len);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
 			bu_cv_htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
@@ -335,7 +335,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'f':
 		/* Variable-precision fastf_t floating point */
 		len = ip->sp_count * sizeof(fastf_t);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
 			bu_cv_ntohf((unsigned char *)loc, cp, ip->sp_count);
 			break;

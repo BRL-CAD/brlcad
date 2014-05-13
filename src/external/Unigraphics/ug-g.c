@@ -4916,7 +4916,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     }
 
     if ( do_entire_part ) {
-	return( convert_entire_part( node, p_name, refset_name,
+	return ( convert_entire_part( node, p_name, refset_name,
 				     inst_name, curr_xform, units_conv ) );
     }
 
@@ -5016,20 +5016,20 @@ convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, cons
 	bu_log( "Using user specified reference set name (%s) in place of (%s)\n",
 		use_refset_name, refset_name );
 	if ( BU_STR_EQUAL( use_refset_name, "Entire Part" ) || BU_STR_EQUAL( use_refset_name, "None" ) ) {
-	    return( convert_entire_part( node, p_name, refset_name, inst_name,
+	    return ( convert_entire_part( node, p_name, refset_name, inst_name,
 					 curr_xform, units_conv ) );
 	} else {
-	    return( convert_reference_set( node, p_name, use_refset_name, inst_name,
+	    return ( convert_reference_set( node, p_name, use_refset_name, inst_name,
 					   curr_xform, units_conv ) );
 	}
     }
     if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	/* convert reference set */
-	return( convert_reference_set( node, p_name, refset_name, inst_name,
+	return ( convert_reference_set( node, p_name, refset_name, inst_name,
 				       curr_xform, units_conv ) );
     } else {
 	/* convert entire part */
-	return( convert_entire_part( node, p_name, refset_name, inst_name,
+	return ( convert_entire_part( node, p_name, refset_name, inst_name,
 				     curr_xform, units_conv ) );
     }
 

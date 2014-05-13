@@ -122,7 +122,7 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
     } else {
 	bu_strlcpy(filepath, pszFilename, MAXPATHLEN);
     }
-    return(bSuccess);
+    return (bSuccess);
 }
 #endif
 

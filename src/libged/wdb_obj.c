@@ -84,7 +84,7 @@ An error has occurred while adding a new object to the database.\n", (char *)NUL
 			 "' from the database.\n", (char *)NULL);\
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
 
-#define WDB_TCL_DELETE_ERR_return(_name) {  \
+#define WDB_TCL_DELETE_ERR_return (_name) {  \
 	WDB_TCL_DELETE_ERR(_name); \
 	return TCL_ERROR;  }
 

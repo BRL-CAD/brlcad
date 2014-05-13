@@ -178,7 +178,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "afn")) != -1) {
-	switch(c) {
+	switch (c) {
 	    case 'a':
 		gktd.killrefs = 1;
 		break;

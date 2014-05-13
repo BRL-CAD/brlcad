@@ -94,7 +94,7 @@ reshape(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 void
 resize_isst(struct isst_s *isstp)
 {
-    switch(isstp->gs) {
+    switch (isstp->gs) {
 	case 0:
 	    isstp->camera.w = isstp->tile.size_x = isstp->w;
 	    isstp->camera.h = isstp->tile.size_y = isstp->h;

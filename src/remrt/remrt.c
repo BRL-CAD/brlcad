@@ -725,7 +725,7 @@ read_rc_file(void)
 static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
-    return((t1->tv_sec - t0->tv_sec) +
+    return ((t1->tv_sec - t0->tv_sec) +
 	   (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 

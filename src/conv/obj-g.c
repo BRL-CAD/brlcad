@@ -3393,7 +3393,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'r':
-		switch(bu_optarg[0]) {
+		switch (bu_optarg[0]) {
 		    case '1':
 			bot_orientation = RT_BOT_UNORIENTED;
 			break;
