@@ -34,8 +34,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-mat_t identity;
-/* DEG2RAD , if needed, is available as a global in vmath.h . */
 
 struct val {
     double v_z[3];
