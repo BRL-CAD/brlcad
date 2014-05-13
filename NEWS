@@ -35,7 +35,7 @@ changes made.  See document footer for additional details.
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
 * added -v verbose output option to MGED 'search' command - Cliff Yapp
-* fixed two memory leaks in red-black tree handling - Tom Browder
+* fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
 * fixed crash of extrude with special case bezier curves - huskmate13
 * improved performance of 'terrain' & numerous shaders - Sean Morrison
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
@@ -46,6 +46,7 @@ changes made.  See document footer for additional details.
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
 * added comb -S option to stop when object already exists - Cliff Yapp
+* improved comb command documentation with many examples - Cliff Yapp
 
 
 ----------------------------------------------------------------------
