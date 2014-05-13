@@ -3076,7 +3076,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     }
     skt->vert_count = vr->curr_vert;
     skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof(point2d_t), "skt->verts");
-    for(idx = 0 ; idx < vr->curr_vert ; idx++) {
+    for (idx = 0 ; idx < vr->curr_vert ; idx++) {
 	skt->verts[idx][0] = vr->the_array[idx*3];
 	skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }

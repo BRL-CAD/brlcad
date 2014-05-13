@@ -198,13 +198,13 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	std::set<size_t> verts;
 	std::set<size_t>::iterator f_it, v_it;
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
 	}
 	point_t pt;
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
 	    center.x += pt[0]/verts.size();
 	    center.y += pt[1]/verts.size();
@@ -212,7 +212,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	}
         Eigen::MatrixXd A(3, verts.size());
 	int vert_cnt = 0;
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
 	    A(0,vert_cnt) = pt[0] - center.x;
 	    A(1,vert_cnt) = pt[1] - center.y;
@@ -238,7 +238,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
         point_t pc;
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
             point_t p1, p2, p3;
             VMOVE(p1, &info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3]);
             VMOVE(p2, &info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3]);
@@ -279,12 +279,12 @@ planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info
         fastf_t max_dist = 0.0;
         ON_Plane best_fit_plane;
         fit_plane(patch_id, faces, info, &best_fit_plane);
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
 	}
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    point_t pt;
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
             fastf_t curr_dist = best_fit_plane.DistanceTo(ON_3dPoint(pt[0], pt[1], pt[2]));
@@ -1163,11 +1163,11 @@ find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loo
     } else {
 	std::map<size_t, std::vector<size_t> >::iterator l_it;
 	fastf_t diag_max = 0.0;
-	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
+	for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
 	    double boxmin[3] = {0.0, 0.0, 0.0};
 	    double boxmax[3] = {0.0, 0.0, 0.0};
 	    std::vector<size_t>::iterator v_it;
-	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
+	    for (v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
 		ON_BrepEdge& edge = info->brep->m_E[(int)(*v_it)];
 		const ON_Curve* edge_curve = edge.EdgeCurveOf();
 		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1);
@@ -1179,7 +1179,7 @@ find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loo
 		diag_max = pmin.DistanceTo(pmax);
             }
 	}
-	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
+	for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
 	    if ((*l_it).first != *outer_loop) {
 		(*inner_loops).insert((*l_it).first);
 	    }
@@ -1207,7 +1207,7 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
     int vert_prev = -1;
     //std::cout << "Patch " << patch_id << " loop edges: \n";
     bool trim_rev = false;
-    for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
+    for (loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
 	ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];

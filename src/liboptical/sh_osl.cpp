@@ -201,7 +201,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    }
 	    else if (BU_STR_EQUAL(item, "color")) {
 		Color3 color_value;
-		for(int i=0; i<3; i++) {
+		for (int i=0; i<3; i++) {
 		    item = strtok(NULL, "#");
 		    if (item == NULL) {
 			fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
@@ -220,7 +220,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		else if (BU_STR_EQUAL(item, "vector")) type = TypeDesc::TypeVector;
 
 		Vec3 vec_value;
-		for(int i=0; i<3; i++) {
+		for (int i=0; i<3; i++) {
 		    item = strtok(NULL, "#");
 		    if (item == NULL) {
 			fprintf(stderr, "[Error] Missing %d-th component of %s value\n", i, type_name.c_str());
@@ -234,8 +234,8 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    else if (BU_STR_EQUAL(item, "matrix")) {
 		fprintf(stderr, "matrix\n");
 		Matrix44 mat_value;
-		for(int i=0; i<4; i++)
-		    for(int j=0; j<4; j++) {
+		for (int i=0; i<4; i++)
+		    for (int j=0; j<4; j++) {
 			item = strtok(NULL, "#");
 			if (item == NULL) {
 			    fprintf(stderr, "[Error] Missing %d-th component of matrix value\n", i*4 + j);
@@ -531,7 +531,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     /* Check if it is the first time this thread is calling this function */
     bool visited = false;
-    for(size_t i = 0; i < visited_addrs.size(); i++) {
+    for (size_t i = 0; i < visited_addrs.size(); i++) {
 	if (ap->a_resource == visited_addrs[i]) {
 	    visited = true;
 	    thread_info = thread_infos[i];

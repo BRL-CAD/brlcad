@@ -2900,7 +2900,7 @@ int
 is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     int numpoints = brep_loop_points.Count();
-    for(int i=1; i < numpoints-1; i++) {
+    for (int i=1; i < numpoints-1; i++) {
 	int seam = 0;
 	ON_2dPoint p = brep_loop_points[i].p2d;
 	if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
@@ -2939,7 +2939,7 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	int i;
 	BrepTrimPoint btp;
 	int numpoints = brep_loop_points.Count();
-	for(i=0; i < numpoints; i++) {
+	for (i=0; i < numpoints; i++) {
 	    p = brep_loop_points[i].p2d;
 	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
 		while(++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
@@ -2962,12 +2962,12 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	if (entering > 0) {
 	    if (entering == 1) { // crosses in U
 		shifted_points.Append(seam_btp);
-		for(int j=i; j < brep_loop_points.Count(); j++) {
+		for (int j=i; j < brep_loop_points.Count(); j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
 		}
-		for(int j=1; j < i-1; j++) {
+		for (int j=1; j < i-1; j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
@@ -2981,12 +2981,12 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		// heading left and hit left seam do this
 		btp.p2d = p;
 		shifted_points.Append(btp);
-		for(int j=i; j < brep_loop_points.Count(); j++) {
+		for (int j=i; j < brep_loop_points.Count(); j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
 		}
-		for(int j=1; j < i-1; j++) {
+		for (int j=1; j < i-1; j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
@@ -3091,7 +3091,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
 		double delta =  trim->Domain().Length() / 10.0;
-		for(int i=1; i<=10; i++) {
+		for (int i=1; i<=10; i++) {
 		    btp.p3d = p3d;
 		    btp.p2d = v1.Point();
 		    btp.t = trim->Domain().m_t[0] + (i-1)*delta;
@@ -3154,7 +3154,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	for (int li = 0; li < loop_cnt; li++) {
 	    int num_loop_points = brep_loop_points[li].Count();
 	    if (num_loop_points > 1) {
-		for(int i = 0; i < num_loop_points; i++) {
+		for (int i = 0; i < num_loop_points; i++) {
 		    ON_2dPoint &p = brep_loop_points[li][i].p2d;
 		    if (IsAtSeam(s,p,BREP_SAME_POINT_TOLERANCE)) {
 			ForceToClosestSeam(s,p,BREP_SAME_POINT_TOLERANCE);
@@ -3258,13 +3258,13 @@ poly2tri_CDT(struct bu_list *vhead,
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
 	if (num_loop_points > 2) {
-	    for(int i = 1; i < num_loop_points; i++) {
+	    for (int i = 1; i < num_loop_points; i++) {
 		// map point to last entry to 3d point
 		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		polyline.push_back(p);
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
 	    }
-	    for(int i = 1; i < brep_loop_points[li].Count(); i++) {
+	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
 		// map point to last entry to 3d point
 		ON_Line *line = new ON_Line((brep_loop_points[li])[i-1].p2d, (brep_loop_points[li])[i].p2d);
 		ON_BoundingBox bb = line->BoundingBox();
@@ -3885,7 +3885,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		if (edge.m_edge_user.p != NULL) {
 		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)edge.m_edge_user.p;
 		    std::map<double,ON_3dPoint *>::iterator i;
-		    for(i=points->begin(); i != points->end(); i++) {
+		    for (i=points->begin(); i != points->end(); i++) {
 			ON_3dPoint *p = (*i).second;
 			delete p;
 		    }
@@ -3900,7 +3900,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		if (trim.m_trim_user.p != NULL) {
 		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)trim.m_trim_user.p;
 		    std::map<double,ON_3dPoint *>::iterator i;
-		    for(i=points->begin(); i != points->end(); i++) {
+		    for (i=points->begin(); i != points->end(); i++) {
 			ON_3dPoint *p = (*i).second;
 			delete p;
 		    }

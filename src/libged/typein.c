@@ -2834,7 +2834,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     hip = (struct rt_hrt_internal *)intern->idb_ptr;
     hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
 
-    for(i = 0; i < n - 1; i++) {
+    for (i = 0; i < n - 1; i++) {
 	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
     vals[12] = atof(cmd_argv[3 + 12]);

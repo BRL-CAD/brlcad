@@ -122,7 +122,7 @@ bn_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
 
     /* copy points_2d array to something
        that can be sorted and sort it */
-    for(i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
 	V2MOVE(points[i], points_2d[i]);
     }
 

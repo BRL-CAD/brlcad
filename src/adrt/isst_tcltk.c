@@ -342,7 +342,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
 	struct adrt_mesh_s *mesh;
 
 	/* clear all the hit list */
-	for(BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
+	for (BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
 	    mesh->flags &= ~ADRT_MESH_HIT;
     }
 

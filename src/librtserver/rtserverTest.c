@@ -85,14 +85,14 @@ countHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
 	numPartitions = BU_GLONG(c);
 	c += SIZEOF_NETWORK_LONG;
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -185,7 +185,7 @@ main( int argc, char *argv[] )
 
 
     /* shoot a ray ten times, cleaning and loading geometry each time */
-    for(i=0 ; i<10 ; i++) {
+    for (i=0 ; i<10 ; i++) {
 	/* load geometry */
 	my_session_id = loadGeometry( argv[bu_optind], &objs );
 

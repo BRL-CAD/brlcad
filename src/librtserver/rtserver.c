@@ -347,7 +347,7 @@ rts_clean( int sessionid)
 	title = NULL;
     }
 
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
+    for ( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
 	struct bu_vlb *vlb;
 
 	ap = (struct application *)BU_PTBL_GET( &apps, i);
@@ -527,7 +527,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	/* create the hash table of region names */
 	BU_ALLOC(rts_rtip->rtrti_region_names, Tcl_HashTable);
 	Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
-	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
+	for ( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
 	    Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
 	    if ( !newPtr ) {
@@ -740,7 +740,7 @@ printHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
@@ -749,7 +749,7 @@ printHits(struct bu_vlb *vlb)
 	c += SIZEOF_NETWORK_LONG;
 	bu_log("\tnumber of partitions: %d\n", numPartitions);
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -1454,7 +1454,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
-    for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
+    for (rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
 	jobject ray, start, direction;
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);

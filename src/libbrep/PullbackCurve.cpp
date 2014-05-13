@@ -3933,7 +3933,7 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
 	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 	while (seg != data->segments.end()) {
 	    ON_2dPointArray *points = (*seg);
-	    for(int i=0; i < points->Count(); i++) {
+	    for (int i=0; i < points->Count(); i++) {
 		ON_2dPoint *pt = points->At(i);
 		int seam = IsAtSeam(surf,*pt,PBC_TOL);
 		if (seam > 0) {
@@ -3992,7 +3992,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 		while (seg != data->segments.end()) {
 		    ON_2dPointArray *points = (*seg);
-		    for(int i=0; i < points->Count(); i++) {
+		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->x = points->At(i)->x + length;
 		    }
 		    seg++;
@@ -4002,7 +4002,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 		while (seg != data->segments.end()) {
 		    ON_2dPointArray *points = (*seg);
-		    for(int i=0; i < points->Count(); i++) {
+		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->y = points->At(i)->y + length;
 		    }
 		    seg++;

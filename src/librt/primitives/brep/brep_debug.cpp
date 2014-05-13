@@ -1295,7 +1295,7 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     c3->GetNurbForm(*nc3, 0.0);
     ON_3dPoint edge_start, edge_end;
     dump.Print("edge[%2d]: for ", ei);
-    for(int i = 0; i < trim_cnt; ++i) {
+    for (int i = 0; i < trim_cnt; ++i) {
 	dump.Print("trim[%2d] ", edge.m_ti[i]);
     }
     dump.Print("\n");
@@ -2731,7 +2731,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    if (BU_STR_EQUAL(strindex, "all")) {
 		ON_Brep *brep = bs->brep;
 		if (BU_STR_EQUAL(part, "S")) {
-		    for(int i = 0; i < brep->m_S.Count(); ++i) {
+		    for (int i = 0; i < brep->m_S.Count(); ++i) {
 			ret = brep_surface_info(bs, vls, i);
 		    }
 		} else if (BU_STR_EQUAL(part, "F")) {

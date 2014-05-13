@@ -99,7 +99,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     /* TODO: get a sample to work with
        LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"associated_geometry");
        LIST_OF_ENTITIES::iterator i;
-       for(i=l->begin();i!=l->end();i++) {
+       for (i=l->begin();i!=l->end();i++) {
        SDAI_Application_instance *entity = (*i);
        if (entity) {
        PCurveOrSurface *aPCOS = (PCurveOrSurface *)Factory::CreateObject(sw,entity);

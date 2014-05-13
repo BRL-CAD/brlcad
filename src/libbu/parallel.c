@@ -443,7 +443,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     user_thread_data_bu = (struct thread_data *)bu_calloc(ncpu, sizeof(*user_thread_data_bu), "struct thread_data *user_thread_data_bu");
 
     /* Fill in the data of user_thread_data_bu structures of all threads */
-    for(x = 0; x < ncpu; x++) {
+    for (x = 0; x < ncpu; x++) {
 	user_thread_data_bu[x].user_func = func;
 	user_thread_data_bu[x].user_arg  = arg;
 	user_thread_data_bu[x].cpu_id    = x;

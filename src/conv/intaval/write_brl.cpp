@@ -57,7 +57,7 @@ void addTriangle
 	return;
 
     // search for duplicate triangle
-    for(size_t i = 0; i < num_faces; ++i) {
+    for (size_t i = 0; i < num_faces; ++i) {
 	if (faces[i * 3] == a) {
 	    if (faces[i * 3 + 1] == b) {
 		if (faces[i * 3 + 2] == c)
@@ -205,13 +205,13 @@ void writeSolidBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
@@ -252,10 +252,10 @@ void writeRingModeBox
     vect_t outer[MAX_NPTS];
 
     if (translate) {
-	for(size_t i = 0; i < form.npts; ++i)
+	for (size_t i = 0; i < form.npts; ++i)
 	  VADD2(outer[i], form.data.pt[i], form.tr_vec);
     } else {
-      for(size_t i = 0; i < form.npts; ++i) {
+      for (size_t i = 0; i < form.npts; ++i) {
 	  VMOVE(outer[i], form.data.pt[i]);
       }
     }
@@ -267,7 +267,7 @@ void writeRingModeBox
     // compute inner points
     vect_t inner[MAX_NPTS];
 
-    for(size_t i2 = 0; i2 < form.npts; ++i2) {
+    for (size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;
 
 	VMOVE(a, outer[i2]);
@@ -341,12 +341,12 @@ void writeRingModeBox
     int inner_i[MAX_NPTS];
     fastf_t vertices[MAX_NPTS * 3];
 
-    for(size_t i3 = 0; i3 < form.npts; ++i3) {
+    for (size_t i3 = 0; i3 < form.npts; ++i3) {
 	size_t i = 0;
 
 	// outer
 	// search for duplicate vertex
-	for(; i < num_vertices; ++i) {
+	for (; i < num_vertices; ++i) {
 	  if (NEAR_EQUAL(outer[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
 	      NEAR_EQUAL(outer[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
 	      NEAR_EQUAL(outer[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
@@ -367,7 +367,7 @@ void writeRingModeBox
 
 	// inner
 	// search for duplicate vertex
-	for(i = 0; i < num_vertices; ++i) {
+	for (i = 0; i < num_vertices; ++i) {
 	    if (NEAR_EQUAL(inner[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
 		NEAR_EQUAL(inner[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
 		NEAR_EQUAL(inner[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
@@ -391,7 +391,7 @@ void writeRingModeBox
     size_t num_faces = 0;
     int faces[MAX_TRIANGLES * 3];
 
-    for(size_t i4 = 0; i4 < form.npts; ++i4) {
+    for (size_t i4 = 0; i4 < form.npts; ++i4) {
 	size_t nextIndex = (i4 + 1) % form.npts;
 
 	addTriangle(faces, num_faces, outer_i[i4], outer_i[nextIndex], inner_i[i4]);
@@ -400,7 +400,7 @@ void writeRingModeBox
 
     fastf_t thickness[MAX_TRIANGLES];
 
-    for(size_t i5 = 0; i5 < num_faces; ++i5)
+    for (size_t i5 = 0; i5 < num_faces; ++i5)
 	thickness[i5] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(num_faces);
@@ -439,13 +439,13 @@ void writePlateBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i<form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i<form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
@@ -454,7 +454,7 @@ void writePlateBot
 
     fastf_t thickness[MAX_TRIANGLES];
 
-    for(size_t i = 0; i < form.data.bot.num_faces; ++i)
+    for (size_t i = 0; i < form.data.bot.num_faces; ++i)
 	thickness[i] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(form.data.bot.num_faces);

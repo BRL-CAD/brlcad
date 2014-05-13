@@ -2004,7 +2004,7 @@ db_search_free(struct bu_ptbl *search_results)
     if (!search_results || search_results->l.magic != BU_PTBL_MAGIC)
 	return;
 
-    for(i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
+    for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
 	struct db_full_path *path = (struct db_full_path *)BU_PTBL_GET(search_results, i);
 	if (path->magic && path->magic == DB_FULL_PATH_MAGIC) {
 	    db_free_full_path(path);
@@ -2084,7 +2084,7 @@ _db_search_full_paths(void *searchplan,
 	bu_free(full_paths, "free search container");
 
     }
-    for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
+    for (i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
 	BU_ALLOC(new_entry, struct db_full_path_list);
 	BU_ALLOC(new_entry->path, struct db_full_path);
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
@@ -2092,7 +2092,7 @@ _db_search_full_paths(void *searchplan,
 	db_dup_full_path(new_entry->path, dfptr);
 	BU_LIST_PUSH(&(searchresults_list->l), &(new_entry->l));
     }
-    for(i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
+    for (i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
 	db_free_full_path(dfptr);
     }

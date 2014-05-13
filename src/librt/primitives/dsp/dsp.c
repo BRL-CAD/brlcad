@@ -1794,7 +1794,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     point_t bbmin, bbmax;
     fastf_t dot, dot2;
 
-    for(x = 0; x < 4; x++)
+    for (x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
     x = 0;
 

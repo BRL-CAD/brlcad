@@ -5092,7 +5092,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 	results[4] = VDOT(from_zplus, norm_dir);
 	results[5] = VDOT(from_zminus, norm_dir);
 
-	for(j = 0; j < 6; j++) {
+	for (j = 0; j < 6; j++) {
 	    if (results[j] > tmp) {
 		result_max = j;
 		tmp = results[j];

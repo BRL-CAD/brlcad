@@ -195,7 +195,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 	RT_BOT_CK_MAGIC(bot);
 
-	for(i=0;i<bot->num_faces;i++)
+	for (i=0;i<bot->num_faces;i++)
 	{
 	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
 	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);

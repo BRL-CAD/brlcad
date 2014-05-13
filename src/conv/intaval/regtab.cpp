@@ -128,7 +128,7 @@ void createRegions(struct rt_wdb* wdbp)
     struct wmember tophead;
     BU_LIST_INIT(&tophead.l);
 
-    for(std::map<std::string, Region*>::iterator it = regionTable.begin();
+    for (std::map<std::string, Region*>::iterator it = regionTable.begin();
 	it != regionTable.end();
 	++it) {
 	Region* regionp = it->second;

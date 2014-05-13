@@ -117,7 +117,7 @@ int main() {
     // "Loop" through the schema, building one of each entity type.
 
     const EntityDescriptor * ent;  // needs to be declared const...
-    for( int i = 0; i < num_ents; i++ ) {
+    for ( int i = 0; i < num_ents; i++ ) {
         ent = registry->NextEntity();
 
         // Build object, using its name, through the registry

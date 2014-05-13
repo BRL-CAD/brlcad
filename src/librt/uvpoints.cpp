@@ -64,7 +64,7 @@ void* MemoryManager::allocate(size_t size)
     if (QuadNodePtrList.empty()) {
 	base = new char[size * POOL_SIZE];
 	MemoryPoolList.push_back(base);
-	for(int i = 0; i < POOL_SIZE; ++i) {
+	for (int i = 0; i < POOL_SIZE; ++i) {
 	    QuadNodePtrList.push_front(&(static_cast<char*>(base)[i*size]));
 	}
     }
@@ -186,7 +186,7 @@ void QuadNode::AppendKeys(std::set<UVKey, UVKeyComp> *newkeys, int MAX_TREE_DEPT
     std::set<UVKey, UVKeyComp>::iterator item;
     std::string keystring;
 
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	counting++;
 	ints_to_key(&keystring, PU[i], PV[i], MAX_TREE_DEPTH);
 	item = newkeys->find(keystring);
@@ -261,12 +261,12 @@ void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 #if TREE_DEBUG
     cout << "Q0 Depth: " << depth + 1 << "\n";
     cout << "PU: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[0]->PU[i] << ", ";
     }
     cout << "}\n";
     cout << "PV: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[0]->PV[i] << ", ";
     }
     cout << "}\n";
@@ -301,12 +301,12 @@ void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 #if TREE_DEBUG
     cout << "Q1 Depth: " << depth + 1 << "\n";
     cout << "PU: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[1]->PU[i] << ", ";
     }
     cout << "}\n";
     cout << "PV: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[1]->PV[i] << ", ";
     }
     cout << "}\n";
@@ -340,12 +340,12 @@ void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 #if TREE_DEBUG
     cout << "Q2 Depth: " << depth + 1 << "\n";
     cout << "PU: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[2]->PU[i] << ", ";
     }
     cout << "}\n";
     cout << "PV: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[2]->PV[i] << ", ";
     }
     cout << "}\n";
@@ -380,12 +380,12 @@ void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 #if TREE_DEBUG
     cout << "Q3 Depth: " << depth + 1 << "\n";
     cout << "PU: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[3]->PU[i] << ", ";
     }
     cout << "}\n";
     cout << "PV: {";
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	cout << Children[3]->PV[i] << ", ";
     }
     cout << "}\n";
@@ -437,7 +437,7 @@ UVKeyQuadTree::UVKeyQuadTree(std::set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPT
     root->PV[7] = pow(2, MAX_TREE_DEPTH + 1)/4;
     root->PU[8] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
     root->PV[8] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
 	counting++;
 	std::cout << root->PU[i] << ", " << root->PV[i] << "\n";
 	ints_to_key(&keynum, root->PU[i], root->PV[i], MAX_TREE_DEPTH);
@@ -495,7 +495,7 @@ int main(int argc, char **argv)
 
     std::ofstream keyfile;
     keyfile.open("keys.txt");
-    for(keyiterator = keys.begin(); keyiterator != keys.end(); keyiterator++) {
+    for (keyiterator = keys.begin(); keyiterator != keys.end(); keyiterator++) {
 	keyfile << keyiterator->getKey()  << "\n";
     }
     keyfile.close();

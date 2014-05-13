@@ -812,7 +812,7 @@ primitive_func( db_tree_state *tsp,
 
 		if (debug&DEBUG_NAMES) {
 		    printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-		    for( i=0 ; i<8 ; i++ ) {
+		    for ( i=0 ; i<8 ; i++ ) {
 			printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
 		    }
 		}
@@ -1093,12 +1093,12 @@ output_triangles( nmgregion *r,
 {
     vertex *v;
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
@@ -1110,7 +1110,7 @@ output_triangles( nmgregion *r,
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
@@ -1120,7 +1120,7 @@ output_triangles( nmgregion *r,
 
 		/* loop through the edges in this loop (facet) */
 		printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
@@ -1157,12 +1157,12 @@ make_bot( nmgregion *r,
     VSETALL( bot_min, INFINITY );
     VSETALL( bot_max, -INFINITY );
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
@@ -1174,7 +1174,7 @@ make_bot( nmgregion *r,
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
@@ -1184,7 +1184,7 @@ make_bot( nmgregion *r,
 
 		/* loop through the edges in this loop (facet) */
 		// printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;

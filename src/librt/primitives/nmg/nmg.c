@@ -3075,7 +3075,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
     npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
     eqs = (plane_t *)bu_calloc(num_faces, sizeof(plane_t), "rt_nmg_faces_area: eqs");
 
-    for(i = 0; i < num_faces; i++) {
+    for (i = 0; i < num_faces; i++) {
 	struct face *f;
 	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
 	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
@@ -3116,7 +3116,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
-	    for(i = 0; i < num_faces; i++) {
+	    for (i = 0; i < num_faces; i++) {
 		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_surf_area: pts");
 	    }
@@ -3157,7 +3157,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     num_faces = BU_PTBL_LEN(&nmg_faces);
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
-    for(i = 0; i < num_faces; i++) {
+    for (i = 0; i < num_faces; i++) {
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_centroid: pts");
     }
@@ -3217,7 +3217,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
-	    for(i = 0; i < num_faces; i++) {
+	    for (i = 0; i < num_faces; i++) {
 		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_volume: pts");
 	    }

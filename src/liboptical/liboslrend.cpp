@@ -49,24 +49,24 @@ OSLRenderer::AddShader(ShaderGroupInfo &group_info)
 
     shadingsys->ShaderGroupBegin();
 
-    for(size_t i = 0; i < group_info.shader_layers.size(); i++) {
+    for (size_t i = 0; i < group_info.shader_layers.size(); i++) {
 
 	ShaderInfo &sh_info = group_info.shader_layers[i];
 
 	/* Set parameters */
-	for(size_t i = 0; i < sh_info.iparam.size(); i++)
+	for (size_t i = 0; i < sh_info.iparam.size(); i++)
 	    shadingsys->Parameter(sh_info.iparam[i].first.c_str(), TypeDesc::TypeInt, &(sh_info.iparam[i].second));
-	for(size_t i = 0; i < sh_info.fparam.size(); i++)
+	for (size_t i = 0; i < sh_info.fparam.size(); i++)
 	    shadingsys->Parameter(sh_info.fparam[i].first.c_str(), TypeDesc::TypeFloat, &(sh_info.fparam[i].second));
-	for(size_t i = 0; i < sh_info.cparam.size(); i++)
+	for (size_t i = 0; i < sh_info.cparam.size(); i++)
 	    shadingsys->Parameter(sh_info.cparam[i].first.c_str(), TypeDesc::TypeColor, &(sh_info.cparam[i].second));
-	for(size_t i = 0; i < sh_info.sparam.size(); i++)
+	for (size_t i = 0; i < sh_info.sparam.size(); i++)
 	    shadingsys->Parameter(sh_info.sparam[i].first.c_str(), TypeDesc::TypeString, &(sh_info.sparam[i].second));
-	for(size_t i = 0; i < sh_info.vparam.size(); i++) {
+	for (size_t i = 0; i < sh_info.vparam.size(); i++) {
 	    std::pair< TypeDesc, Vec3 > &vec_type = sh_info.vparam[i].second;
 	    shadingsys->Parameter(sh_info.vparam[i].first.c_str(), vec_type.first, &(vec_type.second));
 	}
-	for(size_t i = 0; i < sh_info.mparam.size(); i++)
+	for (size_t i = 0; i < sh_info.mparam.size(); i++)
 	    shadingsys->Parameter(sh_info.mparam[i].first.c_str(), TypeDesc::TypeMatrix, &(sh_info.mparam[i].second));
 
 	if (sh_info.layername == "")
@@ -76,7 +76,7 @@ OSLRenderer::AddShader(ShaderGroupInfo &group_info)
     }
 
     /* Set the edges between shader layers */
-    for(size_t i = 0; i < group_info.shader_edges.size(); i++) {
+    for (size_t i = 0; i < group_info.shader_edges.size(); i++) {
 	ShaderParam &sh_param1 = group_info.shader_edges[i].first;
 	ShaderParam &sh_param2 = group_info.shader_edges[i].second;
 	shadingsys->ConnectShaders(sh_param1.layername.c_str(), sh_param1.paramname.c_str(),

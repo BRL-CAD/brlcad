@@ -128,7 +128,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
 
     /****** START hoistable ******/
-    for(i=0;i<2;i++) for(j=0;j<3;j++) {
+    for (i=0;i<2;i++) for (j=0;j<3;j++) {
 	if (isv[i] == 0) {
 	    fastf_t dist;
 
@@ -143,7 +143,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /*** test if intersect is middle of face ***/
-    for(i=0;i<2;i++)
+    for (i=0;i<2;i++)
 	/* test for face in plane */
 	if (isv[i] == 0)	/* assume that the isectpt is necessarily on the vert, line or
 			   face... if it's not seen on the vert or line, it must be face.
@@ -287,7 +287,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     s->maxfaces = ceil(bot->num_faces / (double)faces_per_page) * faces_per_page;
     s->faces = (struct face_s *)bu_malloc(sizeof(struct face_s) * s->maxfaces, "bot soup faces");
 
-    for(i=0;i<bot->num_faces;i++)
+    for (i=0;i<bot->num_faces;i++)
 	soup_add_face(s, bot->vertices+3*bot->faces[i*3+0], bot->vertices+3*bot->faces[i*3+1], bot->vertices+3*bot->faces[i*3+2], tol);
 
     return s;
@@ -319,7 +319,7 @@ invert(union tree *tree)
     s = (struct soup_s *)tree->tr_d.td_r->m_p;
     SOUP_CKMAG(s);
 
-    for(i=0;i<s->nfaces;i++) {
+    for (i=0;i<s->nfaces;i++) {
 	struct face_s *f = s->faces+i;
 	point_t t;
 	VMOVE(t, f->vert[0]);
@@ -350,11 +350,11 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
      * all intersections and split intersecting faces so there are edges at
      * the intersections. Initially going to be O(n^2), then change to use
      * space partitioning (binning? octree? kd?). */
-    for(i=0;i<l->nfaces;i++) {
+    for (i=0;i<l->nfaces;i++) {
 	struct face_s *lf = l->faces+i, *rf = NULL;
 	int ret;
 
-	for(j=0;j<r->nfaces;j++) {
+	for (j=0;j<r->nfaces;j++) {
 	    rf = r->faces+j;
 	    /* quick bounding box test */
 	    if (lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
@@ -383,7 +383,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
     printf("Composing! %lu %lu\n", l->nfaces, r->nfaces);
 
     bu_log("solid /left\n");
-    for(i=0; i < (int)l->nfaces; i++) {
+    for (i=0; i < (int)l->nfaces; i++) {
 	bu_log("  facet normal %f %f %f\n", V3ARGS(l->faces[i].plane));
 	bu_log("    outer loop\n");
 	bu_log("      vertex %f %f %f\n", V3ARGS(l->faces[i].vert[0]));
@@ -395,7 +395,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
     bu_log("endsolid /left\n");
 
     bu_log("solid /right\n");
-    for(i=0; i < (int)r->nfaces; i++) {
+    for (i=0; i < (int)r->nfaces; i++) {
 	bu_log("  facet normal %f %f %f\n", V3ARGS(r->faces[i].plane));
 	bu_log("    outer loop\n");
 	bu_log("      vertex %f %f %f\n", V3ARGS(r->faces[i].vert[0]));

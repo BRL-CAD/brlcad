@@ -54,7 +54,7 @@ nawk '
 # Both of these would be easy to add.
 function inside_cyl(m,n)
 {
-	for( m += 3; m < n; m += 3 ) {
+	for ( m += 3; m < n; m += 3 ) {
 		ax = substr(comp[m-3],1,8)
 		ay = substr(comp[m-3],9,8)
 		az = substr(comp[m-3],18,8)
@@ -156,7 +156,7 @@ function abs(x)
 	# now we can process this component number
 
 	prev_stype = substr( comp[1],28,1 )
-	for( i=2 ; i <= nl ; i++ ) {
+	for ( i=2 ; i <= nl ; i++ ) {
 
 		if ( prev_stype >= 5 && prev_stype <=8 ) {
 			begini = i - 1
@@ -168,23 +168,23 @@ function abs(x)
 
 			if ( prev_stype == 5 && (i - begini) > 4 ) {
 				printf "component #%s - wedge\n",substr(comp[begini],32,4)
-				for( j = begini; j < i; j++ )
+				for ( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
 			else if ( prev_stype == 6 && (i - begini) > 2 ) {
 				printf "component #%s - sphere\n",substr(comp[begini],32,4)
-				for( j = begini; j < i; j++ )
+				for ( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
 			else if ( prev_stype == 7 && (i - begini) > 4 ) {
 				printf "component #%s - box\n",substr(comp[begini],32,4)
-				for( j = begini; j < i; j++ )
+				for ( j = begini; j < i; j++ )
 					printf "%s\n", comp[j]
 			}
 			else if ( prev_stype == 8 && (i - begini) > 3 ) {
 				if ( inside_cyl( begini,i ) ) {
 					printf "component #%s - cylinder\n",substr(comp[begini],32,4)
-					for( j = begini; j < i; j++ )
+					for ( j = begini; j < i; j++ )
 						printf "%s\n", comp[j]
 				}
 			}

@@ -328,7 +328,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     (void)db_search(problem_regions, no_nonsub_region_below_region_search, 1, &dp, wdbp, DB_SEARCH_TREE);
     if (BU_PTBL_LEN(problem_regions) > 0) {
 	bu_log("Error - found nested regions within the .g file: \n");
-	for(i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
+	for (i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
 	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(problem_regions, i);
 	    bu_log("   %s\n", db_path_to_string(dfp));
 	}
@@ -355,7 +355,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     (void)db_search(invalid_assemblies, invalid_assembly_above_intersect, 1, &dp, wdbp, DB_SEARCH_TREE);
     if (BU_PTBL_LEN(invalid_assemblies) > 0) {
 	bu_log("Error - found invalid assemblies within the .g file: \n");
-	for(i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
+	for (i = 0; i < BU_PTBL_LEN(problem_regions); i++) {
 	    struct db_full_path *dfp = (struct db_full_path *)BU_PTBL_GET(invalid_assemblies, i);
 	    bu_log("   %s\n", db_path_to_string(dfp));
 	}

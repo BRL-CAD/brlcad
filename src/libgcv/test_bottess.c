@@ -88,11 +88,11 @@ test_tri_intersections()
 static int
 find_tri(struct soup_s *s, struct face_s *f, struct bn_tol *t) {
     unsigned int i, j, k;
-    for(i=0;i<s->nfaces;i++) {
+    for (i=0;i<s->nfaces;i++) {
 	int found[3] = {0,0,0};
 	struct face_s *wf = s->faces+i;
 
-	for(j=0;j<3;j++) for(k=0;k<3;k++) if (VNEAR_EQUAL( wf->vert[j], f->vert[k], t->dist)) found[j] = 1;
+	for (j=0;j<3;j++) for (k=0;k<3;k++) if (VNEAR_EQUAL( wf->vert[j], f->vert[k], t->dist)) found[j] = 1;
 	if (found[0] == 1 && found[1] == 1 && found[2] == 1) return i;
     }
     return -1;
@@ -265,7 +265,7 @@ int test_compose()
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
-    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
+    for (i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, INSIDE);
     if (ls.nfaces != 0) { rval++; printf("Missing faces\n"); }
 
@@ -274,7 +274,7 @@ int test_compose()
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
-    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
+    for (i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
     if (ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
 
