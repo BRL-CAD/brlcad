@@ -425,13 +425,13 @@ compare_dps(struct diff_result_container *result, const struct directory *dp1, c
 
     /* If we have a result structure, uses its bu_avs containers */
     if (result) {
-	ino = &(result->internal_new_only); 
-	ioo = &(result->internal_orig_only); 
+	ino = &(result->internal_new_only);
+	ioo = &(result->internal_orig_only);
 	iod = &(result->internal_orig_diff);
 	ind = &(result->internal_new_diff);
 	ins = &(result->internal_shared);
-	ano = &(result->additional_new_only); 
-	aoo = &(result->additional_orig_only); 
+	ano = &(result->additional_new_only);
+	aoo = &(result->additional_orig_only);
 	aod = &(result->additional_orig_diff);
 	avsnd = &(result->additional_new_diff);
 	ans = &(result->additional_shared);
@@ -777,7 +777,7 @@ diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, st
 	    if ((int)BU_PTBL_LEN(results->changed_conflicts) > 0) {
 		bu_vls_printf(diff_log, "\n%d conflicts in objects changed in both dbip1 and dbip2\n", (int)BU_PTBL_LEN(results->changed_conflicts));
 	    }
-	
+
 	}
 	line_len = 0;
 	if (state->return_unchanged > 0) {
