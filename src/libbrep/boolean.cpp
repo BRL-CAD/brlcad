@@ -1623,43 +1623,51 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     return pt_no_dup.Count() % 2 != 0;
 }
 
-ON_2dPoint
+HIDDEN bool
+is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
+{
+    bool inside = false;
+    if (is_point_inside_loop(pt, tface->m_outerloop)) {
+	inside = true;
+	for (size_t i = 0; i < tface->m_innerloop.size(); ++i) {
+	    if (!is_point_outside_loop(pt, tface->m_innerloop[i])) {
+		inside = false;
+		break;
+	    }
+	}
+    }
+    return inside;
+}
+ 
+// TODO: For faces that have most of their area trimmed away, this is
+// a very innefficient algorithm. If the grid approach doesn't work
+// after a small number of samples, we should switch to an alternative
+// algorithm, such as sampling around points on the inner loops.
+HIDDEN ON_2dPoint
 get_point_inside_trimmed_face(const TrimmedFace *tface)
 {
-    const int try_count = 10;
+    const int GP_MAX_STEPS = 8; // must be a power of two
 
     ON_PolyCurve polycurve;
     if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
 	throw InvalidGeometry("face_brep_location(): invalid outerloop.\n");
     }
     ON_BoundingBox bbox =  polycurve.BoundingBox();
-    ON_2dPoint test_pt2d;
+    double u_len = bbox.m_max.x - bbox.m_min.x;
+    double v_len = bbox.m_max.y - bbox.m_min.y;
 
-    /* FIXME: Boolean evaluation should be deterministic and
-     * repeatable.  Using a random number generator will potentially
-     * result in different evaluations and should be avoided.  Suggest
-     * using a fixed 3x3 grid, newtonian walk, or some othe repeatable
-     * method.
-     */
-    ON_RandomNumberGenerator rng;
+    ON_2dPoint test_pt2d;
     bool found = false;
-    for (int i = 0; i < try_count; i++) {
-	// Get a random point inside the outerloop's bounding box.
-	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
-	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
-	test_pt2d = ON_2dPoint(x, y);
-	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
-	    // The test point should not be inside an innerloop
-	    size_t j = 0;
-	    for (; j < tface->m_innerloop.size(); ++j) {
-		if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
-		    break;
-		}
-	    }
-	    if (j == tface->m_innerloop.size()) {
-		// We find a valid test point
-		found = true;
-		break;
+    for (int steps = 1; steps <= GP_MAX_STEPS && !found; steps *= 2) {
+	double u_halfstep = u_len / (steps * 2.0);
+	double v_halfstep = v_len / (steps * 2.0);
+
+	for (int i = 0; i < steps && !found; ++i) {
+	    test_pt2d.x = bbox.m_min.x + u_halfstep * (1 + 2 * i);
+
+	    for (int j = 0; j < steps && !found; ++j) {
+		test_pt2d.y = bbox.m_min.y + v_halfstep * (1 + 2 * j);
+		found = is_point_inside_trimmed_face(test_pt2d, tface);
 	    }
 	}
     }
