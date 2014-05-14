@@ -78,8 +78,6 @@
 
 #define SHMEM_KEY 42
 
-/* FIXME: see next FIXME ref gcc 4.8.1 error */
-const int GLUMTBL_FACTOR = INT_MAX / 256;
 
 /*
  * Per window state information.
@@ -951,19 +949,23 @@ x24_setup(FBIO *ifp, int width, int height)
 	case FLG_VS1:
 	    if (!lumdone) {
 		int i;
-		for (i = 0; i < 256; i++) {
-		    rlumtbl[i] = i * 5016388;
-                    /* FIXME: The following line constant factor 9848226 causes an error with gcc 4.8.1:
-                     *   error: iteration 219u invokes undefined behavior [-Werror=aggressive-loop-optimizations]
-                     *
-                     * Short term fix is to make the factor = LONG_MAX / 256 until someone
-                     * with more contextual knowledge can fix it properly.
-                     *
-                     */
+		unsigned long r, g, b;
 
-		    /* glumtbl[i] = i * 9848226; */
-                    glumtbl[i] = i * GLUMTBL_FACTOR;
-		    blumtbl[i] = i * 1912603;
+		/* This is an integer arithmetic version of YUV to RGB
+		 * conversion where we're multiplying by three
+		 * coefficients (0.299, 0.587, 0.114) for 24-bit
+		 * integers.  See http://en.wikipedia.org/wiki/YUV for
+		 * more details.
+		 *
+		 * NOTE: Using an addition method to build up the
+		 * luminance ramp instead of multiplication because
+		 * it's probably faster and avoids a gcc 4.8.1
+		 * aggressive optimization bug.
+		 */
+		for (i = r = g = b = 0; i < 256; i++, r += 5016388, g += 9848226, b += 1912603) {
+		    rlumtbl[i] = r;
+		    glumtbl[i] = g;
+		    blumtbl[i] = b;
 		}
 		lumdone = 1;
 	    }
