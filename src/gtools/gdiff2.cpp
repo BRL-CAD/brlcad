@@ -405,8 +405,8 @@ compare_dps(struct diff_result_container *result, const struct directory *dp1, c
 
     int internal_diff = 1;
     int attr_diff = 1;
-    int bad_internal_1 = 0;
-    int bad_internal_2 = 0;
+    int bad_internal_1 = 1;
+    int bad_internal_2 = 1;
     RT_DB_INTERNAL_INIT(intern_1);
     RT_DB_INTERNAL_INIT(intern_2);
 
@@ -417,10 +417,10 @@ compare_dps(struct diff_result_container *result, const struct directory *dp1, c
 
     /* Get the internal objects */
     if (rt_db_get_internal(intern_1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internal_1++;
+	bad_internal_1--;
     }
     if (rt_db_get_internal(intern_2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internal_2++;
+	bad_internal_2--;
     }
 
     /* If we have a result structure, uses its bu_avs containers */
@@ -468,6 +468,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     struct diff_results *results;
     struct diff_result_container *result;
     struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
+    int changed_status = -1;
 
     if (!left || !right || !before || !after|| !data)
 	return -1;
@@ -488,17 +489,40 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     result = (struct diff_result_container *)bu_calloc(1, sizeof(struct diff_result_container), "diff result struct");
     diff_result_init(result);
 
-    if (compare_dps(result, before, left, after, right, &diff_tol) == -1) {
-	result->status = 1;
-	return -1;
-    }
-
-    if (result->internal_diff || result->attribute_diff) {
-	bu_ptbl_ins(results->changed, (long *)result);
-    } else {
-	if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
-	bu_ptbl_ins(results->unchanged, (long *)before);
-	diff_result_free(result);
+    changed_status = compare_dps(result, before, left, after, right, &diff_tol);
+    switch (changed_status) {
+	case -1:
+	    result->status = 1;
+	    return -1;
+	    break;
+	case 0:
+	    result->internal_diff = 0;
+	    result->attribute_diff = 0;
+	    if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
+	    bu_ptbl_ins(results->unchanged, (long *)before);
+	    diff_result_free(result);
+	    break;
+	case 1:
+	    result->internal_diff = 0;
+	    result->attribute_diff = 1;
+	    bu_ptbl_ins(results->changed, (long *)result);
+	    break;
+	case 2:
+	    result->internal_diff = 1;
+	    result->attribute_diff = 0;
+	    bu_ptbl_ins(results->changed, (long *)result);
+	    break;
+	case 3:
+	    result->internal_diff = 1;
+	    result->attribute_diff = 1;
+	    bu_ptbl_ins(results->changed, (long *)result);
+	    break;
+	default:
+	    bu_log("error - unknown return code %d from directory object comparison\n", changed_status);
+	    diff_result_free(result);
+	    result->status = 1;
+	    return -1;
+	    break;
     }
 
     return 0;
