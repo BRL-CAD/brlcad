@@ -951,9 +951,9 @@ s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 
 7.24
 ----
-s/bu_set_realtime([[:space:]]);//g
+s/bu_set_realtime\([[:space:]]\);//g
         didn't do anything [7.23]
-s/.*bu_cpulimit_[sg]et([[:space:]]);//g
+s/.*bu_cpulimit_[sg]et\([[:space:]]\);//g
         didn't do anything [7.23]
 s/rt_g\./RTG\./g
         renamed rt_g global to RTG so it doesn't match the struct name [7.24]
@@ -969,7 +969,7 @@ s/bu_find_hash_entry/bu_hash_tbl_find/g
 s/bu_hash_add_entry/bu_hash_tbl_add/g
 s/bu_hash_tbl_pr/bu_hash_tbl_print/g
 	renamed for better consistency in hash table API and with other libbu API [7.24]
-s/dm_applicationfocus([[:space:]]);//g
+s/dm_applicationfocus\([[:space:]]\);//g
 	only useful in older os x versions, users can now do the same thing via XQuartz preferences
 s/bu_vls_trunc2/bu_vls_trunc/g
         removed duplicitous function in favor of more general version
