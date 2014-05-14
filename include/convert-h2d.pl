@@ -1,0 +1,77 @@
+#!/usr/bin/anv perl
+
+
+# converts a C .h file to a rudimentary .d file for linking C to D
+
+# global vars (defined in BEGIN block at the end)
+my @h;
+
+BEGIN {
+  @h
+    = (
+       'RtServerImpl.h',
+       'analyze.h',
+       'anim.h',
+       'bin.h',
+       'bio.h',
+       'bn.h',
+       'bot.h',
+       'brep.h',
+       'brlcad.h',
+       'brlcad_ident.h',
+       'brlcad_version.h',
+       'bselect.h',
+       'bu.h',
+       'common.h',
+       'conf.h',
+       'cursor.h',
+       'db.h',
+       'db5.h',
+       'db_diff.h',
+       'dg.h',
+       'dm.h',
+       'dvec.h',
+       'fb.h',
+       'fbio.h',
+       'fbmsg.h',
+       'fbserv_obj.h',
+       'fft.h',
+       'gcv.h',
+       'ged.h',
+       'icv.h',
+       'libtermio.h',
+       'light.h',
+       'mater.h',
+       'nmg.h',
+       'nurb.h',
+       'obj.h',
+       'optical.h',
+       'orle.h',
+       'pc.h',
+       'photonmap.h',
+       'pkg.h',
+       'plastic.h',
+       'plot3.h',
+       'pstdint.h',
+       'raytrace.h',
+       'redblack.h',
+       'rtfunc.h',
+       'rtgeom.h',
+       'rtserver.h',
+       'shadefuncs.h',
+       'shadework.h',
+       'solid.h',
+       'spectrum.h',
+       'spm.h',
+       'sysv.h',
+       'tclcad.h',
+       'tie.h',
+       'tol.h',
+       'vectfont.h',
+       'vector_fpu.h',
+       'vector_x86.h',
+       'vmath.h',
+       'wdb.h',
+      );
+
+}
