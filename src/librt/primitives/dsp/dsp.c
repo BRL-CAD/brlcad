@@ -1160,13 +1160,6 @@ add_seg(struct isect_stuff *isect,
     struct bu_list *spot;
 #endif
 
-    /*  FIXME: gcc 4.8.1 reports error here (rel build):
-/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/dsp/dsp.c:1184:9: error: 'seg_in.hit_vpriv[0]' may be used uninitialized in this function [-Werror=maybe-uninitialized]
-     dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
-         ^
-    */
-    dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
-
     tt *= tt;
 
 #ifdef ORDERED_ISECT
