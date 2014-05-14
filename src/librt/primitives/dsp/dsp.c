@@ -1132,10 +1132,6 @@ plot_seg(struct isect_stuff *isect,
 }
 
 
-#define ADD_SEG(isect, in, out, min, max, r, g, b) \
-	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
-
-
 /**
  * Add a segment to the list of intersections in DSP space
  *
@@ -1149,8 +1145,8 @@ add_seg(struct isect_stuff *isect,
 	struct hit *out_hit,
 	const point_t bbmin, /* The bounding box of what you are adding ... */
 	const point_t bbmax, /* ... */
-	int r, int g, int b, /* ... this is strictly for debug plot purposes */
-	int line)
+	int r, int g, int b  /* ... this is strictly for debug plot purposes */
+    )
 
 {
     struct seg *seg;
@@ -1993,7 +1989,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 
 		/* create seg with hits[i].hit_point as out point */
-		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
+		if (add_seg(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
 		    return 1;
 
 		hitp = 0;
@@ -2461,7 +2457,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	}
 
 	/* outta here */
-	return ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
+	return add_seg(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
     }
 
 
@@ -2539,7 +2535,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
 
 	/* add a segment to the list */
-	return ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
+	return add_seg(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
     }
 
     return 0;
