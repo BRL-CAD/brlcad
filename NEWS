@@ -61,6 +61,7 @@ changes made.  See document footer for additional details.
 * gattributes section 5 man page renamed to attributes - Tom Browder
 * changed 'benchmark' defaults: 2% deviation, 5 frames - Sean Morrison
 * improved bwrect to handle redirected input and output - Mohit Daga
+* upgraded boost to version 1.55.0 - Tom Browder
 * fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
 * fixed pixscale and bwscale to not output ioctl error - Mohit Daga
 * improved fast4-g import of numerous region groups - Richard Weiss
