@@ -1846,6 +1846,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 
 	    rational = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
 	    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    if (coords < 1)
+		continue; /* "pointless" */
 
 	    pt = srf->ctl_points;
 	    for (i = 0; i < 4; i++) {
@@ -1853,14 +1855,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		    ctl_pt[i][j] = *pt;
 		    pt++;
 		}
-		if (rational) {
-		    for (j = 0; j < coords-1; j++)
-		       /* FIXME: gcc 4.8.1 reports error here (rel build):
-/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_rt_isect.c:1867:41: error: array subscript is above array bounds [-Werror=array-bounds]
-    ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
-					 ^
-		       */
-			ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
+		for (j = 0; rational && j < coords-1; j++) {
+		    ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
 		}
 	    }
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT) {
