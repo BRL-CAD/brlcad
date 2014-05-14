@@ -3332,6 +3332,9 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 		    V_MAX(zmax, (*pt)[Z]);
 		    break;
 		case BN_VLIST_POINT_DRAW:
+		    /* add a tiny bit of padding around points so that
+		     * single points being drawn don't vanish.
+		     */
 		    V_MIN(xmin, (*pt)[X]-1.0);
 		    V_MAX(xmax, (*pt)[X]+1.0);
 		    V_MIN(ymin, (*pt)[Y]-1.0);
