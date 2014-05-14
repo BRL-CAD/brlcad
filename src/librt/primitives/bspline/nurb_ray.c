@@ -287,13 +287,14 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
     register int i;
     struct face_g_snurb *region;
     struct knot_vector new_knots;
-    /* FIXME: gcc 4.8.1 report array overrun with size 40, temp  change to 400 */
-    /* fastf_t knot_vec[40]; */
-    fastf_t knot_vec[400];
 
-    /* Build the new knot vector in the local array */
-    /* XXX fill in magic number here? */
-    new_knots.knots = & knot_vec[0];
+    fastf_t *knot_vec = NULL;
+    size_t maxorder = FMAX(srf->order[0], srf->order[1]);
+    knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
+
+    /* Build the new knot vector in a local array, which gets copied
+     * later in rt_nurb_s_refine(). */
+    new_knots.knots = &knot_vec[0];
 
     if (dir == RT_NURB_SPLIT_ROW) {
 	new_knots.k_size = srf->order[0] * 2;
@@ -309,11 +310,10 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 	    knot_vec[i] = param1;
 	    knot_vec[i+srf->order[1]] = param2;
 	}
-
     }
-    if (new_knots.k_size >= 40) bu_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
     region = rt_nurb_s_refine(srf, dir, &new_knots, res);
+    bu_free(knot_vec, "knot vector");
 
     return region;
 }
