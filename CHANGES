@@ -988,3 +988,6 @@ s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
 s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont-if.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
+        library-specific public headers moved into a subdir [7.24]
+s/([^_])([nh]to[hn][fd])/\1bu_\2/g
+        ntohf, ntohd, htonf, htond renamed with bu_ prefix [7.24]
