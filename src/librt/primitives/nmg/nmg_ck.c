@@ -521,7 +521,7 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 		bu_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
 		break;
 	    case OT_OPPOSITE:  if (fu->fumate_p->orientation != OT_SAME)
-		bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
+		    bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
 		break;
 	    case OT_UNSPEC	: break;
 	    default		: bu_bomb("nmg_vfu() unknown faceuse orientation\n"); break;
@@ -1427,7 +1427,7 @@ nmg_eu_2s_orient_bad(const struct edgeuse *eu, const struct shell *s1, const str
 	eur = eu1->radial_p;
     } while (eur != eurstart);
     /* All is well, the whole way 'round */
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_eu_2s_orient_bad(eu=%p, s1=%p, s2=%p) ret=%d\n",
 	       (void *)eu_orig, (void *)s1, (void *)s2, ret);

@@ -3120,7 +3120,7 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 	    while (BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
-		     bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
+		    bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
 				     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
 		    /* fuse the two vertices */
 		    nmg_jv(eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);

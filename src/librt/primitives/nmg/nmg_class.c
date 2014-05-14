@@ -552,7 +552,7 @@ again:
 
     /* find the closest approach in this face to the projected point */
     nmg_class = nmg_class_pt_fu_except(vg->coord, fu, lu,
-				   NULL, NULL, NULL, 0, 0, tol);
+				       NULL, NULL, NULL, 0, 0, tol);
 
     /* If this vertex lies ON loop edge, must check all others. */
     if (nmg_class == NMG_CLASS_AonBshared) {
@@ -670,9 +670,9 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 * short circuit everything.
 		 */
 		nmg_class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-					       (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					       (void (*)(struct vertexuse *, point_t, const char *))NULL,
-					       (const char *)NULL, 0, 0, tol);
+						   (void (*)(struct edgeuse *, point_t, const char *))NULL,
+						   (void (*)(struct vertexuse *, point_t, const char *))NULL,
+						   (const char *)NULL, 0, 0, tol);
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
@@ -2464,7 +2464,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 	NMG_CK_VERTEX_G(vg);
 
 	nmg_class = nmg_class_pt_lu_except(vg->coord, lu2,
-				       (struct edge *)NULL, tol);
+					   (struct edge *)NULL, tol);
 
 	if (lu2->orientation == OT_OPPOSITE) {
 	    if (nmg_class == NMG_CLASS_AoutB)

@@ -215,8 +215,8 @@ pl_ray(struct ray_data *rd)
 
 HIDDEN void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 
 
 {
@@ -253,8 +253,8 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 
 HIDDEN void
 set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 {
     if (!seg_p) {
 	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
@@ -295,10 +295,10 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
 HIDDEN int
 state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -349,10 +349,10 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -397,10 +397,10 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -493,10 +493,10 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -596,10 +596,10 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -770,10 +770,10 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 
 HIDDEN int
 state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 5);
@@ -782,10 +782,10 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
@@ -807,7 +807,7 @@ HIDDEN int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
 
 
-    /* intersection w/ ray */
+/* intersection w/ ray */
 
 {
     int ray_state = 0;
@@ -818,7 +818,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
     int seg_count = 0;
 
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
-        int (*state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
+	int (*state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
 
 	NMG_CK_HITMISS(a_hit);
 

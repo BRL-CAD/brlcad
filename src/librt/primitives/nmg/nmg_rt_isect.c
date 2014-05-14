@@ -1136,9 +1136,9 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 	if (*eu_p->up.magic_p == NMG_SHELL_MAGIC || \
 	    (*eu_p->up.magic_p == NMG_LOOPUSE_MAGIC && \
 	     *eu_p->up.lu_p->up.magic_p == NMG_SHELL_MAGIC)) \
-		ray_hit_vertex(rd, vu_p, NMG_VERT_ENTER_LEAVE); \
+	    ray_hit_vertex(rd, vu_p, NMG_VERT_ENTER_LEAVE); \
 	else \
-		ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
+	    ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
 	NMG_GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	myhit->hit.hit_private = (genptr_t)eu_p->e_p; \
@@ -1215,7 +1215,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	    }
 
 	    if (UNLIKELY(!(NMG_3MANIFOLD &
-		   NMG_MANIFOLDS(rd->manifolds, fu->f_p)))) {
+			   NMG_MANIFOLDS(rd->manifolds, fu->f_p)))) {
 		bu_log("This is not a 3-Manifold face.  I'll skip it\n");
 		continue;
 	    }
@@ -2219,15 +2219,15 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     myhit = NMG_INDEX_GET(rd->hitmiss, fp);
     if (myhit) {
 	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
-			     NMG_RT_HIT_MAGIC)) {
+				NMG_RT_HIT_MAGIC)) {
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit\n");
 	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
-				    NMG_RT_HIT_SUB_MAGIC)) {
+				       NMG_RT_HIT_SUB_MAGIC)) {
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit sub-element\n");
 	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
-				    NMG_RT_MISS_MAGIC)) {
+				       NMG_RT_MISS_MAGIC)) {
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously missed\n");
 	} else {
@@ -2763,8 +2763,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	if (RTG.NMG_debug)
 	    bu_log("hari_kari = %d, %d\n", hari_kari_minus, hari_kari_plus);
 	plus_class = NMG_CLASS_Unknown;
-    }
-    else if (plus_class != minus_class || minus_class == NMG_CLASS_Unknown) {
+    } else if (plus_class != minus_class || minus_class == NMG_CLASS_Unknown) {
 	plus_class = NMG_CLASS_Unknown;
     }
 

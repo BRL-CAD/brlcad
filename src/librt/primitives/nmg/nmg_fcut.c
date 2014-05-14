@@ -221,9 +221,9 @@ nmg_face_state_transition(struct nmg_ray_state *rs,
  */
 HIDDEN void
 ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
-    /* table of vertexuses on intercept line */
-    /* unused? */
-    /* unused? */
+/* table of vertexuses on intercept line */
+/* unused? */
+/* unused? */
 
 
 {
@@ -355,7 +355,7 @@ nmg_ck_vu_ptbl(struct bu_ptbl *p, struct faceuse *fu)
     BU_CK_PTBL(p);
     NMG_CK_FACEUSE(fu);
 
- top:
+top:
     for (i = 0; i < BU_PTBL_END(p); i++) {
 	vu = (struct vertexuse *)BU_PTBL_GET(p, i);
 	NMG_CK_VERTEXUSE(vu);
@@ -419,7 +419,7 @@ double
 nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int assessment, int in)
 
 
-    /* 1 = inbound edge, 0 = outbound edge */
+/* 1 = inbound edge, 0 = outbound edge */
 {
     struct loopuse *lu;
     struct edgeuse *this_eu;
@@ -685,7 +685,7 @@ nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
      * the edge must lie to one side or the other of the ray.
      * Check vector from v to otherv against "left" vector.
      */
- left_right:
+left_right:
     VSUB2(heading, otherv->vg_p->coord, v->vg_p->coord);
     if (MAGSQ(heading) <= SMALL_FASTF) bu_bomb("nmg_assess_eu() null heading 2\n");
     if (VDOT(heading, rs->left) < 0) {
@@ -693,7 +693,7 @@ nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
     } else {
 	ret = NMG_E_ASSESSMENT_LEFT;
     }
- out:
+out:
     if (RTG.NMG_debug&DEBUG_FCUT) {
 	bu_log("nmg_assess_eu(%p, fw=%d, pos=%d) v=%p otherv=%p: %s\n",
 	       (void *)eu, forw, pos, (void *)v, (void *)otherv,
@@ -840,7 +840,7 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
  */
 int
 nmg_wedge_class(int ass, double a, double b)
-    /* assessment of two edges forming wedge */
+/* assessment of two edges forming wedge */
 
 
 {
@@ -901,7 +901,7 @@ nmg_wedge_class(int ass, double a, double b)
     }
     /* A is left, B is RIGHT */
     ret = WEDGE_CROSS;
- out:
+out:
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("nmg_wedge_class(%g, %g) = %s\n",
 	       a, b, WEDGECLASS2STR(ret));
@@ -1059,7 +1059,7 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 	goto out;
     }
     ret = WEDGE2_OVERLAP;			/* ERROR */
- out:
+out:
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log(" a_in_cd=%d, b_in_cd=%d, c_in_ab=%d, d_in_ab=%d\n",
 	       a_in_cd, b_in_cd, c_in_ab, d_in_ab);
@@ -1092,7 +1092,7 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 static int
 nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
 
-    /* vu index of coincident range */
+/* vu index of coincident range */
 
 
 {
@@ -1195,7 +1195,7 @@ nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang,
 		continue;
 	}
     }
- out:
+out:
     if (RTG.NMG_debug&DEBUG_VU_SORT)
 	bu_log("nmg_find_vu_in_wedge(start=%d, end=%d, lo=%g, hi=%g) END candidate=%d\n",
 	       start, end, lo_ang, hi_ang,
@@ -1401,7 +1401,7 @@ nmg_face_vu_compare(const void *aa, const void *bb, void *UNUSED(arg))
 	    bu_log("nmg_face_vu_compare: Unhandled wedge class: %d\n", b->wedge_class);
 	    break;
     }
- out:
+out:
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("nmg_face_vu_compare(vu=%p, vu=%p) %s %s, %s\n",
 	       (void *)a->vu, (void *)b->vu,
@@ -1495,7 +1495,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
 static int
 nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
 
-    /* vu index of coincident range */
+/* vu index of coincident range */
 
 
 {
@@ -1552,7 +1552,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	exclude = not_these;
     }
 
- again:
+again:
     /* May be many "outer" wedges to iterate over this side of line */
     outer_wedge = nmg_find_vu_in_wedge(vs, start, end,
 				       lo_ang, hi_ang, wclass, exclude);
@@ -1564,7 +1564,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
     outer_lu = nmg_find_lu_of_vu(vs[outer_wedge].vu);
     NMG_CK_LOOPUSE(outer_lu);
 
- again_inner:
+again_inner:
     inner_wedge = nmg_find_vu_in_wedge(vs, start, end,
 				       vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
 				       wclass, exclude);
@@ -1655,8 +1655,8 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 int
 nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
-    /* first index */
-    /* last index + 1 */
+/* first index */
+/* last index + 1 */
 {
     int num;
     struct nmg_vu_stuff *vs;
@@ -1680,7 +1680,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
     ls = (struct nmg_loop_stuff *)bu_malloc(sizeof(struct nmg_loop_stuff)*num,
 					    "nmg_loop_stuff");
 
- top:
+top:
     if (retries++ > 24) bu_bomb("nmg_face_coincident_vu_sort() infinite loop\n");
     /* Assess each vu, create list of loopuses, find max angles */
     nloop = 0;
@@ -1817,7 +1817,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
     /* Sort the vertexuse table into appropriate order */
     bu_sort((genptr_t)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
-	  nmg_face_vu_compare, NULL);
+	    nmg_face_vu_compare, NULL);
 
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("Vertexuse table (after sort):\n");
@@ -1892,12 +1892,12 @@ nmg_sanitize_fu(struct faceuse *fu)
 void
 nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
 
-    /* table of vertexuses in fu1 on intercept line */
-    /* face being worked */
-    /* for plane equation */
+/* table of vertexuses in fu1 on intercept line */
+/* face being worked */
+/* for plane equation */
 
 
-    /* may be null.  Geom of isect line. */
+/* may be null.  Geom of isect line. */
 
 {
     plane_t n1;
@@ -1989,7 +1989,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 	(a)[X] = ((b)[X] + (c)[X]) * 0.5;\
 	(a)[Y] = ((b)[Y] + (c)[Y]) * 0.5;\
 	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
-	}
+    }
 /**
  * Force the geometry structure for a given edge to be that of
  * the intersection line between the two faces.
@@ -2053,7 +2053,7 @@ nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const cha
      * XXX This is DUBIOUS, as the angle might be very different.
      */
     nmg_jeg(rs->eg_p, eu->g.lseg_p);
- out:
+out:
     NMG_CK_EDGE_G_LSEG(rs->eg_p);
     if (RTG.NMG_debug&DEBUG_FCUT) {
 	bu_log("nmg_edge_geom_isect_line(eu=%p) g=%p, rs->eg=%p at END\n",
@@ -2532,7 +2532,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 			other_is_in_best = 0;
 		    } else {
 			nmg_class = nmg_class_pt_lu_except(other_vp->vg_p->coord,
-						       best_lu, (struct edge *)NULL, rs->tol);
+							   best_lu, (struct edge *)NULL, rs->tol);
 
 			if ((nmg_class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
 			    (nmg_class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE))
@@ -2683,9 +2683,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 */
 	VAVERAGE(mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord)
 	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
-	    				   (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
-					   (const char *)NULL, 0, 1, rs->tol);
+					       (void (*)(struct edgeuse *, point_t, const char *))NULL,
+					       (void (*)(struct vertexuse *, point_t, const char *))NULL,
+					       (const char *)NULL, 0, 1, rs->tol);
 
 	if (RTG.NMG_debug&DEBUG_FCUT) {
 	    bu_log("vu1=%p (%g %g %g), vu2=%p (%g %g %g)\n",
@@ -2702,9 +2702,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 * may be outside fu2, and we don't want to cut fu1 here.
 	 */
 	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
-	    			       (void (*)(struct edgeuse *, point_t, const char *))NULL,
-				       (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				       (char *)NULL, 0, 0, rs->tol);
+					   (void (*)(struct edgeuse *, point_t, const char *))NULL,
+					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
+					   (char *)NULL, 0, 0, rs->tol);
 
 	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;
@@ -2959,9 +2959,9 @@ int
 nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
 
 
-    /* other rs's vu list */
-    /* list of distances from intersect ray start point */
-    /* list of distances from intersect ray start point */
+/* other rs's vu list */
+/* list of distances from intersect ray start point */
+/* list of distances from intersect ray start point */
 {
     int i;
     int zapped;
@@ -3058,15 +3058,15 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
  */
 struct edge_g_lseg *
 nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t *mag2, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
-    /* table of vertexuses in fu1 on intercept line */
-    /* table of vertexuses in fu2 on intercept line */
-    /* table of distances to vertexuses from is->pt */
-    /* table of distances to vertexuses from is->pt */
-    /* face being worked */
-    /* for plane equation */
+/* table of vertexuses in fu1 on intercept line */
+/* table of vertexuses in fu2 on intercept line */
+/* table of distances to vertexuses from is->pt */
+/* table of distances to vertexuses from is->pt */
+/* face being worked */
+/* for plane equation */
 
 
-    /* may be null.  geometry of isect line */
+/* may be null.  geometry of isect line */
 
 {
     struct vertexuse **vu1, **vu2;
@@ -3088,7 +3088,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 	       (void *)fu1, (void *)fu2, b1->end, b2->end);
     }
 
- top:
+top:
     /*
      * Sort hit points by increasing distance, vertex ptr, vu ptr,
      * and eliminate any duplicate vu's.
@@ -3487,7 +3487,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
     switch (action) {
 	default:
 	case NMG_ACTION_ERROR:
-    bomb:
+	bomb:
 	    {
 		struct bu_vls str = BU_VLS_INIT_ZERO;
 

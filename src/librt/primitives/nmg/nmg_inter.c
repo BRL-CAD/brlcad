@@ -419,12 +419,12 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	this_obj = NULL;
     bad:
 	if (this_obj) {
-	  bu_log("nmg_get_2d_vertex(, assoc_use=%p %s) this_obj=%p %s, is->twod=%p %s\n",
-		 (void *)assoc_use, bu_identify_magic(*assoc_use),
-		 (void *)this_obj, bu_identify_magic(*this_obj),
-		 (void *)is->twod, bu_identify_magic(*(is->twod)));
+	    bu_log("nmg_get_2d_vertex(, assoc_use=%p %s) this_obj=%p %s, is->twod=%p %s\n",
+		   (void *)assoc_use, bu_identify_magic(*assoc_use),
+		   (void *)this_obj, bu_identify_magic(*this_obj),
+		   (void *)is->twod, bu_identify_magic(*(is->twod)));
 	} else {
-	  bu_log("nmg_get_2d_vertex - this is NULL\n");
+	    bu_log("nmg_get_2d_vertex - this is NULL\n");
 	}
 	bu_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
     }
@@ -892,11 +892,11 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	 */
 	int nmg_class;
 	nmg_class = nmg_class_pt_fu_except(hit_pt, fu2,
-				       (struct loopuse *)NULL,
-				       (void (*)(struct edgeuse *, point_t, const char *))NULL,
-				       (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				       (const char *)NULL, 0,
-				       0, &is->tol);
+					   (struct loopuse *)NULL,
+					   (void (*)(struct edgeuse *, point_t, const char *))NULL,
+					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
+					   (const char *)NULL, 0,
+					   0, &is->tol);
 
 	eu1forw = nmg_ebreaker((struct vertex *)NULL, eu1, &is->tol);
 	vu1_final = eu1forw->vu_p;
@@ -2477,9 +2477,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * distance from p0->q1.
 		 */
 		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
-		   (dist[1] < omsff))) ||
-		   ((dist[1] > SMALL_FASTF) && (dist[1] < omsff)
-		   && (dist[0] > opsff))) {
+						(dist[1] < omsff))) ||
+		    ((dist[1] > SMALL_FASTF) && (dist[1] < omsff)
+		     && (dist[0] > opsff))) {
 		    /* true when q1 is within p0->p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
@@ -2531,10 +2531,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
 		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) &&
-			   (dist[0] < omsff)) ||
-			  ((dist[0] > SMALL_FASTF) &&
-			   (dist[0] < omsff) &&
-			   EQUAL(dist[1], 1.0))) {
+			    (dist[0] < omsff)) ||
+			   ((dist[0] > SMALL_FASTF) &&
+			    (dist[0] < omsff) &&
+			    EQUAL(dist[1], 1.0))) {
 		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
@@ -2542,7 +2542,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
 			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
 			   (EQUAL(dist[0], 1.0) && (dist[1] < -SMALL_FASTF)) ||
-			  ((dist[0] < -SMALL_FASTF) && EQUAL(dist[1], 1.0))) {
+			   ((dist[0] < -SMALL_FASTF) && EQUAL(dist[1], 1.0))) {
 		    /* true when eu2 shares one of the vertices of eu1 and
 		     * the other vertex in eu2 is on the far side of eu1
 		     * outside eu1 (i.e. p0->p1).
@@ -2554,7 +2554,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		} else {
 		    /* should never get here */
 		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n",
-			    dist[0], dist[1]);
+			   dist[0], dist[1]);
 		    bu_bomb("nmg_isect_two_face2p_jra(): unexpected condition\n");
 		}
 	    } else {
@@ -2674,7 +2674,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 	/* Check if this vertex is within other FU */
 	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu2, NULL, NULL, NULL,
-				       (char *)NULL, 0, 0, &is->tol);
+					   (char *)NULL, 0, 0, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
 	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
@@ -2700,7 +2700,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 	/* Check if this vertex is within other FU */
 	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu1, NULL, NULL, NULL,
-				       (char *)NULL, 0, 0, &is->tol);
+					   (char *)NULL, 0, 0, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
 	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
@@ -3435,16 +3435,16 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
 
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
-					(void (*)(struct edgeuse *, point_t, const char *))NULL,
-					(void (*)(struct vertexuse *, point_t, const char *))NULL,
-					(const char *)NULL, 0, 0, &is->tol);
+				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
+				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
+				  (const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
-					(void (*)(struct edgeuse *, point_t, const char *))NULL,
-					(void (*)(struct vertexuse *, point_t, const char *))NULL,
-					(const char *)NULL, 0, 0, &is->tol);
+				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
+				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
+				  (const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
@@ -3717,7 +3717,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    nmg_class = nmg_class_pt_fu_except(vg1->coord, fu, (struct loopuse *)NULL,
-					   0, 0, (char *)NULL, 0, 0, &is->tol);
+					       0, 0, (char *)NULL, 0, 0, &is->tol);
 	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
@@ -3735,7 +3735,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    nmg_class = nmg_class_pt_fu_except(vg2->coord, fu, (struct loopuse *)NULL,
-					   0, 0, (char *)NULL, 0, 0, &is->tol);
+					       0, 0, (char *)NULL, 0, 0, &is->tol);
 	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
@@ -3775,7 +3775,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	/* check if hit point is within fu */
 	nmg_class = nmg_class_pt_fu_except(hit_pt, fu, (struct loopuse *)NULL,
-				       0, 0, (char *)NULL, 0, 0, &is->tol);
+					   0, 0, (char *)NULL, 0, 0, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
 	    struct edgeuse *new_eu;
@@ -4325,18 +4325,18 @@ re_tabulate:
 	    nmg_pr_eg(&(*eg1)->l.magic, 0);
 	    nmg_pr_eg(&is->on_eg->l.magic, 0);
 	    bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
-		    bn_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
-		    bn_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
+		   bn_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
+		   bn_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
 	    VPRINT("is->pt2d ", is->pt2d);
 	    VPRINT("is->dir2d", is->dir2d);
 	    VPRINT("eg_pt2d ", eg_pt2d);
 	    VPRINT("eg_dir2d ", eg_dir2d);
 	    bu_log(" 3d line isect, code=%d\n",
-		    bn_isect_line3_line3(&dist[0], &dist[1],
-		    is->pt, is->dir,
-		    (*eg1)->e_pt,
-		    (*eg1)->e_dir,
-		    &(is->tol)));
+		   bn_isect_line3_line3(&dist[0], &dist[1],
+					is->pt, is->dir,
+					(*eg1)->e_pt,
+					(*eg1)->e_dir,
+					&(is->tol)));
 	    goto force_isect;
 	}
 

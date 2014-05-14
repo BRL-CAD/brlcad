@@ -110,8 +110,8 @@ nmg_pr_m(const struct model *m)
 #define MKPAD(_h) { \
 	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
 	else if ((_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr)) { \
-		bu_strlcpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
-		_h = nmg_pr_padstr; \
+	    bu_strlcpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
+	    _h = nmg_pr_padstr; \
 	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) bu_strlcat(_h, "   ", sizeof(nmg_pr_padstr)); } }
 
 #define Return { h[strlen(h)-3] = '\0'; return; }
@@ -683,14 +683,14 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
     bu_log("%s%p l.forw\n", h, (void *)vu->l.forw);
     bu_log("%s%p l.back\n", h, (void *)vu->l.back);
     if (vu->a.magic_p) switch (*vu->a.magic_p) {
-	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    bu_log("%s%p a.plane_p\n", h, (void *)vu->a.plane_p);
-	    bu_log("%s normal: %f %f %f\n", h, V3ARGS(vu->a.plane_p->N));
-	    break;
-	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-	    bu_log("%s%p a.cnurb_p\n", h, (void *)vu->a.cnurb_p);
-	    break;
-    }
+	    case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		bu_log("%s%p a.plane_p\n", h, (void *)vu->a.plane_p);
+		bu_log("%s normal: %f %f %f\n", h, V3ARGS(vu->a.plane_p->N));
+		break;
+	    case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		bu_log("%s%p a.cnurb_p\n", h, (void *)vu->a.cnurb_p);
+		break;
+	}
     bu_log("%s%p v_p\n", h, (void *)vu->v_p);
     nmg_pr_v(vu->v_p, h);
     if (vu->a.magic_p) nmg_pr_vua(vu->a.magic_p, h);

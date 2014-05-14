@@ -142,7 +142,7 @@ void
 nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_markers, const vectp_t normal)
 
 
-    /* bit vector! */
+/* bit vector! */
 
 {
     const struct edgeuse *eu;
@@ -268,12 +268,12 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
 	VSUB2(tocent, first_vg->coord, centroid);
 	f = MAGNITUDE(tocent) * 0.5;
 	if (fp) {
-	  if (*fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC) {
-	    /* snurb normals are plotted in nmg_snurb_fu_to_vlist() */
-	    RT_ADD_VLIST(vhead, centroid, BN_VLIST_LINE_MOVE);
-	    VJOIN1(tip, centroid, f, normal);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	  }
+	    if (*fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC) {
+		/* snurb normals are plotted in nmg_snurb_fu_to_vlist() */
+		RT_ADD_VLIST(vhead, centroid, BN_VLIST_LINE_MOVE);
+		VJOIN1(tip, centroid, f, normal);
+		RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	    }
 	}
 
 	/* For any vertexuse attributes with normals, draw them too */
@@ -1457,17 +1457,17 @@ static unsigned char broken_colors[][3] = {
 };
 #define PICK_BROKEN_COLOR(p) { \
 	if (global_classlist == (char **)NULL) { \
-		broken_color = 5; \
+	    broken_color = 5; \
 	} else if (NMG_INDEX_TEST(global_classlist[NMG_CLASS_AinB], (p))) \
-		broken_color = NMG_CLASS_AinB; \
+	    broken_color = NMG_CLASS_AinB; \
 	else if (NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBshared], (p))) \
-		broken_color = NMG_CLASS_AonBshared; \
+	    broken_color = NMG_CLASS_AonBshared; \
 	else if (NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBanti], (p))) \
-		broken_color = NMG_CLASS_AonBanti; \
+	    broken_color = NMG_CLASS_AonBanti; \
 	else if (NMG_INDEX_TEST(global_classlist[NMG_CLASS_AoutB], (p))) \
-		broken_color = NMG_CLASS_AoutB; \
+	    broken_color = NMG_CLASS_AoutB; \
 	else \
-		broken_color = 4;}
+	    broken_color = 4;}
 
 HIDDEN void
 show_broken_vu(struct bn_vlblock *vbp, const struct vertexuse *vu)
@@ -2166,7 +2166,7 @@ int
 nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_interior)
 
 
-    /* typ. 10 */
+/* typ. 10 */
 {
     register int i;
     register int j;
@@ -2262,8 +2262,8 @@ void
 nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interior, int cmd)
 
 
-    /* typ. 10 */
-    /* BN_VLIST_LINE_DRAW, etc. */
+/* typ. 10 */
+/* BN_VLIST_LINE_DRAW, etc. */
 {
     const struct edge_g_cnurb *eg;
     const struct faceuse *fu;

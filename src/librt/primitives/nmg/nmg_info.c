@@ -59,7 +59,7 @@ nmg_find_model(const uint32_t *magic_p_arg)
 {
     register const uint32_t *magic_p = magic_p_arg;
 
- top:
+top:
     if (magic_p == NULL) {
 	bu_log("nmg_find_model(%p) encountered null pointer\n",
 	       (void *)magic_p_arg);
@@ -119,7 +119,7 @@ nmg_find_model(const uint32_t *magic_p_arg)
 struct shell *
 nmg_find_shell(const uint32_t *magic_p)
 {
- top:
+top:
     if (magic_p == NULL) {
 	bu_log("nmg_find_shell(%p) encountered null pointer\n", (void *)magic_p);
 	bu_bomb("nmg_find_shell() null pointer\n");
@@ -511,7 +511,7 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
     match:		;
     }
     ret = 1;
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_loop_is_a_crack(lu=%p) ret=%d\n", (void *)lu, ret);
     }
@@ -554,7 +554,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
 	goto out;
     }
 
- out:
+out:
     if (UNLIKELY(RTG.NMG_debug & DEBUG_BASIC)) {
 	bu_log("nmg_loop_is_ccw(lu=%p) ret=%d\n", (void *)lu, ret);
     }
@@ -763,7 +763,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	goto out;
     }
     eu = (struct edgeuse *)NULL;
- out:
+out:
     if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_findeu() returns %p\n", (void *)eu);
 
@@ -858,7 +858,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	goto out;
     }
     eu = (struct edgeuse *)NULL;
- out:
+out:
     if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_find_eu_in_face() returns %p\n", (void *)eu);
 
@@ -937,7 +937,7 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	goto out;
     }
     eu = (struct edgeuse *)NULL;
- out:
+out:
     if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_find_e() returns %p\n", (void *)eu);
 
@@ -1189,8 +1189,8 @@ nmg_find_e_pt2_handler(uint32_t *lp, genptr_t state, int UNUSED(unused))
 struct edge *
 nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat, const struct bn_tol *tol)
 
-    /* 2d point */
-    /* 3d to 3d xform */
+/* 2d point */
+/* 3d to 3d xform */
 
 {
     struct model *m;
@@ -2277,7 +2277,7 @@ nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 void
 nmg_edgeuse_with_eg_tabulate(struct bu_ptbl *tab, const struct edge_g_lseg *eg)
 
-    /* can also be edge_g_cnurb */
+/* can also be edge_g_cnurb */
 {
     struct bu_list *midway;	/* &eu->l2, midway into edgeuse */
     struct edgeuse *eu;

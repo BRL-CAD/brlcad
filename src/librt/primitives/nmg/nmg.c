@@ -3081,7 +3081,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
 	VUNITIZE(faces[i].plane_eqn);
 	tmp_pts[i] = faces[i].pts;
-    	HMOVE(eqs[i], faces[i].plane_eqn);
+	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     bn_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {

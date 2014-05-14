@@ -210,8 +210,8 @@ void
 nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
 
 
-    /* non-zero means flush previous vlist */
-    /* non-zero means pause after the display */
+/* non-zero means flush previous vlist */
+/* non-zero means pause after the display */
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -594,7 +594,7 @@ nmg_kill_anti_loops(struct shell *s)
 	    break;
 	}
     }
- out:
+out:
     bu_ptbl_free(&loops);
 }
 
@@ -1583,7 +1583,7 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
     nmg_merge_models(m, tp->tr_d.td_r->m_p);
     ret = 0;
 
- out:
+out:
     if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
 	bu_log("nmg_boolean(tp=%p, m=%p) END, ret=%d\n\n",
 	       (void *)tp, (void *)m, ret);
