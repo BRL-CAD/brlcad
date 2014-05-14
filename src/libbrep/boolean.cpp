@@ -1634,6 +1634,13 @@ get_point_inside_trimmed_face(const TrimmedFace *tface)
     }
     ON_BoundingBox bbox =  polycurve.BoundingBox();
     ON_2dPoint test_pt2d;
+
+    /* FIXME: Boolean evaluation should be deterministic and
+     * repeatable.  Using a random number generator will potentially
+     * result in different evaluations and should be avoided.  Suggest
+     * using a fixed 3x3 grid, newtonian walk, or some othe repeatable
+     * method.
+     */
     ON_RandomNumberGenerator rng;
     bool found = false;
     for (int i = 0; i < try_count; i++) {
