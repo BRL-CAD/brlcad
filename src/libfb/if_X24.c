@@ -953,10 +953,23 @@ x24_setup(FBIO *ifp, int width, int height)
 	case FLG_VS1:
 	    if (!lumdone) {
 		int i;
-		for (i = 0; i < 256; i++) {
-		    rlumtbl[i] = i * 5016388;
-		    glumtbl[i] = i * 9848226;
-		    blumtbl[i] = i * 1912603;
+		unsigned long r, g, b;
+
+		/* This is an integer arithmetic version of YUV to RGB
+		 * conversion where we're multiplying by three
+		 * coefficients (0.299, 0.587, 0.114) for 24-bit
+		 * integers.  See http://en.wikipedia.org/wiki/YUV for
+		 * more details.
+		 *
+		 * NOTE: Using an addition method to build up the
+		 * luminance ramp instead of multiplication because
+		 * it's probably faster and avoids a gcc 4.8.1
+		 * aggressive optimization bug.
+		 */
+		for (i = r = g = b = 0; i < 256; i++, r += 5016388, g += 9848226, b += 1912603) {
+		    rlumtbl[i] = r;
+		    glumtbl[i] = g;
+		    blumtbl[i] = b;
 		}
 		lumdone = 1;
 	    }
