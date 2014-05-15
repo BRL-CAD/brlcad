@@ -434,22 +434,56 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	 * (val1 != val2) && (val_ancestor != val1 && val_ancestor != val2)
 	 */
 
-	/* Removed from both - no conflict */
-	if ((!val1 && !val2) && val_ancestor) bu_avs_add(removed_both, avp->name, val_ancestor);
-	/* Removed from avs2 only, avs1 not changed - no conflict, avs2 change wins and avs1 not merged */
-	if ((val1 && !val2) && avpp_val_compare(val_ancestor, val1, diff_tol)) bu_avs_add(removed_avs2_only, avp->name, val_ancestor);
-	/* Removed from avs2 only, avs1 changed - conflict */
+	/* Removed from both - no conflict, nothing to merge */
+	if ((!val1 && !val2) && val_ancestor)
+	    bu_avs_add(removed_both, avp->name, val_ancestor);
+
+	/* Removed from avs2 only, avs1 not changed - no conflict,
+	 * avs2 removal wins and avs1 is not merged */
+	if ((val1 && !val2) && avpp_val_compare(val_ancestor, val1, diff_tol))
+	    bu_avs_add(removed_avs2_only, avp->name, val_ancestor);
+
+	/* Removed from avs2 only, avs1 changed - conflict
+	 * merge adds conflict a/v pairs */
 	if ((val1 && !val2) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
+	    struct bu_vls avname = BU_VLS_INIT_ZERO;
+	    struct bu_vls avval = BU_VLS_INIT_ZERO;
 	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
 	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
+	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
+	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val1);
+	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
+	    bu_vls_sprintf(&avval, "%s", "REMOVED");
+	    bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
+	    bu_vls_free(&avname);
+	    bu_vls_free(&avval);
 	}
-	/* Removed from avs1 only, avs2 not changed - no conflict, avs1 change wins and avs2 not merged */
-	if ((!val1 && val2) && avpp_val_compare(val_ancestor, val2, diff_tol)) bu_avs_add(removed_avs1_only, avp->name, val_ancestor);
-	/* Removed from avs1 only, avs2 changed - conflict */
+
+	/* Removed from avs1 only, avs2 not changed - no conflict,
+	 * avs1 change wins and avs2 not merged */
+	if ((!val1 && val2) && avpp_val_compare(val_ancestor, val2, diff_tol))
+	    bu_avs_add(removed_avs1_only, avp->name, val_ancestor);
+
+	/* Removed from avs1 only, avs2 changed - conflict,
+	 * merge defaults to preserving information */
 	if ((!val1 && val2) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
+	    struct bu_vls avname = BU_VLS_INIT_ZERO;
+	    struct bu_vls avval = BU_VLS_INIT_ZERO;
 	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
 	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
+	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
+	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
+	    bu_vls_sprintf(&avval, "%s", "REMOVED");
+	    bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
+	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val2);
+	    bu_vls_free(&avname);
+	    bu_vls_free(&avval);
 	}
+
 	/* All values equal, unchanged and merged */
 	if (avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
 	    bu_avs_add(unchanged, avp->name, val_ancestor);
@@ -470,11 +504,20 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	    bu_avs_add(changed_avs1_only, avp->name, val1);
 	    bu_avs_add(merged, avp->name, val1);
 	}
-	/* val1 and val2 changed and incompatible - conflict */
+	/* val1 and val2 changed and incompatible - conflict,
+	 * merge adds conflict a/v pairs */
 	if (!avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
+	    struct bu_vls avname = BU_VLS_INIT_ZERO;
 	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
 	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
 	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
+	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
+	    bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val1);
+	    bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
+	    bu_avs_add(merged, bu_vls_addr(&avname), val2);
+	    bu_vls_free(&avname);
 	}
     }
 
@@ -501,10 +544,17 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	       	bu_avs_add(added_both, avp->name, val1);
 		bu_avs_add(merged, avp->name, val1);
 	    }
-	    /* Added in avs1 and avs2 with different values - conflict */
+	    /* Added in avs1 and avs2 with different values - conflict
+	     * merge adds conflict a/v pairs */
 	    if (avpp_val_compare(val1,val2, diff_tol)) {
+		struct bu_vls avname = BU_VLS_INIT_ZERO;
 		bu_avs_add(added_conflict_avs1, avp->name, val1);
 		bu_avs_add(added_conflict_avs2, avp->name, val2);
+		bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
+		bu_avs_add(merged, bu_vls_addr(&avname), val1);
+		bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
+		bu_avs_add(merged, bu_vls_addr(&avname), val2);
+		bu_vls_free(&avname);
 	    }
 	}
     }
