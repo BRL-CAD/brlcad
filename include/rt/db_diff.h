@@ -64,9 +64,9 @@ RT_EXPORT extern int
 db_diff3(const struct db_i *dbip_left,
 	const struct db_i *dbip_ancestor,
 	const struct db_i *dbip_right,
-	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added_left, const struct directory *added_right, void *data),
+	int (*add_func)(const struct db_i *added_dbip, const struct directory *added, void *data),
 	int (*del_func)(const struct db_i *ancestor, const struct directory *deleted, void *data),
-	int (*chgd_func)(const struct db_i *left, const struct db_i *ancestor, const struct db_i *right, const struct directory *added_left, const struct directory *added_ancestor, const struct directory *added_right, void *data),
+	int (*chgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
 	int (*unchgd_func)(const struct db_i *ancestor, const struct directory *unchanged, void *data),
 	void *client_data);
 
