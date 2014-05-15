@@ -129,6 +129,126 @@ db_diff(const struct db_i *dbip1,
     }
 }
 
+int
+db_diff3(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added_left, const struct directory *added_right, void *data),
+	int (*del_func)(const struct db_i *ancestor, const struct directory *deleted, void *data),
+	int (*chgd_func)(const struct db_i *left, const struct db_i *ancestor, const struct db_i *right, const struct directory *dp_left, const struct directory *dp_ancestor, const struct directory *dp_right, void *data),
+	int (*unchgd_func)(const struct db_i *ancestor, const struct directory *unchanged, void *data),
+	void *client_data)
+{
+    int has_diff = 0;
+    int error = 0;
+    struct directory *dp_ancestor, *dp_left, *dp_right;
+
+    /* Step 1: look at all objects in the ancestor database */
+    FOR_ALL_DIRECTORY_START(dp_ancestor, ancestor) {
+	struct bu_external ext_ancestor, ext_left, ext_right;
+
+	/* skip the _GLOBAL object for now - need to deal with this, however */
+	if (dp_ancestor->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    continue;
+	}
+	dp_left = db_lookup(left, dp_ancestor->d_namep, 0);
+	dp_right = db_lookup(right, dp_ancestor->d_namep, 0);
+	(void)db_get_external(&ext_ancestor, dp_ancestor, ancestor);
+	if (dp_left != RT_DIR_NULL) (void)db_get_external(&ext_left, dp_left, left);
+	if (dp_right != RT_DIR_NULL) (void)db_get_external(&ext_right, dp_right, right);
+
+	/* (!dp_left && !dp_right) && dp_ancestor */
+	if ((dp_left == RT_DIR_NULL) && (dp_right == RT_DIR_NULL)) {
+	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left && !dp_right) && (dp_ancestor == dp_left)  */
+	if ((dp_left != RT_DIR_NULL) && (dp_right == RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_left)) {
+	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left && !dp_right) && (dp_ancestor != dp_left)  */
+	if ((dp_left != RT_DIR_NULL) && (dp_right == RT_DIR_NULL) && db_diff_external(&ext_ancestor, &ext_left)) {
+	    if (chgd_func && chgd_func(left, ancestor, DBI_NULL, dp_left, dp_ancestor, RT_DIR_NULL, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (!dp_left && dp_right) && (dp_ancestor == dp_right) */
+	if ((dp_left == RT_DIR_NULL) && (dp_right != RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_right)) {
+	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (!dp_left && dp_right) && (dp_ancestor != dp_right) */
+	if ((dp_left == RT_DIR_NULL) && (dp_right != RT_DIR_NULL) && db_diff_external(&ext_ancestor, &ext_right)) {
+	    if (chgd_func && chgd_func(DBI_NULL, ancestor, right, RT_DIR_NULL, dp_ancestor, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left == dp_right) && (dp_ancestor == dp_left)   */
+	if (!db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_left)) {
+	    if (unchgd_func && unchgd_func(ancestor, dp_ancestor, client_data)) error--;
+	}
+
+	/* (dp_left == dp_right) && (dp_ancestor != dp_left)   */
+	if (!db_diff_external(&ext_left, &ext_right) && db_diff_external(&ext_ancestor, &ext_left)) {
+	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left != dp_right) && (dp_ancestor == dp_left)   */
+	if (db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_left)) {
+	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left != dp_right) && (dp_ancestor == dp_right)  */
+	if (db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_right)) {
+	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+
+	/* (dp_left != dp_right) && (dp_ancestor != dp_left && dp_ancestor != dp_right) */
+	if (db_diff_external(&ext_left, &ext_right) && db_diff_external(&ext_ancestor, &ext_left) && db_diff_external(&ext_ancestor, &ext_right)) {
+	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+    } FOR_ALL_DIRECTORY_END;
+
+    FOR_ALL_DIRECTORY_START(dp_left, left) {
+	dp_ancestor = db_lookup(ancestor, dp_left->d_namep, 0);
+	if (dp_ancestor == RT_DIR_NULL) {
+	    struct bu_external ext_left, ext_right;
+	    dp_right = db_lookup(right, dp_left->d_namep, 0);
+	    (void)db_get_external(&ext_left, dp_left, left);
+	    if (dp_right != RT_DIR_NULL) (void)db_get_external(&ext_right, dp_right, right);
+	    /* dp_left && !dp_right || dp_left == dp_right */
+	    if (dp_right == RT_DIR_NULL || !db_diff_external(&ext_left, &ext_right)) {
+		if (add_func && add_func(left, right, dp_left, dp_right, client_data)) error--;
+		has_diff++;
+	    }
+	    /* dp_left != dp_right */
+	    if (dp_right != RT_DIR_NULL && db_diff_external(&ext_left, &ext_right)) {
+		if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
+		has_diff++;
+	    }
+	}
+    } FOR_ALL_DIRECTORY_END;
+
+    FOR_ALL_DIRECTORY_START(dp_right, right) {
+	dp_ancestor = db_lookup(ancestor, dp_right->d_namep, 0);
+	dp_left = db_lookup(left, dp_right->d_namep, 0);
+	if (dp_ancestor == RT_DIR_NULL && dp_left == RT_DIR_NULL) {
+	    if (add_func && add_func(DBI_NULL, right, RT_DIR_NULL, dp_right, client_data)) error--;
+	    has_diff++;
+	}
+    } FOR_ALL_DIRECTORY_END;
+
+    return has_diff;
+}
+
 
 HIDDEN int
 avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)

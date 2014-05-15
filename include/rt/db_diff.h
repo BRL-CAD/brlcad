@@ -50,6 +50,28 @@ db_diff(const struct db_i *dbip_left,
 	void *client_data);
 
 /**
+ * Compare three database instances.
+ *
+ * This does a "3-way" diff to identify changes in the left and
+ * right databases relative to the ancestor database, and provides
+ * functional hooks for the various cases.
+ *
+ * The function returns 0 if there are no differences, or returns the
+ * number of differences encountered.  Negative values indicate a
+ * traversal failure.
+ */
+RT_EXPORT extern int
+db_diff3(const struct db_i *dbip_left,
+	const struct db_i *dbip_ancestor,
+	const struct db_i *dbip_right,
+	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added_left, const struct directory *added_right, void *data),
+	int (*del_func)(const struct db_i *ancestor, const struct directory *deleted, void *data),
+	int (*chgd_func)(const struct db_i *left, const struct db_i *ancestor, const struct db_i *right, const struct directory *added_left, const struct directory *added_ancestor, const struct directory *added_right, void *data),
+	int (*unchgd_func)(const struct db_i *ancestor, const struct directory *unchanged, void *data),
+	void *client_data);
+
+
+/**
  * The flags parameter is a bitfield is used with db_compare() to
  * specify whether to report internal object parameter differences
  * (DB_COMPARE_PARAM), attribute differences (DB_COMPARE_ATTRS), or
