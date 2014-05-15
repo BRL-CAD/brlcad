@@ -333,6 +333,196 @@ void diff3_results_free(struct diff3_results *results){
     BU_PUT(results->unchanged, struct bu_ptbl);
 }
 
+/* TODO - this function is a duplicate of a private one in librt - probably
+ * need to move bu_avs_diff3 to db_diff and expose it in the private header... */
+static int
+avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
+{
+    /* We need to look for numbers to do tolerance based comparisons */
+    int num_compare = 1;
+    int pnt_compare = 1;
+    double dval1, dval2;
+    float p1val1, p1val2, p1val3;
+    float p2val1, p2val2, p2val3;
+    char *endptr;
+
+    /* First, check for individual numbers */
+    errno = 0;
+    dval1 = strtod(val1, &endptr);
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
+    errno = 0;
+    dval2 = strtod(val2, &endptr);
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
+
+    /* If we didn't find numbers, try for points (3 floating point numbers) */
+    if (num_compare != 1) {
+	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
+	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
+    }
+
+    if (num_compare == 1) {
+	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
+    }
+    if (pnt_compare == 1) {
+	vect_t v1, v2;
+	VSET(v1, p1val1, p1val2, p1val3);
+	VSET(v2, p2val1, p2val2, p2val3);
+	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
+    }
+    return BU_STR_EQUAL(val1, val2);
+}
+
+
+/*******************************************************************/
+/* diff3 logic for attribute/value sets                            */
+/*******************************************************************/
+static void
+bu_avs_diff3(struct bu_attribute_value_set *unchanged,
+	struct bu_attribute_value_set *removed_avs1_only,
+	struct bu_attribute_value_set *removed_avs2_only,
+	struct bu_attribute_value_set *removed_both,
+	struct bu_attribute_value_set *added_avs1_only,
+	struct bu_attribute_value_set *added_avs2_only,
+	struct bu_attribute_value_set *added_both,
+	struct bu_attribute_value_set *added_conflict_avs1,
+	struct bu_attribute_value_set *added_conflict_avs2,
+	struct bu_attribute_value_set *changed_avs1_only,
+	struct bu_attribute_value_set *changed_avs2_only,
+	struct bu_attribute_value_set *changed_both,
+	struct bu_attribute_value_set *changed_conflict_ancestor,
+	struct bu_attribute_value_set *changed_conflict_avs1,
+	struct bu_attribute_value_set *changed_conflict_avs2,
+	struct bu_attribute_value_set *merged,
+	const struct bu_attribute_value_set *ancestor,
+	const struct bu_attribute_value_set *avs1,
+	const struct bu_attribute_value_set *avs2,
+	const struct bn_tol *diff_tol)
+{
+    struct bu_attribute_value_pair *avp;
+    if (!BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
+    if (!BU_AVS_IS_INITIALIZED(removed_avs1_only)) BU_AVS_INIT(removed_avs1_only);
+    if (!BU_AVS_IS_INITIALIZED(removed_avs2_only)) BU_AVS_INIT(removed_avs2_only);
+    if (!BU_AVS_IS_INITIALIZED(removed_both)) BU_AVS_INIT(removed_both);
+    if (!BU_AVS_IS_INITIALIZED(added_avs1_only)) BU_AVS_INIT(added_avs1_only);
+    if (!BU_AVS_IS_INITIALIZED(added_avs2_only)) BU_AVS_INIT(added_avs2_only);
+    if (!BU_AVS_IS_INITIALIZED(added_both)) BU_AVS_INIT(added_both);
+    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs1)) BU_AVS_INIT(added_conflict_avs1);
+    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs2)) BU_AVS_INIT(added_conflict_avs2);
+    if (!BU_AVS_IS_INITIALIZED(changed_avs1_only)) BU_AVS_INIT(changed_avs1_only);
+    if (!BU_AVS_IS_INITIALIZED(changed_avs2_only)) BU_AVS_INIT(changed_avs2_only);
+    if (!BU_AVS_IS_INITIALIZED(changed_both)) BU_AVS_INIT(changed_both);
+    if (!BU_AVS_IS_INITIALIZED(changed_conflict_ancestor)) BU_AVS_INIT(changed_conflict_ancestor);
+    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs1)) BU_AVS_INIT(changed_conflict_avs1);
+    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs2)) BU_AVS_INIT(changed_conflict_avs2);
+    if (!BU_AVS_IS_INITIALIZED(merged)) BU_AVS_INIT(merged);
+
+    for (BU_AVS_FOR(avp, ancestor)) {
+	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
+	const char *val1 = bu_avs_get(avs1, avp->name);
+	const char *val2 = bu_avs_get(avs2, avp->name);
+	/* The possibilities are:
+	 *
+	 * (!val1 && !val2) && val_ancestor
+	 * (val1 && !val2) && (val_ancestor == val1)
+	 * (val1 && !val2) && (val_ancestor != val1)
+	 * (!val1 && val2) && (val_ancestor == val2)
+	 * (!val1 && val2) && (val_ancestor != val2)
+	 * (val1 == val2) && (val_ancestor == val1)
+	 * (val1 == val2) && (val_ancestor != val1)
+	 * (val1 != val2) && (val_ancestor == val1)
+	 * (val1 != val2) && (val_ancestor == val2)
+	 * (val1 != val2) && (val_ancestor != val1 && val_ancestor != val2)
+	 */
+
+	/* Removed from both - no conflict */
+	if ((!val1 && !val2) && val_ancestor) bu_avs_add(removed_both, avp->name, val_ancestor);
+	/* Removed from avs2 only, avs1 not changed - no conflict, avs2 change wins and avs1 not merged */
+	if ((val1 && !val2) && avpp_val_compare(val_ancestor, val1, diff_tol)) bu_avs_add(removed_avs2_only, avp->name, val_ancestor);
+	/* Removed from avs2 only, avs1 changed - conflict */
+	if ((val1 && !val2) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
+	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
+	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
+	}
+	/* Removed from avs1 only, avs2 not changed - no conflict, avs1 change wins and avs2 not merged */
+	if ((!val1 && val2) && avpp_val_compare(val_ancestor, val2, diff_tol)) bu_avs_add(removed_avs1_only, avp->name, val_ancestor);
+	/* Removed from avs1 only, avs2 changed - conflict */
+	if ((!val1 && val2) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
+	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
+	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
+	}
+	/* All values equal, unchanged and merged */
+	if (avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
+	    bu_avs_add(unchanged, avp->name, val_ancestor);
+	    bu_avs_add(merged, avp->name, val_ancestor);
+	}
+	/* Identical change to both - changed and merged */
+	if (avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
+	    bu_avs_add(changed_both, avp->name, val1);
+	    bu_avs_add(merged, avp->name, val1);
+	}
+	/* val2 changed, val1 not changed - val2 change wins and is merged */
+	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
+	    bu_avs_add(changed_avs2_only, avp->name, val2);
+	    bu_avs_add(merged, avp->name, val2);
+	}
+	/* val1 changed, val2 not changed - val1 change wins and is merged */
+	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val2, diff_tol)) {
+	    bu_avs_add(changed_avs1_only, avp->name, val1);
+	    bu_avs_add(merged, avp->name, val1);
+	}
+	/* val1 and val2 changed and incompatible - conflict */
+	if (!avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
+	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
+	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
+	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
+	}
+    }
+
+    /* Now do avs1 - anything in ancestor has already been handled */
+    for (BU_AVS_FOR(avp, avs1)) {
+	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
+	if (!val_ancestor) {
+	    const char *val1 = bu_avs_get(avs1, avp->name);
+	    const char *val2 = bu_avs_get(avs2, avp->name);
+	    /* The possibilities are:
+	     *
+	     * (val1 && !val2)
+	     * (val1 == val2)
+	     * (val1 != val2)
+	     */
+
+	    /* Added in avs2 only - no conflict */
+	    if (val1 && !val2) {
+		bu_avs_add(added_avs1_only, avp->name, val1);
+		bu_avs_add(merged, avp->name, val1);
+	    }
+	    /* Added in avs1 and avs2 with the same value - no conflict */
+	    if (avpp_val_compare(val1,val2, diff_tol)) {
+	       	bu_avs_add(added_both, avp->name, val1);
+		bu_avs_add(merged, avp->name, val1);
+	    }
+	    /* Added in avs1 and avs2 with different values - conflict */
+	    if (avpp_val_compare(val1,val2, diff_tol)) {
+		bu_avs_add(added_conflict_avs1, avp->name, val1);
+		bu_avs_add(added_conflict_avs2, avp->name, val2);
+	    }
+	}
+    }
+
+    /* Last but not least, avs2 - anything in ancestor and/or avs1 has already been handled */
+    for (BU_AVS_FOR(avp, avs2)) {
+	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
+	const char *val1 = bu_avs_get(avs1, avp->name);
+	if (!val_ancestor && !val1) {
+	    const char *val2 = bu_avs_get(avs2, avp->name);
+	    bu_avs_add(added_avs2_only, avp->name, val1);
+	    bu_avs_add(merged, avp->name, val2);
+	}
+    }
+
+}
+
+
 /*******************************************************************/
 /* Callback functions for db_compare */
 /*******************************************************************/
@@ -1122,6 +1312,22 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		case 1:
 		case 2:
 		case 3:
+		    struct bu_attribute_value_set unchanged;
+		    struct bu_attribute_value_set removed_avs1_only;
+		    struct bu_attribute_value_set removed_avs2_only;
+		    struct bu_attribute_value_set removed_both;
+		    struct bu_attribute_value_set added_avs1_only;
+		    struct bu_attribute_value_set added_avs2_only;
+		    struct bu_attribute_value_set added_both;
+		    struct bu_attribute_value_set added_conflict_avs1;
+		    struct bu_attribute_value_set added_conflict_avs2;
+		    struct bu_attribute_value_set changed_avs1_only;
+		    struct bu_attribute_value_set changed_avs2_only;
+		    struct bu_attribute_value_set changed_both;
+		    struct bu_attribute_value_set changed_conflict_ancestor;
+		    struct bu_attribute_value_set changed_conflict_avs1;
+		    struct bu_attribute_value_set changed_conflict_avs2;
+		    struct bu_attribute_value_set merged;
 		    struct diff_result_container *new_conflict;
 		    BU_GET(new_conflict, struct diff_result_container);
 		    new_conflict->dbip_ancestor = ancestor_dbip;
@@ -1131,6 +1337,13 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 		    new_conflict->dp_orig = dp;
 		    new_conflict->dp_new = dp2;
 		    bu_ptbl_ins(results->changed_conflicts, (long *)new_conflict);
+
+		    bu_avs_diff3(&unchanged, &removed_avs1_only, &removed_avs2_only, &removed_both,
+			    &added_avs1_only, &added_avs2_only, &added_both, &added_conflict_avs1,
+			    &added_conflict_avs2, &changed_avs1_only, &changed_avs2_only, &changed_both,
+			    &changed_conflict_ancestor, &changed_conflict_avs1, &changed_conflict_avs2,
+			    &merged, NULL, NULL, NULL, &diff_tol);
+
 		    break;
 		default:
 		    bu_log("error - unknown return code %d from directory object comparison\n", c);
