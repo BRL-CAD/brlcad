@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# converts a C .h file to a rudimentary .d file for linking C to D
+# converts a C .h file to a rudimentary .di file for linking C to D
 
 use strict;
 use warnings;
@@ -23,7 +23,7 @@ $usage
 
 Use option '-h' for details.
 
-Converts C .h files in this directory to rudimentary .d files
+Converts C .h files in this directory to rudimentary .di files
   for linking C to the D language.
 HERE
 
@@ -34,26 +34,31 @@ my $force = 0;
 my $debug = 0;
 
 # modes
-my $report  = 0;
-my $convert = 0;
+my $report   = 0;
+my $convert1 = 0;
 
 sub zero_modes {
   $report   = 0;
   $convert1 = 0;
 } # zero_modes
 
+my @ifils = ();
+
 foreach my $arg (@ARGV) {
   my $val = undef;
-  my $idx = index $val, '=';
+  my $idx = index $arg, '=';
   if ($idx >= 0) {
     print "DEBUG: input arg is '$arg'\n"
       if $debug;
 
     $val = substr $arg, $idx+1;
+    if ((!defined $val || !$val) && !$debug) {
+      die "ERROR:  For option '$arg' \$val is empty.'\n";
+    }
     $arg = substr $arg, 0, $idx;
     if ($debug) {
       print "arg is now '$arg', val is '$val'\n";
-      die "debug exit";x
+      die "debug exit";
     }
   }
 
@@ -62,6 +67,15 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ m{\A -d}xms) {
     $debug = 1;
+  }
+  elsif ($val && $arg =~ m{\A -h}xms ) {
+    my $f = $val;
+    die "ERROR:  Input file '$f' not found.\n"
+      if (! -e $f);
+    # one more check: must be a '.h' file
+    die "ERROR:  Input file '$f' must be a '.h' file.\n"
+      if ($f !~ m{\.h \z}xms);
+    @ifils = ($f);
   }
   elsif ($arg =~ m{\A -h}xms) {
     help();
@@ -74,7 +88,7 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ m{\A -c1}xms) {
     zero_modes();
-    $c1 = 1;
+    $convert1 = 1;
   }
 
   # error
@@ -91,25 +105,37 @@ my $DIFF =  1;
 # collect all .h files and get the prefixes
 my @h = glob("*.h");
 my $nh = @h;
-# ditto for .d files
-my @d = glob("*.d");
-my $nd = @d;
-my @fils = (@h, @d);
+# ditto for .di files
+my @di = glob("*.di");
+my $ndi = @di;
+my @fils = (@h, @di);
 my $nf = @fils;
 my %f;
 @f{@fils} = ();
 my %stats = ();
+# collect their statuses
 get_status(\%stats, \%f);
 
-# get status of .h files
-print "There are $nh C header files in this directory:\n";
-print "  new:       $stats{h}{new}\n";
-print "  unchanged: $stats{h}{sam}\n";
-print "  changed:   $stats{h}{dif}\n";
-print "There are $nd D header files in this directory:\n";
-print "  new:       $stats{d}{new}\n";
-print "  unchanged: $stats{d}{sam}\n";
-print "  changed:   $stats{d}{dif}\n";
+if ($report) {
+  print "Mode is '-r' (report)...\n\n";
+  my $n = $nh ? $nh : 'zero';
+  print "There are $n C header files in this directory:\n";
+  print "  new:       $stats{h}{new}\n";
+  print "  unchanged: $stats{h}{sam}\n";
+  print "  changed:   $stats{h}{dif}\n";
+
+  $n = $ndi ? $ndi : 'zero';
+  print "There are $n D interface files in this directory:\n";
+  print "  new:       $stats{di}{new}\n";
+  print "  unchanged: $stats{di}{sam}\n";
+  print "  changed:   $stats{di}{dif}\n";
+}
+elsif ($convert1) {
+  print "Mode is '-c1' (convert method 1)...\n\n";
+  @ifils = @h
+    if !@ifils;
+}
+
 
 #### subroutines ####
 sub get_status {
@@ -120,15 +146,15 @@ sub get_status {
   $sref->{h}{sam} = 0;
   $sref->{h}{dif} = 0;
 
-  $sref->{d}{new} = 0;
-  $sref->{d}{sam} = 0;
-  $sref->{d}{dif} = 0;
+  $sref->{di}{new} = 0;
+  $sref->{di}{sam} = 0;
+  $sref->{di}{dif} = 0;
 
   foreach my $f (keys %{$fref}) {
     my $s = file_status($f);
-    my $typ = $f =~ m{\.h \z}xms ? 'h' : 'd';
+    my $typ = $f =~ m{\.h \z}xms ? 'h' : 'di';
     die "ERROR:  Uknown file type for file '$f'!"
-      if ($typ eq 'd' && $f !~ m{\d \z}xms);
+      if ($typ eq 'di' && $f !~ m{\.di \z}xms);
 
     $fref->{$f}{status} = $s;
     $fref->{$f}{typ}    = $typ;
@@ -186,29 +212,29 @@ $usage
 
 modes:
 
-  -r    report status of .h and .d file in the directory
-  -c1   use method 1 to convert .h files to .d files
+  -r    report status of .h and .di files in the directory
+  -c1   use method 1 to convert .h files to .di files
 
-  -h=X  restrict conversion attemp to just file X
+  -h=X  restrict conversion attempt to just file X
 
 options:
 
   -f    force overwriting files
   -d    debug
+  -h    help
 
 notes:
 
   1.  The convert options will normall convert all known .h files to
-      .d files only if they have no existing .d file.
+      .di files only if they have no existing .di file.
 
   2.  Excptions to note 1:
 
       + Use of the '-h=X' option restricts the set of .h files to be
         considered to the single file X.
 
-      + Use of the '-f' option will allow overwriting any existing .d
+      + Use of the '-f' option will allow overwriting an existing .di
         file.
-
 
 HERE
 
