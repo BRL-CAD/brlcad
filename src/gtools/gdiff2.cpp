@@ -491,7 +491,7 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	     * (val1 != val2)
 	     */
 
-	    /* Added in avs2 only - no conflict */
+	    /* Added in avs1 only - no conflict */
 	    if (val1 && !val2) {
 		bu_avs_add(added_avs1_only, avp->name, val1);
 		bu_avs_add(merged, avp->name, val1);
