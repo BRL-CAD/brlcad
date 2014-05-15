@@ -25,7 +25,7 @@
 #include "tcl.h"
 
 #include "raytrace.h"
-#include "db_diff.h"
+#include "rt/db_diff.h"
 
 struct result_container {
     int status;

@@ -1,4 +1,5 @@
 set(rt_headers
+  db_diff.h
   defines.h
   search.h
   )
