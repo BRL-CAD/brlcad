@@ -15,9 +15,13 @@ die "ERROR:  Reference compiler 'dmd' not found.\n"
   if (! -f $DMD);
 
 my $p = basename($0);
+my $usage = "Usage: $p mode [options...]";
+
 if (!@ARGV) {
   print <<"HERE";
-Usage: $p -report [-force][-debug]
+$usage
+
+Use option '-h' for details.
 
 Converts C .h files in this directory to rudimentary .d files
   for linking C to the D language.
@@ -30,20 +34,49 @@ my $force = 0;
 my $debug = 0;
 
 # modes
-my $report = 0;
+my $report  = 0;
+my $convert = 0;
+
+sub zero_modes {
+  $report   = 0;
+  $convert1 = 0;
+} # zero_modes
 
 foreach my $arg (@ARGV) {
   my $val = undef;
+  my $idx = index $val, '=';
+  if ($idx >= 0) {
+    print "DEBUG: input arg is '$arg'\n"
+      if $debug;
+
+    $val = substr $arg, $idx+1;
+    $arg = substr $arg, 0, $idx;
+    if ($debug) {
+      print "arg is now '$arg', val is '$val'\n";
+      die "debug exit";x
+    }
+  }
+
   if ($arg =~ m{\A -f}xms) {
     $force = 1;
   }
   elsif ($arg =~ m{\A -d}xms) {
     $debug = 1;
   }
+  elsif ($arg =~ m{\A -h}xms) {
+    help();
+  }
+
   # modes
   elsif ($arg =~ m{\A -r}xms) {
+    zero_modes();
     $report = 1;
   }
+  elsif ($arg =~ m{\A -c1}xms) {
+    zero_modes();
+    $c1 = 1;
+  }
+
   # error
   else {
     die "ERROR:  Unknown arg '$arg'.\n";
@@ -146,3 +179,38 @@ sub file_status {
   return $status;
 
 } # file_status
+
+sub help {
+  print <<"HERE";
+$usage
+
+modes:
+
+  -r    report status of .h and .d file in the directory
+  -c1   use method 1 to convert .h files to .d files
+
+  -h=X  restrict conversion attemp to just file X
+
+options:
+
+  -f    force overwriting files
+  -d    debug
+
+notes:
+
+  1.  The convert options will normall convert all known .h files to
+      .d files only if they have no existing .d file.
+
+  2.  Excptions to note 1:
+
+      + Use of the '-h=X' option restricts the set of .h files to be
+        considered to the single file X.
+
+      + Use of the '-f' option will allow overwriting any existing .d
+        file.
+
+
+HERE
+
+  exit;
+} # help
