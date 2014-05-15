@@ -179,22 +179,30 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 {
     int have_diff = 0;
     struct bu_attribute_value_pair *avp;
-    if (!BU_AVS_IS_INITIALIZED(shared)) BU_AVS_INIT(shared);
-    if (!BU_AVS_IS_INITIALIZED(orig_only)) BU_AVS_INIT(orig_only);
-    if (!BU_AVS_IS_INITIALIZED(new_only)) BU_AVS_INIT(new_only);
-    if (!BU_AVS_IS_INITIALIZED(orig_diff)) BU_AVS_INIT(orig_diff);
-    if (!BU_AVS_IS_INITIALIZED(new_diff)) BU_AVS_INIT(new_diff);
+    if (shared && !BU_AVS_IS_INITIALIZED(shared)) BU_AVS_INIT(shared);
+    if (orig_only && !BU_AVS_IS_INITIALIZED(orig_only)) BU_AVS_INIT(orig_only);
+    if (new_only && !BU_AVS_IS_INITIALIZED(new_only)) BU_AVS_INIT(new_only);
+    if (orig_diff && !BU_AVS_IS_INITIALIZED(orig_diff)) BU_AVS_INIT(orig_diff);
+    if (new_diff && !BU_AVS_IS_INITIALIZED(new_diff)) BU_AVS_INIT(new_diff);
     for (BU_AVS_FOR(avp, avs1)) {
 	const char *val2 = bu_avs_get(avs2, avp->name);
 	if (!val2) {
-	    bu_avs_add(orig_only, avp->name, avp->value);
+	    if (orig_only) {
+		bu_avs_add(orig_only, avp->name, avp->value);
+	    }
 	    have_diff++;
 	} else {
 	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
-		bu_avs_add(shared, avp->name, avp->value);
+		if (shared) {
+		    bu_avs_add(shared, avp->name, avp->value);
+		}
 	    } else {
-		bu_avs_add(orig_diff, avp->name, avp->value);
-		bu_avs_add(new_diff, avp->name, val2);
+		if (orig_diff) {
+		    bu_avs_add(orig_diff, avp->name, avp->value);
+		}
+		if (new_diff) {
+		    bu_avs_add(new_diff, avp->name, val2);
+		}
 		have_diff++;
 	    }
 	}
@@ -202,7 +210,9 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
     for (BU_AVS_FOR(avp, avs2)) {
 	const char *val1 = bu_avs_get(avs1, avp->name);
 	if (!val1) {
-	    bu_avs_add(new_only, avp->name, avp->value);
+	    if (new_only) {
+		bu_avs_add(new_only, avp->name, avp->value);
+	    }
 	    have_diff++;
 	}
     }
@@ -280,12 +290,12 @@ db_compare(const struct rt_db_internal *left_obj,
     int has_diff = 0;
     int type_change = 0;
 
-    if (!left_obj || !right_obj || !added || !removed || !changed_left || !changed_right || !unchanged) return -1;
-    if (!BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
-    if (!BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
-    if (!BU_AVS_IS_INITIALIZED(changed_left)) BU_AVS_INIT(changed_left);
-    if (!BU_AVS_IS_INITIALIZED(changed_right)) BU_AVS_INIT(changed_right);
-    if (!BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
+    if (!left_obj || !right_obj) return -1;
+    if (added && !BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
+    if (removed && !BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
+    if (changed_left && !BU_AVS_IS_INITIALIZED(changed_left)) BU_AVS_INIT(changed_left);
+    if (changed_right && !BU_AVS_IS_INITIALIZED(changed_right)) BU_AVS_INIT(changed_right);
+    if (unchanged && !BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
 
     if (flags == DB_COMPARE_ALL) do_all = 1;
 
@@ -305,8 +315,12 @@ db_compare(const struct rt_db_internal *left_obj,
 	 * information directly.
 	 */
 	if (left_obj->idb_minor_type != right_obj->idb_minor_type) {
-	    bu_avs_add(changed_left, "object type", left_obj->idb_meth->ft_label);
-	    bu_avs_add(changed_right, "object type", right_obj->idb_meth->ft_label);
+	    if (changed_left) {
+		bu_avs_add(changed_left, "object type", left_obj->idb_meth->ft_label);
+	    }
+	    if (changed_right) {
+		bu_avs_add(changed_right, "object type", right_obj->idb_meth->ft_label);
+	    }
 	    type_change = 1;
 	} else {
 	    if (left_obj->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
@@ -314,8 +328,12 @@ db_compare(const struct rt_db_internal *left_obj,
 		int arb_type_1 = rt_arb_std_type(left_obj, &arb_tol);
 		int arb_type_2 = rt_arb_std_type(right_obj, &arb_tol);
 		if (arb_type_1 != arb_type_2) {
-		    bu_avs_add(changed_left, "object type", arb_type_to_str(arb_type_1));
-		    bu_avs_add(changed_right, "object type", arb_type_to_str(arb_type_2));
+		    if (changed_left) {
+			bu_avs_add(changed_left, "object type", arb_type_to_str(arb_type_1));
+		    }
+		    if (changed_right) {
+			bu_avs_add(changed_right, "object type", arb_type_to_str(arb_type_2));
+		    }
 		    type_change = 1;
 		}
 	    }
@@ -353,11 +371,15 @@ db_compare(const struct rt_db_internal *left_obj,
 	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &left_obj->idb_avs, &right_obj->idb_avs, diff_tol);
 	} else {
 	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {
-		bu_avs_merge(removed, &left_obj->idb_avs);
+		if (removed) {
+		    bu_avs_merge(removed, &left_obj->idb_avs);
+		}
 		has_diff++;
 	    }
 	    if (right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-		bu_avs_merge(added, &right_obj->idb_avs);
+		if (added) {
+		    bu_avs_merge(added, &right_obj->idb_avs);
+		}
 		has_diff++;
 	    }
 	}
