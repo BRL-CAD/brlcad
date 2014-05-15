@@ -1621,9 +1621,9 @@ is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
     }
     return inside;
 }
- 
+
 // TODO: For faces that have most of their area trimmed away, this is
-// a very innefficient algorithm. If the grid approach doesn't work
+// a very inefficient algorithm. If the grid approach doesn't work
 // after a small number of samples, we should switch to an alternative
 // algorithm, such as sampling around points on the inner loops.
 HIDDEN ON_2dPoint
