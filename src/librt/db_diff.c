@@ -261,6 +261,10 @@ arb_type_to_str(int type) {
     return NULL;
 }
 
+/* TODO - need to add some bu_extern based logic to this - even if we can't
+ * get at the parameters, we should at least be able to clear the attributes
+ * and do bu_externs on "raw" versions of the objects to see if they do differ
+ * somehow... */
 int
 db_compare(const struct rt_db_internal *left_obj,
 	   const struct rt_db_internal *right_obj,
