@@ -832,11 +832,6 @@ split_trimmed_face(
      * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
      * Chains.
      */
-    if (ssx_curves.Count() == 0) {
-	// No curve, no splitting
-	out.Append(orig_face->Duplicate());
-	return out;
-    }
 
     // Get the intersection points between the SSI curves and the outerloop.
     ON_SimpleArray<IntersectPoint> clx_points;
