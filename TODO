@@ -85,6 +85,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add an mk_extrude() routine to libwdb.
+
 * Teach CMake to respect and use user-defined CMAKE_C_FLAGS and
   other options supplied at the command line and in environment
   variables.  See whether we can pass a variable into CMAKE_C_FLAGS
