@@ -73,14 +73,12 @@ void diff_state_free(struct diff_state *state) {
 
 /*******************************************************************/
 /* Structure and memory management for the container used to hold
- * diff results for pairs of differing objects */
+ * diff results for related differing objects */
 /*******************************************************************/
 struct diff_result_container {
     int status;
-    struct db_i *dbip_ancestor;
     struct db_i *dbip_orig;
     struct db_i *dbip_new;
-    const struct directory *dp_ancestor;
     const struct directory *dp_orig;
     const struct directory *dp_new;
     int internal_diff;
@@ -104,10 +102,8 @@ diff_result_init(struct diff_result_container *result)
     result->status = 0;
     result->internal_diff = 0;
     result->attribute_diff = 0;
-    result->dbip_ancestor = DBI_NULL;
     result->dbip_orig = DBI_NULL;
     result->dbip_new = DBI_NULL;
-    result->dp_ancestor = RT_DIR_NULL;
     result->dp_orig = RT_DIR_NULL;
     result->dp_new = RT_DIR_NULL;
     BU_AVS_INIT(&result->internal_shared);
@@ -143,21 +139,143 @@ diff_result_free(void *result)
     bu_avs_free(&curr_result->additional_new_diff);
 }
 
+struct diff3_result_container {
+    int status;
+    struct db_i *ancestor_dbip;
+    struct db_i *left_dbip;
+    struct db_i *right_dbip;
+    const struct directory *ancestor_dp;
+    const struct directory *left_dp;
+    const struct directory *right_dp;
+    int internal_diff;
+    struct bu_attribute_value_set param_unchanged;
+    struct bu_attribute_value_set param_removed_left_only;
+    struct bu_attribute_value_set param_removed_right_only;
+    struct bu_attribute_value_set param_removed_both;
+    struct bu_attribute_value_set param_added_left_only;
+    struct bu_attribute_value_set param_added_right_only;
+    struct bu_attribute_value_set param_added_both;
+    struct bu_attribute_value_set param_added_conflict_left;
+    struct bu_attribute_value_set param_added_conflict_right;
+    struct bu_attribute_value_set param_changed_left_only;
+    struct bu_attribute_value_set param_changed_right_only;
+    struct bu_attribute_value_set param_changed_both;
+    struct bu_attribute_value_set param_changed_conflict_ancestor;
+    struct bu_attribute_value_set param_changed_conflict_left;
+    struct bu_attribute_value_set param_changed_conflict_right;
+    struct bu_attribute_value_set param_merged;
+    int attribute_diff;
+    struct bu_attribute_value_set attribute_unchanged;
+    struct bu_attribute_value_set attribute_removed_left_only;
+    struct bu_attribute_value_set attribute_removed_right_only;
+    struct bu_attribute_value_set attribute_removed_both;
+    struct bu_attribute_value_set attribute_added_left_only;
+    struct bu_attribute_value_set attribute_added_right_only;
+    struct bu_attribute_value_set attribute_added_both;
+    struct bu_attribute_value_set attribute_added_conflict_left;
+    struct bu_attribute_value_set attribute_added_conflict_right;
+    struct bu_attribute_value_set attribute_changed_left_only;
+    struct bu_attribute_value_set attribute_changed_right_only;
+    struct bu_attribute_value_set attribute_changed_both;
+    struct bu_attribute_value_set attribute_changed_conflict_ancestor;
+    struct bu_attribute_value_set attribute_changed_conflict_left;
+    struct bu_attribute_value_set attribute_changed_conflict_right;
+    struct bu_attribute_value_set attribute_merged;
+};
+
+#if 0
+static void
+diff3_result_init(struct diff3_result_container *result)
+{
+    result->status = 0;
+    result->internal_diff = 0;
+    result->attribute_diff = 0;
+    result->ancestor_dbip = DBI_NULL;
+    result->left_dbip = DBI_NULL;
+    result->right_dbip = DBI_NULL;
+    result->ancestor_dp = RT_DIR_NULL;
+    result->left_dp = RT_DIR_NULL;
+    result->right_dp = RT_DIR_NULL;
+    BU_AVS_INIT(&result->param_unchanged);
+    BU_AVS_INIT(&result->param_removed_left_only);
+    BU_AVS_INIT(&result->param_removed_right_only);
+    BU_AVS_INIT(&result->param_removed_both);
+    BU_AVS_INIT(&result->param_added_left_only);
+    BU_AVS_INIT(&result->param_added_right_only);
+    BU_AVS_INIT(&result->param_added_both);
+    BU_AVS_INIT(&result->param_added_conflict_left);
+    BU_AVS_INIT(&result->param_added_conflict_right);
+    BU_AVS_INIT(&result->param_changed_left_only);
+    BU_AVS_INIT(&result->param_changed_right_only);
+    BU_AVS_INIT(&result->param_changed_both);
+    BU_AVS_INIT(&result->param_changed_conflict_ancestor);
+    BU_AVS_INIT(&result->param_changed_conflict_left);
+    BU_AVS_INIT(&result->param_changed_conflict_right);
+    BU_AVS_INIT(&result->param_merged);
+    BU_AVS_INIT(&result->attribute_unchanged);
+    BU_AVS_INIT(&result->attribute_removed_left_only);
+    BU_AVS_INIT(&result->attribute_removed_right_only);
+    BU_AVS_INIT(&result->attribute_removed_both);
+    BU_AVS_INIT(&result->attribute_added_left_only);
+    BU_AVS_INIT(&result->attribute_added_right_only);
+    BU_AVS_INIT(&result->attribute_added_both);
+    BU_AVS_INIT(&result->attribute_added_conflict_left);
+    BU_AVS_INIT(&result->attribute_added_conflict_right);
+    BU_AVS_INIT(&result->attribute_changed_left_only);
+    BU_AVS_INIT(&result->attribute_changed_right_only);
+    BU_AVS_INIT(&result->attribute_changed_both);
+    BU_AVS_INIT(&result->attribute_changed_conflict_ancestor);
+    BU_AVS_INIT(&result->attribute_changed_conflict_left);
+    BU_AVS_INIT(&result->attribute_changed_conflict_right);
+    BU_AVS_INIT(&result->attribute_merged);
+
+}
+#endif
 
 static void
-diff_result_free_ptbl(struct bu_ptbl *results_table)
+diff3_result_free(void *curr_result)
 {
-    int i = 0;
+    struct diff3_result_container *result = (struct diff3_result_container *)curr_result;
 
-    if (!results_table)
+    if (!result)
 	return;
 
-    for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
-	struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(results_table, i);
-	diff_result_free((void *)result);
-    }
-    bu_ptbl_free(results_table);
+    bu_avs_free(&result->param_unchanged);
+    bu_avs_free(&result->param_removed_left_only);
+    bu_avs_free(&result->param_removed_right_only);
+    bu_avs_free(&result->param_removed_both);
+    bu_avs_free(&result->param_added_left_only);
+    bu_avs_free(&result->param_added_right_only);
+    bu_avs_free(&result->param_added_both);
+    bu_avs_free(&result->param_added_conflict_left);
+    bu_avs_free(&result->param_added_conflict_right);
+    bu_avs_free(&result->param_changed_left_only);
+    bu_avs_free(&result->param_changed_right_only);
+    bu_avs_free(&result->param_changed_both);
+    bu_avs_free(&result->param_changed_conflict_ancestor);
+    bu_avs_free(&result->param_changed_conflict_left);
+    bu_avs_free(&result->param_changed_conflict_right);
+    bu_avs_free(&result->param_merged);
+    bu_avs_free(&result->attribute_unchanged);
+    bu_avs_free(&result->attribute_removed_left_only);
+    bu_avs_free(&result->attribute_removed_right_only);
+    bu_avs_free(&result->attribute_removed_both);
+    bu_avs_free(&result->attribute_added_left_only);
+    bu_avs_free(&result->attribute_added_right_only);
+    bu_avs_free(&result->attribute_added_both);
+    bu_avs_free(&result->attribute_added_conflict_left);
+    bu_avs_free(&result->attribute_added_conflict_right);
+    bu_avs_free(&result->attribute_changed_left_only);
+    bu_avs_free(&result->attribute_changed_right_only);
+    bu_avs_free(&result->attribute_changed_both);
+    bu_avs_free(&result->attribute_changed_conflict_ancestor);
+    bu_avs_free(&result->attribute_changed_conflict_left);
+    bu_avs_free(&result->attribute_changed_conflict_right);
+    bu_avs_free(&result->attribute_merged);
+
 }
+
+
 
 /*******************************************************************/
 /* Structure and memory management for the container used to hold
@@ -193,14 +311,19 @@ void diff_results_init(struct diff_results *results){
 }
 
 
-void diff_results_free(struct diff_results *results){
-
+void diff_results_free(struct diff_results *results)
+{
+    int i = 0;
     bu_ptbl_free(results->added);
     bu_ptbl_free(results->removed);
     bu_ptbl_free(results->unchanged);
     bu_ptbl_free(results->changed_ancestor_dbip);
     bu_ptbl_free(results->changed_new_dbip_1);
-    diff_result_free_ptbl(results->changed);
+    for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
+	struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(results->changed, i);
+	diff_result_free((void *)result);
+    }
+    bu_ptbl_free(results->changed);
 
     BU_PUT(results->added, struct bu_ptbl);
     BU_PUT(results->removed, struct bu_ptbl);
@@ -211,364 +334,72 @@ void diff_results_free(struct diff_results *results){
 
 }
 
-
-/*******************************************************************/
-/* Structures and memory management for the containers specific to
- * diff3 results */
-/*******************************************************************/
-
-struct diff3_result_container {
-    struct diff_result_container *ancestor_dbip1;
-    struct diff_result_container *ancestor_dbip2;
-    struct diff_result_container *dbip1_dbip2;
-    int internal_diff;
-    int attribute_diff;
-    struct bu_attribute_value_set *additional_unchanged;
-    struct bu_attribute_value_set *additional_added;
-    struct bu_attribute_value_set *additional_added_conflicting_dbip1;
-    struct bu_attribute_value_set *additional_added_conflicting_dbip2;
-    struct bu_attribute_value_set *additional_removed;
-    struct bu_attribute_value_set *additional_changed;
-    struct bu_attribute_value_set *additional_changed_conflicting_dbip1;
-    struct bu_attribute_value_set *additional_changed_conflicting_dbip2;
-
-};
-
 struct diff3_results {
     float diff_tolerance;
-
-    struct bu_ptbl *added_dbip1;     	/* directory pointers */
-    struct bu_ptbl *added_dbip2;     	/* directory pointers */
-    struct bu_ptbl *added_both;     	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two added objects *without* conflict, we need to use a container)*/
-    struct bu_ptbl *added_conflicts;    /* containers */
-
-    struct bu_ptbl *removed_dbip1;   	/* directory pointers */
-    struct bu_ptbl *removed_dbip2;   	/* directory pointers */
-    struct bu_ptbl *removed_both;     	/* directory pointers (dbip1) */
-
-    struct bu_ptbl *changed_ancestor;   /* directory pointers */
-    struct bu_ptbl *changed_dbip1_new;	/* directory pointers */
-    struct bu_ptbl *changed_dbip2_new;	/* directory pointers */
-    struct bu_ptbl *changed_both;	/* directory pointers (dbip1 - note that we are assuming objects are either identical or conflict - if we can merge the two changed objects *without* conflict, we need to use a container) */
-    struct bu_ptbl *changed_conflicts;  /* containers */
-
-    struct bu_ptbl *unchanged; 		/* directory pointers (ancestor)*/
+    struct db_i *merged_db;
+    struct bu_ptbl *unchanged; /* directory pointers (ancestor dbip) */
+    struct bu_ptbl *removed_left_only; /* directory pointers (ancestor dbip) */
+    struct bu_ptbl *removed_right_only; /* directory pointers (ancestor dbip) */
+    struct bu_ptbl *removed_both; /* directory pointers (ancestor dbip) */
+    struct bu_ptbl *added_left_only; /* directory pointers (left dbip) */
+    struct bu_ptbl *added_right_only; /* directory pointers (right dbip) */
+    struct bu_ptbl *changed; /* containers */
+    struct bu_ptbl *conflict; /* containers */
 };
 
 void diff3_results_init(struct diff3_results *results){
 
-    BU_GET(results->added_dbip1, struct bu_ptbl);
-    BU_GET(results->added_dbip2, struct bu_ptbl);
-    BU_GET(results->added_both, struct bu_ptbl);
-    BU_GET(results->added_conflicts, struct bu_ptbl);
-
-    BU_GET(results->removed_dbip1, struct bu_ptbl);
-    BU_GET(results->removed_dbip2, struct bu_ptbl);
-    BU_GET(results->removed_both, struct bu_ptbl);
-
-    BU_GET(results->changed_ancestor, struct bu_ptbl);
-    BU_GET(results->changed_dbip1_new, struct bu_ptbl);
-    BU_GET(results->changed_dbip2_new, struct bu_ptbl);
-    BU_GET(results->changed_both, struct bu_ptbl);
-    BU_GET(results->changed_conflicts, struct bu_ptbl);
-
+    results->merged_db = DBI_NULL;
+    results->diff_tolerance = RT_LEN_TOL;
     BU_GET(results->unchanged, struct bu_ptbl);
+    BU_GET(results->removed_left_only, struct bu_ptbl);
+    BU_GET(results->removed_right_only, struct bu_ptbl);
+    BU_GET(results->removed_both, struct bu_ptbl);
+    BU_GET(results->added_left_only, struct bu_ptbl);
+    BU_GET(results->added_right_only, struct bu_ptbl);
+    BU_GET(results->changed, struct bu_ptbl);
+    BU_GET(results->conflict, struct bu_ptbl);
 
-    BU_PTBL_INIT(results->added_dbip1);
-    BU_PTBL_INIT(results->added_dbip2);
-    BU_PTBL_INIT(results->added_both);
-    BU_PTBL_INIT(results->added_conflicts);
-
-    BU_PTBL_INIT(results->removed_dbip1);
-    BU_PTBL_INIT(results->removed_dbip2);
+    BU_PTBL_INIT(results->unchanged); 
+    BU_PTBL_INIT(results->removed_left_only);
+    BU_PTBL_INIT(results->removed_right_only);
     BU_PTBL_INIT(results->removed_both);
+    BU_PTBL_INIT(results->added_left_only);
+    BU_PTBL_INIT(results->added_right_only); 
+    BU_PTBL_INIT(results->changed);
+    BU_PTBL_INIT(results->conflict);
 
-    BU_PTBL_INIT(results->changed_ancestor);
-    BU_PTBL_INIT(results->changed_dbip1_new);
-    BU_PTBL_INIT(results->changed_dbip2_new);
-    BU_PTBL_INIT(results->changed_both);
-    BU_PTBL_INIT(results->changed_conflicts);
-
-    BU_PTBL_INIT(results->unchanged);
 }
 
+void diff3_results_free(struct diff3_results *results)
+{
+    int i = 0;
 
-void diff3_results_free(struct diff3_results *results){
-
-    bu_ptbl_free(results->added_dbip1);
-    bu_ptbl_free(results->added_dbip2);
-    bu_ptbl_free(results->added_both);
-
-    bu_ptbl_free(results->removed_dbip1);
-    bu_ptbl_free(results->removed_dbip2);
+    bu_ptbl_free(results->unchanged); 
+    bu_ptbl_free(results->removed_left_only);
+    bu_ptbl_free(results->removed_right_only);
     bu_ptbl_free(results->removed_both);
-
-    bu_ptbl_free(results->changed_ancestor);
-    bu_ptbl_free(results->changed_dbip1_new);
-    bu_ptbl_free(results->changed_dbip2_new);
-    bu_ptbl_free(results->changed_both);
-
-    bu_ptbl_free(results->unchanged);
-
-    /* TODO - properly free the allocated containers with BU_PUT */
-    bu_ptbl_free(results->added_conflicts);
-    bu_ptbl_free(results->changed_conflicts);
-
-
-    BU_PUT(results->added_dbip1, struct bu_ptbl);
-    BU_PUT(results->added_dbip2, struct bu_ptbl);
-    BU_PUT(results->added_both, struct bu_ptbl);
-    BU_PUT(results->added_conflicts, struct bu_ptbl);
-
-    BU_PUT(results->removed_dbip1, struct bu_ptbl);
-    BU_PUT(results->removed_dbip2, struct bu_ptbl);
-    BU_PUT(results->removed_both, struct bu_ptbl);
-
-    BU_PUT(results->changed_ancestor, struct bu_ptbl);
-    BU_PUT(results->changed_dbip1_new, struct bu_ptbl);
-    BU_PUT(results->changed_dbip2_new, struct bu_ptbl);
-    BU_PUT(results->changed_both, struct bu_ptbl);
-    BU_PUT(results->changed_conflicts, struct bu_ptbl);
+    bu_ptbl_free(results->added_left_only);
+    bu_ptbl_free(results->added_right_only); 
+    for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
+	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->changed, i);
+	diff3_result_free((void *)result);
+    }
+    bu_ptbl_free(results->changed);
+    for (i = 0; i < (int)BU_PTBL_LEN(results->conflict); i++) {
+	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->conflict, i);
+	diff3_result_free((void *)result);
+    }
+    bu_ptbl_free(results->conflict);
 
     BU_PUT(results->unchanged, struct bu_ptbl);
-}
-
-/* TODO - this function is a duplicate of a private one in librt - probably
- * need to move bu_avs_diff3 to db_diff and expose it in the private header... */
-static int
-avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
-{
-    /* We need to look for numbers to do tolerance based comparisons */
-    int num_compare = 1;
-    int pnt_compare = 1;
-    double dval1, dval2;
-    float p1val1, p1val2, p1val3;
-    float p2val1, p2val2, p2val3;
-    char *endptr;
-
-    /* First, check for individual numbers */
-    errno = 0;
-    dval1 = strtod(val1, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
-    errno = 0;
-    dval2 = strtod(val2, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
-
-    /* If we didn't find numbers, try for points (3 floating point numbers) */
-    if (num_compare != 1) {
-	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
-	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
-    }
-
-    if (num_compare == 1) {
-	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
-    }
-    if (pnt_compare == 1) {
-	vect_t v1, v2;
-	VSET(v1, p1val1, p1val2, p1val3);
-	VSET(v2, p2val1, p2val2, p2val3);
-	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
-    }
-    return BU_STR_EQUAL(val1, val2);
-}
-
-
-/*******************************************************************/
-/* diff3 logic for attribute/value sets                            */
-/*******************************************************************/
-static void
-bu_avs_diff3(struct bu_attribute_value_set *unchanged,
-	struct bu_attribute_value_set *removed_avs1_only,
-	struct bu_attribute_value_set *removed_avs2_only,
-	struct bu_attribute_value_set *removed_both,
-	struct bu_attribute_value_set *added_avs1_only,
-	struct bu_attribute_value_set *added_avs2_only,
-	struct bu_attribute_value_set *added_both,
-	struct bu_attribute_value_set *added_conflict_avs1,
-	struct bu_attribute_value_set *added_conflict_avs2,
-	struct bu_attribute_value_set *changed_avs1_only,
-	struct bu_attribute_value_set *changed_avs2_only,
-	struct bu_attribute_value_set *changed_both,
-	struct bu_attribute_value_set *changed_conflict_ancestor,
-	struct bu_attribute_value_set *changed_conflict_avs1,
-	struct bu_attribute_value_set *changed_conflict_avs2,
-	struct bu_attribute_value_set *merged,
-	const struct bu_attribute_value_set *ancestor,
-	const struct bu_attribute_value_set *avs1,
-	const struct bu_attribute_value_set *avs2,
-	const struct bn_tol *diff_tol)
-{
-    struct bu_attribute_value_pair *avp;
-    if (!BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
-    if (!BU_AVS_IS_INITIALIZED(removed_avs1_only)) BU_AVS_INIT(removed_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_avs2_only)) BU_AVS_INIT(removed_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_both)) BU_AVS_INIT(removed_both);
-    if (!BU_AVS_IS_INITIALIZED(added_avs1_only)) BU_AVS_INIT(added_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(added_avs2_only)) BU_AVS_INIT(added_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(added_both)) BU_AVS_INIT(added_both);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs1)) BU_AVS_INIT(added_conflict_avs1);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs2)) BU_AVS_INIT(added_conflict_avs2);
-    if (!BU_AVS_IS_INITIALIZED(changed_avs1_only)) BU_AVS_INIT(changed_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_avs2_only)) BU_AVS_INIT(changed_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_both)) BU_AVS_INIT(changed_both);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_ancestor)) BU_AVS_INIT(changed_conflict_ancestor);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs1)) BU_AVS_INIT(changed_conflict_avs1);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs2)) BU_AVS_INIT(changed_conflict_avs2);
-    if (!BU_AVS_IS_INITIALIZED(merged)) BU_AVS_INIT(merged);
-
-    for (BU_AVS_FOR(avp, ancestor)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	const char *val1 = bu_avs_get(avs1, avp->name);
-	const char *val2 = bu_avs_get(avs2, avp->name);
-	/* The possibilities are:
-	 *
-	 * (!val1 && !val2) && val_ancestor
-	 * (val1 && !val2) && (val_ancestor == val1)
-	 * (val1 && !val2) && (val_ancestor != val1)
-	 * (!val1 && val2) && (val_ancestor == val2)
-	 * (!val1 && val2) && (val_ancestor != val2)
-	 * (val1 == val2) && (val_ancestor == val1)
-	 * (val1 == val2) && (val_ancestor != val1)
-	 * (val1 != val2) && (val_ancestor == val1)
-	 * (val1 != val2) && (val_ancestor == val2)
-	 * (val1 != val2) && (val_ancestor != val1 && val_ancestor != val2)
-	 */
-
-	/* Removed from both - no conflict, nothing to merge */
-	if ((!val1 && !val2) && val_ancestor)
-	    bu_avs_add(removed_both, avp->name, val_ancestor);
-
-	/* Removed from avs2 only, avs1 not changed - no conflict,
-	 * avs2 removal wins and avs1 is not merged */
-	if ((val1 && !val2) && avpp_val_compare(val_ancestor, val1, diff_tol))
-	    bu_avs_add(removed_avs2_only, avp->name, val_ancestor);
-
-	/* Removed from avs2 only, avs1 changed - conflict
-	 * merge adds conflict a/v pairs */
-	if ((val1 && !val2) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    struct bu_vls avval = BU_VLS_INIT_ZERO;
-	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
-	    bu_vls_sprintf(&avval, "%s", "REMOVED");
-	    bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
-	    bu_vls_free(&avname);
-	    bu_vls_free(&avval);
-	}
-
-	/* Removed from avs1 only, avs2 not changed - no conflict,
-	 * avs1 change wins and avs2 not merged */
-	if ((!val1 && val2) && avpp_val_compare(val_ancestor, val2, diff_tol))
-	    bu_avs_add(removed_avs1_only, avp->name, val_ancestor);
-
-	/* Removed from avs1 only, avs2 changed - conflict,
-	 * merge defaults to preserving information */
-	if ((!val1 && val2) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    struct bu_vls avval = BU_VLS_INIT_ZERO;
-	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
-	    bu_vls_sprintf(&avval, "%s", "REMOVED");
-	    bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
-	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val2);
-	    bu_vls_free(&avname);
-	    bu_vls_free(&avval);
-	}
-
-	/* All values equal, unchanged and merged */
-	if (avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    bu_avs_add(unchanged, avp->name, val_ancestor);
-	    bu_avs_add(merged, avp->name, val_ancestor);
-	}
-	/* Identical change to both - changed and merged */
-	if (avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    bu_avs_add(changed_both, avp->name, val1);
-	    bu_avs_add(merged, avp->name, val1);
-	}
-	/* val2 changed, val1 not changed - val2 change wins and is merged */
-	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    bu_avs_add(changed_avs2_only, avp->name, val2);
-	    bu_avs_add(merged, avp->name, val2);
-	}
-	/* val1 changed, val2 not changed - val1 change wins and is merged */
-	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    bu_avs_add(changed_avs1_only, avp->name, val1);
-	    bu_avs_add(merged, avp->name, val1);
-	}
-	/* val1 and val2 changed and incompatible - conflict,
-	 * merge adds conflict a/v pairs */
-	if (!avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    bu_avs_add(changed_conflict_avs1, avp->name, val1);
-	    bu_avs_add(changed_conflict_avs2, avp->name, val2);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
-	    bu_avs_add(merged, bu_vls_addr(&avname), val2);
-	    bu_vls_free(&avname);
-	}
-    }
-
-    /* Now do avs1 - anything in ancestor has already been handled */
-    for (BU_AVS_FOR(avp, avs1)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	if (!val_ancestor) {
-	    const char *val1 = bu_avs_get(avs1, avp->name);
-	    const char *val2 = bu_avs_get(avs2, avp->name);
-	    /* The possibilities are:
-	     *
-	     * (val1 && !val2)
-	     * (val1 == val2)
-	     * (val1 != val2)
-	     */
-
-	    /* Added in avs1 only - no conflict */
-	    if (val1 && !val2) {
-		bu_avs_add(added_avs1_only, avp->name, val1);
-		bu_avs_add(merged, avp->name, val1);
-	    }
-	    /* Added in avs1 and avs2 with the same value - no conflict */
-	    if (avpp_val_compare(val1,val2, diff_tol)) {
-	       	bu_avs_add(added_both, avp->name, val1);
-		bu_avs_add(merged, avp->name, val1);
-	    }
-	    /* Added in avs1 and avs2 with different values - conflict
-	     * merge adds conflict a/v pairs */
-	    if (avpp_val_compare(val1,val2, diff_tol)) {
-		struct bu_vls avname = BU_VLS_INIT_ZERO;
-		bu_avs_add(added_conflict_avs1, avp->name, val1);
-		bu_avs_add(added_conflict_avs2, avp->name, val2);
-		bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
-		bu_avs_add(merged, bu_vls_addr(&avname), val1);
-		bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
-		bu_avs_add(merged, bu_vls_addr(&avname), val2);
-		bu_vls_free(&avname);
-	    }
-	}
-    }
-
-    /* Last but not least, avs2 - anything in ancestor and/or avs1 has already been handled */
-    for (BU_AVS_FOR(avp, avs2)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	const char *val1 = bu_avs_get(avs1, avp->name);
-	if (!val_ancestor && !val1) {
-	    const char *val2 = bu_avs_get(avs2, avp->name);
-	    bu_avs_add(added_avs2_only, avp->name, val1);
-	    bu_avs_add(merged, avp->name, val2);
-	}
-    }
+    BU_PUT(results->removed_left_only, struct bu_ptbl);
+    BU_PUT(results->removed_right_only, struct bu_ptbl);
+    BU_PUT(results->removed_both, struct bu_ptbl);
+    BU_PUT(results->added_left_only, struct bu_ptbl);
+    BU_PUT(results->added_right_only, struct bu_ptbl);
+    BU_PUT(results->changed, struct bu_ptbl);
+    BU_PUT(results->conflict, struct bu_ptbl);
 
 }
 
@@ -626,89 +457,14 @@ diff_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right)
     return 0;
 }
 
-static int
-compare_dps(struct diff_result_container *result, const struct directory *dp1, const struct db_i *dbip1, const struct directory *dp2, const struct db_i *dbip2, struct bn_tol *diff_tol)
-{
-    /* Compare the two objects */
-    struct rt_db_internal *intern_1 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_1");
-    struct rt_db_internal *intern_2 = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_2");
-    struct bu_attribute_value_set *ino = NULL;
-    struct bu_attribute_value_set *ioo = NULL;
-    struct bu_attribute_value_set *iod = NULL;
-    struct bu_attribute_value_set *ind = NULL;
-    struct bu_attribute_value_set *ins = NULL;
-    struct bu_attribute_value_set *ano = NULL;
-    struct bu_attribute_value_set *aoo = NULL;
-    struct bu_attribute_value_set *aod = NULL;
-    struct bu_attribute_value_set *avsnd = NULL;
-    struct bu_attribute_value_set *ans = NULL;
-
-    int internal_diff = 1;
-    int attr_diff = 1;
-    int bad_internal_1 = 1;
-    int bad_internal_2 = 1;
-    RT_DB_INTERNAL_INIT(intern_1);
-    RT_DB_INTERNAL_INIT(intern_2);
-
-    if (result) {
-	result->dp_orig = dp1;
-	result->dp_new = dp2;
-    }
-
-    /* Get the internal objects */
-    if (rt_db_get_internal(intern_1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internal_1--;
-    }
-    if (rt_db_get_internal(intern_2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) >= 0) {
-	bad_internal_2--;
-    }
-
-    /* If we have a result structure, uses its bu_avs containers */
-    if (result) {
-	ino = &(result->internal_new_only);
-	ioo = &(result->internal_orig_only);
-	iod = &(result->internal_orig_diff);
-	ind = &(result->internal_new_diff);
-	ins = &(result->internal_shared);
-	ano = &(result->additional_new_only);
-	aoo = &(result->additional_orig_only);
-	aod = &(result->additional_orig_diff);
-	avsnd = &(result->additional_new_diff);
-	ans = &(result->additional_shared);
-    }
-    if (bad_internal_1 || bad_internal_2) {
-	if (!bad_internal_1) rt_db_free_internal(intern_1);
-	if (!bad_internal_2) rt_db_free_internal(intern_2);
-	if (result) result->status = 1;
-	return -1;
-    }
-
-    internal_diff = db_compare(intern_1, intern_2, DB_COMPARE_PARAM, ino, ioo, iod, ind, ins, diff_tol);
-    attr_diff = db_compare(intern_1, intern_2, DB_COMPARE_ATTRS, ano, aoo, aod, avsnd, ans, diff_tol);
-
-    if (result) {
-	result->internal_diff = internal_diff;
-	result->attribute_diff = attr_diff;
-    }
-
-    rt_db_free_internal(intern_1);
-    rt_db_free_internal(intern_2);
-
-    if (!internal_diff && !attr_diff) return 0;
-    if (!internal_diff && attr_diff)  return 1;
-    if (internal_diff && !attr_diff)  return 2;
-    if (internal_diff && attr_diff)   return 3;
-    return -1;  /* Shouldn't get here */
-}
-
-
 int
 diff_changed(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data)
 {
     struct diff_results *results;
     struct diff_result_container *result;
     struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
-    int changed_status = -1;
+    struct rt_db_internal intern_orig;
+    struct rt_db_internal intern_new;
 
     if (!left || !right || !before || !after|| !data)
 	return -1;
@@ -729,44 +485,78 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     result = (struct diff_result_container *)bu_calloc(1, sizeof(struct diff_result_container), "diff result struct");
     diff_result_init(result);
 
-    changed_status = compare_dps(result, before, left, after, right, &diff_tol);
-    switch (changed_status) {
-	case -1:
-	    result->status = 1;
-	    return -1;
-	    break;
-	case 0:
-	    result->internal_diff = 0;
-	    result->attribute_diff = 0;
-	    if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
-	    bu_ptbl_ins(results->unchanged, (long *)before);
-	    diff_result_free(result);
-	    break;
-	case 1:
-	    result->internal_diff = 0;
-	    result->attribute_diff = 1;
-	    bu_ptbl_ins(results->changed, (long *)result);
-	    break;
-	case 2:
-	    result->internal_diff = 1;
-	    result->attribute_diff = 0;
-	    bu_ptbl_ins(results->changed, (long *)result);
-	    break;
-	case 3:
-	    result->internal_diff = 1;
-	    result->attribute_diff = 1;
-	    bu_ptbl_ins(results->changed, (long *)result);
-	    break;
-	default:
-	    bu_log("error - unknown return code %d from directory object comparison\n", changed_status);
-	    diff_result_free(result);
-	    result->status = 1;
-	    return -1;
-	    break;
+    result->dp_orig = before;
+    result->dp_new = after;
+
+    RT_DB_INTERNAL_INIT(&intern_orig);
+    RT_DB_INTERNAL_INIT(&intern_new);
+
+    /* Get the internal objects */
+    if (rt_db_get_internal(&intern_orig, before, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	result->status = 1;
+	return -1;
     }
+    if (rt_db_get_internal(&intern_new, after, right, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern_orig);
+	result->status = 1;
+	return -1;
+    }
+
+    result->internal_diff = db_compare(&intern_orig, &intern_new, DB_COMPARE_PARAM,
+	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
+	    &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
+
+    result->attribute_diff = db_compare(&intern_orig, &intern_new, DB_COMPARE_ATTRS,
+	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
+	    &(result->additional_new_diff), &(result->additional_shared), &diff_tol);
+
+    if (result->internal_diff || result->attribute_diff) {
+	bu_ptbl_ins(results->changed, (long *)result);
+    } else {
+	if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
+	bu_ptbl_ins(results->unchanged, (long *)before);
+	diff_result_free(result);
+    }
+
+    rt_db_free_internal(&intern_orig);
+    rt_db_free_internal(&intern_new);
 
     return 0;
 }
+
+
+
+
+
+
+/*******************************************************************/
+/* Callback functions for db_compare3 */
+/*******************************************************************/
+#if 0
+int
+diff3_added(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *UNUSED(added), void *data)
+{
+    return 0;
+}
+
+
+int
+diff3_removed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *removed, void *data)
+{
+}
+
+
+int
+diff3_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(right), const struct directory *unchanged, void *data)
+{
+}
+
+int
+diff3_changed(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data)
+{
+}
+#endif
+
 
 /*******************************************************************/
 /* Output generators for diff log */
@@ -957,6 +747,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, stru
     bu_vls_printf(diff_log, "\n");
 }
 
+#if 0
 static void
 diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, struct diff_state *state)
 {
@@ -1053,7 +844,7 @@ diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, st
     }
     bu_vls_printf(diff_log, "\n");
 }
-
+#endif
 
 
 /*******************************************************************/
@@ -1181,6 +972,7 @@ do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *
  * of looking at every entry every time - potentially expensive in
  * the worst cases. */
 
+#if 0
 static const struct directory *
 dp_ptbl_find(struct bu_ptbl *table, const char *name)
 {
@@ -1443,7 +1235,7 @@ do_diff3(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct db_i *new_d
 
     return 0;
 }
-
+#endif
 
 
 static void
@@ -1578,10 +1370,10 @@ main(int argc, char **argv)
 
     if (argc == 2)
 	diff_return = do_diff(ancestor_dbip, new_dbip_1, state);
-
+#if 0
     if (argc == 3)
 	diff_return = do_diff3(ancestor_dbip, new_dbip_1, new_dbip_2, state);
-
+#endif
     diff_state_free(state);
     BU_PUT(state, struct diff_state);
 
