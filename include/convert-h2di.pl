@@ -138,26 +138,27 @@ elsif ($convert1) {
 
   my $incdirs  = '-I. -I../src/other/tcl/generic';
   foreach my $ifil (@ifils) {
-    my $process = 0;
-    # check to see status of generated file
+    my ($process, $stat) = (0, 0);
+    # check to see current status of input file
+    $stat = $f{$ifil}{status};
+    if ($stat == $DIFF ||$stat == $NEW) {
+      $process = 1;
+    }
+
+    # final output file
     my $ofil = $ifil;
     $ofil =~ s{\.h \z}{\.di}xms;
-    my $stat = $f{$ofil}{status};
+    $stat = $f{$ofil}{status};
     if (defined $stat && $stat == $NEW) {
       $process = 1;
     }
-    else {
-      # check status of input file
-      $stat = $f{$ifil}{status};
-      if ($stat == $DIFF ||$stat == $NEW) {
-	$process = 1;
-      }
+    elsif (-e $ofil && !$force) {
+      $process = 0;
     }
-    # override?
-    $process = 1
-      if ($force);
+
     if (!$process) {
       print "Skipping input file '$ifil'...\n";
+      next;
     }
 
     print "Processing file '$ifil' => '$ofil'...\n";
@@ -173,6 +174,9 @@ elsif ($convert1) {
     if (!$old_hash_ref || $old_hash ne $new_hash) {
       store \$new_hash, $hfil;
       push @ofils, $ofil;
+    }
+    else {
+      print "Output file '$ofil' has not changed.\n";
     }
   }
 }
