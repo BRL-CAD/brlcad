@@ -115,6 +115,62 @@ db_compare(const struct rt_db_internal *left_obj,
 	   struct bn_tol *diff_tol);
 
 
+/**
+ * Compare three database objects.
+ *
+ * The flags parameter is a bitfield specifying what type of
+ * comparisons to perform.  The default is to compare everything and
+ * report on any differences encountered.
+ *
+ * The same bu_attribute_value_set container may be passed to any of
+ * the provided containers to aggregate results.  NULL may be passed
+ * to not inspect or record information for that type of comparison.
+ *
+ * This function returns:
+ *
+ * 0 if there are no differences
+ * 1 if there are differences but no conflits
+ * 2 if there are conflits
+ * 3 if there are differences but they cannot be studied (tcl params not available)
+ * 4 if there are conflits but they cannot be studied (tcl params not available)
+ *
+ * Negative values indicate an internal error.
+ *
+ * The various attribute/value sets contain the categorized
+ * parameters.  The "merged" set contains the combined attributes
+ * of all objects, with conflicts encoded according to the templates:
+ *
+ * CONFLICT(ANCESTOR):<avs name> , avs_value_ancestor
+ * CONFLICT(LEFT):<avs name> , avs_value_left
+ * CONFLICT(RIGHT):<avs name> , avs_value_right
+ *
+ * For cases where a value didn't exist, avs_value_* is replaced with
+ * REMOVED.
+ *
+ */
+RT_EXPORT extern int
+db_compare3(const struct rt_db_internal *left,
+	const struct rt_db_internal *ancestor,
+	const struct rt_db_internal *right,
+	db_compare_criteria_t flags,
+	struct bu_attribute_value_set *unchanged,
+	struct bu_attribute_value_set *removed_left_only,
+	struct bu_attribute_value_set *removed_right_only,
+	struct bu_attribute_value_set *removed_both,
+	struct bu_attribute_value_set *added_left_only,
+	struct bu_attribute_value_set *added_right_only,
+	struct bu_attribute_value_set *added_both,
+	struct bu_attribute_value_set *added_conflict_left,
+	struct bu_attribute_value_set *added_conflict_right,
+	struct bu_attribute_value_set *changed_left_only,
+	struct bu_attribute_value_set *changed_right_only,
+	struct bu_attribute_value_set *changed_both,
+	struct bu_attribute_value_set *changed_conflict_ancestor,
+	struct bu_attribute_value_set *changed_conflict_left,
+	struct bu_attribute_value_set *changed_conflict_right,
+	struct bu_attribute_value_set *merged,
+	struct bn_tol *diff_tol);
+
 /*
  * Local Variables:
  * tab-width: 8
