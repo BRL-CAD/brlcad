@@ -20,6 +20,7 @@ changes made.  See document footer for additional details.
 * documented image size options in rtwizard man page - Cliff Yapp
 * added view center specification dialog to rtwizard - Cliff Yapp
 * increased rtwizard window size for button visibility - Cliff Yapp
+* improved pipe ray tracing grazing hit behavior - Keith Bowman
 * upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
