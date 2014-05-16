@@ -271,10 +271,10 @@ int
 db_diff3(const struct db_i *left,
 	const struct db_i *ancestor,
 	const struct db_i *right,
-	int (*add_func)(const struct db_i *added_dbip, const struct directory *added, void *data),
-	int (*del_func)(const struct db_i *ancestor, const struct directory *deleted, void *data),
+	int (*add_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
+	int (*del_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
 	int (*chgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*unchgd_func)(const struct db_i *ancestor, const struct directory *unchanged, void *data),
+	int (*unchgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
 	void *client_data)
 {
     int has_diff = 0;
@@ -297,13 +297,13 @@ db_diff3(const struct db_i *left,
 
 	/* (!dp_left && !dp_right) && dp_ancestor */
 	if ((dp_left == RT_DIR_NULL) && (dp_right == RT_DIR_NULL)) {
-	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 	    has_diff++;
 	}
 
 	/* (dp_left && !dp_right) && (dp_ancestor == dp_left)  */
 	if ((dp_left != RT_DIR_NULL) && (dp_right == RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 	    has_diff++;
 	}
 
@@ -315,7 +315,7 @@ db_diff3(const struct db_i *left,
 
 	/* (!dp_left && dp_right) && (dp_ancestor == dp_right) */
 	if ((dp_left == RT_DIR_NULL) && (dp_right != RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_right)) {
-	    if (del_func && del_func(ancestor, dp_ancestor, client_data)) error--;
+	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 	    has_diff++;
 	}
 
@@ -327,7 +327,7 @@ db_diff3(const struct db_i *left,
 
 	/* (dp_left == dp_right) && (dp_ancestor == dp_left)   */
 	if (!db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (unchgd_func && unchgd_func(ancestor, dp_ancestor, client_data)) error--;
+	    if (unchgd_func && unchgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 	}
 
 	/* (dp_left == dp_right) && (dp_ancestor != dp_left)   */
@@ -364,7 +364,7 @@ db_diff3(const struct db_i *left,
 	    if (dp_right != RT_DIR_NULL) (void)db_get_external(&ext_right, dp_right, right);
 	    /* dp_left && !dp_right || dp_left == dp_right */
 	    if (dp_right == RT_DIR_NULL || !db_diff_external(&ext_left, &ext_right)) {
-		if (add_func && add_func(left, dp_left, client_data)) error--;
+		if (add_func && add_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 		has_diff++;
 	    }
 	    /* dp_left != dp_right */
@@ -379,7 +379,7 @@ db_diff3(const struct db_i *left,
 	dp_ancestor = db_lookup(ancestor, dp_right->d_namep, 0);
 	dp_left = db_lookup(left, dp_right->d_namep, 0);
 	if (dp_ancestor == RT_DIR_NULL && dp_left == RT_DIR_NULL) {
-	    if (add_func && add_func(right, dp_right, client_data)) error--;
+	    if (add_func && add_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
 	    has_diff++;
 	}
     } FOR_ALL_DIRECTORY_END;
