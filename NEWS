@@ -53,6 +53,7 @@ changes made.  See document footer for additional details.
 --- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* improved pipe ray tracing grazing hit behavior - Keith Bowman
 * upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
