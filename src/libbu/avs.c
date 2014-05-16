@@ -79,6 +79,8 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 {
     struct bu_attribute_value_pair *app;
 
+    if (!avsp) return 0;
+
     BU_CK_AVS(avsp);
 
     if (UNLIKELY(!name)) {
