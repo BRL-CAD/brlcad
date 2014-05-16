@@ -6,8 +6,9 @@ use strict;
 use warnings;
 
 use File::Basename;
-use Storable;
-use Digest::MD5::File qw(file_md5_hex);
+use lib('.');
+
+use D; # local convenience module
 
 # use the reference D compiler
 my $DMD = '/usr/bin/dmd';
@@ -97,11 +98,6 @@ foreach my $arg (@ARGV) {
   }
 }
 
-# global vars
-my $NEW  = -1;
-my $SAME =  0;
-my $DIFF =  1;
-
 # collect all .h and .di files; note that some .h files are obsolete
 # and are so indicated inside the following function
 my (@h, @di) = ();
@@ -136,49 +132,7 @@ elsif ($convert1) {
   @ifils = @h
     if !@ifils;
 
-  my $incdirs  = '-I. -I../src/other/tcl/generic';
-  foreach my $ifil (@ifils) {
-    my ($process, $stat) = (0, 0);
-    # check to see current status of input file
-    $stat = $f{$ifil}{status};
-    if ($stat == $DIFF ||$stat == $NEW) {
-      $process = 1;
-    }
-
-    # final output file
-    my $ofil = $ifil;
-    $ofil =~ s{\.h \z}{\.di}xms;
-    $stat = $f{$ofil}{status};
-    if (defined $stat && $stat == $NEW) {
-      $process = 1;
-    }
-    elsif (-e $ofil && !$force) {
-      $process = 0;
-    }
-
-    if (!$process) {
-      print "Skipping input file '$ifil'...\n";
-      next;
-    }
-
-    print "Processing file '$ifil' => '$ofil'...\n";
-    my $msg = qx(gcc -E -x c $incdirs -o $ofil $ifil);
-
-    # update hash for the new file
-    my $hfil = ".${ofil}.md5hash"; # keep the last hash here
-
-    my $new_hash = file_md5_hex($ofil);
-    my $old_hash_ref = retrieve($hfil) if -e $hfil;
-    $old_hash_ref = '' if !defined $old_hash_ref;
-    my $old_hash = $old_hash_ref ? $$old_hash_ref : '';
-    if (!$old_hash_ref || $old_hash ne $new_hash) {
-      store \$new_hash, $hfil;
-      push @ofils, $ofil;
-    }
-    else {
-      print "Output file '$ofil' has not changed.\n";
-    }
-  }
+  D::convert1(\@ifils, \@ofils, \%f, \%stats, $force);
 }
 
 print "Normal end.\n";
@@ -210,13 +164,13 @@ sub get_status {
     $fref->{$f}{status} = $s;
     $fref->{$f}{typ}    = $typ;
 
-    if ($s == $NEW) {
+    if ($s == $D::NEW) {
       ++$sref->{$typ}{new};
     }
-    elsif ($s == $SAME) {
+    elsif ($s == $D::SAME) {
       ++$sref->{$typ}{sam};
     }
-    elsif ($s == $DIFF) {
+    elsif ($s == $D::DIFF) {
       ++$sref->{$typ}{dif};
     }
     else {
@@ -229,26 +183,23 @@ sub file_status {
   # uses an md5 hash to determine if a file has changed (or is new)
   my $f = shift @_;
 
-  my $hfil = ".${f}.md5hash"; # keep the last hash here
-
   # current hash:
-  my $new_hash = file_md5_hex($f);
-  my $old_hash_ref = retrieve($hfil) if -e $hfil;
-  $old_hash_ref = '' if !defined $old_hash_ref;
-  my $old_hash = $old_hash_ref ? $$old_hash_ref : '';
+  my $curr_hash = D::calc_md5hash($f);
+  # previous, if any
+  my $prev_hash = D::retrieve_md5hash($f);
 
   my $status = undef;
-  if (!$old_hash_ref) {
-    $status = $NEW;
+  if (!$prev_hash) {
+    $status = $D::NEW;
     #print "Note that '$f' is new or unprocessed.\n";
   }
-  elsif ($old_hash eq $new_hash) {
-    $status = $SAME;
+  elsif ($prev_hash eq $curr_hash) {
+    $status = $D::SAME;
     #print "Note that '$f' has not changed.\n";
   }
   else {
-    store \$new_hash, $hfil;
-    $status = $DIFF;
+    D::store_md5hash($f, $curr_hash);
+    $status = $D::DIFF;
     #print "Note that '$f' has changed.\n";
   }
 
