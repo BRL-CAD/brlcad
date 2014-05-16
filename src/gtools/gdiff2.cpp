@@ -543,8 +543,18 @@ diff3_removed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(ancesto
 
 
 int
-diff3_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(ancestor), const struct db_i *UNUSED(right), const struct directory *UNUSED(dp_left), const struct directory *UNUSED(dp_ancestor), const struct directory *UNUSED(dp_right), void *UNUSED(data))
+diff3_unchanged(const struct db_i *UNUSED(left), const struct db_i *UNUSED(ancestor), const struct db_i *UNUSED(right), const struct directory *UNUSED(dp_left), const struct directory *dp_ancestor, const struct directory *UNUSED(dp_right), void *data)
 {
+    struct diff_results *results;
+
+    if (!data || !dp_ancestor)
+	return -1;
+
+    results = (struct diff_results *)data;
+    if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
+
+    bu_ptbl_ins(results->unchanged, (long *)dp_ancestor);
+
     return 0;
 }
 
