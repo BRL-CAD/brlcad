@@ -31,9 +31,6 @@ HERE
   exit;
 }
 
-my $force = 0;
-my $debug = 0;
-
 # modes
 my $report   = 0;
 my $convert1 = 0;
@@ -50,24 +47,27 @@ foreach my $arg (@ARGV) {
   my $idx = index $arg, '=';
   if ($idx >= 0) {
     print "DEBUG: input arg is '$arg'\n"
-      if $debug;
+      if $D::debug;
 
     $val = substr $arg, $idx+1;
-    if ((!defined $val || !$val) && !$debug) {
+    if ((!defined $val || !$val) && !$D::debug) {
       die "ERROR:  For option '$arg' \$val is empty.'\n";
     }
     $arg = substr $arg, 0, $idx;
-    if ($debug) {
+    if ($D::debug) {
       print "arg is now '$arg', val is '$val'\n";
       die "debug exit";
     }
   }
 
   if ($arg =~ m{\A -f}xms) {
-    $force = 1;
+    $D::force = 1;
   }
   elsif ($arg =~ m{\A -d}xms) {
-    $debug = 1;
+    $D::debug = 1;
+  }
+  elsif ($arg =~ m{\A -v}xms) {
+    $D::verbose = 1;
   }
   elsif ($val && $arg =~ m{\A -h}xms ) {
     my $f = $val;
@@ -80,6 +80,9 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ m{\A -h}xms) {
     help();
+  }
+  elsif ($arg =~ m{\A -C}xms) {
+    $D::clean = 1;
   }
 
   # modes
@@ -101,7 +104,7 @@ foreach my $arg (@ARGV) {
 # collect all .h and .di files; note that some .h files are obsolete
 # and are so indicated inside the following function
 my (@h, @di) = ();
-collect_files(\@h, \@di);
+D::collect_files(\@h, \@di); # deletes generated files if $D::clean
 my $nh   = @h;
 my $ndi  = @di;
 my @fils = (@h, @di);
@@ -132,7 +135,7 @@ elsif ($convert1) {
   @ifils = @h
     if !@ifils;
 
-  D::convert1(\@ifils, \@ofils, \%f, \%stats, $force);
+  D::convert1(\@ifils, \@ofils, \%f, \%stats);
 }
 
 print "Normal end.\n";
@@ -230,6 +233,7 @@ options:
   -f    force overwriting files
   -d    debug
   -h    help
+  -C    cleans out all generated files and the stored file hashes
 
 notes:
 
@@ -248,28 +252,3 @@ HERE
 
   exit;
 } # help
-
-sub collect_files {
-  my $href  = shift @_;
-  my $diref = shift @_;
-
-  my @di = glob("*.di");
-  push @{$diref}, @di;
-
-  # ignored .h files
-  my @ignore
-    = (
-       'conf.h',
-       'dvec.h',
-       'redblack.h',
-      );
-  my %ignore = ();
-  @ignore{@ignore} = ();
-
-  my @h  = glob("*.h");
-  foreach my $f (@h) {
-    next if exists $ignore{$f};
-    push @{$href}, $f;
-  }
-
-} # collect_files
