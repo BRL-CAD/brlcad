@@ -7,12 +7,63 @@ use Storable;
 use Digest::MD5::File qw(file_md5_hex);
 use Readonly;
 use Data::Dumper;
+use File::Copy;
 
 # local vars
 my $storefile = '.md5tablestore';
 # key md5 file hases by file name in this table;
 my %md5table;
 
+# ignored top-level original .h files
+my @ignore
+  = (
+     'conf.h',
+     'dvec.h',
+     'redblack.h',
+    );
+my %ignore = ();
+@ignore{@ignore} = ();
+
+# temp ignored .h files called inside top-level files
+my @tignore
+  = (
+     'config_win.h',
+     'brlcad_config.h',
+    );
+my %tignore = ();
+@tignore{@tignore} = ();
+
+# this is a kludge
+Readonly our $IDIR => '/usr/src/tbrowde/brlcad-svn-d-binding/include';
+
+# "mapped" files
+my %is_mapped
+  = (
+     'tcl.h'          => "$IDIR/../src/other/tcl/generic/tcl.h",
+     'tclDecls.h'     => "$IDIR/../src/other/tcl/generic/tclDecls.h",
+     'tclPlatDecls.h' => "$IDIR/../src/other/tcl/generic/tclPlatDecls.h",
+    );
+
+# sys headers and their equivalen Phobos module names form import
+# statements; empty is unknown or don't use
+my %sysmod
+  = (
+          '<tchar.h>'     => '',,
+          '<wchar.h>'     => '',,
+          '<sys/types.h>' => '',,
+          '<dlfcn.h>'     => '',,
+          '<signal.h>'    => '',,
+          '<setjmp.h>'    => '',,
+          '<stdint.h>'    => '',,
+          '<limits.h>'    => '',,
+          '<string.h>'    => '',,
+          '<stdlib.h>'    => '',,
+          '<stdarg.h>'    => '',,
+          '<stddef.h>'    => '',,
+          '<stdio.h>'     => 'std.stdio',
+    );
+
+#==========================================================================
 # vars for export
 our $force   = 0;
 our $verbose = 0;
@@ -39,8 +90,11 @@ sub convert1 {
   my $incdirs  = '-I. -I../src/other/tcl/generic';
 
   foreach my $ifil (@{$ifils_ref}) {
+    my $stem = $ifil;
+    $stem =~ s{\.h \z}{}x;
+
     my ($process, $stat) = (0, 0);
-    my ($curr_hash, $prev_hash);
+    my ($curr_hash, $prev_hash, $fpo);
 
     # check to see current status of input file
     $curr_hash = file_md5_hex($ifil);
@@ -54,8 +108,7 @@ sub convert1 {
       if ($force);
 
     # final output file
-    my $ofil = $ifil;
-    $ofil =~ s{\.h \z}{\.di}xms;
+    my $ofil = $stem . '.d';
     $prev_hash = retrieve_md5hash($ofil);
     if (!$prev_hash) {
       $process = 1;
@@ -75,9 +128,97 @@ sub convert1 {
     print "D::convert1(): Processing file '$ifil' => '$ofil'...\n"
       if $verbose;
 
-    my $msg = qx(gcc -E -x c $incdirs -o $ofil $ifil);
+    # get rid of system headers (but record their use)
+    my %syshdr = ();
 
-    # update hash for the new file
+    my $tfil0 = $stem . '.inter0';
+    open $fpo, '>', $tfil0
+      or die "$tfil0: $!";
+
+    my $incregex = qr/\A \s* \# \s* include \s+
+		      (
+			(\<[a-zA-Z0-9\._\-\/]{3,}\>)
+		      |
+			(\"[a-zA-Z0-9\._\-\/]{3,}\")
+		      ) \s*/x;
+
+    my (@fpi, @parfils) = ();
+
+    # the starting file
+    my $level = 0;
+    open $fpi[$level], '<', $ifil
+      or die "$ifil: $!";
+    my $fp = $fpi[$level];
+    push @parfils, $ifil;
+
+  LINE:
+    while (defined(my $line = <$fp>)) {
+      if ($line =~ m{$incregex}x) {
+	my $s = $1;
+	chomp $s;
+	$s =~ s{\A \s*}{}x;
+	$s =~ s{\s* \z}{}x;
+	$s =~ s{\A \"}{}x;
+	$s =~ s{\" \z}{}x;
+	#print "debug: \$1 (\$s) = '$s'\n";
+
+	# get a new file
+	my $f = $s;
+
+        # ignore <> files
+	if (is_syshdr($f)) {
+	  print "WARNING: ignoring sys include file '$f' for now...\n";
+	  $syshdr{$s} = 1;
+	  # don't print
+	  next LINE;
+	}
+
+	# some files are ignored for now
+        if (exists $tignore{$f}) {
+	  print "WARNING: ignoring include file '$f' for now...\n";
+	  next LINE;
+	}
+
+        # may be a "mapped" file
+	if (exists $is_mapped{$f}) {
+	  my $ff = $is_mapped{$f};
+	  print "WARNING: using mapped file '$f' => '$ff' for now...\n";
+	  $f = $ff;
+	}
+
+	# we try to follow this include file
+	die "ERROR:  Include file '$f' (in '$parfils[$level]') not found."
+	  if !-f $f;
+	print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n";
+	open $fpi[++$level], '<', $f
+	  or die "$f: $!";
+	$fp = $fpi[$level];
+        $parfils[$level] = $f;
+	next LINE;
+      }
+
+      print $fpo $line;
+    }
+    # work back up the file tree as we find EOF
+    if ($level > 0) {
+      --$level;
+      $fp = $fpi[$level];
+      goto LINE;
+    }
+
+    push @{$ofils_ref}, $tfil0;
+
+    #print Dumper(\%syshdr); die "debug exit";
+
+    my $tfil1 = $stem . '.inter1';
+    push @{$ofils_ref}, $tfil1;
+
+    my $msg = qx(gcc -E -x c $incdirs -o $tfil1 $tfil0);
+
+    # dress up the file and convert it to "final" form (eventually)
+    convert1final($ofil, $tfil1, \%syshdr, $stem);
+
+    # update hash for the new, final output file
     $curr_hash = calc_md5hash($ofil);
 
     if (!$prev_hash || $prev_hash ne $curr_hash) {
@@ -149,15 +290,6 @@ sub collect_files {
     push @{$diref}, @di;
   }
 
-  # ignored .h files
-  my @ignore
-    = (
-       'conf.h',
-       'dvec.h',
-       'redblack.h',
-      );
-  my %ignore = ();
-  @ignore{@ignore} = ();
 
   my @h  = glob("*.h");
   foreach my $f (@h) {
@@ -166,6 +298,46 @@ sub collect_files {
   }
 
 } # collect_files
+
+sub is_syshdr {
+  my $f = shift @_;
+  return 1 if ($f =~ m{\A \s* \< [\S]+ \> \s* \z}x);
+  return 0;
+} # is_syshdr
+
+sub convert1final {
+  my $ofil = shift @_; # $ofil
+  my $ifil = shift @_; # $tfil1
+  my $sref = shift @_; # \%syshdr
+  my $stem = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+
+  open my $fpo, '>', $ofil
+    or die "$ofil: $!";
+
+  print $fpo "module $stem;\n";
+  print $fpo "\n";
+
+  foreach my $h (sort keys %sysmod) {
+    my $mod = $sysmod{$h};
+    next if !$mod;
+    print $fpo "import $mod;\n";
+  }
+  print $fpo "\n";
+
+  open my $fpi, '<', $ifil
+    or die "$ifil: $!";
+  while (defined(my $line = <$fpi>)) {
+    # ignore cpp comment lines
+    next if ($line =~ m{\A \s* \#}x);
+
+    # ignore blanklines
+    my @d = split(' ', $line);
+    next if !defined $d[0];
+
+    print $fpo $line;
+  }
+
+} # convert1final
 
 # mandatory true return from a Perl module
 1;
