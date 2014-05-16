@@ -42,6 +42,144 @@
 #include "raytrace.h"
 #include "rt/db_diff.h"
 
+/* TODO - there has to be a better way to do this.  Seems like overkill to define
+ * a functab function, but this is way too fragile */
+HIDDEN int
+rt_intern_struct_size(int type) {
+    if (type >= ID_MAXIMUM) return 0;
+    switch (type) {
+	case  ID_NULL       :/**< @brief Unused */
+	    return 0;
+	    break;
+	case  ID_TOR        :/**< @brief Toroid */
+	    return sizeof(struct rt_tor_internal);
+	    break;
+	case  ID_TGC        :/**< @brief Generalized Truncated General Cone */
+	    return sizeof(struct rt_tgc_internal);
+	    break;
+	case  ID_ELL        :/**< @brief Ellipsoid */
+	    return sizeof(struct rt_ell_internal);
+	    break;
+	case  ID_ARB8       :/**< @brief Generalized ARB.  V + 7 vectors */
+	    return sizeof(struct rt_arb_internal);
+	    break;
+	case  ID_ARS        :/**< @brief ARS */
+	    return sizeof(struct rt_ars_internal);
+	    break;
+	case  ID_HALF       :/**< @brief Half-space */
+	    return sizeof(struct rt_half_internal);
+	    break;
+	case  ID_REC        :/**< @brief Right Elliptical Cylinder [TGC special] */
+	    return sizeof(struct rt_tgc_internal);
+	    break;
+	case  ID_POLY       :/**< @brief Polygonal faceted object */
+	    return sizeof(struct rt_pg_face_internal);
+	    break;
+	case  ID_BSPLINE    :/**< @brief B-spline object */
+	    return sizeof(struct rt_nurb_internal);
+	    break;
+	case  ID_SPH        :/**< @brief Sphere */
+	    return sizeof(struct rt_ell_internal);
+	    break;
+	case  ID_NMG        :/**< @brief n-Manifold Geometry solid */
+	    return sizeof(struct model);
+	    break;
+	case  ID_EBM        :/**< @brief Extruded bitmap solid */
+	    return sizeof(struct rt_ebm_internal);
+	    break;
+	case  ID_VOL        :/**< @brief 3-D Volume */
+	    return sizeof(struct rt_vol_internal);
+	    break;
+	case  ID_ARBN       :/**< @brief ARB with N faces */
+	    return sizeof(struct rt_arbn_internal);
+	    break;
+	case  ID_PIPE       :/**< @brief Pipe (wire) solid */
+	    return sizeof(struct rt_pipe_internal);
+	    break;
+	case  ID_PARTICLE   :/**< @brief Particle system solid */
+	    return sizeof(struct rt_part_internal);
+	    break;
+	case  ID_RPC        :/**< @brief Right Parabolic Cylinder  */
+	    return sizeof(struct rt_rpc_internal);
+	    break;
+	case  ID_RHC        :/**< @brief Right Hyperbolic Cylinder  */
+	    return sizeof(struct rt_rhc_internal);
+	    break;
+	case  ID_EPA        :/**< @brief Elliptical Paraboloid  */
+	    return sizeof(struct rt_epa_internal);
+	    break;
+	case  ID_EHY        :/**< @brief Elliptical Hyperboloid  */
+	    return sizeof(struct rt_ehy_internal);
+	    break;
+	case  ID_ETO        :/**< @brief Elliptical Torus  */
+	    return sizeof(struct rt_eto_internal);
+	    break;
+	case  ID_GRIP       :/**< @brief Pseudo Solid Grip */
+	    return sizeof(struct rt_grip_internal);
+	    break;
+	case  ID_JOINT      :/**< @brief Pseudo Solid/Region Joint */
+	    return 0;
+	    break;
+	case  ID_HF         :/**< @brief Height Field */
+	    return sizeof(struct rt_hf_internal);
+	    break;
+	case  ID_DSP        :/**< @brief Displacement map */
+	    return sizeof(struct rt_dsp_internal);
+	    break;
+	case  ID_SKETCH     :/**< @brief 2D sketch */
+	    return sizeof(struct rt_sketch_internal);
+	    break;
+	case  ID_EXTRUDE    :/**< @brief Solid of extrusion */
+	    return sizeof(struct rt_extrude_internal);
+	    break;
+	case  ID_SUBMODEL   :/**< @brief Instanced submodel */
+	    return sizeof(struct rt_submodel_internal);
+	    break;
+	case  ID_CLINE      :/**< @brief FASTGEN4 CLINE solid */
+	    return sizeof(struct rt_cline_internal);
+	    break;
+	case  ID_BOT        :/**< @brief Bag o' triangles */
+	    return sizeof(struct rt_bot_internal);
+	    break;
+	case  ID_COMBINATION:/**< @brief Combination Record */
+	    return sizeof(struct rt_comb_internal);
+	    break;
+	case  ID_BINUNIF    :/**< @brief Uniform-array binary */
+	    return sizeof(struct rt_binunif_internal);
+	    break;
+	case  ID_CONSTRAINT :/**< @brief Constraint object */
+	    return sizeof(struct rt_constraint_internal);
+	    break;
+	case  ID_SUPERELL   :/**< @brief Superquadratic ellipsoid */
+	    return sizeof(struct rt_superell_internal);
+	    break;
+	case  ID_METABALL   :/**< @brief Metaball */
+	    return sizeof(struct rt_metaball_internal);
+	    break;
+	case  ID_BREP       :/**< @brief B-rep object */
+	    return sizeof(struct rt_brep_internal);
+	    break;
+	case  ID_HYP        :/**< @brief Hyperboloid of one sheet */
+	    return sizeof(struct rt_hyp_internal);
+	    break;
+	case  ID_REVOLVE    :/**< @brief Solid of Revolution */
+	    return sizeof(struct rt_revolve_internal);
+	    break;
+	case  ID_PNTS       :/**< @brief Collection of Points */
+	    return sizeof(struct rt_pnts_internal);
+	    break;
+	case  ID_ANNOTATION :/**< @brief Annotation */
+	    return sizeof(struct rt_annotation_internal);
+	    break;
+	case  ID_HRT        :/**< @brief Heart */
+	    return sizeof(struct rt_hrt_internal);
+	    break;
+	default:
+	    return 0;
+	    break;
+    }
+    return 0;
+}
 
 HIDDEN int
 db_diff_external(const struct bu_external *ext1, const struct bu_external *ext2)
@@ -391,20 +529,16 @@ arb_type_to_str(int type) {
     return NULL;
 }
 
-/* TODO - need to add some bu_extern based logic to this - even if we can't
- * get at the parameters, we should at least be able to clear the attributes
- * and do bu_externs on "raw" versions of the objects to see if they do differ
- * somehow... */
 int
 db_compare(const struct rt_db_internal *left_obj,
-	   const struct rt_db_internal *right_obj,
-	   db_compare_criteria_t flags,
-	   struct bu_attribute_value_set *added,
-	   struct bu_attribute_value_set *removed,
-	   struct bu_attribute_value_set *changed_left,
-	   struct bu_attribute_value_set *changed_right,
-	   struct bu_attribute_value_set *unchanged,
-	   struct bn_tol *diff_tol)
+	const struct rt_db_internal *right_obj,
+	db_compare_criteria_t flags,
+	struct bu_attribute_value_set *added,
+	struct bu_attribute_value_set *removed,
+	struct bu_attribute_value_set *changed_left,
+	struct bu_attribute_value_set *changed_right,
+	struct bu_attribute_value_set *unchanged,
+	struct bn_tol *diff_tol)
 {
     int do_all = 0;
     int has_diff = 0;
@@ -478,8 +612,16 @@ db_compare(const struct rt_db_internal *left_obj,
 	}
 	if (have_tcl1 && have_tcl2) {
 	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &avs1, &avs2, diff_tol);
+	} else {
+	    if (!type_change) {
+		/* We don't have the tcl list version of the internal parameters, so all
+		 * we can do is compare the idb_ptr memory.*/
+		int memsize = rt_intern_struct_size(left_obj->idb_minor_type);
+		if (memcmp((void *)left_obj->idb_ptr, (void *)right_obj->idb_ptr, memsize)) {
+		    has_diff = 1;
+		}
+	    }
 	}
-
 	bu_avs_free(&avs1);
 	bu_avs_free(&avs2);
 
@@ -509,6 +651,37 @@ db_compare(const struct rt_db_internal *left_obj,
     if (type_change) return 1;
     return (has_diff) ? 1 : 0;
 }
+
+
+/*
+int
+db_compare3(
+	const struct rt_db_internal *dp_left,
+	const struct rt_db_internal *dp_ancestor,
+	const struct rt_db_internal *dp_right,
+	db_compare_criteria_t flags,
+	struct bu_attribute_value_set *removed_left_only,
+	struct bu_attribute_value_set *removed_right_only,
+	struct bu_attribute_value_set *removed_both,
+	struct bu_attribute_value_set *added_left_only,
+	struct bu_attribute_value_set *added_right_only,
+	struct bu_attribute_value_set *added_both,
+	struct bu_attribute_value_set *added_conflict_left,
+	struct bu_attribute_value_set *added_conflict_right,
+	struct bu_attribute_value_set *changed_left_only,
+	struct bu_attribute_value_set *changed_right_only,
+	struct bu_attribute_value_set *changed_both,
+	struct bu_attribute_value_set *changed_conflict_ancestor,
+	struct bu_attribute_value_set *changed_conflict_left,
+	struct bu_attribute_value_set *changed_conflict_right,
+	struct bu_attribute_value_set *merged,
+	struct bn_tol *diff_tol)
+{
+
+}
+*/
+
+
 
 /*
  * Local Variables:
