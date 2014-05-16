@@ -102,20 +102,21 @@ my $NEW  = -1;
 my $SAME =  0;
 my $DIFF =  1;
 
-# collect all .h files and get the prefixes
-my @h = glob("*.h");
-my $nh = @h;
-# ditto for .di files
-my @di = glob("*.di");
-my $ndi = @di;
+# collect all .h and .di files; note that some .h files are obsolete
+# and are so indicated inside the following function
+my (@h, @di) = ();
+collect_files(\@h, \@di);
+my $nh   = @h;
+my $ndi  = @di;
 my @fils = (@h, @di);
-my $nf = @fils;
+my $nf   = @fils;
 my %f;
 @f{@fils} = ();
 my %stats = ();
 # collect their statuses
 get_status(\%stats, \%f);
 
+my @ofils = ();
 if ($report) {
   print "Mode is '-r' (report)...\n\n";
   my $n = $nh ? $nh : 'zero';
@@ -134,8 +135,54 @@ elsif ($convert1) {
   print "Mode is '-c1' (convert method 1)...\n\n";
   @ifils = @h
     if !@ifils;
+
+  my $incdirs  = '-I. -I../src/other/tcl/generic';
+  foreach my $ifil (@ifils) {
+    my $process = 0;
+    # check to see status of generated file
+    my $ofil = $ifil;
+    $ofil =~ s{\.h \z}{\.di}xms;
+    my $stat = $f{$ofil}{status};
+    if (defined $stat && $stat == $NEW) {
+      $process = 1;
+    }
+    else {
+      # check status of input file
+      $stat = $f{$ifil}{status};
+      if ($stat == $DIFF ||$stat == $NEW) {
+	$process = 1;
+      }
+    }
+    # override?
+    $process = 1
+      if ($force);
+    if (!$process) {
+      print "Skipping input file '$ifil'...\n";
+    }
+
+    print "Processing file '$ifil' => '$ofil'...\n";
+    my $msg = qx(gcc -E -x c $incdirs -o $ofil $ifil);
+
+    # update hash for the new file
+    my $hfil = ".${ofil}.md5hash"; # keep the last hash here
+
+    my $new_hash = file_md5_hex($ofil);
+    my $old_hash_ref = retrieve($hfil) if -e $hfil;
+    $old_hash_ref = '' if !defined $old_hash_ref;
+    my $old_hash = $old_hash_ref ? $$old_hash_ref : '';
+    if (!$old_hash_ref || $old_hash ne $new_hash) {
+      store \$new_hash, $hfil;
+      push @ofils, $ofil;
+    }
+  }
 }
 
+print "Normal end.\n";
+if (@ofils) {
+  my $s = (1 < @ofils) ? 's' : '';
+  print "See output file$s:\n";
+  print "  $_\n" for @ofils;
+}
 
 #### subroutines ####
 sub get_status {
@@ -179,6 +226,7 @@ sub file_status {
   my $f = shift @_;
 
   my $hfil = ".${f}.md5hash"; # keep the last hash here
+
   # current hash:
   my $new_hash = file_md5_hex($f);
   my $old_hash_ref = retrieve($hfil) if -e $hfil;
@@ -214,6 +262,11 @@ modes:
 
   -r    report status of .h and .di files in the directory
   -c1   use method 1 to convert .h files to .di files
+          method 1 uses a C compiler to convert the header to an
+          intermediate file for further manipulation
+          (see http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules)
+        this program uses GNU gcc:
+          \$ gcc -E -x c -o outfile -I incdir .. -I incdirN infile
 
   -h=X  restrict conversion attempt to just file X
 
@@ -240,3 +293,28 @@ HERE
 
   exit;
 } # help
+
+sub collect_files {
+  my $href  = shift @_;
+  my $diref = shift @_;
+
+  my @di = glob("*.di");
+  push @{$diref}, @di;
+
+  # ignored .h files
+  my @ignore
+    = (
+       'conf.h',
+       'dvec.h',
+       'redblack.h',
+      );
+  my %ignore = ();
+  @ignore{@ignore} = ();
+
+  my @h  = glob("*.h");
+  foreach my $f (@h) {
+    next if exists $ignore{$f};
+    push @{$href}, $f;
+  }
+
+} # collect_files
