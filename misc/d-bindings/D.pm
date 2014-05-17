@@ -231,6 +231,12 @@ sub convert1 {
 	open $fpi[++$level], '<', $f
 	  or die "$f: $!";
         $parfils[$level] = $f;
+
+	# record its source
+	print $fpo "//===========================================================================\n";
+	print $fpo "// included input lines (level $level) from '$f'\n";
+	print $fpo "//===========================================================================\n";
+
 	next LINE;
       }
 
