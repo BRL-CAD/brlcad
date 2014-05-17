@@ -109,6 +109,10 @@ foreach my $arg (@ARGV) {
   }
 }
 
+if ($D::devel) {
+  @ifils = qw(bu.h);
+}
+
 # collect all .h and .d files; note that some .h files are obsolete
 # and are so indicated inside the following function
 my (@h, @d) = ();
