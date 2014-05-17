@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# converts a C .h file to a rudimentary .di file for linking C to D
+# converts a C .h file to a rudimentary .d file for linking C to D
 
 use strict;
 use warnings;
@@ -32,7 +32,7 @@ $usage
 
 Use option '-h' for details.
 
-Converts C .h files in this directory to rudimentary .di files
+Converts C .h files in this directory to rudimentary .d files
   for linking C to the D language.
 HERE
 
@@ -82,8 +82,8 @@ foreach my $arg (@ARGV) {
     die "ERROR:  Input file '$f' not found.\n"
       if (! -e $f);
     # one more check: must be a '.h' file
-    die "ERROR:  Input file '$f' must be a '.h' file.\n"
-      if ($f !~ m{\.h \z}xms);
+    die "ERROR:  Input file '$f' must be a '$D::Hsuf' file.\n"
+      if ($f !~ m{$D::Hsuf \z}xms);
     @ifils = ($f);
   }
   elsif ($arg =~ m{\A -h}xms) {
@@ -109,13 +109,13 @@ foreach my $arg (@ARGV) {
   }
 }
 
-# collect all .h and .di files; note that some .h files are obsolete
+# collect all .h and .d files; note that some .h files are obsolete
 # and are so indicated inside the following function
-my (@h, @di) = ();
-D::collect_files(\@h, \@di); # deletes generated files if $D::clean
+my (@h, @d) = ();
+D::collect_files(\@h, \@d); # deletes generated files if $D::clean
 my $nh   = @h;
-my $ndi  = @di;
-my @fils = (@h, @di);
+my $nd  = @d;
+my @fils = (@h, @d);
 my $nf   = @fils;
 my %f;
 @f{@fils} = ();
@@ -127,13 +127,13 @@ my @ofils = ();
 if ($report) {
   print "Mode is '-r' (report)...\n\n";
   my $n = $nh ? $nh : 'zero';
-  print "There are $n C header files in this directory:\n";
+  print "There are $n C header files in the '$D::IDIR' directory:\n";
   print "  new:       $stats{h}{new}\n";
   print "  unchanged: $stats{h}{sam}\n";
   print "  changed:   $stats{h}{dif}\n";
 
-  $n = $ndi ? $ndi : 'zero';
-  print "There are $n D interface files in this directory:\n";
+  $n = $nd ? $nd : 'zero';
+  print "There are $n D interface files in the '$D::DIDIR' directory:\n";
   print "  new:       $stats{di}{new}\n";
   print "  unchanged: $stats{di}{sam}\n";
   print "  changed:   $stats{di}{dif}\n";
@@ -168,9 +168,9 @@ sub get_status {
 
   foreach my $f (keys %{$fref}) {
     my $s = file_status($f);
-    my $typ = $f =~ m{\.h \z}xms ? 'h' : 'd';
+    my $typ = $f =~ m{$D::Hsuf \z}xms ? 'h' : 'd';
     die "ERROR:  Uknown file type for file '$f'!"
-      if ($typ eq 'di' && $f !~ m{\.di \z}xms);
+      if ($typ eq 'd' && $f !~ m{$D::Dsuf \z}xms);
 
     $fref->{$f}{status} = $s;
     $fref->{$f}{typ}    = $typ;
@@ -226,7 +226,7 @@ $usage
 
 modes:
 
-  -r    report status of .h and .di files in the directory
+  -r    report status of .h and .d files in the directory
   -c1   use method 1 to convert .h files to .di files
           method 1 uses a C compiler to convert the header to an
           intermediate file for further manipulation

@@ -24,6 +24,10 @@ Readonly our $IDIR2 => "$RDIR/include";
 # the location for the D interface files
 Readonly our $DIDIR => "./di";
 
+# file type suffixes
+Readonly our $Hsuf => '.h';
+Readonly our $Dsuf => '.d';
+
 
 # local vars
 my $storefile = '.md5tablestore';
@@ -83,6 +87,7 @@ our $force   = 0;
 our $verbose = 0;
 our $debug   = 0;
 our $clean   = 0;
+our $devel   = 1;
 
 # global vars
 Readonly our $NEW  => -1;
@@ -105,7 +110,7 @@ sub convert1 {
 
   foreach my $ifil (@{$ifils_ref}) {
     my $stem = $ifil;
-    $stem =~ s{\.h \z}{}x;
+    $stem =~ s{$Hsuf \z}{}x;
 
     my ($process, $stat) = (0, 0);
     my ($curr_hash, $prev_hash, $fpo);
@@ -122,7 +127,7 @@ sub convert1 {
       if ($force);
 
     # final output file
-    my $ofil = $stem . '.d';
+    my $ofil = $stem . $Dsuf;
     $prev_hash = retrieve_md5hash($ofil);
     if (!$prev_hash) {
       $process = 1;
@@ -305,7 +310,7 @@ sub collect_files {
   my $href  = shift @_; # @h
   my $diref = shift @_; # @d
 
-  my @d = glob("${D::DIDIR}/*.d");
+  my @d = glob("${D::DIDIR}/*$Dsuf");
   if ($clean) {
     unlink @d;
     remove_md5hash_store();
@@ -314,7 +319,7 @@ sub collect_files {
     push @{$diref}, @d;
   }
 
-  my @h  = glob("${D::IDIR}/*.h");
+  my @h  = glob("${D::IDIR}/*$Hsuf");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
