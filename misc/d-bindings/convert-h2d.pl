@@ -19,6 +19,10 @@ die "ERROR:  Reference compiler 'dmd' not found.\n"
 die "ERROR:  Unknown include dir for BRL-CAD public headers: '$D::IDIR' (see D.pm)\n"
   if ! -d $D::IDIR;
 
+# check for proper D directory for interface files
+die "ERROR:  Unknown include dir for BRL-CAD public headers: '$D::DIDIR' (see D.pm)\n"
+  if ! -d $D::DIDIR;
+
 my $p = basename($0);
 my $usage = "Usage: $p mode [options...]";
 
@@ -164,7 +168,7 @@ sub get_status {
 
   foreach my $f (keys %{$fref}) {
     my $s = file_status($f);
-    my $typ = $f =~ m{\.h \z}xms ? 'h' : 'di';
+    my $typ = $f =~ m{\.h \z}xms ? 'h' : 'd';
     die "ERROR:  Uknown file type for file '$f'!"
       if ($typ eq 'di' && $f !~ m{\.di \z}xms);
 

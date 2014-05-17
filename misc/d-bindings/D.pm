@@ -21,6 +21,9 @@ Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
 Readonly our $IDIR => "$RDIR/include/brlcad";
 # the source dir of some other installed BRL-CAD include files
 Readonly our $IDIR2 => "$RDIR/include";
+# the location for the D interface files
+Readonly our $DIDIR => "./di";
+
 
 # local vars
 my $storefile = '.md5tablestore';
@@ -300,19 +303,18 @@ sub retrieve_md5hash {
 sub collect_files {
   # deletes generated files if $D::clean
   my $href  = shift @_; # @h
-  my $diref = shift @_; # @di
+  my $diref = shift @_; # @d
 
-  my @di = glob("*.di");
+  my @d = glob("${D::DIDIR}/*.d");
   if ($clean) {
-    unlink @di;
+    unlink @d;
     remove_md5hash_store();
   }
   else {
-    push @{$diref}, @di;
+    push @{$diref}, @d;
   }
 
-
-  my @h  = glob("*.h");
+  my @h  = glob("${D::IDIR}/*.h");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
