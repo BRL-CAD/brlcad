@@ -8,6 +8,7 @@ use Digest::MD5::File qw(file_md5_hex);
 use Readonly;
 use Data::Dumper;
 use File::Copy;
+use File::Basename;
 
 # The following defs are for use just during the experimental
 # phase. They will have to be handled differently during devlopment
@@ -22,7 +23,7 @@ Readonly our $IDIR => "$RDIR/include/brlcad";
 # the source dir of some other installed BRL-CAD include files
 Readonly our $IDIR2 => "$RDIR/include";
 # the location for the D interface files
-Readonly our $DIDIR => "./di";
+Readonly our $DIDIR => './di';
 
 # file type suffixes
 Readonly our $Hsuf => '.h';
@@ -106,10 +107,10 @@ sub convert1 {
   my $fref      = shift @_; # %f
   my $sref      = shift @_; # %stats
 
-  my $incdirs  = '-I. -I../src/other/tcl/generic';
+  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
 
   foreach my $ifil (@{$ifils_ref}) {
-    my $stem = $ifil;
+    my $stem = basename $ifil;
     $stem =~ s{$Hsuf \z}{}x;
 
     my ($process, $stat) = (0, 0);
@@ -127,7 +128,7 @@ sub convert1 {
       if ($force);
 
     # final output file
-    my $ofil = $stem . $Dsuf;
+    my $ofil = "${D::DIDIR}/${stem}${Dsuf}";
     $prev_hash = retrieve_md5hash($ofil);
     if (!$prev_hash) {
       $process = 1;
@@ -154,7 +155,7 @@ sub convert1 {
     my @tmpfils = ();
 
     # first intermediate file
-    my $tfil0 = $stem . '.inter0';
+    my $tfil0 = "${D::DIDIR}/${stem}.inter0";
     push @tmpfils, $tfil0;
     open $fpo, '>', $tfil0
       or die "$tfil0: $!";
@@ -175,7 +176,12 @@ sub convert1 {
     push @parfils, $ifil;
 
   LINE:
-    while (defined(my $line = <$fpi[$level]>)) {
+    while (defined(my $line = readline $fpi[$level])) {
+      if (0 && $debug) {
+	my $s = $line;
+	chomp $s;
+	print "debug: line = '$s'\n";
+      }
       if ($line =~ m{$incregex}x) {
 	my $s = $1;
 	chomp $s;
@@ -183,7 +189,8 @@ sub convert1 {
 	$s =~ s{\s* \z}{}x;
 	$s =~ s{\A \"}{}x;
 	$s =~ s{\" \z}{}x;
-	#print "debug: \$1 (\$s) = '$s'\n";
+	print "debug: \$1 (\$s) = '$s'\n"
+	  if $debug;
 
 	# get a new file
 	my $f = $s;
@@ -209,10 +216,18 @@ sub convert1 {
 	  $f = $ff;
 	}
 
+	# one more shot for things in the subdir of $IDIR like './bu/bu.h'
+        if (!-f $f) {
+	  my $ff = "${D::IDIR}/${f}";
+	  print "NOTE: using file '$f' => '$ff'...\n";
+	  $f = $ff;
+	}
+
 	# we try to follow this include file
 	die "ERROR:  Include file '$f' (in '$parfils[$level]') not found."
 	  if !-f $f;
-	print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n";
+	print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n"
+	  if $debug;
 	open $fpi[++$level], '<', $f
 	  or die "$f: $!";
         $parfils[$level] = $f;
@@ -224,8 +239,13 @@ sub convert1 {
     # work back up the file tree as we find EOF
     if ($level > 0) {
       --$level;
+      if (!defined $fpi[$level]) {
+	print "ERROR:  At level $level, file pointer is not defined!\n";
+      }
       goto LINE;
     }
+
+    #print Dumper(\@parfils); die "debug exit";
 
     push @{$ofils_ref}, $tfil0
       if $debug;
@@ -233,12 +253,16 @@ sub convert1 {
     #print Dumper(\%syshdr); die "debug exit";
 
     # second intermediate file
-    my $tfil1 = $stem . '.inter1';
+    my $tfil1 = "${D::DIDIR}/${stem}.inter1";
     push @tmpfils, $tfil1;
     push @{$ofils_ref}, $tfil1
       if $debug;
 
     my $msg = qx(gcc -E -x c $incdirs -o $tfil1 $tfil0);
+    if ($msg) {
+      chomp $msg;
+      print "WARNING: msg: '$msg'\n";
+    }
 
     # dress up the file and convert it to "final" form (eventually)
     convert1final($ofil, $tfil1, \%syshdr, $stem);
@@ -284,7 +308,7 @@ sub store_md5hash {
   $tabref->{$f} = $md5hash;
   store $tabref, $storefile;
 
-  if ($debug) {
+  if (0 && $debug) {
     print Dumper($tabref); die "debug exit";
   }
 } # store_md5hash
@@ -307,19 +331,19 @@ sub retrieve_md5hash {
 
 sub collect_files {
   # deletes generated files if $D::clean
-  my $href  = shift @_; # @h
-  my $diref = shift @_; # @d
+  my $href = shift @_; # @h
+  my $dref = shift @_; # @d
 
-  my @d = glob("${D::DIDIR}/*$Dsuf");
+  my @d = glob("${D::DIDIR}/*${Dsuf}");
   if ($clean) {
     unlink @d;
     remove_md5hash_store();
   }
   else {
-    push @{$diref}, @d;
+    push @{$dref}, @d;
   }
 
-  my @h  = glob("${D::IDIR}/*$Hsuf");
+  my @h  = glob("${D::IDIR}/*${Hsuf}");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
