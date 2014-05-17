@@ -3287,12 +3287,6 @@ RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
 			       const char *ilp,
 			       const struct command_tab *tp);
 
-/**
- * DEPRECATED: use bu_argv_from_string() instead
- */
-RT_EXPORT extern int rt_split_cmd(char **argv, int lim, char *lp);
-
-
 /* The database library */
 
 /* wdb.c */

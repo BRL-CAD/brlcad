@@ -293,8 +293,6 @@ include/vmath.h
 ----
 include/raytrace.h
 	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
-srt/librt/cmd.c
-	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
 	terminology and output format [deprecated 7.12]
 include/raytrace.h
@@ -316,6 +314,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+srt/librt/cmd.c
+	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 
