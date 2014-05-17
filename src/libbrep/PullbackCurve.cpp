@@ -45,6 +45,7 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
+
 /* FIXME: duplicated with opennurbs_ext.cpp */
 class BSpline
 {
@@ -56,6 +57,7 @@ public:
     std::vector<double> knots;
     ON_2dPointArray controls;
 };
+
 
 bool
 isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness)
@@ -929,7 +931,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 	return;
 
     const ON_Curve* curve = data->curve;
-
     if (!curve)
 	return;
 
@@ -938,16 +939,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 	return;
 
     ON_2dPointArray *samples = new ON_2dPointArray();
-
     size_t numKnots = curve->SpanCount();
     double *knots = new double[numKnots + 1];
-
-    ON_2dPoint lastgoodpoint;
-    ON_2dPoint lastbadpoint;
-    ON_2dPoint workingpoint;
-    bool lastgoodpoint_set = false;
-    bool lastbadpoint_set = false;
-    bool workingpoint_set = false;
 
     curve->GetSpanVector(knots);
 
@@ -967,10 +960,14 @@ pullback_samples_from_closed_surface(PBCData* data,
 	knots[++istop] = s;
     }
 
+    //TODO: remove debugging code
+    //std::cerr << "t - " << t << " istart - " << istart << "knots[istart] - " << knots[istart] << std::endl;
+    //std::cerr << "s - " << s << " istop - " << istop << "knots[istop] - " << knots[istop] << std::endl;
+
     size_t samplesperknotinterval;
     size_t degree = curve->Degree();
 
-    if (degree == 1) {
+    if (degree > 1) {
 	samplesperknotinterval = 3 * degree;
     } else {
 	samplesperknotinterval = 18 * degree;
@@ -991,17 +988,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 
     size_t i;
     for (i = istart; (i <= (numKnots / 2)) && (i <= istop); ++i) {
-	if (i > istart) {
+	if (i > 0) {
 	    double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	    if (!toUV(*data, prev_pt, knots[i - 1], PBC_FROM_OFFSET)) {
-		std::cout << "prev_pt1 failed" << std::endl;
-	    } else {
-		lastgoodpoint = prev_pt;
-		samples->Append(prev_pt);
-		lastgoodpoint_set = true;
-		lastbadpoint_set = false;
-		workingpoint_set = false;
-	    }
 	    for (size_t j = 1; j < samplesperknotinterval;) {
 		if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
 		    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
@@ -1013,6 +1001,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 #ifdef SHOW_UNUSED
 			double lastgood = 0.0, lastbad = 0.0;
 #endif
+			ON_2dPoint lastgoodpoint;
+			ON_2dPoint lastbadpoint;
+			ON_2dPoint workingpoint;
 			if (dot < dottol) {
 			    double step = delta;
 			    double at = knots[i - 1] + j * delta;
@@ -1023,10 +1014,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 				    lastbad = at;
 #endif
 				    lastbadpoint = workingpoint;
-				    lastbadpoint_set = workingpoint_set;
 				    at = at - step;
 				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
 					dir = workingpoint - prev_pt;
 					dir.Unitize();
 					dot = prev_dir * dir;
@@ -1036,10 +1025,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 				    lastgood = at;
 #endif
 				    lastgoodpoint = workingpoint;
-				    lastgoodpoint_set = workingpoint_set;
 				    at = at + step;
 				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
 					dir = workingpoint - prev_pt;
 					dir.Unitize();
 					dot = prev_dir * dir;
@@ -1051,30 +1038,19 @@ pullback_samples_from_closed_surface(PBCData* data,
 				lastbad = at;
 #endif
 				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
 			    } else {
 #ifdef SHOW_UNUSED
 				lastgood = at;
 #endif
 				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
 			    }
-			    if (lastgoodpoint_set) {
-				samples->Append(lastgoodpoint);
-				data->segments.push_back(samples);
-				samples = new ON_2dPointArray();
-			    }
+			    samples->Append(lastgoodpoint);
+			    data->segments.push_back(samples);
+			    samples = new ON_2dPointArray();
+			    samples->Append(lastbadpoint);
 
-			    if (lastgoodpoint_set) {
-				std::cout << "finalgoodpt1 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-			    } else {
-				std::cout << "finalgoodpt1 -  unknown" << std::endl;
-			    }
-			    if (lastbadpoint_set) {
-				std::cout << "finalbadpt1 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			    } else {
-				std::cout << "finalbadpt1 -  unknown" << std::endl;
-			    }
+			    std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+			    std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
 			}
 		    }
 		    samples->Append(pt);
@@ -1088,7 +1064,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 		    j++;
 		}
 	    }
-	} /* i > istart */
+	} /* i > 0 */
 
 	if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
 	    if ((i == istart) && (i < numKnots)) {
@@ -1114,19 +1090,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 	}
     }
 
-    has_dir = false;
-    has_prev_dir = false;
-    for (; (i > 1) && (i <= numKnots) && (i <= istop); ++i) {
+    for (; (i <= numKnots) && (i <= istop); ++i) {
 	double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	if (!toUV(*data, prev_pt, knots[i - 1], -PBC_FROM_OFFSET)) {
-	    std::cout << "prev_pt2 failed" << std::endl;
-	} else {
-	    lastgoodpoint = prev_pt;
-	    samples->Append(prev_pt);
-	    lastgoodpoint_set = true;
-	    lastbadpoint_set = false;
-	    workingpoint_set = false;
-	}
 	for (size_t j = 1; j < samplesperknotinterval;) {
 	    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
 		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
@@ -1138,6 +1103,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 #ifdef SHOW_UNUSED
 		    double lastgood = 0.0, lastbad = 0.0;
 #endif
+		    ON_2dPoint lastgoodpoint;
+		    ON_2dPoint lastbadpoint;
+		    ON_2dPoint workingpoint;
 		    //std::cout << "dot - " << dot << std::endl;
 		    if (dot < dottol) {
 			double step = delta;
@@ -1149,10 +1117,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 				lastbad = at;
 #endif
 				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
 				at = at - step;
 				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
 				    dir = workingpoint - prev_pt;
 				    dir.Unitize();
 				    dot = prev_dir * dir;
@@ -1162,10 +1128,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 				lastgood = at;
 #endif
 				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
 				at = at + step;
 				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
 				    dir = workingpoint - prev_pt;
 				    dir.Unitize();
 				    dot = prev_dir * dir;
@@ -1177,30 +1141,19 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    lastbad = at;
 #endif
 			    lastbadpoint = workingpoint;
-			    lastbadpoint_set = workingpoint_set;
 			} else {
 #ifdef SHOW_UNUSED
 			    lastgood = at;
 #endif
 			    lastgoodpoint = workingpoint;
-			    lastgoodpoint_set = workingpoint_set;
 			}
-			if (lastgoodpoint_set) {
-			    samples->Append(lastgoodpoint);
-			    data->segments.push_back(samples);
-			    samples = new ON_2dPointArray();
-			}
+			samples->Append(lastgoodpoint);
+			data->segments.push_back(samples);
+			samples = new ON_2dPointArray();
+			samples->Append(lastbadpoint);
 
-			if (lastgoodpoint_set) {
-			    std::cout << "finalgoodpt2 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-			} else {
-			    std::cout << "finalgoodpt2 -  unknown" << std::endl;
-			}
-			if (lastbadpoint_set) {
-			    std::cout << "finalbadpt2 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			} else {
-			    std::cout << "finalbadpt2 -  unknown" << std::endl;
-			}
+			std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+			std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
 		    }
 		}
 		samples->Append(pt);
@@ -1229,14 +1182,12 @@ pullback_samples_from_closed_surface(PBCData* data,
     }
 
     delete [] knots;
-
-    if (samples != NULL) {
+    if (samples != NULL)
 	data->segments.push_back(samples);
-    }
 
     return;
 }
- 
+
 PBCData *
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		 const ON_Curve* curve,
