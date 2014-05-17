@@ -131,7 +131,12 @@ sub convert1 {
     # get rid of system headers (but record their use)
     my %syshdr = ();
 
+    # container for tmp files
+    my @tmpfils = ();
+
+    # first intermediate file
     my $tfil0 = $stem . '.inter0';
+    push @tmpfils, $tfil0;
     open $fpo, '>', $tfil0
       or die "$tfil0: $!";
 
@@ -206,17 +211,25 @@ sub convert1 {
       goto LINE;
     }
 
-    push @{$ofils_ref}, $tfil0;
+    push @{$ofils_ref}, $tfil0
+      if $debug;
 
     #print Dumper(\%syshdr); die "debug exit";
 
+    # second intermediate file
     my $tfil1 = $stem . '.inter1';
-    push @{$ofils_ref}, $tfil1;
+    push @tmpfils, $tfil1;
+    push @{$ofils_ref}, $tfil1
+      if $debug;
 
     my $msg = qx(gcc -E -x c $incdirs -o $tfil1 $tfil0);
 
     # dress up the file and convert it to "final" form (eventually)
     convert1final($ofil, $tfil1, \%syshdr, $stem);
+
+    # eliminate unneeded intermediate files;
+    unlink @tmpfils
+      if !$debug;
 
     # update hash for the new, final output file
     $curr_hash = calc_md5hash($ofil);
