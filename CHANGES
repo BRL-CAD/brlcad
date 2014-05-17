@@ -268,8 +268,6 @@ mged
 
 7.14
 ----
-include/dm_color.h
-	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
 	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 src/gtools
@@ -316,6 +314,10 @@ include/raytrace.h
 Below are the interfaces that have followed deprecation policy and are
 now no longer a part of BRL-CAD.
 
+7.26.0
+------
+include/dm_color.h
+	dm_color.h -> dm.h [deprecated 7.14]
 
 7.24.2
 ------
