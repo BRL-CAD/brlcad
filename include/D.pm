@@ -153,11 +153,10 @@ sub convert1 {
     my $level = 0;
     open $fpi[$level], '<', $ifil
       or die "$ifil: $!";
-    my $fp = $fpi[$level];
     push @parfils, $ifil;
 
   LINE:
-    while (defined(my $line = <$fp>)) {
+    while (defined(my $line = <$fpi[$level]>)) {
       if ($line =~ m{$incregex}x) {
 	my $s = $1;
 	chomp $s;
@@ -197,7 +196,6 @@ sub convert1 {
 	print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n";
 	open $fpi[++$level], '<', $f
 	  or die "$f: $!";
-	$fp = $fpi[$level];
         $parfils[$level] = $f;
 	next LINE;
       }
@@ -207,7 +205,6 @@ sub convert1 {
     # work back up the file tree as we find EOF
     if ($level > 0) {
       --$level;
-      $fp = $fpi[$level];
       goto LINE;
     }
 
