@@ -19,6 +19,8 @@ use File::Copy;
 Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
 # the source dir of the installed BRL-CAD include files
 Readonly our $IDIR => "$RDIR/include/brlcad";
+# the source dir of some other installed BRL-CAD include files
+Readonly our $IDIR2 => "$RDIR/include";
 
 # local vars
 my $storefile = '.md5tablestore';
@@ -35,7 +37,8 @@ my @ignore
 my %ignore = ();
 @ignore{@ignore} = ();
 
-# temp ignored .h files called inside top-level files
+# temp ignored .h files called inside top-level files (may be
+# permanent, they are ostensably for CMake)
 my @tignore
   = (
      'config_win.h',
@@ -44,12 +47,12 @@ my @tignore
 my %tignore = ();
 @tignore{@tignore} = ();
 
-# "mapped" files
+# "mapped" files (header files not in the main BRL-CAD header die)
 my %is_mapped
   = (
-     'tcl.h'          => "$IDIR/../src/other/tcl/generic/tcl.h",
-     'tclDecls.h'     => "$IDIR/../src/other/tcl/generic/tclDecls.h",
-     'tclPlatDecls.h' => "$IDIR/../src/other/tcl/generic/tclPlatDecls.h",
+     'tcl.h'          => "$IDIR2/tcl.h",
+     'tclDecls.h'     => "$IDIR2/tclDecls.h",
+     'tclPlatDecls.h' => "$IDIR2/tclPlatDecls.h",
     );
 
 # sys headers and their equivalen Phobos module names form import
