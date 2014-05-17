@@ -1076,7 +1076,7 @@ do_diff3(struct db_i *left, struct db_i *ancestor, struct db_i *right, struct di
 
     have_diff = db_diff3(left, ancestor, right, &diff3_added, &diff3_removed, &diff3_changed, &diff3_unchanged, (void *)results);
 
-    return 0;
+    return have_diff;
 }
 
 
