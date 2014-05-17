@@ -110,7 +110,7 @@ foreach my $arg (@ARGV) {
 }
 
 if ($D::devel) {
-  @ifils = qw(bu.h);
+  @ifils = ("${D::IDIR}/bu.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
@@ -136,11 +136,21 @@ if ($report) {
   print "  unchanged: $stats{h}{sam}\n";
   print "  changed:   $stats{h}{dif}\n";
 
+  if ($D::verbose) {
+    print "  Files:\n";
+    print "    $_\n" for (@h);
+  }
+
   $n = $nd ? $nd : 'zero';
   print "There are $n D interface files in the '$D::DIDIR' directory:\n";
   print "  new:       $stats{di}{new}\n";
   print "  unchanged: $stats{di}{sam}\n";
   print "  changed:   $stats{di}{dif}\n";
+
+  if ($D::verbose) {
+    print "  Files:\n";
+    print "    $_\n" for (@d);
+  }
 }
 elsif ($convert1) {
   print "Mode is '-c1' (convert method 1)...\n\n";
