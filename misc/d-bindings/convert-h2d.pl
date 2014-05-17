@@ -13,7 +13,11 @@ use D; # local convenience module
 # use the reference D compiler
 my $DMD = '/usr/bin/dmd';
 die "ERROR:  Reference compiler 'dmd' not found.\n"
-  if (! -f $DMD);
+  if ! -f $DMD;
+
+# check for proper source dir:
+die "ERROR:  Unknown include dir for BRL-CAD public headers: '$D::IDIR' (see D.pm)\n"
+  if ! -d $D::IDIR;
 
 my $p = basename($0);
 my $usage = "Usage: $p mode [options...]";

@@ -9,6 +9,17 @@ use Readonly;
 use Data::Dumper;
 use File::Copy;
 
+# The following defs are for use just during the experimental
+# phase. They will have to be handled differently during devlopment
+# and installation.  For instance, the final .d files may be installed
+# as both source (maybe in a sub-dir of the normal include die) and as
+# dmd-compiled versions (say in a 'dmd-obj' installed sub-dir).
+
+# the root dir of the installed BRL-CAD package
+Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
+# the source dir of the installed BRL-CAD include files
+Readonly our $IDIR => "$RDIR/include/brlcad";
+
 # local vars
 my $storefile = '.md5tablestore';
 # key md5 file hases by file name in this table;
@@ -32,9 +43,6 @@ my @tignore
     );
 my %tignore = ();
 @tignore{@tignore} = ();
-
-# this is a kludge
-Readonly our $IDIR => '/usr/src/tbrowde/brlcad-svn-d-binding/include';
 
 # "mapped" files
 my %is_mapped
