@@ -47,7 +47,7 @@ my @tignore
 my %tignore = ();
 @tignore{@tignore} = ();
 
-# "mapped" files (header files not in the main BRL-CAD header die)
+# "mapped" files (header files not in the main BRL-CAD header dir)
 my %is_mapped
   = (
      'tcl.h'          => "$IDIR2/tcl.h",
