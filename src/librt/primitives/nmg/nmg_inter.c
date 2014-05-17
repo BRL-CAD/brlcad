@@ -1353,11 +1353,11 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      */
     nmg_get_2d_vertex(eu1_start, vu1a->v_p, is, &fu2->l.magic);	/* 2D line */
     nmg_get_2d_vertex(eu1_end, vu1b->v_p, is, &fu2->l.magic);
-    VSUB2_2D(eu1_dir, eu1_end, eu1_start);
+    V2SUB2(eu1_dir, eu1_end, eu1_start);
 
     nmg_get_2d_vertex(eu2_start, vu2a->v_p, is, &fu2->l.magic);
     nmg_get_2d_vertex(eu2_end, vu2b->v_p, is, &fu2->l.magic);
-    VSUB2_2D(eu2_dir, eu2_end, eu2_start);
+    V2SUB2(eu2_dir, eu2_end, eu2_start);
 
     dist[0] = dist[1] = 0;	/* for clean prints, below */
 
@@ -2889,7 +2889,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
      */
     nmg_get_2d_vertex(eu1_start, vu1a->v_p, is, &fu1->l.magic);
     nmg_get_2d_vertex(eu1_end, vu1b->v_p, is, &fu1->l.magic);
-    VSUB2_2D(eu1_dir, eu1_end, eu1_start);
+    V2SUB2(eu1_dir, eu1_end, eu1_start);
 
     dist[0] = dist[1] = 0;	/* for clean prints, below */
 
@@ -4370,7 +4370,7 @@ re_tabulate:
 	    bu_log("\t\tnmg_class_pt_fu_except(fu1) returns %s\n", nmg_class_name(nmg_class));
 	}
 
-	VJOIN1_2D(hit2d, is->pt2d, dist[0], is->dir2d);
+	V2JOIN1(hit2d, is->pt2d, dist[0], is->dir2d);
 
 	/* Consistency check between geometry, and hit_v. */
 	if (hit_v) {

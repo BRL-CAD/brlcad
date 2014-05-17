@@ -1520,13 +1520,13 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
 	    lsg = (struct line_seg *)lng;
-	    VADD2_2D(pta, skt->verts[lsg->start], skt->verts[lsg->end]);
-	    VSCALE_2D(pt, pta, 0.5);
+	    V2ADD2(pta, skt->verts[lsg->start], skt->verts[lsg->end]);
+	    V2SCALE(pt, pta, 0.5);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    csg = (struct carc_seg *)lng;
 	    if (csg->radius < 0.0) {
-		VMOVE_2D(pt, skt->verts[csg->start]);
+		V2MOVE(pt, skt->verts[csg->start]);
 	    } else {
 		point2d_t start2d = V2INIT_ZERO;
 		point2d_t end2d = V2INIT_ZERO;
@@ -1601,12 +1601,12 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    eg.ctl_points = (fastf_t *)bu_malloc(nsg->c_size * coords * sizeof(fastf_t), "eg.ctl_points");
 	    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		for (i = 0; i < nsg->c_size; i++) {
-		    VMOVE_2D(&eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]]);
+		    V2MOVE(&eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]]);
 		    eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
 		}
 	    } else {
 		for (i = 0; i < nsg->c_size; i++) {
-		    VMOVE_2D(&eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]]);
+		    V2MOVE(&eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]]);
 		}
 	    }
 	    rt_nurb_c_eval(&eg, (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0]) * 0.5, tmp_pt);
@@ -1624,7 +1624,7 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    bsg = (struct bezier_seg *)lng;
 	    V = (point2d_t *)bu_calloc(bsg->degree+1, sizeof(point2d_t), "Bezier control points");
 	    for (i = 0; i <= bsg->degree; i++) {
-		VMOVE_2D(V[i], skt->verts[bsg->ctl_points[i]]);
+		V2MOVE(V[i], skt->verts[bsg->ctl_points[i]]);
 	    }
 	    bezier(V, bsg->degree, 0.51, NULL, NULL, pt, NULL);
 	    bu_free((char *)V, "Bezier control points");
@@ -1972,7 +1972,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
     get_seg_midpoint(seg, ip, ptb);
 
     V2SUB2(dir, ptb, pta);
-    inv_len = 1.0 / sqrt(MAGSQ_2D(dir));
+    inv_len = 1.0 / sqrt(MAG2SQ(dir));
     V2SCALE(dir, dir, inv_len);
 
     /* intersect pta<->ptb line with both loops */

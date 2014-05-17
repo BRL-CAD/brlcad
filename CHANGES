@@ -280,14 +280,6 @@ mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 	bots, per_line [deprecated 7.14]
-include/vmath.h
-	VADD2_2D -> V2ADD2 [deprecated 7.14]
-	VSUB2_2D -> V2SUB2 [deprecated 7.14]
-	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
-	VDOT_2D -> V2DOT [deprecated 7.14]
-	VMOVE_2D -> V2MOVE [deprecated 7.14]
-	VSCALE_2D -> V2SCALE [deprecated 7.14]
-	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
 
 7.12
 ----
@@ -312,6 +304,14 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+include/vmath.h
+	VADD2_2D -> V2ADD2 [deprecated 7.14]
+	VSUB2_2D -> V2SUB2 [deprecated 7.14]
+	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
+	VDOT_2D -> V2DOT [deprecated 7.14]
+	VMOVE_2D -> V2MOVE [deprecated 7.14]
+	VSCALE_2D -> V2SCALE [deprecated 7.14]
+	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
 include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
 srt/librt/cmd.c
