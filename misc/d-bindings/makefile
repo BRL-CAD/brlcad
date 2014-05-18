@@ -12,7 +12,10 @@ LIBDIR  := $(BDIR)/lib
 INCDIR  := $(BDIR)/include/brlcad
 INCDIR2 := $(BDIR)/include
 
-BINDINGS = bu.d
+# D interface (DI) files dir
+DIDIR   := ./di
+
+BINDINGS = $(DIDIR)/bu.d
 
 SRC = test_bu.d $(BINDINGS)
 
