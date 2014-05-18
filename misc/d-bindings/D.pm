@@ -13,7 +13,7 @@ use File::Basename;
 # The following defs are for use just during the experimental
 # phase. They will have to be handled differently during devlopment
 # and installation.  For instance, the final .d files may be installed
-# as both source (maybe in a sub-dir of the normal include die) and as
+# as both source (maybe in a sub-dir of the normal include dir) and as
 # dmd-compiled versions (say in a 'dmd-obj' installed sub-dir).
 
 # the root dir of the installed BRL-CAD package
