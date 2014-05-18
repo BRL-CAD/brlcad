@@ -142,12 +142,12 @@ sub convert {
     }
 
     if (!$process) {
-      print "D::convert1(): Skipping input file '$ifil'...\n"
+      print "D::convert(): Skipping input file '$ifil'...\n"
 	if $verbose;
       next;
     }
 
-    print "D::convert1(): Processing file '$ifil' => '$ofil'...\n"
+    print "D::convert(): Processing file '$ifil' => '$ofil'...\n"
       if $verbose;
 
     # container for tmp files
@@ -159,21 +159,36 @@ sub convert {
     # first intermediate file
     my $tfil0 = "${D::DIDIR}/${stem}.inter0";
     push @tmpfils, $tfil0;
-
-    # insert unique included files into the single input file
-    flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+    push @{$ofils_ref}, $tfil0
+	if $debug;
 
     # second intermediate file
     my $tfil1 = "${D::DIDIR}/${stem}.inter1";
     push @tmpfils, $tfil1;
     push @{$ofils_ref}, $tfil1
-      if $debug;
+	if $debug;
 
-    # use g++ -E
-    convert_with_gcc($tfil0, $tfil1);
+    #==== method 1 ====
+    if ($meth == 1) {
 
-    # dress up the file and convert it to "final" form (eventually)
-    convert1final($ofil, $tfil1, \%syshdr, $stem);
+      # insert unique included files into the single input file
+      flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+
+      # use g++ -E
+      convert_with_gcc($tfil0, $tfil1);
+
+      # dress up the file and convert it to "final" form (eventually)
+      convert1final($ofil, $tfil1, \%syshdr, $stem);
+    }
+    #==== method 1 ====
+    elsif ($meth == 2) {
+
+      # use dstep
+      convert_with_dstep($tfil0, $tfil1);
+
+      # dress up the file and convert it to "final" form (eventually)
+      convert1final($ofil, $tfil1, \%syshdr, $stem);
+    }
 
     # eliminate unneeded intermediate files;
     unlink @tmpfils
@@ -192,7 +207,7 @@ sub convert {
       push @{$ofils_ref}, $ofil;
     }
     else {
-      print "D::convert1(): Output file '$ofil' has not changed.\n"
+      print "D::convert(): Output file '$ofil' has not changed.\n"
 	if $verbose;
     }
 
