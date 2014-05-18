@@ -44,10 +44,15 @@ my $report   = 0;
 my $convert1 = 0;
 my $convert2 = 0;
 
+my $mode_selected = 0;
 sub zero_modes {
+  my $ms = shift @_;
+  $ms = 0 if !defined $ms;
   $report   = 0;
   $convert1 = 0;
   $convert2 = 0;
+
+  $mode_selected = 1 if $ms;
 } # zero_modes
 
 my @ifils = ();
@@ -97,15 +102,15 @@ foreach my $arg (@ARGV) {
 
   # modes
   elsif ($arg =~ m{\A -r}xms) {
-    zero_modes();
+    zero_modes(1);
     $report = 1;
   }
   elsif ($arg =~ m{\A -c1}xms) {
-    zero_modes();
+    zero_modes(1);
     $convert1 = 1;
   }
   elsif ($arg =~ m{\A -c2}xms) {
-    zero_modes();
+    zero_modes(1);
     $convert2 = 1;
   }
 
@@ -114,6 +119,9 @@ foreach my $arg (@ARGV) {
     die "ERROR:  Unknown arg '$arg'.\n";
   }
 }
+
+die "ERROR:  No mode selected.\n"
+  if !$mode_selected;
 
 if ($D::devel) {
   @ifils = ("${D::IDIR}/bu.h");
