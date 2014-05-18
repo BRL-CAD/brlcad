@@ -40,17 +40,15 @@ HERE
 }
 
 # modes
-my $report   = 0;
-my $convert1 = 0;
-my $convert2 = 0;
+my $report  = 0;
+my $convert = 0;
 
 my $mode_selected = 0;
 sub zero_modes {
   my $ms = shift @_;
   $ms = 0 if !defined $ms;
-  $report   = 0;
-  $convert1 = 0;
-  $convert2 = 0;
+  $report  = 0;
+  $convert = 0;
 
   $mode_selected = 1 if $ms;
 } # zero_modes
@@ -107,11 +105,11 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ m{\A -c1}xms) {
     zero_modes(1);
-    $convert1 = 1;
+    $convert = 1;
   }
   elsif ($arg =~ m{\A -c2}xms) {
     zero_modes(1);
-    $convert2 = 1;
+    $convert = 2;
   }
 
   # error
@@ -166,19 +164,17 @@ if ($report) {
     print "    $_\n" for (@d);
   }
 }
-elsif ($convert1) {
-  print "Mode is '-c1' (convert method 1)...\n\n";
+elsif ($convert) {
   @ifils = @h
     if !@ifils;
+  if ($convert == 1) {
+    print "Mode is '-c1' (convert method 1)...\n\n";
+  }
+  elsif ($convert == 2) {
+    print "Mode is '-c2' (convert method 2)...\n\n";
+  }
 
-  D::convert1(\@ifils, \@ofils, \%f, \%stats);
-}
-elsif ($convert2) {
-  print "Mode is '-c2' (convert method 2)...\n\n";
-  @ifils = @h
-    if !@ifils;
-
-  D::convert2(\@ifils, \@ofils, \%f, \%stats);
+  D::convert(\@ifils, \@ofils, \%f, \%stats, $convert);
 }
 
 print "Normal end.\n";
