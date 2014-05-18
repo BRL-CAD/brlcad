@@ -199,7 +199,7 @@ sub convert {
 
     if (!$prev_hash || $prev_hash ne $curr_hash) {
       if ($verbose) {
-	print "D::convert1(): Output file '$ofil' hashes:\n";
+	print "D::convert(): Output file '$ofil' hashes:\n";
 	print "  prev '$prev_hash'\n";
 	print "  curr '$curr_hash'\n";
       }
@@ -213,7 +213,7 @@ sub convert {
 
   } # iterate over input files
 
-} # convert1
+} # convert
 
 sub calc_md5hash {
   my $f = shift @_;
@@ -225,10 +225,13 @@ sub store_md5hash {
   my $f       = shift @_;
   my $md5hash = shift @_;
 
-  $md5hash = calc_md5hash($f) if !defined $md5hash;
+  $md5hash = calc_md5hash($f)
+    if !defined $md5hash;
 
-  my $tabref = retrieve($storefile) if -e $storefile;
-  $tabref = \%md5table if !defined $tabref;
+  my $tabref = retrieve($storefile)
+    if -e $storefile;
+  $tabref = \%md5table
+    if !defined $tabref;
   $tabref->{$f} = $md5hash;
   store $tabref, $storefile;
 
@@ -241,13 +244,14 @@ sub retrieve_md5hash {
   # return stored file hash or 0 if not found in hash
   my $f = shift @_;
 
-  my $tabref = retrieve($storefile) if -e $storefile;
-  $tabref = \%md5table if !defined $tabref;
+  my $tabref = retrieve($storefile)
+    if -e $storefile;
+  $tabref = \%md5table
+    if !defined $tabref;
 
   my $md5hash = 0;
-  if (exists $tabref->{$f}) {
-    $md5hash = $tabref->{$f};
-  }
+  $md5hash = $tabref->{$f}
+    if (exists $tabref->{$f});
 
   return $md5hash;
 
@@ -348,25 +352,6 @@ sub convert_with_dstep {
     chomp $msg;
     print "WARNING: msg: '$msg'\n";
   }
-
-=pod
-
-  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
-
-  my $opts = '';
-  #$opts .= ' -CC'; # keep C++ comments
-  #$opts .= ' -H'; # list includes
-  $opts .= ' -v'; # report include paths
-  $opts .= ' -P'; # omit line markers
-
-  my $msg = qx(gcc -E -x c $opts $incdirs -o $ofil $ifil);
-
-  if ($msg) {
-    chomp $msg;
-    print "WARNING: msg: '$msg'\n";
-  }
-
-=cut
 
 } # convert_with_dstep
 
