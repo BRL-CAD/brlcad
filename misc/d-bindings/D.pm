@@ -107,8 +107,6 @@ sub convert1 {
   my $fref      = shift @_; # %f
   my $sref      = shift @_; # %stats
 
-  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
-
   foreach my $ifil (@{$ifils_ref}) {
     my $stem = basename $ifil;
     $stem =~ s{$Hsuf \z}{}x;
@@ -175,6 +173,22 @@ sub convert1 {
       or die "$ifil: $!";
     push @parfils, $ifil;
 
+    if (0 && $debug) {
+      # use g++ -E
+      my $tfil = 'temp-bu-cpp-file.txt';
+      convert_with_gcc($ifil, $tfil);
+      die "debug exit: see tmp file '$tfil'";
+    }
+
+    # record its source
+    print $fpo "//===========================================================================\n";
+    print $fpo "// beginning input lines (level $level) from '$ifil'\n";
+    print $fpo "//===========================================================================\n";
+
+    # don't repeat included files
+    my %seen = ();
+    $seen{$ifil} = 1;
+
   LINE:
     while (defined(my $line = readline $fpi[$level])) {
       if (0 && $debug) {
@@ -190,14 +204,15 @@ sub convert1 {
 	$s =~ s{\A \"}{}x;
 	$s =~ s{\" \z}{}x;
 	print "debug: \$1 (\$s) = '$s'\n"
-	  if $debug;
+	  if (0 && $debug);
 
 	# get a new file
 	my $f = $s;
 
         # ignore <> files
 	if (is_syshdr($f)) {
-	  print "WARNING: ignoring sys include file '$f' for now...\n";
+	  print "WARNING: ignoring sys include file '$f' for now...\n"
+	    if (0 && $debug);
 	  $syshdr{$s} = 1;
 	  # don't print
 	  next LINE;
@@ -205,23 +220,36 @@ sub convert1 {
 
 	# some files are ignored for now
         if (exists $tignore{$f}) {
-	  print "WARNING: ignoring include file '$f' for now...\n";
+	  print "WARNING: ignoring include file '$f' for now...\n"
+	    if (0 && $debug);
 	  next LINE;
 	}
 
         # may be a "mapped" file
 	if (exists $is_mapped{$f}) {
 	  my $ff = $is_mapped{$f};
-	  print "WARNING: using mapped file '$f' => '$ff' for now...\n";
+	  print "WARNING: using mapped file '$f' => '$ff' for now...\n"
+	    if (0 && $debug);
 	  $f = $ff;
 	}
 
 	# one more shot for things in the subdir of $IDIR like './bu/bu.h'
         if (!-f $f) {
-	  my $ff = "${D::IDIR}/${f}";
-	  print "NOTE: using file '$f' => '$ff'...\n";
+	  # the following two formats are the same but confuse the 'seen' hash:
+	  #   'bu/bu_vlist.h'
+	  #   './bu/bu_vlist.h'
+	  my $s = $f;
+	  $s =~ s{\A \./}{}x;
+	  my $ff = "${D::IDIR}/${s}";
+	  print "NOTE: using file '$f' => '$ff'...\n"
+	    if (0 && $debug);
 	  $f = $ff;
 	}
+
+	# but don't inlcude it if we've seen it before
+        next LINE if (exists $seen{$f});
+	# record it as seen
+	$seen{$f} = 1;
 
 	# we try to follow this include file
 	die "ERROR:  Include file '$f' (in '$parfils[$level]') not found."
@@ -242,6 +270,7 @@ sub convert1 {
 
       print $fpo $line;
     }
+
     # work back up the file tree as we find EOF
     if ($level > 0) {
       --$level;
@@ -264,11 +293,8 @@ sub convert1 {
     push @{$ofils_ref}, $tfil1
       if $debug;
 
-    my $msg = qx(gcc -E -x c $incdirs -o $tfil1 $tfil0);
-    if ($msg) {
-      chomp $msg;
-      print "WARNING: msg: '$msg'\n";
-    }
+    # use g++ -E
+    convert_with_gcc($tfil0, $tfil1);
 
     # dress up the file and convert it to "final" form (eventually)
     convert1final($ofil, $tfil1, \%syshdr, $stem);
@@ -396,6 +422,27 @@ sub convert1final {
   }
 
 } # convert1final
+
+sub convert_with_gcc {
+  my $ifil = shift @_; # tfil0
+  my $ofil = shift @_; # tfil1
+
+  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
+
+  my $opts = '';
+  #$opts .= ' -CC'; # keep C++ comments
+  #$opts .= ' -H'; # list includes
+  $opts .= ' -v'; # report include paths
+  $opts .= ' -P'; # omit line markers
+
+  my $msg = qx(gcc -E -x c $opts $incdirs -o $ofil $ifil);
+
+  if ($msg) {
+    chomp $msg;
+    print "WARNING: msg: '$msg'\n";
+  }
+
+} # convert_with_gcc
 
 # mandatory true return from a Perl module
 1;
