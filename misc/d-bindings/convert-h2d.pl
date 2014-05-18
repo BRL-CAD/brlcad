@@ -42,10 +42,12 @@ HERE
 # modes
 my $report   = 0;
 my $convert1 = 0;
+my $convert2 = 0;
 
 sub zero_modes {
   $report   = 0;
   $convert1 = 0;
+  $convert2 = 0;
 } # zero_modes
 
 my @ifils = ();
@@ -101,6 +103,10 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ m{\A -c1}xms) {
     zero_modes();
     $convert1 = 1;
+  }
+  elsif ($arg =~ m{\A -c2}xms) {
+    zero_modes();
+    $convert2 = 1;
   }
 
   # error
@@ -158,6 +164,13 @@ elsif ($convert1) {
     if !@ifils;
 
   D::convert1(\@ifils, \@ofils, \%f, \%stats);
+}
+elsif ($convert2) {
+  print "Mode is '-c2' (convert method 2)...\n\n";
+  @ifils = @h
+    if !@ifils;
+
+  D::convert2(\@ifils, \@ofils, \%f, \%stats);
 }
 
 print "Normal end.\n";
@@ -241,12 +254,19 @@ $usage
 modes:
 
   -r    report status of .h and .d files in the directory
-  -c1   use method 1 to convert .h files to .di files
+
+  -c1   use method 1 to convert .h files to .d files
           method 1 uses a C compiler to convert the header to an
           intermediate file for further manipulation
           (see http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules)
         this program uses GNU gcc:
           \$ gcc -E -x c -o outfile -I incdir .. -I incdirN infile
+  -c2   use method 2 to convert .h files to .d files
+          method 2 uses 'dstep' to convert the header to an
+          intermediate file for further manipulation
+          (see http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules)
+        this program uses dstep:
+          \$ dstep infile -o outfile
 
   -h=X  restrict conversion attempt to just file X
 
@@ -260,14 +280,14 @@ options:
 notes:
 
   1.  The convert options will normall convert all known .h files to
-      .di files only if they have no existing .di file.
+      .d files only if they have no existing .d file.
 
   2.  Excptions to note 1:
 
       + Use of the '-h=X' option restricts the set of .h files to be
         considered to the single file X.
 
-      + Use of the '-f' option will allow overwriting an existing .di
+      + Use of the '-f' option will allow overwriting an existing .d
         file.
 
 HERE

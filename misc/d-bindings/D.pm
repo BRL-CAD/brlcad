@@ -101,6 +101,15 @@ sub remove_md5hash_store {
   %md5table = ();
 } # remove_md5hash_store
 
+sub convert2 {
+  die "ERROR:  the convert2 method is not yet ready for use.";
+
+  my $ifils_ref = shift @_; # @ifils
+  my $ofils_ref = shift @_; # @ofils
+  my $fref      = shift @_; # %f
+  my $sref      = shift @_; # %stats
+} # convert2
+
 sub convert1 {
   my $ifils_ref = shift @_; # @ifils
   my $ofils_ref = shift @_; # @ofils
@@ -146,14 +155,24 @@ sub convert1 {
     print "D::convert1(): Processing file '$ifil' => '$ofil'...\n"
       if $verbose;
 
-    # get rid of system headers (but record their use)
-    my %syshdr = ();
-
     # container for tmp files
     my @tmpfils = ();
 
+    # get rid of system headers (but record their use)
+    my %syshdr = ();
+
     # first intermediate file
     my $tfil0 = "${D::DIDIR}/${stem}.inter0";
+    push @tmpfils, $tfil0;
+
+    # insert unique included files into the single input file
+    flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+
+=pod
+
+    # get rid of system headers (but record their use)
+    my %syshdr = ();
+
     push @tmpfils, $tfil0;
     open $fpo, '>', $tfil0
       or die "$tfil0: $!";
@@ -246,7 +265,7 @@ sub convert1 {
 	  $f = $ff;
 	}
 
-	# but don't inlcude it if we've seen it before
+	# but don't include it if we've seen it before
         next LINE if (exists $seen{$f});
 	# record it as seen
 	$seen{$f} = 1;
@@ -287,6 +306,8 @@ sub convert1 {
 
     #print Dumper(\%syshdr); die "debug exit";
 
+=cut
+
     # second intermediate file
     my $tfil1 = "${D::DIDIR}/${stem}.inter1";
     push @tmpfils, $tfil1;
@@ -319,6 +340,7 @@ sub convert1 {
       print "D::convert1(): Output file '$ofil' has not changed.\n"
 	if $verbose;
     }
+
   }
 
 } # convert1
@@ -470,6 +492,143 @@ sub convert_with_dstep {
 =cut
 
 } # convert_with_dstep
+
+sub flatten_c_header {
+  # insert unique included files into the single input file
+  my $ifil      = shift @_; # $ifil
+  my $ofil      = shift @_; # $tfil0
+  my $stem      = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+  my $sysref    = shift @_; # \%syshdr
+
+  open my $fpo, '>', $ofil
+    or die "$ofil: $!";
+
+  my $incregex = qr/\A \s* \# \s* include \s+
+		    (
+		      (\<[a-zA-Z0-9\._\-\/]{3,}\>)
+		    |
+		      (\"[a-zA-Z0-9\._\-\/]{3,}\")
+		    ) \s*/x;
+
+  my (@fpi, @parfils) = ();
+
+  # the starting file
+  my $level = 0;
+  open $fpi[$level], '<', $ifil
+    or die "$ifil: $!";
+  push @parfils, $ifil;
+
+  if (0 && $debug) {
+    # use g++ -E
+    my $tfil = 'temp-bu-cpp-file.txt';
+    convert_with_gcc($ifil, $tfil);
+    die "debug exit: see tmp file '$tfil'";
+  }
+
+  # record its source
+  print $fpo "//===========================================================================\n";
+  print $fpo "// beginning input lines (level $level) from '$ifil'\n";
+  print $fpo "//===========================================================================\n";
+
+  # don't repeat included files
+  my %seen = ();
+  $seen{$ifil} = 1;
+
+ LINE:
+  while (defined(my $line = readline $fpi[$level])) {
+    if (0 && $debug) {
+      my $s = $line;
+      chomp $s;
+      print "debug: line = '$s'\n";
+    }
+    if ($line =~ m{$incregex}x) {
+      my $s = $1;
+      chomp $s;
+      $s =~ s{\A \s*}{}x;
+      $s =~ s{\s* \z}{}x;
+      $s =~ s{\A \"}{}x;
+      $s =~ s{\" \z}{}x;
+      print "debug: \$1 (\$s) = '$s'\n"
+	if (0 && $debug);
+
+      # get a new file
+      my $f = $s;
+
+      # ignore <> files
+      if (is_syshdr($f)) {
+	print "WARNING: ignoring sys include file '$f' for now...\n"
+	  if (0 && $debug);
+	$sysref->{$s} = 1;
+	# don't print
+	next LINE;
+      }
+
+      # some files are ignored for now
+      if (exists $tignore{$f}) {
+	print "WARNING: ignoring include file '$f' for now...\n"
+	  if (0 && $debug);
+	next LINE;
+      }
+
+      # may be a "mapped" file
+      if (exists $is_mapped{$f}) {
+	my $ff = $is_mapped{$f};
+	print "WARNING: using mapped file '$f' => '$ff' for now...\n"
+	  if (0 && $debug);
+	$f = $ff;
+      }
+
+      # one more shot for things in the subdir of $IDIR like './bu/bu.h'
+      if (!-f $f) {
+	# the following two formats are the same but confuse the 'seen' hash:
+	#   'bu/bu_vlist.h'
+	#   './bu/bu_vlist.h'
+	my $s = $f;
+	$s =~ s{\A \./}{}x;
+	my $ff = "${D::IDIR}/${s}";
+	print "NOTE: using file '$f' => '$ff'...\n"
+	  if (0 && $debug);
+	$f = $ff;
+      }
+
+      # but don't include it if we've seen it before
+      next LINE if (exists $seen{$f});
+      # record it as seen
+      $seen{$f} = 1;
+
+      # we try to follow this include file
+      die "ERROR:  Include file '$f' (in '$parfils[$level]') not found."
+	if !-f $f;
+      print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n"
+	if $debug;
+      open $fpi[++$level], '<', $f
+	or die "$f: $!";
+      $parfils[$level] = $f;
+
+      # record its source
+      print $fpo "//===========================================================================\n";
+      print $fpo "// included input lines (level $level) from '$f'\n";
+      print $fpo "//===========================================================================\n";
+
+      next LINE;
+    }
+
+    print $fpo $line;
+  }
+
+  # work back up the file tree as we find EOF
+  if ($level > 0) {
+    --$level;
+    if (!defined $fpi[$level]) {
+      print "ERROR:  At level $level, file pointer is not defined!\n";
+    }
+    goto LINE;
+  }
+
+  #print Dumper(\@parfils); die "debug exit";
+
+  #print Dumper(\%syshdr); die "debug exit";
+} # flatten_c_header
 
 # mandatory true return from a Perl module
 1;
