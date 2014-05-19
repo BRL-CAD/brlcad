@@ -944,9 +944,9 @@ db_compare3(const struct rt_db_internal *left,
 	 * ancestor != left && ancestor != right && left != right
 	 */
 	{
-	    int a = ancestor->idb_minor_type;   
-	    int l = left->idb_minor_type;   
-	    int r = right->idb_minor_type; 
+	    int a = ancestor->idb_minor_type;
+	    int l = left->idb_minor_type;
+	    int r = right->idb_minor_type;
 	    int a_arb = 0;
 	    int l_arb = 0;
 	    int r_arb = 0;

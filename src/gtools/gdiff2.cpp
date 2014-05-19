@@ -362,13 +362,13 @@ void diff3_results_init(struct diff3_results *results){
     BU_GET(results->changed, struct bu_ptbl);
     BU_GET(results->conflict, struct bu_ptbl);
 
-    BU_PTBL_INIT(results->unchanged); 
+    BU_PTBL_INIT(results->unchanged);
     BU_PTBL_INIT(results->removed_left_only);
     BU_PTBL_INIT(results->removed_right_only);
     BU_PTBL_INIT(results->removed_both);
     BU_PTBL_INIT(results->added_left_only);
-    BU_PTBL_INIT(results->added_right_only); 
-    BU_PTBL_INIT(results->added_both); 
+    BU_PTBL_INIT(results->added_right_only);
+    BU_PTBL_INIT(results->added_both);
     BU_PTBL_INIT(results->added_merged); 
     BU_PTBL_INIT(results->changed);
     BU_PTBL_INIT(results->conflict);
@@ -379,13 +379,13 @@ void diff3_results_free(struct diff3_results *results)
 {
     int i = 0;
 
-    bu_ptbl_free(results->unchanged); 
+    bu_ptbl_free(results->unchanged);
     bu_ptbl_free(results->removed_left_only);
     bu_ptbl_free(results->removed_right_only);
     bu_ptbl_free(results->removed_both);
     bu_ptbl_free(results->added_left_only);
-    bu_ptbl_free(results->added_right_only); 
-    bu_ptbl_free(results->added_both); 
+    bu_ptbl_free(results->added_right_only);
+    bu_ptbl_free(results->added_both);
     for (i = 0; i < (int)BU_PTBL_LEN(results->added_merged); i++) {
 	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->added_merged, i);
 	diff3_result_free((void *)result);
@@ -546,7 +546,7 @@ diff3_added(const struct db_i *left, const struct db_i *ancestor, const struct d
      * added in left only
      * added in right only
      * added in left and right, identically
-     * added in left and right, mergably
+     * added in left and right, mergeably
      * added in left and right, conflict
      */
     struct diff3_results *results;
@@ -679,18 +679,18 @@ diff3_changed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(ancesto
      * changed in left, right unchanged
      * changed in right, left unchanged
      * changed in left and right, identically
-     * changed in left and right, mergably
+     * changed in left and right, mergeably
      *
      *
      * Conflicts:
-     * removed in left, changed in right 
+     * removed in left, changed in right
      * removed in right, changed in left
      * changed in left, changed in right, conflict
      *
      *
      * Cases where additions conflict with each other are handled by diff3_added
      */
- 
+
     return 0;
 }
 

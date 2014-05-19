@@ -129,10 +129,10 @@ db_compare(const struct rt_db_internal *left_obj,
  * This function returns:
  *
  * 0 if there are no differences
- * 1 if there are differences but no conflits
- * 2 if there are conflits
+ * 1 if there are differences but no conflicts
+ * 2 if there are conflicts
  * 3 if there are differences but they cannot be studied (tcl params not available)
- * 4 if there are conflits but they cannot be studied (tcl params not available)
+ * 4 if there are conflicts but they cannot be studied (tcl params not available)
  *
  * Negative values indicate an internal error.
  *
