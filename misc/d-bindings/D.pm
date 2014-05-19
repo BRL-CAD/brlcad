@@ -197,7 +197,7 @@ sub convert {
       copy $ifil, $cfil;
 
       # the output file of interest will be named:
-      my $tufil = "$cfil.001.tu";
+      my $tufil = "$cfil.001t.tu";
       push @tmpfils, $tufil;
       push @{$ofils_ref}, $tufil
 	if $debug;
@@ -214,7 +214,7 @@ sub convert {
       process_tu_file($tufil, $pfil);
 
       # dress up the file and convert it to "final" form (eventually)
-      #convert3final($ofil, $tfil1, \%syshdr, $stem);
+      #convert3final($ofil, $pfil, \%syshdr, $stem);
     }
 
     # eliminate unneeded intermediate files;
@@ -224,7 +224,11 @@ sub convert {
     # update hash for the new, final output file
     $curr_hash = calc_md5hash($ofil);
 
-    if (!$prev_hash || $prev_hash ne $curr_hash) {
+    if (!-f $ofil) {
+      print "D::convert(): Output file '$ofil' does not exist.\n"
+	if $verbose;
+    }
+    elsif (!$prev_hash || $prev_hash ne $curr_hash) {
       if ($verbose) {
 	print "D::convert(): Output file '$ofil' hashes:\n";
 	print "  prev '$prev_hash'\n";
@@ -319,14 +323,23 @@ sub process_tu_file {
 
   use GCC::TranslationUnit;
 
+  die "ERROR:  tu file '$tufil' not found."
+    if ! -f $tufil;
+
   # echo '#include <stdio.h>' > stdio.c
   # gcc -fdump-translation-unit -c stdio.c
-  my $node = GCC::TranslationUnit::Parser->parsefile($tufil)->root;
+  my $node = GCC::TranslationUnit::Parser->parsefile($tufil);
+  die "ERROR:  Undefined reference \$tu"
+    if (!defined $node or !$node);
 
   # list every function/variable name
   while ($node) {
     if ($node->isa('GCC::Node::function_decl') ||
        $node->isa('GCC::Node::var_decl')) {
+      printf "%s declared in %s\n",
+        $node->name->identifier, $node->source;
+    }
+    else {
       printf "%s declared in %s\n",
         $node->name->identifier, $node->source;
     }
