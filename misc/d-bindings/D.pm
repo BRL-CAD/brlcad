@@ -166,21 +166,34 @@ sub convert {
     my $tfil1 = "${D::DIDIR}/${stem}.inter1";
     push @tmpfils, $tfil1;
     push @{$ofils_ref}, $tfil1
-	if $debug;
+      if $debug;
 
     #==== method 1 ====
     if ($meth == 1) {
 
       # insert unique included files into the single input file
-      flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+      #flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+
+      # use gcc; need a C input file
+      my $cfil = "./di/$stem.h.c";
+      if (-f $tfil0) {
+	copy $tfil0, $cfil;
+      }
+      else {
+	copy $ifil, $cfil;
+      }
+
+      push @tmpfils, $cfil;
+      push @{$ofils_ref}, $cfil
+	if $debug;
 
       # use g++ -E
-      convert_with_gcc($tfil0, $tfil1);
+      convert_with_gcc_E($cfil, $tfil1);
 
       # dress up the file and convert it to "final" form (eventually)
       convert1final($ofil, $tfil1, \%syshdr, $stem);
     }
-    #==== method 1 ====
+    #==== method 2 ====
     elsif ($meth == 2) {
 
       # use dstep
@@ -195,6 +208,7 @@ sub convert {
       # use gcc; need a C input file
       my $cfil = "./di/$stem.h.c";
       copy $ifil, $cfil;
+      push @tmpfils, $cfil;
 
       # the output file of interest will be named:
       my $tufil = "$cfil.001t.tu";
@@ -202,11 +216,11 @@ sub convert {
       push @{$ofils_ref}, $tufil
 	if $debug;
 
-      convert_with_gcc2($cfil);
+      convert_with_gcc_fdump_tu($cfil);
 
       # extract data into another file
       # the output file of interest will be named:
-      my $pfil = "./di/$tufil.dat";
+      my $pfil = "$tufil.dat";
       push @tmpfils, $pfil;
       push @{$ofils_ref}, $pfil
 	if $debug;
@@ -316,8 +330,12 @@ sub is_syshdr {
   return 0;
 } # is_syshdr
 
+=pod
+
 sub process_tu_file {
-  # processes tu output for mehod 3
+  die "GCC::TranslationUnit doesn't work; author queried";
+
+  # processes tu output for method 3
   my $tufil = shift @_;
   my $ofil  = shift @_;
 
@@ -332,21 +350,30 @@ sub process_tu_file {
   die "ERROR:  Undefined reference \$tu"
     if (!defined $node or !$node);
 
+  open my $fp, '>', $ofil
+    or die "$ofil: $!";
+
   # list every function/variable name
   while ($node) {
+
+    #print Dumper($node);
+
     if ($node->isa('GCC::Node::function_decl') ||
        $node->isa('GCC::Node::var_decl')) {
-      printf "%s declared in %s\n",
+      printf $fp "%s declared in %s\n",
         $node->name->identifier, $node->source;
     }
     else {
-      printf "%s declared in %s\n",
+      printf $fp "%s declared in %s\n",
         $node->name->identifier, $node->source;
     }
+
     $node = $node->chain;
   }
 
 } # convert_tu_file
+
+=cut
 
 sub convert1final {
   my $ofil = shift @_; # $ofil
@@ -363,6 +390,9 @@ sub convert1final {
   print $fpo "extern (C) {\n";
   print $fpo "\n";
 
+  # avoid multiple blank lines
+  my $prev_line_was_space = 1;
+
   foreach my $h (sort keys %sysmod) {
     my $mod = $sysmod{$h};
     next if !$mod;
@@ -372,54 +402,72 @@ sub convert1final {
 
   open my $fpi, '<', $ifil
     or die "$ifil: $!";
+
   while (defined(my $line = <$fpi>)) {
 
-=pod
-
-    # ignore cpp comment lines
-    next if ($line =~ m{\A \s* \#}x);
-
-=cut
-
-=pod
-
-    # ignore blanklines
+    # ignore or collapse blank lines?
     my @d = split(' ', $line);
-    next if !defined $d[0];
+    if (!defined $d[0]) {
+      if (!$prev_line_was_space) {
+	print $fpo "\n";
+	$prev_line_was_space = 1;
+      }
+      next;
+    }
 
-=cut
+    if ($line =~ m{\A \s* \#}x) {
+      if (0) {
+	# ignore cpp comment lines
+	next;
+      }
+      elsif (1) {
+	# replace cpp comment lines with a space unless prev line was a space
+	if (!$prev_line_was_space) {
+	  print $fpo "\n";
+	  $prev_line_was_space = 1;
+	}
+	next;
+      }
+    }
 
+    $prev_line_was_space = 0;
     print $fpo $line;
   }
 
   # ender
-  print $fpo "\n";
+  print $fpo "\n"
+    if !$prev_line_was_space;
+
   print $fpo "} // extern (C) {\n";
 
 } # convert1final
 
-sub convert_with_gcc {
+sub convert_with_gcc_E {
   my $ifil = shift @_; # tfil0
   my $ofil = shift @_; # tfil1
 
   my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
 
   my $opts = '';
-  #$opts .= ' -CC'; # keep C++ comments
+  #$opts .= ' -CC'; # keep C and C++ comments
   #$opts .= ' -H'; # list includes
   $opts .= ' -v'; # report include paths
-  $opts .= ' -P'; # omit line markers
+  #$opts .= ' -P'; # omit line markers
 
-  my $msg = qx(gcc -E -x c $opts $incdirs -o $ofil $ifil);
+  my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
+  print "debug-cmd: '$cmd'\n"
+    if $debug;
+
+  my $msg = qx($cmd);
 
   if ($msg) {
     chomp $msg;
     print "WARNING: msg: '$msg'\n";
   }
 
-} # convert_with_gcc
+} # convert_with_gcc_E
 
-sub convert_with_gcc2 {
+sub convert_with_gcc_fdump_tu {
   my $cfil = shift @_;
 
   my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
@@ -429,6 +477,7 @@ sub convert_with_gcc2 {
   my $cmd = "gcc -fdump-translation-unit -c $incdirs -o $ofil $cfil";
   print "debug-cmd: '$cmd'\n"
     if $debug;
+
   my $msg = qx($cmd);
 
   if ($msg) {
@@ -436,7 +485,7 @@ sub convert_with_gcc2 {
     print "WARNING: msg: '$msg'\n";
   }
 
-} # convert_with_gcc2
+} # convert_with_fdump_tu
 
 sub convert_with_dstep {
   my $ifil = shift @_; # tfil0

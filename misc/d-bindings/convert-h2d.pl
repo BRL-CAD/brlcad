@@ -103,7 +103,8 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $report = 1;
   }
-  elsif ($arg =~ m{\A -c([1-3]){1}}xms) {
+  elsif ($arg =~ m{\A -c([1-2]){1}}xms) {
+    # note c3 is not working yet
     zero_modes(1);
     $convert = $1;
   }
@@ -257,12 +258,15 @@ modes:
           intermediate file for further manipulation
         this program uses GNU gcc:
           \$ gcc -E -o outfile -I incdir .. -I incdirN infile
+
   -c2   use method 2 to convert .h files to .d files
           method 2 uses 'dstep' to convert the header to an
           intermediate file for further manipulation
         this program uses dstep:
           \$ dstep infile -o outfile
-  -c3   use method 3 to convert .h files to .d files
+
+  -c3   NOT YET WORKING!!!
+        use method 3 to convert .h files to .d files
           method 1 uses a C compiler to convert the header to an
           intermediate file for further manipulation
         this program uses GNU gcc:
