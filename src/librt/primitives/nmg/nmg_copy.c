@@ -173,7 +173,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 	    if (ret->g.plane_p == NULL)
 		ret->g.plane_p = nmg_construct_face_g_plane(original->g.plane_p, structArray);
 
-	    BU_LIST_APPEND(&ret->g.plane_p->f_hd, &ret->l);
+	    BU_LIST_INSERT(&ret->g.plane_p->f_hd, &ret->l);
 	    break;
 
 	case NMG_FACE_G_SNURB_MAGIC:
@@ -182,7 +182,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 	    if (ret->g.snurb_p == NULL)
 		ret->g.snurb_p = nmg_construct_face_g_snurb(original->g.snurb_p, structArray);
 
-	    BU_LIST_APPEND(&ret->g.snurb_p->f_hd, &ret->l);
+	    BU_LIST_INSERT(&ret->g.snurb_p->f_hd, &ret->l);
     }
 
     return ret;
@@ -611,7 +611,7 @@ nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, genp
 	if (newLoopUse == NULL)
 	    newLoopUse = nmg_construct_loopuse(ret, originalLoopUse, structArray);
 
-	BU_LIST_APPEND(&ret->lu_hd, &newLoopUse->l);
+	BU_LIST_INSERT(&ret->lu_hd, &newLoopUse->l);
     }
 
     return ret;
@@ -675,7 +675,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 	if (newFaceUse == NULL)
 	    newFaceUse = nmg_construct_faceuse(ret, originalFaceUse, structArray);
 
-	BU_LIST_APPEND(&ret->fu_hd, &newFaceUse->l);
+	BU_LIST_INSERT(&ret->fu_hd, &newFaceUse->l);
     }
 
     for (BU_LIST_FOR(originalLoopUse, loopuse, &original->lu_hd)) {
@@ -684,7 +684,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 	if (newLoopUse == NULL)
 	    newLoopUse = nmg_construct_loopuse(ret, originalLoopUse, structArray);
 
-	BU_LIST_APPEND(&ret->lu_hd, &newLoopUse->l);
+	BU_LIST_INSERT(&ret->lu_hd, &newLoopUse->l);
     }
 
     for (BU_LIST_FOR(originalEdgeUse, edgeuse, &original->eu_hd)) {
@@ -693,7 +693,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 	if (newEdgeUse == NULL)
 	    newEdgeUse = nmg_construct_edgeuse(ret, originalEdgeUse, structArray);
 
-	BU_LIST_APPEND(&ret->eu_hd, &newEdgeUse->l);
+	BU_LIST_INSERT(&ret->eu_hd, &newEdgeUse->l);
     }
 
     if (original->vu_p != 0) {
@@ -748,10 +748,10 @@ nmg_clone_model(const struct model *original)
 		if (newShell == NULL)
 		    newShell = nmg_construct_shell(newRegion, originalShell, structArray);
 
-		BU_LIST_APPEND(&newRegion->s_hd, &newShell->l);
+		BU_LIST_INSERT(&newRegion->s_hd, &newShell->l);
 	    }
 
-	    BU_LIST_APPEND(&ret->r_hd, &newRegion->l);
+	    BU_LIST_INSERT(&ret->r_hd, &newRegion->l);
 	}
     }
 
