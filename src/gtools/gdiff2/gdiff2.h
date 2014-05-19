@@ -222,6 +222,18 @@ extern int diff3_changed(const struct db_i *left,
 	void *data);
 
 
+/*******************************************************************/
+/*              summary functions for printing results             */
+/*******************************************************************/
+extern void diff_summarize(struct bu_vls *diff_log,
+	const struct diff_results *results,
+	struct diff_state *state);
+
+extern void diff3_summarize(struct bu_vls *diff_log,
+        const struct diff3_results *results,
+       	struct diff_state *state);
+
+
 #endif
 
 /*

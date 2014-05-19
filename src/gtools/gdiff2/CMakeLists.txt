@@ -12,6 +12,7 @@ set(gdiff_srcs
   diff_callbacks.c
   diff3_callbacks.c
   gdiff2.c
+  summary.c
   )
 
 BRLCAD_ADDEXEC(gdiff2 "${gdiff_srcs}" "librt")
