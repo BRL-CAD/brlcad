@@ -56,7 +56,9 @@ static const char *BRLCAD_HOST = BRLCAD_COMPILE_HOST;
 /**
  * Installation path, updated every time a build pass occurs.
  */
-static const char *BRLCAD_PATH = BRLCAD_COMPILE_PATH;
+static const char *BRLCAD_PATH = {
+#include "conf/PATH"
+};
 
 /**
  * Compilation user, updated every time a build pass occurs.
