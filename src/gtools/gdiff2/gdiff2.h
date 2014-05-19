@@ -32,9 +32,10 @@
 #define _GDIFF2_H
 
 /*******************************************************************/
-/* Structure and memory management for state management - this holds
- * user supplied options and output logs */
+/*     Containers for holding various forms of diff information    */
 /*******************************************************************/
+
+/* Reporting options, search filters, and other user specified state */
 struct diff_state {
     int return_added;
     int return_removed;
@@ -52,10 +53,7 @@ struct diff_state {
 extern void diff_state_init(struct diff_state *state);
 extern void diff_state_free(struct diff_state *state);
 
-/*******************************************************************/
-/* Structure and memory management for the container used to hold
- * diff results for related differing objects */
-/*******************************************************************/
+/* diff results container for differing objects */
 struct diff_result_container {
     int status;
     struct db_i *dbip_orig;
@@ -79,10 +77,7 @@ struct diff_result_container {
 extern void diff_result_init(struct diff_result_container *result);
 extern void diff_result_free(struct diff_result_container *result);
 
-/*******************************************************************/
-/* Structure and memory management for the container used to hold
- * diff3 results for related differing objects */
-/*******************************************************************/
+/* diff3 results container for differing objects */
 struct diff3_result_container {
     int status;
     const struct db_i *ancestor_dbip;
@@ -130,10 +125,8 @@ struct diff3_result_container {
 extern void diff3_result_init(struct diff3_result_container *result);
 extern void diff3_result_free(struct diff3_result_container *result);
 
-/*******************************************************************/
-/* Structure and memory management for the container used to hold
- * diff results */
-/*******************************************************************/
+/* Higher level diff results for databases - holds information for
+ * multiple objects */
 struct diff_results {
     float diff_tolerance;
     struct bu_ptbl *added;     /* directory pointers */
@@ -147,10 +140,8 @@ struct diff_results {
 extern void diff_results_init(struct diff_results *results);
 extern void diff_results_free(struct diff_results *results);
 
-/*******************************************************************/
-/* Structure and memory management for the container used to hold
- * diff results */
-/*******************************************************************/
+/* Higher level diff3 results for databases - holds information for
+ * multiple objects */
 struct diff3_results {
     float diff_tolerance;
     struct db_i *merged_db;
@@ -168,6 +159,33 @@ struct diff3_results {
 
 extern void diff3_results_init(struct diff3_results *results);
 extern void diff3_results_free(struct diff3_results *results);
+
+
+/*******************************************************************/
+/*              callback functions for diff processing             */
+/*******************************************************************/
+extern int diff_added(const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *added,
+	void *data);
+
+extern int diff_removed(const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *removed,
+	void *data);
+
+extern int diff_unchanged(const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *unchanged,
+	void *data);
+
+extern int diff_changed(const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *before,
+	const struct directory *after,
+	void *data);
+
+
 
 #endif
 
