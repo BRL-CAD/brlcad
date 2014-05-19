@@ -277,7 +277,7 @@ options:
   -h    help
   -C    cleans out all generated files and the stored file hashes
 
-notes:
+Notes:
 
   1.  The convert options will normall convert all known .h files to
       .d files only if they have no existing .d file.
@@ -290,7 +290,11 @@ notes:
       + Use of the '-f' option will allow overwriting an existing .d
         file.
 
-  3.  See <http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules>.
+  3.  See conversion information at:
+
+      + <http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules>
+
+      + <http://stackoverflow.com/questions/994732/how-can-i-parse-a-c-header-file-with-perl>
 
 HERE
 
