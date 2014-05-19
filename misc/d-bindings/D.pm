@@ -12,23 +12,7 @@ use File::Basename;
 
 use lib('.');
 use CParse;
-
-# The following defs are for use just during the experimental
-# phase. They will have to be handled differently during devlopment
-# and installation.  For instance, the final .d files may be installed
-# as both source (maybe in a sub-dir of the normal include dir) and as
-# dmd-compiled versions (say in a 'dmd-obj' installed sub-dir).
-
-# the root dir of the installed BRL-CAD package
-Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
-
-# the source dir of the installed BRL-CAD include files
-Readonly our $IDIR => "$RDIR/include/brlcad";
-# the source dirs of some other installed BRL-CAD include files
-Readonly our $IDIR2 => "$RDIR/include";
-
-# the location for the D interface files
-Readonly our $DIDIR => './di';
+use BP;
 
 # file type suffixes
 Readonly our $Hsuf => '.h';
@@ -63,9 +47,9 @@ my %tignore = ();
 # "mapped" files (header files not in the main BRL-CAD header dir)
 my %is_mapped
   = (
-     'tcl.h'          => "$IDIR2/tcl.h",
-     'tclDecls.h'     => "$IDIR2/tclDecls.h",
-     'tclPlatDecls.h' => "$IDIR2/tclPlatDecls.h",
+     'tcl.h'          => "$BP::IDIR2/tcl.h",
+     'tclDecls.h'     => "$BP::IDIR2/tclDecls.h",
+     'tclPlatDecls.h' => "$BP::IDIR2/tclPlatDecls.h",
     );
 
 # sys headers and their equivalen Phobos module names form import
@@ -308,6 +292,8 @@ sub retrieve_md5hash {
 } # retrieve_md5hash
 
 sub collect_files {
+  BP::get_brlcad_incdirs();
+
   # deletes generated files if $D::clean
   my $href = shift @_; # @h
   my $dref = shift @_; # @d

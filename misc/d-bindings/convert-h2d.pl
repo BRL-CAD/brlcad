@@ -9,6 +9,7 @@ use File::Basename;
 use lib('.');
 
 use D; # local convenience module
+use BP;
 
 # use the reference D compiler
 my $DMD = '/usr/bin/dmd';
@@ -16,12 +17,12 @@ die "ERROR:  Reference compiler 'dmd' not found.\n"
   if ! -f $DMD;
 
 # check for proper source dir:
-die "ERROR:  Unknown include dir for BRL-CAD public headers: '$D::IDIR' (see D.pm)\n"
-  if ! -d $D::IDIR;
+die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::IDIR' (see D.pm)\n"
+  if ! -d $BP::IDIR;
 
 # check for proper D directory for interface files
-die "ERROR:  Unknown include dir for BRL-CAD public headers: '$D::DIDIR' (see D.pm)\n"
-  if ! -d $D::DIDIR;
+die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::DIDIR' (see D.pm)\n"
+  if ! -d $BP::DIDIR;
 
 my $p = basename($0);
 my $usage = "Usage: $p mode [options...]";
@@ -119,7 +120,7 @@ die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
 if ($D::devel) {
-  @ifils = ("${D::IDIR}/bu.h");
+  @ifils = ("${BP::IDIR}/bu.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
