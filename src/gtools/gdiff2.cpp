@@ -698,6 +698,19 @@ diff3_changed(const struct db_i *UNUSED(left), const struct db_i *UNUSED(ancesto
 /*******************************************************************/
 /* Output generators for diff log */
 /*******************************************************************/
+
+void
+avs_log(struct bu_vls *attr_log, const struct bu_attribute_value_set *avs, const char *title, const char *offset_title, const char *offset_entry)
+{
+    struct bu_attribute_value_pair *avpp;
+    if (avs->count > 0) {
+	bu_vls_printf(attr_log, "%s%s:\n", offset_title, title);
+	for (BU_AVS_FOR(avpp, avs)) {
+	    bu_vls_printf(attr_log, "%s%s\n", offset_entry, avpp->name);
+	}
+    }
+}
+
 static void
 params_summary(struct bu_vls *attr_log, const struct diff_result_container *result)
 {
@@ -707,12 +720,7 @@ params_summary(struct bu_vls *attr_log, const struct diff_result_container *resu
     const struct bu_attribute_value_set *orig_diff = &result->internal_orig_diff;
     const struct bu_attribute_value_set *new_diff = &result->internal_new_diff;
 
-    if (orig_only->count > 0) {
-	bu_vls_printf(attr_log, "   Parameters removed:\n");
-	for (BU_AVS_FOR(avpp, orig_only)) {
-	    bu_vls_printf(attr_log, "      %s\n", avpp->name);
-	}
-    }
+    avs_log(attr_log, orig_only, "Parameters removed:", "   ", "      ");
     if (new_only->count > 0) {
 	bu_vls_printf(attr_log, "   Parameters added:\n");
 	for (BU_AVS_FOR(avpp, new_only)) {
@@ -727,73 +735,43 @@ params_summary(struct bu_vls *attr_log, const struct diff_result_container *resu
     }
 }
 
-void
-avs_log(struct bu_vls *attr_log, const struct bu_attribute_value_set *avs, const char *title, const char *offset_title, const char *offset_entry)
-{
-    struct bu_attribute_value_pair *avpp;
-    if (avs->count > 0) {
-	bu_vls_printf(attr_log, "%s%s:\n", offset_title, title);
-	for (BU_AVS_FOR(avpp, avs)) {
-	    bu_vls_printf(attr_log, "%s%s\n", offset_entry, avpp->name);
-	}
-    }
-}
-
-#if 0
 static void
 params3_summary(struct bu_vls *attr_log, const struct diff3_result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
-    /*const struct bu_attribute_value_set *unchanged                 = &result->param_unchanged;*/
-    const struct bu_attribute_value_set *removed_left_only         = &result->param_removed_left_only;
-    const struct bu_attribute_value_set *removed_right_only        = &result->param_removed_right_only;
-    const struct bu_attribute_value_set *removed_both              = &result->param_removed_both;
-    const struct bu_attribute_value_set *added_left_only           = &result->param_added_left_only;
-    const struct bu_attribute_value_set *added_right_only          = &result->param_added_right_only;
-    const struct bu_attribute_value_set *added_both                = &result->param_added_both;
-    const struct bu_attribute_value_set *added_conflict_left       = &result->param_added_conflict_left;
-    const struct bu_attribute_value_set *added_conflict_right      = &result->param_added_conflict_right;
-    const struct bu_attribute_value_set *changed_left_only         = &result->param_changed_left_only;
-    const struct bu_attribute_value_set *changed_right_only        = &result->param_changed_right_only;
-    const struct bu_attribute_value_set *changed_both              = &result->param_changed_both;
-    const struct bu_attribute_value_set *changed_conflict_ancestor = &result->param_changed_conflict_ancestor;
-    const struct bu_attribute_value_set *changed_conflict_left     = &result->param_changed_conflict_left;
-    const struct bu_attribute_value_set *changed_conflict_right    = &result->param_changed_conflict_right;
-    /*const struct bu_attribute_value_set *merged                    = &result->param_merged;*/
 
     /* Report removed parameters */
-    avs_log(attr_log, removed_left_only, "Parameters removed in left", "   ", "      ");
-    avs_log(attr_log, removed_right_only, "Parameters removed in right", "   ", "      ");
-    avs_log(attr_log, removed_both, "Parameters removed in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->param_removed_left_only, "Parameters removed in left", "   ", "      ");
+    avs_log(attr_log, &result->param_removed_right_only, "Parameters removed in right", "   ", "      ");
+    avs_log(attr_log, &result->param_removed_both, "Parameters removed in both left and right", "   ", "      ");
 
     /* Report added parameters */
-    avs_log(attr_log, added_left_only, "Parameters added in left", "   ", "      ");
-    avs_log(attr_log, added_right_only, "Parameters added in right", "   ", "      ");
-    avs_log(attr_log, added_both, "Parameters added in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->param_added_left_only, "Parameters added in left", "   ", "      ");
+    avs_log(attr_log, &result->param_added_right_only, "Parameters added in right", "   ", "      ");
+    avs_log(attr_log, &result->param_added_both, "Parameters added in both left and right", "   ", "      ");
 
     /* Parameter conflicts in additions */
-    if (added_conflict_left->count > 0) {
+    if ((&result->param_added_conflict_left)->count > 0) {
 	bu_vls_printf(attr_log, "   CONFLICT: Parameters added in both left and right with different values:\n");
-	for (BU_AVS_FOR(avpp, added_conflict_left)) {
-	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(added_conflict_left, avpp->name), bu_avs_get(added_conflict_right, avpp->name));
+	for (BU_AVS_FOR(avpp, &result->param_added_conflict_left)) {
+	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(&result->param_added_conflict_left, avpp->name), bu_avs_get(&result->param_added_conflict_right, avpp->name));
 	}
     }
 
     /* Report changed parameters */
-    avs_log(attr_log, changed_left_only, "Parameters changed in left", "   ", "      ");
-    avs_log(attr_log, changed_right_only, "Parameters changed in right", "   ", "      ");
-    avs_log(attr_log, changed_both, "Parameters changed to the same value in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->param_changed_left_only, "Parameters changed in left", "   ", "      ");
+    avs_log(attr_log, &result->param_changed_right_only, "Parameters changed in right", "   ", "      ");
+    avs_log(attr_log, &result->param_changed_both, "Parameters changed to the same value in both left and right", "   ", "      ");
 
     /* Parameter conflicts in changes */
-    if (changed_conflict_ancestor->count > 0) {
+    if ((&result->param_changed_conflict_ancestor)->count > 0) {
 	bu_vls_printf(attr_log, "   CONFLICT: Parameters changed in both left and right with different values:\n");
-	for (BU_AVS_FOR(avpp, added_conflict_left)) {
-	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(changed_conflict_ancestor, avpp->name), bu_avs_get(changed_conflict_left, avpp->name), bu_avs_get(changed_conflict_right, avpp->name));
+	for (BU_AVS_FOR(avpp, &result->param_added_conflict_left)) {
+	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(&result->param_changed_conflict_ancestor, avpp->name), bu_avs_get(&result->param_changed_conflict_left, avpp->name), bu_avs_get(&result->param_changed_conflict_right, avpp->name));
 	}
     }
 
 }
-#endif
 
 static void
 attrs_summary(struct bu_vls *attr_log, const struct diff_result_container *result)
@@ -804,12 +782,7 @@ attrs_summary(struct bu_vls *attr_log, const struct diff_result_container *resul
     const struct bu_attribute_value_set *orig_diff = &result->additional_orig_diff;
     const struct bu_attribute_value_set *new_diff = &result->additional_new_diff;
 
-    if (orig_only->count > 0) {
-	bu_vls_printf(attr_log, "   Attributes removed:\n");
-	for (BU_AVS_FOR(avpp, orig_only)) {
-	    bu_vls_printf(attr_log, "      %s\n", avpp->name);
-	}
-    }
+    avs_log(attr_log, orig_only, "Attributes removed:", "   ", "      ");
     if (new_only->count > 0) {
 	bu_vls_printf(attr_log, "   Attributes added:\n");
 	for (BU_AVS_FOR(avpp, new_only)) {
@@ -824,61 +797,43 @@ attrs_summary(struct bu_vls *attr_log, const struct diff_result_container *resul
     }
 }
 
-#if 0
 static void
 attrs3_summary(struct bu_vls *attr_log, const struct diff3_result_container *result)
 {
     struct bu_attribute_value_pair *avpp;
-    /*const struct bu_attribute_value_set *unchanged                 = &result->attribute_unchanged;*/
-    const struct bu_attribute_value_set *removed_left_only         = &result->attribute_removed_left_only;
-    const struct bu_attribute_value_set *removed_right_only        = &result->attribute_removed_right_only;
-    const struct bu_attribute_value_set *removed_both              = &result->attribute_removed_both;
-    const struct bu_attribute_value_set *added_left_only           = &result->attribute_added_left_only;
-    const struct bu_attribute_value_set *added_right_only          = &result->attribute_added_right_only;
-    const struct bu_attribute_value_set *added_both                = &result->attribute_added_both;
-    const struct bu_attribute_value_set *added_conflict_left       = &result->attribute_added_conflict_left;
-    const struct bu_attribute_value_set *added_conflict_right      = &result->attribute_added_conflict_right;
-    const struct bu_attribute_value_set *changed_left_only         = &result->attribute_changed_left_only;
-    const struct bu_attribute_value_set *changed_right_only        = &result->attribute_changed_right_only;
-    const struct bu_attribute_value_set *changed_both              = &result->attribute_changed_both;
-    const struct bu_attribute_value_set *changed_conflict_ancestor = &result->attribute_changed_conflict_ancestor;
-    const struct bu_attribute_value_set *changed_conflict_left     = &result->attribute_changed_conflict_left;
-    const struct bu_attribute_value_set *changed_conflict_right    = &result->attribute_changed_conflict_right;
-    /*const struct bu_attribute_value_set *merged                    = &result->attribute_merged;*/
 
     /* Report removed attributes */
-    avs_log(attr_log, removed_left_only, "Attributes removed in left", "   ", "      ");
-    avs_log(attr_log, removed_right_only, "Attributes removed in right", "   ", "      ");
-    avs_log(attr_log, removed_both, "Attributes removed in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_removed_left_only, "Attributes removed in left", "   ", "      ");
+    avs_log(attr_log, &result->attribute_removed_right_only, "Attributes removed in right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_removed_both, "Attributes removed in both left and right", "   ", "      ");
 
     /* Report added attributes */
-    avs_log(attr_log, added_left_only, "Attributes added in left", "   ", "      ");
-    avs_log(attr_log, added_right_only, "Attributes added in right", "   ", "      ");
-    avs_log(attr_log, added_both, "Attributes added in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_added_left_only, "Attributes added in left", "   ", "      ");
+    avs_log(attr_log, &result->attribute_added_right_only, "Attributes added in right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_added_both, "Attributes added in both left and right", "   ", "      ");
 
     /* Attribute conflicts in additions */
-    if (added_conflict_left->count > 0) {
+    if ((&result->attribute_added_conflict_left)->count > 0) {
 	bu_vls_printf(attr_log, "   CONFLICT: Attributes added in both left and right with different values:\n");
-	for (BU_AVS_FOR(avpp, added_conflict_left)) {
-	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(added_conflict_left, avpp->name), bu_avs_get(added_conflict_right, avpp->name));
+	for (BU_AVS_FOR(avpp, &result->attribute_added_conflict_left)) {
+	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(&result->attribute_added_conflict_left, avpp->name), bu_avs_get(&result->attribute_added_conflict_right, avpp->name));
 	}
     }
 
     /* Report changed attributes */
-    avs_log(attr_log, changed_left_only, "Attributes changed in left", "   ", "      ");
-    avs_log(attr_log, changed_right_only, "Attributes changed in right", "   ", "      ");
-    avs_log(attr_log, changed_both, "Attributes changed to the same value in both left and right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_changed_left_only, "Attributes changed in left", "   ", "      ");
+    avs_log(attr_log, &result->attribute_changed_right_only, "Attributes changed in right", "   ", "      ");
+    avs_log(attr_log, &result->attribute_changed_both, "Attributes changed to the same value in both left and right", "   ", "      ");
 
     /* Attribute conflicts in changes */
-    if (changed_conflict_ancestor->count > 0) {
+    if ((&result->attribute_changed_conflict_ancestor)->count > 0) {
 	bu_vls_printf(attr_log, "   CONFLICT: Attributes changed in both left and right with different values:\n");
-	for (BU_AVS_FOR(avpp, added_conflict_left)) {
-	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(changed_conflict_ancestor, avpp->name), bu_avs_get(changed_conflict_left, avpp->name), bu_avs_get(changed_conflict_right, avpp->name));
+	for (BU_AVS_FOR(avpp, &result->attribute_added_conflict_left)) {
+	    bu_vls_printf(attr_log, "      %s: (%s,%s)\n", avpp->name, bu_avs_get(&result->attribute_changed_conflict_ancestor, avpp->name), bu_avs_get(&result->attribute_changed_conflict_left, avpp->name), bu_avs_get(&result->attribute_changed_conflict_right, avpp->name));
 	}
     }
 
 }
-#endif
 
 static int
 print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, const struct directory *dp, const int line_len)
@@ -906,6 +861,59 @@ print_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const int cnt, 
 
 
 static void
+print_tbl_dp(struct bu_vls *diff_log, const struct bu_ptbl *dptable, const char *lead, const int flag)
+{
+    int i = 0;
+    int line_len = 0;
+    if (flag > 0) {
+	if ((int)BU_PTBL_LEN(dptable) > 0) {
+	    bu_vls_printf(diff_log, "\n%s:\n", lead);
+	}
+	for (i = 0; i < (int)BU_PTBL_LEN(dptable); i++) {
+	    struct directory *dp = (struct directory *)BU_PTBL_GET(dptable, i);
+	    line_len = print_dp(diff_log, dptable, i, dp, line_len);
+	}
+    }
+}
+
+static void
+print_tbl_diff(struct bu_vls *diff_log, const struct bu_ptbl *difftable, const char *lead, const int flag)
+{
+    int i = 0;
+    int line_len = 0;
+    if (flag > 0) {
+	if ((int)BU_PTBL_LEN(difftable) > 0) {
+	    bu_vls_printf(diff_log, "\n%s:\n", lead);
+	}
+	for (i = 0; i < (int)BU_PTBL_LEN(difftable); i++) {
+	    struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(difftable, i);
+	    const struct directory *dp = result->dp_orig;
+	    if (!dp) dp = result->dp_new;
+	    line_len = print_dp(diff_log, difftable, i, dp, line_len);
+	}
+    }
+}
+
+static void
+print_tbl_diff3(struct bu_vls *diff_log, const struct bu_ptbl *difftable, const char *lead, const int flag)
+{
+    int i = 0;
+    int line_len = 0;
+    if (flag > 0) {
+	if ((int)BU_PTBL_LEN(difftable) > 0) {
+	    bu_vls_printf(diff_log, "\n%s:\n", lead);
+	}
+	for (i = 0; i < (int)BU_PTBL_LEN(difftable); i++) {
+	    struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(difftable, i);
+	    const struct directory *dp = result->ancestor_dp;
+	    if (!dp) dp = result->left_dp;
+	    if (!dp) dp = result->right_dp;
+	    line_len = print_dp(diff_log, difftable, i, dp, line_len);
+	}
+    }
+}
+
+static void
 diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, struct diff_state *state)
 {
     int i = 0;
@@ -924,65 +932,14 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, stru
     unchanged = results->unchanged;
 
     if (state->verbosity == 1) {
-	int line_len = 0;
-	if (state->return_added > 0) {
-	    if ((int)BU_PTBL_LEN(added) > 0) {
-		bu_vls_printf(diff_log, "\nObjects added:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
-		line_len = print_dp(diff_log, added, i, dp, line_len);
-	    }
-	}
-	line_len = 0;
-	if (state->return_removed > 0) {
-	    if ((int)BU_PTBL_LEN(removed) > 0) {
-		bu_vls_printf(diff_log, "\nObjects removed:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
-		line_len = print_dp(diff_log, removed, i, dp, line_len);
-	    }
-	}
-	line_len = 0;
-	if (state->return_changed > 0) {
-	    if ((int)BU_PTBL_LEN(changed) > 0) {
-		bu_vls_printf(diff_log, "\nObjects changed:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
-		struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(changed, i);
-		const struct directory *dp = result->dp_orig;
-		if (!dp) dp = result->dp_new;
-		line_len = print_dp(diff_log, changed, i, dp, line_len);
-	    }
-	}
-	line_len = 0;
-	if (state->return_unchanged > 0) {
-	    if ((int)BU_PTBL_LEN(unchanged) > 0) {
-		bu_vls_printf(diff_log, "\nObjects unchanged:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
-		line_len = print_dp(diff_log, unchanged, i, dp, line_len);
-	    }
-	}
-
+	print_tbl_dp(diff_log, added, "Objects added", state->return_added);
+	print_tbl_dp(diff_log, removed, "Objects removed", state->return_removed);
+	print_tbl_diff(diff_log, removed, "Objects changed", state->return_changed);
+	print_tbl_dp(diff_log, unchanged, "Objects unchanged", state->return_unchanged);
     }
     if (state->verbosity > 1) {
-	if (state->return_added > 0) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(added); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(added, i);
-		bu_vls_printf(diff_log, "%s was added.\n\n", dp->d_namep);
-	    }
-	}
-
-	if (state->return_removed > 0) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(removed); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(removed, i);
-		bu_vls_printf(diff_log, "%s was removed.\n\n", dp->d_namep);
-	    }
-	}
-
+	print_tbl_dp(diff_log, added, "Objects added", state->return_added);
+	print_tbl_dp(diff_log, removed, "Objects removed", state->return_removed);
 	if (state->return_changed > 0) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(changed); i++) {
 		struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(changed, i);
@@ -994,14 +951,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, stru
 		bu_vls_printf(diff_log, "\n");
 	    }
 	}
-	if (state->return_unchanged > 0) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(unchanged); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(unchanged, i);
-		bu_vls_printf(diff_log, "%s was unchanged.\n\n", dp->d_namep);
-	    }
-	}
-
-
+	print_tbl_dp(diff_log, unchanged, "Objects unchanged", state->return_unchanged);
     }
     bu_vls_printf(diff_log, "\n");
 }
@@ -1027,54 +977,26 @@ diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, st
     //struct bu_ptbl *conflict           = results->conflict;           /* containers */
 
     //if (state->verbosity == 1) {
-	int line_len = 0;
-	if (state->return_added > 0) {
-	    if ((int)BU_PTBL_LEN(added_left_only) > 0 || (int)BU_PTBL_LEN(added_right_only) > 0 || (int)BU_PTBL_LEN(added_both) > 0) {
-		bu_vls_printf(diff_log, "\nObjects added:\n");
-	    }
-	    if ((int)BU_PTBL_LEN(added_left_only) > 0) {
-		bu_vls_printf(diff_log, "From left:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(added_left_only); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(added_left_only, i);
-		line_len = print_dp(diff_log, added_left_only, i, dp, line_len);
-	    }
-	    line_len = 0;
-	    if ((int)BU_PTBL_LEN(added_right_only) > 0) {
-		bu_vls_printf(diff_log, "\nFrom right:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(added_right_only); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(added_right_only, i);
-		line_len = print_dp(diff_log, added_right_only, i, dp, line_len);
-	    }
-	    line_len = 0;
-	    if ((int)BU_PTBL_LEN(added_both) > 0) {
-		bu_vls_printf(diff_log, "\nFrom both left and right, identically:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(added_both); i++) {
-		struct directory *dp = (struct directory *)BU_PTBL_GET(added_both, i);
-		line_len = print_dp(diff_log, added_both, i, dp, line_len);
-	    }
-	    if ((int)BU_PTBL_LEN(added_merged) > 0) {
-		bu_vls_printf(diff_log, "\nFrom both left and right, merged information:\n");
-	    }
-	    for (i = 0; i < (int)BU_PTBL_LEN(added_merged); i++) {
-		struct diff3_result_container *d3 = (struct diff3_result_container *)BU_PTBL_GET(added_merged, i);
-		line_len = print_dp(diff_log, added_both, i, d3->left_dp, line_len);
-	    }
-
+    if (state->return_added && ((int)BU_PTBL_LEN(added_left_only) > 0 || (int)BU_PTBL_LEN(added_right_only) > 0 || (int)BU_PTBL_LEN(added_both) > 0)) {
+	bu_vls_printf(diff_log, "\nObjects added:\n");
+    }
+    print_tbl_dp(diff_log, added_left_only, "From left", state->return_added);
+    print_tbl_dp(diff_log, added_right_only, "From right", state->return_added);
+    print_tbl_dp(diff_log, added_both, "From left and right, identically", state->return_added);
+    print_tbl_diff3(diff_log, added_merged, "From left and right, merged information", state->return_added);
+    if (state->verbosity > 10) {
+	for (i = 0; i < (int)BU_PTBL_LEN(added_merged); i++) {
+	    struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(added_merged, i);
+	    params3_summary(diff_log, result);
+	    attrs3_summary(diff_log, result);
 	}
-	line_len = 0;
-	if (state->return_removed > 0) {
-	}
-	line_len = 0;
-	if (state->return_changed > 0) {
-	}
-	line_len = 0;
-	if (state->return_unchanged > 0) {
-	}
-
-    //}
+    }
+    if (state->return_removed > 0) {
+    }
+    if (state->return_changed > 0) {
+    }
+    if (state->return_unchanged > 0) {
+    }
 
     bu_vls_printf(diff_log, "\n");
 }
