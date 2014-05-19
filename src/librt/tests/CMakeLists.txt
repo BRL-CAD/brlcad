@@ -23,6 +23,10 @@ BRLCAD_ADDEXEC(test_diff test_diff.c "librt" NO_INSTALL)
 BRLCAD_ADDEXEC(test_nmg_mk test_nmg_mk.c "librt" NO_INSTALL)
 add_test(test_nmg_mk test_nmg_mk)
 
+# nmg_copy testing
+BRLCAD_ADDEXEC(test_nmg_copy test_nmg_copy.c "librt" NO_INSTALL)
+add_test(test_nmg_copy test_nmg_copy)
+
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
