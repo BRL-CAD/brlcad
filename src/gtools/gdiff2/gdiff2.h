@@ -185,6 +185,41 @@ extern int diff_changed(const struct db_i *left,
 	const struct directory *after,
 	void *data);
 
+/*******************************************************************/
+/*             callback functions for diff3 processing             */
+/*******************************************************************/
+extern int diff3_added(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	const struct directory *dp_left, 
+	const struct directory *dp_ancestor, 
+	const struct directory *dp_right, 
+	void *data);
+
+extern int diff3_removed(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	const struct directory *dp_left, 
+	const struct directory *dp_ancestor, 
+	const struct directory *dp_right, 
+	void *data);
+
+
+extern int diff3_unchanged(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	const struct directory *dp_left, 
+	const struct directory *dp_ancestor, 
+	const struct directory *dp_right, 
+	void *data);
+
+extern int diff3_changed(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	const struct directory *dp_left, 
+	const struct directory *dp_ancestor, 
+	const struct directory *dp_right, 
+	void *data);
 
 
 #endif

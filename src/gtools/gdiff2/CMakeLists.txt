@@ -10,6 +10,7 @@ include_directories(${GDIFF_INCLUDE_DIRS})
 set(gdiff_srcs
   containers.c
   diff_callbacks.c
+  diff3_callbacks.c
   gdiff2.c
   )
 
