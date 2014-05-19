@@ -21,10 +21,12 @@ use CParse;
 
 # the root dir of the installed BRL-CAD package
 Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
+
 # the source dir of the installed BRL-CAD include files
 Readonly our $IDIR => "$RDIR/include/brlcad";
-# the source dir of some other installed BRL-CAD include files
+# the source dirs of some other installed BRL-CAD include files
 Readonly our $IDIR2 => "$RDIR/include";
+
 # the location for the D interface files
 Readonly our $DIDIR => './di';
 
@@ -319,11 +321,15 @@ sub collect_files {
     push @{$dref}, @d;
   }
 
+  # main API headers
   my @h  = glob("${D::IDIR}/*${Hsuf}");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
   }
+
+  # other headers
+  #my @oh  = glob("${D::IDIR}/*${Hsuf}");
 
 } # collect_files
 
@@ -454,7 +460,7 @@ sub convert1final {
       warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
     }
 
-    $i = CParse::extract_unknown(\@lines, $i, $fpo);
+    $i = CParse::extract_object(\@lines, $i, $fpo);
 
     #print $fpo $line;
     $prev_line_was_space = 0;

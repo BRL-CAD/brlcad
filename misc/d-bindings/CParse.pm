@@ -46,7 +46,7 @@ our @keys2
 our %key2;
 @key2{@keys2} = ();
 
-sub extract_unknown {
+sub extract_object {
 
   my $lines_aref = shift @_; # \@lines
   my $i          = shift @_; # $i - current @lines index
@@ -116,7 +116,7 @@ sub extract_unknown {
 
   return $last_index;
 
-} # extract_unknown
+} # extract_object
 
 =pod
 
