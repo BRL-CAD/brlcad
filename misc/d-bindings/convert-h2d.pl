@@ -103,13 +103,9 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $report = 1;
   }
-  elsif ($arg =~ m{\A -c1}xms) {
+  elsif ($arg =~ m{\A -c([1-3]){1}}xms) {
     zero_modes(1);
-    $convert = 1;
-  }
-  elsif ($arg =~ m{\A -c2}xms) {
-    zero_modes(1);
-    $convert = 2;
+    $convert = $1;
   }
 
   # error
@@ -167,12 +163,9 @@ if ($report) {
 elsif ($convert) {
   @ifils = @h
     if !@ifils;
-  if ($convert == 1) {
-    print "Mode is '-c1' (convert method 1)...\n\n";
-  }
-  elsif ($convert == 2) {
-    print "Mode is '-c2' (convert method 2)...\n\n";
-  }
+  print "Mode is '-c$convert' (convert method $convert)...\n\n";
+  die "debug exit"
+    if (0 && $D::debug);
 
   D::convert(\@ifils, \@ofils, \%f, \%stats, $convert);
 }
@@ -262,15 +255,18 @@ modes:
   -c1   use method 1 to convert .h files to .d files
           method 1 uses a C compiler to convert the header to an
           intermediate file for further manipulation
-          (see http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules)
         this program uses GNU gcc:
-          \$ gcc -E -x c -o outfile -I incdir .. -I incdirN infile
+          \$ gcc -E -o outfile -I incdir .. -I incdirN infile
   -c2   use method 2 to convert .h files to .d files
           method 2 uses 'dstep' to convert the header to an
           intermediate file for further manipulation
-          (see http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules)
         this program uses dstep:
           \$ dstep infile -o outfile
+  -c3   use method 3 to convert .h files to .d files
+          method 1 uses a C compiler to convert the header to an
+          intermediate file for further manipulation
+        this program uses GNU gcc:
+          \$ gcc -fdump-translation-unit -o outfile -I incdir .. -I incdirN infile
 
   -h=X  restrict conversion attempt to just file X
 
@@ -293,6 +289,8 @@ notes:
 
       + Use of the '-f' option will allow overwriting an existing .d
         file.
+
+  3.  See <http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules>.
 
 HERE
 

@@ -356,6 +356,27 @@ sub convert_with_gcc {
 
 } # convert_with_gcc
 
+sub convert_with_gcc2 {
+  my $ifil = shift @_; # tfil0
+  my $ofil = shift @_; # tfil1
+
+  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
+
+  my $opts = '';
+  #$opts .= ' -CC'; # keep C++ comments
+  #$opts .= ' -H'; # list includes
+  $opts .= ' -v'; # report include paths
+  $opts .= ' -P'; # omit line markers
+
+  my $msg = qx(gcc -fdump-translation-unit -c $opts $incdirs -o $ofil $ifil);
+
+  if ($msg) {
+    chomp $msg;
+    print "WARNING: msg: '$msg'\n";
+  }
+
+} # convert_with_gcc2
+
 sub convert_with_dstep {
   my $ifil = shift @_; # tfil0
   my $ofil = shift @_; # tfil1
