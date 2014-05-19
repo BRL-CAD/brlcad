@@ -569,9 +569,9 @@ BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DAT
 #---------------------------------------------------------------------
 # CMake by default provides four different configurations for multi-
 # configuration build tools.  We want only two - Debug and Release.
-if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" MATCHES "Debug;Release")
+if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
   set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" MATCHES "Debug;Release")
+endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it
