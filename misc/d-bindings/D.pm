@@ -109,7 +109,7 @@ sub convert {
   my $meth      = shift @_; # meth: 1 or 2
 
   die "ERROR:  Unknown conversion method $meth."
-    if (!defined $meth || !($meth == 1 || $meth == 2));
+    if (!defined $meth || $meth !~ m{\A [1-3]{1} \z}x);
 
   foreach my $ifil (@{$ifils_ref}) {
     my $stem = basename $ifil;
@@ -188,6 +188,33 @@ sub convert {
 
       # dress up the file and convert it to "final" form (eventually)
       convert1final($ofil, $tfil1, \%syshdr, $stem);
+    }
+    #==== method 3 ====
+    elsif ($meth == 3) {
+
+      # use gcc; need a C input file
+      my $cfil = "./di/$stem.h.c";
+      copy $ifil, $cfil;
+
+      # the output file of interest will be named:
+      my $tufil = "$cfil.001.tu";
+      push @tmpfils, $tufil;
+      push @{$ofils_ref}, $tufil
+	if $debug;
+
+      convert_with_gcc2($cfil);
+
+      # extract data into another file
+      # the output file of interest will be named:
+      my $pfil = "./di/$tufil.dat";
+      push @tmpfils, $pfil;
+      push @{$ofils_ref}, $pfil
+	if $debug;
+
+      process_tu_file($tufil, $pfil);
+
+      # dress up the file and convert it to "final" form (eventually)
+      #convert3final($ofil, $tfil1, \%syshdr, $stem);
     }
 
     # eliminate unneeded intermediate files;
@@ -285,6 +312,29 @@ sub is_syshdr {
   return 0;
 } # is_syshdr
 
+sub process_tu_file {
+  # processes tu output for mehod 3
+  my $tufil = shift @_;
+  my $ofil  = shift @_;
+
+  use GCC::TranslationUnit;
+
+  # echo '#include <stdio.h>' > stdio.c
+  # gcc -fdump-translation-unit -c stdio.c
+  my $node = GCC::TranslationUnit::Parser->parsefile($tufil)->root;
+
+  # list every function/variable name
+  while ($node) {
+    if ($node->isa('GCC::Node::function_decl') ||
+       $node->isa('GCC::Node::var_decl')) {
+      printf "%s declared in %s\n",
+        $node->name->identifier, $node->source;
+    }
+    $node = $node->chain;
+  }
+
+} # convert_tu_file
+
 sub convert1final {
   my $ofil = shift @_; # $ofil
   my $ifil = shift @_; # $tfil1
@@ -357,18 +407,16 @@ sub convert_with_gcc {
 } # convert_with_gcc
 
 sub convert_with_gcc2 {
-  my $ifil = shift @_; # tfil0
-  my $ofil = shift @_; # tfil1
+  my $cfil = shift @_;
 
   my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
 
-  my $opts = '';
-  #$opts .= ' -CC'; # keep C++ comments
-  #$opts .= ' -H'; # list includes
-  $opts .= ' -v'; # report include paths
-  $opts .= ' -P'; # omit line markers
+  my $ofil = "$cfil.o";
 
-  my $msg = qx(gcc -fdump-translation-unit -c $opts $incdirs -o $ofil $ifil);
+  my $cmd = "gcc -fdump-translation-unit -c $incdirs -o $ofil $cfil";
+  print "debug-cmd: '$cmd'\n"
+    if $debug;
+  my $msg = qx($cmd);
 
   if ($msg) {
     chomp $msg;
