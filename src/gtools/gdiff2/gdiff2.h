@@ -49,6 +49,9 @@ struct diff_state {
     struct bu_vls *search_filter;
 };
 
+extern void diff_state_init(struct diff_state *state);
+extern void diff_state_free(struct diff_state *state);
+
 /*******************************************************************/
 /* Structure and memory management for the container used to hold
  * diff results for related differing objects */
@@ -73,7 +76,13 @@ struct diff_result_container {
     struct bu_attribute_value_set additional_new_diff;
 };
 
+extern void diff_result_init(struct diff_result_container *result);
+extern void diff_result_free(struct diff_result_container *result);
 
+/*******************************************************************/
+/* Structure and memory management for the container used to hold
+ * diff3 results for related differing objects */
+/*******************************************************************/
 struct diff3_result_container {
     int status;
     const struct db_i *ancestor_dbip;
@@ -118,12 +127,13 @@ struct diff3_result_container {
     struct bu_attribute_value_set attribute_merged;
 };
 
+extern void diff3_result_init(struct diff3_result_container *result);
+extern void diff3_result_free(struct diff3_result_container *result);
 
 /*******************************************************************/
 /* Structure and memory management for the container used to hold
  * diff results */
 /*******************************************************************/
-
 struct diff_results {
     float diff_tolerance;
     struct bu_ptbl *added;     /* directory pointers */
@@ -134,7 +144,13 @@ struct diff_results {
     struct bu_ptbl *changed_new_dbip_1;   /* directory pointers */
 };
 
+extern void diff_results_init(struct diff_results *results);
+extern void diff_results_free(struct diff_results *results);
 
+/*******************************************************************/
+/* Structure and memory management for the container used to hold
+ * diff results */
+/*******************************************************************/
 struct diff3_results {
     float diff_tolerance;
     struct db_i *merged_db;
@@ -149,6 +165,9 @@ struct diff3_results {
     struct bu_ptbl *changed; /* containers */
     struct bu_ptbl *conflict; /* containers */
 };
+
+extern void diff3_results_init(struct diff3_results *results);
+extern void diff3_results_free(struct diff3_results *results);
 
 #endif
 
