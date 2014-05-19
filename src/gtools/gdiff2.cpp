@@ -141,9 +141,9 @@ diff_result_free(void *result)
 
 struct diff3_result_container {
     int status;
-    struct db_i *ancestor_dbip;
-    struct db_i *left_dbip;
-    struct db_i *right_dbip;
+    const struct db_i *ancestor_dbip;
+    const struct db_i *left_dbip;
+    const struct db_i *right_dbip;
     const struct directory *ancestor_dp;
     const struct directory *left_dp;
     const struct directory *right_dp;
@@ -342,6 +342,7 @@ struct diff3_results {
     struct bu_ptbl *added_left_only; /* directory pointers (left dbip) */
     struct bu_ptbl *added_right_only; /* directory pointers (right dbip) */
     struct bu_ptbl *added_both; /* directory pointers (left dbip) */
+    struct bu_ptbl *added_merged; /* containers */
     struct bu_ptbl *changed; /* containers */
     struct bu_ptbl *conflict; /* containers */
 };
@@ -357,6 +358,7 @@ void diff3_results_init(struct diff3_results *results){
     BU_GET(results->added_left_only, struct bu_ptbl);
     BU_GET(results->added_right_only, struct bu_ptbl);
     BU_GET(results->added_both, struct bu_ptbl);
+    BU_GET(results->added_merged, struct bu_ptbl);
     BU_GET(results->changed, struct bu_ptbl);
     BU_GET(results->conflict, struct bu_ptbl);
 
@@ -367,6 +369,7 @@ void diff3_results_init(struct diff3_results *results){
     BU_PTBL_INIT(results->added_left_only);
     BU_PTBL_INIT(results->added_right_only); 
     BU_PTBL_INIT(results->added_both); 
+    BU_PTBL_INIT(results->added_merged); 
     BU_PTBL_INIT(results->changed);
     BU_PTBL_INIT(results->conflict);
 
@@ -383,6 +386,10 @@ void diff3_results_free(struct diff3_results *results)
     bu_ptbl_free(results->added_left_only);
     bu_ptbl_free(results->added_right_only); 
     bu_ptbl_free(results->added_both); 
+    for (i = 0; i < (int)BU_PTBL_LEN(results->added_merged); i++) {
+	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->added_merged, i);
+	diff3_result_free((void *)result);
+    } 
     for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
 	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->changed, i);
 	diff3_result_free((void *)result);
@@ -532,7 +539,7 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 /* Callback functions for db_compare3 */
 /*******************************************************************/
 int
-diff3_added(const struct db_i *left, const struct db_i *UNUSED(ancestor), const struct db_i *right, const struct directory *dp_left, const struct directory *dp_ancestor, const struct directory *dp_right, void *data)
+diff3_added(const struct db_i *left, const struct db_i *ancestor, const struct db_i *right, const struct directory *dp_left, const struct directory *dp_ancestor, const struct directory *dp_right, void *data)
 {
     /* The cases are:
      *
@@ -565,13 +572,19 @@ diff3_added(const struct db_i *left, const struct db_i *UNUSED(ancestor), const 
 	struct rt_db_internal intern_left;
 	struct rt_db_internal intern_right;
 	struct bn_tol diff_tol = BN_TOL_INIT_ZERO;
-	diff_tol.dist = results->diff_tolerance;
-
-	int diff3_status = 0;
 	struct diff3_result_container *result3 = (struct diff3_result_container *)bu_calloc(1, sizeof(struct diff3_result_container), "diff3 result struct");
 	diff3_result_init(result3);
 	RT_DB_INTERNAL_INIT(&intern_left);
 	RT_DB_INTERNAL_INIT(&intern_right);
+	diff_tol.dist = results->diff_tolerance;
+
+	result3->ancestor_dbip = ancestor;
+	result3->left_dbip = left;
+	result3->right_dbip = right;
+	result3->ancestor_dp = dp_ancestor;
+	result3->left_dp = dp_left;
+	result3->right_dp = dp_right;
+
 	/* Get the internal objects */
 	if (rt_db_get_internal(&intern_left, dp_left, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    return -1;
@@ -581,7 +594,7 @@ diff3_added(const struct db_i *left, const struct db_i *UNUSED(ancestor), const 
 	    return -1;
 	}
 
-	int diff_param_result = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_PARAM, &(result3->param_unchanged),
+	result3->internal_diff = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_PARAM, &(result3->param_unchanged),
 		&(result3->param_removed_left_only), &(result3->param_removed_right_only), &(result3->param_removed_both),
 		&(result3->param_added_left_only), &(result3->param_added_right_only), &(result3->param_added_both),
 		&(result3->param_added_conflict_left), &(result3->param_added_conflict_right),
@@ -590,7 +603,7 @@ diff3_added(const struct db_i *left, const struct db_i *UNUSED(ancestor), const 
 		&(result3->param_changed_conflict_left),&(result3->param_changed_conflict_right),
 		&(result3->param_merged), &diff_tol);
 
-	int diff_attrs_result = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_ATTRS, &(result3->attribute_unchanged),
+	result3->attribute_diff = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_ATTRS, &(result3->attribute_unchanged),
 		&(result3->attribute_removed_left_only), &(result3->attribute_removed_right_only), &(result3->attribute_removed_both),
 		&(result3->attribute_added_left_only), &(result3->attribute_added_right_only), &(result3->attribute_added_both),
 		&(result3->attribute_added_conflict_left), &(result3->attribute_added_conflict_right),
@@ -599,13 +612,22 @@ diff3_added(const struct db_i *left, const struct db_i *UNUSED(ancestor), const 
 		&(result3->attribute_changed_conflict_left),&(result3->attribute_changed_conflict_right),
 		&(result3->attribute_merged), &diff_tol);
 
-	diff3_status = (diff_param_result > diff_attrs_result) ? diff_param_result : diff_attrs_result;
+	result3->status = (result3->internal_diff > result3->attribute_diff) ? result3->internal_diff : result3->attribute_diff;
 
-	switch (diff3_status) {
+	switch (result3->status) {
 	    case 0:
 		/* dp_left == dp_right */
 		bu_ptbl_ins(results->added_both, (long *)dp_left);
 		diff3_result_free(result3);
+		break;
+	    case 1:
+		/* dp_left != dp_right, but they can be merged */
+		bu_ptbl_ins(results->added_merged, (long *)result3);
+		break;
+	    case 2:
+	    case 3:
+		/* dp_left != dp_right */
+		bu_ptbl_ins(results->conflict, (long *)result3);
 		break;
 	    default:
 		return -1;
