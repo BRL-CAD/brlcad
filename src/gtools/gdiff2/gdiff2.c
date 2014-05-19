@@ -1,4 +1,4 @@
-/*                    G D I F F 2 . C P P
+/*                     G D I F F 2 . C
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -20,7 +20,6 @@
 
 #include "common.h"
 
-extern "C" {
 #include <string.h>
 
 #include "tcl.h"
@@ -28,7 +27,6 @@ extern "C" {
 #include "bu/getopt.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
-}
 
 /*******************************************************************/
 /* Structure and memory management for state management - this holds
@@ -965,28 +963,23 @@ diff3_summarize(struct bu_vls *diff_log, const struct diff3_results *results, st
     if (state->verbosity < 1 || !results)
 	return;
 
-    //struct bu_ptbl *unchanged          = results->unchanged;          /* directory pointers (ancestor dbip) */
-    //struct bu_ptbl *removed_left_only  = results->removed_left_only;  /* directory pointers (ancestor dbip) */
-    //struct bu_ptbl *removed_right_only = results->removed_right_only; /* directory pointers (ancestor dbip) */
-    //struct bu_ptbl *removed_both       = results->removed_both;       /* directory pointers (ancestor dbip) */
-    struct bu_ptbl *added_left_only    = results->added_left_only;    /* directory pointers (left dbip) */
-    struct bu_ptbl *added_right_only   = results->added_right_only;   /* directory pointers (right dbip) */
-    struct bu_ptbl *added_both         = results->added_both;         /* directory pointers (left dbip) */
-    struct bu_ptbl *added_merged       = results->added_merged;       /* containers */
-    //struct bu_ptbl *changed            = results->changed;            /* containers */
-    //struct bu_ptbl *conflict           = results->conflict;           /* containers */
+    /*struct bu_ptbl *unchanged          = results->unchanged;         */ /* directory pointers (ancestor dbip) */
+    /*struct bu_ptbl *removed_left_only  = results->removed_left_only; */ /* directory pointers (ancestor dbip) */
+    /*struct bu_ptbl *removed_right_only = results->removed_right_only;*/ /* directory pointers (ancestor dbip) */
+    /*struct bu_ptbl *removed_both       = results->removed_both;      */ /* directory pointers (ancestor dbip) */
+    /*struct bu_ptbl *changed            = results->changed;  */          /* containers */
+    /*struct bu_ptbl *conflict           = results->conflict; */          /* containers */
 
-    //if (state->verbosity == 1) {
-    if (state->return_added && ((int)BU_PTBL_LEN(added_left_only) > 0 || (int)BU_PTBL_LEN(added_right_only) > 0 || (int)BU_PTBL_LEN(added_both) > 0)) {
+    if (state->return_added && ((int)BU_PTBL_LEN(results->added_left_only) > 0 || (int)BU_PTBL_LEN(results->added_right_only) > 0 || (int)BU_PTBL_LEN(results->added_both) > 0)) {
 	bu_vls_printf(diff_log, "\nObjects added:\n");
     }
-    print_tbl_dp(diff_log, added_left_only, "From left", state->return_added);
-    print_tbl_dp(diff_log, added_right_only, "From right", state->return_added);
-    print_tbl_dp(diff_log, added_both, "From left and right, identically", state->return_added);
-    print_tbl_diff3(diff_log, added_merged, "From left and right, merged information", state->return_added);
+    print_tbl_dp(diff_log, results->added_left_only, "From left", state->return_added);
+    print_tbl_dp(diff_log, results->added_right_only, "From right", state->return_added);
+    print_tbl_dp(diff_log, results->added_both, "From left and right, identically", state->return_added);
+    print_tbl_diff3(diff_log, results->added_merged, "From left and right, merged information", state->return_added);
     if (state->verbosity > 10) {
-	for (i = 0; i < (int)BU_PTBL_LEN(added_merged); i++) {
-	    struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(added_merged, i);
+	for (i = 0; i < (int)BU_PTBL_LEN(results->added_merged); i++) {
+	    struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->added_merged, i);
 	    params3_summary(diff_log, result);
 	    attrs3_summary(diff_log, result);
 	}
