@@ -104,15 +104,33 @@ typedef enum {
  * there are differences.  Negative values indicate an internal error.
  */
 RT_EXPORT extern int
-db_compare(const struct rt_db_internal *left_obj,
-	   const struct rt_db_internal *right_obj,
-	   db_compare_criteria_t flags,
-	   struct bu_attribute_value_set *added,
+db_compare(struct bu_attribute_value_set *added,
 	   struct bu_attribute_value_set *removed,
 	   struct bu_attribute_value_set *changed_left,
 	   struct bu_attribute_value_set *changed_right,
 	   struct bu_attribute_value_set *unchanged,
-	   struct bn_tol *diff_tol);
+	   const struct rt_db_internal *left_obj,
+	   const struct rt_db_internal *right_obj,
+	   db_compare_criteria_t flags,
+	   const struct bn_tol *diff_tol);
+
+/**
+ * Compare the attribute sets.
+ *
+ * This function is useful for comparing the contents
+ * of two attribute/value sets. Used by db_compare, this
+ * function is also directly avaiable for processing sets
+ * and attribute only objects that don't have an internal
+ * representation */
+RT_EXPORT extern int
+db_avs_diff(struct bu_attribute_value_set *added,
+            struct bu_attribute_value_set *removed,
+            struct bu_attribute_value_set *changed_left,
+            struct bu_attribute_value_set *changed_right,
+            struct bu_attribute_value_set *unchanged,
+	    const struct bu_attribute_value_set *left_set,
+	    const struct bu_attribute_value_set *right_set,
+            const struct bn_tol *diff_tol);
 
 
 /**

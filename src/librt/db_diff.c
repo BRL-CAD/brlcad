@@ -210,12 +210,12 @@ db_diff(const struct db_i *dbip1,
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
 	int this_diff = 0;
-
+#if 0
 	/* skip the _GLOBAL object for now - need to deal with this, however */
 	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    continue;
 	}
-
+#endif
 	/* check if this object exists in the other database */
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
@@ -245,10 +245,12 @@ db_diff(const struct db_i *dbip1,
     FOR_ALL_DIRECTORY_START(dp2, dbip2) {
 	int this_diff = 0;
 
+#if 0
 	/* skip the _GLOBAL object for now - need to deal with this, however */
 	if (dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    continue;
 	}
+#endif
 
 	/* check if this object exists in the other database */
 	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
@@ -284,11 +286,12 @@ db_diff3(const struct db_i *left,
     /* Step 1: look at all objects in the ancestor database */
     FOR_ALL_DIRECTORY_START(dp_ancestor, ancestor) {
 	struct bu_external ext_ancestor, ext_left, ext_right;
-
+#if 0
 	/* skip the _GLOBAL object for now - need to deal with this, however */
 	if (dp_ancestor->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    continue;
 	}
+#endif
 	dp_left = db_lookup(left, dp_ancestor->d_namep, 0);
 	dp_right = db_lookup(right, dp_ancestor->d_namep, 0);
 	(void)db_get_external(&ext_ancestor, dp_ancestor, ancestor);
@@ -425,51 +428,52 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
     return BU_STR_EQUAL(val1, val2);
 }
 
-HIDDEN int
-bu_avs_diff(struct bu_attribute_value_set *shared,
-	struct bu_attribute_value_set *orig_only,
-	struct bu_attribute_value_set *new_only,
-	struct bu_attribute_value_set *orig_diff,
-	struct bu_attribute_value_set *new_diff,
-	const struct bu_attribute_value_set *avs1,
-	const struct bu_attribute_value_set *avs2,
+int
+db_avs_diff(
+	struct bu_attribute_value_set *added,
+	struct bu_attribute_value_set *removed,
+	struct bu_attribute_value_set *changed_left,
+	struct bu_attribute_value_set *changed_right,
+	struct bu_attribute_value_set *unchanged,
+	const struct bu_attribute_value_set *left_set,
+	const struct bu_attribute_value_set *right_set,
 	const struct bn_tol *diff_tol)
 {
     int have_diff = 0;
     struct bu_attribute_value_pair *avp;
-    if (shared && !BU_AVS_IS_INITIALIZED(shared)) BU_AVS_INIT(shared);
-    if (orig_only && !BU_AVS_IS_INITIALIZED(orig_only)) BU_AVS_INIT(orig_only);
-    if (new_only && !BU_AVS_IS_INITIALIZED(new_only)) BU_AVS_INIT(new_only);
-    if (orig_diff && !BU_AVS_IS_INITIALIZED(orig_diff)) BU_AVS_INIT(orig_diff);
-    if (new_diff && !BU_AVS_IS_INITIALIZED(new_diff)) BU_AVS_INIT(new_diff);
-    for (BU_AVS_FOR(avp, avs1)) {
-	const char *val2 = bu_avs_get(avs2, avp->name);
+    if (unchanged && !BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
+    if (removed && !BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
+    if (added && !BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
+    if (changed_left && !BU_AVS_IS_INITIALIZED(changed_left)) BU_AVS_INIT(changed_left);
+    if (changed_right && !BU_AVS_IS_INITIALIZED(changed_right)) BU_AVS_INIT(changed_right);
+    for (BU_AVS_FOR(avp, left_set)) {
+	const char *val2 = bu_avs_get(right_set, avp->name);
 	if (!val2) {
-	    if (orig_only) {
-		(void)bu_avs_add(orig_only, avp->name, avp->value);
+	    if (removed) {
+		(void)bu_avs_add(removed, avp->name, avp->value);
 	    }
 	    have_diff++;
 	} else {
 	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
-		if (shared) {
-		    (void)bu_avs_add(shared, avp->name, avp->value);
+		if (unchanged) {
+		    (void)bu_avs_add(unchanged, avp->name, avp->value);
 		}
 	    } else {
-		if (orig_diff) {
-		    (void)bu_avs_add(orig_diff, avp->name, avp->value);
+		if (changed_left) {
+		    (void)bu_avs_add(changed_left, avp->name, avp->value);
 		}
-		if (new_diff) {
-		    (void)bu_avs_add(new_diff, avp->name, val2);
+		if (changed_right) {
+		    (void)bu_avs_add(changed_right, avp->name, val2);
 		}
 		have_diff++;
 	    }
 	}
     }
-    for (BU_AVS_FOR(avp, avs2)) {
-	const char *val1 = bu_avs_get(avs1, avp->name);
+    for (BU_AVS_FOR(avp, right_set)) {
+	const char *val1 = bu_avs_get(left_set, avp->name);
 	if (!val1) {
-	    if (new_only) {
-		(void)bu_avs_add(new_only, avp->name, avp->value);
+	    if (added) {
+		(void)bu_avs_add(added, avp->name, avp->value);
 	    }
 	    have_diff++;
 	}
@@ -749,15 +753,15 @@ arb_type_to_str(int type) {
 }
 
 int
-db_compare(const struct rt_db_internal *left_obj,
-	const struct rt_db_internal *right_obj,
-	db_compare_criteria_t flags,
-	struct bu_attribute_value_set *added,
+db_compare(struct bu_attribute_value_set *added,
 	struct bu_attribute_value_set *removed,
 	struct bu_attribute_value_set *changed_left,
 	struct bu_attribute_value_set *changed_right,
 	struct bu_attribute_value_set *unchanged,
-	struct bn_tol *diff_tol)
+	const struct rt_db_internal *left_obj,
+	const struct rt_db_internal *right_obj,
+	db_compare_criteria_t flags,
+	const struct bn_tol *diff_tol)
 {
     int do_all = 0;
     int has_diff = 0;
@@ -822,7 +826,7 @@ db_compare(const struct rt_db_internal *left_obj,
 	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
 	}
 	if (have_tcl1 && have_tcl2) {
-	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &avs1, &avs2, diff_tol);
+	    has_diff += db_avs_diff(added, removed, changed_left, changed_right, unchanged, &avs1, &avs2, diff_tol);
 	} else {
 	    if (!type_change) {
 		/* We don't have the tcl list version of the internal parameters, so all
@@ -841,7 +845,7 @@ db_compare(const struct rt_db_internal *left_obj,
     if (flags == DB_COMPARE_ATTRS || do_all) {
 
 	if (left_obj->idb_avs.magic == BU_AVS_MAGIC && right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-	    has_diff += bu_avs_diff(unchanged, removed, added, changed_left, changed_right, &left_obj->idb_avs, &right_obj->idb_avs, diff_tol);
+	    has_diff += db_avs_diff(added, removed, changed_left, changed_right, unchanged, &left_obj->idb_avs, &right_obj->idb_avs, diff_tol);
 	} else {
 	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {
 		if (removed) {

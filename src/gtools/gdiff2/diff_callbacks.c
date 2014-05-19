@@ -104,6 +104,47 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
     result->dp_orig = before;
     result->dp_new = after;
 
+    if (before->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY || after->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	if (!(before->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && after->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)) {
+	    return -1;
+	} else {
+	    struct bu_external before_ext;
+	    struct bu_external after_ext;
+	    struct db5_raw_internal before_raw;
+	    struct db5_raw_internal after_raw;
+	    struct bu_attribute_value_set before_avs;
+	    struct bu_attribute_value_set after_avs;
+
+	    BU_EXTERNAL_INIT(&before_ext);
+	    BU_EXTERNAL_INIT(&after_ext);
+	    if (db_get_external(&before_ext, before, left) < 0 || db5_get_raw_internal_ptr(&before_raw, before_ext.ext_buf) == NULL) {return -1;}
+	    if (db_get_external(&after_ext, after, right) < 0 || db5_get_raw_internal_ptr(&after_raw, after_ext.ext_buf) == NULL) {return -1;}
+	    /* Parse out the attributes */
+	    if (db5_import_attributes(&before_avs, &before_raw.attributes) < 0 || db5_import_attributes(&after_avs, &after_raw.attributes) < 0) {
+		bu_free_external(&before_ext);
+		bu_free_external(&after_ext);
+		return -1;
+	    }
+	    result->internal_diff = 0;
+	    result->attribute_diff = db_avs_diff(&(result->additional_new_only), &(result->additional_orig_only),
+		    &(result->additional_orig_diff), &(result->additional_new_diff), &(result->additional_shared),
+		    &before_avs, &after_avs, &diff_tol);
+	    if (result->attribute_diff) {
+		bu_ptbl_ins(results->changed, (long *)result);
+	    } else {
+		if (!BU_PTBL_IS_INITIALIZED(results->unchanged)) BU_PTBL_INIT(results->unchanged);
+		bu_ptbl_ins(results->unchanged, (long *)before);
+		diff_result_free(result);
+	    }
+	    bu_free_external(&before_ext);
+	    bu_free_external(&after_ext);
+
+	    bu_avs_free(&before_avs);
+	    bu_avs_free(&after_avs);
+	    return 0;
+	}
+    }
+
     RT_DB_INTERNAL_INIT(&intern_orig);
     RT_DB_INTERNAL_INIT(&intern_new);
 
@@ -118,13 +159,13 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 	return -1;
     }
 
-    result->internal_diff = db_compare(&intern_orig, &intern_new, DB_COMPARE_PARAM,
-	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-	    &(result->internal_new_diff), &(result->internal_shared), &diff_tol);
+    result->internal_diff = db_compare(&(result->internal_new_only), &(result->internal_orig_only),
+	    &(result->internal_orig_diff), &(result->internal_new_diff), &(result->internal_shared),
+	    &intern_orig, &intern_new, DB_COMPARE_PARAM, &diff_tol);
 
-    result->attribute_diff = db_compare(&intern_orig, &intern_new, DB_COMPARE_ATTRS,
-	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
-	    &(result->additional_new_diff), &(result->additional_shared), &diff_tol);
+    result->attribute_diff = db_compare(&(result->additional_new_only), &(result->additional_orig_only),
+	    &(result->additional_orig_diff), &(result->additional_new_diff), &(result->additional_shared),
+	    &intern_orig, &intern_new, DB_COMPARE_ATTRS, &diff_tol);
 
     if (result->internal_diff || result->attribute_diff) {
 	bu_ptbl_ins(results->changed, (long *)result);
