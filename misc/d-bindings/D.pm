@@ -10,6 +10,9 @@ use Data::Dumper;
 use File::Copy;
 use File::Basename;
 
+use lib('.');
+use CParse;
+
 # The following defs are for use just during the experimental
 # phase. They will have to be handled differently during devlopment
 # and installation.  For instance, the final .d files may be installed
@@ -403,35 +406,77 @@ sub convert1final {
   open my $fpi, '<', $ifil
     or die "$ifil: $!";
 
-  while (defined(my $line = <$fpi>)) {
+  my @lines = <$fpi>;
+  my $nl = @lines;
+
+
+ LINE:
+
+  for (my $i = 0; $i < $nl; ++$i) {
+    my $lnum = $i + 1;
+    my $line = $lines[$i];
+
+    my @d = split(' ', $line);
 
     # ignore or collapse blank lines?
-    my @d = split(' ', $line);
     if (!defined $d[0]) {
       if (!$prev_line_was_space) {
 	print $fpo "\n";
 	$prev_line_was_space = 1;
       }
-      next;
+      next LINE;
     }
 
-    if ($line =~ m{\A \s* \#}x) {
-      if (0) {
-	# ignore cpp comment lines
-	next;
-      }
-      elsif (1) {
+    my $key = $d[0];
+
+    if ($key =~ m{\A \s* \#}x) {
+      if (1) {
 	# replace cpp comment lines with a space unless prev line was a space
 	if (!$prev_line_was_space) {
 	  print $fpo "\n";
 	  $prev_line_was_space = 1;
 	}
-	next;
+	next LINE;
+      }
+      elsif (0) {
+	# ignore cpp comment lines
+	next LINE;
       }
     }
 
-    $prev_line_was_space = 0;
+    if (!exists $CParse::key{$key}) {
+      die "unknown key '$key' at line $lnum, file '$ifil'...";
+    }
+
+    # capture second token
+    my $key2 = (1 < @d) ? $d[1] : '';
+    if ($key eq 'typedef') {
+      if ($key2 eq 'struct') {
+	#$i = CParse::extract_struct(\@lines, $i, $fpo);
+	$i = CParse::extract_struct(\@lines, $i, $fpo);
+      }
+      elsif ($key2 eq 'enum') {
+#	 $i = CParse::extract_enum(\@lines, $i, $fpo);
+	$i = CParse::extract_struct(\@lines, $i, $fpo);
+      }
+      else {
+	# $i = CParse::extract_typedef(\@lines, $i, $fpo);
+	$i = CParse::extract_struct(\@lines, $i, $fpo);
+      }
+    }
+    elsif ($key eq 'struct') {
+      $i = CParse::extract_struct(\@lines, $i, $fpo);
+    }
+    elsif ($key eq 'enum') {
+#      $i = CParse::extract_enum(\@lines, $i, $fpo);
+	$i = CParse::extract_struct(\@lines, $i, $fpo);
+    }
+    else {
+      die "unhandled key '$key' at line $lnum, file '$ifil'...";
+    }
+
     print $fpo $line;
+    $prev_line_was_space = 0;
   }
 
   # ender
