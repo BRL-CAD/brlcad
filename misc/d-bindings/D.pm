@@ -297,6 +297,9 @@ sub convert1final {
   print $fpo "module $stem;\n";
   print $fpo "\n";
 
+  print $fpo "extern (C) {\n";
+  print $fpo "\n";
+
   foreach my $h (sort keys %sysmod) {
     my $mod = $sysmod{$h};
     next if !$mod;
@@ -307,15 +310,28 @@ sub convert1final {
   open my $fpi, '<', $ifil
     or die "$ifil: $!";
   while (defined(my $line = <$fpi>)) {
+
+=pod
+
     # ignore cpp comment lines
     next if ($line =~ m{\A \s* \#}x);
+
+=cut
+
+=pod
 
     # ignore blanklines
     my @d = split(' ', $line);
     next if !defined $d[0];
 
+=cut
+
     print $fpo $line;
   }
+
+  # ender
+  print $fpo "\n";
+  print $fpo "} // extern (C) {\n";
 
 } # convert1final
 
@@ -491,6 +507,9 @@ sub flatten_c_header {
 
   #print Dumper(\%syshdr); die "debug exit";
 } # flatten_c_header
+
+sub get_c_statement {
+} # get_c_statement
 
 # mandatory true return from a Perl module
 1;
