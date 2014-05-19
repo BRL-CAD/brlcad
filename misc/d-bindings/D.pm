@@ -450,33 +450,52 @@ sub convert1final {
 
     # capture second token
     my $key2 = (1 < @d) ? $d[1] : '';
+    if (!exists $CParse::key2{$key2}) {
+      warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
+    }
+
+    $i = CParse::extract_unknown(\@lines, $i, $fpo);
+
+    #print $fpo $line;
+    $prev_line_was_space = 0;
+    #next LINE;
+
+=pod
+
     if ($key eq 'typedef') {
       if ($key2 eq 'struct') {
 	#$i = CParse::extract_struct(\@lines, $i, $fpo);
 	$i = CParse::extract_struct(\@lines, $i, $fpo);
+	next LINE;
       }
       elsif ($key2 eq 'enum') {
 #	 $i = CParse::extract_enum(\@lines, $i, $fpo);
 	$i = CParse::extract_struct(\@lines, $i, $fpo);
+	next LINE;
       }
       else {
 	# $i = CParse::extract_typedef(\@lines, $i, $fpo);
 	$i = CParse::extract_struct(\@lines, $i, $fpo);
+	next LINE;
       }
     }
     elsif ($key eq 'struct') {
       $i = CParse::extract_struct(\@lines, $i, $fpo);
+	next LINE;
     }
     elsif ($key eq 'enum') {
 #      $i = CParse::extract_enum(\@lines, $i, $fpo);
 	$i = CParse::extract_struct(\@lines, $i, $fpo);
+	next LINE;
     }
     else {
-      die "unhandled key '$key' at line $lnum, file '$ifil'...";
+      $i = CParse::extract_unknown(\@lines, $i, $fpo);
+      #die "unhandled key '$key' at line $lnum, file '$ifil'...";
+	next LINE;
     }
 
-    print $fpo $line;
-    $prev_line_was_space = 0;
+=cut
+
   }
 
   # ender
