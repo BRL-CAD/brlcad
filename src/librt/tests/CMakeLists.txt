@@ -19,6 +19,10 @@ BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL)
 # diff testing
 BRLCAD_ADDEXEC(test_diff test_diff.c "librt" NO_INSTALL)
 
+# nmg_mk testing
+BRLCAD_ADDEXEC(test_nmg_mk test_nmg_mk.c "librt" NO_INSTALL)
+add_test(test_nmg_mk test_nmg_mk)
+
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
