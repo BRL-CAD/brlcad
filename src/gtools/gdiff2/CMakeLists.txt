@@ -17,7 +17,7 @@ set(gdiff_srcs
 
 BRLCAD_ADDEXEC(gdiff2 "${gdiff_srcs}" "librt")
 
-CMAKEFILES(gdiff2.h)
+CMAKEFILES(gdiff2.h tests)
 
 # Local Variables:
 # tab-width: 8
