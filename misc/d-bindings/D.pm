@@ -3,8 +3,6 @@ package D;
 use strict;
 use warnings;
 
-use Storable;
-use Digest::MD5::File qw(file_md5_hex);
 use Readonly;
 use Data::Dumper;
 use File::Copy;
@@ -13,16 +11,11 @@ use File::Basename;
 use lib('.');
 use CParse;
 use BP;
+use DS;
 
 # file type suffixes
 Readonly our $Hsuf => '.h';
 Readonly our $Dsuf => '.d';
-
-
-# local vars
-my $storefile = '.md5tablestore';
-# key md5 file hases by file name in this table;
-my %md5table;
 
 # ignored top-level original .h files
 my @ignore
@@ -85,10 +78,6 @@ Readonly our $SAME =>  0;
 Readonly our $DIFF =>  1;
 
 #### subroutines ####
-sub remove_md5hash_store {
-  unlink $storefile;
-  %md5table = ();
-} # remove_md5hash_store
 
 sub convert {
   my $ifils_ref = shift @_; # @ifils
@@ -248,48 +237,6 @@ sub convert {
   } # iterate over input files
 
 } # convert
-
-sub calc_md5hash {
-  my $f = shift @_;
-  return file_md5_hex($f);
-} # calc_md5hash
-
-sub store_md5hash {
-  # store an input hash (or calculates a new one) and stores it
-  my $f       = shift @_;
-  my $md5hash = shift @_;
-
-  $md5hash = calc_md5hash($f)
-    if !defined $md5hash;
-
-  my $tabref = retrieve($storefile)
-    if -e $storefile;
-  $tabref = \%md5table
-    if !defined $tabref;
-  $tabref->{$f} = $md5hash;
-  store $tabref, $storefile;
-
-  if (0 && $debug) {
-    print Dumper($tabref); die "debug exit";
-  }
-} # store_md5hash
-
-sub retrieve_md5hash {
-  # return stored file hash or 0 if not found in hash
-  my $f = shift @_;
-
-  my $tabref = retrieve($storefile)
-    if -e $storefile;
-  $tabref = \%md5table
-    if !defined $tabref;
-
-  my $md5hash = 0;
-  $md5hash = $tabref->{$f}
-    if (exists $tabref->{$f});
-
-  return $md5hash;
-
-} # retrieve_md5hash
 
 sub collect_files {
   BP::get_brlcad_incdirs();
