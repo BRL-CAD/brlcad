@@ -269,7 +269,7 @@ diff3_results_free(struct diff3_results *results)
     for (i = 0; i < (int)BU_PTBL_LEN(results->added_merged); i++) {
 	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->added_merged, i);
 	diff3_result_free(result);
-    } 
+    }
     for (i = 0; i < (int)BU_PTBL_LEN(results->changed); i++) {
 	struct diff3_result_container *result = (struct diff3_result_container *)BU_PTBL_GET(results->changed, i);
 	diff3_result_free(result);

@@ -200,7 +200,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Test for nmg_msv failed!\n");
     }
 
-    bu_log("All unit tests successed.\n");
+    bu_log("All unit tests succeeded.\n");
     return 0;
 }
 

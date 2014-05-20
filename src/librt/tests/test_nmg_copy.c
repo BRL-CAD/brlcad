@@ -133,7 +133,7 @@ nmg_compare_faceuse(struct faceuse *fu1, struct faceuse *fu2)
     return result;
 }
 
-int 
+int
 nmg_compare_shell_a(struct shell_a *sa1, struct shell_a *sa2)
 {
     int result;
@@ -264,7 +264,7 @@ nmg_compare_shell(struct shell *s1, struct shell *s2)
     return result;
 }
 
-int 
+int
 nmg_compare_region_a(struct nmgregion_a *ra1, struct nmgregion_a *ra2)
 {
     int result;
@@ -471,7 +471,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Test Case by nmg_mrsv failed!\n");
     }
 
-    bu_log("All unit tests successed.\n");
+    bu_log("All unit tests succeeded.\n");
     return 0;
 }
 
