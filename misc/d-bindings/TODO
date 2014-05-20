@@ -1,0 +1,57 @@
+Decide how the D interface system fits into the build system:
+
+1.  We need to know some system characteristics to properly create
+    modules.
+
+2.  Is completely-automatic generation of interface modules possible?
+
+3.  What is the status of D standard modules vs. the C library?
+
+Proposed layout in the build directory
+
+  # all public api (for headers found in installed dir
+  # "$BRLCAD_ROOT/include/brlcad" and its sub-dirs)
+  ./di/X.d       # module: brlcad.X (includes all X/* headers)
+  ...
+
+  # other brlcad-specific, private installed headers
+
+  # "$BRLCAD_ROOT/include"
+  ./di/other/X.d  # module: brlcad.other.X
+  ...
+
+  # for subdirs
+  # "$BRLCAD_ROOT/include/X"
+  ./di/X/Y.d      # module: brlcad.X.Y
+  ...
+
+Note that for eventual installation the contents of directory "./di"
+will be recursively installed to:
+
+   $BRLCAD_ROOT/d
+
+=== Current librt Dependencies
+
+To be successful, the BRL-CAD core library librt must be available,
+and its current, external dependencies on my system are (from ldd):
+
+  linux-vdso.so.1
+  libz.so.1
+  libdl.so.2
+  libpthread.so.0
+  libm.so.6
+  libstdc++.so.6
+  libgcc_s.so.1
+  libc.so.6
+  /lib64/ld-linux-x86-64.so.2
+
+libbu and its external dependencies are only one less:
+
+  linux-vdso.so.1
+  libpthread.so.0
+  libdl.so.2
+  libm.so.6
+  libstdc++.so.6
+  libgcc_s.so.1
+  libc.so.6
+  /lib64/ld-linux-x86-64.so.2
