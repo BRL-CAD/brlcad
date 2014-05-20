@@ -233,6 +233,19 @@ extern void diff3_summarize(struct bu_vls *diff_log,
         const struct diff3_results *results,
        	struct diff_state *state);
 
+/*******************************************************************/
+/*                      utility functions                          */
+/*******************************************************************/
+
+/* Do the attribute difference between two attribute-only objects */
+extern int
+attr_obj_diff(struct diff_result_container *result,
+	const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *dp_left,
+	const struct directory *dp_right,
+	const struct bn_tol *diff_tol);
+
 
 #endif
 
