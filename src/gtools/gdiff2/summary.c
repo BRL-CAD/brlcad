@@ -260,7 +260,7 @@ diff_summarize(struct bu_vls *diff_log, const struct diff_results *results, stru
     if (state->verbosity == 1) {
 	print_tbl_dp(diff_log, added, "Objects added", state->return_added);
 	print_tbl_dp(diff_log, removed, "Objects removed", state->return_removed);
-	print_tbl_diff(diff_log, removed, "Objects changed", state->return_changed);
+	print_tbl_diff(diff_log, changed, "Objects changed", state->return_changed);
 	print_tbl_dp(diff_log, unchanged, "Objects unchanged", state->return_unchanged);
     }
     if (state->verbosity > 1) {
