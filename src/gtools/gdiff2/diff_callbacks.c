@@ -106,7 +106,20 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 
     if (before->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY || after->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	if (!(before->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && after->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)) {
-	    return -1;
+	    RT_DB_INTERNAL_INIT(&intern_orig);
+	    RT_DB_INTERNAL_INIT(&intern_new);
+	    if (before->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+		if (rt_db_get_internal(&intern_new, after, right, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		    result->status = 1;
+		    return -1;
+		}
+	    }
+	    if (after->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+		if (rt_db_get_internal(&intern_orig, before, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		    result->status = 1;
+		    return -1;
+		}
+	    }
 	} else {
 	    struct bu_external before_ext;
 	    struct bu_external after_ext;
@@ -143,20 +156,20 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 	    bu_avs_free(&after_avs);
 	    return 0;
 	}
-    }
+    } else {
+	RT_DB_INTERNAL_INIT(&intern_orig);
+	RT_DB_INTERNAL_INIT(&intern_new);
 
-    RT_DB_INTERNAL_INIT(&intern_orig);
-    RT_DB_INTERNAL_INIT(&intern_new);
-
-    /* Get the internal objects */
-    if (rt_db_get_internal(&intern_orig, before, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	result->status = 1;
-	return -1;
-    }
-    if (rt_db_get_internal(&intern_new, after, right, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	rt_db_free_internal(&intern_orig);
-	result->status = 1;
-	return -1;
+	/* Get the internal objects */
+	if (rt_db_get_internal(&intern_orig, before, left, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    result->status = 1;
+	    return -1;
+	}
+	if (rt_db_get_internal(&intern_new, after, right, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    rt_db_free_internal(&intern_orig);
+	    result->status = 1;
+	    return -1;
+	}
     }
 
     result->internal_diff = db_compare(&(result->internal_new_only), &(result->internal_orig_only),
