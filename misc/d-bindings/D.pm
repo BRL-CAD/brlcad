@@ -97,19 +97,19 @@ sub convert {
     my ($curr_hash, $prev_hash, $fpo);
 
     # check to see current status of input file
-    $curr_hash = file_md5_hex($ifil);
-    $prev_hash = retrieve_md5hash($ifil);
+    $curr_hash = DS::file_md5_hex($ifil);
+    $prev_hash = DS::retrieve_md5hash($ifil);
 
     if (!$prev_hash || $prev_hash ne $curr_hash) {
       $process = 1;
-      store_md5hash($ifil, $curr_hash);
+      DS::store_md5hash($ifil, $curr_hash);
     }
     $process = 1
       if ($force);
 
     # final output file
-    my $ofil = "${D::DIDIR}/${stem}${Dsuf}";
-    $prev_hash = retrieve_md5hash($ofil);
+    my $ofil = "${BP::DIDIR}/${stem}${Dsuf}";
+    $prev_hash = DS::retrieve_md5hash($ofil);
     if (!$prev_hash) {
       $process = 1;
     }
@@ -135,13 +135,13 @@ sub convert {
     my %syshdr = ();
 
     # first intermediate file
-    my $tfil0 = "${D::DIDIR}/${stem}.inter0";
+    my $tfil0 = "${BP::DIDIR}/${stem}.inter0";
     push @tmpfils, $tfil0;
     push @{$ofils_ref}, $tfil0
 	if $debug;
 
     # second intermediate file
-    my $tfil1 = "${D::DIDIR}/${stem}.inter1";
+    my $tfil1 = "${BP::DIDIR}/${stem}.inter1";
     push @tmpfils, $tfil1;
     push @{$ofils_ref}, $tfil1
       if $debug;
@@ -214,7 +214,7 @@ sub convert {
       if !$debug;
 
     # update hash for the new, final output file
-    $curr_hash = calc_md5hash($ofil);
+    $curr_hash = DS::calc_md5hash($ofil);
 
     if (!-f $ofil) {
       print "D::convert(): Output file '$ofil' does not exist.\n"
@@ -226,7 +226,7 @@ sub convert {
 	print "  prev '$prev_hash'\n";
 	print "  curr '$curr_hash'\n";
       }
-      store_md5hash($ofil, $curr_hash);
+      DS::store_md5hash($ofil, $curr_hash);
       push @{$ofils_ref}, $ofil;
     }
     else {
@@ -239,30 +239,31 @@ sub convert {
 } # convert
 
 sub collect_files {
-  BP::get_brlcad_incdirs();
+  #BP::get_brlcad_inc_data();
+  BP::get_brlcad_ext_inc_data();
 
   # deletes generated files if $D::clean
   my $href = shift @_; # @h
   my $dref = shift @_; # @d
 
-  my @d = glob("${D::DIDIR}/*${Dsuf}");
+  my @d = glob("${BP::DIDIR}/*${Dsuf}");
   if ($clean) {
     unlink @d;
-    remove_md5hash_store();
+    DS::remove_md5hash_store();
   }
   else {
     push @{$dref}, @d;
   }
 
   # main API headers
-  my @h  = glob("${D::IDIR}/*${Hsuf}");
+  my @h  = glob("${BP::IDIR}/*${Hsuf}");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
   }
 
   # other headers
-  #my @oh  = glob("${D::IDIR}/*${Hsuf}");
+  #my @oh  = glob("${BP::IDIR}/*${Hsuf}");
 
 } # collect_files
 
@@ -384,12 +385,12 @@ sub convert1final {
     }
 
     if (!exists $CParse::key{$key}) {
-      die "unknown key '$key' at line $lnum, file '$ifil'...";
+      warn "unknown key '$key' at line $lnum, file '$ifil'...";
     }
 
     # capture second token
     my $key2 = (1 < @d) ? $d[1] : '';
-    if (!exists $CParse::key2{$key2}) {
+    if ($key2 && !exists $CParse::key2{$key2}) {
       warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
     }
 

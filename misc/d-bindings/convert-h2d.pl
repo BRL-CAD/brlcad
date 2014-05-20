@@ -221,9 +221,9 @@ sub file_status {
   my $f = shift @_;
 
   # current hash:
-  my $curr_hash = D::calc_md5hash($f);
+  my $curr_hash = DS::calc_md5hash($f);
   # previous, if any
-  my $prev_hash = D::retrieve_md5hash($f);
+  my $prev_hash = DS::retrieve_md5hash($f);
 
   my $status = undef;
   if (!$prev_hash) {
@@ -235,7 +235,7 @@ sub file_status {
     #print "Note that '$f' has not changed.\n";
   }
   else {
-    D::store_md5hash($f, $curr_hash);
+    DS::store_md5hash($f, $curr_hash);
     $status = $D::DIFF;
     #print "Note that '$f' has changed.\n";
   }

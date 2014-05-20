@@ -25,6 +25,12 @@ Proposed layout in the build directory
   ./di/X/Y.d      # module: brlcad.X.Y
   ...
 
+  # for external headers found, we attempt to generate F files for
+  # them and put them in a separate sub-dir
+  ./di/external/X.d      # module: brlcad.external.X
+  ./di/external/X/Y.d    # module: brlcad.external.X.Y
+  ...
+
 Note that for eventual installation the contents of directory "./di"
 will be recursively installed to:
 

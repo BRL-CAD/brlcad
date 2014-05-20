@@ -11,10 +11,13 @@ use Digest::MD5::File qw(file_md5_hex);
 
 # local vars ===========================
 my $storefile = '.path_md5hash_tablestore';
+
 # keep path md5 hash data in this table
 my %path_md5hash_table;
 # key: path
 # val: md5 hash of path
+
+my $debug = 0;
 
 #### subroutines ####
 sub calc_md5hash {
@@ -27,7 +30,7 @@ sub store_md5hash {
   my $pth     = shift @_;
   my $md5hash = shift @_;
 
-  $md5hash = calc_md5hash($ph)
+  $md5hash = calc_md5hash($pth)
     if !defined $md5hash;
 
   my $tabref = retrieve($storefile)
@@ -46,9 +49,12 @@ sub retrieve_md5hash {
   # return stored path hash or 0 if not found in hash
   my $pth = shift @_;
 
+  #die "ERROR:  input path '$pth' not defined" if !defined $pth;
+  #die "ERROR:  input path '$pth' is zero" if !$pth || $pth eq '0';
+
   my $tabref = retrieve($storefile)
     if -e $storefile;
-  $tabref = %path_md5hash_table
+  $tabref = \%path_md5hash_table
     if !defined $tabref;
 
   my $md5hash = 0;
