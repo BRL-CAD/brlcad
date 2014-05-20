@@ -874,11 +874,7 @@ type_to_str(const struct rt_db_internal *obj, int arb_type) {
 }
 
 int
-db_compare3(const struct rt_db_internal *left,
-	const struct rt_db_internal *ancestor,
-	const struct rt_db_internal *right,
-	db_compare_criteria_t flags,
-	struct bu_attribute_value_set *unchanged,
+db_compare3(struct bu_attribute_value_set *unchanged,
 	struct bu_attribute_value_set *removed_left_only,
 	struct bu_attribute_value_set *removed_right_only,
 	struct bu_attribute_value_set *removed_both,
@@ -894,6 +890,10 @@ db_compare3(const struct rt_db_internal *left,
 	struct bu_attribute_value_set *changed_conflict_left,
 	struct bu_attribute_value_set *changed_conflict_right,
 	struct bu_attribute_value_set *merged,
+	const struct rt_db_internal *left,
+	const struct rt_db_internal *ancestor,
+	const struct rt_db_internal *right,
+	db_compare_criteria_t flags,
 	struct bn_tol *diff_tol)
 {
     int do_all = 0;

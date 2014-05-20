@@ -80,23 +80,23 @@ diff3_added(const struct db_i *left, const struct db_i *ancestor, const struct d
 	    return -1;
 	}
 
-	result3->internal_diff = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_PARAM, &(result3->param_unchanged),
+	result3->internal_diff = db_compare3(&(result3->param_unchanged),
 		&(result3->param_removed_left_only), &(result3->param_removed_right_only), &(result3->param_removed_both),
 		&(result3->param_added_left_only), &(result3->param_added_right_only), &(result3->param_added_both),
 		&(result3->param_added_conflict_left), &(result3->param_added_conflict_right),
 		&(result3->param_changed_left_only), &(result3->param_changed_right_only),
 		&(result3->param_changed_both), &(result3->param_changed_conflict_ancestor),
 		&(result3->param_changed_conflict_left),&(result3->param_changed_conflict_right),
-		&(result3->param_merged), &diff_tol);
+		&(result3->param_merged), &intern_left, NULL, &intern_right, DB_COMPARE_PARAM, &diff_tol);
 
-	result3->attribute_diff = db_compare3(&intern_left, NULL, &intern_right, DB_COMPARE_ATTRS, &(result3->attribute_unchanged),
+	result3->attribute_diff = db_compare3(&(result3->attribute_unchanged),
 		&(result3->attribute_removed_left_only), &(result3->attribute_removed_right_only), &(result3->attribute_removed_both),
 		&(result3->attribute_added_left_only), &(result3->attribute_added_right_only), &(result3->attribute_added_both),
 		&(result3->attribute_added_conflict_left), &(result3->attribute_added_conflict_right),
 		&(result3->attribute_changed_left_only), &(result3->attribute_changed_right_only),
 		&(result3->attribute_changed_both), &(result3->attribute_changed_conflict_ancestor),
 		&(result3->attribute_changed_conflict_left),&(result3->attribute_changed_conflict_right),
-		&(result3->attribute_merged), &diff_tol);
+		&(result3->attribute_merged), &intern_left, NULL, &intern_right, DB_COMPARE_ATTRS, &diff_tol);
 
 	result3->status = (result3->internal_diff > result3->attribute_diff) ? result3->internal_diff : result3->attribute_diff;
 
