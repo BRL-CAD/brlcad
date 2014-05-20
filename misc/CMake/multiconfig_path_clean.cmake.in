@@ -35,13 +35,13 @@
 ###
 file(GLOB ALL_FILES "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/*")
 foreach(foundfile ${ALL_FILES})
-	if(NOT "${foundfile}" MATCHES "rule$")
-		if(IS_DIRECTORY "${foundfile}")
-			execute_process(COMMAND "@CMAKE_COMMAND@" -E remove_directory "${foundfile}")
-		else(IS_DIRECTORY "${foundfile}")
-			execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${foundfile}")
-		endif(IS_DIRECTORY "${foundfile}")
-	endif(NOT "${foundfile}" MATCHES "rule$")
+  if(NOT "${foundfile}" MATCHES "rule$")
+    if(IS_DIRECTORY "${foundfile}")
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E remove_directory "${foundfile}")
+    else(IS_DIRECTORY "${foundfile}")
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${foundfile}")
+    endif(IS_DIRECTORY "${foundfile}")
+  endif(NOT "${foundfile}" MATCHES "rule$")
 endforeach(foundfile ${ALL_FILES})
 
 # Local Variables:

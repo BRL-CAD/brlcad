@@ -2269,19 +2269,11 @@ if(CMAKE_CONFIGURATION_TYPES)
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
     COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
     COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
     )
 
-else(CMAKE_CONFIGURATION_TYPES)
-
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove    ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
-
 endif(CMAKE_CONFIGURATION_TYPES)
 
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 
 
 # Write out version and compilation information

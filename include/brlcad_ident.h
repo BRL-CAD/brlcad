@@ -54,13 +54,6 @@ static const char *BRLCAD_DATE = BRLCAD_COMPILE_DATE;
 static const char *BRLCAD_HOST = BRLCAD_COMPILE_HOST;
 
 /**
- * Installation path, updated every time a build pass occurs.
- */
-static const char *BRLCAD_PATH = {
-#include "conf/PATH"
-};
-
-/**
  * Compilation user, updated every time a build pass occurs.
  */
 static const char *BRLCAD_USER = BRLCAD_COMPILE_USER;
@@ -93,9 +86,9 @@ brlcad_ident(const char *title)
     isize = strlen(ident);
     snprintf(ident + isize, 1024 - isize,
 	     "    %s, Compilation %d\n"
-	     "    %s@%s:%s\n",
+	     "    %s@%s\n",
 	     BRLCAD_DATE, BRLCAD_COUNT,
-	     BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
+	     BRLCAD_USER, BRLCAD_HOST
 	);
 
     return ident;
