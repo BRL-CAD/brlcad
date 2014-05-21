@@ -960,36 +960,32 @@ BUGS & UNEXPECTED BEHAVIOR
 --------------------------
 
 When a bug or unexpected behavior is encountered that cannot be
-quickly fixed, it minimally needs to be documented.  If you are
-already a BRL-CAD contributor, this means either making a comment in
-the BUGS file or by making a formal report to the SourceForge bug
-tracker at:
+quickly fixed, it needs to be documented in our BUGS file or more
+formally reported to the SourceForge bug tracker at:
 
 http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
 
-If the bug is complicated, will require significant discussion or
-collaboration, cannot be fixed any time soon, or if you do not have
-commit access, the issue should be reported to the SourceForge bug
-tracker.  The issues listed in BUGS are not necessarily listed in bug
-tracker, and vice-versa.  The BUGS file is merely maintained as a
-convenience notepad of long and short term issues for the developers
-only.
+The tracker is the main source for user-reported bugs and/or any
+issues that require significant discussion or benefit from having
+their status publicly announced.  Issues listed in BUGS file are not
+necessarily listed in the tracker, and vice-versa.  The BUGS file is
+also a convenience notepad of long and short term development issues.
 
 
 COMMIT ACCESS
 -------------
 
 Commit access is evaluated on a person-to-person basis at the
-discretion of existing contributors, but generally readily granted so
-long as there is an existing developer with commit access willing to
-mentor the new developer.  If you would like to have commit access,
-there is usually no need to ask -- they will ask you.  Getting
-involved with the other contributors and making patches will generally
-result in automatic consideration for commit access.  If you have to
-ask for it, you probably won't get it.
+discretion of existing contributors.  Commit access is generally
+granted after a contributor demonstrates strong competency with our
+developer guidelines and an existing developer with commit access
+vouches for the new developer.
 
-That said, the following steps represent a minimum that needs to occur
-in order for commit access to be granted:
+If you would like to have commit access, there is no need to ask.
+Getting involved with the other contributors and making patches will
+result in automatic consideration for commit access.  That said, the
+following steps represent a minimum that needs to occur in order for
+commit access to be granted:
 
 1) Read this file completely.
 
@@ -997,25 +993,19 @@ in order for commit access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a SourceForge account, submit two or more patches that
+4) Create a SourceForge account, submit at least two patches that
 demonstrate competency with our coding style, apply flawlessly, and
-provide significant improvements to the existing code.
+provide some signficant improvement.
 
-5) Be a nice person.  We're here to have fun and do cool things.  ;)
+5) Get to know the other developers.  One of them will need to vouch
+for your commit access.
+
+*) Be a nice person.  ;)
 
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
 this developer's guide within reasonable expectations.  A basic rule
-of thumb is: don't break anything.
-
-While the testing process will strive to ensure consistent behavior as
-changes are made, the responsibility still remains with the individual
-contributors to ensure that everything still compiles and runs as it
-should.  At any given time, BRL-CAD should compile on all of the
-primary platforms and (minimally) pass the BRL-CAD Benchmark
-successfully.  If changes are made that are not exercised by the
-Benchmark suite, testing should be manually performed in a manner that
-exercises those particular changes.
+of thumb is:  don't break anything.
 
 
 CONTRIBUTOR RESPONSIBILITIES
