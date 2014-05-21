@@ -1,1 +1,9 @@
-
+/.path_md5hash_tablestore
+/.svnignore
+/*.new
+/di
+/# auto-generated files
+/BH.pm
+/BE.pm
+/.svnignore
+/*.*
