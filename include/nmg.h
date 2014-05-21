@@ -183,30 +183,6 @@ struct knot_vector {
  *   8) pointer to child(ren)
  */
 
-
-struct model {
-    uint32_t magic;
-    struct bu_list r_hd;	/**< @brief list of regions */
-    char *manifolds;            /**< @brief structure 1-3manifold table */
-    long index;			/**< @brief struct # in this model */
-    long maxindex;		/**< @brief # of structs so far */
-};
-
-struct nmgregion {
-    struct bu_list l;		/**< @brief regions, in model's r_hd list */
-    struct model *m_p;		/**< @brief owning model */
-    struct nmgregion_a *ra_p;	/**< @brief attributes */
-    struct bu_list s_hd;	/**< @brief list of shells in region */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct nmgregion_a {
-    uint32_t magic;
-    point_t min_pt;		/**< @brief minimums of bounding box */
-    point_t max_pt;		/**< @brief maximums of bounding box */
-    long index;			/**< @brief struct # in this model */
-};
-
 /**
  * When a shell encloses volume, it's done entirely by the list of
  * faceuses.
@@ -225,15 +201,15 @@ struct nmgregion_a {
  * linked list.
  */
 struct shell {
-    struct bu_list l;		/**< @brief shells, in region's s_hd list */
-    struct nmgregion *r_p;	/**< @brief owning region */
+    uint32_t magic;
     struct shell_a *sa_p;	/**< @brief attribs */
-
     struct bu_list fu_hd;	/**< @brief list of face uses in shell */
     struct bu_list lu_hd;	/**< @brief wire loopuses (edge groups) */
     struct bu_list eu_hd;	/**< @brief wire list (shell has wires) */
     struct vertexuse *vu_p;	/**< @brief internal ptr to single vertexuse */
+    char *manifolds;	/**< @brief structure 1-3manifold table */
     long index;			/**< @brief struct # in this model */
+    long maxindex;		/**< @brief # of structs so far */
 };
 
 struct shell_a {
