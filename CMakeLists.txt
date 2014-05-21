@@ -2115,6 +2115,12 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
 # before the main BRL-CAD directories to provide the necessary build
@@ -2127,6 +2133,9 @@ add_subdirectory(src/other)
 # but are not otherwise usable in BRL-CAD (due to licensing, design
 # intent, etc.)
 add_subdirectory(misc/tools)
+
+# Now put back the BRL-CAD flags
+RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
