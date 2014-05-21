@@ -7,11 +7,16 @@ use warnings;
 
 use Parse::RecDescent;
 
+my $ifil = shift @ARGV;
+open my $fp, '<', $ifil
+  or die "$ifil: $!";
+
 local $/;
 my $grammar = <DATA>;
 my $parser = Parse::RecDescent->new($grammar);
 
-my $text = <>;
+my $text = <$fp>;
+#my $text = $s;
 
 my $parse_tree = $parser->translation_unit($text) or die "bad C code";
 

@@ -11,8 +11,9 @@ git clone https://github.com/SiegeLord/Tango-D2.git
 via Debian packages:
 -------------------
 
-dub         # see http://d-apt.sourceforge.net/
-libcurl-dev # openssl version
+dub                      # see http://d-apt.sourceforge.net/
+libcurl-dev              # openssl version
+libparse-recdescent-perl
 
 via local install:
 -----------------
