@@ -44,6 +44,27 @@ the user to specify a background color
 as a decimal number in the range of 0 to 255.</para>
   </listitem>
   </varlistentry>
+      <varlistentry>
+        <term><option>-w</option> <replaceable>file_width</replaceable></term>
+        <listitem>
+          <para>specifies the desired width of the saved image, in
+          pixels.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-n</option> <replaceable>file_height</replaceable></term>
+        <listitem>
+          <para>specifies the desired height of the saved image, in
+          scanlines.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-s</option> <replaceable>squarefilesize</replaceable></term>
+        <listitem>
+          <para>sets the saved image width and height to the indicated
+          value.</para>
+        </listitem>
+      </varlistentry>
   <varlistentry>
   <term><emphasis remap='I'>file.bw</emphasis></term>
   <listitem>
