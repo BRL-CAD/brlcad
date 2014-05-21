@@ -1198,34 +1198,27 @@ ON_Intersect(const ON_Curve *curveA,
 	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
 		if (lineA.MinimumDistanceTo(lineB) < isect_tol) {
 		    // report a ccx_overlap event
-		    double startB_on_A, endB_on_A, startA_on_B, endA_on_B;
-		    lineA.ClosestPointTo(lineB.from, &startB_on_A);
-		    lineA.ClosestPointTo(lineB.to, &endB_on_A);
-		    lineB.ClosestPointTo(lineA.from, &startA_on_B);
-		    lineB.ClosestPointTo(lineA.to, &endA_on_B);
-
-		    // make sure parameters are valid
-		    double min_tA = -t1_tol, max_tA = 1.0 + t1_tol;
-		    double min_tB = -t2_tol, max_tB = 1.0 + t2_tol;
-		    if (startB_on_A < min_tA || startB_on_A > max_tA ||
-			startA_on_B < min_tB || startA_on_B > max_tB ||
-			endB_on_A < min_tA || endB_on_A > max_tA ||
-			endA_on_B < min_tB || endA_on_B > max_tB) {
-			continue;
-		    }
-
 		    double t_a1, t_a2, t_b1, t_b2;
-		    if (startB_on_A > 0.0) {
-			t_a1 = startB_on_A, t_b1 = 0.0;
-		    } else {
-			t_a1 = 0.0, t_b1 = startA_on_B;
-		    }
-		    if (endB_on_A < 1.0) {
-			t_a2 = endB_on_A, t_b2 = 1.0;
-		    } else {
-			t_a2 = 1.0, t_b2 = endA_on_B;
-		    }
+		    lineA.ClosestPointTo(lineB.from, &t_a1);
+		    lineA.ClosestPointTo(lineB.to, &t_a2);
+		    lineB.ClosestPointTo(lineA.from, &t_b1);
+		    lineB.ClosestPointTo(lineA.to, &t_b2);
 
+		    // Since ClosestPointTo treats the lines as
+		    // infinite, t values aren't necessarily in [0.0, 1.0].
+		    CLAMP(t_a1, 0.0, 1.0);
+		    CLAMP(t_a2, 0.0, 1.0);
+		    CLAMP(t_b1, 0.0, 1.0);
+		    CLAMP(t_b2, 0.0, 1.0);
+
+		    // t values may not be increasing if lines have
+		    // opposite directions.
+		    if (t_a1 > t_a2) {
+			std::swap(t_a1, t_a2);
+		    }
+		    if (t_b1 > t_b2) {
+			std::swap(t_b1, t_b2);
+		    }
 		    XEventProxy event(ON_X_EVENT::ccx_overlap);
 		    event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
 		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
