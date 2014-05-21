@@ -18,30 +18,51 @@ Readonly our $RDIR => '/usr/brlcad/rel-7.25.0';
 
 # the source dir of the installed BRL-CAD include files
 Readonly our $IDIR => "$RDIR/include/brlcad";
+
 # the source dirs of some other installed BRL-CAD include files
 Readonly our $IDIR2 => "$RDIR/include";
 
 # the location for the D interface files
 Readonly our $DIDIR => './di';
 
+# used during collecting info and writing modules
+our $debug = 0;
 my %seen = ();
+my %dir  = ();
 
 # need absolute paths
+
 # list of BRL-CAD installed headers
-my $tfil  = '/usr/src/tbrowde/brlcad-svn-d-binding/misc/d-bindings/BH.pm';
+#   key: basename
+#   val: path
+my $tfil  = '/usr/src/tbrowde/brlcad-svn-d-binding/misc/d-bindings/BH.pm.new';
+
 # list of BRL-CAD external headers called by the installed headers
-my $tfil2 = '/usr/src/tbrowde/brlcad-svn-d-binding/misc/d-bindings/BHE.pm';
+#   key: basename <X/Y/Z>
+#   val: path
+my $tfil2 = '/usr/src/tbrowde/brlcad-svn-d-binding/misc/d-bindings/BE.pm.new';
+
+=pod
 
 sub get_brlcad_ext_inc_data {
   # get all external include paths and files called by the BRL-CAD headers
   use BH;
+  my $oref  = shift @_;
+  my $debug = shift @_;
+  $BP::debug = (defined $debug && $debug) ? 1 : 0;
 
 } # get_brlcad_ext_inc_data
 
+=cut
+
 sub get_brlcad_inc_data {
   # get all include paths and files under the $RDIR/include directory
+  my $oref  = shift @_;
+  my $debug = shift @_;
+  $BP::debug = (defined $debug && $debug)? 1 : 0;
 
-  open my $fp, '>', $tfil
+  # initialize the module
+  open my $fp, '>', "$tfil"
     or die "$tfil: $!";
   print $fp "package BH;\n\n";
   print $fp "# WARNING:  This file is auto-generated: edits will be lost!!\n\n";
@@ -52,15 +73,26 @@ sub get_brlcad_inc_data {
 
   find(\&_process_file, ("$RDIR/include"));
 
+  # finalize the module
   open $fp, '>>', $tfil
     or die "$tfil: $!";
+
+  # end the hdr hash
   print $fp ");\n\n";
+
+  # write the path hash
+  print $fp "our %hdr = (\n";
+  foreach my $d (keys %dir) {
+  }
+
   print $fp "# mandatory true return for a Perl module\n";
   print $fp "1;\n";
 
   close $fp;
 
-  print "See file '$tfil'\n"; die "debug exit";
+  push @{$oref}, basename($tfil);
+
+  #print "See file '$tfil'\n"; die "debug exit";
 
 } # get_brlcad_inc_data
 
@@ -69,17 +101,24 @@ sub _process_file {
   my $fdir = $File::Find::dir;
   my $fnam = $_;
 
-  if (1 && !-d $fnam) {
-    print "=== in dir '$fdir'\n";
-    print "   path: '$path'\n";
-    print "   file: '$fnam'\n";
+  if (-d $fnam) {
+      $dir{$path} = $fnam;
+  }
+  else {
+    if ($BP::debug) {
+      print "=== in dir '$fdir'\n";
+      print "   path: '$path'\n";
+      print "   file: '$fnam'\n";
+    }
 
     # check for dups
     if (!exists $seen{$fnam}) {
       $seen{$fnam} = $path;
     }
     else {
-      print "WARNING:  File '$fnam' is a dup.\n";
+      print "WARNING:  File: '$fnam'\n";
+      print "                '$path' is a dup\n";
+      print "          Prev: '$seen{$fnam}'\n";
     }
 
     # save data

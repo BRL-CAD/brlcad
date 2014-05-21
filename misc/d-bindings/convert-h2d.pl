@@ -25,16 +25,14 @@ die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::DIDIR' (see D
   if ! -d $BP::DIDIR;
 
 my $p = basename($0);
-my $usage = "Usage: $p mode [options...]";
-
+my $usage  = "Usage:   $p mode [options...]\n\n";
+$usage    .= "  modes:   -r | -cN | -h=X | -b | -e\n";
+$usage    .= "  options: -f -d -C -h";
 if (!@ARGV) {
   print <<"HERE";
 $usage
 
 Use option '-h' for details.
-
-Converts C .h files in this directory to rudimentary .d files
-  for linking C to the D language.
 HERE
 
   exit;
@@ -43,6 +41,8 @@ HERE
 # modes
 my $report  = 0;
 my $convert = 0;
+my $Bgen    = 0;
+my $Egen    = 0;
 
 my $mode_selected = 0;
 sub zero_modes {
@@ -50,6 +50,8 @@ sub zero_modes {
   $ms = 0 if !defined $ms;
   $report  = 0;
   $convert = 0;
+  $Bgen    = 0;
+  $Egen    = 0;
 
   $mode_selected = 1 if $ms;
 } # zero_modes
@@ -104,10 +106,19 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $report = 1;
   }
-  elsif ($arg =~ m{\A -c([1-2]){1}}xms) {
+  elsif ($arg =~ m{\A -c([1]){1}}xms) {
+    # note c2 is not working yet
     # note c3 is not working yet
     zero_modes(1);
     $convert = $1;
+  }
+  elsif ($arg =~ m{\A -b}xms) {
+    zero_modes(1);
+    $Bgen = 1;
+  }
+  elsif ($arg =~ m{\A -e}xms) {
+    zero_modes(1);
+    $Egen = 1;
   }
 
   # error
@@ -152,7 +163,7 @@ if ($report) {
   }
 
   $n = $nd ? $nd : 'zero';
-  print "There are $n D interface files in the '$D::DIDIR' directory:\n";
+  print "There are $n D interface files in the '$BP::DIDIR' directory:\n";
   print "  new:       $stats{di}{new}\n";
   print "  unchanged: $stats{di}{sam}\n";
   print "  changed:   $stats{di}{dif}\n";
@@ -170,6 +181,16 @@ elsif ($convert) {
     if (0 && $D::debug);
 
   D::convert(\@ifils, \@ofils, \%f, \%stats, $convert);
+}
+elsif ($Bgen) {
+  BP::get_brlcad_inc_data(\@ofils, $D::debug);
+}
+elsif ($Egen) {
+  # requires BH.pm
+  my $f = 'BH.pm';
+  die "ERROR:  Need auto-generated file '$f'.\n"
+    if ! -f $f;
+  BP::get_brlcad_ext_inc_data(\@ofils, $D::debug);
 }
 
 print "Normal end.\n";

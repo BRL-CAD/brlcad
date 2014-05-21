@@ -239,8 +239,6 @@ sub convert {
 } # convert
 
 sub collect_files {
-  #BP::get_brlcad_inc_data();
-  BP::get_brlcad_ext_inc_data();
 
   # deletes generated files if $D::clean
   my $href = shift @_; # @h
