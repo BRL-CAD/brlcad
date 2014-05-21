@@ -163,15 +163,15 @@ main(int argc, char **argv)
     int c;
     int diff_return = 0;
     struct diff_state *state;
+    struct db_i *left_dbip = DBI_NULL;
+    struct db_i *right_dbip = DBI_NULL;
     struct db_i *ancestor_dbip = DBI_NULL;
-    struct db_i *new_dbip_1 = DBI_NULL;
-    struct db_i *new_dbip_2 = DBI_NULL;
     const char *diff_prog_name = argv[0];
 
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "aC:cF:mrt:uv:xh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "aC:cF:rt:uv:xh?")) != -1) {
 	switch (c) {
 	    case 'a':
 		state->return_added = 1;
@@ -188,9 +188,6 @@ main(int argc, char **argv)
 	    case 'F':
 		state->have_search_filter = 1;
 		bu_vls_sprintf(state->search_filter, "%s", bu_optarg);
-		break;
-	    case 'm':   /* mged readable */
-		state->output_mode = 109;  /* use ascii decimal value for 'm' to signify mged mode */
 		break;
 	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
 		if (sscanf(bu_optarg, "%f", &(state->diff_tolerance)) != 1) {
@@ -218,11 +215,6 @@ main(int argc, char **argv)
 	}
     }
 
-    if (state->output_mode == 109) {
-	bu_log("Error - mged script generation not yet implemented\n");
-	bu_exit(EXIT_FAILURE, NULL);
-    }
-
     if (state->return_added == -1 && state->return_removed == -1 && state->return_changed == -1 && state->return_unchanged == 0) {
 	state->return_added = 1; state->return_removed = 1; state->return_changed = 1;
     }
@@ -247,51 +239,74 @@ main(int argc, char **argv)
 	bu_exit(1, "Cannot stat file %s\n", argv[2]);
     }
 
-    if ((ancestor_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
-    }
-    RT_CK_DBI(ancestor_dbip);
-    if (db_dirbuild(ancestor_dbip) < 0) {
-	db_close(ancestor_dbip);
-	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+    /* diff case */
+    if (argc == 2) {
+	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	}
+	RT_CK_DBI(left_dbip);
+	if (db_dirbuild(left_dbip) < 0) {
+	    db_close(left_dbip);
+	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	}
+
+	if ((right_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	}
+	RT_CK_DBI(right_dbip);
+	if (db_dirbuild(right_dbip) < 0) {
+	    db_close(ancestor_dbip);
+	    db_close(right_dbip);
+	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	}
+
+	diff_return = do_diff(left_dbip, right_dbip, state);
     }
 
-    if ((new_dbip_1 = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
-	bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
-    }
-    RT_CK_DBI(new_dbip_1);
-    if (db_dirbuild(new_dbip_1) < 0) {
-	db_close(ancestor_dbip);
-	db_close(new_dbip_1);
-	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
-    }
-
-    /* If we have three files, we're doing a 3 way diff and maybe a 3 way merge */
+    /* diff3 case */
     if (argc == 3) {
-	if ((new_dbip_2 = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
+	if (!bu_file_exists(argv[2], NULL)) {
+	    bu_exit(1, "Cannot stat file %s\n", argv[2]);
+	}
+
+	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	}
+	RT_CK_DBI(left_dbip);
+	if (db_dirbuild(left_dbip) < 0) {
+	    db_close(left_dbip);
+	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	}
+
+	if ((ancestor_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	}
+	RT_CK_DBI(ancestor_dbip);
+	if (db_dirbuild(ancestor_dbip) < 0) {
+	    db_close(left_dbip);
+	    db_close(ancestor_dbip);
+	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	}
+
+	if ((right_dbip = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);
 	}
-	RT_CK_DBI(new_dbip_2);
-	if (db_dirbuild(new_dbip_2) < 0) {
+	RT_CK_DBI(right_dbip);
+	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
-	    db_close(new_dbip_2);
+	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
 	}
+
+	diff_return = do_diff3(left_dbip, ancestor_dbip, right_dbip, state);
     }
-
-
-    if (argc == 2)
-	diff_return = do_diff(ancestor_dbip, new_dbip_1, state);
-
-    if (argc == 3)
-	diff_return = do_diff3(ancestor_dbip, new_dbip_1, new_dbip_2, state);
 
     diff_state_free(state);
     BU_PUT(state, struct diff_state);
 
-    db_close(ancestor_dbip);
-    db_close(new_dbip_1);
-    if (argc == 3) db_close(new_dbip_2);
+    db_close(left_dbip);
+    db_close(right_dbip);
+    if (argc == 3) db_close(ancestor_dbip);
     return diff_return;
 }
 

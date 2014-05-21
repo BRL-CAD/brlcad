@@ -36,7 +36,7 @@ diff3_added(const struct db_i *left, const struct db_i *ancestor, const struct d
      * added in left and right, conflict
      */
     struct diff3_results *results;
-    if (!data || !dp_ancestor)
+    if (!data || dp_ancestor)
 	return -1;
 
     results = (struct diff3_results *)data;
