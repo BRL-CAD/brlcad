@@ -52,20 +52,20 @@ db_diff(const struct db_i *dbip_left,
 /**
  * DIFF3 bit flags to select various types of results
  */
-#define DIFF_UNCHANGED				0
-#define DIFF_REMOVED_BOTH_IDENTICALLY 		1
-#define DIFF_REMOVED_LEFT_ONLY 			2
-#define DIFF_REMOVED_RIGHT_ONLY 		4
-#define DIFF_ADDED_BOTH_IDENTICALLY 		8
-#define DIFF_ADDED_LEFT_ONLY 			16
-#define DIFF_ADDED_RIGHT_ONLY 			32
-#define DIFF_CHANGED_BOTH_IDENTICALLY   	64
-#define DIFF_CHANGED_LEFT_ONLY 			128
-#define DIFF_CHANGED_RIGHT_ONLY 		256
-#define DIFF_CHANGED_CLEAN_MERGE 		1024
-#define DIFF_CONFLICT_LEFT_CHANGE_RIGHT_DEL 	2048
-#define DIFF_CONFLICT_RIGHT_CHANGE_LEFT_DEL 	4096
-#define DIFF_CONFLICT_BOTH_CHANGED	 	8192
+#define DIFF3_UNCHANGED				0         /* (ancestor == left) && (ancestor == right)                    */
+#define DIFF3_REMOVED_BOTH_IDENTICALLY 		1         /* (ancestor) && (right == NULL) && (left == NULL)              */
+#define DIFF3_REMOVED_LEFT_ONLY 		2         /* (ancestor == right) && (left == NULL)                        */
+#define DIFF3_REMOVED_RIGHT_ONLY 		4         /* (ancestor == left) && (right == NULL)                        */
+#define DIFF3_ADDED_BOTH_IDENTICALLY 		8         /* (ancestor == NULL) && (left == right)                        */
+#define DIFF3_ADDED_LEFT_ONLY 			16        /* (ancestor == NULL) && (right == NULL) && (left)              */
+#define DIFF3_ADDED_RIGHT_ONLY 			32        /* (ancestor == NULL) && (left == NULL) && (right)              */
+#define DIFF3_CHANGED_BOTH_IDENTICALLY   	64        /* (ancestor != left) && (ancestor != right) && (left == right) */
+#define DIFF3_CHANGED_LEFT_ONLY 		128       /* (ancestor != left) && (ancestor == right)                    */
+#define DIFF3_CHANGED_RIGHT_ONLY 		256       /* (ancestor == left) && (ancestor != right)                    */
+#define DIFF3_CHANGED_CLEAN_MERGE 		1024      /* ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) && (clean_merge)  */
+#define DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL 	2048      /* (ancestor != left) && (right== NULL)                         */
+#define DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL 	4096      /* (ancestor != right) && (left == NULL)                        */
+#define DIFF3_CONFLICT_BOTH_CHANGED	 	8192      /* ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) && (!clean_merge)  */
 
 /**
  * Compare three database instances.
@@ -74,40 +74,8 @@ db_diff(const struct db_i *dbip_left,
  * right databases relative to the ancestor database, and provides
  * functional hooks for the various cases.
  *
- * It is necessary to encode more information about difference reports in
- * diff3 return codes.  Here is the template:
- *
- *
- * (ancestor == NULL) && (right == NULL) && (left == NULL)      return -1; (error)
- * (ancestor == left) && (ancestor == right)                    return 0;  (unchanged)
- * (ancestor) && (right == NULL) && (left == NULL)              return 1;  (removed both)
- * (ancestor == right) && (left == NULL)                        return 2;  (removed left)
- * (ancestor == left) && (right == NULL)                        return 3;  (removed right)
- * (ancestor == NULL) && (left == right)                        return 4;  (added, both identically)
- * (ancestor == NULL) && (right == NULL) && (left)              return 5;  (added, left only)
- * (ancestor == NULL) && (left == NULL) && (right)              return 6;  (added, right only)
- * (ancestor != left) && (ancestor != right) && (left == right) return 7;  (changed, both identically)
- * (ancestor != left) && (ancestor == right)                    return 8;  (changed, left only)
- * (ancestor == left) && (ancestor != right)                    return 9;  (changed, right only)
- * ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) {
- *    if (clean_merge)                                          return 10; (both added or changed, compatible differences)
- *    if (!clean_merge)                                         return 13; (both added or changed, incompatible differences)
- * }
- * (ancestor != right) && (left == NULL)                        return 11; (conflict - right change, left del)
- * (ancestor != left) && (right == NULL)                        return 12; (conflict - left change, right del)
- *
- * The rational for the numerical returns is roughly "the higher the number, the worse
- * the problem" - for a db_i, the worst problem encountered by any of its
- * object pairs is the status of the db_i diff as a whole.
- *
- * So the return ranges may be interpreted as follows:
- *
- * 0       unchanged
- * 1 - 3   indicates only removals
- * 4 - 6   indicates additions, and possibly removals
- * 7 - 9   indicates changes, and possibly additions and removals
- * 10      indicates changes requiring merging, and possibly the previous categories
- * 11 - 13 indicate one or more conflicts, and possibly all previous categories.
+ * Returns an int with bit flags set according to the above
+ * diff categories.
  *
  */
 RT_EXPORT extern int
@@ -194,38 +162,8 @@ db_avs_diff(struct bu_attribute_value_set *added,
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * This function, like db_diff3, uses the following convention:
- *
- * (ancestor == NULL) && (right == NULL) && (left == NULL)      return -1; (error)
- * (ancestor == left) && (ancestor == right)                    return 0;  (unchanged)
- * (ancestor) && (right == NULL) && (left == NULL)              return 1;  (removed both)
- * (ancestor == right) && (left == NULL)                        return 2;  (removed left)
- * (ancestor == left) && (right == NULL)                        return 3;  (removed right)
- * (ancestor == NULL) && (left == right)                        return 4;  (added, both identically)
- * (ancestor == NULL) && (right == NULL) && (left)              return 5;  (added, left only)
- * (ancestor == NULL) && (left == NULL) && (right)              return 6;  (added, right only)
- * (ancestor != left) && (ancestor != right) && (left == right) return 7;  (changed, both identically)
- * (ancestor != left) && (ancestor == right)                    return 8;  (changed, left only)
- * (ancestor == left) && (ancestor != right)                    return 9;  (changed, right only)
- * ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) {
- *    if (clean_merge)                                          return 10; (both added or changed, compatible differences)
- *    if (!clean_merge)                                         return 13; (both added or changed, incompatible differences)
- * }
- * (ancestor != right) && (left == NULL)                        return 11; (conflict - right change, left del)
- * (ancestor != left) && (right == NULL)                        return 12; (conflict - left change, right del)
- *
- * The rational for the numerical returns is roughly "the higher the number, the worse
- * the problem" - for internals, the worst problem encountered by any of the
- * object's internal comparisons is the status of the object diff as a whole.
- *
- * So the return ranges may be interpreted as follows:
- *
- * 0       unchanged
- * 1 - 3   indicates only removals
- * 4 - 6   indicates additions, and possibly removals
- * 7 - 9   indicates changes, and possibly additions and removals
- * 10      indicates changes requiring merging, and possibly the previous categories
- * 11 - 13 indicate one or more conflicts, and possibly all previous categories.
+ * Returns an int with bit flags set according to the above
+ * diff3 categories.
  *
  * The various attribute/value sets contain the categorized
  * parameters.  The "merged" set contains the combined attributes
