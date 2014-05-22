@@ -50,15 +50,65 @@ db_diff(const struct db_i *dbip_left,
 	void *client_data);
 
 /**
+ * DIFF3 bit flags to select various types of results
+ */
+#define DIFF_UNCHANGED				0
+#define DIFF_REMOVED_BOTH_IDENTICALLY 		1
+#define DIFF_REMOVED_LEFT_ONLY 			2
+#define DIFF_REMOVED_RIGHT_ONLY 		4
+#define DIFF_ADDED_BOTH_IDENTICALLY 		8
+#define DIFF_ADDED_LEFT_ONLY 			16
+#define DIFF_ADDED_RIGHT_ONLY 			32
+#define DIFF_CHANGED_BOTH_IDENTICALLY   	64
+#define DIFF_CHANGED_LEFT_ONLY 			128
+#define DIFF_CHANGED_RIGHT_ONLY 		256
+#define DIFF_CHANGED_CLEAN_MERGE 		1024
+#define DIFF_CONFLICT_LEFT_CHANGE_RIGHT_DEL 	2048
+#define DIFF_CONFLICT_RIGHT_CHANGE_LEFT_DEL 	4096
+#define DIFF_CONFLICT_BOTH_CHANGED	 	8192
+
+/**
  * Compare three database instances.
  *
  * This does a "3-way" diff to identify changes in the left and
  * right databases relative to the ancestor database, and provides
  * functional hooks for the various cases.
  *
- * The function returns 0 if there are no differences, or returns the
- * number of differences encountered.  Negative values indicate a
- * traversal failure.
+ * It is necessary to encode more information about difference reports in
+ * diff3 return codes.  Here is the template:
+ *
+ *
+ * (ancestor == NULL) && (right == NULL) && (left == NULL)      return -1; (error)
+ * (ancestor == left) && (ancestor == right)                    return 0;  (unchanged)
+ * (ancestor) && (right == NULL) && (left == NULL)              return 1;  (removed both)
+ * (ancestor == right) && (left == NULL)                        return 2;  (removed left)
+ * (ancestor == left) && (right == NULL)                        return 3;  (removed right)
+ * (ancestor == NULL) && (left == right)                        return 4;  (added, both identically)
+ * (ancestor == NULL) && (right == NULL) && (left)              return 5;  (added, left only)
+ * (ancestor == NULL) && (left == NULL) && (right)              return 6;  (added, right only)
+ * (ancestor != left) && (ancestor != right) && (left == right) return 7;  (changed, both identically)
+ * (ancestor != left) && (ancestor == right)                    return 8;  (changed, left only)
+ * (ancestor == left) && (ancestor != right)                    return 9;  (changed, right only)
+ * ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) {
+ *    if (clean_merge)                                          return 10; (both added or changed, compatible differences)
+ *    if (!clean_merge)                                         return 13; (both added or changed, incompatible differences)
+ * }
+ * (ancestor != right) && (left == NULL)                        return 11; (conflict - right change, left del)
+ * (ancestor != left) && (right == NULL)                        return 12; (conflict - left change, right del)
+ *
+ * The rational for the numerical returns is roughly "the higher the number, the worse
+ * the problem" - for a db_i, the worst problem encountered by any of its
+ * object pairs is the status of the db_i diff as a whole.
+ *
+ * So the return ranges may be interpreted as follows:
+ *
+ * 0       unchanged
+ * 1 - 3   indicates only removals
+ * 4 - 6   indicates additions, and possibly removals
+ * 7 - 9   indicates changes, and possibly additions and removals
+ * 10      indicates changes requiring merging, and possibly the previous categories
+ * 11 - 13 indicate one or more conflicts, and possibly all previous categories.
+ *
  */
 RT_EXPORT extern int
 db_diff3(const struct db_i *dbip_left,
@@ -144,15 +194,38 @@ db_avs_diff(struct bu_attribute_value_set *added,
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * This function returns:
+ * This function, like db_diff3, uses the following convention:
  *
- * 0 if there are no differences
- * 1 if there are differences but no conflicts
- * 2 if there are conflicts
- * 3 if there are differences but they cannot be studied (tcl params not available)
- * 4 if there are conflicts but they cannot be studied (tcl params not available)
+ * (ancestor == NULL) && (right == NULL) && (left == NULL)      return -1; (error)
+ * (ancestor == left) && (ancestor == right)                    return 0;  (unchanged)
+ * (ancestor) && (right == NULL) && (left == NULL)              return 1;  (removed both)
+ * (ancestor == right) && (left == NULL)                        return 2;  (removed left)
+ * (ancestor == left) && (right == NULL)                        return 3;  (removed right)
+ * (ancestor == NULL) && (left == right)                        return 4;  (added, both identically)
+ * (ancestor == NULL) && (right == NULL) && (left)              return 5;  (added, left only)
+ * (ancestor == NULL) && (left == NULL) && (right)              return 6;  (added, right only)
+ * (ancestor != left) && (ancestor != right) && (left == right) return 7;  (changed, both identically)
+ * (ancestor != left) && (ancestor == right)                    return 8;  (changed, left only)
+ * (ancestor == left) && (ancestor != right)                    return 9;  (changed, right only)
+ * ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) {
+ *    if (clean_merge)                                          return 10; (both added or changed, compatible differences)
+ *    if (!clean_merge)                                         return 13; (both added or changed, incompatible differences)
+ * }
+ * (ancestor != right) && (left == NULL)                        return 11; (conflict - right change, left del)
+ * (ancestor != left) && (right == NULL)                        return 12; (conflict - left change, right del)
  *
- * Negative values indicate an internal error.
+ * The rational for the numerical returns is roughly "the higher the number, the worse
+ * the problem" - for internals, the worst problem encountered by any of the
+ * object's internal comparisons is the status of the object diff as a whole.
+ *
+ * So the return ranges may be interpreted as follows:
+ *
+ * 0       unchanged
+ * 1 - 3   indicates only removals
+ * 4 - 6   indicates additions, and possibly removals
+ * 7 - 9   indicates changes, and possibly additions and removals
+ * 10      indicates changes requiring merging, and possibly the previous categories
+ * 11 - 13 indicate one or more conflicts, and possibly all previous categories.
  *
  * The various attribute/value sets contain the categorized
  * parameters.  The "merged" set contains the combined attributes
@@ -166,6 +239,8 @@ db_avs_diff(struct bu_attribute_value_set *added,
  * REMOVED.
  *
  */
+
+
 RT_EXPORT extern int
 db_compare3(struct bu_attribute_value_set *unchanged,
 	struct bu_attribute_value_set *removed_left_only,
