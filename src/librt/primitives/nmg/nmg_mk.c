@@ -708,14 +708,14 @@ nmg_meonvu(struct vertexuse *vu)
 {
     struct edge *e;
     struct edgeuse *eu1, *eu2;
-    struct model *s;
+    struct shell *s;
 
     NMG_CK_VERTEXUSE(vu);
 
-    s = nmg_find_model(vu->up.magic_p);
-    GET_EDGE(e, m);
-    GET_EDGEUSE(eu1, m);
-    GET_EDGEUSE(eu2, m);
+    s = nmg_find_shell(vu->up.magic_p);
+    GET_EDGE(e, s);
+    GET_EDGEUSE(eu1, s);
+    GET_EDGEUSE(eu2, s);
 
     BU_LIST_INIT(&eu1->l2);
     BU_LIST_INIT(&eu2->l2);
@@ -751,7 +751,7 @@ nmg_meonvu(struct vertexuse *vu)
 	    bu_bomb("nmg_meonvu() vertexuse parent shell disowns vertexuse!\n");
 	s->vu_p = (struct vertexuse *)NULL;	/* remove from shell */
 
-	eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic, m);
+	eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic, s);
 	BU_LIST_APPEND(&s->eu_hd, &eu2->l);
 	BU_LIST_APPEND(&s->eu_hd, &eu1->l);
     } else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
