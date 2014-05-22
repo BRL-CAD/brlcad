@@ -370,6 +370,21 @@ parallel_interface_arg(struct thread_data *user_thread_data)
     }
 }
 
+#if defined(_WIN32)
+/**
+ * A separate stub to call parallel_interface_arg that avoids a 
+ *  potential crash* on 64-bit windows and calls ExitThread to 
+ *  cleanly stop the thread.
+ *  *See ThreadProc MSDN documentation.
+ */
+HIDDEN DWORD
+parallel_interface_arg_stub(struct thread_data *user_thread_data)
+{
+    parallel_interface_arg(user_thread_data);
+    ExitThread(0);
+    return 0; /* Extraneous */
+}
+#endif
 
 #endif /* PARALLEL */
 
@@ -410,9 +425,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     int i;
 #  endif /* SUNOS */
 #  ifdef WIN32
-    int nthreadc = 0;
+    int nthreadc = ncpu;
     HANDLE hThreadArray[MAX_PSW] = {0};
     int i;
+    DWORD returnCode;
 #  endif /* WIN32 */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
@@ -622,32 +638,34 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  ifdef WIN32
     /* Create the Win32 threads */
 
-    for (i = 0; i < ncpu; i++) {
-	DWORD pdwThreadId;
-
+    for (i = 0; i < nthreadc; i++) {
 	hThreadArray[i] = CreateThread(
 	    NULL,
 	    0,
-	    (LPTHREAD_START_ROUTINE)parallel_interface_arg,
+	    (LPTHREAD_START_ROUTINE)parallel_interface_arg_stub,
 	    &user_thread_data_bu[i],
 	    0,
-	    &pdwThreadId);
+	    NULL);
 
+	/* Ensure that all successfully created threads are in sequential order.*/
 	if (hThreadArray[i] == NULL) {
-	    bu_log("bu_parallel(): Error in CreateThread");
+	    bu_log("bu_parallel(): Error in CreateThread, Win32 error code %d.\n", GetLastError());
+	    --nthreadc;
 	}
-
-	nthreadc++;
     }
     /* Wait for other threads in the array */
+    
+   
+    returnCode = WaitForMultipleObjects(nthreadc, hThreadArray, TRUE, INFINITE);
+    if (returnCode == WAIT_FAILED) {
+	bu_log("bu_parallel(): Error in WaitForMultipleObjects, Win32 error code %d.\n", GetLastError());
+    }
 
-    WaitForMultipleObjects(nthreadc, hThreadArray, TRUE, INFINITE);
     for (x = 0; x < nthreadc; x++) {
 	int ret;
-	if ((ret = CloseHandle(hThreadArray[x]) != 0)) {
-	    /* The thread not closing properly */
-	    bu_log("bu_parallel(): Error closing threads");
-	    x--;
+	if ((ret = CloseHandle(hThreadArray[x]) == 0)) {
+	    /* Thread didn't close properly if return value is zero; don't retry and potentially loop forever.  */
+	    bu_log("bu_parallel(): Error closing thread %d of %d, Win32 error code %d.\n", x, nthreadc, GetLastError());
 	}
     }
 #  endif /* end if Win32 threads */

@@ -1210,10 +1210,6 @@ endif(BRLCAD_ENABLE_DTRACE)
 
 # Take advantage of parallel processors if available - highly recommended
 option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-if(WIN32 AND BRLCAD_ENABLE_SMP)
-  message("SMP Support is not ready on Windows - disabling")
-  set(BRLCAD_ENABLE_SMP OFF)
-endif(WIN32 AND BRLCAD_ENABLE_SMP)
 mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
