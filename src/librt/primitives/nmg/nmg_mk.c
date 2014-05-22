@@ -2666,7 +2666,7 @@ nmg_unglueedge(struct edgeuse *eu)
 {
     struct edge *old_e;
     struct edge *new_e;
-    struct model *m;
+    struct shelll *s;
 
     NMG_CK_EDGEUSE(eu);
     old_e = eu->e_p;
@@ -2680,7 +2680,7 @@ nmg_unglueedge(struct edgeuse *eu)
 	return;
     }
 
-    m = nmg_find_model(&eu->l.magic);
+    s = nmg_find_shell(&eu->l.magic);
     GET_EDGE(new_e, m);		/* create new edge */
 
     new_e->magic = NMG_EDGE_MAGIC;
