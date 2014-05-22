@@ -24,6 +24,14 @@
  */
 
 /**
+ * DIFF bit flags to select various types of results
+ */
+#define DIFF_UNCHANGED	0      /* (left == right) */
+#define DIFF_REMOVED	1      /* (right == NULL) */
+#define DIFF_ADDED	2      /* (left == NULL)  */
+#define DIFF_CHANGED	4      /* (left != right) */
+
+/**
  * Compare two database instances.
  *
  * All objects in dbip_left are compared against the objects in
@@ -36,9 +44,10 @@
  * but is unchanged, unch_func() is called.  NULL may be
  * passed to skip any callback.
  *
- * The function returns 0 if there are no differences, or returns the
- * number of differences encountered.  Negative values indicate a
- * traversal failure.
+ * Returns an int with bit flags set according to the above
+ * four diff categories.
+ *
+ * Negative returns indicate an error.
  */
 RT_EXPORT extern int
 db_diff(const struct db_i *dbip_left,
@@ -75,8 +84,9 @@ db_diff(const struct db_i *dbip_left,
  * functional hooks for the various cases.
  *
  * Returns an int with bit flags set according to the above
- * diff categories.
+ * diff3 categories.
  *
+ * Negative returns indicate an error.
  */
 RT_EXPORT extern int
 db_diff3(const struct db_i *dbip_left,
@@ -118,8 +128,10 @@ typedef enum {
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * This function returns 0 if there are no differences and non-0 if
- * there are differences.  Negative values indicate an internal error.
+ * Returns an int with bit flags set according to the above
+ * four diff categories.
+ *
+ * Negative returns indicate an error.
  */
 RT_EXPORT extern int
 db_compare(struct bu_attribute_value_set *added,
@@ -164,6 +176,8 @@ db_avs_diff(struct bu_attribute_value_set *added,
  *
  * Returns an int with bit flags set according to the above
  * diff3 categories.
+ *
+ * Negative returns indicate an error.
  *
  * The various attribute/value sets contain the categorized
  * parameters.  The "merged" set contains the combined attributes
