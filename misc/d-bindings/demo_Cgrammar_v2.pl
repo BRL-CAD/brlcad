@@ -7,6 +7,11 @@ use warnings;
 
 use Parse::RecDescent;
 
+if (!@ARGV) {
+  print "Usage: $0 <C file for parsing>\n";
+  exit;
+}
+
 my $ifil = shift @ARGV;
 open my $fp, '<', $ifil
   or die "$ifil: $!";
