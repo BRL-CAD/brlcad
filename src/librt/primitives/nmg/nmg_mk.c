@@ -1507,7 +1507,7 @@ void
 nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 {
     struct vertex_g *vg;
-    struct model *m;
+    struct shell *s;
 
     NMG_CK_VERTEX(v);
 
@@ -1515,9 +1515,9 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
     if (vg) {
 	NMG_CK_VERTEX_G(v->vg_p);
     } else {
-	m = nmg_find_model(
+	s = nmg_find_shell(
 	    &BU_LIST_NEXT(vertexuse, &v->vu_hd)->l.magic);
-	GET_VERTEX_G(vg, m);
+	GET_VERTEX_G(vg, s);
 
 	vg->magic = NMG_VERTEX_G_MAGIC;
 	v->vg_p = vg;
@@ -1557,14 +1557,14 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 void
 nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
 {
-    struct model *m;
+    struct shell *s;
 
     NMG_CK_VERTEXUSE(vu);
 
     if (!vu->a.magic_p) {
 	struct vertexuse_a_plane *vua;
-	m = nmg_find_model(&vu->l.magic);
-	GET_VERTEXUSE_A_PLANE(vua, m);
+	s = nmg_find_shell(&vu->l.magic);
+	GET_VERTEXUSE_A_PLANE(vua, s);
 	vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
 	vu->a.plane_p = vua;
     } else if (*vu->a.magic_p == NMG_VERTEXUSE_A_CNURB_MAGIC) {
@@ -1596,7 +1596,7 @@ void
 nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 {
     struct vertexuse_a_cnurb *vua;
-    struct model *m;
+    struct shell *s;
 
     NMG_CK_VERTEXUSE(vu);
 
@@ -1605,7 +1605,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
     if (vu->up.eu_p->g.magic_p) NMG_CK_EDGE_G_CNURB(vu->up.eu_p->g.cnurb_p);
 
     m = nmg_find_model(&vu->l.magic);
-    GET_VERTEXUSE_A_CNURB(vua, m);
+    GET_VERTEXUSE_A_CNURB(vua, s);
     VMOVE(vua->param, uvw);
     vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
 
@@ -1627,7 +1627,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 void
 nmg_edge_g(struct edgeuse *eu)
 {
-    struct model *m;
+    struct shell *s;
     struct edge_g_lseg *eg_p = (struct edge_g_lseg *)NULL;
     struct edge *e;
     struct edgeuse *eu2;
@@ -1668,8 +1668,8 @@ nmg_edge_g(struct edgeuse *eu)
 
     if (!eg_p) {
 	/* Make new edge_g structure */
-	m = nmg_find_model(&eu->l.magic);
-	GET_EDGE_G_LSEG(eg_p, m);
+	s = nmg_find_shell(&eu->l.magic);
+	GET_EDGE_G_LSEG(eg_p, s);
 	BU_LIST_INIT(&eg_p->eu_hd2);
 	eg_p->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 
@@ -1737,7 +1737,7 @@ nmg_edge_g(struct edgeuse *eu)
 void
 nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_pts, int pt_type, fastf_t *points)
 {
-    struct model *m;
+    struct shell *s;
     struct edge_g_cnurb *eg;
     struct edge *e;
     struct faceuse *fu;
@@ -1762,8 +1762,8 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
     NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
     /* Make new edge_g structure */
-    m = nmg_find_model(&eu->l.magic);
-    GET_EDGE_G_CNURB(eg, m);
+    s = nmg_find_shell(&eu->l.magic);
+    GET_EDGE_G_CNURB(eg, s);
     BU_LIST_INIT(&eg->eu_hd2);
 
     eg->order = order;
@@ -1857,7 +1857,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
 void
 nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
 {
-    struct model *m;
+    struct shell *s;
     struct edge_g_cnurb *eg;
     struct edge *e;
     struct faceuse *fu;
@@ -1885,8 +1885,8 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
     NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
     /* Make new edge_g structure */
-    m = nmg_find_model(&eu->l.magic);
-    GET_EDGE_G_CNURB(eg, m);
+    s = nmg_find_shell(&eu->l.magic);
+    GET_EDGE_G_CNURB(eg, s);
     BU_LIST_INIT(&eg->eu_hd2);
 
     eg->order = 0;		/* SPECIAL FLAG */
@@ -1994,7 +1994,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     struct vertex_g *vg;
     struct loop_g *lg;
     struct loopuse *lu;
-    struct model *m;
+    struct shell *s;
     uint32_t magic1;
     fastf_t thickening;
 
@@ -2007,7 +2007,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     if (lg) {
 	NMG_CK_LOOP_G(lg);
     } else {
-	m = nmg_find_model(lu->up.magic_p);
+	s = nmg_find_shell(lu->up.magic_p);
 	GET_LOOP_G(l->lg_p, m);
 	lg = l->lg_p;
 	lg->magic = NMG_LOOP_G_MAGIC;
@@ -2076,7 +2076,7 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
     int i;
     struct face_g_plane *fg;
     struct face *f;
-    struct model *m;
+    struct shell *s;
 
     NMG_CK_FACEUSE(fu);
     f = fu->f_p;
@@ -2090,8 +2090,8 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
 	/* Face already has face_g_plane associated with it */
 	NMG_CK_FACE_G_PLANE(fg);
     } else {
-	m = nmg_find_model(&fu->l.magic);
-	GET_FACE_G_PLANE(f->g.plane_p, m);
+	m = nmg_find_shell(&fu->l.magic);
+	GET_FACE_G_PLANE(f->g.plane_p, s);
 	f->flip = 0;
 	fg = f->g.plane_p;
 	fg->magic = NMG_FACE_G_PLANE_MAGIC;
@@ -2122,7 +2122,7 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
     struct face *f;
     struct face *f_tmp;
     struct face_g_plane *fg;
-    struct model *m;
+    struct shell *s;
     int use_count=0;
 
     NMG_CK_FACEUSE(fu);
@@ -2155,8 +2155,8 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
     BU_LIST_DEQUEUE(&f->l);
 
     /* get a new geometry structure */
-    m = nmg_find_model(&fu->l.magic);
-    GET_FACE_G_PLANE(f->g.plane_p, m);
+    s = nmg_find_shell(&fu->l.magic);
+    GET_FACE_G_PLANE(f->g.plane_p, s);
     f->flip = 0;
     fg = f->g.plane_p;
     fg->magic = NMG_FACE_G_PLANE_MAGIC;
@@ -2189,7 +2189,7 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
 {
     struct face_g_snurb *fg;
     struct face *f;
-    struct model *m;
+    struct shell *s;
 
     NMG_CK_FACEUSE(fu);
     f = fu->f_p;
@@ -2204,8 +2204,8 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
 	bu_bomb("nmg_face_g_snurb() face already has geometry\n");
     }
 
-    m = nmg_find_model(&fu->l.magic);
-    GET_FACE_G_SNURB(f->g.snurb_p, m);
+    s = nmg_find_shell(&fu->l.magic);
+    GET_FACE_G_SNURB(f->g.snurb_p, s);
     fg = f->g.snurb_p;
 
     fg->order[0] = u_order;
@@ -2317,7 +2317,6 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
-    struct model *m;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -2325,8 +2324,7 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
     if (s->sa_p) {
 	NMG_CK_SHELL_A(s->sa_p);
     } else {
-	m = nmg_find_model(&s->l.magic);
-	GET_SHELL_A(s->sa_p, m);
+	GET_SHELL_A(s->sa_p, s);
 	s->sa_p->magic = NMG_SHELL_A_MAGIC;
     }
     sa = s->sa_p;
@@ -2384,44 +2382,6 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_shell_a(s=%p, tol=%p)\n", (void *)s, (void *)tol);
-    }
-}
-
-
-/**
- * build attributes/extents for all shells in a region
- *
- */
-void
-nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
-{
-    register struct shell *s;
-    struct nmgregion_a *ra;
-
-    NMG_CK_REGION(r);
-    BN_CK_TOL(tol);
-    if (r->ra_p) {
-	ra = r->ra_p;
-	NMG_CK_REGION_A(ra);
-    } else {
-	GET_REGION_A(ra, r->m_p);
-	r->ra_p = ra;
-    }
-
-    ra->magic = NMG_REGION_A_MAGIC;
-
-    VSETALL(ra->max_pt, -MAX_FASTF);
-    VSETALL(ra->min_pt, MAX_FASTF);
-
-    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	nmg_shell_a(s, tol);
-	NMG_CK_SHELL_A(s->sa_p);
-	VMIN(ra->min_pt, s->sa_p->min_pt);
-	VMAX(ra->max_pt, s->sa_p->max_pt);
-    }
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_region_a(r=%p, tol=%p)\n", (void *)r, (void *)tol);
     }
 }
 
