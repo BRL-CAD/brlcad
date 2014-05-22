@@ -53,10 +53,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
     DEPENDS rt
     )
-  add_custom_target(regress-repository
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt
-    )
+#  add_custom_target(regress-repository
+#    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
+#    DEPENDS rt
+#    )
   add_custom_target(regress-red
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
@@ -106,10 +106,11 @@ if(SH_EXEC)
     DEPENDS regress-mged regress-moss regress-lights
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
-    regress-repository regress-red regress-nirt
+    regress-red regress-nirt
     regress-comgeom regress-gnff regress-gdot
     regress-dsp regress-asc2dsp
     )
+# regress-repository
 
 endif(SH_EXEC)
 
