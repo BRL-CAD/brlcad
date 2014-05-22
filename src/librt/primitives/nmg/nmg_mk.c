@@ -387,7 +387,6 @@ nmg_mf(struct loopuse *lu1)
     struct faceuse *fu1, *fu2;
     struct loopuse *lu2;
     struct shell *s;
-    struct model *m;
 
     NMG_CK_LOOPUSE(lu1);
     if (*lu1->up.magic_p != NMG_SHELL_MAGIC) {
@@ -402,10 +401,9 @@ nmg_mf(struct loopuse *lu1)
     s = lu1->up.s_p;
     NMG_CK_SHELL(s);
 
-    m = nmg_find_model(&s->l.magic);
-    GET_FACE(f, m);
-    GET_FACEUSE(fu1, m);
-    GET_FACEUSE(fu2, m);
+    GET_FACE(f, s);
+    GET_FACEUSE(fu1, s);
+    GET_FACEUSE(fu2, s);
 
     f->fu_p = fu1;
     f->g.plane_p = (struct face_g_plane *)NULL;
@@ -420,8 +418,7 @@ nmg_mf(struct loopuse *lu1)
     fu2->fumate_p = fu1;
     fu1->orientation = fu2->orientation = OT_UNSPEC;
     fu1->f_p = fu2->f_p = f;
-    fu1->l.magic =
-	fu2->l.magic = NMG_FACEUSE_MAGIC; /* Faceuse structs are GOOD */
+    fu1->l.magic = fu2->l.magic = NMG_FACEUSE_MAGIC; /* Faceuse structs are GOOD */
 
     /* move the loopuses from the shell to the faceuses */
     BU_LIST_DEQUEUE(&lu1->l);
@@ -488,7 +485,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     struct loopuse *lu1, *lu2;
     struct vertexuse *vu1 = NULL;
     struct vertexuse *vu2;
-    struct model *m;
+
     /* XXX - why the new union? ctj */
     union {
 	struct shell *s;
@@ -502,10 +499,9 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	NMG_CK_VERTEX(v);
     }
 
-    m = nmg_find_model(magic);
-    GET_LOOP(l, m);
-    GET_LOOPUSE(lu1, m);
-    GET_LOOPUSE(lu2, m);
+    GET_LOOP(l, s);
+    GET_LOOPUSE(lu1, s);
+    GET_LOOPUSE(lu2, s);
 
     l->lg_p = (struct loop_g *)NULL;
     l->lu_p = lu1;
@@ -542,14 +538,14 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	    vu1->up.lu_p = lu1;
 	    if (v) nmg_movevu(vu1, v);
 	} else {
-	    if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
-	    else vu1 = nmg_mvvu(&lu1->l.magic, m);
+	    if (v) vu1 = nmg_mvu(v, &lu1->l.magic, s);
+	    else vu1 = nmg_mvvu(&lu1->l.magic, s);
 	}
 	NMG_CK_VERTEXUSE(vu1);
 	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
-	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
+	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, s);
 	NMG_CK_VERTEXUSE(vu2);
 	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
@@ -557,19 +553,18 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	/* First, finish setting up the loopuses */
 	lu1->up.fu_p = p.fu;
 	lu2->up.fu_p = p.fu->fumate_p;
-	lu1->l.magic = lu2->l.magic =
-	    NMG_LOOPUSE_MAGIC;	/* Loopuse structs are GOOD */
+	lu1->l.magic = lu2->l.magic = NMG_LOOPUSE_MAGIC;	/* Loopuse structs are GOOD */
 
 	BU_LIST_INSERT(&p.fu->fumate_p->lu_hd, &lu2->l);
 	BU_LIST_INSERT(&p.fu->lu_hd, &lu1->l);
 
 	/* Second, build the vertices */
-	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
-	else vu1 = nmg_mvvu(&lu1->l.magic, m);
+	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, s);
+	else vu1 = nmg_mvvu(&lu1->l.magic, s);
 	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
-	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
+	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, s);
 	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else {
@@ -615,16 +610,15 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     struct edgeuse *eu1;
     struct edgeuse *eu2;
     struct vertexuse *vu;
-    struct model *m;
 
     if (v1) NMG_CK_VERTEX(v1);
     if (v2) NMG_CK_VERTEX(v2);
     NMG_CK_SHELL(s);
 
     m = nmg_find_model(&s->l.magic);
-    GET_EDGE(e, m);
-    GET_EDGEUSE(eu1, m);
-    GET_EDGEUSE(eu2, m);
+    GET_EDGE(e, s);
+    GET_EDGEUSE(eu1, s);
+    GET_EDGEUSE(eu2, s);
 
     BU_LIST_INIT(&eu1->l2);
     BU_LIST_INIT(&eu2->l2);
@@ -642,8 +636,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     /* XXX - why not OT_UNSPEC? ctj */
     eu1->vu_p = eu2->vu_p = (struct vertexuse *) NULL;
 
-    eu1->l.magic = eu2->l.magic =
-	NMG_EDGEUSE_MAGIC;	/* Edgeuse structs are GOOD */
+    eu1->l.magic = eu2->l.magic = NMG_EDGEUSE_MAGIC;	/* Edgeuse structs are GOOD */
     /* Not really, edgeuses require vertexuses, but we've got to */
     /* call nmg_mvvu() or nmg_mvu() before we can set vu_p so we */
     /* NULL out vu_p now. */
@@ -652,7 +645,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     eu1->up.s_p = eu2->up.s_p = s;
 
     if (v1) {
-	eu1->vu_p = nmg_mvu(v1, &eu1->l.magic, m);
+	eu1->vu_p = nmg_mvu(v1, &eu1->l.magic, s);
     } else if (s->vu_p) {
 	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
@@ -661,11 +654,11 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	eu1->vu_p = vu;
 	vu->up.eu_p = eu1;
     } else {
-	eu1->vu_p = nmg_mvvu(&eu1->l.magic, m);
+	eu1->vu_p = nmg_mvvu(&eu1->l.magic, s);
     }
 
     if (v2) {
-	eu2->vu_p = nmg_mvu(v2, &eu2->l.magic, m);
+	eu2->vu_p = nmg_mvu(v2, &eu2->l.magic, s);
     } else if (s->vu_p) {
 	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
@@ -674,7 +667,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	eu2->vu_p = vu;
 	vu->up.eu_p = eu2;
     } else {
-	eu2->vu_p = nmg_mvvu(&eu2->l.magic, m);
+	eu2->vu_p = nmg_mvvu(&eu2->l.magic, s);
     }
 
     /* This if statement dies when no vertex stealing */
@@ -715,11 +708,11 @@ nmg_meonvu(struct vertexuse *vu)
 {
     struct edge *e;
     struct edgeuse *eu1, *eu2;
-    struct model *m;
+    struct model *s;
 
     NMG_CK_VERTEXUSE(vu);
 
-    m = nmg_find_model(vu->up.magic_p);
+    s = nmg_find_model(vu->up.magic_p);
     GET_EDGE(e, m);
     GET_EDGEUSE(eu1, m);
     GET_EDGEUSE(eu2, m);
