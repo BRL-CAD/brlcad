@@ -150,7 +150,7 @@ sub convert {
     if ($meth == 1) {
 
       # insert unique included files into the single input file
-      #flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
+      flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
 
       # use gcc; need a C input file
       my $cfil = "./di/$stem.h.c";
@@ -448,13 +448,13 @@ sub convert_with_gcc_E {
   my $ifil = shift @_; # tfil0
   my $ofil = shift @_; # tfil1
 
-  my $incdirs  = "-I${D::IDIR} -I${D::IDIR2}";
+  my $incdirs  = "-I${BP::IDIR} -I${BP::IDIR2}";
 
   my $opts = '';
   #$opts .= ' -CC'; # keep C and C++ comments
   #$opts .= ' -H'; # list includes
-  $opts .= ' -v'; # report include paths
-  #$opts .= ' -P'; # omit line markers
+  #$opts .= ' -v'; # report include paths
+  $opts .= ' -P'; # omit line markers
 
   my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
   print "debug-cmd: '$cmd'\n"
@@ -596,7 +596,7 @@ sub flatten_c_header {
 	#   './bu/bu_vlist.h'
 	my $s = $f;
 	$s =~ s{\A \./}{}x;
-	my $ff = "${D::IDIR}/${s}";
+	my $ff = "${BP::IDIR}/${s}";
 	print "NOTE: using file '$f' => '$ff'...\n"
 	  if (0 && $debug);
 	$f = $ff;
