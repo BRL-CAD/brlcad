@@ -120,6 +120,18 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $Egen = 1;
   }
+  elsif ($arg =~ m{\A -[Tt]{1}}xms) {
+    # a test mode
+    zero_modes(1);
+    $convert = 1;
+
+    $D::force   = 1;
+    $D::verbose = 1;
+    $D::debug   = 1;
+    $D::clean   = 1;
+    $D::devel   = 1;
+
+  }
 
   # error
   else {
