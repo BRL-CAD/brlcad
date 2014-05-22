@@ -81,6 +81,9 @@ rt_intern_struct_size(int type) {
 	case  ID_SPH        :/**< @brief Sphere */
 	    return sizeof(struct rt_ell_internal);
 	    break;
+	case  ID_NMG        :/**< @brief n-Manifold Geometry solid */
+	    return sizeof(struct shell);
+	    break;
 	case  ID_EBM        :/**< @brief Extruded bitmap solid */
 	    return sizeof(struct rt_ebm_internal);
 	    break;
