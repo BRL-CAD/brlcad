@@ -941,19 +941,20 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 	 *
 	 * Cases:
 	 *
-	 * ancestor == left && left == right
+	 * ancestor == NULL && left != right
 	 * ancestor != left && left == right
 	 * ancestor != left && ancestor == right && left != right
 	 * ancestor == left && ancestor != right && left != right
 	 * ancestor != left && ancestor != right && left != right
 	 */
 	{
-	    int a = ancestor->idb_minor_type;
+	    int a = -1;
 	    int l = left->idb_minor_type;
 	    int r = right->idb_minor_type;
 	    int a_arb = 0;
 	    int l_arb = 0;
 	    int r_arb = 0;
+	    if (ancestor) a = ancestor->idb_minor_type;
 	    if (a == DB5_MINORTYPE_BRLCAD_ARB8 || l == DB5_MINORTYPE_BRLCAD_ARB8 || r == DB5_MINORTYPE_BRLCAD_ARB8) {
 		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 		if (a == DB5_MINORTYPE_BRLCAD_ARB8) {a_arb = rt_arb_std_type(ancestor, &arb_tol);}
@@ -961,12 +962,6 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 		if (r == DB5_MINORTYPE_BRLCAD_ARB8) {r_arb = rt_arb_std_type(right, &arb_tol);}
 	    }
 
-	    /* ancestor == left && left == right */
-	    if ( (a == l) && (l == r) ) {
-		(void)bu_avs_add(unchanged, "object type", type_to_str(ancestor, a_arb));
-		(void)bu_avs_add(merged, "object type", type_to_str(ancestor, a_arb));
-		type_change = 0;
-	    }
 	    /* ancestor != left && left == right */
 	    if ( (a != l) && (l == r) ) {
 		(void)bu_avs_add(changed_both, "object type", type_to_str(left, l_arb));
@@ -982,8 +977,15 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 		(void)bu_avs_add(changed_right_only, "object type", type_to_str(right, r_arb));
 		(void)bu_avs_add(merged, "object type", type_to_str(right, r_arb));
 	    }
+	    /* ancestor == NULL && left != right */
+	    if ( (a == -1) && (a != l) && (a != r) && (l != r) ) {
+		(void)bu_avs_add(added_conflict_left, "object type", type_to_str(left, l_arb));
+		(void)bu_avs_add(added_conflict_right, "object type", type_to_str(right, r_arb));
+		(void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
+		(void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
+	    }
 	    /* ancestor != left && ancestor != right && left != right */
-	    if ( (a != l) && (a != r) && (l != r) ) {
+	    if ( (a != -1) && (a != l) && (a != r) && (l != r) ) {
 		(void)bu_avs_add(changed_conflict_ancestor, "object type", type_to_str(ancestor, a_arb));
 		(void)bu_avs_add(changed_conflict_left, "object type", type_to_str(left, l_arb));
 		(void)bu_avs_add(changed_conflict_right, "object type", type_to_str(right, r_arb));
