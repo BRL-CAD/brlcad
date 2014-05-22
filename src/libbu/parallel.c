@@ -372,8 +372,8 @@ parallel_interface_arg(struct thread_data *user_thread_data)
 
 #if defined(_WIN32)
 /**
- * A separate stub to call parallel_interface_arg that avoids a 
- *  potential crash* on 64-bit windows and calls ExitThread to 
+ * A separate stub to call parallel_interface_arg that avoids a
+ *  potential crash* on 64-bit windows and calls ExitThread to
  *  cleanly stop the thread.
  *  *See ThreadProc MSDN documentation.
  */
@@ -654,8 +654,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	}
     }
     /* Wait for other threads in the array */
-    
-   
+
+
     returnCode = WaitForMultipleObjects(nthreadc, hThreadArray, TRUE, INFINITE);
     if (returnCode == WAIT_FAILED) {
 	bu_log("bu_parallel(): Error in WaitForMultipleObjects, Win32 error code %d.\n", GetLastError());
