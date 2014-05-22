@@ -649,6 +649,8 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	if (!val_ancestor) {
 	    const char *val1 = bu_avs_get(avs1, avp->name);
 	    const char *val2 = bu_avs_get(avs2, avp->name);
+	    int have_same_val;
+	    have_diff++;
 	    /* The possibilities are:
 	     *
 	     * (val1 && !val2)
@@ -660,17 +662,15 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 	    if (val1 && !val2) {
 		(void)bu_avs_add(added_avs1_only, avp->name, val1);
 		(void)bu_avs_add(merged, avp->name, val1);
-		have_diff++;
 	    }
+
+	    have_same_val = avpp_val_compare(val1,val2, diff_tol);
+
 	    /* Added in avs1 and avs2 with the same value - no conflict */
-	    if (avpp_val_compare(val1,val2, diff_tol)) {
-	       	(void)bu_avs_add(added_both, avp->name, val1);
+	    if (have_same_val) {
+		(void)bu_avs_add(added_both, avp->name, val1);
 		(void)bu_avs_add(merged, avp->name, val1);
-		have_diff++;
-	    }
-	    /* Added in avs1 and avs2 with different values - conflict
-	     * merge adds conflict a/v pairs */
-	    if (avpp_val_compare(val1,val2, diff_tol)) {
+	    } else {
 		struct bu_vls avname = BU_VLS_INIT_ZERO;
 		(void)bu_avs_add(added_conflict_avs1, avp->name, val1);
 		(void)bu_avs_add(added_conflict_avs2, avp->name, val2);
@@ -679,7 +679,6 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
 		bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
 		(void)bu_avs_add(merged, bu_vls_addr(&avname), val2);
 		bu_vls_free(&avname);
-		have_diff++;
 	    }
 	}
     }
@@ -938,23 +937,17 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 	 * the attribute/value paradigm used for the majority of the comparisons.  For
 	 * this reason, we handle it specially using the lower level database type
 	 * information directly.
-	 *
-	 * Cases:
-	 *
-	 * ancestor == NULL && left != right
-	 * ancestor != left && left == right
-	 * ancestor != left && ancestor == right && left != right
-	 * ancestor == left && ancestor != right && left != right
-	 * ancestor != left && ancestor != right && left != right
 	 */
 	{
 	    int a = -1;
-	    int l = left->idb_minor_type;
-	    int r = right->idb_minor_type;
+	    int l = -1;
+	    int r = -1;
 	    int a_arb = 0;
 	    int l_arb = 0;
 	    int r_arb = 0;
 	    if (ancestor) a = ancestor->idb_minor_type;
+	    if (right) r = right->idb_minor_type;
+	    if (left) l = left->idb_minor_type;
 	    if (a == DB5_MINORTYPE_BRLCAD_ARB8 || l == DB5_MINORTYPE_BRLCAD_ARB8 || r == DB5_MINORTYPE_BRLCAD_ARB8) {
 		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 		if (a == DB5_MINORTYPE_BRLCAD_ARB8) {a_arb = rt_arb_std_type(ancestor, &arb_tol);}
@@ -962,36 +955,53 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 		if (r == DB5_MINORTYPE_BRLCAD_ARB8) {r_arb = rt_arb_std_type(right, &arb_tol);}
 	    }
 
-	    /* ancestor != left && left == right */
-	    if ( (a != l) && (l == r) ) {
-		(void)bu_avs_add(changed_both, "object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(merged, "object type", type_to_str(left, l_arb));
-	    }
-	    /* ancestor != left && ancestor == right && left != right */
-	    if ( (a != l) && (a == r) && (l != r) ) {
-		(void)bu_avs_add(changed_left_only, "object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(merged, "object type", type_to_str(left, l_arb));
-	    }
-	    /* ancestor == left && ancestor != right && left != right */
-	    if ( (a == l) && (a != r) && (l != r) ) {
-		(void)bu_avs_add(changed_right_only, "object type", type_to_str(right, r_arb));
-		(void)bu_avs_add(merged, "object type", type_to_str(right, r_arb));
-	    }
-	    /* ancestor == NULL && left != right */
-	    if ( (a == -1) && (a != l) && (a != r) && (l != r) ) {
-		(void)bu_avs_add(added_conflict_left, "object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(added_conflict_right, "object type", type_to_str(right, r_arb));
-		(void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
-	    }
-	    /* ancestor != left && ancestor != right && left != right */
-	    if ( (a != -1) && (a != l) && (a != r) && (l != r) ) {
-		(void)bu_avs_add(changed_conflict_ancestor, "object type", type_to_str(ancestor, a_arb));
-		(void)bu_avs_add(changed_conflict_left, "object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(changed_conflict_right, "object type", type_to_str(right, r_arb));
-		(void)bu_avs_add(merged, "CONFLICT(ANCESTOR):object type", type_to_str(ancestor, a_arb));
-		(void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
-		(void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
+	    if (ancestor) {
+		if (left && right) {
+		    /* ancestor != left && ancestor == right && left != right */
+		    if ( (a != l) && (a == r) && (l != r) ) {
+			(void)bu_avs_add(changed_left_only, "object type", type_to_str(left, l_arb));
+			(void)bu_avs_add(merged, "object type", type_to_str(left, l_arb));
+		    }
+		    /* ancestor == left && ancestor != right && left != right */
+		    if ( (a == l) && (a != r) && (l != r) ) {
+			(void)bu_avs_add(changed_right_only, "object type", type_to_str(right, r_arb));
+			(void)bu_avs_add(merged, "object type", type_to_str(right, r_arb));
+		    }
+		    /* ancestor != left && ancestor != right && left != right */
+		    if ( (a != l) && (a != r) && (l != r) ) {
+			(void)bu_avs_add(changed_conflict_ancestor, "object type", type_to_str(ancestor, a_arb));
+			(void)bu_avs_add(changed_conflict_left, "object type", type_to_str(left, l_arb));
+			(void)bu_avs_add(changed_conflict_right, "object type", type_to_str(right, r_arb));
+			(void)bu_avs_add(merged, "CONFLICT(ANCESTOR):object type", type_to_str(ancestor, a_arb));
+			(void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
+			(void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
+		    }
+		} else {
+		    if (left) {
+			/* ancestor != left*/
+			if (a != l) {
+			    (void)bu_avs_add(changed_conflict_ancestor, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
+			    (void)bu_avs_add(changed_conflict_left, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
+			    (void)bu_avs_add(merged, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
+			}
+		    }
+		    if (right) {
+			/* ancestor != left*/
+			if (a != r) {
+			    (void)bu_avs_add(changed_conflict_ancestor, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
+			    (void)bu_avs_add(changed_conflict_right, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
+			    (void)bu_avs_add(merged, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
+			}
+		    }
+		}
+	    } else {
+		/* ancestor == NULL && left != right */
+		if ( (a == -1 && l != -1 && r != -1) && (l != r) ) {
+		    (void)bu_avs_add(added_conflict_left, "object type", type_to_str(left, l_arb));
+		    (void)bu_avs_add(added_conflict_right, "object type", type_to_str(right, r_arb));
+		    (void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
+		    (void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
+		}
 	    }
 	}
 
@@ -1001,7 +1011,13 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 	 * in the list is the type of the object, which we have
 	 * just handled above */
 	bu_vls_trunc(&ancestor_tcl, 0);
-	if (ancestor->idb_meth->ft_get(&ancestor_tcl, ancestor, NULL) == BRLCAD_ERROR) have_tcl_ancestor = 0;
+	if (ancestor) {
+	    if (ancestor->idb_meth->ft_get(&ancestor_tcl, ancestor, NULL) == BRLCAD_ERROR) have_tcl_ancestor = 0;
+	} else {
+	    /* If there is no ancestor, the empty list is accurate */
+	    bu_vls_sprintf(&ancestor_tcl, "%s", "{}");
+	    have_tcl_ancestor = 1;
+	}
 	bu_vls_trunc(&left_tcl, 0);
 	if (left->idb_meth->ft_get(&left_tcl, left, NULL) == BRLCAD_ERROR) have_tcl_left = 0;
 	bu_vls_trunc(&right_tcl, 0);
@@ -1031,11 +1047,11 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 		 * ancestor == left && ancestor != right && left != right
 		 * ancestor != left && ancestor != right && left != right
 		 * */
-		void *a = (void *)ancestor->idb_ptr;
+		void *a = NULL;
 		void *l = (void *)left->idb_ptr;
 		void *r = (void *)right->idb_ptr;
 		int memsize = rt_intern_struct_size(ancestor->idb_minor_type);
-
+		if (ancestor)  a = (void *)ancestor->idb_ptr;
 		/* ancestor == left && left == right */
 		if (!memcmp(a, l, memsize) && !memcmp(l, r, memsize)) {
 		    (void)bu_avs_add(unchanged, "PARAMS", "NO_CHANGE");
@@ -1082,7 +1098,7 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 	BU_AVS_INIT(&lt);
 	BU_AVS_INIT(&rt);
 
-	if (ancestor->idb_avs.magic == BU_AVS_MAGIC) {
+	if (ancestor && ancestor->idb_avs.magic == BU_AVS_MAGIC) {
 	    a = &(ancestor->idb_avs);
 	} else {
 	    a = &at;
