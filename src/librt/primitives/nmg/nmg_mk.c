@@ -269,12 +269,12 @@ nmg_ms(void)
  * upptr is a pointer to parent struct
  */
 static struct vertexuse *
-nmg_mvu(struct vertex *v, uint32_t *upptr, struct model *m)
+nmg_mvu(struct vertex *v, uint32_t *upptr, struct shell *s)
 {
     struct vertexuse *vu;
 
     NMG_CK_VERTEX(v);
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     if (*upptr != NMG_SHELL_MAGIC &&
 	*upptr != NMG_LOOPUSE_MAGIC &&
@@ -285,7 +285,7 @@ nmg_mvu(struct vertex *v, uint32_t *upptr, struct model *m)
 	bu_bomb("nmg_mvu() Cannot build vertexuse without parent\n");
     }
 
-    GET_VERTEXUSE(vu, m);
+    GET_VERTEXUSE(vu, s);
 
     vu->v_p = v;
     vu->a.plane_p = (struct vertexuse_a_plane *)NULL;
@@ -312,21 +312,21 @@ nmg_mvu(struct vertex *v, uint32_t *upptr, struct model *m)
  * structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
-nmg_mvvu(uint32_t *upptr, struct model *m)
+nmg_mvvu(uint32_t *upptr, struct shell *s)
 {
     struct vertex *v;
     struct vertexuse *ret_vu;
 
-    NMG_CK_MODEL(m);
-    GET_VERTEX(v, m);
+    NMG_CK_SHELL(s);
+    GET_VERTEX(v, s);
     BU_LIST_INIT(&v->vu_hd);
     v->vg_p = (struct vertex_g *)NULL;
     v->magic = NMG_VERTEX_MAGIC;	/* Vertex struct is GOOD */
-    ret_vu = nmg_mvu(v, upptr, m);
+    ret_vu = nmg_mvu(v, upptr, s);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mvvu(upptr=%p, m=%p) returns vu=%p\n",
-	       (void *)upptr, (void *)m, (void *)ret_vu);
+	bu_log("nmg_mvvu(upptr=%p, s=%p) returns vu=%p\n",
+	       (void *)upptr, (void *)s, (void *)ret_vu);
     }
 
     return ret_vu;
@@ -347,31 +347,18 @@ nmg_mvvu(uint32_t *upptr, struct model *m)
  * The new vertexuse is s->vu_p;
  */
 struct shell *
-nmg_msv(struct nmgregion *r)
+nmg_msv()
 {
     struct shell *s;
     struct vertexuse *vu;
 
-    NMG_CK_REGION(r);
+    s = nmg_ms();
+    vu = nmg_mvvu(&s->l.magic, s);
 
-    /* set up shell */
-    GET_SHELL(s, r->m_p);
-
-    s->r_p = r;
-    BU_LIST_APPEND(&r->s_hd, &s->l);
-
-    s->sa_p = (struct shell_a *)NULL;
-    BU_LIST_INIT(&s->fu_hd);
-    BU_LIST_INIT(&s->lu_hd);
-    BU_LIST_INIT(&s->eu_hd);
-    s->vu_p = (struct vertexuse *) NULL;
-    s->l.magic = NMG_SHELL_MAGIC;	/* Shell Struct is GOOD */
-
-    vu = nmg_mvvu(&s->l.magic, r->m_p);
     s->vu_p = vu;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_msv(r=%p) returns s=%p, vu=%p\n", (void *)r, (void *)s, (void *)s->vu_p);
+	bu_log("nmg_msv() returns s=%p, vu=%p\n", (void *)s, (void *)s->vu_p);
     }
 
     return s;
