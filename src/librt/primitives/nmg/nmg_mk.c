@@ -219,114 +219,40 @@
 
 
 /**
- * Make Model
+ * Make Shell
  *
- * Create a new model.  The region list is empty.  Creates a new model
- * structure.  The model region structure list is empty.
+ * Create a new shell.  The faceuse list, loopuse list and edgeuse list are empty.
  *
  * Returns -
- * (struct model *)
+ * (struct shell *)
  *
  * "maxindex" is a misnomer.  It is the value of the NEXT index
  * assigned.  This allows "ptab"s to be allocated easily using maxindex
  * and the index value of the structures to be the actual index into
  * the "ptab".
  */
-struct model *
-nmg_mm(void)
+struct shell *
+nmg_ms(void)
 {
-    struct model *m;
+    struct shell *s;
 
-    NMG_GETSTRUCT(m, model);
+    NMG_GETSTRUCT(s, shell);
 
-    BU_LIST_INIT(&m->r_hd);
-    m->index = 0;
-    m->maxindex = 1;
-    m->magic = NMG_MODEL_MAGIC;	/* Model Structure is GOOD */
-    m->manifolds = (char *)NULL;
+    BU_LIST_INIT(&s->fu_hd);
+    BU_LIST_INIT(&s->lu_hd);
+    BU_LIST_INIT(&s->eu_hd);
+    s->magic = NMG_SHELL_MAGIC;
+    s->sa_p = (struct shell_a *)NULL;
+    s->vu_p = (struct vertexuse *)NULL
+    s->manifolds = (char *)NULL;
+    s->index = 0;
+    s->maxindex = 1;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mm() returns model %p\n", (void *)m);
+	bu_log("nmg_ms() returns shell %p\n", (void *)s);
     }
 
-    return m;
-}
-
-
-/**
- * Make Model and Region.
- *
- * Create a new model, and an "empty" region to go with it.
- * Essentially this creates a minimal model system.
- *
- * Returns -
- * (struct model *)
- *
- * Implicit Return -
- * The new region is found with BU_LIST_FIRST(nmgregion, &m->r_hd);
- */
-struct model *
-nmg_mmr(void)
-{
-    struct model *m;
-    struct nmgregion *r;
-
-    m = nmg_mm();
-    GET_REGION(r, m);
-
-    r->m_p = m;
-
-    r->ra_p = (struct nmgregion_a *)NULL;
-    BU_LIST_INIT(&r->s_hd);
-    r->l.magic = NMG_REGION_MAGIC;	/* Region Structure is GOOD */
-
-    BU_LIST_APPEND(&m->r_hd, &r->l);
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mmr() returns model %p with region %p\n", (void *)m, (void *)r);
-    }
-
-    return m;
-}
-
-
-/**
- * Make new region, shell, vertex in model as well as the required
- * "uses".  Create a new region in model consisting of a minimal
- * shell.
- *
- * Returns -
- * (struct nmgregion *)
- *
- * Implicit Returns -
- * Region is also found with r=BU_LIST_FIRST(nmgregion, &m->r_hd);
- * The new shell is found with s=BU_LIST_FIRST(shell, &r->s_hd);
- * The new vertexuse is s->vu_p;
- */
-struct nmgregion *
-nmg_mrsv(struct model *m)
-{
-    struct nmgregion *r;
-
-    NMG_CK_MODEL(m);
-
-    GET_REGION(r, m);
-    r->m_p = m;
-    r->ra_p = (struct nmgregion_a *) NULL;
-
-    BU_LIST_INIT(&r->s_hd);
-    r->l.magic = NMG_REGION_MAGIC;	/* Region struct is GOOD */
-
-    (void)nmg_msv(r);
-
-    /* new region goes at "head" of list of regions in model */
-    BU_LIST_APPEND(&m->r_hd, &r->l);
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mrsv(m=%p) returns r=%p\n", (void *)m, (void *)r);
-    }
-
-    return r;
+    return s;
 }
 
 
