@@ -838,7 +838,6 @@ nmg_ml(struct shell *s)
     struct edgeuse *p1;
     struct edgeuse *p2;
     struct edgeuse *feu;
-    struct model *m;
 
     NMG_CK_SHELL(s);
     /* If loop on single vertex */
@@ -855,10 +854,9 @@ nmg_ml(struct shell *s)
 	return lu1;
     }
 
-    m = nmg_find_model(&s->l.magic);
-    GET_LOOP(l, m);
-    GET_LOOPUSE(lu1, m);
-    GET_LOOPUSE(lu2, m);
+    GET_LOOP(l, s);
+    GET_LOOPUSE(lu1, s);
+    GET_LOOPUSE(lu2, s);
 
     l->lg_p = (struct loop_g *)NULL;
     l->lu_p = lu1;
@@ -1477,6 +1475,11 @@ nmg_ks(struct shell *s)
 	FREE_SHELL_A(s->sa_p);
     }
 
+    if (s->manifolds) {
+	bu_free((char *)s->manifolds, "free manifolds table");
+	s->manifolds = (char *)NULL;
+    }
+
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_ks(s=%p)\n", (void *)s);
     }
@@ -1487,77 +1490,6 @@ nmg_ks(struct shell *s)
 	return 1;
 
     return 0;
-}
-
-
-/**
- * Kill a region and all shells in it.
- *
- * Returns -
- * 0 If all is well
- * 1 If model is now empty.  While not "illegal",
- * an empty model is probably worthy of note.
- */
-int
-nmg_kr(struct nmgregion *r)
-{
-    struct model *m;
-
-    if (!r)
-	return 0;
-
-    NMG_CK_REGION(r);
-    m = r->m_p;
-    if (m)
-	NMG_CK_MODEL(m);
-
-    while (BU_LIST_NON_EMPTY(&r->s_hd))
-	(void)nmg_ks(BU_LIST_FIRST(shell, &r->s_hd));
-
-    BU_LIST_DEQUEUE(&r->l);
-
-    if (r->ra_p) {
-	FREE_REGION_A(r->ra_p);
-    }
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_kr(r=%p)\n", (void *)r);
-    }
-
-    FREE_REGION(r);
-
-    if (m && BU_LIST_IS_EMPTY(&m->r_hd)) {
-	m->maxindex = 1;	/* Reset when last region is killed */
-	return 1;
-    }
-    return 0;
-}
-
-
-/**
- * Kill an entire model.  Nothing is left.
- */
-void
-nmg_km(struct model *m)
-{
-    if (!m)
-	return;
-
-    NMG_CK_MODEL(m);
-
-    while (BU_LIST_NON_EMPTY(&m->r_hd))
-	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
-
-    if (m->manifolds) {
-	bu_free((char *)m->manifolds, "free manifolds table");
-	m->manifolds = (char *)NULL;
-    }
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_km(m=%p)\n", (void *)m);
-    }
-
-    FREE_MODEL(m);
 }
 
 
