@@ -336,7 +336,7 @@ nmg_mvvu(uint32_t *upptr, struct shell *s)
 /**
  * Make Shell, Vertex Use, Vertex
  *
- * Create a new shell in a specified region.  The shell will consist
+ * Create a new shell.  The shell will consist
  * of a single vertexuse and vertex (which are also created).
  *
  * Returns -
