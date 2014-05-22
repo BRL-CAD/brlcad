@@ -1631,13 +1631,6 @@ INFRASTRUCTURE
 
 * ensure successful build on mingw
 
-* update the msvc build to not use installTree.tcl -- the build
-  shouldn't really be reliant upon tclsh or be all contained within
-  the tclsh project.  sub-projects should build and install by
-  themselves (e.g. tkhtml3 should generate its htmltokens.h file).
-  the "brlcad" project, if any, can build up the installation tree and
-  generate the final installation exe.
-
 * the binary windows installer is missing headers for our external
   dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
   bu.h and raytrace.h requires them)
