@@ -245,6 +245,10 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
+	/* Reset the material head so we don't get warnings when the global
+	 * is overwritten.  This will go away when material_head ceases to
+	 * be a librt global.*/
+	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
@@ -254,6 +258,10 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(right_dbip);
+	/* Reset the material head so we don't get warnings when the global
+	 * is overwritten.  This will go away when material_head ceases to
+	 * be a librt global.*/
+	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(right_dbip);
@@ -273,6 +281,10 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
+	/* Reset the material head so we don't get warnings when the global
+	 * is overwritten.  This will go away when material_head ceases to
+	 * be a librt global.*/
+	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
@@ -282,6 +294,10 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(ancestor_dbip);
+	/* Reset the material head so we don't get warnings when the global
+	 * is overwritten.  This will go away when material_head ceases to
+	 * be a librt global.*/
+	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(ancestor_dbip) < 0) {
 	    db_close(left_dbip);
 	    db_close(ancestor_dbip);
@@ -292,6 +308,10 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);
 	}
 	RT_CK_DBI(right_dbip);
+	/* Reset the material head so we don't get warnings when the global
+	 * is overwritten.  This will go away when material_head ceases to
+	 * be a librt global.*/
+	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(left_dbip);
