@@ -1133,34 +1133,6 @@ nmg_vlblock_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 }
 
 
-void
-nmg_vlblock_r(struct bn_vlblock *vbp, const struct nmgregion *r, int fancy)
-{
-    struct shell *s;
-
-    BN_CK_VLBLOCK(vbp);
-    NMG_CK_REGION(r);
-
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_vlblock_s(vbp, s, fancy);
-    }
-}
-
-
-void
-nmg_vlblock_m(struct bn_vlblock *vbp, const struct model *m, int fancy)
-{
-    struct nmgregion *r;
-
-    BN_CK_VLBLOCK(vbp);
-    NMG_CK_MODEL(m);
-
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	nmg_vlblock_r(vbp, r, fancy);
-    }
-}
-
-
 /************************************************************************
  *									*
  *		Visualization helper routines				*
