@@ -163,7 +163,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
     }
 
     bu_log("\tplotting %s\n", name);
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
@@ -2166,17 +2166,13 @@ out:
 
 
 void
-nmg_dump_model(struct model *m)
+nmg_dump_shell(struct shell *s)
 {
-    struct nmgregion *r;
-    struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
     struct vertex_g *vg;
     FILE *fp;
-    size_t r_cnt = 0;
-    size_t s_cnt = 0;
     size_t fu_cnt = 0;
     size_t lu_cnt = 0;
     size_t eu_cnt = 0;
@@ -2185,39 +2181,28 @@ nmg_dump_model(struct model *m)
 	bu_bomb("nmg_vertex_dump, open failed\n");
     }
 
-    r_cnt = 0;
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	r_cnt++;
-	NMG_CK_REGION(r);
-	s_cnt = 0;
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    s_cnt++;
-	    NMG_CK_SHELL(s);
-	    fu_cnt = 0;
-	    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-		fu_cnt++;
-		NMG_CK_FACEUSE(fu);
-		lu_cnt = 0;
-		for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		    lu_cnt++;
-		    NMG_CK_LOOPUSE(lu);
-		    eu_cnt = 0;
-		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-			eu_cnt++;
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_VERTEX(eu->vu_p->v_p);
-			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			vg = eu->vu_p->v_p->vg_p;
-			fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
-				(unsigned long)r_cnt,
-				(unsigned long)s_cnt,
-				(unsigned long)fu_cnt,
-				(unsigned long)lu_cnt,
-				(unsigned long)eu_cnt,
-				V3ARGS(vg->coord));
-		    }
-		}
+    NMG_CK_SHELL(s);
+    fu_cnt = 0;
+    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+	fu_cnt++;
+	NMG_CK_FACEUSE(fu);
+	lu_cnt = 0;
+	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+	    lu_cnt++;
+	    NMG_CK_LOOPUSE(lu);
+	    eu_cnt = 0;
+	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+		eu_cnt++;
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
+		NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+		vg = eu->vu_p->v_p->vg_p;
+		fprintf(fp, "%ld %ld %ld %g %g %g\n",
+			(unsigned long)fu_cnt,
+			(unsigned long)lu_cnt,
+			(unsigned long)eu_cnt,
+			V3ARGS(vg->coord));
 	    }
 	}
     }
@@ -3772,8 +3757,8 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell.\n");
     }
 
-    (void)nmg_edge_g_fuse(&s->l.magic, tol);
-    (void)nmg_unbreak_region_edges(&s->l.magic);
+    (void)nmg_edge_g_fuse(&s->magic, tol);
+    (void)nmg_unbreak_region_edges(&s->magic);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
@@ -3807,36 +3792,10 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 	fu = fu_next;
     }
 
-    nmg_vsshell(s, s->r_p);
+    nmg_vsshell(s);
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell completed.\n");
-    }
-}
-
-
-void
-nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
-{
-    struct nmgregion *r;
-    struct shell *s;
-
-    BN_CK_TOL(tol);
-    NMG_CK_MODEL(m);
-
-    if (RTG.NMG_debug & DEBUG_TRI) {
-	bu_log("nmg_triangulate_model(): Triangulating NMG model.\n");
-    }
-
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	NMG_CK_REGION(r);
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    nmg_triangulate_shell(s, tol);
-	}
-    }
-
-    if (RTG.NMG_debug & DEBUG_TRI) {
-	bu_log("nmg_triangulate_model(): Triangulating NMG model completed.\n");
     }
 }
 
