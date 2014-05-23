@@ -68,10 +68,10 @@ The
 option requests verbose output.
 The
 <option>-i</option>
-option requests the output file units to be inches (the default is mm).The
+option requests the output file units to be inches (the default is mm). The
 <option>-p</option>
 option requests that the output consist entirely of POLYFACE MESH entities.
-(The default is all 3DFACE entities).
+(The default is all 3DFACE entities.)
 The
 <option>-o</option>
 option specifies the name of the file to receive the output
