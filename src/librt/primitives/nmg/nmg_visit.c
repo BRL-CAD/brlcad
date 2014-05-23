@@ -221,46 +221,6 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t
 
 
 void
-nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, genptr_t state)
-
-
-/* Handler's private state */
-{
-    struct shell *s;
-
-    NMG_CK_REGION(r);
-
-    if (htab->bef_region) htab->bef_region((uint32_t *)r, state, 0);
-
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_visit_shell(s, htab, state);
-    }
-    if (htab->vis_region_a && r->ra_p)
-	htab->vis_region_a((uint32_t *)r->ra_p, state, 0);
-
-    if (htab->aft_region) htab->aft_region((uint32_t *)r, state, 1);
-}
-void
-nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genptr_t state)
-
-
-/* Handler's private state */
-{
-    struct nmgregion *r;
-
-    NMG_CK_MODEL(model);
-
-    if (htab->bef_model) htab->bef_model((uint32_t *)model, state, 0);
-
-    for (BU_LIST_FOR(r, nmgregion, &model->r_hd)) {
-	nmg_visit_region(r, htab, state);
-    }
-
-    if (htab->aft_model) htab->aft_model((uint32_t *)model, state, 1);
-}
-
-
-void
 nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, genptr_t state)
 /* Handler's private state */
 {
@@ -269,12 +229,6 @@ nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, genptr_
 	    bu_log("nmg_visit() Can't visit %s directly\n", bu_identify_magic(*magicp));
 	    bu_bomb("nmg_visit()\n");
 	    /* NOTREACHED */
-	case NMG_MODEL_MAGIC:
-	    nmg_visit_model((struct model *)magicp, htab, state);
-	    break;
-	case NMG_REGION_MAGIC:
-	    nmg_visit_region((struct nmgregion *)magicp, htab, state);
-	    break;
 	case NMG_SHELL_MAGIC:
 	    nmg_visit_shell((struct shell *)magicp, htab, state);
 	    break;
