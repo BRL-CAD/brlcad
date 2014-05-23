@@ -370,7 +370,7 @@ out:
 	point_t mid_pt;
 	point_t left_pt;
 	fu = eu->up.lu_p->up.fu_p;
-	bits = (long *)bu_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+	bits = (long *)bu_calloc(nmg_find_shell(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 	sprintf(buf, "faceclass%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL)
 	    bu_bomb(buf);
@@ -619,19 +619,16 @@ int
 nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
-    struct model *m;
     long *faces_seen = NULL;
-    vect_t region_diagonal;
-    fastf_t region_diameter;
+    vect_t shell_diagonal;
+    fastf_t shell_diameter;
     int nmg_class = 0;
     vect_t projection_dir = VINIT_ZERO;
     int tries = 0;
     struct xray rp;
-    fastf_t model_bb_max_width;
-    point_t m_min_pt, m_max_pt; /* nmg model min and max points */
+    fastf_t shell_bb_max_width;
+    point_t s_min_pt, s_max_pt; /* nmg shell min and max points */
 
-    m = s->r_p->m_p;
-    NMG_CK_MODEL(m);
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
@@ -647,7 +644,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     }
 
     if (!in_or_out_only) {
-	faces_seen = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]");
+	faces_seen = (long *)bu_calloc(s->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]");
 	/*
 	 * First pass:  Try hard to see if point is ON a face.
 	 */
@@ -712,12 +709,12 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
      * If that number is even, we're outside the shell, otherwise we're
      * inside the shell.
      */
-    NMG_CK_REGION_A(s->r_p->ra_p);
-    VSUB2(region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt);
-    region_diameter = MAGNITUDE(region_diagonal);
+    NMG_CK_SHELL_A(s->sa_p);
+    VSUB2(shell_diagonal, s->sa_p->max_pt, s->sa_p->min_pt);
+    shell_diameter = MAGNITUDE(shell_diagonal);
 
-    nmg_model_bb(m_min_pt, m_max_pt, m);
-    model_bb_max_width = bn_dist_pt3_pt3(m_min_pt, m_max_pt);
+    nmg_shell_bb(s_min_pt, s_max_pt, s);
+    shell_bb_max_width = bn_dist_pt3_pt3(s_min_pt, s_max_pt);
 
     /* Choose an unlikely direction */
     tries = 0;
@@ -735,8 +732,8 @@ retry:
     VUNITIZE(projection_dir);
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY) {
-	bu_log("nmg_class_pt_s(): Pt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
-	       V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
+	bu_log("nmg_class_pt_s(): Pt=(%g, %g, %g) dir=(%g, %g, %g), shell_diam=%g\n",
+	       V3ARGS(pt), V3ARGS(projection_dir), shell_diameter);
     }
 
     VMOVE(rp.r_pt, pt);
@@ -744,7 +741,7 @@ retry:
     /* give the ray a length which is at least the max
      * length of the nmg model bounding box.
      */
-    VSCALE(rp.r_dir, projection_dir, model_bb_max_width * 1.25);
+    VSCALE(rp.r_dir, projection_dir, shell_bb_max_width * 1.25);
 
     /* get NMG ray-tracer to tell us if start point is inside or outside */
     nmg_class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, tol);
@@ -1609,10 +1606,8 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 		char buf[128];
 		static int num;
 		long *b;
-		struct model *m;
 
-		m = nmg_find_model(lu->up.magic_p);
-		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		b = (long *)bu_calloc(s->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
 			nmg_euprint("In:  edgeuse", eu);
@@ -2581,7 +2576,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
     }
 
     /* classification returned NMG_CLASS_AonB, so need to try other points */
-    nmg_vertex_tabulate(&verts, &s2->l.magic);
+    nmg_vertex_tabulate(&verts, &s2->magic);
     for (i = 0; i < BU_PTBL_END(&verts); i++) {
 	struct vertex *v;
 
