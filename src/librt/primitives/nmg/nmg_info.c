@@ -47,67 +47,6 @@
  *									*
  ************************************************************************/
 
-/**
- * Given a pointer to the magic number in any NMG data structure,
- * return a pointer to the model structure that contains that NMG item.
- *
- * The reason for the register variable is to leave the argument variable
- * unmodified;  this may aid debugging in event of a core dump.
- */
-struct model *
-nmg_find_model(const uint32_t *magic_p_arg)
-{
-    register const uint32_t *magic_p = magic_p_arg;
-
-top:
-    if (magic_p == NULL) {
-	bu_log("nmg_find_model(%p) encountered null pointer\n",
-	       (void *)magic_p_arg);
-	bu_bomb("nmg_find_model() null pointer\n");
-	/* NOTREACHED */
-    }
-
-    switch (*magic_p) {
-	case NMG_MODEL_MAGIC:
-	    return (struct model *)magic_p;
-	case NMG_REGION_MAGIC:
-	    return ((struct nmgregion *)magic_p)->m_p;
-	case NMG_SHELL_MAGIC:
-	    return ((struct shell *)magic_p)->r_p->m_p;
-	case NMG_FACEUSE_MAGIC:
-	    magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
-	    goto top;
-	case NMG_FACE_MAGIC:
-	    magic_p = &((struct face *)magic_p)->fu_p->l.magic;
-	    goto top;
-	case NMG_LOOP_MAGIC:
-	    magic_p = ((struct loop *)magic_p)->lu_p->up.magic_p;
-	    goto top;
-	case NMG_LOOPUSE_MAGIC:
-	    magic_p = ((struct loopuse *)magic_p)->up.magic_p;
-	    goto top;
-	case NMG_EDGE_MAGIC:
-	    magic_p = ((struct edge *)magic_p)->eu_p->up.magic_p;
-	    goto top;
-	case NMG_EDGEUSE_MAGIC:
-	    magic_p = ((struct edgeuse *)magic_p)->up.magic_p;
-	    goto top;
-	case NMG_VERTEX_MAGIC:
-	    magic_p = &(BU_LIST_FIRST(vertexuse,
-				      &((struct vertex *)magic_p)->vu_hd)->l.magic);
-	    goto top;
-	case NMG_VERTEXUSE_MAGIC:
-	    magic_p = ((struct vertexuse *)magic_p)->up.magic_p;
-	    goto top;
-
-	default:
-	    bu_log("nmg_find_model() can't get model for magic=%x (%s)\n",
-		   *magic_p, bu_identify_magic(*magic_p));
-	    bu_bomb("nmg_find_model() failure\n");
-    }
-    return (struct model *)NULL;
-}
-
 
 /**
  * Given a pointer to the magic number in any NMG data structure,
@@ -129,7 +68,7 @@ top:
 	case NMG_SHELL_MAGIC:
 	    return (struct shell *)magic_p;
 	case NMG_FACEUSE_MAGIC:
-	    magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
+	    magic_p = &((struct faceuse *)magic_p)->s_p->magic;
 	    goto top;
 	case NMG_FACE_MAGIC:
 	    magic_p = &((struct face *)magic_p)->fu_p->l.magic;
@@ -164,23 +103,15 @@ top:
 
 
 void
-nmg_model_bb(fastf_t *min_pt, fastf_t *max_pt, const struct model *m)
+nmg_shell_bb(fastf_t *min_pt, fastf_t *max_pt, const struct shell *s)
 {
-    struct nmgregion *r;
     register int i;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
-    min_pt[0] = min_pt[1] = min_pt[2] = MAX_FASTF;
-    max_pt[0] = max_pt[1] = max_pt[2] = -MAX_FASTF;
-
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (i=0; i < 3; i++) {
-	    if (min_pt[i] > r->ra_p->min_pt[i])
-		min_pt[i] = r->ra_p->min_pt[i];
-	    if (max_pt[i] < r->ra_p->max_pt[i])
-		max_pt[i] = r->ra_p->max_pt[i];
-	}
+    for (i=0; i < 3; i++) {
+    	min_pt[i] = s->sa_p->min_pt[i];
+    	max_pt[i] = s->sa_p->max_pt[i];
     }
 }
 
@@ -1193,7 +1124,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
 /* 3d to 3d xform */
 
 {
-    struct model *m;
+    struct shell *s;
     struct fen2d_state st;
     static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
 						   NULL, NULL, NULL, NULL, NULL,
@@ -1203,10 +1134,10 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
     /* htab.vis_edge = nmg_find_e_pt2_handler; */
 
     BN_CK_TOL(tol);
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.mindist = INFINITY;
     VMOVE(st.pt2, pt2);
     MAT_COPY(st.mat, mat);
@@ -1700,34 +1631,6 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 
 
 /**
- * Brute force search of the entire model to find a vertex that
- * matches this point.
- * XXX Shouldn't this return the _closest_ match, not just the
- * XXX first match within tolerance?
- */
-struct vertex *
-nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_tol *tol)
-{
-    struct nmgregion *r;
-    struct shell *s;
-    struct vertex *v;
-
-    NMG_CK_MODEL(m);
-    BN_CK_TOL(tol);
-
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    v = nmg_find_pt_in_shell(s, pt, tol);
-	    if (v) {
-		return v;
-	    }
-	}
-    }
-    return (struct vertex *)NULL;
-}
-
-
-/**
  * Returns -
  * 1 If found
  * 0 If not found
@@ -1980,12 +1883,12 @@ nmg_2rvf_handler(uint32_t *vp, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every vertex
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -1994,10 +1897,10 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, NULL, nmg_2rvf_handler, NULL};
     /* handlers.vertex = nmg_2rvf_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2033,12 +1936,12 @@ nmg_vert_a_handler(uint32_t *vp, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every vertexuse normal
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2047,10 +1950,10 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, nmg_vert_a_handler, NULL, NULL};
     /* handlers.vis_vertexuse_a = nmg_vert_a_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2083,12 +1986,12 @@ nmg_2edgeuse_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every edgeuse
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2097,10 +2000,10 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.bef_edgeuse = nmg_2edgeuse_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2133,12 +2036,12 @@ nmg_2edge_handler(uint32_t *ep, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every edge
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2147,10 +2050,10 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.vis_edge = nmg_2edge_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2192,12 +2095,12 @@ nmg_edge_g_handler(uint32_t *ep, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every edge
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2206,10 +2109,10 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.vis_edge_g = nmg_edge_g_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2242,12 +2145,12 @@ nmg_2face_handler(uint32_t *fp, genptr_t state, int UNUSED(unused))
 /**
  * Given a pointer to any nmg data structure,
  * build an bu_ptbl list which has every face
- * pointer from there on "down" in the model, each one listed exactly once.
+ * pointer from there on "down" in the shell, each one listed exactly once.
  */
 void
 nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct vf_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2256,10 +2159,10 @@ nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.vis_face = nmg_2face_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
@@ -2360,7 +2263,7 @@ nmg_line_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
 void
 nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
 {
-    struct model *m;
+    struct shell *s;
     struct edge_line_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2369,11 +2272,11 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
 						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.bef_edgeuse = nmg_line_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
     VMOVE(st.pt, pt);
     VMOVE(st.dir, dir);
@@ -2442,7 +2345,7 @@ nmg_v_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
 void
 nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t *magic_p)
 {
-    struct model *m;
+    struct shell *s;
     struct e_and_v_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL,
@@ -2452,10 +2355,10 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
     /* handlers.vis_edge = nmg_e_handler; */
     /* handlers.vis_vertex = nmg_v_handler; */
 
-    m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
+    s = nmg_find_shell(magic_p);
+    NMG_CK_SHELL(s);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.edges = eutab;
     st.verts = vtab;
 
