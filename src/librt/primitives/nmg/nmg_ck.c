@@ -991,18 +991,18 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
  * returns number of vertices that do not lie on geometry
  */
 int
-nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
+nmg_ck_geometry(const struct shell *s, const struct bn_tol *tol)
 {
     struct bu_ptbl g_tbl;
     int i;
-    int count=0;
+    int count = 0;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
     bu_ptbl_init(&g_tbl, 64, " &g_tbl ");
 
-    nmg_edge_g_tabulate(&g_tbl, &m->magic);
+    nmg_edge_g_tabulate(&g_tbl, &s->magic);
 
     for (i=0; i<BU_PTBL_END(&g_tbl); i++) {
 	uint32_t *ep;
@@ -1023,9 +1023,9 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_reset(&g_tbl);
 
-    nmg_face_tabulate(&g_tbl, &m->magic);
+    nmg_face_tabulate(&g_tbl, &s->magic);
 
-    for (i=0; i<BU_PTBL_END(&g_tbl); i++) {
+    for (i = 0; i < BU_PTBL_END(&g_tbl); i++) {
 	struct face *f;
 
 	f = (struct face *)BU_PTBL_GET(&g_tbl, i);
@@ -1426,29 +1426,6 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 		NMG_CK_VERTEX(vu->v_p);
 	    }
 	}
-    }
-    return 0;
-}
-
-
-/**
- * Check all the shells in a region for being closed.
- *
- * Returns -
- * 0 OK
- * !0 status code from nmg_check_radial()
- */
-int
-nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
-{
-    const struct shell *s;
-    int ret;
-
-    NMG_CK_REGION(r);
-    BN_CK_TOL(tol);
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	ret = nmg_ck_closed_surf(s, tol);
-	if (ret != 0) return ret;
     }
     return 0;
 }
