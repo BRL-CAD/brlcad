@@ -273,7 +273,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     NMG_CK_SHELL(sp);
 
     if (tbl == (char *)NULL)
-	tbl = (char *)bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
+	tbl = (char *)bu_calloc(sp->maxindex, 1, "manifold table");
 
     /*
      * points in shells form 0-manifold objects.
@@ -354,8 +354,8 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     if (RTG.NMG_debug & DEBUG_MANIF)
 	bu_log("starting to paint non-dangling faces\n");
 
-    paint_meaning = (char *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(char), "paint meaning table");
-    paint_table = (long *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(long), "paint table");
+    paint_meaning = (char *)bu_calloc(sp->maxindex, sizeof(char), "paint meaning table");
+    paint_table = (long *)bu_calloc(sp->maxindex, sizeof(long), "paint table");
     paint_color = 1;
 
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
@@ -382,9 +382,9 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 
 	/* this should never trigger. */
 	/* it is easier to compare against the max model index */
-	if (paint_color > sp->r_p->m_p->maxindex - 1) {
+	if (paint_color > sp->maxindex - 1) {
 	    bu_log("nmg_shell_manifolds(): ERROR, color index out of range (%ld > %ld)\n",
-		   paint_color, sp->r_p->m_p->maxindex - 1);
+		   paint_color, sp->maxindex - 1);
 	    bu_bomb("nmg_shell_manifolds(): ERROR, color index out of range\n");
 	    break;
 	}
@@ -411,37 +411,17 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 
 
 char *
-nmg_manifolds(struct model *m)
+nmg_manifolds(struct shell *s)
 {
-    struct nmgregion *rp;
-    struct shell *sp;
     char *tbl;
 
-
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
     if (RTG.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_manifolds(%p)\n", (void *)m);
+	bu_log("nmg_manifolds(%p)\n", (void *)s);
 
-    tbl = (char *)bu_calloc(m->maxindex, 1, "manifold table");
+    tbl = (char *)bu_calloc(s->maxindex, 1, "manifold table");
 
-
-    for (BU_LIST_FOR(rp, nmgregion, &m->r_hd)) {
-	NMG_CK_REGION(rp);
-	BU_LIST_LINK_CHECK(&rp->l);
-
-	for (BU_LIST_FOR(sp, shell, &rp->s_hd)) {
-
-	    NMG_CK_SHELL(sp);
-	    BU_LIST_LINK_CHECK(&sp->l);
-
-	    nmg_shell_manifolds(sp, tbl);
-
-	    /* make sure the region manifold bits are a superset
-	     * of the shell manifold bits
-	     */
-	    NMG_CP_MANIFOLD(tbl, rp, sp);
-	}
-    }
+    nmg_shell_manifolds(s, tbl);
 
     return tbl;
 }
