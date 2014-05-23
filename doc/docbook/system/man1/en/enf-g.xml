@@ -21,6 +21,7 @@
     <arg choice='opt'>-i <replaceable>starting_ident_number</replaceable></arg>
     <arg choice='opt'>-l <replaceable>name_length_limit</replaceable></arg>
     <arg choice='opt'>-n <replaceable>part_number_to_name_mapping</replaceable></arg>
+    <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>input_enf_facet_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
 </cmdsynopsis>
@@ -47,9 +48,11 @@ that limit. If a
 <emphasis remap='I'>part_number_to_name_mapping</emphasis>
 file is provided, then that file will be read and used to convert part numbers in the
 <emphasis remap='I'>input_enf_facet_file</emphasis>
-to the corresponding names in the mapping. This file is expected to consist of a series
+to the corresponding names in the mapping, and is expected to consist of a series
 of lines of text with each line having a part number and a legal BRL-CAD object name separated
-by a tab.</para>
+by a tab.
+(<emphasis remap='I'>-v</emphasis> option is provided for verbose mode.)
+</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
