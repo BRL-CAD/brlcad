@@ -844,7 +844,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     }
 
     bu_log("\toverlay %s\n", name);
-    b = (long *)bu_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fpi->fu_p->s_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
@@ -1166,7 +1166,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 
     bu_log("overlay pt_fu_parity_error.plot3\n");
 
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
