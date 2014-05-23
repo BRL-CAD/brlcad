@@ -539,22 +539,11 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
  * validate a single shell and all elements under it
  */
 void
-nmg_vsshell(const struct shell *s, const struct nmgregion *r)
+nmg_vsshell(const struct shell *s)
 {
     pointp_t lpt, hpt;
 
     NMG_CK_SHELL(s);
-    if (s->r_p != r) {
-	bu_log("shell's r_p (%8p) doesn't point to parent (%8p)\n", (void *)s->r_p, (void *)r);
-	bu_bomb("nmg_vsshell()\n");
-    }
-
-    if (!s->l.forw) {
-	bu_bomb("nmg_vshell(): Shell's forw ptr is null\n");
-    } else if (s->l.forw->back != (struct bu_list *)s) {
-	bu_log("forw shell's back(%8p) is not me (%8p)\n", (void *)s->l.forw->back, (void *)s);
-	bu_bomb("nmg_vsshell()\n");
-    }
 
     if (s->sa_p) {
 	NMG_CK_SHELL_A(s->sa_p);
@@ -580,8 +569,8 @@ nmg_vsshell(const struct shell *s, const struct nmgregion *r)
     }
 
     nmg_vfu(&s->fu_hd, s);
-    nmg_vlu(&s->lu_hd, &s->l.magic);
-    nmg_veu(&s->eu_hd, &s->l.magic);
+    nmg_vlu(&s->lu_hd, &s->magic);
+    nmg_veu(&s->eu_hd, &s->magic);
 }
 
 
@@ -589,54 +578,13 @@ nmg_vsshell(const struct shell *s, const struct nmgregion *r)
  * Validate a list of shells and all elements under them.
  */
 void
-nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
+nmg_vshell(const struct bu_list *hp)
 {
     struct shell *s;
 
-    NMG_CK_REGION(r);
-
     for (BU_LIST_FOR(s, shell, hp)) {
-	nmg_vsshell(s, r);
+	nmg_vsshell(s);
     }
-}
-
-
-/**
- * validate a list of nmgregions and all elements under them
- */
-void
-nmg_vregion(const struct bu_list *hp, const struct model *m)
-{
-    struct nmgregion *r;
-
-    for (BU_LIST_FOR(r, nmgregion, hp)) {
-	NMG_CK_REGION(r);
-	if (r->m_p != m) {
-	    bu_log("nmgregion pointer m_p %8p should be %8p\n",
-		   (void *)r->m_p, (void *)m);
-	    bu_bomb("nmg_vregion()\n");
-	}
-	if (r->ra_p) {
-	    NMG_CK_REGION_A(r->ra_p);
-	}
-
-	nmg_vshell(&r->s_hd, r);
-
-	if (BU_LIST_PNEXT_PLAST(nmgregion, r) != r) {
-	    bu_bomb("nmg_vregion() forw nmgregion's back is not me\n");
-	}
-    }
-}
-
-
-/**
- * validate an NMG model and all elements in it.
- */
-void
-nmg_vmodel(const struct model *m)
-{
-    NMG_CK_MODEL(m);
-    nmg_vregion(&m->r_hd, m);
 }
 
 
