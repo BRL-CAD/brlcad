@@ -30,15 +30,6 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-struct bu_semaphores {
-    uint32_t magic;
-    HANDLE m;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
@@ -50,21 +41,29 @@ struct bu_semaphores {
     uint32_t magic;
     mutex_t mu;
 };
-# define DEFINED_BU_SEMAPHORES 1
-#endif	/* SUNOS */
+#	define DEFINED_BU_SEMAPHORES 1
 
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAVE_PTHREAD_H
+#elif defined(HAVE_PTHREAD_H)
 #	include <pthread.h>
 struct bu_semaphores {
     uint32_t magic;
     pthread_mutex_t mu;
 };
 #	define DEFINED_BU_SEMAPHORES 1
-#endif
 
+/*
+ * multithread support based on the Windows kernel.
+ */
+#elif defined(_WIN32) && !defined(__CYGWIN__)
+struct bu_semaphores {
+    uint32_t magic;
+    CRITICAL_SECTION m;
+};
+#	define DEFINED_BU_SEMAPHORES 1
+#endif
 
 #define BU_SEMAPHORE_MAGIC 0x62757365
 
@@ -99,7 +98,7 @@ bu_semaphore_init(unsigned int nsemaphores)
      * Begin vendor-specific initialization sections.
      */
 
-#	ifdef SUNOS
+#	if defined(SUNOS)
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
@@ -108,8 +107,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	}
 
     }
-#	endif
-#	if defined(HAVE_PTHREAD_H)
+#	elif defined(HAVE_PTHREAD_H)
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
@@ -117,16 +115,12 @@ bu_semaphore_init(unsigned int nsemaphores)
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
-#	endif
-
-#	if defined(_WIN32) && !defined(__CYGWIN__)
+#	elif defined(_WIN32) && !defined(__CYGWIN__)
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	bu_semaphores[i].m = CreateMutex(NULL, FALSE, NULL);
-	if (bu_semaphores[i].m == NULL) {
-	    fprintf(stderr, "bu_semaphore_init(): CreateMutex() failed on [%d]\n", i);
-	    bu_bomb("fatal semaphore acquisition failure");
-	}
+	
+	/* This cannot fail except for very low memory situations in XP. */
+	InitializeCriticalSection(&bu_semaphores[i].m);
     }
 #	endif
 
@@ -142,7 +136,30 @@ bu_semaphore_init(unsigned int nsemaphores)
 
 void
 bu_semaphore_free() {
+    unsigned int i;
+
     if (bu_semaphores) {
+	/* Close out the mutexes already created. */
+#	if defined(SUNOS)
+	for (i = 0; i < bu_nsemaphores; i++) {
+	    if (mutex_destroy(&bu_semaphores[i].mu)) {
+		fprintf(stderr, "bu_semaphore_free(): mutex_destroy() failed on [%d]\n", i);
+	    }
+	}
+
+#	elif defined(HAVE_PTHREAD_H)
+	for (i = 0; i < bu_nsemaphores; i++) {
+	    if (pthread_mutex_destroy(&bu_semaphores[i].mu)) {
+		fprintf(stderr, "bu_semaphore_free(): pthread_mutex_destroy() failed on [%d]\n", i);
+	    }
+	}
+
+#	elif defined(_WIN32) && !defined(__CYGWIN__)
+	for (i = 0; i < bu_nsemaphores; i++) {
+	    DeleteCriticalSection(&bu_semaphores[i].m);
+	}
+#	endif
+
 	free(bu_semaphores);
 	bu_semaphores = (struct bu_semaphores *)NULL;
 	bu_nsemaphores = 0;
@@ -205,10 +222,8 @@ bu_semaphore_acquire(unsigned int i)
     }
 #	endif
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    if (WaitForSingleObject(bu_semaphores[i].m, INFINITE) == WAIT_FAILED) {
-	fprintf(stderr, "bu_semaphore_acquire(): WaitForSingleObject() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
-    }
+    /* This only fails if the timeout exceeds 30 days. */
+    EnterCriticalSection(&bu_semaphores[i].m);
 #	endif
 
 #endif
@@ -216,7 +231,7 @@ bu_semaphore_acquire(unsigned int i)
 
 
 void
-bu_semaphore_release(unsigned int i)
+bu_semaphore_release(unsigned int i)	
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     i = i; /* quellage */
@@ -255,10 +270,7 @@ bu_semaphore_release(unsigned int i)
 #	endif
 
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    if (!ReleaseMutex(bu_semaphores[i].m)) {
-	fprintf(stderr, "bu_semaphore_acquire(): ReleaseMutex() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
-    }
+    LeaveCriticalSection(&bu_semaphores[i].m);
 #	endif
 #endif
 }
