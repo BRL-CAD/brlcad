@@ -3,6 +3,8 @@ package CParse;
 use strict;
 use warnings;
 
+use ParseCChunk;
+
 our @keys
   = (
      'typedef',
@@ -252,6 +254,12 @@ sub extract_object {
     push @olines, $line;
   }
 
+  if (1) {
+    # try Parse::RecDescent instead of my kludges below
+    ParseCChunk::parse_chunk(\@olines);
+    return;
+  }
+
   my $norig_lines = $last_index - $first_index + 1;
 
   # do some rudimentary analysis
@@ -285,6 +293,7 @@ sub extract_object {
   # get new length
   $s = $ss;
   $slen = length $s;
+
 
   # track '{}', '()', '[]' first and last positions
   my $cfirst   = -1; # curly braces

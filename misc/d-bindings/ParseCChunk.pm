@@ -17,7 +17,8 @@ sub parse_chunk {
   my $grammar = <DATA>;
   my $parser = Parse::RecDescent->new($grammar);
 
-  my $parse_tree = $parser->translation_unit($text) or die "bad C code";
+  my $parse_tree = $parser->statement_list($text)
+    or die "bad C code";
 
   use Data::Dumper 'Dumper';
   warn Dumper [ $parse_tree ];
