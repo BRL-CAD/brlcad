@@ -35,56 +35,6 @@
 #include "raytrace.h"
 
 
-static struct nmgregion_a *
-nmg_construct_region_a(const struct nmgregion_a *original, genptr_t *structArray)
-{
-    struct nmgregion_a *ret;
-
-    NMG_GETSTRUCT(ret, nmgregion_a);
-
-    ret->magic = NMG_REGION_A_MAGIC;
-
-    VMOVE(ret->min_pt, original->min_pt);
-    VMOVE(ret->max_pt, original->max_pt);
-
-    ret->index              = original->index;
-    structArray[ret->index] = ret;
-
-    return ret;
-}
-
-
-static struct nmgregion *
-nmg_construct_region(struct model *parent, const struct nmgregion *original, genptr_t *structArray)
-{
-    struct nmgregion *ret;
-
-    NMG_GETSTRUCT(ret, nmgregion);
-
-    ret->l.magic = NMG_REGION_MAGIC;
-    ret->m_p     = parent;
-    ret->ra_p    = (struct nmgregion_a *)NULL;
-
-    BU_LIST_INIT(&ret->s_hd);
-
-    ret->index              = original->index;
-    structArray[ret->index] = ret;
-
-    if (original->ra_p != NULL) {
-	const struct nmgregion_a *originalAttributes = original->ra_p;
-	struct nmgregion_a *newAttributes
-	    = (struct nmgregion_a *)structArray[originalAttributes->index];
-
-	if (newAttributes == NULL)
-	    newAttributes = nmg_construct_region_a(originalAttributes, structArray);
-
-	ret->ra_p = newAttributes;
-    }
-
-    return ret;
-}
-
-
 static struct face_g_plane *
 nmg_construct_face_g_plane(const struct face_g_plane *original, genptr_t *structArray)
 {
@@ -638,7 +588,7 @@ nmg_construct_shell_a(const struct shell_a *original, genptr_t *structArray)
 
 
 static struct shell *
-nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genptr_t *structArray)
+nmg_construct_shell(const struct shell *original, genptr_t *structArray)
 {
     struct shell         *ret;
     const struct faceuse *originalFaceUse;
@@ -647,8 +597,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 
     NMG_GETSTRUCT(ret, shell);
 
-    ret->l.magic = NMG_SHELL_MAGIC;
-    ret->r_p     = parent;
+    ret->magic = NMG_SHELL_MAGIC;
     ret->sa_p    = (struct shell_a *)NULL;
 
     BU_LIST_INIT(&ret->fu_hd);
@@ -657,6 +606,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 
     ret->vu_p               = (struct vertexuse *) NULL;
     ret->index              = original->index;
+    ret->maxindex = original->maxindex;
     structArray[ret->index] = ret;
 
     if (original->sa_p != NULL) {
@@ -708,19 +658,19 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 
 
 /**
- * Makes a deep copy of a NMG model structure.
+ * Makes a deep copy of a NMG shell structure.
  */
-struct model *
-nmg_clone_model(const struct model *original)
+struct shell *
+nmg_clone_shell(const struct shell *original)
 {
-    struct model           *ret;
+    struct shell           *ret;
     genptr_t               *structArray;
     const struct nmgregion *originalRegion;
     struct bn_tol           tolerance;
 
     NMG_CK_MODEL(original);
 
-    structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_model() structArray");
+    structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
 
     ret = nmg_mm();
     ret->index    = original->index;
@@ -734,28 +684,9 @@ nmg_clone_model(const struct model *original)
     tolerance.perp    = 1e-6;
     tolerance.para    = 1 - tolerance.perp;
 
-    for (BU_LIST_FOR(originalRegion, nmgregion, &original->r_hd)) {
-	struct nmgregion *newRegion = (struct nmgregion *)structArray[originalRegion->index];
+    ret = (struct shell *)structArray[original->index];
 
-	if (newRegion == NULL) {
-	    const struct shell *originalShell;
-
-	    newRegion = nmg_construct_region(ret, originalRegion, structArray);
-
-	    for (BU_LIST_FOR(originalShell, shell, &originalRegion->s_hd)) {
-		struct shell *newShell = (struct shell *)structArray[originalShell->index];
-
-		if (newShell == NULL)
-		    newShell = nmg_construct_shell(newRegion, originalShell, structArray);
-
-		BU_LIST_INSERT(&newRegion->s_hd, &newShell->l);
-	    }
-
-	    BU_LIST_INSERT(&ret->r_hd, &newRegion->l);
-	}
-    }
-
-    bu_free(structArray, "nmg_clone_model() structArray");
+    bu_free(structArray, "nmg_clone_shell() structArray");
 
     return ret;
 }
