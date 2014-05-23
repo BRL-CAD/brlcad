@@ -181,6 +181,191 @@ rt_intern_struct_size(int type) {
     return 0;
 }
 
+
+HIDDEN int
+tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)
+{
+    int i = 0;
+    int list_c = 0;
+    const char **listv = (const char **)NULL;
+
+    if (Tcl_SplitList(NULL, tcl_list, &list_c, (const char ***)&listv) != TCL_OK) {
+	return -1;
+    }
+
+    if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
+
+    if (!list_c) {
+	Tcl_Free((char *)listv);
+	return 0;
+    }
+
+    for (i = offset; i < list_c; i += 2) {
+	(void)bu_avs_add(avs, listv[i], listv[i+1]);
+    }
+
+    Tcl_Free((char *)listv);
+    return 0;
+}
+
+/* TODO - this should be a function somewhere, is it already? */
+HIDDEN const char *
+arb_type_to_str(int type) {
+    switch (type) {
+	case 4:
+	    return "arb4";
+	    break;
+	case 5:
+	    return "arb5";
+	    break;
+	case 6:
+	    return "arb6";
+	    break;
+	case 7:
+	    return "arb7";
+	    break;
+	case 8:
+	    return "arb8";
+	    break;
+	default:
+	    return NULL;
+	    break;
+    }
+    return NULL;
+}
+HIDDEN const char *
+type_to_str(const struct rt_db_internal *obj, int arb_type) {
+    if (arb_type) return arb_type_to_str(arb_type);
+    return obj->idb_meth->ft_label;
+}
+
+
+void
+diff_init_result(struct diff_result **result, const struct bn_tol *curr_diff_tol, const char *obj_name)
+{
+    if (!result) return;
+    BU_GET(*result, struct diff_result);
+    if (obj_name) {
+	(*result)->obj_name = bu_strdup(obj_name);
+    } else {
+	(*result)->obj_name = NULL;
+    }
+    (*result)->param_state = 0;
+    (*result)->attr_state = 0;
+    BU_GET((*result)->diff_tol, struct bn_tol);
+    if (curr_diff_tol) {
+	(*result)->diff_tol->magic = BN_TOL_MAGIC;
+	(*result)->diff_tol->dist = curr_diff_tol->dist;
+	(*result)->diff_tol->dist_sq = curr_diff_tol->dist_sq;
+	(*result)->diff_tol->perp = curr_diff_tol->perp;
+	(*result)->diff_tol->para = curr_diff_tol->para;
+    } else {
+	BN_TOL_INIT((*result)->diff_tol);
+    }
+    BU_GET((*result)->left_param_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->right_param_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->left_attr_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->right_attr_avs, struct bu_attribute_value_set);
+    BU_AVS_INIT((*result)->left_param_avs);
+    BU_AVS_INIT((*result)->right_param_avs);
+    BU_AVS_INIT((*result)->left_attr_avs);
+    BU_AVS_INIT((*result)->right_attr_avs);
+}
+
+
+void
+diff_free_result(struct diff_result *result)
+{
+    if (result->obj_name) {
+	bu_free(result->obj_name, "free name copy in diff result");
+    }
+    bu_avs_free(result->left_param_avs);
+    bu_avs_free(result->right_param_avs);
+    bu_avs_free(result->left_attr_avs);
+    bu_avs_free(result->right_attr_avs);
+    BU_PUT(result->diff_tol, struct bn_tol);
+    BU_PUT(result->left_param_avs, struct bu_attribute_value_set);
+    BU_PUT(result->right_param_avs, struct bu_attribute_value_set);
+    BU_PUT(result->left_attr_avs, struct bu_attribute_value_set);
+    BU_PUT(result->right_attr_avs, struct bu_attribute_value_set);
+    BU_PUT(result, struct diff_result);
+}
+
+HIDDEN int
+avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
+{
+    /* We need to look for numbers to do tolerance based comparisons */
+    int num_compare = 1;
+    int pnt_compare = 1;
+    double dval1, dval2;
+    float p1val1, p1val2, p1val3;
+    float p2val1, p2val2, p2val3;
+    char *endptr;
+
+    /* First, check for individual numbers */
+    errno = 0;
+    dval1 = strtod(val1, &endptr);
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
+    errno = 0;
+    dval2 = strtod(val2, &endptr);
+    if (errno == EINVAL || *endptr != '\0') num_compare--;
+
+    /* If we didn't find numbers, try for points (3 floating point numbers) */
+    if (num_compare != 1) {
+	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
+	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
+    }
+
+    if (num_compare == 1) {
+	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
+    }
+    if (pnt_compare == 1) {
+	vect_t v1, v2;
+	VSET(v1, p1val1, p1val2, p1val3);
+	VSET(v2, p2val1, p2val2, p2val3);
+	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
+    }
+    return BU_STR_EQUAL(val1, val2);
+}
+
+int
+db_avs_diff(const struct bu_attribute_value_set *left_set,
+	    const struct bu_attribute_value_set *right_set,
+            const struct bn_tol *diff_tol,
+	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
+	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
+	    void *client_data)
+{
+    int state = DIFF_EMPTY;
+    struct bu_attribute_value_pair *avp;
+    for (BU_AVS_FOR(avp, left_set)) {
+	const char *val2 = bu_avs_get(right_set, avp->name);
+	if (!val2) {
+	    if (del_func) {del_func(avp->name, avp->value, client_data);}
+	    state |= DIFF_REMOVED;
+	} else {
+	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
+		if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
+		state |= DIFF_UNCHANGED;
+	    } else {
+		if (chgd_func) {chgd_func(avp->name, avp->value, val2, client_data);}
+		state |= DIFF_CHANGED;
+	    }
+	}
+    }
+    for (BU_AVS_FOR(avp, right_set)) {
+	const char *val1 = bu_avs_get(left_set, avp->name);
+	if (!val1) {
+	    if (add_func) {add_func(avp->name, avp->value, client_data);}
+	    state |= DIFF_ADDED;
+	}
+    }
+    return state;
+}
+
+
 HIDDEN int
 db_diff_external(const struct bu_external *ext1, const struct bu_external *ext2)
 {
@@ -193,90 +378,285 @@ db_diff_external(const struct bu_external *ext1, const struct bu_external *ext2)
     return 0;
 }
 
+struct diff_elements {
+    int bin_obj;
+    struct rt_db_internal *intern;
+    int bin_params;
+    void *idb_ptr;
+    struct bu_attribute_value_set *params;
+    struct bu_attribute_value_set *attrs;
+};
+
+HIDDEN void
+get_diff_components(struct diff_elements *el, const struct db_i *dbip, const struct directory *dp)
+{
+    el->idb_ptr = NULL;
+    el->bin_params = 0;
+    el->bin_obj = 0;
+    el->intern = NULL;
+
+    BU_GET(el->attrs, struct bu_attribute_value_set);
+    BU_AVS_INIT(el->attrs);
+    BU_GET(el->params, struct bu_attribute_value_set);
+    BU_AVS_INIT(el->params);
+
+    if (!dp) return;
+
+    /* Deal with attribute-only objects, since they're "special" */
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	struct bu_external dp_ext;
+	struct db5_raw_internal dp_raw;
+	BU_EXTERNAL_INIT(&dp_ext);
+	if (db_get_external(&dp_ext, dp, dbip) < 0 || db5_get_raw_internal_ptr(&dp_raw, dp_ext.ext_buf) == NULL) {
+	    bu_free_external(&dp_ext);
+	    el->bin_obj = 1;
+	    return;
+	}
+	/* Parse out the attributes */
+	if (db5_import_attributes(el->attrs, &dp_raw.attributes) < 0) {
+	    bu_free_external(&dp_ext);
+	    el->bin_obj = 1;
+	    return;
+	}
+	return;
+    }
+
+    /* Now deal with more normal objects */
+    BU_GET(el->intern, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(el->intern);
+    if (rt_db_get_internal(el->intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	/* Arrgh - No internal representation */
+	rt_db_free_internal(el->intern);
+	BU_PUT(el->intern, struct rt_db_internal);
+	el->intern = NULL;
+	el->bin_obj = 1;
+	return;
+    } else {
+	struct bu_vls s_tcl = BU_VLS_INIT_ZERO;
+	int have_tcl = 1;
+
+	el->idb_ptr = el->intern->idb_ptr;
+
+	/* object type isn't a normal parameter attribute, so add it as such */
+	if (el->intern->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
+	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    bu_avs_add(el->params, "DB5_MINORTYPE", type_to_str(el->intern, rt_arb_std_type(el->intern, &arb_tol)));
+	} else {
+	    bu_avs_add(el->params, "DB5_MINORTYPE", el->intern->idb_meth->ft_label);
+	}
+
+	/* Convert the rest of the params to attributes, if possible */
+	bu_vls_trunc(&s_tcl, 0);
+	if (el->intern->idb_meth->ft_get(&s_tcl, el->intern, NULL) == BRLCAD_ERROR) have_tcl = 0;
+	if (!have_tcl || tcl_list_to_avs(bu_vls_addr(&s_tcl), el->params, 1)) have_tcl = 0;
+	if (!have_tcl) {
+	    el->bin_params = 1;
+	}
+	bu_vls_free(&s_tcl);
+
+	/* Pick up the extra attributes */
+	if (el->intern->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_merge(el->attrs, &(el->intern->idb_avs));
+	}
+
+    }
+}
+
+HIDDEN void
+free_diff_components(struct diff_elements *el)
+{
+    bu_avs_free(el->attrs);
+    bu_avs_free(el->params);
+    BU_PUT(el->attrs, struct bu_attribute_value_set);
+    BU_PUT(el->params, struct bu_attribute_value_set);
+    if (el->intern) {
+	rt_db_free_internal(el->intern);
+	BU_PUT(el->intern, struct rt_db_internal);
+    }
+}
+
+int
+db_diff_dp(const struct db_i *left,
+	const struct db_i *right,
+	const struct directory *left_dp,
+       	const struct directory *right_dp,
+       	const struct bn_tol *diff_tol,
+       	db_compare_criteria_t flags,
+	struct diff_result *ext_result)
+{
+    int state = DIFF_EMPTY;
+
+    struct diff_elements left_components;
+    struct diff_elements right_components;
+
+    struct diff_result *result = NULL;
+
+    if (!left_dp && !right_dp) {
+	return -1;
+    }
+
+    /* If we aren't populating a result struct for the
+     * caller, use a local copy to keep the code simple */
+    if (!ext_result) {
+	diff_init_result(&result, diff_tol, "tmp");
+    } else {
+	result = ext_result;
+    }
+    result->param_state = DIFF_EMPTY;
+    result->attr_state = DIFF_EMPTY;
+
+    get_diff_components(&left_components, left, left_dp);
+    get_diff_components(&right_components, right, right_dp);
+
+
+    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+
+	if (diff_tol) {
+	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, NULL, NULL, NULL, NULL, NULL);
+	}
+	/*compare the idb_ptr memory.*/
+	if (left_components.bin_params && right_components.bin_params && left_components.idb_ptr && right_components.idb_ptr) {
+	    if (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type) {
+		int memsize = rt_intern_struct_size(left_components.intern->idb_minor_type);
+		if (memcmp((void *)left_components.idb_ptr, (void *)right_components.idb_ptr, memsize)) {
+		    result->param_state |= DIFF_CHANGED;
+		    bu_avs_add(result->left_param_avs, "params_binary", "BINARY_ORIG");
+		    bu_avs_add(result->right_param_avs, "params_binary", "BINARY_NEW");
+
+		} else {
+		    result->param_state |= DIFF_UNCHANGED;
+		    bu_avs_add(result->left_param_avs, "params_binary", "BINARY_ORIG");
+		    bu_avs_add(result->right_param_avs, "params_binary", "BINARY_ORIG");
+		}
+	    }
+	}
+    }
+
+    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, NULL, NULL, NULL, NULL, NULL);
+    }
+
+    free_diff_components(&left_components);
+    free_diff_components(&right_components);
+
+    state |= result->param_state;
+    state |= result->attr_state;
+
+    if (!ext_result) {
+	diff_free_result(result);
+	BU_PUT(result, struct diff_result);
+    }
+
+    return state;
+}
+
 int
 db_diff(const struct db_i *dbip1,
 	const struct db_i *dbip2,
-	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added, void *data),
-	int (*del_func)(const struct db_i *left, const struct db_i *right, const struct directory *removed, void *data),
-	int (*chgd_func)(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data),
-	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
-	void *client_data)
+	const struct bn_tol *diff_tol,
+	db_compare_criteria_t flags,
+	struct bu_ptbl *results)
 {
-    int ret = 0;
-    int error = 0;
+    int param_state = DIFF_UNCHANGED;
+    int attr_state = DIFF_UNCHANGED;
+    int state = DIFF_UNCHANGED;
     struct directory *dp1, *dp2;
-    struct bu_external ext1, ext2;
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
-	int this_diff = 0;
-#if 0
-	/* skip the _GLOBAL object for now - need to deal with this, however */
-	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	    continue;
-	}
-#endif
-	/* check if this object exists in the other database */
-	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
-	    this_diff++;
-	    if (del_func && del_func(dbip1, dbip2, dp1, client_data)) error--;
-	    continue;
+	struct bu_external ext1, ext2;
+	int extern_state = DIFF_UNCHANGED;
+	struct diff_result *result = NULL;
+	diff_init_result(&result, diff_tol, dp1->d_namep);
+
+	/* determine the status of this object in the other database */
+	dp2 = db_lookup(dbip2, dp1->d_namep, 0);
+
+	/* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
+	if (flags == DB_COMPARE_ALL) {
+	    if (db_get_external(&ext1, dp1, dbip1) || db_get_external(&ext2, dp2, dbip2)) {
+		bu_log("Warning - Error getting bu_external form when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
+	    } else {
+		if (db_diff_external(&ext1, &ext2)) {extern_state = DIFF_CHANGED;}
+	    }
 	}
 
-	/* Check if the objects differ */
-	if (db_get_external(&ext1, dp1, dbip1) || db_get_external(&ext2, dp2, dbip2)) {
-	    bu_log("Error getting bu_external form when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
-	    error--;
-	    continue;
+	/* Do internal diffs */
+	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+	    param_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
+	}
+	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+	    attr_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
+	}
+	state |= param_state;
+	state |= attr_state;
+	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
+	    bu_log("Warning - internal comparsion and bu_external comparison disagree when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
+
 	}
 
-	if (db_diff_external(&ext1, &ext2)) {
-	    this_diff++;
-	    if (chgd_func && chgd_func(dbip1, dbip2, dp1, dp2, client_data)) error--;
+	if (results) {
+	    bu_ptbl_ins(results, (long *)result);
 	} else {
-	    if (unch_func && unch_func(dbip1, dbip2, dp1, client_data)) error--;
+	    diff_free_result(result);
+	    BU_PUT(result, struct diff_result);
 	}
-
-	ret += this_diff;
 
     } FOR_ALL_DIRECTORY_END;
 
     /* now look for objects in the other database that aren't here */
     FOR_ALL_DIRECTORY_START(dp2, dbip2) {
-	int this_diff = 0;
 
-#if 0
-	/* skip the _GLOBAL object for now - need to deal with this, however */
-	if (dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	    continue;
+	/* determine the status of this object in the other database */
+	dp1 = db_lookup(dbip1, dp2->d_namep, 0);
+
+	/* By this point, any differences will be additions */
+	if (dp1 == RT_DIR_NULL) {
+	    struct diff_result *result = NULL;
+	    diff_init_result(&result, diff_tol, dp2->d_namep);
+
+	    /* Do internal diffs */
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+		param_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
+	    }
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+		attr_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
+	    }
+	    state |= param_state;
+	    state |= attr_state;
+
+	    if (results) {
+		bu_ptbl_ins(results, (long *)result);
+	    } else {
+		diff_free_result(result);
+		BU_PUT(result, struct diff_result);
+	    }
+
 	}
-#endif
-
-	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
-	    this_diff++;
-	    if (add_func && add_func(dbip1, dbip2, dp2, client_data)) error--;
-	}
-
-	ret += this_diff;
 
     } FOR_ALL_DIRECTORY_END;
 
-    if (!error) {
-    	return ret;
-    } else {
-	return error;
-    }
+    return state;
 }
 
+#if 0
 int
-db_diff3(const struct db_i *left,
-	const struct db_i *ancestor,
-	const struct db_i *right,
-	int (*add_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*del_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*chgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*unchgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
+db_diff3(const struct db_i *dbip_left,
+	const struct db_i *dbip_ancestor,
+	const struct db_i *dbip_right,
+	const struct bn_tol *diff_tol,
+	db_compare_criteria_t flags,
+	int (*client_func)(const struct db_i *left_dbip,
+	                   const struct db_i *ancestor_dbip,
+			   const struct db_i *right_dbip,
+			   const struct directory *left,
+			   const struct directory *ancestor,
+			   const struct directory *right,
+			   int param_state,
+			   int attr_state,
+			   const struct bn_tol *diff_tol,
+			   db_compare_criteria_t flags,
+			   void *data),
 	void *client_data)
 {
     int has_diff = 0;
@@ -391,78 +771,6 @@ db_diff3(const struct db_i *left,
 }
 
 
-HIDDEN int
-avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
-{
-    /* We need to look for numbers to do tolerance based comparisons */
-    int num_compare = 1;
-    int pnt_compare = 1;
-    double dval1, dval2;
-    float p1val1, p1val2, p1val3;
-    float p2val1, p2val2, p2val3;
-    char *endptr;
-
-    /* First, check for individual numbers */
-    errno = 0;
-    dval1 = strtod(val1, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
-    errno = 0;
-    dval2 = strtod(val2, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
-
-    /* If we didn't find numbers, try for points (3 floating point numbers) */
-    if (num_compare != 1) {
-	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
-	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
-    }
-
-    if (num_compare == 1) {
-	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
-    }
-    if (pnt_compare == 1) {
-	vect_t v1, v2;
-	VSET(v1, p1val1, p1val2, p1val3);
-	VSET(v2, p2val1, p2val2, p2val3);
-	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
-    }
-    return BU_STR_EQUAL(val1, val2);
-}
-
-int
-db_avs_diff(const struct bu_attribute_value_set *left_set,
-	    const struct bu_attribute_value_set *right_set,
-	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
-	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
-	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
-	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
-	    const struct bn_tol *diff_tol,
-	    void *client_data)
-{
-    int state = DIFF_UNCHANGED;
-    struct bu_attribute_value_pair *avp;
-    for (BU_AVS_FOR(avp, left_set)) {
-	const char *val2 = bu_avs_get(right_set, avp->name);
-	if (!val2) {
-	    if (del_func) {del_func(avp->name, avp->value, client_data);}
-	    state |= DIFF_REMOVED;
-	} else {
-	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
-		if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
-	    } else {
-		if (chgd_func) {chgd_func(avp->name, avp->value, val2, client_data);}
-		state |= DIFF_CHANGED;
-	    }
-	}
-    }
-    for (BU_AVS_FOR(avp, right_set)) {
-	const char *val1 = bu_avs_get(left_set, avp->name);
-	if (!val1) {
-	    if (add_func) {add_func(avp->name, avp->value, client_data);}
-	    state |= DIFF_ADDED;
-	}
-    }
-    return state;
-}
 
 
 /*******************************************************************/
@@ -681,156 +989,20 @@ bu_avs_diff3(struct bu_attribute_value_set *unchanged,
     return (have_diff) ? 1 : 0;
 }
 
-
-HIDDEN int
-tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)
-{
-    int i = 0;
-    int list_c = 0;
-    const char **listv = (const char **)NULL;
-
-    if (Tcl_SplitList(NULL, tcl_list, &list_c, (const char ***)&listv) != TCL_OK) {
-	return -1;
-    }
-
-    if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
-
-    if (!list_c) {
-	Tcl_Free((char *)listv);
-	return 0;
-    }
-
-    for (i = offset; i < list_c; i += 2) {
-	(void)bu_avs_add(avs, listv[i], listv[i+1]);
-    }
-
-    Tcl_Free((char *)listv);
-    return 0;
-}
-
-/* TODO - this should be a function somewhere, is it already? */
-HIDDEN const char *
-arb_type_to_str(int type) {
-    switch (type) {
-	case 4:
-	    return "arb4";
-	    break;
-	case 5:
-	    return "arb5";
-	    break;
-	case 6:
-	    return "arb6";
-	    break;
-	case 7:
-	    return "arb7";
-	    break;
-	case 8:
-	    return "arb8";
-	    break;
-	default:
-	    return NULL;
-	    break;
-    }
-    return NULL;
-}
-
-int
-db_compare(const struct rt_db_internal *left_obj,
-	const struct rt_db_internal *right_obj,
-	int (*add_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	int (*del_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	int (*chgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	int (*unchgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	db_compare_criteria_t flags,
-	void *client_data)
-{
-    int do_all = 0;
-    int state = DIFF_UNCHANGED;
-    int param_state = DIFF_UNCHANGED;
-    int attr_state = DIFF_UNCHANGED;
-
-    if (!left_obj && !right_obj) return -1;
-
-    if (left_obj && !right_obj) {
-	param_state |= DIFF_REMOVED;
-	attr_state |= DIFF_REMOVED;
-	state |= DIFF_REMOVED;
-    }
-    if (!left_obj && right_obj) {
-	param_state |= DIFF_ADDED;
-	attr_state |= DIFF_ADDED;
-	state |= DIFF_ADDED;
-    }
-
-    if (flags == DB_COMPARE_ALL) do_all = 1;
-
-    if ((flags == DB_COMPARE_PARAM || do_all) && (left_obj && right_obj) && (param_state == DIFF_UNCHANGED)) {
-	/* Type is a valid basis on which to declare a DB_COMPARE_PARAM difference event,
-	 * but as a single value in the rt_<type>_get return it does not fit neatly into
-	 * the attribute/value paradigm used for the majority of the comparisons.  For
-	 * this reason, we handle it specially using the lower level database type
-	 * information directly.
-	 */
-	if (left_obj->idb_minor_type != right_obj->idb_minor_type) {
-	    param_state |= DIFF_CHANGED;
-	} else {
-	    if (left_obj->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-		int arb_type_1 = rt_arb_std_type(left_obj, &arb_tol);
-		int arb_type_2 = rt_arb_std_type(right_obj, &arb_tol);
-		if (arb_type_1 != arb_type_2) {
-		    param_state |= DIFF_CHANGED;
-		}
-	    }
-	}
-
-	/* Compare the idb_ptr memory, if we aren't already sure we've changed. */
-	if (!param_state) {
-	    int memsize = rt_intern_struct_size(left_obj->idb_minor_type);
-	    if (memcmp((void *)left_obj->idb_ptr, (void *)right_obj->idb_ptr, memsize)) {
-		param_state |= DIFF_CHANGED;
-	    }
-	}
-    }
-
-    if ((flags == DB_COMPARE_ATTRS || do_all) && (left_obj && right_obj) && (param_state == DIFF_UNCHANGED)) {
-	if (left_obj->idb_avs.magic == BU_AVS_MAGIC && right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-	    struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-	    attr_state |= db_avs_diff(&left_obj->idb_avs, &right_obj->idb_avs, NULL, NULL, NULL, NULL, &diff_tol, NULL);
-	} else {
-	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_REMOVED;}
-	    if (right_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_ADDED;}
-	}
-    }
-
-    state |= param_state;
-    state |= attr_state;
-
-    /* We know enough now to identify the state of the diff - if we also have user functions, call them now */
-    if ((state & DIFF_ADDED) && add_func) add_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
-    if ((state & DIFF_REMOVED) && del_func) del_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
-    if ((state & DIFF_CHANGED) && chgd_func) chgd_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
-    if ((state == DIFF_UNCHANGED) && unchgd_func) unchgd_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
-    return state;
-}
-
-#if 0
-HIDDEN const char *
-type_to_str(const struct rt_db_internal *obj, int arb_type) {
-    if (arb_type) return arb_type_to_str(arb_type);
-    return obj->idb_meth->ft_label;
-}
-#endif
-
 int
 db_compare3(const struct rt_db_internal *left,
 	    const struct rt_db_internal *ancestor,
 	    const struct rt_db_internal *right,
-	    int (*add_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	    int (*del_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	    int (*chgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
-	    int (*unchgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	    const struct bn_tol *diff_tol,
 	    db_compare_criteria_t flags,
+	    int (*client_func)(const struct rt_db_internal *left_obj,
+	                     const struct rt_db_internal *ancestor_obj,
+			     const struct rt_db_internal *right_obj,
+			     int param_state,
+			     int attr_state,
+			     const struct bn_tol *diff_tol,
+			     db_compare_criteria_t flags,
+			     void *data),
 	    void *client_data)
 {
     int do_all = 0;
@@ -980,6 +1152,7 @@ db_compare3(const struct rt_db_internal *left,
     return state;
 
 }
+#endif
 
 
 /*
