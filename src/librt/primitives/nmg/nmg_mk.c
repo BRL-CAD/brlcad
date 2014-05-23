@@ -243,7 +243,7 @@ nmg_ms(void)
     BU_LIST_INIT(&s->eu_hd);
     s->magic = NMG_SHELL_MAGIC;
     s->sa_p = (struct shell_a *)NULL;
-    s->vu_p = (struct vertexuse *)NULL
+    s->vu_p = (struct vertexuse *)NULL;
     s->manifolds = (char *)NULL;
     s->index = 0;
     s->maxindex = 1;
@@ -353,7 +353,7 @@ nmg_msv()
     struct vertexuse *vu;
 
     s = nmg_ms();
-    vu = nmg_mvvu(&s->l.magic, s);
+    vu = nmg_mvvu(&s->magic, s);
 
     s->vu_p = vu;
 
@@ -485,6 +485,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     struct loopuse *lu1, *lu2;
     struct vertexuse *vu1 = NULL;
     struct vertexuse *vu2;
+    struct shell *s;
 
     /* XXX - why the new union? ctj */
     union {
@@ -499,6 +500,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	NMG_CK_VERTEX(v);
     }
 
+    s = nmg_find_shell(magic);
     GET_LOOP(l, s);
     GET_LOOPUSE(lu1, s);
     GET_LOOPUSE(lu2, s);
@@ -615,7 +617,6 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     if (v2) NMG_CK_VERTEX(v2);
     NMG_CK_SHELL(s);
 
-    m = nmg_find_model(&s->l.magic);
     GET_EDGE(e, s);
     GET_EDGEUSE(eu1, s);
     GET_EDGEUSE(eu2, s);
@@ -844,7 +845,7 @@ nmg_ml(struct shell *s)
     if (BU_LIST_IS_EMPTY(&s->eu_hd) && s->vu_p) {
 	NMG_CK_VERTEXUSE(s->vu_p);
 	NMG_CK_VERTEX(s->vu_p->v_p);
-	lu1 = nmg_mlv(&s->l.magic, s->vu_p->v_p, OT_UNSPEC);
+	lu1 = nmg_mlv(&s->magic, s->vu_p->v_p, OT_UNSPEC);
 	/* (void) nmg_kvu(s->vu_p); */
 
 	if (RTG.NMG_debug & DEBUG_BASIC) {
@@ -1450,15 +1451,10 @@ nmg_keu(register struct edgeuse *eu1)
 int
 nmg_ks(struct shell *s)
 {
-    struct nmgregion *r;
-
     if (!s)
 	return 0;
 
     NMG_CK_SHELL(s);
-    r = s->r_p;
-    if (r)
-	NMG_CK_REGION(r);
 
     while (BU_LIST_NON_EMPTY(&s->fu_hd))
 	(void)nmg_kfu(BU_LIST_FIRST(faceuse, &s->fu_hd));
@@ -1468,8 +1464,6 @@ nmg_ks(struct shell *s)
 	(void)nmg_keu(BU_LIST_FIRST(edgeuse, &s->eu_hd));
     if (s->vu_p)
 	nmg_kvu(s->vu_p);
-
-    BU_LIST_DEQUEUE(&s->l);
 
     if (s->sa_p) {
 	FREE_SHELL_A(s->sa_p);
@@ -1485,9 +1479,6 @@ nmg_ks(struct shell *s)
     }
 
     FREE_SHELL(s);
-
-    if (r && BU_LIST_IS_EMPTY(&r->s_hd))
-	return 1;
 
     return 0;
 }
@@ -1604,7 +1595,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
     NMG_CK_EDGEUSE(vu->up.eu_p);
     if (vu->up.eu_p->g.magic_p) NMG_CK_EDGE_G_CNURB(vu->up.eu_p->g.cnurb_p);
 
-    m = nmg_find_model(&vu->l.magic);
+    s = nmg_find_shell(&vu->l.magic);
     GET_VERTEXUSE_A_CNURB(vua, s);
     VMOVE(vua->param, uvw);
     vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
@@ -2008,7 +1999,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	NMG_CK_LOOP_G(lg);
     } else {
 	s = nmg_find_shell(lu->up.magic_p);
-	GET_LOOP_G(l->lg_p, m);
+	GET_LOOP_G(l->lg_p, s);
 	lg = l->lg_p;
 	lg->magic = NMG_LOOP_G_MAGIC;
     }
@@ -2090,7 +2081,7 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
 	/* Face already has face_g_plane associated with it */
 	NMG_CK_FACE_G_PLANE(fg);
     } else {
-	m = nmg_find_shell(&fu->l.magic);
+	s = nmg_find_shell(&fu->l.magic);
 	GET_FACE_G_PLANE(f->g.plane_p, s);
 	f->flip = 0;
 	fg = f->g.plane_p;
@@ -2487,12 +2478,12 @@ nmg_demote_eu(struct edgeuse *eu)
     NMG_CK_EDGEUSE(eu);
     v = eu->vu_p->v_p;
     if (!nmg_is_vertex_a_selfloop_in_shell(v, s))
-	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
+	(void)nmg_mlv(&s->magic, v, OT_SAME);
 
     NMG_CK_EDGEUSE(eu->eumate_p);
     v = eu->eumate_p->vu_p->v_p;
     if (!nmg_is_vertex_a_selfloop_in_shell(v, s))
-	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
+	(void)nmg_mlv(&s->magic, v, OT_SAME);
 
     tmp = (size_t)eu;
     (void)nmg_keu(eu);
@@ -2666,7 +2657,7 @@ nmg_unglueedge(struct edgeuse *eu)
 {
     struct edge *old_e;
     struct edge *new_e;
-    struct shelll *s;
+    struct shell *s;
 
     NMG_CK_EDGEUSE(eu);
     old_e = eu->e_p;
@@ -2681,7 +2672,7 @@ nmg_unglueedge(struct edgeuse *eu)
     }
 
     s = nmg_find_shell(&eu->l.magic);
-    GET_EDGE(new_e, m);		/* create new edge */
+    GET_EDGE(new_e, s);		/* create new edge */
 
     new_e->magic = NMG_EDGE_MAGIC;
     new_e->eu_p = eu;
