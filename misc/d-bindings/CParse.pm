@@ -198,10 +198,23 @@ sub extract_object {
   my $first_index = $i;
   my $last_index;
 
+  my $nactual_lines = 0;
+
  LINE:
   for (; $i < $nl; ++$i) {
     my $lnum = $i + 1;
     my $line = $lines_aref->[$i];
+
+=pod
+
+    # skip blank lines
+    my @d = split(' ', $line);
+    next LINE if !defined $d[0];
+
+=cut
+
+    ++$nactual_lines;
+
     my $len = length $line;
     for (my $j = 0; $j < $len; ++$j) {
       my $c = substr $line, $j, 1;
@@ -239,125 +252,151 @@ sub extract_object {
     push @olines, $line;
   }
 
+  my $norig_lines = $last_index - $first_index + 1;
+
+  # do some rudimentary analysis
+  # make lines one string
+  my $s = join ' ', @olines;
+  # add spaces around some items
+  my @ch = ('{', '(', '[', ']', ')', '}', ';', '*');
+  my %ch;
+  @ch{@ch} = ();
+
+  my $slen = length $s;
+
+  my $ss = '';
+  for (my $i = 0; $i < $slen; ++$i) {
+    my $c = substr $s, $i, 1;
+    if (!exists $ch{$c}) {
+      $ss .= $c;
+      next;
+    }
+
+    $ss .= ' ';
+    $ss .= $c;
+    $ss .= ' ';
+  }
+
+  # now close up '*'
+  while ($ss =~ s{\*[\s]+\*}{\*\*}) {
+    ; # noopt
+  }
+
+  # get new length
+  $s = $ss;
+  $slen = length $s;
+
+  # track '{}', '()', '[]' first and last positions
+  my $cfirst   = -1; # curly braces
+  my $pfirst   = -1; # parentheses
+  my $sfirst   = -1; # square brackets
+  my $clast    = -1; # curly braces
+  my $plast    = -1; # parentheses
+  my $slast    = -1; # square brackets
+  my $semilast = -1; # semicolon
+
+  for (my $i = 0; $i < $slen; ++$i) {
+    my $c = substr $s, $i, 1;
+    if ($c eq '{') {
+      $cfirst = _update_index($cfirst, $i);
+    }
+    elsif ($c eq '}') {
+      $clast = _update_index($clast, $i);
+    }
+
+    elsif ($c eq '(') {
+      $pfirst = _update_index($pfirst, $i);
+    }
+    elsif ($c eq ')') {
+      $plast = _update_index($plast, $i);
+    }
+
+    elsif ($c eq '[') {
+      $sfirst = _update_index($sfirst, $i);
+    }
+    elsif ($c eq ']') {
+      $slast = _update_index($slast, $i);
+    }
+
+    elsif ($c eq ';') {
+      $semilast = _update_index($semilast, $i);
+    }
+  }
+
+  my $typ = 'unknown';
+  my $enum   = index $s, 'enum';
+  my $struct = index $s, 'struct';
+  my $union  = index $s, 'union';
+  my $typdef = index $s, 'typedef';
+
+  my @d = split(' ', $s);
+  my $ftok = shift @d;
+  if ($ftok eq 'extern') {
+    $typ = 'var decl';
+  }
+  elsif ($ftok eq 'struct') {
+    $typ = 'struct';
+  }
+  elsif ($ftok eq 'union') {
+    $typ = 'union';
+  }
+  elsif ($cfirst >= 0
+      && ($pfirst < 0 || $cfirst < $pfirst)
+      && ($sfirst < 0 || $cfirst < $sfirst)) {
+    if ($enum >=0 && $enum < $cfirst) {
+      $typ = 'enum';
+    }
+    elsif ($struct >=0 && $struct < $cfirst) {
+      $typ = 'struct';
+    }
+    elsif ($union >=0 && $union < $cfirst) {
+      $typ = 'union';
+    }
+  }
+  elsif ($pfirst >= 0
+      && ($cfirst < 0 || $pfirst < $cfirst)
+      && ($sfirst < 0 || $pfirst < $sfirst)) {
+    $typ = 'func decl';
+  }
+
+  my $typd = '';
+  $typd = 'typedef' if ($s =~/typedef/);
+  my $t = '';
+  if ($typd) {
+    $t = $typd;
+  }
+
+  if ($t && $typ ne 'unknown') {
+    $t .= " $typ";
+  }
+  elsif (!$t) {
+    $t = $typ;
+  }
+
   # print good lines to output file
   print  $fp "\n";
-  printf $fp "=== starting extracted code at input line %d:\n", $first_index + 1;
+  printf $fp "//=== starting extracted code at input line %d:\n", $first_index + 1;
+  printf $fp "//  object type '$t'\n";
+  #printf $fp "// N original lines: $norig_lines\n";
+  #printf $fp "// N actual lines:   $nactual_lines\n";
   print  $fp "$_" for @olines;
-  printf $fp "=== ending extracted code at input line %d:\n", $last_index + 1;
+  printf $fp "//=== ending extracted code at input line %d:\n", $last_index + 1;
   print  $fp "\n";
 
   return $last_index;
 
 } # extract_object
 
-=pod
+sub _update_index {
+  my $max = shift @_;
+  my $i   = shift @_;
 
-sub extract_enum {
-  # example:
-  #   typedef enum {
-  #       BU_LITTLE_ENDIAN = 1234,
-  #       BU_BIG_ENDIAN = 4321,
-  #       BU_PDP_ENDIAN = 3412
-  #   } bu_endian_t;
+  return $i
+    if ($i > $max);
 
-  my $lines_aref = shift @_; # \@lines
-  my $i          = shift @_; # $i - current @lines index
-  my $fp         = shift @_; # ouput file pointer
+  return $max;
 
-  my $nl = scalar @{$lines_aref};
-
-  # we're at the first line of the enum
-  # get all lines til the last
-  my @olines = ();
-  # track '{}' levels
-  my $level = 0;
-  my $first_index = $i;
-  my $last_index;
-
- LINE:
-  for (; $i < $nl; ++$i) {
-    my $lnum = $i + 1;
-    my $line = $lines_aref->[$i];
-    my $len = length $line;
-    for (my $j = 0; $j < $len; ++$j) {
-      my $c = substr $line, $j, 1;
-      if ($c eq '{') {
-	++$level;
-      }
-      elsif ($c eq '}') {
-	--$level;
-      }
-      elsif ($c eq ';' && $level == 0) {
-	push @olines, $line;
-	$last_index = $i;
-	last LINE;
-      }
-    }
-    push @olines, $line;
-  }
-
-  # print good lines to output file
-  printf $fp "=== starting extracted code at input line %d:\n", $first_index + 1;
-  print  $fp "$_" for @olines;
-  printf $fp "=== ending extracted code at input line %d:\n", $last_index + 1;
-
-  return $last_index;
-
-} # extract_enum
-
-sub extract_struct {
-  # example:
-  #   typedef struct (OR struct)
-  #     {
-  #       unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
-  #     } __sigset_t;
-
-  my $lines_aref = shift @_; # \@lines
-  my $i          = shift @_; # $i - current @lines index
-  my $fp         = shift @_; # ouput file pointer
-
-  my $nl = scalar @{$lines_aref};
-
-  # we're at the first line of the struct
-  # get all lines til the last
-  my @olines = ();
-  # track '{}' levels
-  my $level = 0;
-  my $first_index = $i;
-  my $last_index;
-
- LINE:
-  for (; $i < $nl; ++$i) {
-    my $lnum = $i + 1;
-    my $line = $lines_aref->[$i];
-    my $len = length $line;
-    for (my $j = 0; $j < $len; ++$j) {
-      my $c = substr $line, $j, 1;
-      if ($c eq '{') {
-	++$level;
-      }
-      elsif ($c eq '}') {
-	--$level;
-      }
-      elsif ($c eq ';' && $level == 0) {
-	push @olines, $line;
-	$last_index = $i;
-	last LINE;
-      }
-    }
-    push @olines, $line;
-  }
-
-  # print good lines to output file
-  printf $fp "=== starting extracted code at input line %d:\n", $first_index + 1;
-  print  $fp "$_" for @olines;
-  printf $fp "=== ending extracted code at input line %d:\n", $last_index + 1;
-
-  return $last_index;
-
-} # extract_struct
-
-=cut
+} # _update_index
 
 # mandatory true return for a Perl module
 1;
