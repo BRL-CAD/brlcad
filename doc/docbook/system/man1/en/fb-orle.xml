@@ -100,7 +100,7 @@ as an overlay.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c</option><replaceable>x</replaceable></term>
+  <term><option>-c</option><replaceable> x</replaceable></term>
   <listitem>
 <para>Specify a color to use as the “background”.
 The character
@@ -113,14 +113,14 @@ of the region being saved is used as the background color.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-l</option><replaceable>x y</replaceable></term>
+  <term><option>-l</option><replaceable> x y</replaceable></term>
   <listitem>
 <para>Specify the size of the saved box.
 This is useful if only a portion of the image is to be saved.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-p</option><replaceable>x y</replaceable></term>
+  <term><option>-p</option><replaceable> x y</replaceable></term>
   <listitem>
 <para>Specify the upper left corner of the saved portion
 of the image.</para>
@@ -135,9 +135,9 @@ on its standard error as it proceeds through encoding the image.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-h</option></term>
+  <term><option>-H</option></term>
   <listitem>
-<para>“hires” flag.  Set both the height and width of the framebuffer
+<para>“hi-res” flag.  Set both the height and width of the framebuffer
 to 1024.  The default is 512x512.</para>
   </listitem>
   </varlistentry>
