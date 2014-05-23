@@ -429,42 +429,27 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 }
 
 int
-db_avs_diff(
-	struct bu_attribute_value_set *added,
-	struct bu_attribute_value_set *removed,
-	struct bu_attribute_value_set *changed_left,
-	struct bu_attribute_value_set *changed_right,
-	struct bu_attribute_value_set *unchanged,
-	const struct bu_attribute_value_set *left_set,
-	const struct bu_attribute_value_set *right_set,
-	const struct bn_tol *diff_tol)
+db_avs_diff(const struct bu_attribute_value_set *left_set,
+	    const struct bu_attribute_value_set *right_set,
+	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
+	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
+	    const struct bn_tol *diff_tol,
+	    void *client_data)
 {
     int state = DIFF_UNCHANGED;
     struct bu_attribute_value_pair *avp;
-    if (unchanged && !BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
-    if (removed && !BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
-    if (added && !BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
-    if (changed_left && !BU_AVS_IS_INITIALIZED(changed_left)) BU_AVS_INIT(changed_left);
-    if (changed_right && !BU_AVS_IS_INITIALIZED(changed_right)) BU_AVS_INIT(changed_right);
     for (BU_AVS_FOR(avp, left_set)) {
 	const char *val2 = bu_avs_get(right_set, avp->name);
 	if (!val2) {
-	    if (removed) {
-		(void)bu_avs_add(removed, avp->name, avp->value);
-	    }
+	    if (del_func) {del_func(avp->name, avp->value, client_data);}
 	    state |= DIFF_REMOVED;
 	} else {
 	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
-		if (unchanged) {
-		    (void)bu_avs_add(unchanged, avp->name, avp->value);
-		}
+		if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
 	    } else {
-		if (changed_left) {
-		    (void)bu_avs_add(changed_left, avp->name, avp->value);
-		}
-		if (changed_right) {
-		    (void)bu_avs_add(changed_right, avp->name, val2);
-		}
+		if (chgd_func) {chgd_func(avp->name, avp->value, val2, client_data);}
 		state |= DIFF_CHANGED;
 	    }
 	}
@@ -472,9 +457,7 @@ db_avs_diff(
     for (BU_AVS_FOR(avp, right_set)) {
 	const char *val1 = bu_avs_get(left_set, avp->name);
 	if (!val1) {
-	    if (added) {
-		(void)bu_avs_add(added, avp->name, avp->value);
-	    }
+	    if (add_func) {add_func(avp->name, avp->value, client_data);}
 	    state |= DIFF_ADDED;
 	}
     }
@@ -813,7 +796,7 @@ db_compare(const struct rt_db_internal *left_obj,
     if ((flags == DB_COMPARE_ATTRS || do_all) && (left_obj && right_obj) && (param_state == DIFF_UNCHANGED)) {
 	if (left_obj->idb_avs.magic == BU_AVS_MAGIC && right_obj->idb_avs.magic == BU_AVS_MAGIC) {
 	    struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-	    attr_state |= db_avs_diff(NULL, NULL, NULL, NULL, NULL, &left_obj->idb_avs, &right_obj->idb_avs, &diff_tol);
+	    attr_state |= db_avs_diff(&left_obj->idb_avs, &right_obj->idb_avs, NULL, NULL, NULL, NULL, &diff_tol, NULL);
 	} else {
 	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_REMOVED;}
 	    if (right_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_ADDED;}

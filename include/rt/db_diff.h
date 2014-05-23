@@ -114,19 +114,33 @@ typedef enum {
 
 
 /**
- * Compare the attribute sets.
+ * Compare two attribute sets.
  *
  * This function is useful for comparing the contents
  * of two attribute/value sets. */
 RT_EXPORT extern int
-db_avs_diff(struct bu_attribute_value_set *added,
-            struct bu_attribute_value_set *removed,
-            struct bu_attribute_value_set *changed_left,
-            struct bu_attribute_value_set *changed_right,
-            struct bu_attribute_value_set *unchanged,
-	    const struct bu_attribute_value_set *left_set,
+db_avs_diff(const struct bu_attribute_value_set *left_set,
 	    const struct bu_attribute_value_set *right_set,
-            const struct bn_tol *diff_tol);
+	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
+	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
+            const struct bn_tol *diff_tol,
+	    void *client_data);
+
+/**
+ * Compare three attribute sets.
+ */
+RT_EXPORT extern int
+db_avs_diff3(const struct bu_attribute_value_set *left_set,
+	     const struct bu_attribute_value_set *ancestor_set,
+	     const struct bu_attribute_value_set *right_set,
+	     int (*add_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	     int (*del_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	     int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	     int (*unchgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	     const struct bn_tol *diff_tol,
+	     void *client_data);
 
 
 /**
