@@ -99,7 +99,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     struct faceuse *prev_fu;
     struct face_g_plane *fg1, *fg2;
 
-    flags = (char *)bu_calloc((s->r_p->m_p->maxindex) * 2, sizeof(char),
+    flags = (char *)bu_calloc((s->maxindex) * 2, sizeof(char),
 			      "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */
@@ -760,7 +760,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
     }
 
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
+	nmg_vsshell(s1);
 
     /*
      * For each face in the shell, process all the loops in the face,
@@ -868,7 +868,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
     nmg_s_radial_harmonize(s1, tol);
 
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
+	nmg_vsshell(s1);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_js(s1=%p, s2=%p) END\n", (void *)s1, (void *)s2);
@@ -890,20 +890,17 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
 void
 nmg_invert_shell(struct shell *s)
 {
-    struct model *m;
     struct faceuse *fu;
     char *tags;
 
     NMG_CK_SHELL(s);
-    m = s->r_p->m_p;
-    NMG_CK_MODEL(m);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_invert_shell(%p)\n", (void *)s);
     }
 
     /* Allocate map of faces visited */
-    tags = (char *)bu_calloc(m->maxindex+1, 1, "nmg_invert_shell() tags[]");
+    tags = (char *)bu_calloc(s->maxindex + 1, 1, "nmg_invert_shell() tags[]");
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
@@ -1014,7 +1011,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	}
     }
 
-    lu = nmg_mlv(&s->l.magic, *verts[0], OT_SAME);
+    lu = nmg_mlv(&s->magic, *verts[0], OT_SAME);
     fu = nmg_mf(lu);
     fu->orientation = OT_SAME;
     fu->fumate_p->orientation = OT_OPPOSITE;
@@ -1149,7 +1146,7 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 		NMG_CK_VERTEX(verts[i]);
 	    }
 	}
-	lu = nmg_mlv(&s->l.magic, verts[n-1], OT_SAME);
+	lu = nmg_mlv(&s->magic, verts[n-1], OT_SAME);
 	fu = nmg_mf(lu);
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	eu = nmg_meonvu(vu);
@@ -1165,7 +1162,7 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 	}
 
     } else {
-	lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, OT_SAME);
+	lu = nmg_mlv(&s->magic, (struct vertex *)NULL, OT_SAME);
 	fu = nmg_mf(lu);
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	eu = nmg_meonvu(vu);
@@ -1225,7 +1222,7 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 
     if (verts) {
 	if (!fu) {
-	    lu = nmg_mlv(&s->l.magic, verts[n-1], dir);
+	    lu = nmg_mlv(&s->magic, verts[n-1], dir);
 	    fu = nmg_mf(lu);
 	} else {
 	    lu = nmg_mlv(&fu->l.magic, verts[n-1], dir);
@@ -1243,7 +1240,7 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 	}
     } else {
 	if (!fu) {
-	    lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, dir);
+	    lu = nmg_mlv(&s->magic, (struct vertex *)NULL, dir);
 	    fu = nmg_mf(lu);
 	} else {
 	    lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, dir);
@@ -1829,8 +1826,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 {
     struct loopuse *new_lu, *lu;
     struct faceuse *new_fu = (struct faceuse *)NULL;
-    struct model *m;
-    struct model *m_f;
+    struct shell *s_f;
     plane_t pl;
     long **trans_tbl;
     long tbl_size;
@@ -1842,12 +1838,11 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
     /* allocate the table that holds the translations between existing
      * elements and the duplicates we will create.
      */
-    m = nmg_find_model((uint32_t *)s);
-    tbl_size = m->maxindex;
+    tbl_size = s->maxindex;
 
-    m_f = nmg_find_model((uint32_t *)fu);
-    if (m != m_f)
-	tbl_size += m_f->maxindex;
+    s_f = nmg_find_shell((uint32_t *)fu);
+    if (s != s_f)
+	tbl_size += s_f->maxindex;
 
     /* Needs double space, because model will grow as dup proceeds */
     trans_tbl = (long **)bu_calloc(tbl_size*2, sizeof(long *),
@@ -1860,7 +1855,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	if (new_fu) {
 	    new_lu = nmg_dup_loop(lu, &new_fu->l.magic, trans_tbl);
 	} else {
-	    new_lu = nmg_dup_loop(lu, &s->l.magic, trans_tbl);
+	    new_lu = nmg_dup_loop(lu, &s->magic, trans_tbl);
 	    new_fu = nmg_mf(new_lu);
 
 	    /* since nmg_mf() FORCES the orientation of the initial
@@ -2285,7 +2280,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 {
     struct loopuse *lu, *oldlu;
     struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
-    struct model *m;
+    struct shell *s;
     FILE *fd;
     char name[32];
     static int i = 0;
@@ -2318,14 +2313,14 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     }
 
     NMG_CK_FACEUSE(oldlu->up.fu_p);
-    m = oldlu->up.fu_p->s_p->r_p->m_p;
-    NMG_CK_MODEL(m);
+    s = oldlu->up.fu_p->s_p;
+    NMG_CK_SHELL(s);
 
     if (RTG.NMG_debug & DEBUG_CUTLOOP) {
 	bu_log("\tnmg_cut_loop\n");
 	if (RTG.NMG_debug & DEBUG_PLOTEM) {
 	    long *tab;
-	    tab = (long *)bu_calloc(m->maxindex, sizeof(long),
+	    tab = (long *)bu_calloc(s->maxindex, sizeof(long),
 				    "nmg_cut_loop flag[] 1");
 
 	    (void)sprintf(name, "Before_cutloop%d.plot3", ++i);
@@ -2397,7 +2392,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
     if (RTG.NMG_debug & DEBUG_CUTLOOP && RTG.NMG_debug & DEBUG_PLOTEM) {
 	long *tab;
-	tab = (long *)bu_calloc(m->maxindex, sizeof(long),
+	tab = (long *)bu_calloc(s->maxindex, sizeof(long),
 				"nmg_cut_loop flag[] 2");
 
 	(void)sprintf(name, "After_cutloop%d.plot3", i);
@@ -4832,7 +4827,7 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
 	bu_log("nmg_mv_vu_between_shells(dest_s=%p, src_s=%p, vu=%p)\n",
 	       (void *)dest, (void *)src, (void *)vu);
     }
-    (void) nmg_mlv(&(dest->l.magic), vu->v_p, OT_SAME);
+    (void) nmg_mlv(&(dest->magic), vu->v_p, OT_SAME);
     if (vu->v_p->vg_p) {
 	NMG_CK_VERTEX_G(vu->v_p->vg_p);
     }
