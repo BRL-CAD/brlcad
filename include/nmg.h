@@ -509,32 +509,29 @@ struct vertexuse_a_cnurb {
  * in nmg.h In particular, application code should NEVER do these
  * things.  Any need to do so should be handled by extending nmg_mk.c
  */
-#define NMG_INCR_INDEX(_p, _m)	\
-	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
+#define NMG_INCR_INDEX(_p, _s)	\
+	NMG_CK_SHELL(_s); (_p)->index = ((_s)->maxindex)++
 
 
-#define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
-#define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
-#define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL_A(p, m)           {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}
-#define GET_FACE(p, m)              {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_PLANE(p, m)      {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_SNURB(p, m)      {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, m);}
-#define GET_FACEUSE(p, m)           {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE(p, m)              {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_LSEG(p, m)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_CNURB(p, m)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
-#define GET_EDGEUSE(p, m)           {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX(p, m)            {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX_G(p, m)          {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE(p, m)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL(p, s)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, s);}
+#define GET_SHELL_A(p, s)           {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, s);}
+#define GET_FACE(p, s)              {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, s);}
+#define GET_FACE_G_PLANE(p, s)      {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, s);}
+#define GET_FACE_G_SNURB(p, s)      {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, s);}
+#define GET_FACEUSE(p, s)           {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, s);}
+#define GET_LOOP(p, s)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, s);}
+#define GET_LOOP_G(p, s)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, s);}
+#define GET_LOOPUSE(p, s)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, s);}
+#define GET_LOOPUSE_A(p, s)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, s);}
+#define GET_EDGE(p, s)              {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, s);}
+#define GET_EDGE_G_LSEG(p, s)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, s);}
+#define GET_EDGE_G_CNURB(p, s)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, s);}
+#define GET_EDGEUSE(p, s)           {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, s);}
+#define GET_VERTEX(p, s)            {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, s);}
+#define GET_VERTEX_G(p, s)          {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, s);}
+#define GET_VERTEXUSE(p, s)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, s);}
+#define GET_VERTEXUSE_A_PLANE(p, s) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, s);}
+#define GET_VERTEXUSE_A_CNURB(p, s) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, s);}
 
 
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
