@@ -18,7 +18,8 @@ BRLCAD_ADDEXEC(g_transfer g_transfer.c "librt;libpkg" NO_INSTALL)
 BRLCAD_ADDDATA(g_transfer.c sample_applications)
 
 add_subdirectory(beset)
-add_subdirectory(gdiff2)
+#add_subdirectory(gdiff2)
+CMAKEFILES(gdiff2)
 
 # Local Variables:
 # tab-width: 8

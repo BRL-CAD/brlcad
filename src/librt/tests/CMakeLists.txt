@@ -17,7 +17,7 @@ BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL)
 #add_test(NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
 # diff testing
-BRLCAD_ADDEXEC(test_diff test_diff.c "librt" NO_INSTALL)
+#BRLCAD_ADDEXEC(test_diff test_diff.c "librt" NO_INSTALL)
 
 # nmg_mk testing
 BRLCAD_ADDEXEC(test_nmg_mk test_nmg_mk.c "librt" NO_INSTALL)
@@ -39,6 +39,7 @@ set(distcheck_files
   dirbuild-test-0.g
   dirbuild-test-1.g
   dirbuild-test-2.g
+  test_diff.c
   )
 
 CMAKEFILES(${distcheck_files})

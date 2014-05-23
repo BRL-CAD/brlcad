@@ -439,7 +439,7 @@ db_avs_diff(
 	const struct bu_attribute_value_set *right_set,
 	const struct bn_tol *diff_tol)
 {
-    int have_diff = 0;
+    int state = DIFF_UNCHANGED;
     struct bu_attribute_value_pair *avp;
     if (unchanged && !BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
     if (removed && !BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
@@ -452,7 +452,7 @@ db_avs_diff(
 	    if (removed) {
 		(void)bu_avs_add(removed, avp->name, avp->value);
 	    }
-	    have_diff++;
+	    state |= DIFF_REMOVED;
 	} else {
 	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
 		if (unchanged) {
@@ -465,7 +465,7 @@ db_avs_diff(
 		if (changed_right) {
 		    (void)bu_avs_add(changed_right, avp->name, val2);
 		}
-		have_diff++;
+		state |= DIFF_CHANGED;
 	    }
 	}
     }
@@ -475,10 +475,10 @@ db_avs_diff(
 	    if (added) {
 		(void)bu_avs_add(added, avp->name, avp->value);
 	    }
-	    have_diff++;
+	    state |= DIFF_ADDED;
 	}
     }
-    return (have_diff) ? 1 : 0;
+    return state;
 }
 
 
@@ -752,38 +752,36 @@ arb_type_to_str(int type) {
 }
 
 int
-db_compare(struct bu_attribute_value_set *added,
-	struct bu_attribute_value_set *removed,
-	struct bu_attribute_value_set *changed_left,
-	struct bu_attribute_value_set *changed_right,
-	struct bu_attribute_value_set *unchanged,
-	const struct rt_db_internal *left_obj,
+db_compare(const struct rt_db_internal *left_obj,
 	const struct rt_db_internal *right_obj,
+	int (*add_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	int (*del_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	int (*chgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	int (*unchgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
 	db_compare_criteria_t flags,
-	const struct bn_tol *diff_tol)
+	void *client_data)
 {
     int do_all = 0;
-    int has_diff = 0;
-    int type_change = 0;
+    int state = DIFF_UNCHANGED;
+    int param_state = DIFF_UNCHANGED;
+    int attr_state = DIFF_UNCHANGED;
 
-    if (!left_obj || !right_obj) return -1;
-    if (added && !BU_AVS_IS_INITIALIZED(added)) BU_AVS_INIT(added);
-    if (removed && !BU_AVS_IS_INITIALIZED(removed)) BU_AVS_INIT(removed);
-    if (changed_left && !BU_AVS_IS_INITIALIZED(changed_left)) BU_AVS_INIT(changed_left);
-    if (changed_right && !BU_AVS_IS_INITIALIZED(changed_right)) BU_AVS_INIT(changed_right);
-    if (unchanged && !BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
+    if (!left_obj && !right_obj) return -1;
+
+    if (left_obj && !right_obj) {
+	param_state |= DIFF_REMOVED;
+	attr_state |= DIFF_REMOVED;
+	state |= DIFF_REMOVED;
+    }
+    if (!left_obj && right_obj) {
+	param_state |= DIFF_ADDED;
+	attr_state |= DIFF_ADDED;
+	state |= DIFF_ADDED;
+    }
 
     if (flags == DB_COMPARE_ALL) do_all = 1;
 
-    if (flags == DB_COMPARE_PARAM || do_all) {
-	int have_tcl1 = 1;
-	int have_tcl2 = 1;
-	struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
-	struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
-	struct bu_attribute_value_set avs1, avs2;
-	BU_AVS_INIT(&avs1);
-	BU_AVS_INIT(&avs2);
-
+    if ((flags == DB_COMPARE_PARAM || do_all) && (left_obj && right_obj) && (param_state == DIFF_UNCHANGED)) {
 	/* Type is a valid basis on which to declare a DB_COMPARE_PARAM difference event,
 	 * but as a single value in the rt_<type>_get return it does not fit neatly into
 	 * the attribute/value paradigm used for the majority of the comparisons.  For
@@ -791,303 +789,159 @@ db_compare(struct bu_attribute_value_set *added,
 	 * information directly.
 	 */
 	if (left_obj->idb_minor_type != right_obj->idb_minor_type) {
-	    (void)bu_avs_add(changed_left, "object type", left_obj->idb_meth->ft_label);
-	    (void)bu_avs_add(changed_right, "object type", right_obj->idb_meth->ft_label);
-	    type_change = 1;
+	    param_state |= DIFF_CHANGED;
 	} else {
 	    if (left_obj->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
 		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 		int arb_type_1 = rt_arb_std_type(left_obj, &arb_tol);
 		int arb_type_2 = rt_arb_std_type(right_obj, &arb_tol);
 		if (arb_type_1 != arb_type_2) {
-		    (void)bu_avs_add(changed_left, "object type", arb_type_to_str(arb_type_1));
-		    (void)bu_avs_add(changed_right, "object type", arb_type_to_str(arb_type_2));
-		    type_change = 1;
+		    param_state |= DIFF_CHANGED;
 		}
 	    }
 	}
 
-	/* Try to create attribute/value set definitions for these
-	 * objects from their Tcl list definitions.  We use an
-	 * offset of one because for all objects the first entry
-	 * in the list is the type of the object, which we have
-	 * just handled above */
-	bu_vls_trunc(&s1_tcl, 0);
-	if (left_obj->idb_meth->ft_get(&s1_tcl, left_obj, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
-	bu_vls_trunc(&s2_tcl, 0);
-	if (right_obj->idb_meth->ft_get(&s2_tcl, right_obj, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
-
-	/* If the tcl conversions didn't succeed, we've reached the limit of what
-	 * we can do with internal parameter diffing. Otherwise, diff the resulting
-	 * a/v sets.*/
-	if (have_tcl1 && have_tcl2) {
-	    if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
-	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
-	}
-	if (have_tcl1 && have_tcl2) {
-	    has_diff += db_avs_diff(added, removed, changed_left, changed_right, unchanged, &avs1, &avs2, diff_tol);
-	} else {
-	    if (!type_change) {
-		/* We don't have the tcl list version of the internal parameters, so all
-		 * we can do is compare the idb_ptr memory.*/
-		int memsize = rt_intern_struct_size(left_obj->idb_minor_type);
-		if (memcmp((void *)left_obj->idb_ptr, (void *)right_obj->idb_ptr, memsize)) {
-		    has_diff = 1;
-		}
+	/* Compare the idb_ptr memory, if we aren't already sure we've changed. */
+	if (!param_state) {
+	    int memsize = rt_intern_struct_size(left_obj->idb_minor_type);
+	    if (memcmp((void *)left_obj->idb_ptr, (void *)right_obj->idb_ptr, memsize)) {
+		param_state |= DIFF_CHANGED;
 	    }
 	}
-	bu_avs_free(&avs1);
-	bu_avs_free(&avs2);
-
     }
 
-    if (flags == DB_COMPARE_ATTRS || do_all) {
-
+    if ((flags == DB_COMPARE_ATTRS || do_all) && (left_obj && right_obj) && (param_state == DIFF_UNCHANGED)) {
 	if (left_obj->idb_avs.magic == BU_AVS_MAGIC && right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-	    has_diff += db_avs_diff(added, removed, changed_left, changed_right, unchanged, &left_obj->idb_avs, &right_obj->idb_avs, diff_tol);
+	    struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    attr_state |= db_avs_diff(NULL, NULL, NULL, NULL, NULL, &left_obj->idb_avs, &right_obj->idb_avs, &diff_tol);
 	} else {
-	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {
-		if (removed) {
-		    bu_avs_merge(removed, &left_obj->idb_avs);
-		}
-		has_diff++;
-	    }
-	    if (right_obj->idb_avs.magic == BU_AVS_MAGIC) {
-		if (added) {
-		    bu_avs_merge(added, &right_obj->idb_avs);
-		}
-		has_diff++;
-	    }
+	    if (left_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_REMOVED;}
+	    if (right_obj->idb_avs.magic == BU_AVS_MAGIC) {attr_state |= DIFF_ADDED;}
 	}
-
     }
 
-    if (type_change) return 1;
-    return (has_diff) ? 1 : 0;
+    state |= param_state;
+    state |= attr_state;
+
+    /* We know enough now to identify the state of the diff - if we also have user functions, call them now */
+    if ((state & DIFF_ADDED) && add_func) add_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
+    if ((state & DIFF_REMOVED) && del_func) del_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
+    if ((state & DIFF_CHANGED) && chgd_func) chgd_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
+    if ((state == DIFF_UNCHANGED) && unchgd_func) unchgd_func(left_obj, right_obj, param_state, attr_state, flags, client_data);
+    return state;
 }
 
+#if 0
 HIDDEN const char *
 type_to_str(const struct rt_db_internal *obj, int arb_type) {
     if (arb_type) return arb_type_to_str(arb_type);
     return obj->idb_meth->ft_label;
 }
+#endif
 
 int
-db_compare3(struct bu_attribute_value_set *unchanged,
-	struct bu_attribute_value_set *removed_left_only,
-	struct bu_attribute_value_set *removed_right_only,
-	struct bu_attribute_value_set *removed_both,
-	struct bu_attribute_value_set *added_left_only,
-	struct bu_attribute_value_set *added_right_only,
-	struct bu_attribute_value_set *added_both,
-	struct bu_attribute_value_set *added_conflict_left,
-	struct bu_attribute_value_set *added_conflict_right,
-	struct bu_attribute_value_set *changed_left_only,
-	struct bu_attribute_value_set *changed_right_only,
-	struct bu_attribute_value_set *changed_both,
-	struct bu_attribute_value_set *changed_conflict_ancestor,
-	struct bu_attribute_value_set *changed_conflict_left,
-	struct bu_attribute_value_set *changed_conflict_right,
-	struct bu_attribute_value_set *merged,
-	const struct rt_db_internal *left,
-	const struct rt_db_internal *ancestor,
-	const struct rt_db_internal *right,
-	db_compare_criteria_t flags,
-	struct bn_tol *diff_tol)
+db_compare3(const struct rt_db_internal *left,
+	    const struct rt_db_internal *ancestor,
+	    const struct rt_db_internal *right,
+	    int (*add_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	    int (*del_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	    int (*chgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	    int (*unchgd_func)(const struct rt_db_internal *left_obj, const struct rt_db_internal *ancestor_obj, const struct rt_db_internal *right_obj, int param_state, int attr_state, db_compare_criteria_t flags, void *data),
+	    db_compare_criteria_t flags,
+	    void *client_data)
 {
     int do_all = 0;
-    int has_diff = 0;
-    int type_change = 1;
+    int state = DIFF3_UNCHANGED;
+    int param_state = DIFF3_UNCHANGED;
+    int attr_state = DIFF3_UNCHANGED;
 
-    if (!left || !right) return -1;
-    if (!BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
-    if (!BU_AVS_IS_INITIALIZED(removed_left_only)) BU_AVS_INIT(removed_left_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_right_only)) BU_AVS_INIT(removed_right_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_both)) BU_AVS_INIT(removed_both);
-    if (!BU_AVS_IS_INITIALIZED(added_left_only)) BU_AVS_INIT(added_left_only);
-    if (!BU_AVS_IS_INITIALIZED(added_right_only)) BU_AVS_INIT(added_right_only);
-    if (!BU_AVS_IS_INITIALIZED(added_both)) BU_AVS_INIT(added_both);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_left)) BU_AVS_INIT(added_conflict_left);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_right)) BU_AVS_INIT(added_conflict_right);
-    if (!BU_AVS_IS_INITIALIZED(changed_left_only)) BU_AVS_INIT(changed_left_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_right_only)) BU_AVS_INIT(changed_right_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_both)) BU_AVS_INIT(changed_both);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_ancestor)) BU_AVS_INIT(changed_conflict_ancestor);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_left)) BU_AVS_INIT(changed_conflict_left);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_right)) BU_AVS_INIT(changed_conflict_right);
-    if (!BU_AVS_IS_INITIALIZED(merged)) BU_AVS_INIT(merged);
-
+    if (!left && !ancestor && !right) return -1;
+    if (ancestor && !left && !right) {
+	param_state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
+	attr_state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
+	state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
+    }
 
     if (flags == DB_COMPARE_ALL) do_all = 1;
 
-    if (flags == DB_COMPARE_PARAM || do_all) {
-	int have_tcl_ancestor = 1;
-	int have_tcl_left = 1;
-	int have_tcl_right = 1;
-	struct bu_vls ancestor_tcl = BU_VLS_INIT_ZERO;
-	struct bu_vls left_tcl = BU_VLS_INIT_ZERO;
-	struct bu_vls right_tcl = BU_VLS_INIT_ZERO;
-	struct bu_attribute_value_set ancestor_avs, left_avs, right_avs;
-	BU_AVS_INIT(&ancestor_avs);
-	BU_AVS_INIT(&left_avs);
-	BU_AVS_INIT(&right_avs);
-
+    if ((flags == DB_COMPARE_PARAM || do_all) && (param_state == DIFF_UNCHANGED)) {
+	int ancestor_left = -1;
+	int ancestor_right = -1;
+	int left_right = -1;
 	/* Type is a valid basis on which to declare a DB_COMPARE_PARAM difference event,
 	 * but as a single value in the rt_<type>_get return it does not fit neatly into
 	 * the attribute/value paradigm used for the majority of the comparisons.  For
 	 * this reason, we handle it specially using the lower level database type
 	 * information directly.
 	 */
-	{
-	    int a = -1;
-	    int l = -1;
-	    int r = -1;
-	    int a_arb = 0;
-	    int l_arb = 0;
-	    int r_arb = 0;
-	    if (ancestor) a = ancestor->idb_minor_type;
-	    if (right) r = right->idb_minor_type;
-	    if (left) l = left->idb_minor_type;
-	    if (a == DB5_MINORTYPE_BRLCAD_ARB8 || l == DB5_MINORTYPE_BRLCAD_ARB8 || r == DB5_MINORTYPE_BRLCAD_ARB8) {
-		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-		if (a == DB5_MINORTYPE_BRLCAD_ARB8) {a_arb = rt_arb_std_type(ancestor, &arb_tol);}
-		if (l == DB5_MINORTYPE_BRLCAD_ARB8) {l_arb = rt_arb_std_type(left, &arb_tol);}
-		if (r == DB5_MINORTYPE_BRLCAD_ARB8) {r_arb = rt_arb_std_type(right, &arb_tol);}
-	    }
-
-	    if (ancestor) {
-		if (left && right) {
-		    /* ancestor != left && ancestor == right && left != right */
-		    if ( (a != l) && (a == r) && (l != r) ) {
-			(void)bu_avs_add(changed_left_only, "object type", type_to_str(left, l_arb));
-			(void)bu_avs_add(merged, "object type", type_to_str(left, l_arb));
-		    }
-		    /* ancestor == left && ancestor != right && left != right */
-		    if ( (a == l) && (a != r) && (l != r) ) {
-			(void)bu_avs_add(changed_right_only, "object type", type_to_str(right, r_arb));
-			(void)bu_avs_add(merged, "object type", type_to_str(right, r_arb));
-		    }
-		    /* ancestor != left && ancestor != right && left != right */
-		    if ( (a != l) && (a != r) && (l != r) ) {
-			(void)bu_avs_add(changed_conflict_ancestor, "object type", type_to_str(ancestor, a_arb));
-			(void)bu_avs_add(changed_conflict_left, "object type", type_to_str(left, l_arb));
-			(void)bu_avs_add(changed_conflict_right, "object type", type_to_str(right, r_arb));
-			(void)bu_avs_add(merged, "CONFLICT(ANCESTOR):object type", type_to_str(ancestor, a_arb));
-			(void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
-			(void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
-		    }
-		} else {
-		    if (left) {
-			/* ancestor != left*/
-			if (a != l) {
-			    (void)bu_avs_add(changed_conflict_ancestor, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
-			    (void)bu_avs_add(changed_conflict_left, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
-			    (void)bu_avs_add(merged, "object type", "TYPE_CHANGE_LEFT_VS_DEL_RIGHT_CONFLICT");
-			}
-		    }
-		    if (right) {
-			/* ancestor != left*/
-			if (a != r) {
-			    (void)bu_avs_add(changed_conflict_ancestor, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
-			    (void)bu_avs_add(changed_conflict_right, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
-			    (void)bu_avs_add(merged, "object type", "TYPE_CHANGE_RIGHT_VS_DEL_RIGHT_CONFLICT");
-			}
-		    }
-		}
-	    } else {
-		/* ancestor == NULL && left != right */
-		if ( (a == -1 && l != -1 && r != -1) && (l != r) ) {
-		    (void)bu_avs_add(added_conflict_left, "object type", type_to_str(left, l_arb));
-		    (void)bu_avs_add(added_conflict_right, "object type", type_to_str(right, r_arb));
-		    (void)bu_avs_add(merged, "CONFLICT(LEFT):object type", type_to_str(left, l_arb));
-		    (void)bu_avs_add(merged, "CONFLICT(RIGHT):object type", type_to_str(right, r_arb));
-		}
-	    }
+	int a = -1;
+	int l = -1;
+	int r = -1;
+	int a_arb = 0;
+	int l_arb = 0;
+	int r_arb = 0;
+	if (ancestor) a = ancestor->idb_minor_type;
+	if (right) r = right->idb_minor_type;
+	if (left) l = left->idb_minor_type;
+	if (a == DB5_MINORTYPE_BRLCAD_ARB8 || l == DB5_MINORTYPE_BRLCAD_ARB8 || r == DB5_MINORTYPE_BRLCAD_ARB8) {
+	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    if (a == DB5_MINORTYPE_BRLCAD_ARB8) {a_arb = rt_arb_std_type(ancestor, &arb_tol);}
+	    if (l == DB5_MINORTYPE_BRLCAD_ARB8) {l_arb = rt_arb_std_type(left, &arb_tol);}
+	    if (r == DB5_MINORTYPE_BRLCAD_ARB8) {r_arb = rt_arb_std_type(right, &arb_tol);}
 	}
 
-	/* Try to create attribute/value set definitions for these
-	 * objects from their Tcl list definitions.  We use an
-	 * offset of one because for all objects the first entry
-	 * in the list is the type of the object, which we have
-	 * just handled above */
-	bu_vls_trunc(&ancestor_tcl, 0);
-	if (ancestor) {
-	    if (ancestor->idb_meth->ft_get(&ancestor_tcl, ancestor, NULL) == BRLCAD_ERROR) have_tcl_ancestor = 0;
-	} else {
-	    /* If there is no ancestor, the empty list is accurate */
-	    bu_vls_sprintf(&ancestor_tcl, "%s", "{}");
-	    have_tcl_ancestor = 1;
-	}
-	bu_vls_trunc(&left_tcl, 0);
-	if (left->idb_meth->ft_get(&left_tcl, left, NULL) == BRLCAD_ERROR) have_tcl_left = 0;
-	bu_vls_trunc(&right_tcl, 0);
-	if (right->idb_meth->ft_get(&right_tcl, right, NULL) == BRLCAD_ERROR) have_tcl_right = 0;
-
-	/* If the tcl conversions didn't succeed, we've reached the limit of what
-	 * we can do with internal parameter diffing. Otherwise, diff the resulting
-	 * a/v sets.*/
-	if (have_tcl_ancestor && have_tcl_left && have_tcl_right) {
-	    if (tcl_list_to_avs(bu_vls_addr(&ancestor_tcl), &ancestor_avs, 1)) have_tcl_ancestor = 0;
-	    if (tcl_list_to_avs(bu_vls_addr(&left_tcl), &left_avs, 1)) have_tcl_left = 0;
-	    if (tcl_list_to_avs(bu_vls_addr(&right_tcl), &right_avs, 1)) have_tcl_right = 0;
-	}
-	if (have_tcl_ancestor && have_tcl_left && have_tcl_right) {
-	    has_diff += bu_avs_diff3(unchanged, removed_left_only, removed_right_only, removed_both,
-		    added_left_only, added_right_only, added_both, added_conflict_left, added_conflict_right,
-		    changed_left_only, changed_right_only, changed_both, changed_conflict_ancestor,
-		    changed_conflict_left, changed_conflict_right, merged, &ancestor_avs, &left_avs, &right_avs, diff_tol);
-	} else {
-	    if (!type_change) {
-		/* We don't have the tcl list version of the internal parameters, so all
-		 * we can do is compare the idb_ptr memory.  Cases:
-		 *
-		 * ancestor == left && left == right
-		 * ancestor != left && left == right
-		 * ancestor != left && ancestor == right && left != right
-		 * ancestor == left && ancestor != right && left != right
-		 * ancestor != left && ancestor != right && left != right
-		 * */
-		void *a = NULL;
-		void *l = (void *)left->idb_ptr;
-		void *r = (void *)right->idb_ptr;
+	if (ancestor && left) {
+	    if (a != l || a_arb != l_arb) ancestor_left = 0;
+	    if (ancestor_left == -1) {
 		int memsize = rt_intern_struct_size(ancestor->idb_minor_type);
-		if (ancestor)  a = (void *)ancestor->idb_ptr;
-		/* ancestor == left && left == right */
-		if (!memcmp(a, l, memsize) && !memcmp(l, r, memsize)) {
-		    (void)bu_avs_add(unchanged, "PARAMS", "NO_CHANGE");
-		    (void)bu_avs_add(merged, "PARAMS", "NO_CHANGE");
-		}
-		/* ancestor != left && left == right */
-		if (memcmp(a, l, memsize) && !memcmp(l, r, memsize)) {
-		    (void)bu_avs_add(changed_both, "PARAMS", "BOTH_BINARY");
-		    (void)bu_avs_add(merged, "PARAMS", "BOTH_BINARY");
-		    has_diff = 1;
-		}
-	    /* ancestor != left && ancestor == right && left != right */
-		if (memcmp(a, l, memsize) && !memcmp(a, r, memsize) && memcmp(l, r, memsize)) {
-		    (void)bu_avs_add(changed_left_only, "PARAMS", "LEFT_BINARY");
-		    (void)bu_avs_add(merged, "PARAMS", "LEFT_BINARY");
-		    has_diff = 1;
-		}
-	    /* ancestor == left && ancestor != right && left != right */
-		if (!memcmp(a, l, memsize) && memcmp(a, r, memsize) && memcmp(l, r, memsize)) {
-		    (void)bu_avs_add(changed_right_only, "PARAMS", "RIGHT_BINARY");
-		    (void)bu_avs_add(merged, "PARAMS", "RIGHT_BINARY");
-		    has_diff = 1;
-		}
-	    /* ancestor != left && ancestor != right && left != right */
-		if (memcmp(a, l, memsize) && memcmp(a, r, memsize) && memcmp(l, r, memsize)) {
-		    (void)bu_avs_add(changed_conflict_ancestor, "PARAMS", "BINARY_CONFLICT");
-		    (void)bu_avs_add(changed_conflict_left, "PARAMS", "BINARY_CONFLICT");
-		    (void)bu_avs_add(changed_conflict_right, "PARAMS", "BINARY_CONFLICT");
-		    (void)bu_avs_add(merged, "PARAMS", "BINARY_CONFLICT");
-		    has_diff = 1;
+		if (memcmp((void *)ancestor->idb_ptr, (void *)left->idb_ptr, memsize)) {
+		    ancestor_left = 0;
+		} else {
+		    ancestor_left = 1;
 		}
 	    }
 	}
+
+	if (ancestor && right) {
+	    if (a != r || a_arb != r_arb) ancestor_right = 0;
+	    if (ancestor_right == -1) {
+		int memsize = rt_intern_struct_size(ancestor->idb_minor_type);
+		if (memcmp((void *)ancestor->idb_ptr, (void *)right->idb_ptr, memsize)) {
+		    ancestor_right = 0;
+		} else {
+		    ancestor_right = 1;
+		}
+	    }
+	}
+
+	if (left && right) {
+	    if (l != r || l_arb != r_arb) left_right = 0;
+	    if (left_right == -1) {
+		int memsize = rt_intern_struct_size(left->idb_minor_type);
+		if (memcmp((void *)left->idb_ptr, (void *)right->idb_ptr, memsize)) {
+		    left_right = 0;
+		} else {
+		    left_right = 1;
+		}
+	    }
+	}
+
+	if (ancestor_right && !left) param_state |= DIFF3_REMOVED_LEFT_ONLY;
+	if (ancestor_left && !right) param_state |= DIFF3_REMOVED_RIGHT_ONLY;
+	if (!ancestor && left_right) param_state |= DIFF3_ADDED_BOTH_IDENTICALLY;
+	if (!ancestor && !left && right) param_state |= DIFF3_ADDED_RIGHT_ONLY;
+	if (!ancestor && left && !right) param_state |= DIFF3_ADDED_LEFT_ONLY;
+	if (!ancestor_left && !ancestor_right && left_right) param_state |= DIFF3_CHANGED_BOTH_IDENTICALLY;
+	if (!ancestor_left && ancestor_right) param_state |= DIFF3_CHANGED_LEFT_ONLY;
+	if (ancestor_left && !ancestor_right) param_state |= DIFF3_CHANGED_RIGHT_ONLY;
+	if ((!ancestor || (!ancestor_left && !ancestor_right)) && !left_right) param_state |= DIFF3_CONFLICT_BOTH_CHANGED;
+	if (ancestor && left && !ancestor_left && !right) param_state |= DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL;
+	if (ancestor && right && !ancestor_right && !left) param_state |= DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL;
+
     }
 
-    if (flags == DB_COMPARE_ATTRS || do_all) {
+    if ((flags == DB_COMPARE_ATTRS || do_all) && !attr_state) {
+	struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 	const struct bu_attribute_value_set *a;
 	const struct bu_attribute_value_set *l;
 	const struct bu_attribute_value_set *r;
@@ -1114,10 +968,10 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 	    r = &rt;
 	}
 
-	has_diff += bu_avs_diff3(unchanged, removed_left_only, removed_right_only, removed_both,
-		added_left_only, added_right_only, added_both, added_conflict_left, added_conflict_right,
-		changed_left_only, changed_right_only, changed_both, changed_conflict_ancestor,
-		changed_conflict_left, changed_conflict_right, merged, a, l, r, diff_tol);
+	attr_state |= bu_avs_diff3(NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, a, l, r, &diff_tol);
 
 	bu_avs_free(&at);
 	bu_avs_free(&lt);
@@ -1125,8 +979,22 @@ db_compare3(struct bu_attribute_value_set *unchanged,
 
     }
 
-    if (type_change) return 1;
-    return (has_diff) ? 1 : 0;
+    state |= param_state;
+    state |= attr_state;
+
+    /* We know enough now to identify the state of the diff - if we also have user functions, call them now */
+    if (((state & DIFF3_ADDED_BOTH_IDENTICALLY) || (state & DIFF3_ADDED_LEFT_ONLY) || (state & DIFF3_ADDED_RIGHT_ONLY)) && add_func)
+	add_func(left, ancestor, right, param_state, attr_state, flags, client_data);
+    if (((state & DIFF3_REMOVED_BOTH_IDENTICALLY) || (state & DIFF3_REMOVED_LEFT_ONLY) || (state & DIFF3_REMOVED_RIGHT_ONLY)) && del_func)
+       	del_func(left, ancestor, right, param_state, attr_state, flags, client_data);
+    if (((state & DIFF3_CHANGED_BOTH_IDENTICALLY) || (state & DIFF3_CHANGED_LEFT_ONLY) || (state & DIFF3_CHANGED_RIGHT_ONLY) ||
+		(state & DIFF3_CHANGED_CLEAN_MERGE)|| (state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL) ||
+		(state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL) || (state & DIFF3_CONFLICT_BOTH_CHANGED)) && chgd_func)
+       	chgd_func(left, ancestor, right, param_state, attr_state, flags, client_data);
+    if ((state == DIFF3_UNCHANGED) && unchgd_func)
+       	unchgd_func(left, ancestor, right, param_state, attr_state, flags, client_data);
+
+    return state;
 
 }
 
