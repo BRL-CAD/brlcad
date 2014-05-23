@@ -83,24 +83,6 @@ nmg_pr_orient(int orientation, const char *h)
 }
 
 
-void
-nmg_pr_m(const struct model *m)
-{
-    const struct nmgregion *r;
-
-    bu_log("MODEL %p\n", (void *)m);
-    if (!m || m->magic != NMG_MODEL_MAGIC) {
-	bu_log("bad model magic\n");
-	return;
-    }
-    bu_log("%ld maxindex\n", m->maxindex);
-
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	nmg_pr_r(r, (char *)NULL);
-    }
-}
-
-
 /**
  * NOTE:  All the nmg_pr_*() routines take an "h" (header string) pointer.
  * This can be an arbitrary caller-provided string, as long as it is kept
@@ -115,31 +97,6 @@ nmg_pr_m(const struct model *m)
 	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) bu_strlcat(_h, "   ", sizeof(nmg_pr_padstr)); } }
 
 #define Return { h[strlen(h)-3] = '\0'; return; }
-
-void
-nmg_pr_r(const struct nmgregion *r, char *h)
-{
-    struct shell *s;
-
-    bu_log("REGION %p\n", (void *)r);
-
-    MKPAD(h);
-
-    if (!r || r->l.magic != NMG_REGION_MAGIC) {
-	bu_log("bad region magic\n");
-	Return;
-    }
-
-    bu_log("%p m_p\n", (void *)r->m_p);
-    bu_log("%p l.forw\n", (void *)r->l.forw);
-    bu_log("%p l.back\n", (void *)r->l.back);
-    bu_log("%p ra_p\n", (void *)r->ra_p);
-
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_pr_s(s, h);
-    }
-    Return;
-}
 
 
 void
@@ -237,15 +194,13 @@ nmg_pr_s(const struct shell *s, char *h)
     MKPAD(h);
 
     bu_log("%sSHELL %p\n", h, (void *)s);
-    if (!s || s->l.magic != NMG_SHELL_MAGIC) {
+    if (!s || s->magic != NMG_SHELL_MAGIC) {
 	bu_log("bad shell magic\n");
 	Return;
     }
 
-    bu_log("%s%p r_p\n", h, (void *)s->r_p);
-    bu_log("%s%p l.forw\n", h, (void *)s->l.forw);
-    bu_log("%s%p l.back\n", h, (void *)s->l.back);
     bu_log("%s%p sa_p\n", h, (void *)s->sa_p);
+    bu_log("%ld maxindex\n", s->maxindex);
     if (s->sa_p)
 	nmg_pr_sa(s->sa_p, h);
 
@@ -277,7 +232,7 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
     MKPAD(h);
 
     bu_log("%sSHELL %p\n", h, (void *)s);
-    if (!s || s->l.magic != NMG_SHELL_MAGIC) {
+    if (!s || s->magic != NMG_SHELL_MAGIC) {
 	bu_log("bad shell magic\n");
 	Return;
     }
@@ -995,7 +950,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 	return;
     }
 
-    b = (long *)bu_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
+    b = (long *)bu_calloc(nmg_find_shell((uint32_t *)eu)->maxindex, sizeof(long),
 			  "nmg_pl_lu_around_eu flag[]");
 
     /* To go correct way around, start with arg's mate,
