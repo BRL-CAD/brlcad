@@ -2431,7 +2431,7 @@ struct hitmiss {
  */
 struct ray_data {
     uint32_t		magic;
-    struct model	*rd_m;
+    struct shell	*rd_s;
     char		*manifolds; /**< @brief   structure 1-3manifold table */
     vect_t		rd_invdir;
     struct xray		*rp;

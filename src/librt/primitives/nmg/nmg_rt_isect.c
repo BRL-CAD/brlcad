@@ -141,7 +141,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
     }
 
     bu_log("overlay %s\n", name);
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
@@ -171,7 +171,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     long *b;
     point_t min_pt, max_pt;
     int i;
-    struct model *m;
+    struct shell *s;
 
     sprintf(name, "ray%02d.plot3", plot_file_number++);
     fp=fopen(name, "wb");
@@ -181,8 +181,8 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     }
 
     bu_log("overlay %s\n", name);
-    m = nmg_find_model(eu->up.magic_p);
-    b = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
+    s = nmg_find_shell(eu->up.magic_p);
+    b = (long *)bu_calloc(s->maxindex, sizeof(long), "bit vec");
 
     pl_erase(fp);
 
@@ -740,7 +740,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("vertex_neighborhood\n");
 
-    nmg_model_bb(min_pt, max_pt, nmg_find_model(vu_p->up.magic_p));
+    nmg_shell_bb(min_pt, max_pt, nmg_find_shell(vu_p->up.magic_p));
     for (dimen= -MAX_FASTF, i=3; i--;) {
 	t = max_pt[i]-min_pt[i];
 	if (t > dimen) dimen = t;
@@ -2349,54 +2349,6 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("nmg_isect_ray_shell(done) %p, %p\n", (void *)rd, (void *)s_p);
-}
-
-
-void
-nmg_isect_ray_model(struct ray_data *rd)
-{
-    struct nmgregion *r_p;
-    struct shell *s_p;
-
-    if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("isect_ray_nmg: Pnt(%g %g %g) Dir(%g %g %g)\n",
-	       rd->rp->r_pt[0],
-	       rd->rp->r_pt[1],
-	       rd->rp->r_pt[2],
-	       rd->rp->r_dir[0],
-	       rd->rp->r_dir[1],
-	       rd->rp->r_dir[2]);
-
-    NMG_CK_MODEL(rd->rd_m);
-    NMG_CK_HITMISS_LISTS(rd);
-
-    /* Caller has assured us that the ray intersects the nmg model,
-     * check ray for intersection with rpp's of nmgregion's
-     */
-    for (BU_LIST_FOR(r_p, nmgregion, &rd->rd_m->r_hd)) {
-	NMG_CK_REGION(r_p);
-	NMG_CK_REGION_A(r_p->ra_p);
-
-	/* does ray intersect nmgregion rpp? */
-	if (! rt_in_rpp(rd->rp, rd->rd_invdir,
-			r_p->ra_p->min_pt, r_p->ra_p->max_pt))
-	    continue;
-
-	/* ray intersects region, check shell intersection */
-	for (BU_LIST_FOR(s_p, shell, &r_p->s_hd)) {
-	    nmg_isect_ray_shell(rd, s_p);
-	}
-    }
-
-    if (RTG.NMG_debug & DEBUG_RT_ISECT) {
-	if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
-	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
-		bu_log("ray missed NMG\n");
-	} else {
-	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
-		nmg_rt_print_hitlist(&rd->rd_hit);
-	}
-    }
 
     /* sanity check */
     NMG_CK_HITMISS_LISTS(rd);
@@ -2668,16 +2620,16 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree))
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
-    rd.rd_m = nmg_find_model(&s->l.magic);
+    rd.rd_s = nmg_find_shell(&s->magic);
 
     /* If there is a manifolds list attached to the model structure
      * then use it, otherwise create a manifolds list to be used once
      * in this function and then freed in this function.
      */
-    if (rd.rd_m->manifolds) {
-	rd.manifolds = rd.rd_m->manifolds;
+    if (rd.rd_s->manifolds) {
+	rd.manifolds = rd.rd_s->manifolds;
     } else {
-	rd.manifolds = nmg_manifolds(rd.rd_m);
+	rd.manifolds = nmg_manifolds(rd.rd_s);
     }
 
     if (RTG.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
@@ -2718,7 +2670,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     rd.stp = (struct soltab *)NULL;
     rd.seghead = (struct seg *)NULL;
     rd.magic = NMG_RAY_DATA_MAGIC;
-    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_m->maxindex,
+    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_s->maxindex,
 					      sizeof(struct hitmiss *), "nmg geom hit list");
     rd.classifying_ray = 1;
 
@@ -2782,7 +2734,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
-    if (!rd.rd_m->manifolds) {
+    if (!rd.rd_s->manifolds) {
 	/* If there is no manifolds list attached to the model
 	 * structure then the list was created here (within
 	 * nmg_class_ray_vs_shell) and should be freed here.
