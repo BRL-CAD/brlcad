@@ -402,33 +402,6 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 }
 
 
-void
-nmg_r_to_vlist(struct bu_list *vhead, const struct nmgregion *r, int poly_markers)
-{
-    register struct shell *s;
-
-    BU_CK_LIST_HEAD(vhead);
-    NMG_CK_REGION(r);
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_s_to_vlist(vhead, s, poly_markers);
-    }
-}
-
-
-void
-nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
-{
-    register struct nmgregion *r;
-
-    BU_CK_LIST_HEAD(vhead);
-    NMG_CK_MODEL(m);
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	NMG_CK_REGION(r);
-	nmg_r_to_vlist(vhead, r, poly_markers);
-    }
-}
-
-
 /************************************************************************
  *									*
  *		Routines to lay out the fancy edgeuse drawings		*
