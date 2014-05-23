@@ -365,7 +365,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     BN_CK_TOL(bs->bs_tol);
 
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s->r_p->s_hd, s->r_p);
+	nmg_vsshell(s);
 
     /*
      * For each face in the shell, process all the loops in the face,
@@ -422,7 +422,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    bu_log("faceuse %p loops retained=%d\n",
 		   (void *)fu, loops_retained);
 	if (RTG.NMG_debug & DEBUG_VERIFY)
-	    nmg_vshell(&s->r_p->s_hd, s->r_p);
+	    nmg_vsshell(s);
 
 	/*
 	 * Here, faceuse will have 0 or more loopuses still in it.
@@ -436,7 +436,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		bu_log("faceuse %p empty, kill\n", (void *)fu);
 	    nmg_kfu(fu);	/* kill face & mate, dequeue from shell */
 	    if (RTG.NMG_debug & DEBUG_VERIFY)
-		nmg_vshell(&s->r_p->s_hd, s->r_p);
+		nmg_vsshell(s);
 	    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 	    fu = nextfu;
 	    continue;
@@ -449,7 +449,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	fu = nextfu;
     }
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s->r_p->s_hd, s->r_p);
+	nmg_vsshell(s);
 
     /*
      * For each loop in the shell, process.
@@ -486,7 +486,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	lu = nextlu;
     }
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s->r_p->s_hd, s->r_p);
+	nmg_vsshell(s);
 
     /*
      * For each wire-edge in the shell, ...
@@ -558,7 +558,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	lu = nextlu;
     }
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s->r_p->s_hd, s->r_p);
+	nmg_vsshell(s);
 
     /*
      * Final case:  shell of a single vertexuse
@@ -580,7 +580,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
     }
     if (RTG.NMG_debug & DEBUG_VERIFY)
-	nmg_vshell(&s->r_p->s_hd, s->r_p);
+	nmg_vsshell(s);
     nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 }
 
