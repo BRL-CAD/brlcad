@@ -28,13 +28,6 @@
 #include "raytrace.h"
 #include "rt/db_diff.h"
 
-void
-result_free_ptbl(struct bu_ptbl *results_table)
-{
-    bu_ptbl_free(results_table);
-}
-
-
 int
 main(int argc, char **argv)
 {
