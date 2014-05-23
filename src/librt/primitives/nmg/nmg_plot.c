@@ -741,30 +741,6 @@ nmg_pl_shell(FILE *fp, const struct shell *s, int fancy)
 }
 
 
-void
-nmg_pl_r(FILE *fp, const struct nmgregion *r)
-{
-    struct bn_vlblock *vbp;
-
-    vbp = rt_vlblock_init();
-    nmg_vlblock_r(vbp, r, 0);
-    rt_plot_vlblock(fp, vbp);
-    rt_vlblock_free(vbp);
-}
-
-
-void
-nmg_pl_m(FILE *fp, const struct model *m)
-{
-    struct bn_vlblock *vbp;
-
-    vbp = rt_vlblock_init();
-    nmg_vlblock_m(vbp, m, 0);
-    rt_plot_vlblock(fp, vbp);
-    rt_vlblock_free(vbp);
-}
-
-
 /************************************************************************
  *									*
  *		Visualization of fancy edgeuses into VLBLOCKs		*
