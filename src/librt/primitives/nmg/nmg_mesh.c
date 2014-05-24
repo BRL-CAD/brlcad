@@ -622,8 +622,8 @@ nmg_mesh_shell_shell(struct shell *s1, struct shell *s2, const struct bn_tol *to
     NMG_CK_SHELL(s2);
     BN_CK_TOL(tol);
 
-    nmg_region_v_unique(s1->r_p, tol);
-    nmg_region_v_unique(s2->r_p, tol);
+    nmg_shell_v_unique(s1, tol);
+    nmg_shell_v_unique(s2, tol);
 
     /* First, mesh all faces of shell 2 with themselves */
     for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {
