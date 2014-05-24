@@ -1096,7 +1096,7 @@ struct db_tree_state {
 	); /**< @brief callback during DAG traversal called on leaf primitive nodes */
     const struct rt_tess_tol *	ts_ttol;	/**< @brief  Tessellation tolerance */
     const struct bn_tol	*	ts_tol;		/**< @brief  Math tolerance */
-    struct model **		ts_m;		/**< @brief  ptr to ptr to NMG "model" */
+    struct shell **		ts_s;		/**< @brief  ptr to ptr to NMG "shell" */
     struct rt_i *		ts_rtip;	/**< @brief  Helper for rt_gettrees() */
     struct resource *		ts_resp;	/**< @brief  Per-CPU data */
 };
@@ -1190,7 +1190,7 @@ union tree {
 	uint32_t magic;
 	int td_op;			/**< @brief  leaf, OP_NMG_TESS */
 	const char *td_name;		/**< @brief  If non-null, dynamic string describing heritage of this region */
-	struct nmgregion *td_r;		/**< @brief  ptr to NMG region */
+	struct shell *td_s;		/**< @brief  ptr to NMG shell */
     } tr_d;
     struct tree_db_leaf {
 	uint32_t magic;
@@ -2132,14 +2132,12 @@ struct rt_functab {
 		     struct application * /*ap*/);
 #define RTFUNCTAB_FUNC_VSHOT_CAST(_func) ((void (*)(struct soltab *[], struct xray *[], struct seg *, int, struct application *))_func)
 
-    int (*ft_tessellate)(struct nmgregion ** /*r*/,
-			 struct model * /*m*/,
+    int (*ft_tessellate)(struct shell ** /*s*/,
 			 struct rt_db_internal * /*ip*/,
 			 const struct rt_tess_tol * /*ttol*/,
 			 const struct bn_tol * /*tol*/);
 #define RTFUNCTAB_FUNC_TESS_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *))_func)
-    int (*ft_tnurb)(struct nmgregion ** /*r*/,
-		    struct model * /*m*/,
+    int (*ft_tnurb)(struct shell ** /*s*/,
 		    struct rt_db_internal * /*ip*/,
 		    const struct bn_tol * /*tol*/);
 #define RTFUNCTAB_FUNC_TNURB_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct bn_tol *))_func)
@@ -7162,8 +7160,8 @@ RT_EXPORT extern double nmg_measure_fu_angle(const struct edgeuse *eu,
 					     const vect_t zvec);
 
 /* from nmg_bool.c */
-RT_EXPORT extern struct nmgregion *nmg_do_bool(struct nmgregion *s1,
-					       struct nmgregion *s2,
+RT_EXPORT extern struct shell *nmg_do_bool(struct shell *s1,
+					       struct shell *s2,
 					       const int oper, const struct bn_tol *tol);
 RT_EXPORT extern void nmg_shell_coplanar_face_merge(struct shell *s,
 						    const struct bn_tol *tol,
