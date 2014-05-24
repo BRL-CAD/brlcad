@@ -706,63 +706,6 @@ nmg_pr_m_struct_counts(const struct shell *s, const char *str)
 }
 
 
-/**
- * Combine two NMG model trees into one single NMG model.  The
- * first model inherits the nmgregions of the second.  The second
- * model pointer is freed before return.
- */
-void
-nmg_merge_models(struct model *m1, struct model *m2)
-{
-    struct nmgregion *r;
-
-    NMG_CK_MODEL(m1);
-    NMG_CK_MODEL(m2);
-
-    /* first reorder the first model to "compress" the
-     * number space if possible.
-     */
-    nmg_m_reindex(m1, 0);
-
-    if (m1 == m2) /* nothing to do */
-	return;
-
-    /* now re-order the second model starting with an index number
-     * of m1->maxindex.
-     *
-     * We might get away with using m1->maxindex-1, since the first
-     * value is assigned to the second model structure, and we will
-     * shortly be freeing the second model struct.
-     */
-
-    nmg_m_reindex(m2, m1->maxindex);
-    m1->maxindex = m2->maxindex;		/* big enough for both */
-
-    /* Rehome all the regions in m2, and move them from m2 to m1 */
-    for (BU_LIST_FOR(r, nmgregion, &(m2->r_hd))) {
-	NMG_CK_REGION(r);
-	r->m_p = m1;
-    }
-    BU_LIST_APPEND_LIST(&(m1->r_hd), &(m2->r_hd));
-
-    /* If there are any manifold tables, when the models are
-     * merged they become invalid and need to be regenerated.
-     * To avoid confusion, free them here so it is known they
-     * need to be regenerated.
-     */
-    if (m1->manifolds) {
-	bu_free((char *)m1->manifolds, "free manifolds table");
-	m1->manifolds = (char *)NULL;
-    }
-    if (m2->manifolds) {
-	bu_free((char *)m2->manifolds, "free manifolds table");
-	m2->manifolds = (char *)NULL;
-    }
-
-    FREE_MODEL(m2);
-}
-
-
 #define CHECK_INDEX(_p) if ((_p)->index > maxindex) maxindex = (_p)->index
 #define CHECK_VU_INDEX(_vu) {\
 	NMG_CK_VERTEXUSE(_vu); \
