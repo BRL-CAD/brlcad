@@ -1547,9 +1547,8 @@ nmg_ck_v_in_fus(uint32_t *vp, genptr_t state, int UNUSED(unused))
 
 
 void
-nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
+nmg_ck_vs_in_shell(const struct shell *s, const struct bn_tol *tol)
 {
-    struct model *m;
     struct v_ck_state st;
     struct bu_ptbl tab;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
@@ -1559,18 +1558,16 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 						       NULL, NULL, NULL, nmg_ck_v_in_fus, NULL};
     /* handlers.vis_vertex = nmg_ck_v_in_fus; */
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
-    m = r->m_p;
-    NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(s->maxindex+1, sizeof(char), "visited[]");
     st.tabl = &tab;
     st.tol = (struct bn_tol *)tol;
 
     (void)bu_ptbl_init(&tab, 64, " &tab");
 
-    nmg_visit(&r->l.magic, &handlers, (genptr_t)&st);
+    nmg_visit(&s->magic, &handlers, (genptr_t)&st);
 
     bu_ptbl_free(&tab);
 
