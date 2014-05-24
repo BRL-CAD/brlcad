@@ -1512,7 +1512,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	char buf[128];
 	FILE *fp;
-	struct model *m;
+	struct shell *s;
 	long *b;
 	struct bn_vlblock *vbp;
 	static int num = 0;
@@ -1523,8 +1523,8 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	VPRINT("\tvertex", vs[start].vu->v_p->vg_p->coord);
 
 	/* Plot all the loops that touch here. */
-	m = nmg_find_model((uint32_t *)vs[start].vu);
-	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
+	s = nmg_find_shell((uint32_t *)vs[start].vu);
+	b = (long *)bu_calloc(s->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
 	vbp = rt_vlblock_init();
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;
