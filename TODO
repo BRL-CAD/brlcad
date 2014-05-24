@@ -1572,6 +1572,9 @@ NMG/BoT
 
 * need a simplified means to programmatically create and edit BoT
   meshes via the command line without resorting to get/put.
+  
+* implement the routine nmg_fix_normals(struct shell *s_orig, const 
+  struct bn_tol *tol) to fit new nmg structure.
 
 
 RTGL

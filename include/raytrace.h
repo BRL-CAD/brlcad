@@ -6452,9 +6452,6 @@ RT_EXPORT extern struct face *nmg_find_top_face_in_dir(const struct shell *s,
 RT_EXPORT extern struct face *nmg_find_top_face(const struct shell *s,
 						int *dir,
 						long *flags);
-RT_EXPORT extern int nmg_find_outer_and_void_shells(struct nmgregion *r,
-						    struct bu_ptbl ***shells,
-						    const struct bn_tol *tol);
 RT_EXPORT extern int nmg_mark_edges_real(const uint32_t *magic_p);
 RT_EXPORT extern void nmg_tabulate_face_g_verts(struct bu_ptbl *tab,
 						const struct face_g_plane *fg);
