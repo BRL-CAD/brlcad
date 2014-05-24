@@ -36,7 +36,7 @@
 int
 rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
-    struct model *nmg;
+    struct shell *nmg;
 
     mat_t mirmat;
     mat_t rmat;
@@ -48,8 +48,6 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     fastf_t ang;
 
     int i;
-    struct nmgregion *r;
-    struct shell *s;
     struct bu_ptbl table;
     struct vertex *v;
 
@@ -61,8 +59,8 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     RT_CK_DB_INTERNAL(ip);
 
-    nmg = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(nmg);
+    nmg = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(nmg);
 
     MAT_IDN(mirmat);
 
@@ -120,12 +118,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	}
     }
 
-    for (BU_LIST_FOR (r, nmgregion, &nmg->r_hd)) {
-	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	    nmg_invert_shell(s);
-	}
-    }
-
+    nmg_invert_shell(nmg);
 
     for (i=0; i<BU_PTBL_END(&table); i++) {
 	struct face *f;
