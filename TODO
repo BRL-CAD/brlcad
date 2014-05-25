@@ -1576,6 +1576,8 @@ NMG/BoT
 * implement the routine nmg_fix_normals(struct shell *s_orig, const 
   struct bn_tol *tol) to fit new nmg structure.
 
+* implement the routine 'nmg_extrude_cleanup', 'nmg_hollow_shell'
+  and 'nmg_extrude_shell' to fit new nmg structure.
 
 RTGL
 ----
