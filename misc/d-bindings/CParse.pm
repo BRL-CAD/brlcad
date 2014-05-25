@@ -257,7 +257,7 @@ sub extract_object {
   if (1) {
     # try Parse::RecDescent instead of my kludges below
     ParseCChunk::parse_chunk(\@olines);
-    return;
+    return $last_index;
   }
 
   my $norig_lines = $last_index - $first_index + 1;
