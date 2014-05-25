@@ -1108,7 +1108,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1117,7 +1117,6 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     point_t *ell = NULL;	/* array of ellipse points */
     point_t Ell_V;	/* vertex of an ellipse */
     struct rt_eto_internal *tip;
-    struct shell *s;
     struct vertex **verts = NULL;
     struct faceuse **faces = NULL;
     struct vertex **vertp[4];
@@ -1205,8 +1204,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     verts = (struct vertex **)bu_calloc(npts*nells, sizeof(struct vertex *),
 					"rt_eto_tess *verts[]");
@@ -1271,7 +1269,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_shell_a(*s, tol);
 
  failure:
     bu_free((char *)ell, "make_ellipse pts");
