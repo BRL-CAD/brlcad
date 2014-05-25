@@ -1159,10 +1159,10 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_epa_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, **normals, theta_new, theta_prev;
@@ -1174,7 +1174,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_epa_internal *xip;
     point_t p1;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
-    struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct vertex *vertp[3];
     struct vertex ***vells = (struct vertex ***)NULL;
@@ -1364,8 +1363,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * put epa geometry into nmg data structures
      */
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* vertices of ellipses of epa */
     vells = (struct vertex ***)
@@ -1548,11 +1546,11 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Glue the edges of different outward pointing face uses together */
     nmg_gluefaces(outfaceuses, face, tol);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(*s, tol, 1);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
