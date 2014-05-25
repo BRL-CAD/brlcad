@@ -50,7 +50,7 @@
 /* This is the solid information specific to an nmg solid */
 struct nmg_specific {
     uint32_t nmg_smagic;	/* STRUCT START magic number */
-    struct model *nmg_model;
+    struct shell *nmg_shell;
     char *manifolds;		/* structure 1-3manifold table */
     vect_t nmg_invdir;
     uint32_t nmg_emagic;	/* STRUCT END magic number */
@@ -92,13 +92,13 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct
 int
 rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct model *m;
+    struct shell *s;
     struct nmg_specific *nmg_s;
     vect_t work;
 
     RT_CK_DB_INTERNAL(ip);
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
@@ -108,7 +108,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     BU_GET(nmg_s, struct nmg_specific);
     stp->st_specific = (genptr_t)nmg_s;
-    nmg_s->nmg_model = m;
+    nmg_s->nmg_shell = s;
     ip->idb_ptr = (genptr_t)NULL;
     nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
     nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
@@ -116,7 +116,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* build table indicating the manifold level of each sub-element
      * of NMG solid
      */
-    nmg_s->manifolds = nmg_manifolds(m);
+    nmg_s->manifolds = nmg_manifolds(s);
 
     return 0;
 }
@@ -125,11 +125,10 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_nmg_print(const struct soltab *stp)
 {
-    struct model *m =
-	(struct model *)stp->st_specific;
+    struct shell *s = (struct shell *)stp->st_specific;
 
-    NMG_CK_MODEL(m);
-    nmg_pr_m(m);
+    NMG_CK_SHELL(s);
+    nmg_pr_s(s);
 }
 
 
@@ -186,7 +185,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     /* build the NMG per-ray data structure */
-    rd.rd_m = nmg->nmg_model;
+    rd.rd_s = nmg->nmg_shell;
     rd.manifolds = nmg->manifolds;
     VMOVE(rd.rd_invdir, nmg->nmg_invdir);
     rd.rp = rp;
@@ -201,7 +200,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      * will either be (NULL) if item not previously processed or a
      * hitmiss ptr if item was previously processed
      */
-    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_m->maxindex,
+    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_s->maxindex,
 					      sizeof(struct hitmiss *), "nmg geom hit list");
 
     /* initialize the lists of things that have been hit/missed */
@@ -281,7 +280,7 @@ rt_nmg_free(struct soltab *stp)
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
 
-    nmg_km(nmg->nmg_model);
+    nmg_ks(nmg->nmg_shell);
     BU_PUT(nmg, struct nmg_specific);
     stp->st_specific = NULL; /* sanity */
 }
@@ -290,14 +289,14 @@ rt_nmg_free(struct soltab *stp)
 int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    struct model *m;
+    struct shell *s;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
-    nmg_m_to_vlist(vhead, m, 0);
+    nmg_s_to_vlist(vhead, s, 0);
 
     return 0;
 }
@@ -314,47 +313,9 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_nmg_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
-    struct model *lm;
-
-    NMG_CK_MODEL(m);
-
-    RT_CK_DB_INTERNAL(ip);
-    lm = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(lm);
-
-    if (BU_LIST_IS_EMPTY(&(lm->r_hd))) {
-	/* No regions in imported geometry, can't give valid 'r' */
-	*r = (struct nmgregion *)NULL;
-	return -1;
-    }
-
-    /* XXX A big hack, just for testing ***/
-
-    *r = BU_LIST_FIRST(nmgregion, &(lm->r_hd));
-    NMG_CK_REGION(*r);
-    if (BU_LIST_NEXT_NOT_HEAD(*r, &(lm->r_hd))) {
-	struct nmgregion *r2;
-
-	r2 = BU_LIST_PNEXT(nmgregion, &((*r)->l));
-	while (BU_LIST_NOT_HEAD(&r2->l, &(lm->r_hd))) {
-	    struct nmgregion *next_r;
-
-	    next_r = BU_LIST_PNEXT(nmgregion, &r2->l);
-	    nmg_merge_regions(*r, r2, tol);
-
-	    r2 = next_r;
-	}
-    }
-
-
-    /* XXX The next two lines "destroy" the internal nmg solid.  This
-     * means that once you tessellate an NMG solid, your in-memory copy
-     * becomes invalid, and you can't do anything else with it until
-     * you get a new copy from disk.
-     */
-    nmg_merge_models(m, lm);
+    *s = (struct shell *)ip->idb_ptr;
     ip->idb_ptr = GENPTR_NULL;
 
     return 0;
@@ -1008,53 +969,12 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 
     oindex = ecnt[idx].per_struct_index;
     switch (ecnt[idx].kind) {
-	case NMG_KIND_MODEL: {
-	    struct model *m = (struct model *)ip;
-	    struct disk_model *d;
-	    d = &((struct disk_model *)op)[oindex];
-	    NMG_CK_MODEL(m);
-	    PUTMAGIC(DISK_MODEL_MAGIC);
-	    *(uint32_t *)d->version = htonl(0);
-	    INDEXL(d, m, r_hd);
-	}
-	    return;
-	case NMG_KIND_NMGREGION: {
-	    struct nmgregion *r = (struct nmgregion *)ip;
-	    struct disk_nmgregion *d;
-	    d = &((struct disk_nmgregion *)op)[oindex];
-	    NMG_CK_REGION(r);
-	    PUTMAGIC(DISK_REGION_MAGIC);
-	    INDEXL(d, r, l);
-	    INDEX(d, r, m_p);
-	    INDEX(d, r, ra_p);
-	    INDEXL(d, r, s_hd);
-	}
-	    return;
-	case NMG_KIND_NMGREGION_A: {
-	    struct nmgregion_a *r = (struct nmgregion_a *)ip;
-	    struct disk_nmgregion_a *d;
-
-	    /* must be double for import and export */
-	    double min[ELEMENTS_PER_POINT];
-	    double max[ELEMENTS_PER_POINT];
-
-	    d = &((struct disk_nmgregion_a *)op)[oindex];
-	    NMG_CK_REGION_A(r);
-	    PUTMAGIC(DISK_REGION_A_MAGIC);
-	    VSCALE(min, r->min_pt, local2mm);
-	    VSCALE(max, r->max_pt, local2mm);
-	    bu_cv_htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
-	    bu_cv_htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
-	}
-	    return;
 	case NMG_KIND_SHELL: {
 	    struct shell *s = (struct shell *)ip;
 	    struct disk_shell *d;
 	    d = &((struct disk_shell *)op)[oindex];
 	    NMG_CK_SHELL(s);
 	    PUTMAGIC(DISK_SHELL_MAGIC);
-	    INDEXL(d, s, l);
-	    INDEX(d, s, r_p);
 	    INDEX(d, s, sa_p);
 	    INDEXL(d, s, fu_hd);
 	    INDEXL(d, s, lu_hd);
@@ -1414,62 +1334,17 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 
     iindex = 0;
     switch (ecnt[idx].kind) {
-	case NMG_KIND_MODEL: {
-	    struct model *m = (struct model *)op;
-	    struct disk_model *d;
-	    d = &((struct disk_model *)ip)[iindex];
-	    NMG_CK_MODEL(m);
-	    NMG_CK_DISKMAGIC(d->magic, DISK_MODEL_MAGIC);
-	    INDEXL_HD(d, m, r_hd, m->r_hd);
-	}
-	    return 0;
-	case NMG_KIND_NMGREGION: {
-	    struct nmgregion *r = (struct nmgregion *)op;
-	    struct disk_nmgregion *d;
-	    d = &((struct disk_nmgregion *)ip)[iindex];
-	    NMG_CK_REGION(r);
-	    NMG_CK_DISKMAGIC(d->magic, DISK_REGION_MAGIC);
-	    INDEX(d, r, model, m_p);
-	    INDEX(d, r, nmgregion_a, ra_p);
-	    INDEXL_HD(d, r, s_hd, r->s_hd);
-	    INDEXL_HD(d, r, l, r->m_p->r_hd); /* do after m_p */
-	    NMG_CK_MODEL(r->m_p);
-	}
-	    return 0;
-	case NMG_KIND_NMGREGION_A: {
-	    struct nmgregion_a *r = (struct nmgregion_a *)op;
-	    struct disk_nmgregion_a *d;
-	    point_t min;
-	    point_t max;
-
-	    /* must be double for import and export */
-	    double scanmin[ELEMENTS_PER_POINT];
-	    double scanmax[ELEMENTS_PER_POINT];
-
-	    d = &((struct disk_nmgregion_a *)ip)[iindex];
-	    NMG_CK_REGION_A(r);
-	    NMG_CK_DISKMAGIC(d->magic, DISK_REGION_A_MAGIC);
-	    bu_cv_ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
-	    VMOVE(min, scanmin); /* convert double to fastf_t */
-	    bu_cv_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
-	    VMOVE(max, scanmax); /* convert double to fastf_t */
-	    bn_rotate_bbox(r->min_pt, r->max_pt, mat, min, max);
-	}
-	    return 0;
 	case NMG_KIND_SHELL: {
 	    struct shell *s = (struct shell *)op;
 	    struct disk_shell *d;
 	    d = &((struct disk_shell *)ip)[iindex];
 	    NMG_CK_SHELL(s);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_SHELL_MAGIC);
-	    INDEX(d, s, nmgregion, r_p);
 	    INDEX(d, s, shell_a, sa_p);
 	    INDEXL_HD(d, s, fu_hd, s->fu_hd);
 	    INDEXL_HD(d, s, lu_hd, s->lu_hd);
 	    INDEXL_HD(d, s, eu_hd, s->eu_hd);
 	    INDEX(d, s, vertexuse, vu_p);
-	    NMG_CK_REGION(s->r_p);
-	    INDEXL_HD(d, s, l, s->r_p->s_hd); /* after s->r_p */
 	}
 	    return 0;
 	case NMG_KIND_SHELL_A: {
@@ -1831,10 +1706,10 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
  * preparation for the importation operation, using the GET_xxx()
  * macros, so that m->maxindex, etc., are all appropriately handled.
  */
-HIDDEN struct model *
+HIDDEN struct shell *
 rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 {
-    struct model *m = (struct model *)0;
+    struct shell *s = (struct shell *)0;
     int subscript;
     int kind;
     int j;
@@ -1846,32 +1721,10 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 	    ecnt[subscript].kind = kind;
 	    ecnt[subscript].per_struct_index = 0; /* unused on import */
 	    switch (kind) {
-		case NMG_KIND_MODEL:
-		    if (m) bu_bomb("multiple models?");
-		    m = nmg_mm();
-		    /* Keep disk indices & new indices equal... */
-		    m->maxindex++;
-		    ptrs[subscript] = (uint32_t *)m;
-		    break;
-		case NMG_KIND_NMGREGION: {
-		    struct nmgregion *r;
-		    GET_REGION(r, m);
-		    r->l.magic = NMG_REGION_MAGIC;
-		    BU_LIST_INIT(&r->s_hd);
-		    ptrs[subscript] = (uint32_t *)r;
-		}
-		    break;
-		case NMG_KIND_NMGREGION_A: {
-		    struct nmgregion_a *ra;
-		    GET_REGION_A(ra, m);
-		    ra->magic = NMG_REGION_A_MAGIC;
-		    ptrs[subscript] = (uint32_t *)ra;
-		}
-		    break;
 		case NMG_KIND_SHELL: {
-		    struct shell *s;
-		    GET_SHELL(s, m);
-		    s->l.magic = NMG_SHELL_MAGIC;
+		    s = nmg_ms();
+		    s->maxindex++;
+		    s->magic = NMG_SHELL_MAGIC;
 		    BU_LIST_INIT(&s->fu_hd);
 		    BU_LIST_INIT(&s->lu_hd);
 		    BU_LIST_INIT(&s->eu_hd);
@@ -1880,14 +1733,14 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_SHELL_A: {
 		    struct shell_a *sa;
-		    GET_SHELL_A(sa, m);
+		    GET_SHELL_A(sa, s);
 		    sa->magic = NMG_SHELL_A_MAGIC;
 		    ptrs[subscript] = (uint32_t *)sa;
 		}
 		    break;
 		case NMG_KIND_FACEUSE: {
 		    struct faceuse *fu;
-		    GET_FACEUSE(fu, m);
+		    GET_FACEUSE(fu, s);
 		    fu->l.magic = NMG_FACEUSE_MAGIC;
 		    BU_LIST_INIT(&fu->lu_hd);
 		    ptrs[subscript] = (uint32_t *)fu;
@@ -1895,14 +1748,14 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_FACE: {
 		    struct face *f;
-		    GET_FACE(f, m);
+		    GET_FACE(f, s);
 		    f->l.magic = NMG_FACE_MAGIC;
 		    ptrs[subscript] = (uint32_t *)f;
 		}
 		    break;
 		case NMG_KIND_FACE_G_PLANE: {
 		    struct face_g_plane *fg;
-		    GET_FACE_G_PLANE(fg, m);
+		    GET_FACE_G_PLANE(fg, s);
 		    fg->magic = NMG_FACE_G_PLANE_MAGIC;
 		    BU_LIST_INIT(&fg->f_hd);
 		    ptrs[subscript] = (uint32_t *)fg;
@@ -1910,7 +1763,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_FACE_G_SNURB: {
 		    struct face_g_snurb *fg;
-		    GET_FACE_G_SNURB(fg, m);
+		    GET_FACE_G_SNURB(fg, s);
 		    fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
 		    BU_LIST_INIT(&fg->f_hd);
 		    ptrs[subscript] = (uint32_t *)fg;
@@ -1918,7 +1771,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_LOOPUSE: {
 		    struct loopuse *lu;
-		    GET_LOOPUSE(lu, m);
+		    GET_LOOPUSE(lu, s);
 		    lu->l.magic = NMG_LOOPUSE_MAGIC;
 		    BU_LIST_INIT(&lu->down_hd);
 		    ptrs[subscript] = (uint32_t *)lu;
@@ -1926,21 +1779,21 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_LOOP: {
 		    struct loop *l;
-		    GET_LOOP(l, m);
+		    GET_LOOP(l, s);
 		    l->magic = NMG_LOOP_MAGIC;
 		    ptrs[subscript] = (uint32_t *)l;
 		}
 		    break;
 		case NMG_KIND_LOOP_G: {
 		    struct loop_g *lg;
-		    GET_LOOP_G(lg, m);
+		    GET_LOOP_G(lg, s);
 		    lg->magic = NMG_LOOP_G_MAGIC;
 		    ptrs[subscript] = (uint32_t *)lg;
 		}
 		    break;
 		case NMG_KIND_EDGEUSE: {
 		    struct edgeuse *eu;
-		    GET_EDGEUSE(eu, m);
+		    GET_EDGEUSE(eu, s);
 		    eu->l.magic = NMG_EDGEUSE_MAGIC;
 		    eu->l2.magic = NMG_EDGEUSE2_MAGIC;
 		    ptrs[subscript] = (uint32_t *)eu;
@@ -1948,14 +1801,14 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_EDGE: {
 		    struct edge *e;
-		    GET_EDGE(e, m);
+		    GET_EDGE(e, s);
 		    e->magic = NMG_EDGE_MAGIC;
 		    ptrs[subscript] = (uint32_t *)e;
 		}
 		    break;
 		case NMG_KIND_EDGE_G_LSEG: {
 		    struct edge_g_lseg *eg;
-		    GET_EDGE_G_LSEG(eg, m);
+		    GET_EDGE_G_LSEG(eg, s);
 		    eg->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 		    BU_LIST_INIT(&eg->eu_hd2);
 		    ptrs[subscript] = (uint32_t *)eg;
@@ -1963,7 +1816,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_EDGE_G_CNURB: {
 		    struct edge_g_cnurb *eg;
-		    GET_EDGE_G_CNURB(eg, m);
+		    GET_EDGE_G_CNURB(eg, s);
 		    eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 		    BU_LIST_INIT(&eg->eu_hd2);
 		    ptrs[subscript] = (uint32_t *)eg;
@@ -1971,28 +1824,28 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_VERTEXUSE: {
 		    struct vertexuse *vu;
-		    GET_VERTEXUSE(vu, m);
+		    GET_VERTEXUSE(vu, s);
 		    vu->l.magic = NMG_VERTEXUSE_MAGIC;
 		    ptrs[subscript] = (uint32_t *)vu;
 		}
 		    break;
 		case NMG_KIND_VERTEXUSE_A_PLANE: {
 		    struct vertexuse_a_plane *vua;
-		    GET_VERTEXUSE_A_PLANE(vua, m);
+		    GET_VERTEXUSE_A_PLANE(vua, s);
 		    vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
 		    ptrs[subscript] = (uint32_t *)vua;
 		}
 		    break;
 		case NMG_KIND_VERTEXUSE_A_CNURB: {
 		    struct vertexuse_a_cnurb *vua;
-		    GET_VERTEXUSE_A_CNURB(vua, m);
+		    GET_VERTEXUSE_A_CNURB(vua, s);
 		    vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
 		    ptrs[subscript] = (uint32_t *)vua;
 		}
 		    break;
 		case NMG_KIND_VERTEX: {
 		    struct vertex *v;
-		    GET_VERTEX(v, m);
+		    GET_VERTEX(v, s);
 		    v->magic = NMG_VERTEX_MAGIC;
 		    BU_LIST_INIT(&v->vu_hd);
 		    ptrs[subscript] = (uint32_t *)v;
@@ -2000,7 +1853,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    break;
 		case NMG_KIND_VERTEX_G: {
 		    struct vertex_g *vg;
-		    GET_VERTEX_G(vg, m);
+		    GET_VERTEX_G(vg, s);
 		    vg->magic = NMG_VERTEX_G_MAGIC;
 		    ptrs[subscript] = (uint32_t *)vg;
 		}
@@ -2016,7 +1869,8 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 	    subscript++;
 	}
     }
-    return m;
+
+    return s;
 }
 
 
@@ -2078,7 +1932,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 int
 rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
-    struct model *m;
+    struct shell *s;
     union record *rp;
     int kind_counts[NMG_N_KINDS];
     unsigned char *cp;
@@ -2130,7 +1984,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     ptrs[maxindex+1] = &bad_magic;	/* [maxindex+1] gives bad magic */
 
     /* Allocate storage for all the NMG structs, in ptrs[] */
-    m = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
+    s = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
 
     /* Locate the variably sized fastf_t arrays.  ecnt[] has room. */
     cp = (unsigned char *)(rp+1);	/* start at first granule in */
@@ -2148,7 +2002,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 
     if (rebound) {
 	/* Recompute all bounding boxes in model */
-	nmg_rebound(m, tol);
+	nmg_rebound(s, tol);
     } else {
 	/*
 	 * Need to recompute bounding boxes for the faces here.
@@ -2165,7 +2019,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
     ip->idb_meth = &OBJ[ID_NMG];
-    ip->idb_ptr = (genptr_t)m;
+    ip->idb_ptr = (genptr_t)s;
 
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
@@ -2217,7 +2071,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 int
 rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
 {
-    struct model *m;
+    struct shell *s;
     union record *rp;
     struct nmg_struct_counts cntbuf;
     uint32_t **ptrs;
@@ -2235,22 +2089,22 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* As a by-product, this fills in the ptrs[] array! */
     memset((char *)&cntbuf, 0, sizeof(cntbuf));
-    ptrs = nmg_m_struct_count(&cntbuf, m);
+    ptrs = nmg_m_struct_count(&cntbuf, s);
 
     /* Collect overall new subscripts, and structure-specific indices */
-    ecnt = (struct nmg_exp_counts *)bu_calloc(m->maxindex+1,
+    ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
     for (i = 0; i < NMG_N_KINDS; i++)
 	kind_counts[i] = 0;
     subscript = 1;		/* must be larger than DISK_INDEX_NULL */
     double_count = 0;
     fastf_byte_count = 0;
-    for (i=0; i < m->maxindex; i++) {
+    for (i=0; i < s->maxindex; i++) {
 	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
@@ -2307,14 +2161,14 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 	     * Don't assign any new subscripts for them.
 	     * Instead, use DISK_INDEX_NULL, yielding null ptrs.
 	     */
-	    for (i=0; i < m->maxindex; i++) {
+	    for (i=0; i < s->maxindex; i++) {
 		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
 	    }
 	    continue;
 	}
-	for (i=0; i < m->maxindex; i++) {
+	for (i=0; i < s->maxindex; i++) {
 	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
@@ -2325,7 +2179,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
     /* Sanity checking */
-    for (i=0; i < m->maxindex; i++) {
+    for (i=0; i < s->maxindex; i++) {
 	if (ptrs[i] == NULL) continue;
 	if (nmg_index_of_struct(ptrs[i]) != i) {
 	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
@@ -2375,7 +2229,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
     /* Convert all the structures to their disk versions */
-    for (i = m->maxindex-1; i >= 0; i--) {
+    for (i = s->maxindex-1; i >= 0; i--) {
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
@@ -2397,7 +2251,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 int
 rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    struct model *m;
+    struct shell *s;
     union record *rp;
     struct bn_tol tol;
 
@@ -2425,11 +2279,11 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (rt_nmg_import4_internal(ip, ep, mat, 1, &tol) < 0)
 	return -1;
 
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     if (RT_G_DEBUG || RTG.NMG_debug)
-	nmg_vmodel(m);
+	nmg_vsshell(s);
 
     return 0;			/* OK */
 }
@@ -2441,7 +2295,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 	       const mat_t mat,
 	       const struct db_i *dbip)
 {
-    struct model *m;
+    struct shell *s;
     struct bn_tol tol;
     int maxindex;
     int kind;
@@ -2495,7 +2349,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     ptrs[maxindex] = &bad_magic;
     ptrs[maxindex+1] = &bad_magic;
 
-    m = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
+    s = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
 
     rt_nmg_i2alloc(ecnt, dp, kind_counts);
 
@@ -2511,19 +2365,19 @@ rt_nmg_import5(struct rt_db_internal *ip,
     }
 
     /* Face min_pt and max_pt are not stored, so this is mandatory. */
-    nmg_rebound(m, &tol);
+    nmg_rebound(s, &tol);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
     ip->idb_meth = &OBJ[ ID_NMG ];
-    ip->idb_ptr = (genptr_t)m;
-    NMG_CK_MODEL(m);
+    ip->idb_ptr = (genptr_t)s;
+    NMG_CK_SHELL(s);
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
 
     if (RT_G_DEBUG || RTG.NMG_debug) {
-	nmg_vmodel(m);
+	nmg_vsshell(s);
     }
     return 0;		/* OK */
 }
@@ -2535,17 +2389,17 @@ rt_nmg_import5(struct rt_db_internal *ip,
 int
 rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct model *m;
+    struct shell *s;
 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* To ensure that a decent database is written, verify source first */
-    nmg_vmodel(m);
+    nmg_vsshell(s);
 
     /* The "compact" flag is used to save space in the database */
     return rt_nmg_export4_internal(ep, ip, local2mm, 1);
@@ -2559,7 +2413,7 @@ rt_nmg_export5(
     double local2mm,
     const struct db_i *dbip)
 {
-    struct model *m;
+    struct shell *s;
     unsigned char *dp;
     uint32_t **ptrs;
     struct nmg_struct_counts cntbuf;
@@ -2576,13 +2430,13 @@ rt_nmg_export5(
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     memset((char *)&cntbuf, 0, sizeof(cntbuf));
-    ptrs = nmg_m_struct_count(&cntbuf, m);
+    ptrs = nmg_m_struct_count(&cntbuf, s);
 
-    ecnt = (struct nmg_exp_counts *)bu_calloc(m->maxindex+1,
+    ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
     for (i=0; i<NMG_N_KINDS; i++) {
 	kind_counts[i] = 0;
@@ -2590,7 +2444,7 @@ rt_nmg_export5(
     subscript = 1;
     double_count = 0;
     fastf_byte_count = 0;
-    for (i=0; i< m->maxindex; i++) {
+    for (i=0; i< s->maxindex; i++) {
 	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
@@ -2644,7 +2498,7 @@ rt_nmg_export5(
 	if (kind == NMG_KIND_NMGREGION_A ||
 	    kind == NMG_KIND_SHELL_A ||
 	    kind == NMG_KIND_LOOP_G) {
-	    for (i=0; i<m->maxindex; i++) {
+	    for (i=0; i<s->maxindex; i++) {
 		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
@@ -2652,7 +2506,7 @@ rt_nmg_export5(
 	    continue;
 	}
 
-	for (i=0; i< m->maxindex;i++) {
+	for (i=0; i< s->maxindex;i++) {
 	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
@@ -2663,7 +2517,7 @@ rt_nmg_export5(
     subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
     /* Now do some checking to make sure the world is not totally mad */
-    for (i=0; i<m->maxindex; i++) {
+    for (i=0; i<s->maxindex; i++) {
 	if (ptrs[i] == NULL) continue;
 
 	if (nmg_index_of_struct(ptrs[i]) != i) {
@@ -2710,7 +2564,7 @@ rt_nmg_export5(
     }
     rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
-    for (i = m->maxindex-1;i >=0; i--) {
+    for (i = s->maxindex-1;i >=0; i--) {
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
@@ -2732,12 +2586,12 @@ rt_nmg_export5(
 int
 rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
-    struct model *m =
-	(struct model *)ip->idb_ptr;
+    struct shell *s =
+	(struct shell *)ip->idb_ptr;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
     bu_vls_printf(str, "n-Manifold Geometry solid (NMG) maxindex=%ld\n",
-		  (long)m->maxindex);
+		  (long)s->maxindex);
 
     if (!verbose) return 0;
 
@@ -2768,10 +2622,8 @@ rt_nmg_ifree(struct rt_db_internal *ip)
 int
 rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    struct model *m=(struct model *)intern->idb_ptr;
+    struct shell *s=(struct shell *)intern->idb_ptr;
     struct bu_ptbl verts;
-    struct nmgregion *r;
-    struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -2780,12 +2632,12 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     struct vertex_g *vg;
     size_t i;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "nmg");
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic);
+	nmg_vertex_tabulate(&verts, &s->magic);
 
 	/* first list all the vertices */
 	bu_vls_strcat(logstr, " V {");
@@ -2802,56 +2654,43 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	}
 	bu_vls_strcat(logstr, " }");
 
-	/* use the backwards macros here so that "asc2g" will build the same structures */
-	/* now all the nmgregions */
-	for (BU_LIST_FOR_BACKWARDS(r, nmgregion, &m->r_hd)) {
-	    /* bu_vls_strcat(logstr, " R {"); */
+	/* all the faces */
+	if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
+	    for (BU_LIST_FOR_BACKWARDS(fu, faceuse, &s->fu_hd)) {
+		if (fu->orientation != OT_SAME)
+		    continue;
 
-	    /* and all the shells */
-	    for (BU_LIST_FOR_BACKWARDS(s, shell, &r->s_hd)) {
-		/* bu_vls_strcat(logstr, " S {"); */
+		bu_vls_strcat(logstr, " F {");
 
-		/* all the faces */
-		if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
-		    for (BU_LIST_FOR_BACKWARDS(fu, faceuse, &s->fu_hd)) {
-			if (fu->orientation != OT_SAME)
-			    continue;
+		/* all the loops in this face */
+		for (BU_LIST_FOR_BACKWARDS(lu, loopuse, &fu->lu_hd)) {
 
-			bu_vls_strcat(logstr, " F {");
-
-			/* all the loops in this face */
-			for (BU_LIST_FOR_BACKWARDS(lu, loopuse, &fu->lu_hd)) {
-
-			    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-				vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-				bu_vls_printf(logstr, " %d",
-					      bu_ptbl_locate(&verts, (long *)vu->v_p));
-			    } else {
-				bu_vls_strcat(logstr, " {");
-				for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-				    vu = eu->vu_p;
-				    bu_vls_printf(logstr, " %d",
-						  bu_ptbl_locate(&verts, (long *)vu->v_p));
-				}
-				/* end of this loop */
-				bu_vls_strcat(logstr, " }");
-			    }
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+			bu_vls_printf(logstr, " %d",
+				      bu_ptbl_locate(&verts, (long *)vu->v_p));
+		    } else {
+			bu_vls_strcat(logstr, " {");
+			for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+			    vu = eu->vu_p;
+			    bu_vls_printf(logstr, " %d",
+					  bu_ptbl_locate(&verts, (long *)vu->v_p));
 			}
-
-			/* end of this face */
+			/* end of this loop */
 			bu_vls_strcat(logstr, " }");
 		    }
 		}
+
+		/* end of this face */
+		bu_vls_strcat(logstr, " }");
 	    }
-	    /* end of this nmgregion */
-	    /* bu_vls_strcat(logstr, " }"); */
 	}
 	bu_ptbl_free(&verts);
     } else if (BU_STR_EQUAL(attr, "V")) {
 	/* list of vertices */
 
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic);
+	nmg_vertex_tabulate(&verts, &s->magic);
 	for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	    v = (struct vertex *) BU_PTBL_GET(&verts, i);
 	    NMG_CK_VERTEX(v);
@@ -2876,8 +2715,6 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 int
 rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
-    struct model *m;
-    struct nmgregion *r=NULL;
     struct shell *s=NULL;
     struct faceuse *fu=NULL;
     Tcl_Obj *obj, **obj_array;
@@ -2892,8 +2729,8 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     struct bn_tol tol;
 
     RT_CK_DB_INTERNAL(intern);
-    m = (struct model *)intern->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)intern->idb_ptr;
+    NMG_CK_SHELL(s);
 
     verts = (struct tmp_v *)NULL;
     for (i=0; i<argc; i += 2) {
@@ -2935,13 +2772,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			      "ERROR: cannot set faces without vertices\n");
 		return BRLCAD_ERROR;
 	    }
-	    if (BU_LIST_IS_EMPTY(&m->r_hd)) {
-		r = nmg_mrsv(m);
-		s = BU_LIST_FIRST(shell, &r->s_hd);
-	    } else {
-		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		s = BU_LIST_FIRST(shell, &r->s_hd);
-	    }
+
 	    obj = Tcl_NewStringObj(argv[1], -1);
 	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_loops,
 				       &obj_array) != TCL_OK) {
@@ -3019,7 +2850,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    nmg_rebound(m, &tol);
+    nmg_rebound(s, &tol);
 
     return BRLCAD_OK;
 }
@@ -3028,10 +2859,10 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 void
 rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
-    struct model *m;
+    struct shell *s;
 
-    m = nmg_mm();
-    intern->idb_ptr = (genptr_t)m;
+    s = nmg_ms();
+    intern->idb_ptr = (genptr_t)s;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_NMG;
     intern->idb_meth = ftp;
@@ -3069,7 +2900,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
     size_t *npts;
     point_t **tmp_pts;
     plane_t *eqs;
-    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    nmg_face_tabulate(&nmg_faces, &s->magic);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     tmp_pts = (point_t **)bu_calloc(num_faces, sizeof(point_t *), "rt_nmg_faces_area: tmp_pts");
     npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
@@ -3098,46 +2929,40 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 void
 rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    struct model *m;
-    struct nmgregion* r;
+    struct shell *s;
+    struct bu_ptbl nmg_faces;
+    unsigned int num_faces, i;
+    struct poly_face *faces;
 
-    /*Iterate through all regions and shells */
-    m = (struct model *)ip->idb_ptr;
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	struct shell* s;
+    s = (struct shell *)ip->idb_ptr;
 
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    struct bu_ptbl nmg_faces;
-	    unsigned int num_faces, i;
-	    struct poly_face *faces;
+    /*get faces of this shell*/
+    nmg_face_tabulate(&nmg_faces, &s->magic);
+    num_faces = BU_PTBL_LEN(&nmg_faces);
+    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
-	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
-	    num_faces = BU_PTBL_LEN(&nmg_faces);
-	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
-
-	    for (i = 0; i < num_faces; i++) {
-		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_surf_area: pts");
-	    }
-	    rt_nmg_faces_area(faces, s);
-	    for (i = 0; i < num_faces; i++) {
-		*area += faces[i].area;
-	    }
-	    for (i = 0; i < num_faces; i++) {
-		bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
-	    }
-	    bu_free((char *)faces, "rt_nmg_surf_area: faces");
-	}
+    for (i = 0; i < num_faces; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_surf_area: pts");
     }
+
+    rt_nmg_faces_area(faces, s);
+
+    for (i = 0; i < num_faces; i++) {
+	*area += faces[i].area;
+    }
+
+    for (i = 0; i < num_faces; i++) {
+	bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
+    }
+
+    bu_free((char *)faces, "rt_nmg_surf_area: faces");
 }
 
 
 void
 rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    struct model *m;
-    struct nmgregion* r;
     struct shell* s;
     struct poly_face *faces;
     struct bu_ptbl nmg_faces;
@@ -3148,12 +2973,10 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     *cent[0] = 0.0;
     *cent[1] = 0.0;
     *cent[2] = 0.0;
-    m = (struct model *)ip->idb_ptr;
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = (struct shell *)ip->idb_ptr;
 
     /*get faces*/
-    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    nmg_face_tabulate(&nmg_faces, &s->magic);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
@@ -3199,42 +3022,38 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 void
 rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    struct model *m;
-    struct nmgregion* r;
+    struct shell *s;
+    struct bu_ptbl nmg_faces;
+    unsigned int num_faces, i;
+    struct poly_face *faces;
 
-    /*Iterate through all regions and shells */
-    m = (struct model *)ip->idb_ptr;
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	struct shell* s;
+    s = (struct shell *)ip->idb_ptr;
 
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    struct bu_ptbl nmg_faces;
-	    unsigned int num_faces, i;
-	    struct poly_face *faces;
+    /*get faces of this shell*/
+    nmg_face_tabulate(&nmg_faces, &s->magic);
+    num_faces = BU_PTBL_LEN(&nmg_faces);
+    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
-	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
-	    num_faces = BU_PTBL_LEN(&nmg_faces);
-	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
-
-	    for (i = 0; i < num_faces; i++) {
-		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_volume: pts");
-	    }
-	    rt_nmg_faces_area(faces, s);
-	    for (i = 0; i < num_faces; i++) {
-		vect_t tmp = VINIT_ZERO;
-
-		/* calculate volume of pyramid*/
-		VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-		*volume = (VDOT(faces[i].pts[0], tmp)/3);
-	    }
-	    for (i = 0; i < num_faces; i++) {
-		bu_free((char *)faces[i].pts, "rt_nmg_volume: pts");
-	    }
-	    bu_free((char *)faces, "rt_nmg_volume: faces");
-	}
+    for (i = 0; i < num_faces; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_volume: pts");
     }
+
+    rt_nmg_faces_area(faces, s);
+
+    for (i = 0; i < num_faces; i++) {
+	vect_t tmp = VINIT_ZERO;
+
+	/* calculate volume of pyramid*/
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	*volume = (VDOT(faces[i].pts[0], tmp)/3);
+    }
+
+    for (i = 0; i < num_faces; i++) {
+	bu_free((char *)faces[i].pts, "rt_nmg_volume: pts");
+    }
+
+    bu_free((char *)faces, "rt_nmg_volume: faces");
 }
 
 
