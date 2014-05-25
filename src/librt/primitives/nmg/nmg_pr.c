@@ -185,40 +185,39 @@ nmg_pr_fg(const uint32_t *magic, char *h)
 
 
 void
-nmg_pr_s(const struct shell *s, char *h)
+nmg_pr_s(const struct shell *s)
 {
     const struct faceuse *fu;
     const struct loopuse *lu;
     const struct edgeuse *eu;
 
-    MKPAD(h);
-
-    bu_log("%sSHELL %p\n", h, (void *)s);
+    bu_log("SHELL %p\n", (void *)s);
     if (!s || s->magic != NMG_SHELL_MAGIC) {
 	bu_log("bad shell magic\n");
-	Return;
+	return;
     }
 
-    bu_log("%s%p sa_p\n", h, (void *)s->sa_p);
+    bu_log("%p sa_p\n", (void *)s->sa_p);
     bu_log("%ld maxindex\n", s->maxindex);
     if (s->sa_p)
-	nmg_pr_sa(s->sa_p, h);
+	nmg_pr_sa(s->sa_p, (char *)NULL);
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	nmg_pr_fu(fu, h);
+	nmg_pr_fu(fu, (char *)NULL);
     }
 
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
-	nmg_pr_lu(lu, h);
+	nmg_pr_lu(lu, (char *)NULL);
     }
 
     for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
-	nmg_pr_eu(eu, h);
+	nmg_pr_eu(eu, (char *)NULL);
     }
-    if (s->vu_p)
-	nmg_pr_vu(s->vu_p, h);
 
-    Return;
+    if (s->vu_p)
+	nmg_pr_vu(s->vu_p, (char *)NULL);
+
+    return;
 }
 
 
