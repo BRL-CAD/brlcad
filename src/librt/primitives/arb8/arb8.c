@@ -1472,10 +1472,9 @@ rt_arb_ifree(struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_arb_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
-    struct shell *s;
     struct prep_arb pa;
     register int i;
     struct faceuse *fu[6];
@@ -1494,8 +1493,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < 8; i++)
 	verts[i] = (struct vertex *)0;
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* Process each face */
     for (i = 0; i < pa.pa_faces; i++) {
@@ -1523,7 +1521,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		   pa.pa_pindex[0][i], pa.pa_pindex[1][i],
 		   pa.pa_pindex[2][i], pa.pa_pindex[3][i]);
 	}
-	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
+	if ((fu[i] = nmg_cmface(*s, vertp, pa.pa_npts[i])) == 0) {
 	    bu_log("rt_arb_tess(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
@@ -1540,10 +1538,10 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&(*s)->magic);
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
     nmg_make_faces_within_tol(s, tol);
@@ -1577,10 +1575,9 @@ static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_arb_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
-    struct shell *s;
     struct prep_arb pa;
     register int i;
     struct faceuse *fu[6];
@@ -1601,8 +1598,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     for (i = 0; i < 8; i++)
 	verts[i] = (struct vertex *)0;
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* Process each face */
     for (i = 0; i < pa.pa_faces; i++) {
@@ -1721,10 +1717,10 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&(*s)->magic);
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
     return 0;
 }
 
