@@ -551,10 +551,9 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
  *  0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_arbn_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arbn_internal *aip;
-    struct shell *s;
     struct faceuse **fu;		/* array of faceuses */
     size_t nverts;		/* maximum possible number of vertices = neqn!/(3!(neqn-3)! */
     size_t point_count = 0;	/* actual number of vertices */
@@ -723,8 +722,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     loop_verts = (struct vertex ***) bu_calloc(max_edge_count, sizeof(struct vertex **) ,
 					       "rt_arbn_tess: loop_verts");
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* Make the faces */
     for (i = 0; i < aip->neqn; i++) {
@@ -767,20 +765,20 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	if (nmg_fu_planeeqn(fu[i], tol)) {
 	    bu_log("Failed to calculate face plane equation\n");
 	    bu_free((char *)fu, "rt_arbn_tess: fu");
-	    nmg_kr(*r);
-	    *r = (struct nmgregion *)NULL;
+	    nmg_ks(*s);
+	    *s = (struct shell *)NULL;
 	    return -1;
 	}
     }
 
     bu_free((char *)fu, "rt_arbn_tess: fu");
 
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(*s, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&(*s)->magic);
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     return 0;
 
