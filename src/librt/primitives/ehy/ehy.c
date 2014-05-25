@@ -1155,10 +1155,10 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
@@ -1172,7 +1172,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_ehy_internal *xip;
     point_t p1;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
-    struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct faceuse *fu_top;
     struct loopuse *lu;
@@ -1364,8 +1363,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * put ehy geometry into nmg data structures
      */
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* vertices of ellipses of ehy */
     vells = (struct vertex ***)
@@ -1530,8 +1528,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Glue the edges of different outward pointing face uses together */
     nmg_gluefaces(outfaceuses, face, tol);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
     nmg_shell_coplanar_face_merge(s, tol, 1);
@@ -1546,7 +1544,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic);
+    nmg_vertex_tabulate(&vert_tab, &(*s)->magic);
     for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
