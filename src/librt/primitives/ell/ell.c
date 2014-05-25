@@ -891,10 +891,10 @@ struct ell_vert_strip {
  *
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ell_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     mat_t R;
     mat_t S;
@@ -1013,8 +1013,8 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	state.theta_tol = ttol->norm;
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make region, empty shell, vertex */
+    state.s = *s;
 
     /* Find the number of segments to divide 90 degrees worth into */
     nsegs = (int)(M_PI_2 / state.theta_tol + 0.999);
@@ -1202,7 +1202,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     /* Release memory */
     /* All strips have vertices and normals */
@@ -1482,7 +1482,7 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 
 
 int
-rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_ell_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     mat_t R;
     mat_t S;
@@ -1503,7 +1503,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct vertex *verts[8];
     struct vertex **vertp[4];
     struct faceuse *fu;
-    struct shell *s;
     struct loopuse *lu;
     struct edgeuse *eu;
     point_t pole;
@@ -1601,8 +1600,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
      */
     for (i = 0; i < 8; i++) verts[i] = (struct vertex *)0;
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     vertp[0] = &verts[0];
     vertp[1] = &verts[0];
@@ -1645,7 +1643,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     return 0;
 }
