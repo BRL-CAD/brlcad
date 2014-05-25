@@ -747,13 +747,12 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *r points to shell that holds this tessellation.
  */
 int
-rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_bot_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot_ip;
-    struct shell *s;
     struct vertex **verts;
     point_t pt[3];
     point_t center;
@@ -804,8 +803,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	return -1;
     }
-    *r = nmg_mrsv(m);     /* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();     /* Make empty shell, vertex */
 
     verts = (struct vertex **)bu_calloc(bot_ip->num_vertices, sizeof(struct vertex *), "rt_bot_tess: *verts[]");
 
@@ -865,12 +863,12 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     bu_free(verts, "rt_bot_tess *verts[]");
 
-    nmg_mark_edges_real(&s->l.magic);
+    nmg_mark_edges_real(&(*s)->magic);
 
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
-	nmg_fix_normals(s, tol);
+	nmg_fix_normals(*s, tol);
 
     return 0;
 }
