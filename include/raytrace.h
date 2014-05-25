@@ -6365,17 +6365,13 @@ RT_EXPORT extern struct shell *nmg_extrude_shell(struct shell *s, const fastf_t 
 RT_EXPORT extern char *nmg_orientation(int orientation);
 RT_EXPORT extern void nmg_pr_orient(int orientation,
 				    const char *h);
-RT_EXPORT extern void nmg_pr_m(const struct model *m);
-RT_EXPORT extern void nmg_pr_r(const struct nmgregion *r,
-			       char *h);
 RT_EXPORT extern void nmg_pr_sa(const struct shell_a *sa,
 				char *h);
 RT_EXPORT extern void nmg_pr_lg(const struct loop_g *lg,
 				char *h);
 RT_EXPORT extern void nmg_pr_fg(const uint32_t *magic,
 				char *h);
-RT_EXPORT extern void nmg_pr_s(const struct shell *s,
-			       char *h);
+RT_EXPORT extern void nmg_pr_s(const struct shell *s);
 RT_EXPORT extern void  nmg_pr_s_briefly(const struct shell *s,
 					char *h);
 RT_EXPORT extern void nmg_pr_f(const struct face *f,
