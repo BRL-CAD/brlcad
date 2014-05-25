@@ -1235,7 +1235,7 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 
 	case OP_NMG_TESS: {
 	    /* FIXME: fake "copy" .. lie!!! */
-	    new_tp->tr_d.td_r = tp->tr_d.td_r;
+	    new_tp->tr_d.td_s = tp->tr_d.td_s;
 	    new_tp->tr_d.td_name = bu_strdup(tp->tr_d.td_name);
 	    return new_tp;
 	}
@@ -1329,23 +1329,23 @@ db_free_tree(union tree *tp, struct resource *resp)
 
 	case OP_NMG_TESS:
 	    {
-		struct nmgregion *r = tp->tr_d.td_r;
+		struct shell *s = tp->tr_d.td_s;
 		if (tp->tr_d.td_name) {
 		    bu_free((char *)tp->tr_d.td_name, "region name");
 		    tp->tr_d.td_name = (const char *)NULL;
 		}
-		if (r == (struct nmgregion *)NULL) {
+		if (s == (struct shell *)NULL) {
 		    break;
 		}
 		/* Disposing of the nmg model structure is
 		 * left to someone else.
 		 * It would be rude to zap all the other regions here.
 		 */
-		if (r->l.magic == NMG_REGION_MAGIC) {
-		    NMG_CK_REGION(r);
-		    nmg_kr(r);
+		if (s->magic == NMG_SHELL_MAGIC) {
+		    NMG_CK_SHELL(s);
+		    nmg_ks(s);
 		}
-		tp->tr_d.td_r = (struct nmgregion *)NULL;
+		tp->tr_d.td_s = (struct shell *)NULL;
 	    }
 	    break;
 
