@@ -310,7 +310,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	    dualvu = nmg_find_v_in_shell(vu->v_p, duals, 0);
 	    if (!dualvu) {
 		/* Not found, make self-loop in dual shell */
-		lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
+		lu = nmg_mlv(&duals->magic, vu->v_p, OT_BOOLPLACE);
 		nmg_loop_g(lu->l_p, &(is->tol));
 		dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    }
@@ -437,25 +437,25 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     vg = v->vg_p;
     NMG_CK_VERTEX_G(vg);
     if (v->index >= is->maxindex) {
-	struct model *m;
+	struct shell *s;
 	int oldmax;
 	register int i;
 
 	oldmax = is->maxindex;
-	m = nmg_find_model(&v->magic);
-	NMG_CK_MODEL(m);
-	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%d, m->maxindex=%ld\n",
-	       (void *)v, v->index, is->maxindex, m->maxindex);
-	if (v->index >= m->maxindex) {
+	s = nmg_find_shell(&v->magic);
+	NMG_CK_SHELL(s);
+	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%d, s->maxindex=%ld\n",
+	       (void *)v, v->index, is->maxindex, s->maxindex);
+	if (v->index >= s->maxindex) {
 	    /* Really off the end */
 	    VPRINT("3d vertex", vg->coord);
 	    bu_bomb("nmg_get_2d_vertex:  array overrun\n");
 	}
 	/* Need to extend array, it's grown. */
-	is->maxindex = m->maxindex * 4;
+	is->maxindex = s->maxindex * 4;
 	if (RTG.NMG_debug & DEBUG_POLYSECT) {
-	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%ld)\n",
-		   oldmax, is->maxindex, m->maxindex);
+	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (s max=%ld)\n",
+		   oldmax, is->maxindex, s->maxindex);
 	}
 	is->vert2d = (fastf_t *)bu_realloc((char *)is->vert2d,
 					   is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
@@ -525,7 +525,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 void
 nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 {
-    struct model *m;
+    struct shell *s;
     struct face_g_plane *fg;
     vect_t to;
     point_t centroid;
@@ -548,9 +548,9 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
     nmg_isect2d_cleanup(is);
     nmg_hack_last_is = is;
 
-    m = nmg_find_model(assoc_use);
+    s = nmg_find_shell(assoc_use);
 
-    is->maxindex = (2 * m->maxindex);
+    is->maxindex = (2 * s->maxindex);
     is->vert2d = (fastf_t *)bu_malloc(is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
@@ -871,7 +871,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
      * Otherwise, re-use the existing one.
      * Can't just search other face, might miss relevant vert.
      */
-    v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
+    v2 = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
     if (v2) {
 	/* the other face has a convenient vertex for us */
 	if (RTG.NMG_debug & DEBUG_POLYSECT)
@@ -2195,8 +2195,8 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     if (RTG.NMG_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu2);
 	if (fu1)nmg_fu_touchingloops(fu1);
-	nmg_region_v_unique(is->s1->r_p, &is->tol);
-	nmg_region_v_unique(is->s2->r_p, &is->tol);
+	nmg_shell_v_unique(is->s1, &is->tol);
+	nmg_shell_v_unique(is->s2, &is->tol);
     }
 
     /* Build list of all edgeuses in eu1/fu1 and fu2 */
@@ -2981,7 +2981,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 	 * Otherwise, re-use the existing one.
 	 * Can't just search other face, might miss relevant vert.
 	 */
-	new_v = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
+	new_v = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
 	vu1_final = nmg_ebreaker(new_v, eu1, &is->tol)->vu_p;
 	ret = 1;
 	if (!new_v) {
@@ -4528,7 +4528,7 @@ re_tabulate:
 		     * search for one in whole model.
 		     */
 		    if (!hit_v) {
-			hit_v = nmg_find_pt_in_model(fu1->s_p->r_p->m_p,
+			hit_v = nmg_find_pt_in_shell(fu1->s_p,
 						     hit3d, &(is->tol));
 			if (hit_v == vu1a->v_p || hit_v == vu1b->v_p)
 			    bu_bomb("About to make 0-length edge!\n");
@@ -5013,8 +5013,8 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
     if (RTG.NMG_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
-	nmg_region_v_unique(fu1->s_p->r_p, &is->tol);
-	nmg_region_v_unique(fu2->s_p->r_p, &is->tol);
+	nmg_shell_v_unique(fu1->s_p, &is->tol);
+	nmg_shell_v_unique(fu2->s_p, &is->tol);
 	nmg_vfu(&fu1->s_p->fu_hd, fu1->s_p);
 	nmg_vfu(&fu2->s_p->fu_hd, fu2->s_p);
     }
@@ -5476,7 +5476,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     bu_ptbl_init(&edges, 64, " &edges");
-    nmg_edge_tabulate(&edges, &s->l.magic);
+    nmg_edge_tabulate(&edges, &s->magic);
 
     for (i=0; i<BU_PTBL_END(&edges); i++) {
 	struct edge *e;
@@ -5937,8 +5937,8 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     }
 
     if (RTG.NMG_debug & DEBUG_VERIFY) {
-	nmg_region_v_unique(fu1->s_p->r_p, &bs.tol);
-	nmg_region_v_unique(fu2->s_p->r_p, &bs.tol);
+	nmg_shell_v_unique(fu1->s_p, &bs.tol);
+	nmg_shell_v_unique(fu2->s_p, &bs.tol);
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
 	nmg_ck_face_worthless_edges(fu1);
@@ -6250,7 +6250,7 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	goto out;		/* Nothing more to do */
 
     /* Add a wire loop in s2 connecting the two vertices */
-    lu2 = nmg_mlv(&s2->l.magic, eu1->vu_p->v_p, OT_UNSPEC);
+    lu2 = nmg_mlv(&s2->magic, eu1->vu_p->v_p, OT_UNSPEC);
     NMG_CK_LOOPUSE(lu2);
     {
 	struct edgeuse *neu1, *neu2;
@@ -6313,13 +6313,9 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     sa2 = s2->sa_p;
     NMG_CK_SHELL_A(sa2);
 
-    if (UNLIKELY(s1->r_p->m_p != s2->r_p->m_p)) {
-	bu_bomb("nmg_crackshells(): shells are not in the same model");
-    }
-
     if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
-	nmg_ck_vs_in_region(s1->r_p, tol);
-	nmg_ck_vs_in_region(s2->r_p, tol);
+	nmg_ck_vs_in_shell(s1, tol);
+	nmg_ck_vs_in_shell(s2, tol);
     }
 
     /* test if shell s1 and s2 disjoint by at least distance tolerance */
@@ -6329,8 +6325,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 
     bu_ptbl_init(&faces1, 64, "faces1 buffer");
     bu_ptbl_init(&faces2, 64, "faces2 buffer");
-    nmg_face_tabulate(&faces1, &s1->l.magic);
-    nmg_face_tabulate(&faces2, &s2->l.magic);
+    nmg_face_tabulate(&faces1, &s1->magic);
+    nmg_face_tabulate(&faces2, &s2->magic);
 
     /* create a new bounding box which is the intersection
      * of the shell s1 and s2 bounding boxes
@@ -6355,8 +6351,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     (void)bu_ptbl_init(&vert_list2, 64, "&vert_list2");
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
-	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
-	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
+	nmg_vsshell(&s1);
+	nmg_vsshell(&s2);
     }
 
     for (i = 0; i < (size_t)BU_PTBL_END(&faces1); i++) {
@@ -6419,8 +6415,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	}
 
 	if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
-	    nmg_vshell(&s1->r_p->s_hd, s1->r_p);
-	    nmg_vshell(&s2->r_p->s_hd, s2->r_p);
+	    nmg_vsshell(&s1);
+	    nmg_vsshell(&s2);
 	}
     }
 
@@ -6483,16 +6479,16 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     (void)bu_ptbl_free(&vert_list2);
 
     /* Eliminate stray vertices that were added along edges in this step */
-    (void)nmg_unbreak_region_edges(&s1->l.magic);
-    (void)nmg_unbreak_region_edges(&s2->l.magic);
+    (void)nmg_unbreak_region_edges(&s1->magic);
+    (void)nmg_unbreak_region_edges(&s2->magic);
 
     nmg_isect2d_cleanup(&is);
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
-	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
-	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
-	nmg_ck_vs_in_region(s1->r_p, tol);
-	nmg_ck_vs_in_region(s2->r_p, tol);
+	nmg_vsshell(&s1);
+	nmg_vsshell(&s2);
+	nmg_ck_vs_in_shell(s1, tol);
+	nmg_ck_vs_in_shell(s2, tol);
     }
 }
 
