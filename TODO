@@ -1578,6 +1578,8 @@ NMG/BoT
 
 * implement the routine 'nmg_extrude_cleanup', 'nmg_hollow_shell'
   and 'nmg_extrude_shell' to fit new nmg structure.
+  
+* implement the routine 'nmg_merge_regions' to fit new nmg structure.
 
 RTGL
 ----

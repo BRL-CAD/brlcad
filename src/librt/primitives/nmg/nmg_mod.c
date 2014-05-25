@@ -42,30 +42,30 @@
 void
 nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)
 {
-    struct model *m;
+ //   struct model *m;
 
-    NMG_CK_REGION(r1);
-    NMG_CK_REGION(r2);
-    BN_CK_TOL(tol);
+ //   NMG_CK_REGION(r1);
+ //   NMG_CK_REGION(r2);
+ //   BN_CK_TOL(tol);
 
-    m = r1->m_p;
-    NMG_CK_MODEL(m);
+ //   m = r1->m_p;
+ //   NMG_CK_MODEL(m);
 
-    if (r2->m_p != m)
-	bu_bomb("nmg_merge_regions: Tried to merge regions from different models!!");
+ //   if (r2->m_p != m)
+	//bu_bomb("nmg_merge_regions: Tried to merge regions from different models!!");
 
-    /* move all of r2's faces into r1 */
-    while (BU_LIST_NON_EMPTY(&r2->s_hd)) {
-	struct shell *s;
+ //   /* move all of r2's faces into r1 */
+ //   while (BU_LIST_NON_EMPTY(&r2->s_hd)) {
+	//struct shell *s;
 
-	s = BU_LIST_FIRST(shell, &r2->s_hd);
-	BU_LIST_DEQUEUE(&s->l);
-	s->r_p = r1;
-	BU_LIST_APPEND(&r1->s_hd, &s->l);
-    }
+	//s = BU_LIST_FIRST(shell, &r2->s_hd);
+	//BU_LIST_DEQUEUE(&s->l);
+	//s->r_p = r1;
+	//BU_LIST_APPEND(&r1->s_hd, &s->l);
+ //   }
 
-    (void)nmg_kr(r2);
-    nmg_rebound(m, tol);
+ //   (void)nmg_kr(r2);
+ //   nmg_rebound(m, tol);
 }
 
 
