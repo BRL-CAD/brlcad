@@ -532,9 +532,8 @@ struct cline_vert {
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct shell *s;
     struct rt_cline_internal *cline_ip;
     fastf_t ang_tol, abs_tol, norm_tol, rel_tol;
     int nsegs, seg_no, i;
@@ -548,8 +547,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms(s);
 
     ang_tol = M_PI_2;
     abs_tol = M_PI_2;
@@ -787,7 +785,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	}
     }
 
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
     bu_ptbl_free(&faces);
 
     return 0;
