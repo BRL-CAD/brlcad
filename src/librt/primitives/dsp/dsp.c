@@ -3503,13 +3503,12 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_dsp_internal *dsp_ip;
-    struct shell *s;
     int xlim;
     int ylim;
     int x, y;
@@ -3595,8 +3594,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     strip2Verts = (struct vertex **)bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
 
     /* Make region, empty shell, vertex */
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();
 
     /* make the base face */
     base_fu = nmg_cface(s, base_verts, base_vert_count);
@@ -3992,13 +3990,13 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&(*s)->magic);
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
     /* sanity check */
-    nmg_make_faces_within_tol(s, tol);
+    nmg_make_faces_within_tol(*s, tol);
 
     return 0;
 }
