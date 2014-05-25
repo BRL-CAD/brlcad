@@ -1357,10 +1357,9 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 
 
 int
-rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_ebm_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_ebm_internal *eip;
-    struct shell *s;
     struct faceuse *fu=(struct faceuse*)NULL;
     struct vertex ***vertp;	/* dynam array of ptrs to pointers */
     struct vertex **loop_verts;
@@ -1373,7 +1372,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vect_t height, h;
 
     BN_CK_TOL(tol);
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -1428,9 +1427,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Make NMG structures */
 
     /* make region, shell, vertex */
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-
+    *s = nmg_ms();
 
     vertp = (struct vertex ***)bu_calloc(max_loop_length, sizeof(struct vertex **) ,
 					 "rt_ebm_tess: vertp");
@@ -1516,9 +1513,9 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* all faces should merge into one */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(*s, tol, 1);
 
-    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    fu = BU_LIST_FIRST(faceuse, &(*s)->fu_hd);
     NMG_CK_FACEUSE(fu);
 
     VSET(h, 0.0, 0.0, eip->tallness);
@@ -1526,9 +1523,9 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     nmg_extrude_face(fu, height, tol);
 
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&(*s)->magic);
 
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
     bu_free((char *)loop_verts, "rt_ebm_tess: loop_verts");
