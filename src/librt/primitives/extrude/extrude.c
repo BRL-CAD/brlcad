@@ -2017,13 +2017,12 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
 /*
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct bu_list vhead;
-    struct shell *s;
     struct faceuse *fu;
     struct vertex ***verts;
     struct vertex **vertsa;
@@ -2187,8 +2186,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	}
     }
 
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &((*r)->s_hd));
+    *s = nmg_ms();
 
     /* make initial face from outer_loop */
     verts = (struct vertex ***)bu_calloc(vert_count, sizeof(struct vertex **), "verts");
@@ -2303,7 +2301,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	return -1;
     }
 
-    nmg_region_a(*r, tol);
+    nmg_shell_a(*s, tol);
 
     return 0;
 
