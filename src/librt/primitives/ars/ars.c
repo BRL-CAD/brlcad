@@ -478,13 +478,12 @@ rt_ars_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_ars_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     register size_t i;
     register size_t j;
     register size_t k;
     struct rt_ars_internal *arip;
-    struct shell *s;
     struct vertex **verts;
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
@@ -527,8 +526,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Build the topology of the ARS.  Start by allocating storage */
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     verts = (struct vertex **)bu_calloc(arip->ncurves * (arip->pts_per_curve+1),
 					sizeof(struct vertex *),
@@ -635,16 +633,16 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* ARS solids are often built with incorrect face normals.  Don't
      * depend on them to be correct.
      */
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(*s, tol);
 
     /* set edge's is_real flag */
-    nmg_mark_edges_real(&s->l.magic);
+    nmg_mark_edges_real(&(*s)->magic);
 
     /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    nmg_region_a(*s, tol);
 
-    nmg_shell_coplanar_face_merge(s, tol, 0);
-    nmg_simplify_shell(s);
+    nmg_shell_coplanar_face_merge(*s, tol, 0);
+    nmg_simplify_shell(*s);
 
     return 0;
 }
@@ -700,34 +698,30 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     int ret;
 
     /*point_t min, max;*/
     /*if (rt_ars_bbox(ip, &min, &max, &rtip->rti_tol)) return -1;*/
 
-    m = nmg_mm();
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = nmg_ms();
 
-    if (rt_ars_tess(&r, m, ip, &rtip->rti_ttol, &rtip->rti_tol)) {
+    if (rt_ars_tess(&s, ip, &rtip->rti_ttol, &rtip->rti_tol)) {
 	bu_log("Failed to tessellate ARS (%s)\n", stp->st_dp->d_namep);
-	nmg_km(m);
+	nmg_ks(s);
 	return -1;
     }
     rt_ars_ifree(ip);
 
-    s = BU_LIST_FIRST(shell, &r->s_hd);
     bot = nmg_bot(s, &rtip->rti_tol);
 
     if (!bot) {
 	bu_log("Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep);
-	nmg_km(m);
+	nmg_ks(s);
 	return -1;
     }
 
-    nmg_km(m);
+    nmg_ks(s);
 
     intern.idb_magic = RT_DB_INTERNAL_MAGIC;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
