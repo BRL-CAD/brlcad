@@ -680,7 +680,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_nmg_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
 	NULL,
-	sizeof(struct model),
+	sizeof(struct shell),
 	NMG_MODEL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_nmg_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_nmg_adjust),
