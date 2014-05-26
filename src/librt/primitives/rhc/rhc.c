@@ -1183,10 +1183,10 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rhc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
     fastf_t b, c, *back, *front, rh;
@@ -1196,14 +1196,12 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t invR;
     struct rt_rhc_internal *xip;
     struct rt_pt_node *old, *pos, *pts;
-    struct shell *s;
     struct faceuse **outfaceuses;
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
     vect_t *norms;
     fastf_t bb_plus_2bc, b_plus_c, r_sq;
     int failure = 0;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
     RT_CK_TESS_TOL(ttol);
 
@@ -1302,20 +1300,19 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free ((char *)old, "rt_pt_node");
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     for (i = 0; i < n; i++) {
 	vfront[i] = vtemp[i] = (struct vertex *)0;
     }
 
     /* Front face topology.  Verts are considered to go CCW */
-    outfaceuses[0] = nmg_cface(s, vfront, n);
+    outfaceuses[0] = nmg_cface(*s, vfront, n);
 
     (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
-    outfaceuses[1] = nmg_cface(s, vtemp, n);
+    outfaceuses[1] = nmg_cface(*s, vtemp, n);
 
     for (i = 0; i < n; i++) {
 	vback[i] = vtemp[n - 1 - i];
@@ -1417,8 +1414,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Glue the edges of different outward pointing face uses together */
     nmg_gluefaces(outfaceuses, n + 2, tol);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
 fail:
     /* free mem */
