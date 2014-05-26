@@ -63,7 +63,7 @@
  * Tessellate a metaball.
  */
 int
-rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_metaball_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_metaball_internal *mb;
     fastf_t mtol, radius;
@@ -71,14 +71,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     fastf_t i, j, k, finalstep = +INFINITY;
     struct bu_vls times = BU_VLS_INIT_ZERO;
     struct wdb_metaballpt *mbpt;
-    struct shell *s;
     int numtri = 0;
-
-    if (r == NULL || m == NULL)
-	return -1;
-    *r = NULL;
-
-    NMG_CK_MODEL(m);
 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
@@ -104,8 +97,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     V_MAX(mtol, ttol->rel * radius * 10);
     V_MAX(mtol, tol->dist);
 
-    *r = nmg_mrsv(m);	/* new empty nmg */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* new empty nmg */
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -164,10 +156,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		}
 	    }
 
-    nmg_mark_edges_real(&s->l.magic);
-    nmg_region_a(*r, tol);
+    nmg_mark_edges_real(&(*s)->magic);
+    nmg_shell_a(*s, tol);
 
-    nmg_model_fuse(m, tol);
+    nmg_shell_fuse(s, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
