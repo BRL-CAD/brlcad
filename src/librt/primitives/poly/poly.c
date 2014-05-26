@@ -565,10 +565,9 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_pg_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     size_t i;
-    struct shell *s;
     struct vertex **verts;	/* dynamic array of pointers */
     struct vertex ***vertp;/* dynamic array of ptrs to pointers */
     struct faceuse *fu;
@@ -579,8 +578,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     verts = (struct vertex **)bu_malloc(
 	pgp->max_npts * sizeof(struct vertex *), "pg_tess verts[]");
@@ -621,13 +619,13 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	}
     }
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* Polysolids are often built with incorrect face normals.
      * Don't depend on them here.
      */
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(*s, tol);
     bu_free((char *)verts, "pg_tess verts[]");
     bu_free((char *)vertp, "pg_tess vertp[]");
 
