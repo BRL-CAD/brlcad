@@ -1199,7 +1199,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tor_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1215,7 +1215,6 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vect_t G;
     vect_t radius;
     vect_t edge;
-    struct shell *s;
     struct vertex **verts;
     struct faceuse **faces;
     fastf_t *norms;
@@ -1297,8 +1296,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     verts = (struct vertex **)bu_calloc(nw*nlen, sizeof(struct vertex *),
 					"rt_tor_tess *verts[]");
@@ -1360,10 +1358,10 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* kill zero length edgeuse */
-    (void)nmg_keu_zl(s, tol);
+    (void)nmg_keu_zl(*s, tol);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     bu_free((char *)pts, "rt_tor_tess pts[]");
     bu_free((char *)verts, "rt_tor_tess *verts[]");

@@ -31,7 +31,7 @@
 #include "brep.h"
 
 extern "C" {
-    extern void rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    extern void rt_ars_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
     extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
@@ -50,15 +50,14 @@ rt_ars_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ttmptol.norm = 0;
 
     const struct rt_tess_tol *ttol = &ttmptol;
-    struct model *arsm = nmg_mm();
-    struct nmgregion *arsr;
+    struct shell *s = nmg_ms();
 
     tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
-    rt_ars_tess(&arsr, arsm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arsm;
+    rt_ars_tess(&s, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)s;
     rt_nmg_brep(b, tmp_internal, tol);
 
-    FREE_MODEL(arsm);
+    FREE_SHELL(s);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 

@@ -224,32 +224,27 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
 
     // Verify NMG
     RT_CK_DB_INTERNAL(ip);
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     // Both NMG and brep structures re-use components between faces.  In order to track
     // when the conversion routine has already handled an NMG element, use an array.
-    long *brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
-    for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
+    long *brepi = static_cast<long*>(bu_malloc(s->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
+    for (int i = 0; i < s->maxindex; i++) brepi[i] = -INT_MAX;
 
     // Iterate over all faces in the NMG
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		NMG_CK_FACEUSE(fu);
-		if (fu->orientation != OT_SAME) continue;
-		if (nmg_brep_face(b, fu, tol, brepi)) return;
-	    }
-	    (*b)->SetTrimIsoFlags();
-	}
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME) continue;
+	if (nmg_brep_face(b, fu, tol, brepi)) return;
     }
+
+    (*b)->SetTrimIsoFlags();
 }
 
 

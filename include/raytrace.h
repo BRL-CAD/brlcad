@@ -6012,10 +6012,7 @@ RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
 
 /* From file nmg_mk.c */
 /*	MAKE routines */
-RT_EXPORT extern struct model *nmg_mm(void);
-RT_EXPORT extern struct model *nmg_mmr(void);
-RT_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
-RT_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
+RT_EXPORT extern struct shell *nmg_ms();
 RT_EXPORT extern struct faceuse *nmg_mf(struct loopuse *lu1);
 RT_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
 					 struct vertex *v,
@@ -6034,8 +6031,6 @@ RT_EXPORT extern int nmg_keu(struct edgeuse *eu);
 RT_EXPORT extern int nmg_keu_zl(struct shell *s,
 				const struct bn_tol *tol);
 RT_EXPORT extern int nmg_ks(struct shell *s);
-RT_EXPORT extern int nmg_kr(struct nmgregion *r);
-RT_EXPORT extern void nmg_km(struct model *m);
 /*	Geometry and Attribute routines */
 RT_EXPORT extern void nmg_vertex_gv(struct vertex *v,
 				    const point_t pt);
@@ -6077,10 +6072,8 @@ RT_EXPORT extern void nmg_face_g_snurb(struct faceuse *fu,
 				       fastf_t *mesh);
 RT_EXPORT extern void nmg_face_bb(struct face *f,
 				  const struct bn_tol *tol);
-RT_EXPORT extern void nmg_shell_a(struct shell *s,
+RT_EXPORT extern void nmg_shell_a(struct shell *s, 
 				  const struct bn_tol *tol);
-RT_EXPORT extern void nmg_region_a(struct nmgregion *r,
-				   const struct bn_tol *tol);
 /*	DEMOTE routines */
 RT_EXPORT extern int nmg_demote_lu(struct loopuse *lu);
 RT_EXPORT extern int nmg_demote_eu(struct edgeuse *eu);
@@ -6478,8 +6471,7 @@ RT_EXPORT extern int nmg_calc_face_plane(struct faceuse *fu_in,
 RT_EXPORT extern int nmg_calc_face_g(struct faceuse *fu);
 RT_EXPORT extern fastf_t nmg_faceuse_area(const struct faceuse *fu);
 RT_EXPORT extern fastf_t nmg_shell_area(const struct shell *s);
-RT_EXPORT extern fastf_t nmg_region_area(const struct nmgregion *r);
-RT_EXPORT extern fastf_t nmg_model_area(const struct model *m);
+
 /* Some stray rt_ plane functions here */
 RT_EXPORT extern void nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list,
 							     fastf_t *mag,
@@ -6658,8 +6650,7 @@ RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 
-RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
-				 struct model *m,
+RT_EXPORT extern int rt_bot_tess(struct shell **s,
 				 struct rt_db_internal *ip,
 				 const struct rt_tess_tol *ttol,
 				 const struct bn_tol *tol);
