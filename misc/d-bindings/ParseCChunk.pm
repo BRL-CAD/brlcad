@@ -1,6 +1,6 @@
 package ParseCChunk;
 
-#use strict;
+use strict;
 use warnings;
 
 use CGrammar; # <== an auto-generated file
@@ -11,7 +11,10 @@ sub parse_chunk {
   my $text = join(' ', @{$aref});
 
   my $parser = CGrammar->new();
-  my $parse_tree = $parser->statement_list($text);
+
+  #my $parse_tree = $parser->type_specifier($text);
+  #my $parse_tree = $parser->enum_specifier($text);
+  my $parse_tree = $parser->translation_unit($text);
 
   if (!defined $parse_tree) {
     print "=== DEBUG BAD C CODE : lines to be parsed:\n";
@@ -20,7 +23,10 @@ sub parse_chunk {
     print "$text\n";
   }
   else {
-    print "=== GOOD PARSE\n";
+    print "=== GOOD PARSE : lines to be parsed:\n";
+    print "  $_\n" for @{$aref};
+    print "the single line:\n";
+    print "$text\n";
   }
 
 =pod

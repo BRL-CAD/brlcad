@@ -206,14 +206,11 @@ sub extract_object {
   for (; $i < $nl; ++$i) {
     my $lnum = $i + 1;
     my $line = $lines_aref->[$i];
-
-=pod
+    chomp $line;
 
     # skip blank lines
     my @d = split(' ', $line);
     next LINE if !defined $d[0];
-
-=cut
 
     ++$nactual_lines;
 

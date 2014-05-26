@@ -144,6 +144,7 @@ die "ERROR:  No mode selected.\n"
 
 if ($D::devel) {
   @ifils = ("${BP::IDIR}/bu.h");
+  #@ifils = ("./test-hdr.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
