@@ -2143,9 +2143,8 @@ struct tgc_pts
 
 /* version using tolerances */
 int
-rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tgc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct shell *s;		/* shell to hold facetted TGC */
     struct faceuse *fu, *fu_top, *fu_base;
     struct rt_tgc_internal *tip;
     fastf_t radius;		/* bounding sphere radius */
@@ -2549,9 +2548,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    /* make region, shell, vertex */
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    /* make shell, vertex */
+    *s = nmg_ms();
 
     bu_ptbl_init(&verts, 64, " &verts ");
     bu_ptbl_init(&faces, 64, " &faces ");
@@ -2790,7 +2788,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    nmg_region_a(*r, tol);
+    nmg_shell_a(*s, tol);
 
     /* glue faces together */
     nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
@@ -2814,15 +2812,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  * Returns -
  * -1 failure
- * 0 OK. *r points to nmgregion that holds this tessellation
+ * 0 OK. *s points to shell that holds this tessellation
  */
 
 int
-rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_tgc_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_tgc_internal *tip;
 
-    struct shell *s;
     struct vertex *verts[2];
     struct vertex **vertp[4];
     struct faceuse * top_fu;
@@ -2849,9 +2846,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* Create the NMG Topology */
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     /* Create transformation matrix for the top cap surface*/
 
@@ -2956,7 +2951,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     vertp[1] = &verts[0];
     vertp[2] = &verts[1];
     vertp[3] = &verts[1];
-    cyl_fu = nmg_cmface(s, vertp, 4);
+    cyl_fu = nmg_cmface(*s, vertp, 4);
 
     nmg_tgc_nurb_cyl(cyl_fu, top_mat, bot_mat);
 
@@ -2971,7 +2966,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     eu= BU_LIST_LAST(edgeuse, &eu->l);
 
     nmg_je(bot_eu, eu);
-    nmg_region_a(*r, tol);
+    nmg_shell_a(*s, tol);
 
     return 0;
 }
