@@ -1046,18 +1046,14 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
 
 int
-rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_vol_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
     register size_t x, y, z;
     int i;
-    struct shell *s;
     struct vertex *verts[4];
     struct faceuse *fu;
-    struct model *m_tmp;
-    struct nmgregion *r_tmp;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
     RT_CK_TESS_TOL(ttol);
 
@@ -1065,10 +1061,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
-    /* make region, shell, vertex */
-    m_tmp = nmg_mm();
-    r_tmp = nmg_mrsv(m_tmp);
-    s = BU_LIST_FIRST(shell, &r_tmp->s_hd);
+    *s = nmg_ms();
 
     for (x = 0; x < vip->xdim; x++) {
 	for (y = 0; y < vip->ydim; y++) {
@@ -1086,7 +1079,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x+.5, y-.5, z+.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1114,7 +1107,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x+.5, y-.5, z-.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1142,7 +1135,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x+.5, y+.5, z+.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1170,7 +1163,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x+.5, y-.5, z+.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1198,7 +1191,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x+.5, y-.5, z-.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1226,7 +1219,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface(s, verts, 4);
+		    fu = nmg_cface(*s, verts, 4);
 
 		    VSET(pt, x-.5, y-.5, z-.5);
 		    VELMUL(pt1, vip->cellsize, pt);
@@ -1252,16 +1245,16 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    nmg_region_a(r_tmp, tol);
+    nmg_shell_a(*s, tol);
 
-    /* fuse model */
-    nmg_model_fuse(m_tmp, tol);
+    /* fuse shell */
+    nmg_shell_fuse(*s, tol);
 
     /* simplify shell */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(*s, tol, 1);
 
     /* kill snakes */
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+    for (BU_LIST_FOR(fu, faceuse, &(*s)->fu_hd)) {
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
@@ -1273,18 +1266,14 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    (void)nmg_kill_snakes(lu);
     }
 
-    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l));
+    (void)nmg_unbreak_region_edges((uint32_t *)(&(*s)->magic));
 
-    (void)nmg_mark_edges_real((uint32_t *)&s->l);
-
-    nmg_merge_models(m, m_tmp);
-    *r = r_tmp;
+    (void)nmg_mark_edges_real((uint32_t *)&(*s)->magic);
 
     return 0;
 
 fail:
-    nmg_km(m_tmp);
-    *r = (struct nmgregion *)NULL;
+    *s = (struct shell *)NULL;
 
     return -1;
 }
