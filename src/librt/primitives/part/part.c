@@ -1053,7 +1053,7 @@ struct part_vert_strip {
  * lower hemisphere	nsegs+1..nstrips-1	V	South
  */
 int
-rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_part_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_part_internal *pip;
     mat_t R;
@@ -1146,8 +1146,8 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	state.theta_tol = ttol->norm;
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
+    state.s = *s;
 
     /* Find the number of segments to divide 90 degrees worth into */
     nsegs = M_PI_2 / state.theta_tol + 0.999;
@@ -1377,8 +1377,8 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	}
     }
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* Release memory */
     /* All strips have vertices and normals */
