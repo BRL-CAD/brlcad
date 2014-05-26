@@ -1063,10 +1063,10 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rpc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
     fastf_t b, *back, *front, rh;
@@ -1076,13 +1076,11 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t invR;
     struct rt_rpc_internal *xip;
     struct rt_pt_node *old, *pos, *pts;
-    struct shell *s;
     struct faceuse **outfaceuses;
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
     vect_t *norms;
     fastf_t r_sq_over_b;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
     RT_CK_TESS_TOL(ttol);
 
@@ -1169,8 +1167,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)old, "rt_pt_node");
     }
 
-    *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();	/* Make empty shell, vertex */
 
     for (i=0; i<n; i++) {
 	vfront[i] = vtemp[i] = (struct vertex *)0;
@@ -1280,8 +1277,8 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Glue the edges of different outward pointing face uses together */
     nmg_gluefaces(outfaceuses, n+2, tol);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*r, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* free mem */
     bu_free((char *)front, "fastf_t");
