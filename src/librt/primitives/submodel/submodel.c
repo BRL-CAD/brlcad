@@ -644,7 +644,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    gp = (struct goodies *)tsp->ts_m;	/* hack */
+    gp = (struct goodies *)tsp->ts_s;	/* hack */
     if (gp) RT_CK_DBI(gp->dbip);
 
     /* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
@@ -706,7 +706,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     state.ts_tol = tol;
     MAT_COPY(state.ts_mat, sip->root2leaf);
 
-    state.ts_m = (struct model **)&good;	/* hack -- passthrough to rt_submodel_wireframe_leaf() */
+    state.ts_s = (struct shell **)&good;	/* hack -- passthrough to rt_submodel_wireframe_leaf() */
     good.vheadp = vhead;
 
     if (bu_vls_strlen(&sip->file) != 0) {
