@@ -3707,8 +3707,7 @@ tesselate_pipe_end(
  */
 int
 rt_pipe_tess(
-    struct nmgregion **r,
-    struct model *m,
+    struct shell **s,
     struct rt_db_internal *ip,
     const struct rt_tess_tol *ttol,
     const struct bn_tol *tol)
@@ -3717,7 +3716,6 @@ rt_pipe_tess(
     struct wdb_pipept *pp2;
     struct wdb_pipept *pp3;
     point_t curr_pt;
-    struct shell *s;
     struct rt_pipe_internal *pip;
     int arc_segs = 6;			/* minimum number of segments for a circle */
     int tol_segs;
@@ -3740,9 +3738,6 @@ rt_pipe_tess(
 
     BN_CK_TOL(tol);
     RT_CK_TESS_TOL(ttol);
-    NMG_CK_MODEL(m);
-
-    *r = (struct nmgregion *)NULL;
 
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) {
 	return 0;    /* nothing to tesselate */
@@ -3790,8 +3785,7 @@ rt_pipe_tess(
 	}
     }
 
-    *r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    *s = nmg_ms();
 
     outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 					     "rt_pipe_tess: outer_loop");
@@ -3890,8 +3884,8 @@ rt_pipe_tess(
     bu_free((char *)outer_loop, "rt_pipe_tess: outer_loop");
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
-    nmg_rebound(m, tol);
-    nmg_edge_fuse(&s->l.magic, tol);
+    nmg_rebound(s, tol);
+    nmg_edge_fuse(&(*s)->magic, tol);
 
     return 0;
 }
