@@ -28,6 +28,31 @@
 #include "raytrace.h"
 #include "rt/db_diff.h"
 
+void
+print_diff_summary(struct bu_ptbl *results)
+{
+    int i = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(results); i++) {
+	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(results, i);
+	if (dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY) {
+	    bu_log("Object %s parameters have changed:\n", dr->obj_name);
+	    bu_avs_print(dr->left_param_avs, "  Left object parameters");
+	    bu_avs_print(dr->right_param_avs, "  Right object parameters");
+	    bu_log("\n");
+	}
+	if (dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_EMPTY) {
+	    bu_log("Object %s attributes have changed:\n", dr->obj_name);
+	    bu_avs_print(dr->left_attr_avs, "  Left object attributes");
+	    bu_avs_print(dr->right_attr_avs, "  Right object attributes");
+	    bu_log("\n");
+	}
+	if ((dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY) ||
+		(dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_EMPTY)) {
+	    bu_log("\n");
+	}
+    }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -37,7 +62,9 @@ main(int argc, char **argv)
     struct db_i *dbip1 = DBI_NULL;
     struct db_i *dbip2 = DBI_NULL;
     /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
-    struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol *diff_tol;
+    BU_GET(diff_tol, struct bn_tol);
+    diff_tol->dist = BN_TOL_DIST;
 
     BU_PTBL_INIT(&results);
 
@@ -79,11 +106,11 @@ main(int argc, char **argv)
     }
 
 
-    diff_state = db_diff(dbip1, dbip2, &diff_tol, DB_COMPARE_ALL, &results);
+    diff_state = db_diff(dbip1, dbip2, diff_tol, DB_COMPARE_ALL, &results);
     if (diff_state == DIFF_UNCHANGED) {
 	bu_log("No differences found.\n");
     } else {
-	bu_log("Differences found.\n");
+	print_diff_summary(&results);
     }
 
     for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
@@ -92,6 +119,7 @@ main(int argc, char **argv)
     }
 
     bu_ptbl_free(&results);
+    BU_PUT(diff_tol, struct bn_tol);
 
     db_close(dbip1);
     db_close(dbip2);
