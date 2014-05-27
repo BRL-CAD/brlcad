@@ -5,6 +5,8 @@ use warnings;
 
 use ParseCChunk;
 
+my $_WARNED = 0;
+
 our @keys
   = (
      'typedef',
@@ -256,6 +258,11 @@ sub extract_object {
     ParseCChunk::parse_chunk(\@olines);
     return $last_index;
   }
+  elsif (!$_WARNED) {
+    printf "WARNING: Parse::RecDescent not being used (file: '%s', line: %d).\n",
+      __FILE__, __LINE__;
+    $_WARNED = 1;
+  }
 
   my $norig_lines = $last_index - $first_index + 1;
 
@@ -385,7 +392,7 @@ sub extract_object {
   printf $fp "//  object type '$t'\n";
   #printf $fp "// N original lines: $norig_lines\n";
   #printf $fp "// N actual lines:   $nactual_lines\n";
-  print  $fp "$_" for @olines;
+  print  $fp "$_\n" for @olines;
   printf $fp "//=== ending extracted code at input line %d:\n", $last_index + 1;
   print  $fp "\n";
 

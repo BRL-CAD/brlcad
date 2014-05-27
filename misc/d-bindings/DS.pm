@@ -22,6 +22,7 @@ my $debug = 0;
 #### subroutines ####
 sub calc_md5hash {
   my $pth = shift @_;
+  return 0 if !-f $pth;
   return file_md5_hex($pth);
 } # calc_md5hash
 

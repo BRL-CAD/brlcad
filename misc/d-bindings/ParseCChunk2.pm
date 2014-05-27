@@ -1,3 +1,45 @@
+package ParseCChunk2;
+
+#use strict;
+use warnings;
+
+use Parse::RecDescent; # <== an auto-generated file
+
+sub parse_cfile {
+  my $ifil = shift @_;
+  open my $fp, '<', $ifil
+    or die "$ifil: $!";
+
+  local $/;
+  my @ilines = <$fp>;
+  my $text = join(' ', @ilines);
+
+  $::RD_AUTOACTION = q {%item};
+  my $grammar = <DATA>;
+  my $parser = Parse::RecDescent->new($grammar);
+
+=pod
+
+  $::RD_HINT = 1;
+  $::RD_AUTOACTION = q {%item};
+  my $parser = CGrammar->new();
+
+=cut
+
+  my $parse_tree = $parser->translation_unit($text);
+  die "undef \$parse_tree" if !defined $parse_tree;
+
+  use Data::Dumper;
+  print Dumper(\%::RD::item);
+
+  die "debug exit";
+
+} # parse_cfile
+
+# mandatory true return for a Perl module
+1;
+
+__DATA__
 # C grammar from the Parse::RecDescent git repo in file:
 #   'demo_Cgrammar_v2.pl'
 # Quote:  This improved version of the C grammar was provided by Joe Buehler

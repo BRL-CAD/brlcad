@@ -12,6 +12,10 @@ use lib('.');
 use CParse;
 use BP;
 use DS;
+use ParseCChunk2;
+
+# no Windows for now
+Readonly our $WIN => 0;
 
 # file type suffixes
 Readonly our $Hsuf => '.h';
@@ -20,9 +24,10 @@ Readonly our $Dsuf => '.d';
 # ignored top-level original .h files
 my @ignore
   = (
-     'conf.h',
-     'dvec.h',
-     'redblack.h',
+     # don't use these at the moment
+     #'conf.h',
+     #'dvec.h',
+     #'redblack.h',
     );
 my %ignore = ();
 @ignore{@ignore} = ();
@@ -31,8 +36,9 @@ my %ignore = ();
 # permanent, they are ostensably for CMake)
 my @tignore
   = (
-     'config_win.h',
-     'brlcad_config.h',
+     # don't use these at the moment
+     #'config_win.h',
+     #'brlcad_config.h',
     );
 my %tignore = ();
 @tignore{@tignore} = ();
@@ -45,23 +51,24 @@ my %is_mapped
      'tclPlatDecls.h' => "$BP::IDIR2/tclPlatDecls.h",
     );
 
-# sys headers and their equivalen Phobos module names form import
+# sys headers and their equivalent Phobos module names form import
 # statements; empty is unknown or don't use
 my %sysmod
   = (
-          '<tchar.h>'     => '',,
-          '<wchar.h>'     => '',,
-          '<sys/types.h>' => '',,
-          '<dlfcn.h>'     => '',,
-          '<signal.h>'    => '',,
-          '<setjmp.h>'    => '',,
-          '<stdint.h>'    => '',,
-          '<limits.h>'    => '',,
-          '<string.h>'    => '',,
-          '<stdlib.h>'    => '',,
-          '<stdarg.h>'    => '',,
-          '<stddef.h>'    => '',,
-          '<stdio.h>'     => 'std.stdio',
+     # don't use these at the moment
+     #'<tchar.h>'     => '',,
+     #'<wchar.h>'     => '',,
+     #'<sys/types.h>' => '',,
+     #'<dlfcn.h>'     => '',,
+     #'<signal.h>'    => '',,
+     #'<setjmp.h>'    => '',,
+     #'<stdint.h>'    => '',,
+     #'<limits.h>'    => '',,
+     #'<string.h>'    => '',,
+     #'<stdlib.h>'    => '',,
+     #'<stdarg.h>'    => '',,
+     #'<stddef.h>'    => '',,
+     #'<stdio.h>'     => 'std.stdio',
     );
 
 #==========================================================================
@@ -141,7 +148,7 @@ sub convert {
 	if $debug;
 
     # second intermediate file
-    my $tfil1 = "${BP::DIDIR}/${stem}.inter1";
+    my $tfil1 = "${BP::DIDIR}/${stem}.i";
     push @tmpfils, $tfil1;
     push @{$ofils_ref}, $tfil1
       if $debug;
@@ -149,17 +156,62 @@ sub convert {
     #==== method 1 ====
     if ($meth == 1) {
 
+=pod
+
       # insert unique included files into the single input file
       flatten_c_header($ifil, $tfil0, $stem, \%syshdr);
 
+=cut
+
       # use gcc; need a C input file
       my $cfil = "./di/$stem.h.c";
+
+      # note: handling of GCC constructs '__atribute__',
+      # -__restrict', '__extension__', et al.:
+
+=pod
+
+Compatibility with non-GNU compilers
+
+Fortunately, the __attribute__ mechanism was cleverly designed in a
+way to make it easy to quietly eliminate them if used on platforms
+other than GNU C. Superficially, __attribute__ appears to have
+multiple parameters (which would typically rule out using a macro),
+but the two sets of parentheses effectively make it a single
+parameter, and in practice this works very nicely.
+
+/* If we're not using GNU C, elide __attribute__ */
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
+=cut
+
+      open my $fp, '>', $cfil
+        or die "$cfil: $!";
+
+      print $fp <<'HERE';
+/* If we're not using GNU C, elide __attribute__, __extension__, __restrict, __const */
+/* #define __STRICT_ANSI__ */
+#define  __attribute__(x)  /* NOTHING  */
+#define  __extension__     /* NOTHING */
+#define  __restrict        /* NOTHING */
+#define  __const           const
+HERE
+
+      my @tflines = ();
       if (-f $tfil0) {
-	copy $tfil0, $cfil;
+        open my $fpi, '<', $tfil0
+          or die "$tfil0: $!";
+        @tflines = <$fpi>;
       }
       else {
-	copy $ifil, $cfil;
+        open my $fpi, '<', $ifil
+          or die "$ifil: $!";
+        @tflines = <$fpi>;
       }
+      print $fp $_ for @tflines;
+      close $fp;
 
       push @tmpfils, $cfil;
       push @{$ofils_ref}, $cfil
@@ -168,8 +220,19 @@ sub convert {
       # use g++ -E
       convert_with_gcc_E($cfil, $tfil1);
 
+      # parse that file once
+      #ParseCChunk::parse_cfile($tfil1);
+      ParseCChunk2::parse_cfile($tfil1);
+
+      die "debug exit";
+
+=pod
+
       # dress up the file and convert it to "final" form (eventually)
       convert1final($ofil, $tfil1, \%syshdr, $stem);
+
+=cut
+
     }
     #==== method 2 ====
     elsif ($meth == 2) {
@@ -419,6 +482,7 @@ sub convert_with_gcc_E {
   #$opts .= ' -H'; # list includes
   #$opts .= ' -v'; # report include paths
   $opts .= ' -P'; # omit line markers
+  $opts .= ' -undef'; # Do not predefine any system-specific or GCC-specific macros. The standard predefined macros remain defined.
 
   my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
   print "debug-cmd: '$cmd'\n"

@@ -5,6 +5,29 @@ use warnings;
 
 use CGrammar; # <== an auto-generated file
 
+sub parse_cfile {
+  my $ifil = shift @_;
+  open my $fp, '<', $ifil
+    or die "$ifil: $!";
+
+  local $/;
+  my @ilines = <$fp>;
+  my $text = join(' ', @ilines);
+
+  $::RD_HINT = 1;
+  $::RD_AUTOACTION = q {%item};
+  my $parser = CGrammar->new();
+
+  my $parse_tree = $parser->translation_unit($text);
+  die "undef \$parse_tree" if !defined $parse_tree;
+
+  use Data::Dumper;
+  print Dumper(\@CGrammar::namespace000item);
+
+  die "debug exit";
+
+} # parse_cfile
+
 sub parse_chunk {
   my $aref = shift @_;
 
