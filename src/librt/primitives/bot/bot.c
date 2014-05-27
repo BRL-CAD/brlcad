@@ -865,7 +865,7 @@ rt_bot_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 
     nmg_mark_edges_real(&(*s)->magic);
 
-    nmg_region_a(*s, tol);
+    nmg_shell_a(*s, tol);
 
     if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
 	nmg_fix_normals(*s, tol);

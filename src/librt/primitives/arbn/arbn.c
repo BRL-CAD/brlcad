@@ -777,8 +777,8 @@ rt_arbn_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_t
 
     (void)nmg_mark_edges_real(&(*s)->magic);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     return 0;
 

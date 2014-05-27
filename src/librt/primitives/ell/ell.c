@@ -1201,8 +1201,8 @@ rt_ell_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	}
     }
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* Release memory */
     /* All strips have vertices and normals */
@@ -1642,8 +1642,8 @@ rt_ell_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
 	eu = BU_LIST_NEXT(edgeuse, &eu->l);
     }
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     return 0;
 }

@@ -638,8 +638,8 @@ rt_ars_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     /* set edge's is_real flag */
     nmg_mark_edges_real(&(*s)->magic);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     nmg_shell_coplanar_face_merge(*s, tol, 0);
     nmg_simplify_shell(*s);

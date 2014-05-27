@@ -1523,7 +1523,7 @@ rt_ebm_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 
     nmg_extrude_face(fu, height, tol);
 
-    nmg_region_a(*s, tol);
+    nmg_shell_a(*s, tol);
 
     (void)nmg_mark_edges_real(&(*s)->magic);
 

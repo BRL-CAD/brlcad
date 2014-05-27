@@ -1540,8 +1540,8 @@ rt_arb_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     /* Mark edges as real */
     (void)nmg_mark_edges_real(&(*s)->magic);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
     nmg_make_faces_within_tol(*s, tol);
@@ -1719,8 +1719,8 @@ rt_arb_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
     /* Mark edges as real */
     (void)nmg_mark_edges_real(&(*s)->magic);
 
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(*s, tol);
+    /* Compute "geometry" for shell */
+    nmg_shell_a(*s, tol);
     return 0;
 }
 

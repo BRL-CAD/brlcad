@@ -785,7 +785,7 @@ rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_
 	}
     }
 
-    nmg_region_a(*s, tol);
+    nmg_shell_a(*s, tol);
     bu_ptbl_free(&faces);
 
     return 0;
