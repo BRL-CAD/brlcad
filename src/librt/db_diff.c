@@ -250,8 +250,8 @@ diff_init_result(struct diff_result **result, const struct bn_tol *curr_diff_tol
     } else {
 	(*result)->obj_name = NULL;
     }
-    (*result)->param_state = 0;
-    (*result)->attr_state = 0;
+    (*result)->param_state = DIFF_EMPTY;
+    (*result)->attr_state = DIFF_EMPTY;
     BU_GET((*result)->diff_tol, struct bn_tol);
     if (curr_diff_tol) {
 	(*result)->diff_tol->magic = BN_TOL_MAGIC;
@@ -296,36 +296,46 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 {
     /* We need to look for numbers to do tolerance based comparisons */
     int num_compare = 1;
+    int color_compare = 1;
     int pnt_compare = 1;
     double dval1, dval2;
+    int c1val1, c1val2, c1val3;
+    int c2val1, c2val2, c2val3;
     float p1val1, p1val2, p1val3;
     float p2val1, p2val2, p2val3;
     char *endptr;
+    /* Don't try a numerical comparison unless the strings differ -
+     * numerical attempts when they are not needed can introduce
+     * invalid changes */
+    int retval = BU_STR_EQUAL(val1, val2);
 
-    /* First, check for individual numbers */
-    errno = 0;
-    dval1 = strtod(val1, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
-    errno = 0;
-    dval2 = strtod(val2, &endptr);
-    if (errno == EINVAL || *endptr != '\0') num_compare--;
+    if (!retval) {
+	/* First, check for individual numbers */
+	errno = 0;
+	dval1 = strtod(val1, &endptr);
+	if (errno == EINVAL || *endptr != '\0') num_compare--;
+	errno = 0;
+	dval2 = strtod(val2, &endptr);
+	if (errno == EINVAL || *endptr != '\0') num_compare--;
+	if (num_compare == 1) {return NEAR_EQUAL(dval1, dval2, diff_tol->dist);}
 
-    /* If we didn't find numbers, try for points (3 floating point numbers) */
-    if (num_compare != 1) {
-	if (!sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3)) pnt_compare--;
-	if (!sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3)) pnt_compare--;
-    }
+	/* If we didn't find numbers, try for colors (3 integer numbers) */
+	if (sscanf(val1, "%d %d %d", &c1val1, &c1val2, &c1val3) == 3) color_compare--;
+	if (sscanf(val2, "%d %d %d", &c2val1, &c2val2, &c2val3) == 3) color_compare--;
+	if (color_compare == 1) return retval;
 
-    if (num_compare == 1) {
-	return NEAR_EQUAL(dval1, dval2, diff_tol->dist);
+	/* If we didn't find numbers, try for points (3 floating point numbers) */
+	if (sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3) == 3) pnt_compare--;
+	if (sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3) == 3) pnt_compare--;
+
+	if (pnt_compare == 1) {
+	    vect_t v1, v2;
+	    VSET(v1, p1val1, p1val2, p1val3);
+	    VSET(v2, p2val1, p2val2, p2val3);
+	    return VNEAR_EQUAL(v1, v2, diff_tol->dist);
+	}
     }
-    if (pnt_compare == 1) {
-	vect_t v1, v2;
-	VSET(v1, p1val1, p1val2, p1val3);
-	VSET(v2, p2val1, p2val2, p2val3);
-	return VNEAR_EQUAL(v1, v2, diff_tol->dist);
-    }
-    return BU_STR_EQUAL(val1, val2);
+    return retval;
 }
 
 int
@@ -379,6 +389,7 @@ db_diff_external(const struct bu_external *ext1, const struct bu_external *ext2)
 }
 
 struct diff_elements {
+    const char *name;
     int bin_obj;
     struct rt_db_internal *intern;
     int bin_params;
@@ -390,6 +401,7 @@ struct diff_elements {
 HIDDEN void
 get_diff_components(struct diff_elements *el, const struct db_i *dbip, const struct directory *dp)
 {
+    el->name = NULL;
     el->idb_ptr = NULL;
     el->bin_params = 0;
     el->bin_obj = 0;
@@ -401,6 +413,8 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
     BU_AVS_INIT(el->params);
 
     if (!dp) return;
+
+    el->name = dp->d_namep;
 
     /* Deal with attribute-only objects, since they're "special" */
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
@@ -418,6 +432,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
 	    el->bin_obj = 1;
 	    return;
 	}
+	bu_free_external(&dp_ext);
 	return;
     }
 
@@ -475,6 +490,45 @@ free_diff_components(struct diff_elements *el)
     }
 }
 
+struct avs_set {
+    struct bu_attribute_value_set *left_avs;
+    struct bu_attribute_value_set *right_avs;
+};
+
+HIDDEN int
+diff_dp_attr_add(const char *attr_name, const char *attr_val, void *data)
+{
+    struct avs_set *aset = (struct avs_set *)data;
+    bu_avs_add(aset->right_avs, attr_name, attr_val);
+    return 0;
+}
+
+HIDDEN int
+diff_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
+{
+    struct avs_set *aset = (struct avs_set *)data;
+    bu_avs_add(aset->left_avs, attr_name, attr_val);
+    return 0;
+}
+
+HIDDEN int
+diff_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
+{
+    struct avs_set *aset = (struct avs_set *)data;
+    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
+    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
+    return 0;
+}
+
+HIDDEN int
+diff_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
+{
+    struct avs_set *aset = (struct avs_set *)data;
+    bu_avs_add(aset->left_avs, attr_name, attr_val);
+    bu_avs_add(aset->right_avs, attr_name, attr_val);
+    return 0;
+}
+
 int
 db_diff_dp(const struct db_i *left,
 	const struct db_i *right,
@@ -484,6 +538,7 @@ db_diff_dp(const struct db_i *left,
        	db_compare_criteria_t flags,
 	struct diff_result *ext_result)
 {
+    struct avs_set aset;
     int state = DIFF_EMPTY;
 
     struct diff_elements left_components;
@@ -495,6 +550,7 @@ db_diff_dp(const struct db_i *left,
 	return -1;
     }
 
+
     /* If we aren't populating a result struct for the
      * caller, use a local copy to keep the code simple */
     if (!ext_result) {
@@ -502,17 +558,16 @@ db_diff_dp(const struct db_i *left,
     } else {
 	result = ext_result;
     }
-    result->param_state = DIFF_EMPTY;
-    result->attr_state = DIFF_EMPTY;
 
     get_diff_components(&left_components, left, left_dp);
     get_diff_components(&right_components, right, right_dp);
 
-
     if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
 
 	if (diff_tol) {
-	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, NULL, NULL, NULL, NULL, NULL);
+	    aset.left_avs = result->left_param_avs;
+	    aset.right_avs = result->right_param_avs;
+	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(&aset));
 	}
 	/*compare the idb_ptr memory.*/
 	if (left_components.bin_params && right_components.bin_params && left_components.idb_ptr && right_components.idb_ptr) {
@@ -533,7 +588,10 @@ db_diff_dp(const struct db_i *left,
     }
 
     if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
-	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, NULL, NULL, NULL, NULL, NULL);
+	aset.left_avs = result->left_attr_avs;
+	aset.right_avs = result->right_attr_avs;
+	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(&aset));
+	if (result->attr_state > 1) bu_log("attr change: %s, %s\n", left_components.name, right_components.name);
     }
 
     free_diff_components(&left_components);
@@ -557,9 +615,9 @@ db_diff(const struct db_i *dbip1,
 	db_compare_criteria_t flags,
 	struct bu_ptbl *results)
 {
-    int param_state = DIFF_UNCHANGED;
-    int attr_state = DIFF_UNCHANGED;
-    int state = DIFF_UNCHANGED;
+    int param_state = DIFF_EMPTY;
+    int attr_state = DIFF_EMPTY;
+    int state = DIFF_EMPTY;
     struct directory *dp1, *dp2;
 
     /* look at all objects in this database */
@@ -579,6 +637,8 @@ db_diff(const struct db_i *dbip1,
 	    } else {
 		if (db_diff_external(&ext1, &ext2)) {extern_state = DIFF_CHANGED;}
 	    }
+	    bu_free_external(&ext1);
+	    bu_free_external(&ext2);
 	}
 
 	/* Do internal diffs */
