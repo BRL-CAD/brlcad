@@ -90,16 +90,16 @@ int
 diff_filter(struct diff_result *dr, struct diff_state *state) {
     int accept_result = 0;
     if (state->use_params == 1) {
-	if (state->return_unchanged && dr->param_state == DIFF_UNCHANGED) accept_result += 1;
-	if (state->return_removed && dr->param_state == DIFF_REMOVED) accept_result += 1;
-	if (state->return_changed && dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_REMOVED && dr->param_state != DIFF_ADDED) accept_result += 1;
-	if (state->return_added && dr->param_state == DIFF_ADDED) accept_result += 1;
+	if (state->return_unchanged== 1 && dr->param_state == DIFF_UNCHANGED) accept_result += 1;
+	if (state->return_removed== 1 && dr->param_state == DIFF_REMOVED) accept_result += 1;
+	if (state->return_changed== 1 && dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_REMOVED && dr->param_state != DIFF_ADDED) accept_result += 1;
+	if (state->return_added== 1 && dr->param_state == DIFF_ADDED) accept_result += 1;
     }
     if (state->use_attrs == 1) {
-	if (state->return_unchanged && dr->attr_state == DIFF_UNCHANGED) accept_result += 1;
-	if (state->return_removed && dr->attr_state == DIFF_REMOVED) accept_result += 1;
-	if (state->return_changed && dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_REMOVED && dr->attr_state != DIFF_ADDED) accept_result += 1;
-	if (state->return_added && dr->attr_state == DIFF_ADDED) accept_result += 1;
+	if (state->return_unchanged== 1 && dr->attr_state == DIFF_UNCHANGED) accept_result += 1;
+	if (state->return_removed== 1 && dr->attr_state == DIFF_REMOVED) accept_result += 1;
+	if (state->return_changed== 1 && dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_REMOVED && dr->attr_state != DIFF_ADDED) accept_result += 1;
+	if (state->return_added== 1 && dr->attr_state == DIFF_ADDED) accept_result += 1;
     }
     if (accept_result) {
 	return 0;
@@ -113,13 +113,28 @@ void
 diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct diff_state *state)
 {
     int i = 0;
+    int reported = 0;
 
     if (state->verbosity < 1 || !results)
 	return;
 
     for (i = 0; i < (int)BU_PTBL_LEN(results); i++) {
 	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(results, i);
-	if (!diff_filter(dr, state)) {
+	reported = 0;
+	if (dr->param_state == DIFF_ADDED) {
+	    if (state->return_added == 1) bu_log("+ %s\n", dr->obj_name);
+	    reported = 1;
+	}
+	if (!reported && dr->param_state == DIFF_REMOVED) {
+	    if (state->return_removed == 1) bu_log("- %s\n", dr->obj_name);
+	    reported = 1;
+	}
+	if (!reported && dr->param_state == DIFF_UNCHANGED && dr->attr_state == DIFF_UNCHANGED) {
+	    if (state->return_unchanged == 1) bu_log("  %s(%d,%d)\n", dr->obj_name, dr->param_state, dr->attr_state);
+	    reported = 1;
+	}
+
+	if (!reported && state->return_changed == 1) {
 	    diff_result_print(dr, state, diff_log);
 	}
     }
