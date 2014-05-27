@@ -937,6 +937,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) return 0;
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) return 0;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
 	rt_db_free_internal(&intern);
