@@ -6,7 +6,7 @@ $RD_TRACE=1;
 my $parse = Parse::RecDescent->new(do{local$/;<DATA>});
 
 
-while (<>) {
+while (<DATA>) {
 	use Data::Dumper 'Dumper';
 	print Dumper [
 		$parse->line($_)
