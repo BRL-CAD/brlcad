@@ -2,9 +2,9 @@
 
 # PARSE LOGICAL EXPRESSIONS
 
-$RD::TRACE=1;
-
 use Parse::RecDescent;
+
+$RD_TRACE=1;
 
 $grammar =
 q{
