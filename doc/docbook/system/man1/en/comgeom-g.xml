@@ -58,7 +58,7 @@ This can be selected by specifying the
 flag (debug level 1).</para>
 
 <para>In the resulting .g file, high-level group all.g is created.
-If the <command>comgeom-s</command> option is used, its argument (without automatic supplying of
+If the <command>-s</command> option is used, its argument (without automatic supplying of
 leading period) is tacked onto the end of the names of all other items in the .g file. </para>
 
 <para>The units used in a COMGEOM file are specified on a header record.

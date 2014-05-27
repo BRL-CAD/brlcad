@@ -16,9 +16,9 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fb-orle</command>
-    <arg choice="opt" rep="norepeat">-CShvw </arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg><arg choice="opt" rep="norepeat"><replaceable>rgbwBG</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat">-CScdHvw </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-l </arg><arg choice="plain" rep="norepeat"><replaceable>x</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>y</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-F </arg><arg choice="plain" rep="norepeat"><replaceable>Frame_buffer</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-p </arg><arg choice="plain" rep="norepeat"><replaceable>x</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>y</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><replaceable>file.rle</replaceable></arg>
 </cmdsynopsis>
@@ -100,16 +100,10 @@ as an overlay.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c</option><replaceable> x</replaceable></term>
+  <term><option>-c</option></term>
   <listitem>
-<para>Specify a color to use as the “background”.
-The character
-<emphasis remap="I">x</emphasis>
-is selected from the set
-<emphasis remap="B">rgbwBG</emphasis>
-(red, green, blue, white, Black, 18% Grey).
-If this option is not specified, the pixel in the lower left corner
-of the region being saved is used as the background color.</para>
+<para>Only save color map.
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -136,6 +130,12 @@ on its standard error as it proceeds through encoding the image.</para>
   </varlistentry>
   <varlistentry>
   <term><option>-H</option></term>
+  <listitem>
+<para>Debug mode.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
   <listitem>
 <para>“hi-res” flag.  Set both the height and width of the framebuffer
 to 1024.  The default is 512x512.</para>
