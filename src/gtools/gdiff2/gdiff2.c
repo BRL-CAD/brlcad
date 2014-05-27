@@ -20,134 +20,64 @@
 
 #include "./gdiff2.h"
 
-static void
-filter_dp_ptbl(struct bu_ptbl *filtered_control, struct bu_ptbl *to_be_filtered)
-{
-    int i = 0;
-    struct bu_ptbl tmp_tbl = BU_PTBL_INIT_ZERO;
-    if (BU_PTBL_LEN(to_be_filtered) > 0) {
-	bu_ptbl_cat(&tmp_tbl, to_be_filtered);
-	bu_ptbl_reset(to_be_filtered);
-	for (i = 0; i < (int)BU_PTBL_LEN(&tmp_tbl); i++) {
-	    if (bu_ptbl_locate(filtered_control, (long *)BU_PTBL_GET(&tmp_tbl, i)) != -1) {
-		bu_ptbl_ins(to_be_filtered, (long *)BU_PTBL_GET(&tmp_tbl, i));
-	    }
-	}
-	bu_ptbl_free(&tmp_tbl);
-    }
-}
-
-static void
-filter_diff_container_ptbl(struct bu_ptbl *filtered_ancestor_control, struct bu_ptbl *filtered_new_control, struct bu_ptbl *to_be_filtered)
-{
-    int i = 0;
-    struct bu_ptbl tmp_tbl = BU_PTBL_INIT_ZERO;
-    if (BU_PTBL_LEN(to_be_filtered) > 0) {
-	bu_ptbl_cat(&tmp_tbl, to_be_filtered);
-	bu_ptbl_reset(to_be_filtered);
-	for (i = 0; i < (int)BU_PTBL_LEN(&tmp_tbl); i++) {
-	    struct diff_result_container *result = (struct diff_result_container *)BU_PTBL_GET(&tmp_tbl, i);
-	    if ((result->dp_orig && bu_ptbl_locate(filtered_ancestor_control, (long *)result->dp_orig) != -1) ||
-		    (result->dp_new && bu_ptbl_locate(filtered_new_control, (long *)result->dp_orig) != -1)) {
-		bu_ptbl_ins(to_be_filtered, (long *)result);
-	    } else {
-		diff_result_free(result);
-	    }
-	}
-	bu_ptbl_free(&tmp_tbl);
-    }
-}
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
 /*******************************************************************/
 static int
-do_diff(struct db_i *ancestor_dbip, struct db_i *new_dbip_1, struct diff_state *state) {
-    int have_diff = 0;
-    int diff_return = 0;
-    struct diff_results *results;
+do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *state) {
+    int diff_state = DIFF_EMPTY;
+    struct bu_ptbl results;
+    BU_PTBL_INIT(&results);
 
-    BU_GET(results, struct diff_results);
-    diff_results_init(results);
-    results->diff_tolerance = state->diff_tolerance;
-
-    have_diff = db_diff(ancestor_dbip, new_dbip_1, &diff_added, &diff_removed, &diff_changed, &diff_unchanged, (void *)results);
+    diff_state = db_diff(left_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &results);
 
     /* Now we have our diff results, time to filter (if applicable) and report them */
     if (state->have_search_filter) {
+	int i = 0;
+	int filtered_diff_state = DIFF_EMPTY;
+	struct bu_ptbl results_filtered;
+
 	/* In order to respect search filters involving depth, we have to build "allowed"
 	 * sets of objects from both databases based on straight-up search filtering of
 	 * the original databases.  We then check the filtered diff results against the
 	 * search-filtered original databases to make sure they are valid for the final
 	 * results-> */
-	struct bu_ptbl ancestor_dbip_filtered = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl new_dbip_1_filtered = BU_PTBL_INIT_ZERO;
-	(void)db_search(&ancestor_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, ancestor_dbip);
-	(void)db_search(&new_dbip_1_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, new_dbip_1);
+	struct bu_ptbl left_dbip_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl right_dbip_filtered = BU_PTBL_INIT_ZERO;
+	(void)db_search(&left_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
+	(void)db_search(&right_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
 
-	/* Filter added objects */
-	filter_dp_ptbl(&new_dbip_1_filtered, results->added);
-
-	/* Filter removed objects */
-	filter_dp_ptbl(&ancestor_dbip_filtered, results->removed);
-
-	/* Filter changed objects */
-	filter_diff_container_ptbl(&ancestor_dbip_filtered, &new_dbip_1_filtered, results->changed);
-
-	/* Filter unchanged objects */
-	filter_dp_ptbl(&ancestor_dbip_filtered, results->removed);
-
-	db_search_free(&ancestor_dbip_filtered);
-	db_search_free(&new_dbip_1_filtered);
-    }
-
-    if (state->verbosity) {
-	if (!have_diff) {
-	    bu_log("No differences found.\n");
-	} else {
-	    diff_summarize(state->diff_log, results, state);
-	    bu_log("%s", bu_vls_addr(state->diff_log));
+	BU_PTBL_INIT(&results_filtered);
+	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
+	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
+	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
+	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
+	    if ((((dp_left != RT_DIR_NULL) && bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
+		    ((dp_right != RT_DIR_NULL) && bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right)) != -1) {
+		bu_ptbl_ins(&results_filtered, (long *)dr);
+		filtered_diff_state |= dr->param_state;
+		filtered_diff_state |= dr->attr_state;
+	    } else {
+		diff_free_result(dr);
+	    }
 	}
+
+	bu_ptbl_reset(&results);
+	bu_ptbl_cat(&results, &results_filtered);
+	diff_state = filtered_diff_state;
+	bu_ptbl_free(&results_filtered);
     }
-    if (have_diff) {
-	if (state->return_added > 0) diff_return += BU_PTBL_LEN(results->added);
-	if (state->return_removed > 0) diff_return += BU_PTBL_LEN(results->removed);
-	if (state->return_changed > 0) diff_return += BU_PTBL_LEN(results->changed);
-	if (state->return_unchanged > 0) diff_return += BU_PTBL_LEN(results->unchanged);
-    }
-
-    diff_results_free(results);
-    BU_PUT(results, struct diff_results);
-
-    return diff_return;
-}
-
-/*******************************************************************/
-/* Primary function for diff3 operation on three .g files */
-/*******************************************************************/
-static int
-do_diff3(struct db_i *left, struct db_i *ancestor, struct db_i *right, struct diff_state *state) {
-    int have_diff = 0;
-    struct diff3_results *results;
-
-    BU_GET(results, struct diff3_results);
-    diff3_results_init(results);
-    results->diff_tolerance = state->diff_tolerance;
-
-    have_diff = db_diff3(left, ancestor, right, &diff3_added, &diff3_removed, &diff3_changed, &diff3_unchanged, (void *)results);
 
     if (state->verbosity) {
-	if (!have_diff) {
+	if (diff_state == DIFF_UNCHANGED || diff_state == DIFF_EMPTY) {
 	    bu_log("No differences found.\n");
 	} else {
-	    diff3_summarize(state->diff_log, results, state);
+	    diff_summarize(state->diff_log, &results, state);
 	    bu_log("%s", bu_vls_addr(state->diff_log));
 	}
     }
 
-    diff3_results_free(results);
-    BU_PUT(results, struct diff3_results);
-
-    return have_diff;
+    return diff_state;
 }
 
 static void
@@ -190,7 +120,7 @@ main(int argc, char **argv)
 		bu_vls_sprintf(state->search_filter, "%s", bu_optarg);
 		break;
 	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
-		if (sscanf(bu_optarg, "%f", &(state->diff_tolerance)) != 1) {
+		if (sscanf(bu_optarg, "%lf", &(state->diff_tol->dist)) != 1) {
 		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
 		    gdiff_usage(diff_prog_name);
 		    bu_exit (1, NULL);
@@ -270,7 +200,7 @@ main(int argc, char **argv)
 
 	diff_return = do_diff(left_dbip, right_dbip, state);
     }
-
+#if 0
     /* diff3 case */
     if (argc == 3) {
 	if (!bu_file_exists(argv[2], NULL)) {
@@ -320,6 +250,7 @@ main(int argc, char **argv)
 
 	diff_return = do_diff3(left_dbip, ancestor_dbip, right_dbip, state);
     }
+#endif
 
     diff_state_free(state);
     BU_PUT(state, struct diff_state);

@@ -9,11 +9,8 @@ include_directories(${GDIFF_INCLUDE_DIRS})
 
 set(gdiff_srcs
   containers.c
-  diff_callbacks.c
-  diff3_callbacks.c
   gdiff2.c
   summary.c
-  utility.c
   )
 
 BRLCAD_ADDEXEC(gdiff2 "${gdiff_srcs}" "librt")
