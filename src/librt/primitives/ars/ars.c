@@ -573,7 +573,7 @@ rt_ars_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		corners[1] = &verts[IJ(0, 1)];
 		corners[2] = &verts[IJ(1, 1)];
 
-		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
+		if ((fu = nmg_cmface(*s, corners, 3)) == (struct faceuse *)0) {
 		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%zu][%zu]\n",
 			   i, j);
 		}
@@ -604,7 +604,7 @@ rt_ars_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		corners[1] = &verts[IJ(0, 0)];
 		corners[2] = &verts[IJ(1, 1)];
 
-		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
+		if ((fu = nmg_cmface(*s, corners, 3)) == (struct faceuse *)0) {
 		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%zu][%zu]\n",
 			   i, j);
 		}

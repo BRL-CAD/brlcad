@@ -3597,7 +3597,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     *s = nmg_ms();
 
     /* make the base face */
-    base_fu = nmg_cface(s, base_verts, base_vert_count);
+    base_fu = nmg_cface(*s, base_verts, base_vert_count);
 
     /* assign geometry to the base_verts */
     /* start with x=0 edge */
@@ -3647,7 +3647,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &strip1Verts[y-1];
 	verts[2] = &strip1Verts[y];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (y == 1 && strip1Verts[0]->vg_p == NULL) {
 		VSET(tmp_pt, 0, 0, DSP(dsp_ip, 0, 0));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
@@ -3670,7 +3670,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &strip1Verts[y];
 	verts[2] = &base_verts[y];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (strip1Verts[y]->vg_p == NULL) {
 		VSET(tmp_pt, 0, y, DSP(dsp_ip, 0, y));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
@@ -3722,7 +3722,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &strip2Verts[0];
 	verts[2] = &strip1Verts[0];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    VSET(tmp_pt, x+1, 0, DSP(dsp_ip, x+1, 0));
 	    MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	    nmg_vertex_gv(strip2Verts[0], pt[0]);
@@ -3739,7 +3739,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &base_verts[base_vert_no2];
 	verts[2] = &strip2Verts[0];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
 		bu_log("Failed to make second face at x=%d, y=%d\n", x, 0);
 		bu_free(base_verts, "base verts");
@@ -3770,14 +3770,14 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			hole_verts[0] = strip1Verts[y];
 			hole_verts[1] = strip2Verts[y];
 			hole_verts[2] = strip2Verts[y+1];
-			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			nmg_add_loop_to_face(*s, base_fu, hole_verts, 3, OT_OPPOSITE);
 			has_holes = 1;
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(hole_verts[2], pt[0]);
 			strip2Verts[y+1] = hole_verts[2];
 		    } else {
-			fu = nmg_cmface(s, verts, 3);
+			fu = nmg_cmface(*s, verts, 3);
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
@@ -3800,10 +3800,10 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			hole_verts[0] = strip1Verts[y+1];
 			hole_verts[1] = strip1Verts[y];
 			hole_verts[2] = strip2Verts[y];
-			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			nmg_add_loop_to_face(*s, base_fu, hole_verts, 3, OT_OPPOSITE);
 			has_holes = 1;
 		    } else {
-			fu = nmg_cmface(s, verts, 3);
+			fu = nmg_cmface(*s, verts, 3);
 			if (nmg_fu_planeeqn(fu, tol) < 0) {
 			    bu_log("Failed to make first top face at x=%d, y=%d\n", x, y);
 			    bu_free(base_verts, "base verts");
@@ -3826,14 +3826,14 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			hole_verts[0] = strip1Verts[y];
 			hole_verts[1] = strip2Verts[y+1];
 			hole_verts[2] = strip1Verts[y+1];
-			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			nmg_add_loop_to_face(*s, base_fu, hole_verts, 3, OT_OPPOSITE);
 			has_holes = 1;
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(hole_verts[1], pt[0]);
 			strip2Verts[y+1] = hole_verts[1];
 		    } else {
-			fu = nmg_cmface(s, verts, 3);
+			fu = nmg_cmface(*s, verts, 3);
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
@@ -3856,14 +3856,14 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			hole_verts[0] = strip2Verts[y];
 			hole_verts[1] = strip2Verts[y+1];
 			hole_verts[2] = strip1Verts[y+1];
-			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			nmg_add_loop_to_face(*s, base_fu, hole_verts, 3, OT_OPPOSITE);
 			has_holes = 1;
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(hole_verts[1], pt[0]);
 			strip2Verts[y+1] = hole_verts[1];
 		    } else {
-			fu = nmg_cmface(s, verts, 3);
+			fu = nmg_cmface(*s, verts, 3);
 			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
@@ -3884,7 +3884,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &strip2Verts[ylim];
 	verts[2] = &base_verts[ylim+x+1];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
 		bu_log("Failed to make first face at x=%d, y=ylim\n", x);
 		bu_free(base_verts, "base verts");
@@ -3898,7 +3898,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &base_verts[ylim+x];
 	verts[2] = &strip1Verts[ylim];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
 		bu_log("Failed to make second face at x=%d, y=ylim\n", x);
 		bu_free(base_verts, "base verts");
@@ -3922,7 +3922,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &base_verts[base_vert_no1-1];
 	verts[2] = &strip1Verts[y];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
 		bu_log("Failed to make first face at x=xlim, y=%d\n", y);
 		bu_free(base_verts, "base verts");
@@ -3936,7 +3936,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	verts[1] = &base_verts[base_vert_no1-1];
 	verts[2] = &strip1Verts[y+1];
 	if (CHECK_VERTS(verts)) {
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
 		bu_log("Failed to make second face at x=xlim, y=%d\n", y);
 		bu_free(base_verts, "base verts");
@@ -3965,7 +3965,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	if (!nmg_kill_cracks(s))
+	if (!nmg_kill_cracks(*s))
 	    return -1;
 
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
@@ -3975,7 +3975,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	if (!nmg_kill_cracks(s))
+	if (!nmg_kill_cracks(*s))
 	    return -1;
 
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
@@ -3985,7 +3985,7 @@ rt_dsp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	if (!nmg_kill_cracks(s))
+	if (!nmg_kill_cracks(*s))
 	    return -1;
     }
 

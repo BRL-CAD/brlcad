@@ -2194,7 +2194,7 @@ rt_extrude_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tes
 	verts[i] = (struct vertex **)bu_calloc(1, sizeof(struct vertex *), "verts[i]");
     }
 
-    fu = nmg_cmface(s, verts, vert_count);
+    fu = nmg_cmface(*s, verts, vert_count);
     j = 0;
     for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
 	for (i = 0; i < vlp->nused; i++) {
@@ -2277,7 +2277,7 @@ rt_extrude_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tes
 
 	vertsa = (struct vertex **)bu_calloc((int)pt_count, sizeof(struct vertex *), "verts");
 
-	fu = nmg_add_loop_to_face(s, fu, vertsa, (int)pt_count, fdir);
+	fu = nmg_add_loop_to_face(*s, fu, vertsa, (int)pt_count, fdir);
 
 	k = 0;
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {

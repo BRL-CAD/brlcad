@@ -1544,7 +1544,7 @@ rt_arb_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     nmg_region_a(*s, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
-    nmg_make_faces_within_tol(s, tol);
+    nmg_make_faces_within_tol(*s, tol);
 
     return 0;
 }
@@ -1628,7 +1628,7 @@ rt_arb_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
 	}
 	/* The edges created will be linear, in parameter space...,
 	 * but need to have edge_g_cnurb geometry. */
-	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
+	if ((fu[i] = nmg_cmface(*s, vertp, pa.pa_npts[i])) == 0) {
 	    bu_log("rt_arb_tnurb(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}

@@ -1451,7 +1451,7 @@ rt_ebm_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 
 		if (e->left) {
 		    /* make a face */
-		    fu1 = nmg_cmface(s, vertp, loop_length);
+		    fu1 = nmg_cmface(*s, vertp, loop_length);
 		    NMG_CK_FACEUSE(fu1);
 
 		    /* assign geometry to the vertices used in this face */
@@ -1483,7 +1483,7 @@ rt_ebm_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			    loop_verts[i] = (struct vertex *)NULL;
 		    }
 
-		    (void) nmg_add_loop_to_face(s, fu, loop_verts ,
+		    (void) nmg_add_loop_to_face(*s, fu, loop_verts ,
 						loop_length, OT_OPPOSITE);
 
 		    /* Assign geometry to new vertices */

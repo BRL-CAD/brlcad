@@ -1607,7 +1607,7 @@ rt_ell_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
     vertp[2] = &verts[1];
     vertp[3] = &verts[1];
 
-    if ((fu = nmg_cmface(s, vertp, 4)) == 0) {
+    if ((fu = nmg_cmface(*s, vertp, 4)) == 0) {
 	bu_log("rt_ell_tnurb(): nmg_cmface() fail on face\n");
 	return -1;
     }

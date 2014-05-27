@@ -740,7 +740,7 @@ rt_arbn_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_t
 
 	/* Make the face if there is are least 3 vertices */
 	if (loop_length > 2)
-	    fu[face_count++] = nmg_cmface(s, loop_verts, loop_length);
+	    fu[face_count++] = nmg_cmface(*s, loop_verts, loop_length);
     }
 
     /* Associate vertex geometry */

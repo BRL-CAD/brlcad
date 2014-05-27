@@ -642,14 +642,14 @@ rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_
 	verts[1] = &top_outer[next_seg].v;
 	verts[0] = &base_outer[seg_no].v;
 
-	fu = nmg_cmface(s, verts, 3);
+	fu = nmg_cmface(*s, verts, 3);
 	bu_ptbl_ins(&faces, (long *)fu);
 
 	verts[2] = &base_outer[seg_no].v;
 	verts[1] = &top_outer[next_seg].v;
 	verts[0] = &base_outer[next_seg].v;
 
-	fu = nmg_cmface(s, verts, 3);
+	fu = nmg_cmface(*s, verts, 3);
 	bu_ptbl_ins(&faces, (long *)fu);
     }
 
@@ -668,14 +668,14 @@ rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_
 	    verts[1] = &top_inner[next_seg].v;
 	    verts[2] = &base_inner[seg_no].v;
 
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 
 	    verts[0] = &base_inner[seg_no].v;
 	    verts[1] = &top_inner[next_seg].v;
 	    verts[2] = &base_inner[next_seg].v;
 
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 	}
     }
@@ -696,19 +696,19 @@ rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_
 	    verts[2] = &top_outer[seg_no].v;
 	    verts[1] = &top_inner[seg_no].v;
 	    verts[0] = &top_inner[next_seg].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 
 	    verts[2] = &top_inner[next_seg].v;
 	    verts[1] = &top_outer[next_seg].v;
 	    verts[0] = &top_outer[seg_no].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 	} else {
 	    verts[2] = &top_outer[seg_no].v;
 	    verts[1] = &top_center.v;
 	    verts[0] = &top_outer[next_seg].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 	}
     }
@@ -729,19 +729,19 @@ rt_cline_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_
 	    verts[0] = &base_outer[seg_no].v;
 	    verts[1] = &base_inner[seg_no].v;
 	    verts[2] = &base_inner[next_seg].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 
 	    verts[0] = &base_inner[next_seg].v;
 	    verts[1] = &base_outer[next_seg].v;
 	    verts[2] = &base_outer[seg_no].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 	} else {
 	    verts[0] = &base_outer[seg_no].v;
 	    verts[1] = &base_center.v;
 	    verts[2] = &base_outer[next_seg].v;
-	    fu = nmg_cmface(s, verts, 3);
+	    fu = nmg_cmface(*s, verts, 3);
 	    bu_ptbl_ins(&faces, (long *)fu);
 	}
     }

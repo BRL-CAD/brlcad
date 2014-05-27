@@ -1219,7 +1219,7 @@ rt_eto_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    vertp[1] = &verts[ ETO_PT(i+0, j+1) ];
 	    vertp[2] = &verts[ ETO_PT(i+1, j+1) ];
 	    vertp[3] = &verts[ ETO_PT(i+1, j+0) ];
-	    if ((faces[nfaces++] = nmg_cmface(s, vertp, 4)) == (struct faceuse *)0) {
+	    if ((faces[nfaces++] = nmg_cmface(*s, vertp, 4)) == (struct faceuse *)0) {
 		bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
 		       i, nells, j, npts);
 		nfaces--;

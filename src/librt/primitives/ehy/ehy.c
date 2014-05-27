@@ -1381,7 +1381,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	vells[nell-1][i] = (struct vertex *)NULL;
     face = 0;
     BU_ASSERT_PTR(outfaceuses, !=, NULL);
-    if ((outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
+    if ((outfaceuses[face++] = nmg_cface(*s, vells[nell-1], nseg)) == 0) {
 	bu_log("rt_ehy_tess() failure, top face\n");
 	goto fail;
     }
@@ -1427,7 +1427,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		/* first triangle */
 		vertp[1] = vells[top][jj+1];
 		vertp[2] = vells[top][jj];
-		if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 		    bu_log("rt_ehy_tess() failure\n");
 		    goto fail;
 		}
@@ -1440,7 +1440,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		    vertp[1] = vells[bottom][0];
 		else
 		    vertp[1] = (struct vertex *)0;
-		if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 		    bu_log("rt_ehy_tess() failure\n");
 		    goto fail;
 		}
@@ -1453,7 +1453,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		    vertp[1] = vells[top][0];
 		else
 		    vertp[1] = vells[top][jj+2];
-		if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 		    bu_log("rt_ehy_tess() failure\n");
 		    goto fail;
 		}
@@ -1464,7 +1464,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		else
 		    vertp[1] = vells[top][j+1];
 		vertp[2] = vells[top][j];
-		if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 		    bu_log("rt_ehy_tess() failure\n");
 		    goto fail;
 		}
@@ -1477,7 +1477,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 		    vertp[0] = vells[bottom][0];
 		else
 		    vertp[0] = (struct vertex *)0;
-		if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 		    bu_log("rt_ehy_tess() failure\n");
 		    goto fail;
 		}
@@ -1499,7 +1499,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     vertp[0] = (struct vertex *)0;
     vertp[1] = vells[0][1];
     vertp[2] = vells[0][0];
-    if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+    if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 	bu_log("rt_ehy_tess() failure\n");
 	goto fail;
     }
@@ -1513,7 +1513,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    vertp[1] = vells[0][0];
 	else
 	    vertp[1] = vells[0][i+1];
-	if ((outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+	if ((outfaceuses[face++] = nmg_cface(*s, vertp, 3)) == 0) {
 	    bu_log("rt_ehy_tess() failure\n");
 	    goto fail;
 	}
@@ -1532,7 +1532,7 @@ rt_ehy_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     nmg_shell_a(*s, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(*s, tol, 1);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");

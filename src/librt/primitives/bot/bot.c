@@ -834,7 +834,7 @@ rt_bot_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    || bn_3pts_collinear(pt[0], pt[1], pt[2], tol))
 	    continue;
 
-	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+	if ((fu=nmg_cmface(*s, corners, 3)) == (struct faceuse *)NULL) {
 	    bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    continue;
 	}
@@ -854,7 +854,7 @@ rt_bot_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    tmp = corners[0];
 	    corners[0] = corners[2];
 	    corners[2] = tmp;
-	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
+	    if ((fu=nmg_cmface(*s, corners, 3)) == (struct faceuse *)NULL)
 		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    else
 		nmg_calc_face_g(fu);
