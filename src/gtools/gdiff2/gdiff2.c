@@ -52,8 +52,8 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
 	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
 	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
-	    if ((((dp_left != RT_DIR_NULL) && bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
-		    ((dp_right != RT_DIR_NULL) && bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right)) != -1) {
+	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
+		    (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
 		filtered_diff_state |= dr->attr_state;
