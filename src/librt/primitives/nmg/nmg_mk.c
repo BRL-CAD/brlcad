@@ -934,7 +934,7 @@ nmg_ml(struct shell *s)
     }
     if (p2 && p2->vu_p->v_p != feu->vu_p->v_p) {
 	bu_log("nmg_ml() Edge(use)s do not form proper loop!\n");
-	nmg_pr_s(s, (char *)NULL);
+	nmg_pr_s(s);
 	bu_log("nmg_ml() Edge(use)s do not form proper loop!\n");
 	bu_bomb("nmg_ml\n");
     }

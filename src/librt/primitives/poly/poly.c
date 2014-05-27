@@ -594,12 +594,12 @@ rt_pg_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol
 
 	/* Locate these points, if previously mentioned */
 	for (i=0; i < pp->npts; i++) {
-	    verts[i] = nmg_find_pt_in_shell(s,
+	    verts[i] = nmg_find_pt_in_shell(*s,
 					    &pp->verts[3*i], tol);
 	}
 
 	/* Construct the face.  Verts should be in CCW order */
-	if ((fu = nmg_cmface(s, vertp, pp->npts)) == (struct faceuse *)0) {
+	if ((fu = nmg_cmface(*s, vertp, pp->npts)) == (struct faceuse *)0) {
 	    bu_log("rt_pg_tess() nmg_cmface failed, skipping face %zu\n",
 		   p);
 	}

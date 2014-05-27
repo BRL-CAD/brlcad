@@ -53,7 +53,7 @@
 #define FIND_IJ(a, b)	\
 	if (!(verts[IJ(a, b)])) { \
 		verts[IJ(a, b)] = \
-		nmg_find_pt_in_shell(s, ARS_PT(a, b), tol); \
+		nmg_find_pt_in_shell(*s, ARS_PT(a, b), tol); \
 	}
 #define ASSOC_GEOM(corn, a, b)	\
 	if (!((*corners[corn])->vg_p)) { \

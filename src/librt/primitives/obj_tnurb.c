@@ -25,16 +25,15 @@
 
 
 int
-rt_obj_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_obj_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
 
-    if (!r || !ip)
+    if (!s || !ip)
 	return -1;
 
-    if (*r) NMG_CK_REGION(*r);
-    if (m) NMG_CK_MODEL(m);
+    if (s) NMG_CK_SHELL(*s);
     RT_CK_DB_INTERNAL(ip);
     if (tol) BN_CK_TOL(tol);
 
@@ -48,7 +47,7 @@ rt_obj_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     if (!ft->ft_tnurb)
 	return -4;
 
-    return ft->ft_tnurb(r, m, ip, tol);
+    return ft->ft_tnurb(s, ip, tol);
 }
 
 

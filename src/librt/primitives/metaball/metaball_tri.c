@@ -159,7 +159,7 @@ rt_metaball_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_te
     nmg_mark_edges_real(&(*s)->magic);
     nmg_shell_a(*s, tol);
 
-    nmg_shell_fuse(s, tol);
+    nmg_shell_fuse(*s, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));

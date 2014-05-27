@@ -68,13 +68,13 @@ struct tmp_v {
  */
 int
 rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct bn_tol *UNUSED(tol)) {
-    struct model *m;
+    struct shell *s;
 
     RT_CK_DB_INTERNAL(ip);
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
-    nmg_model_bb(*min, *max, m);
+    nmg_shell_bb(*min, *max, s);
     return 0;
 }
 
@@ -2094,7 +2094,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
     /* As a by-product, this fills in the ptrs[] array! */
     memset((char *)&cntbuf, 0, sizeof(cntbuf));
-    ptrs = nmg_m_struct_count(&cntbuf, s);
+    ptrs = nmg_s_struct_count(&cntbuf, s);
 
     /* Collect overall new subscripts, and structure-specific indices */
     ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
@@ -2434,7 +2434,7 @@ rt_nmg_export5(
     NMG_CK_SHELL(s);
 
     memset((char *)&cntbuf, 0, sizeof(cntbuf));
-    ptrs = nmg_m_struct_count(&cntbuf, s);
+    ptrs = nmg_s_struct_count(&cntbuf, s);
 
     ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
@@ -2606,13 +2606,13 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_nmg_ifree(struct rt_db_internal *ip)
 {
-    struct model *m;
+    struct shell *s;
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_ptr) {
-	m = (struct model *)ip->idb_ptr;
-	NMG_CK_MODEL(m);
-	nmg_km(m);
+	s = (struct shell *)ip->idb_ptr;
+	NMG_CK_SHELL(s);
+	nmg_ks(s);
     }
 
     ip->idb_ptr = GENPTR_NULL;	/* sanity */

@@ -665,14 +665,13 @@ nmg_clone_shell(const struct shell *original)
 {
     struct shell           *ret;
     genptr_t               *structArray;
-    const struct nmgregion *originalRegion;
     struct bn_tol           tolerance;
 
     NMG_CK_MODEL(original);
 
     structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
 
-    ret = nmg_mm();
+    ret = nmg_ms();
     ret->index    = original->index;
     ret->maxindex = original->maxindex;
 

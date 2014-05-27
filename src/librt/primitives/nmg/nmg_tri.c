@@ -1129,8 +1129,8 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    pdv_3line(fp, p2->vu_p->v_p->vg_p->coord, cut_end);
 
 	    (void)fclose(fp);
-	    nmg_stash_model_to_file("bad_tri_cut.g",
-				    nmg_find_model(&p1->vu_p->l.magic), buf);
+	    nmg_stash_shell_to_file("bad_tri_cut.g",
+				    nmg_find_shell(&p1->vu_p->l.magic), buf);
 
 	    bu_bomb("cut_mapped_loop() goodnight 3\n");
 	}
@@ -2355,7 +2355,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     struct pt2d *min, *max, *newpt, *first, *prev, *next, *current, *tmp;
     struct pt2d *prev_orig, *next_orig, *pt, *t;
 
-    struct model *m;
+    struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu2, *orig_lu_p;
     struct edgeuse *eu;
@@ -2420,8 +2420,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    if (RTG.NMG_debug & DEBUG_TRI) {
 		eu = BU_LIST_FIRST(edgeuse, &(current->vu_p->up.eu_p->up.lu_p->down_hd));
 		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, tol);
-		m = nmg_find_model(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
-		nmg_stash_model_to_file("cut_unimonotone_infinite_model.g", m, "cut_unimonotone_infinite_model");
+		s = nmg_find_shell(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
+		nmg_stash_shell_to_file("cut_unimonotone_infinite_model.g", s, "cut_unimonotone_infinite_model");
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
 		nmg_plot_fu("cut_unimonotone_infinite_loopuse", current->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
 	    }
@@ -3758,7 +3758,7 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
     }
 
     (void)nmg_edge_g_fuse(&s->magic, tol);
-    (void)nmg_unbreak_region_edges(&s->magic);
+    (void)nmg_unbreak_shell_edges(&s->magic);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {

@@ -26,16 +26,15 @@
 
 
 int
-rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_obj_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
 
-    if (!r || !ip)
+    if (!s || !ip)
 	return -1;
 
-    if (*r) NMG_CK_REGION(*r);
-    if (m) NMG_CK_MODEL(m);
+    if (*s) NMG_CK_SHELL(*s);
     RT_CK_DB_INTERNAL(ip);
     if (ttol) RT_CK_TESS_TOL(ttol);
     if (tol) BN_CK_TOL(tol);
@@ -50,7 +49,7 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (!ft->ft_tessellate)
 	return -4;
 
-    return ft->ft_tessellate(r, m, ip, ttol, tol);
+    return ft->ft_tessellate(s, ip, ttol, tol);
 }
 
 

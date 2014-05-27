@@ -1174,12 +1174,12 @@ rt_rpc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
     }
 
     /* Front face topology.  Verts are considered to go CCW */
-    outfaceuses[0] = nmg_cface(s, vfront, n);
+    outfaceuses[0] = nmg_cface(*s, vfront, n);
 
     (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
-    outfaceuses[1] = nmg_cface(s, vtemp, n);
+    outfaceuses[1] = nmg_cface(*s, vtemp, n);
 
     (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic);
 
@@ -1198,7 +1198,7 @@ rt_rpc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	vertlist[1] = vback[i];		/* straight down, */
 	vertlist[2] = vback[i+1];	/* to left, */
 	vertlist[3] = vfront[i+1];	/* straight up. */
-	outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
+	outfaceuses[2+i] = nmg_cface(*s, vertlist, 4);
     }
 
     (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic);

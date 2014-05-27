@@ -756,11 +756,11 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 }
 
 void
-nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
+nmg_triangulate_shell_mc(struct shell *s, const struct bn_tol *tol)
 {
     BN_CK_TOL(tol);
-    NMG_CK_MODEL(m);
-    nmg_vmodel(m);
+    NMG_CK_SHELL(s);
+    nmg_vsshell(s);
 
     if (RTG.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");

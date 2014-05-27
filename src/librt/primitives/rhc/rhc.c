@@ -1333,7 +1333,7 @@ rt_rhc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	vertlist[1] = vback[i];		/* straight down, */
 	vertlist[2] = vback[i + 1];	/* to left, */
 	vertlist[3] = vfront[i + 1];	/* straight up. */
-	outfaceuses[2 + i] = nmg_cface(s, vertlist, 4);
+	outfaceuses[2 + i] = nmg_cface(*s, vertlist, 4);
     }
 
     (void)nmg_mark_edges_real(&outfaceuses[n + 1]->l.magic);

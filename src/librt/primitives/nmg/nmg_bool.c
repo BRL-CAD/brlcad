@@ -718,7 +718,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    }
 	}
 	if (RTG.NMG_debug & DEBUG_BOOL)
-	    nmg_pr_s(sA, "");
+	    nmg_pr_s(sA);
 
 	bu_log("nmg_bool: sA is unclosed, barging ahead\n");
     }
@@ -733,7 +733,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    }
 	}
 	if (RTG.NMG_debug & DEBUG_BOOL)
-	    nmg_pr_s(sB, "");
+	    nmg_pr_s(sB);
 	bu_log("nmg_bool: sB is unclosed, barging ahead\n");
     }
 
@@ -1041,7 +1041,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 */
 	nmg_simplify_shell(sA);
 	if (RTG.NMG_debug & DEBUG_VERIFY)
-	    nmg_vsshell(&sA);
+	    nmg_vsshell(sA);
 
 	(void) nmg_unbreak_shell_edges(&sA->magic);
 
@@ -1165,7 +1165,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
     s = nmg_ms();
 
-    if (ip->idb_meth->ft_tessellate(s, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
+    if (ip->idb_meth->ft_tessellate(&s, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
 	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
 	return TREE_NULL;
     }
@@ -1219,19 +1219,19 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     RT_CK_DIR(dp);
 
     if (ip->idb_meth->ft_tnurb(
-	    *tsp->ts_s, ip, tsp->ts_tol) < 0) {
+	    tsp->ts_s, ip, tsp->ts_tol) < 0) {
 	bu_log("nmg_booltree_leaf_tnurb(%s): CSG to t-NURB conversation failure\n", dp->d_namep);
 	return TREE_NULL;
     }
 
     if (RTG.NMG_debug & DEBUG_VERIFY) {
-	nmg_vsshell(tsp->ts_s);
+	nmg_vsshell(*tsp->ts_s);
     }
 
     RT_GET_TREE(curtree, tsp->ts_resp);
     curtree->tr_op = OP_NMG_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
-    curtree->tr_d.td_s = tsp->ts_s;
+    curtree->tr_d.td_s = *tsp->ts_s;
 
     if (RT_G_DEBUG&DEBUG_TREEWALK)
 	bu_log("nmg_booltree_leaf_tnurb(%s) OK\n", dp->d_namep);
@@ -1271,7 +1271,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 {
     union tree *tl;
     union tree *tr;
-    struct nmgregion *reg;
+    struct shell *reg;
     int op = NMG_BOOL_ADD;      /* default value */
     const char *op_str = " u "; /* default value */
     size_t rem;
@@ -1287,7 +1287,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	case OP_NMG_TESS:
 	    /* Hit a tree leaf */
 	    if (RTG.NMG_debug & DEBUG_VERIFY) {
-		nmg_vsshell(&tp->tr_d.td_s);
+		nmg_vsshell(tp->tr_d.td_s);
 	    }
 	    return tp;
 	case OP_UNION:
@@ -1409,10 +1409,10 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     NMG_CK_SHELL(tr->tr_d.td_s);
     NMG_CK_SHELL(tl->tr_d.td_s);
 
-    if (nmg_ck_closed_region(tr->tr_d.td_s, tol)) {
+    if (nmg_ck_closed_shell(tr->tr_d.td_s, tol)) {
 	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (r)\n");
     }
-    if (nmg_ck_closed_region(tl->tr_d.td_s, tol)) {
+    if (nmg_ck_closed_shell(tl->tr_d.td_s, tol)) {
 	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (l)\n");
     }
 
@@ -1429,7 +1429,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     /* move operands into the same model */
     nmg_merge_shells(tl->tr_d.td_s, tr->tr_d.td_s);
 
-    /* input s1 and s2 are destroyed, output is new region */
+    /* input s1 and s2 are destroyed, output is new shell */
     reg = nmg_do_bool(tl->tr_d.td_s, tr->tr_d.td_s, op, tol);
 
     /* build string of result name */
@@ -1438,8 +1438,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     snprintf(name, rem, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name);
 
     /* clean up child tree nodes */
-    tl->tr_d.td_s = (struct nmgregion *)NULL;
-    tr->tr_d.td_s = (struct nmgregion *)NULL;
+    tl->tr_d.td_s = (struct shell *)NULL;
+    tr->tr_d.td_s = (struct shell *)NULL;
     db_free_tree(tl, resp);
     db_free_tree(tr, resp);
 
@@ -1453,7 +1453,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	tp->tr_d.td_name = name;
 
 	if (RTG.NMG_debug & DEBUG_VERIFY) {
-	    nmg_vsshell(&reg);
+	    nmg_vsshell(reg);
 	}
 	return tp;
 

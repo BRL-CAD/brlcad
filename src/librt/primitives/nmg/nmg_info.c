@@ -1042,7 +1042,7 @@ nmg_find_edge_between_2fu(const struct faceuse *fu1, const struct faceuse *fu2, 
 				       (void *)ret->e_p, (void *)ret->g.lseg_p);
 				nmg_jeg(ret->g.lseg_p, eur->g.lseg_p);
 				/* See if there are any others. */
-				nmg_model_fuse(nmg_find_model(&eur->l.magic), tol);
+				nmg_shell_fuse(nmg_find_shell(&eur->l.magic), tol);
 			    } else {
 				bu_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
 			    }

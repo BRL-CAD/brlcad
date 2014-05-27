@@ -3797,7 +3797,7 @@ rt_pipe_tess(
 
     pp1 = BU_LIST_FIRST(wdb_pipept, &(pip->pipe_segs_head));
     tesselate_pipe_start(pp1, arc_segs, sin_del, cos_del,
-			 &outer_loop, &inner_loop, r1, r2, s, tol);
+			 &outer_loop, &inner_loop, r1, r2, *s, tol);
 
     pp2 = BU_LIST_NEXT(wdb_pipept, &pp1->l);
     if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
@@ -3823,7 +3823,7 @@ rt_pipe_tess(
 	    /* last segment */
 	    tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 				  pp2->pp_coord, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, *s, tol);
 	    break;
 	}
 
@@ -3839,7 +3839,7 @@ rt_pipe_tess(
 	    /* points are collinear, treat as a linear segment */
 	    tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 				  pp2->pp_coord, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, *s, tol);
 
 	    VMOVE(curr_pt, pp2->pp_coord);
 	    curr_id = pp2->pp_id;
@@ -3857,7 +3857,7 @@ rt_pipe_tess(
 	VJOIN1(bend_start, pp2->pp_coord, dist_to_bend, n1);
 	tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 			      bend_start, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-			      arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+			      arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, *s, tol);
 
 	/* and bend section */
 	VJOIN1(bend_end, pp2->pp_coord, dist_to_bend, n2);
@@ -3865,7 +3865,7 @@ rt_pipe_tess(
 	VJOIN1(bend_center, bend_start, -pp2->pp_bendradius, v1);
 	tesselate_pipe_bend(bend_start, bend_end, bend_center, curr_od / 2.0, curr_id / 2.0,
 			    arc_segs, sin_del, cos_del, &outer_loop, &inner_loop,
-			    r1, r2, s, tol, ttol);
+			    r1, r2, *s, tol, ttol);
 
 	VMOVE(curr_pt, bend_end);
 	curr_id = pp2->pp_id;
@@ -3879,12 +3879,12 @@ rt_pipe_tess(
 	}
     }
 
-    tesselate_pipe_end(pp2, arc_segs, &outer_loop, &inner_loop, s, tol);
+    tesselate_pipe_end(pp2, arc_segs, &outer_loop, &inner_loop, *s, tol);
 
     bu_free((char *)outer_loop, "rt_pipe_tess: outer_loop");
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
-    nmg_rebound(s, tol);
+    nmg_rebound(*s, tol);
     nmg_edge_fuse(&(*s)->magic, tol);
 
     return 0;

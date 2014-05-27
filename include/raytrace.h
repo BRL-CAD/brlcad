@@ -2136,11 +2136,11 @@ struct rt_functab {
 			 struct rt_db_internal * /*ip*/,
 			 const struct rt_tess_tol * /*ttol*/,
 			 const struct bn_tol * /*tol*/);
-#define RTFUNCTAB_FUNC_TESS_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *))_func)
+#define RTFUNCTAB_FUNC_TESS_CAST(_func) ((int (*)(struct shell **, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *))_func)
     int (*ft_tnurb)(struct shell ** /*s*/,
 		    struct rt_db_internal * /*ip*/,
 		    const struct bn_tol * /*tol*/);
-#define RTFUNCTAB_FUNC_TNURB_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct bn_tol *))_func)
+#define RTFUNCTAB_FUNC_TNURB_CAST(_func) ((int (*)(struct shell **, struct rt_db_internal *, const struct bn_tol *))_func)
 
     void (*ft_brep)(ON_Brep ** /*b*/,
 		    struct rt_db_internal * /*ip*/,
@@ -6190,7 +6190,7 @@ RT_EXPORT extern struct edgeuse *nmg_ebreaker(struct vertex *v,
 					      const struct bn_tol *tol);
 RT_EXPORT extern struct vertex *nmg_e2break(struct edgeuse *eu1,
 					    struct edgeuse *eu2);
-RT_EXPORT extern int nmg_unbreak_edge(struct edgeuse *eu1_first);
+RT_EXPORT extern int nmg_unbreak_edges(struct edgeuse *eu1_first);
 RT_EXPORT extern int nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first);
 RT_EXPORT extern struct edgeuse *nmg_eins(struct edgeuse *eu);
 RT_EXPORT extern void nmg_mv_eu_between_shells(struct shell *dest,
@@ -6203,11 +6203,10 @@ RT_EXPORT extern void nmg_mv_vu_between_shells(struct shell *dest,
 
 /* From nmg_info.c */
 /* Model routines */
-RT_EXPORT extern struct model *nmg_find_model(const uint32_t *magic_p);
 RT_EXPORT extern struct shell *nmg_find_shell(const uint32_t *magic_p);
-RT_EXPORT extern void nmg_model_bb(point_t min_pt,
+RT_EXPORT extern void nmg_shell_bb(point_t min_pt,
 				   point_t max_pt,
-				   const struct model *m);
+				   const struct shell *s);
 
 
 /* Shell routines */
@@ -6292,9 +6291,6 @@ RT_EXPORT extern struct vertexuse *nmg_find_pt_in_face(const struct faceuse *fu,
 						       const point_t pt,
 						       const struct bn_tol *tol);
 RT_EXPORT extern struct vertex *nmg_find_pt_in_shell(const struct shell *s,
-						     const point_t pt,
-						     const struct bn_tol *tol);
-RT_EXPORT extern struct vertex *nmg_find_pt_in_model(const struct model *m,
 						     const point_t pt,
 						     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_is_vertex_in_edgelist(const struct vertex *v,
@@ -6435,7 +6431,7 @@ RT_EXPORT extern void nmg_snurb_fu_get_norm(const struct faceuse *fu,
 RT_EXPORT extern void nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu,
 						  const struct vertexuse *vu,
 						  vect_t norm);
-RT_EXPORT extern void nmg_find_zero_length_edges(const struct model *m);
+RT_EXPORT extern void nmg_find_zero_length_edges(const struct shell *s);
 RT_EXPORT extern struct face *nmg_find_top_face_in_dir(const struct shell *s,
 						       int dir, long *flags);
 RT_EXPORT extern struct face *nmg_find_top_face(const struct shell *s,
@@ -6479,9 +6475,9 @@ RT_EXPORT extern void nmg_purge_unwanted_intersection_points(struct bu_ptbl *ver
 							     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_in_or_ref(struct vertexuse *vu,
 				   struct bu_ptbl *b);
-RT_EXPORT extern void nmg_rebound(struct model *m,
+RT_EXPORT extern void nmg_rebound(struct shell *s,
 				  const struct bn_tol *tol);
-RT_EXPORT extern void nmg_count_shell_kids(const struct model *m,
+RT_EXPORT extern void nmg_count_shell_kids(const struct shell *s,
 					   size_t *total_wires,
 					   size_t *total_faces,
 					   size_t *total_points);
@@ -6513,10 +6509,10 @@ RT_EXPORT extern int nmg_split_loops_into_faces(uint32_t *magic_p,
 						const struct bn_tol *tol);
 RT_EXPORT extern int nmg_decompose_shell(struct shell *s,
 					 const struct bn_tol *tol);
-RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
-					      const struct model *m,
+RT_EXPORT extern void nmg_stash_shell_to_file(const char *filename,
+					      const struct shell *s,
 					      const char *title);
-RT_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p);
+RT_EXPORT extern int nmg_unbreak_region_edge(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
 RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
@@ -6565,9 +6561,9 @@ RT_EXPORT extern int nmg_open_shells_connect(struct shell *dst,
 RT_EXPORT extern int nmg_in_vert(struct vertex *new_v,
 				 const int approximate,
 				 const struct bn_tol *tol);
-RT_EXPORT extern void nmg_mirror_model(struct model *m);
+RT_EXPORT extern void nmg_mirror_shell(struct shell *s);
 RT_EXPORT extern int nmg_kill_cracks(struct shell *s);
-RT_EXPORT extern int nmg_kill_zero_length_edgeuses(struct model *m);
+RT_EXPORT extern int nmg_kill_zero_length_edgeuses(struct shell *s);
 RT_EXPORT extern void nmg_make_faces_within_tol(struct shell *s,
 						const struct bn_tol *tol);
 RT_EXPORT extern void nmg_intersect_loops_self(struct shell *s,
@@ -6671,16 +6667,12 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list		*vhead,
 /* From nmg_tri.c */
 RT_EXPORT extern void nmg_triangulate_shell(struct shell *s,
 					    const struct bn_tol  *tol);
-
-
-RT_EXPORT extern void nmg_triangulate_model(struct model *m,
-					    const struct bn_tol *tol);
 RT_EXPORT extern int nmg_triangulate_fu(struct faceuse *fu,
 					const struct bn_tol *tol);
-RT_EXPORT extern void nmg_dump_model(struct model *m);
+RT_EXPORT extern void nmg_dump_shell(struct shell *s);
 
 /*  nmg_tri_mc.c */
-RT_EXPORT extern void nmg_triangulate_model_mc(struct model *m,
+RT_EXPORT extern void nmg_triangulate_shell_mc(struct shell *s,
 					       const struct bn_tol *tol);
 RT_EXPORT extern int nmg_mc_realize_cube(struct shell *s,
 					 int pv,
@@ -6701,7 +6693,7 @@ RT_EXPORT extern int nmg_dangling_face(const struct faceuse *fu,
 /* static set_face_sub_manifold */
 RT_EXPORT extern char *nmg_shell_manifolds(struct shell *sp,
 					   char *tbl);
-RT_EXPORT extern char *nmg_manifolds(struct model *m);
+RT_EXPORT extern char *nmg_manifolds(struct shell *s);
 
 /* nmg.c */
 RT_EXPORT extern int nmg_ray_segs(struct ray_data	*rd);
@@ -7150,8 +7142,8 @@ RT_EXPORT extern struct shell *nmg_do_bool(struct shell *s1,
 RT_EXPORT extern void nmg_shell_coplanar_face_merge(struct shell *s,
 						    const struct bn_tol *tol,
 						    const int simplify);
-RT_EXPORT extern int nmg_two_region_vertex_fuse(struct nmgregion *r1,
-						struct nmgregion *r2,
+RT_EXPORT extern int nmg_two_shell_vertex_fuse(struct shell *s1,
+						struct shell *s2,
 						const struct bn_tol *tol);
 RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
 						    const struct db_full_path *pathp,
@@ -7300,7 +7292,7 @@ RT_EXPORT extern void nmg_ck_fu(const struct shell *s,
 				const char *str);
 RT_EXPORT extern int nmg_ck_eg_verts(const struct edge_g_lseg *eg,
 				     const struct bn_tol *tol);
-RT_EXPORT extern int nmg_ck_geometry(const struct model *m,
+RT_EXPORT extern int nmg_ck_geometry(const struct shell *s,
 				     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_ck_face_worthless_edges(const struct faceuse *fu);
 RT_EXPORT extern void nmg_ck_lueu(const struct loopuse *lu, const char *s);
@@ -7311,13 +7303,13 @@ RT_EXPORT extern int nmg_eu_2s_orient_bad(const struct edgeuse	*eu,
 					  const struct bn_tol	*tol);
 RT_EXPORT extern int nmg_ck_closed_surf(const struct shell *s,
 					const struct bn_tol *tol);
-RT_EXPORT extern int nmg_ck_closed_region(const struct nmgregion *r,
+RT_EXPORT extern int nmg_ck_closed_shell(const struct shell *s,
 					  const struct bn_tol *tol);
 RT_EXPORT extern void nmg_ck_v_in_2fus(const struct vertex *vp,
 				       const struct faceuse *fu1,
 				       const struct faceuse *fu2,
 				       const struct bn_tol *tol);
-RT_EXPORT extern void nmg_ck_vs_in_region(const struct nmgregion *r,
+RT_EXPORT extern void nmg_ck_vs_in_shell(const struct shell *s,
 					  const struct bn_tol *tol);
 
 
@@ -7460,19 +7452,19 @@ RT_EXPORT extern int nmg_fu_touchingloops(const struct faceuse *fu);
 
 /* From nmg_index.c */
 RT_EXPORT extern int nmg_index_of_struct(const uint32_t *p);
-RT_EXPORT extern void nmg_m_set_high_bit(struct model *m);
-RT_EXPORT extern void nmg_m_reindex(struct model *m, long newindex);
+RT_EXPORT extern void nmg_s_set_high_bit(struct shell *s);
+RT_EXPORT extern void nmg_s_reindex(struct shell *s, long newindex);
 RT_EXPORT extern void nmg_vls_struct_counts(struct bu_vls *str,
 					    const struct nmg_struct_counts *ctr);
 RT_EXPORT extern void nmg_pr_struct_counts(const struct nmg_struct_counts *ctr,
 					   const char *str);
-RT_EXPORT extern uint32_t **nmg_m_struct_count(struct nmg_struct_counts *ctr,
-						    const struct model *m);
-RT_EXPORT extern void nmg_pr_m_struct_counts(const struct model	*m,
+RT_EXPORT extern uint32_t **nmg_s_struct_count(struct nmg_struct_counts *ctr,
+						    const struct shell *s);
+RT_EXPORT extern void nmg_pr_s_struct_counts(const struct shell	*s,
 					     const char		*str);
-RT_EXPORT extern void nmg_merge_models(struct model *m1,
-				       struct model *m2);
-RT_EXPORT extern long nmg_find_max_index(const struct model *m);
+RT_EXPORT extern void nmg_merge_shells(struct shell *s1,
+				       struct shell *s2);
+RT_EXPORT extern long nmg_find_max_index(const struct shell *s);
 
 /* From nmg_rt.c */
 
@@ -7554,7 +7546,7 @@ RT_EXPORT extern void rt_dspline_n(double *r,
 /* From nmg_fuse.c */
 RT_EXPORT extern int nmg_is_common_bigloop(const struct face *f1,
 					   const struct face *f2);
-RT_EXPORT extern void nmg_region_v_unique(struct nmgregion *r1,
+RT_EXPORT extern void nmg_shell_v_unique(struct shell *s1,
 					  const struct bn_tol *tol);
 RT_EXPORT extern int nmg_ptbl_vfuse(struct bu_ptbl *t,
 				    const struct bn_tol *tol);
@@ -7611,7 +7603,7 @@ RT_EXPORT extern int nmg_ck_fg_verts(struct faceuse *fu1,
 RT_EXPORT extern int	nmg_two_face_fuse(struct face	*f1,
 					  struct face *f2,
 					  const struct bn_tol *tol);
-RT_EXPORT extern int nmg_model_face_fuse(struct model *m,
+RT_EXPORT extern int nmg_shell_face_fuse(struct shell *s,
 					 const struct bn_tol *tol);
 RT_EXPORT extern int nmg_break_all_es_on_v(uint32_t *magic_p,
 					   struct vertex *v,
@@ -7619,9 +7611,9 @@ RT_EXPORT extern int nmg_break_all_es_on_v(uint32_t *magic_p,
 RT_EXPORT extern int nmg_break_e_on_v(const uint32_t *magic_p,
 				      const struct bn_tol *tol);
 /* DEPRECATED: use nmg_break_e_on_v */
-RT_EXPORT extern int nmg_model_break_e_on_v(const uint32_t *magic_p,
+RT_EXPORT extern int nmg_shell_break_e_on_v(const uint32_t *magic_p,
 					    const struct bn_tol *tol);
-RT_EXPORT extern int nmg_model_fuse(struct model *m,
+RT_EXPORT extern int nmg_shell_fuse(struct shell *s,
 				    const struct bn_tol *tol);
 
 /* radial routines */
@@ -7688,8 +7680,6 @@ RT_EXPORT extern void nmg_s_radial_harmonize(struct shell		*s,
 					     const struct bn_tol	*tol);
 RT_EXPORT extern void nmg_s_radial_check(struct shell		*s,
 					 const struct bn_tol	*tol);
-RT_EXPORT extern void nmg_r_radial_check(const struct nmgregion	*r,
-					 const struct bn_tol	*tol);
 
 
 RT_EXPORT extern struct edge_g_lseg	*nmg_pick_best_edge_g(struct edgeuse *eu1,
@@ -7722,12 +7712,6 @@ RT_EXPORT extern void nmg_visit_faceuse(struct faceuse			*fu,
 					const struct nmg_visit_handlers	*htab,
 					genptr_t			state);
 RT_EXPORT extern void nmg_visit_shell(struct shell			*s,
-				      const struct nmg_visit_handlers	*htab,
-				      genptr_t			state);
-RT_EXPORT extern void nmg_visit_region(struct nmgregion		*r,
-				       const struct nmg_visit_handlers	*htab,
-				       genptr_t			state);
-RT_EXPORT extern void nmg_visit_model(struct model			*model,
 				      const struct nmg_visit_handlers	*htab,
 				      genptr_t			state);
 RT_EXPORT extern void nmg_visit(const uint32_t		*magicp,

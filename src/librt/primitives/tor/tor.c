@@ -1312,7 +1312,7 @@ rt_tor_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    vertp[1] = &verts[ TOR_PT(w+0, len+1) ];
 	    vertp[2] = &verts[ TOR_PT(w+1, len+1) ];
 	    vertp[3] = &verts[ TOR_PT(w+1, len+0) ];
-	    if ((faces[nfaces++] = nmg_cmface(s, vertp, 4)) == (struct faceuse *)0) {
+	    if ((faces[nfaces++] = nmg_cmface(*s, vertp, 4)) == (struct faceuse *)0) {
 		bu_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 		       w, nw, len, nlen);
 		nfaces--;

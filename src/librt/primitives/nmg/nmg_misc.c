@@ -9089,8 +9089,6 @@ nmg_to_poly(const struct shell *s, struct rt_pg_internal *poly_int, const struct
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
-    struct model *dup_m;
-    struct nmgregion *dup_r;
     struct shell *dup_s;
     int max_count;
     int count_npts;

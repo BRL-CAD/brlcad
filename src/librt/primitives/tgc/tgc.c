@@ -2562,7 +2562,7 @@ rt_tgc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	}
 
 	if (BU_PTBL_END(&verts) > 2) {
-	    fu_base = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	    fu_base = nmg_cmface(*s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_base);
 	} else
 	    fu_base = (struct faceuse *)NULL;
@@ -2579,7 +2579,7 @@ rt_tgc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	}
 
 	if (BU_PTBL_END(&verts) > 2) {
-	    fu_top = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	    fu_top = nmg_cmface(*s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_top);
 	} else
 	    fu_top = (struct faceuse *)NULL;
@@ -2611,7 +2611,7 @@ rt_tgc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			v[2] = &pts[i+1][0].v;
 		    else
 			v[2] = curr_top;
-		    fu = nmg_cmface(s, v, 3);
+		    fu = nmg_cmface(*s, v, 3);
 		    bu_ptbl_ins(&faces, (long *)fu);
 		    curr_bot = &pts[i][k].v;
 		}
@@ -2625,7 +2625,7 @@ rt_tgc_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 			v[2] = &pts[i][0].v;
 		    else
 			v[2] = curr_bot;
-		    fu = nmg_cmface(s, v, 3);
+		    fu = nmg_cmface(*s, v, 3);
 		    bu_ptbl_ins(&faces, (long *)fu);
 		    curr_top = &pts[i+1][k].v;
 		}
@@ -2881,7 +2881,7 @@ rt_tgc_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
 
     verts[0] = verts[1] = NULL;
     vertp[0] = &verts[0];
-    top_fu = nmg_cmface(s, vertp, 1);
+    top_fu = nmg_cmface(*s, vertp, 1);
 
     lu = BU_LIST_FIRST(loopuse, &top_fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
@@ -2929,7 +2929,7 @@ rt_tgc_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
     /* Create topology for bottom cap surface */
 
     vertp[0] = &verts[1];
-    bot_fu = nmg_cmface(s, vertp, 1);
+    bot_fu = nmg_cmface(*s, vertp, 1);
 
     lu = BU_LIST_FIRST(loopuse, &bot_fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
