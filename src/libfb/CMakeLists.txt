@@ -35,12 +35,17 @@ if(BRLCAD_ENABLE_TK)
   set(LINKLIBS ${LINKLIBS} ${TK_LIBRARY})
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_QT)
+  set(FBQTDEFS "-DIF_QT")
+  set(fbqt_srcs if_qt.c)
+endif(BRLCAD_ENABLE_QT)
 
 set(LIBFB_SOURCES
   ${fbX11_srcs}
   ${fbogl_srcs}
   ${fbwgl_srcs}
   ${fbtk_srcs}
+  ${fbqt_srcs}
   asize.c
   fb_generic.c
   fb_log.c
@@ -66,6 +71,7 @@ add_definitions(
   ${FBOGLDEFS}
   ${FBTKDEFS}
   ${XOPEN_DEFINE}
+  ${FBQTDEFS}
   )
 
 BRLCAD_ADDLIB(libfb "${LIBFB_SOURCES}" "libbu;libpkg;${LINKLIBS}")

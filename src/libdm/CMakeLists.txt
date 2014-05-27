@@ -58,7 +58,7 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
-  list(APPEND libdm_DEFINES DM_QT)
+  list(APPEND libdm_DEFINES DM_QT IF_QT)
   set(dmqt_srcs dm-qt.cpp)
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
