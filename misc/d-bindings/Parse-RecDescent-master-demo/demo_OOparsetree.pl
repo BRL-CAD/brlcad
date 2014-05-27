@@ -6,6 +6,7 @@ $::RD_AUTOACTION =
 	q{ bless [$item[-1]], $item[0] };
 
 use Parse::RecDescent;
+use Data::Dumper;
 
 my $parse = Parse::RecDescent->new(<<'EOG');
 
@@ -25,6 +26,7 @@ EOG
 while (<>)
 {
 	my $tree = $parse->expr($_);
+	print Data::Dumper->Dump([$tree]);
 	print $tree->eval(), "\n" if $tree;
 }
 
