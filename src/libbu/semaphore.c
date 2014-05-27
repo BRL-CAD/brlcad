@@ -118,7 +118,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 #	elif defined(_WIN32) && !defined(__CYGWIN__)
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	
+
 	/* This cannot fail except for very low memory situations in XP. */
 	InitializeCriticalSection(&bu_semaphores[i].m);
     }
@@ -231,7 +231,7 @@ bu_semaphore_acquire(unsigned int i)
 
 
 void
-bu_semaphore_release(unsigned int i)	
+bu_semaphore_release(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     i = i; /* quellage */

@@ -591,7 +591,7 @@ db_diff(const struct db_i *dbip1,
 	state |= param_state;
 	state |= attr_state;
 	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
-	    bu_log("Warning - internal comparsion and bu_external comparison disagree when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
+	    bu_log("Warning - internal comparison and bu_external comparison disagree when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
 
 	}
 
