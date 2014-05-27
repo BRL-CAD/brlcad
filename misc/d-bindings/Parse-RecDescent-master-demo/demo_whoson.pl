@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl -sw
+#! /usr/local/bin/perl -ws
 
 # WHO'S ON FIRST?
 
@@ -105,9 +105,12 @@ EOCOSTELLO
 	"What's the name of the fellow on third?",
 );
 
-$costello->{prev} = $line = "Who's on first?";
+$costello->{prev} = "Who's on first?";
+$line = "Who's on first?";
 
-while (1)
+$n = 15;
+$i = 0;
+while ($i < $n)
 {
 	print "<costello>  ", $line, "\n";
 	$line = $abbott->Interpretation($line);
@@ -115,5 +118,6 @@ while (1)
 	print "<abbott>    ", $line, "\n";
 	$line = $costello->Interpretation($line);
 	sleep 1;
+	++$i;
 }
 
