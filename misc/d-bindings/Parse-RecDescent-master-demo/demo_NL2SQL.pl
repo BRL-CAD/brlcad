@@ -70,14 +70,12 @@ EOGRAMMAR
 my $parser = Parse::RecDescent->new($grammar)
 	or die "Bad grammar";
 
-$| = 1;
-while (<DATA>)
-{
-	print "> ";
-	sleep 1;
-	print; <>;
-	my $SQL = $parser->translate($_);
-	print $SQL, "\n";
+while (defined(my $line = <DATA>)) {
+  print "> ";
+  #sleep 1;
+  print "$line";
+  my $SQL = $parser->translate($line);
+  print $SQL, "\n";
 }
 
 __DATA__
