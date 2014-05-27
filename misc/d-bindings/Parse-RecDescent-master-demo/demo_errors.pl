@@ -1,3 +1,5 @@
+#!/usr/bin/env perl -w
+
 use v5.10;
 use warnings;
 

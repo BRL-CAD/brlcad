@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use Parse::RecDescent;
 
 local $/;
