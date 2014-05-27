@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl -ws
+#! /usr/local/bin/perl -sw
 
 use Parse::RecDescent;
 
@@ -8,7 +8,7 @@ my $parse = Parse::RecDescent->new(<<'EOGRAMMAR');
 
 {use Tie::Hash; }
 
-line: <rulevar: local %max; tie %max, Tie::StdHash'; %max = (count=>0) >
+line: <rulevar: local %max; tie %max, 'Tie::StdHash'; %max = (count => 0) >
 
 line: seplist[sep=>',']
     | seplist[sep=>':']
