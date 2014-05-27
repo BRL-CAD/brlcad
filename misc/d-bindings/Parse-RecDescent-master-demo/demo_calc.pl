@@ -69,7 +69,7 @@ my $parse = Parse::RecDescent->new(<<'EndGrammar');
 EndGrammar
 
 print "> ";
-while (<>) {    # FOR DEMO CHANGE TO: while (<DATA>)
+while (<DATA>) {    # FOR DEMO CHANGE TO: while (<DATA>)
   print $parse->main($_), "\n\n> ";
 }
 
