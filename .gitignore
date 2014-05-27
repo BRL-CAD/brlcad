@@ -1,7 +1,5 @@
-/.path_md5hash_tablestore
 /.svnignore
-/*.new
-/# auto-generated files
-/BH.pm
-/BE.pm
-/CGrammar.pm
+/Calc.pm
+/RD_TRACE
+/t0
+/t
