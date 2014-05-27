@@ -34,6 +34,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
     /* Now we have our diff results, time to filter (if applicable) and report them */
     if (state->have_search_filter) {
 	int i = 0;
+	int s_flags = 0;
 	int filtered_diff_state = DIFF_EMPTY;
 	struct bu_ptbl results_filtered;
 
@@ -44,16 +45,18 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	 * results-> */
 	struct bu_ptbl left_dbip_filtered = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl right_dbip_filtered = BU_PTBL_INIT_ZERO;
-	(void)db_search(&left_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
-	(void)db_search(&right_dbip_filtered, DB_SEARCH_RETURN_UNIQ_DP, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+	s_flags |= DB_SEARCH_HIDDEN;
+	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
+	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
+	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
 
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
 	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
 	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
-	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
-		    (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
+
+	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) || (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
 		filtered_diff_state |= dr->attr_state;
