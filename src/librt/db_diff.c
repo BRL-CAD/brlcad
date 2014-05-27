@@ -591,7 +591,6 @@ db_diff_dp(const struct db_i *left,
 	aset.left_avs = result->left_attr_avs;
 	aset.right_avs = result->right_attr_avs;
 	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(&aset));
-	if (result->attr_state > 1) bu_log("attr change: %s, %s\n", left_components.name, right_components.name);
     }
 
     free_diff_components(&left_components);
@@ -631,7 +630,7 @@ db_diff(const struct db_i *dbip1,
 	dp2 = db_lookup(dbip2, dp1->d_namep, 0);
 
 	/* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
-	if (flags == DB_COMPARE_ALL) {
+	if (flags == DB_COMPARE_ALL && dp1 != RT_DIR_NULL && dp1->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp2 != RT_DIR_NULL && dp2->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    if (db_get_external(&ext1, dp1, dbip1) || db_get_external(&ext2, dp2, dbip2)) {
 		bu_log("Warning - Error getting bu_external form when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
 	    } else {
