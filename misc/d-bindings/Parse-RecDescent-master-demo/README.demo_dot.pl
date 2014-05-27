@@ -1,3 +1,34 @@
+From root@bib.adnintern.org  Thu Oct 21 05:31:59 1999
+Received: from gimli.cs.monash.edu.au (gimli.cs.monash.edu.au [130.194.64.60])
+	by indy05.cs.monash.edu.au (8.8.8/8.8.8) with ESMTP id FAA07658
+	for <damian@indy05.cs.monash.edu.au>; Thu, 21 Oct 1999 05:31:59 +1000 (EST)
+Received: from bib.adnintern.org ([194.242.172.1])
+	by gimli.cs.monash.edu.au (8.8.8/8.8.8) with ESMTP id FAA08901
+	for <damian@cs.monash.edu.au>; Thu, 21 Oct 1999 05:31:54 +1000
+Received: (from root@localhost)
+	by bib.adnintern.org (8.9.3/8.9.3) id VAA00889;
+	Wed, 20 Oct 1999 21:29:05 +0200
+Date: Wed, 20 Oct 1999 21:29:05 +0200
+Message-Id: <199910201929.VAA00889@bib.adnintern.org>
+From: "Stéphane Payrard -- stef@adnaccess.com (06 60 95 82 69)" <stef@adnaccess.com>
+To: damian@cs.monash.edu.au
+Subject: parsing dot file
+Reply-to: stef@adnaccess.com
+Status: RO
+
+
+you may be interested at this rough cut at the dot grammar to enrichen
+your collection.  dot is a language that describe graphs. I have
+problem with embedded \n in strings that I have not investigated yet
+
+http:/pub/web/www.research.att.com/sw/tools/graphviz
+
+__
+ stef
+
+
+
+
 #! /usr/bin/perl
 use Parse::RecDescent;
 my $DOTSRC="/var/src/gv1.5";
