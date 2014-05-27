@@ -84,31 +84,6 @@ diff_result_print(struct diff_result *dr, struct diff_state *state, struct bu_vl
     bu_vls_free(&tmp_str);
 }
 
-
-
-int
-diff_filter(struct diff_result *dr, struct diff_state *state) {
-    int accept_result = 0;
-    if (state->use_params == 1) {
-	if (state->return_unchanged== 1 && dr->param_state == DIFF_UNCHANGED) accept_result += 1;
-	if (state->return_removed== 1 && dr->param_state == DIFF_REMOVED) accept_result += 1;
-	if (state->return_changed== 1 && dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_REMOVED && dr->param_state != DIFF_ADDED) accept_result += 1;
-	if (state->return_added== 1 && dr->param_state == DIFF_ADDED) accept_result += 1;
-    }
-    if (state->use_attrs == 1) {
-	if (state->return_unchanged== 1 && dr->attr_state == DIFF_UNCHANGED) accept_result += 1;
-	if (state->return_removed== 1 && dr->attr_state == DIFF_REMOVED) accept_result += 1;
-	if (state->return_changed== 1 && dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_REMOVED && dr->attr_state != DIFF_ADDED) accept_result += 1;
-	if (state->return_added== 1 && dr->attr_state == DIFF_ADDED) accept_result += 1;
-    }
-    if (accept_result) {
-	return 0;
-    } else {
-	return 1;
-    }
-}
-
-
 void
 diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct diff_state *state)
 {
