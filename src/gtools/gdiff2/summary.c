@@ -25,51 +25,65 @@
 /* Output generators for diff log */
 /*******************************************************************/
 
+struct log_data {
+    struct bu_vls *log;
+    struct diff_result *dr;
+    struct diff_state *state;
+};
+
 static int
 diff_log_add(const char *attr_name, const char *attr_val, void *data)
 {
-    bu_vls_printf((struct bu_vls *)data, "+ %s: %s\n", attr_name, attr_val);
+    struct log_data *ldata = (struct log_data *)data;
+    bu_vls_printf(ldata->log, "A \"%s\" %s: %s\n", ldata->dr->obj_name, attr_name, attr_val);
     return 0;
 }
 
 static int
-diff_log_del(const char *attr_name, const char *UNUSED(attr_val), void *data)
+diff_log_del(const char *attr_name, const char *attr_val, void *data)
 {
-    bu_vls_printf((struct bu_vls *)data, "- %s\n", attr_name);
+    struct log_data *ldata = (struct log_data *)data;
+    bu_vls_printf(ldata->log, "D \"%s\" %s: %s\n", ldata->dr->obj_name, attr_name, attr_val);
     return 0;
 }
 
 static int
 diff_log_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
 {
-    bu_vls_printf((struct bu_vls *)data, "- %s: %s\n+ %s: %s\n", attr_name, attr_val_left, attr_name, attr_val_right);
+    struct log_data *ldata = (struct log_data *)data;
+    bu_vls_printf(ldata->log, "- \"%s\" %s: %s\n+ \"%s\" %s: %s\n", ldata->dr->obj_name, attr_name, attr_val_left, ldata->dr->obj_name, attr_name, attr_val_right);
     return 0;
 }
 
 static int
 diff_log_unchgd(const char *attr_name, const char *attr_val, void *data)
 {
-    bu_vls_printf((struct bu_vls *)data, "  %s: %s\n", attr_name, attr_val);
+    struct log_data *ldata = (struct log_data *)data;
+    bu_vls_printf(ldata->log, "  \"%s\" %s: %s\n", ldata->dr->obj_name, attr_name, attr_val);
     return 0;
 }
 
 void
 diff_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls *diff_log) {
-    struct bu_vls tmp_param_str = BU_VLS_INIT_ZERO;
-    struct bu_vls tmp_attr_str = BU_VLS_INIT_ZERO;
+    struct log_data log_data;
+    log_data.dr = dr;
+    log_data.state = state;
+    log_data.log = diff_log;
     if (state->use_params == 1) {
-	int (*add_func)(const char *, const char *, void *) = NULL;
-	int (*del_func)(const char *, const char *, void *) = NULL;
-	int (*chgd_func)(const char *, const char *, const char *, void *) = NULL;
-	int (*unchgd_func)(const char *, const char *, void *) = NULL;
-	if (state->return_added && dr->param_state & DIFF_ADDED) add_func = diff_log_add;
-	if (state->return_removed && dr->param_state & DIFF_REMOVED) del_func = diff_log_del;
-	if (state->return_changed && dr->param_state & DIFF_CHANGED) chgd_func = diff_log_chgd;
-	if (state->return_unchanged && dr->param_state & DIFF_UNCHANGED) unchgd_func = diff_log_unchgd;
-	(void)db_avs_diff(dr->left_param_avs, dr->right_param_avs, state->diff_tol, add_func, del_func, chgd_func, unchgd_func, (void *)&tmp_param_str);
-	if (strlen(bu_vls_addr(&tmp_param_str))) {
-	    bu_vls_printf(diff_log, "Object %s parameters:\n", dr->obj_name);
-	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&tmp_param_str));
+	const char *left_type = bu_avs_get(dr->left_param_avs, "DB5_MINORTYPE");
+	const char *right_type = bu_avs_get(dr->right_param_avs, "DB5_MINORTYPE");
+	if ((!left_type || !right_type) || BU_STR_EQUAL(left_type, right_type)) {
+	    int (*add_func)(const char *, const char *, void *) = NULL;
+	    int (*del_func)(const char *, const char *, void *) = NULL;
+	    int (*chgd_func)(const char *, const char *, const char *, void *) = NULL;
+	    int (*unchgd_func)(const char *, const char *, void *) = NULL;
+	    if (state->return_added && dr->param_state & DIFF_ADDED) add_func = diff_log_add;
+	    if (state->return_removed && dr->param_state & DIFF_REMOVED) del_func = diff_log_del;
+	    if (state->return_changed && dr->param_state & DIFF_CHANGED) chgd_func = diff_log_chgd;
+	    if (state->return_unchanged && dr->param_state & DIFF_UNCHANGED) unchgd_func = diff_log_unchgd;
+	    (void)db_avs_diff(dr->left_param_avs, dr->right_param_avs, state->diff_tol, add_func, del_func, chgd_func, unchgd_func, (void *)&log_data);
+	} else {
+	    bu_vls_printf(diff_log, "M \"%s\" %s->%s\n", dr->obj_name, left_type, right_type);
 	}
 
     }
@@ -82,15 +96,8 @@ diff_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls
 	if (state->return_removed && dr->attr_state & DIFF_REMOVED) del_func = diff_log_del;
 	if (state->return_changed && dr->attr_state & DIFF_CHANGED) chgd_func = diff_log_chgd;
 	if (state->return_unchanged && dr->attr_state & DIFF_UNCHANGED) unchgd_func = diff_log_unchgd;
-	(void)db_avs_diff(dr->left_attr_avs, dr->right_attr_avs, state->diff_tol, add_func, del_func, chgd_func, unchgd_func, (void *)&tmp_attr_str);
-	if (strlen(bu_vls_addr(&tmp_attr_str))) {
-	    bu_vls_printf(diff_log, "Object %s attributes:\n", dr->obj_name);
-	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&tmp_attr_str));
-	}
+	(void)db_avs_diff(dr->left_attr_avs, dr->right_attr_avs, state->diff_tol, add_func, del_func, chgd_func, unchgd_func, (void *)&log_data);
     }
-
-    bu_vls_free(&tmp_param_str);
-    bu_vls_free(&tmp_attr_str);
 }
 
 void
@@ -131,9 +138,10 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 		    }
 		    break;
 		case 2:
+		case 3:
 		    bu_vls_printf(diff_log, "A %s\n", dr->obj_name);
 		    break;
-		case 3:
+		case 4:
 		    diff_attrs_print(dr, state, diff_log);
 		    break;
 		default:
@@ -152,16 +160,19 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 		    }
 		    break;
 		case 2:
+		case 3:
 		    bu_vls_printf(diff_log, "D %s\n", dr->obj_name);
 		    break;
-		case 3:
+		case 4:
 		    diff_attrs_print(dr, state, diff_log);
 		    break;
 		default:
 		    break;
 	    }
 	}
-	if (dr->param_state == DIFF_UNCHANGED && dr->attr_state == DIFF_UNCHANGED && state->return_unchanged == 1) {
+	if (((dr->param_state == DIFF_UNCHANGED && state->use_params) || !state->use_params) &&
+		((dr->attr_state == DIFF_UNCHANGED && state->use_attrs) || !state->use_attrs) &&
+	       	state->return_unchanged == 1) {
 		switch (state->verbosity) {
 		    case 1:
 			if (strlen(bu_vls_addr(&unchanged_tmp)) + strlen(dr->obj_name) + 2 > 80) {
@@ -173,9 +184,10 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 			}
 			break;
 		    case 2:
+		    case 3:
 			bu_vls_printf(diff_log, "  %s\n", dr->obj_name);
 			break;
-		    case 3:
+		    case 4:
 			diff_attrs_print(dr, state, diff_log);
 			break;
 		    default:
@@ -183,7 +195,7 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 		}
 	}
 
-	if ((dr->param_state != DIFF_UNCHANGED || dr->attr_state != DIFF_UNCHANGED) && dr->param_state != DIFF_ADDED && dr->param_state != DIFF_REMOVED && state->return_changed == 1) {
+	if (((dr->param_state != DIFF_UNCHANGED && state->use_params) || (dr->attr_state != DIFF_UNCHANGED && state->use_attrs)) && dr->param_state != DIFF_ADDED && dr->param_state != DIFF_REMOVED && state->return_changed == 1) {
 	    switch (state->verbosity) {
 		case 1:
 
@@ -199,6 +211,7 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 		    bu_vls_printf(diff_log, "M %s\n", dr->obj_name);
 		    break;
 		case 3:
+		case 4:
 		    diff_attrs_print(dr, state, diff_log);
 		    break;
 		default:
