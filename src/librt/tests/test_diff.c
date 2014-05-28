@@ -34,16 +34,32 @@ print_diff_summary(struct bu_ptbl *results)
     int i = 0;
     for (i = 0; i < (int)BU_PTBL_LEN(results); i++) {
 	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(results, i);
-	if (dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY) {
+	if (dr->param_state != DIFF_UNCHANGED) {
+	    int j = 0;
 	    bu_log("Object %s parameters have changed:\n", dr->obj_name);
-	    bu_avs_print(dr->left_param_avs, "  Left object parameters");
-	    bu_avs_print(dr->right_param_avs, "  Right object parameters");
+	    for (j = 0; j < (int)BU_PTBL_LEN(dr->param_diffs); j++) {
+		struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(dr->param_diffs, j);
+		if (avp->state == DIFF_ADDED)
+		    bu_log("A %s: %s\n", avp->name, avp->right_value);
+		if (avp->state == DIFF_REMOVED)
+		    bu_log("D %s: %s\n", avp->name, avp->left_value);
+		if (avp->state == DIFF_CHANGED)
+		    bu_log("M %s: %s -> %s\n", avp->name, avp->left_value, avp->right_value);
+	    }
 	    bu_log("\n");
 	}
 	if (dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_EMPTY) {
+	    int j = 0;
 	    bu_log("Object %s attributes have changed:\n", dr->obj_name);
-	    bu_avs_print(dr->left_attr_avs, "  Left object attributes");
-	    bu_avs_print(dr->right_attr_avs, "  Right object attributes");
+	    for (j = 0; j < (int)BU_PTBL_LEN(dr->attr_diffs); j++) {
+		struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(dr->attr_diffs, j);
+		if (avp->state == DIFF_ADDED)
+		    bu_log("A %s: %s\n", avp->name, avp->right_value);
+		if (avp->state == DIFF_REMOVED)
+		    bu_log("D %s: %s\n", avp->name, avp->left_value);
+		if (avp->state == DIFF_CHANGED)
+		    bu_log("M %s: %s -> %s\n", avp->name, avp->left_value, avp->right_value);
+	    }
 	    bu_log("\n");
 	}
 	if ((dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY) ||

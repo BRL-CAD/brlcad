@@ -52,6 +52,30 @@
 #define DIFF3_CONFLICT_ADDED_BOTH	      16384       /* (ancestor == NULL) && (left != right) && (!clean_merge)      */
 #define DIFF3_CONFLICT_CHANGED_BOTH	      32768       /* ((ancestor != left) && (ancestor != right)) && (left != right) && (!clean_merge)  */
 
+/*
+ * Results for a diff between two objects are held in a set
+ * of avs-like structures.
+ */
+struct diff_avp {
+    char *name;
+    int state;
+    char *left_value;
+    char *ancestor_value;
+    char *right_value;
+};
+RT_EXPORT extern void diff_init_avp(struct diff_avp *attr_result);
+RT_EXPORT extern void diff_free_avp(struct diff_avp *attr_result);
+struct diff_result {
+    char *obj_name;
+    int param_state;  /* results of diff for all parameters */
+    int attr_state;   /* results of diff for all attributes */
+    struct bn_tol *diff_tol;
+    struct bu_ptbl *param_diffs;  /* ptbl of diff_avps of parameters */
+    struct bu_ptbl *attr_diffs;   /* ptbl of diff_avps of attributes */
+};
+RT_EXPORT extern void diff_init_result(struct diff_result *result, const struct bn_tol *curr_diff_tol, const char *object_name);
+RT_EXPORT extern void diff_free_result(struct diff_result *result);
+
 /**
  * The flags parameter is a bitfield is used to specify whether
  * to process internal object parameter differences
@@ -63,8 +87,6 @@ typedef enum {
     DB_COMPARE_PARAM=0x01,
     DB_COMPARE_ATTRS=0x02
 } db_compare_criteria_t;
-
-
 
 /**
  * Compare two attribute sets.
@@ -120,22 +142,6 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 			       	void *data),
 	     void *client_data);
 
-/*
- * Results for a diff between two objects are held in a set
- * of avs structures.
- */
-struct diff_result {
-    char *obj_name;
-    int param_state;  /* results of diff for parameters */
-    int attr_state;   /* results of diff for attributes */
-    struct bn_tol *diff_tol;
-    struct bu_attribute_value_set *left_param_avs;
-    struct bu_attribute_value_set *right_param_avs;
-    struct bu_attribute_value_set *left_attr_avs;
-    struct bu_attribute_value_set *right_attr_avs;
-};
-RT_EXPORT extern void diff_init_result(struct diff_result **result, const struct bn_tol *curr_diff_tol, const char *object_name);
-RT_EXPORT extern void diff_free_result(struct diff_result *result);
 
 /**
  * Compare two database objects.

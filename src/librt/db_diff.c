@@ -239,56 +239,76 @@ type_to_str(const struct rt_db_internal *obj, int arb_type) {
     return obj->idb_meth->ft_label;
 }
 
+void
+diff_init_avp(struct diff_avp *attr_result)
+{
+   if (!attr_result) return;
+   attr_result->name = NULL;
+   attr_result->left_value = NULL;
+   attr_result->ancestor_value = NULL;
+   attr_result->right_value = NULL;
+}
 
 void
-diff_init_result(struct diff_result **result, const struct bn_tol *curr_diff_tol, const char *obj_name)
+diff_free_avp(struct diff_avp *attr_result)
+{
+   if (!attr_result) return;
+   if (attr_result->name) bu_free(attr_result->name, "free diff_avp name");
+   if (attr_result->left_value) bu_free(attr_result->left_value, "free diff_avp left_value");
+   if (attr_result->ancestor_value) bu_free(attr_result->ancestor_value, "free diff_avp ancestor_value");
+   if (attr_result->right_value) bu_free(attr_result->right_value, "free diff_avp right_value");
+}
+
+void
+diff_init_result(struct diff_result *result, const struct bn_tol *curr_diff_tol, const char *obj_name)
 {
     if (!result) return;
-    BU_GET(*result, struct diff_result);
     if (obj_name) {
-	(*result)->obj_name = bu_strdup(obj_name);
+	result->obj_name = bu_strdup(obj_name);
     } else {
-	(*result)->obj_name = NULL;
+	result->obj_name = NULL;
     }
-    (*result)->param_state = DIFF_EMPTY;
-    (*result)->attr_state = DIFF_EMPTY;
-    BU_GET((*result)->diff_tol, struct bn_tol);
+    result->param_state = DIFF_EMPTY;
+    result->attr_state = DIFF_EMPTY;
+    BU_GET(result->diff_tol, struct bn_tol);
     if (curr_diff_tol) {
-	(*result)->diff_tol->magic = BN_TOL_MAGIC;
-	(*result)->diff_tol->dist = curr_diff_tol->dist;
-	(*result)->diff_tol->dist_sq = curr_diff_tol->dist_sq;
-	(*result)->diff_tol->perp = curr_diff_tol->perp;
-	(*result)->diff_tol->para = curr_diff_tol->para;
+	(result)->diff_tol->magic = BN_TOL_MAGIC;
+	(result)->diff_tol->dist = curr_diff_tol->dist;
+	(result)->diff_tol->dist_sq = curr_diff_tol->dist_sq;
+	(result)->diff_tol->perp = curr_diff_tol->perp;
+	(result)->diff_tol->para = curr_diff_tol->para;
     } else {
-	BN_TOL_INIT((*result)->diff_tol);
+	BN_TOL_INIT(result->diff_tol);
     }
-    BU_GET((*result)->left_param_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->right_param_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->left_attr_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->right_attr_avs, struct bu_attribute_value_set);
-    BU_AVS_INIT((*result)->left_param_avs);
-    BU_AVS_INIT((*result)->right_param_avs);
-    BU_AVS_INIT((*result)->left_attr_avs);
-    BU_AVS_INIT((*result)->right_attr_avs);
+    BU_GET(result->param_diffs, struct bu_ptbl);
+    BU_GET(result->attr_diffs, struct bu_ptbl);
+    BU_PTBL_INIT(result->param_diffs);
+    BU_PTBL_INIT(result->attr_diffs);
 }
 
 
 void
 diff_free_result(struct diff_result *result)
 {
+    unsigned int i = 0;
     if (result->obj_name) {
 	bu_free(result->obj_name, "free name copy in diff result");
     }
-    bu_avs_free(result->left_param_avs);
-    bu_avs_free(result->right_param_avs);
-    bu_avs_free(result->left_attr_avs);
-    bu_avs_free(result->right_attr_avs);
     BU_PUT(result->diff_tol, struct bn_tol);
-    BU_PUT(result->left_param_avs, struct bu_attribute_value_set);
-    BU_PUT(result->right_param_avs, struct bu_attribute_value_set);
-    BU_PUT(result->left_attr_avs, struct bu_attribute_value_set);
-    BU_PUT(result->right_attr_avs, struct bu_attribute_value_set);
-    BU_PUT(result, struct diff_result);
+    for (i = 0; i < BU_PTBL_LEN(result->param_diffs); i++) {
+	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->param_diffs, i);
+	diff_free_avp(avp);
+	BU_PUT(avp, struct diff_avp);
+    }
+    bu_ptbl_free(result->param_diffs);
+    BU_PUT(result->param_diffs, struct bu_ptbl);
+    for (i = 0; i < BU_PTBL_LEN(result->attr_diffs); i++) {
+	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->attr_diffs, i);
+	diff_free_avp(avp);
+	BU_PUT(avp, struct diff_avp);
+    }
+    bu_ptbl_free(result->attr_diffs);
+    BU_PUT(result->attr_diffs, struct bu_ptbl);
 }
 
 HIDDEN int
@@ -353,23 +373,19 @@ db_avs_diff(const struct bu_attribute_value_set *left_set,
     for (BU_AVS_FOR(avp, left_set)) {
 	const char *val2 = bu_avs_get(right_set, avp->name);
 	if (!val2) {
-	    if (del_func) {del_func(avp->name, avp->value, client_data);}
-	    state |= DIFF_REMOVED;
+	    if (del_func) {state |= del_func(avp->name, avp->value, client_data);}
 	} else {
 	    if (avpp_val_compare(avp->value, val2, diff_tol)) {
-		if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
-		state |= DIFF_UNCHANGED;
+		if (unchgd_func) {state |= unchgd_func(avp->name, avp->value, client_data);}
 	    } else {
-		if (chgd_func) {chgd_func(avp->name, avp->value, val2, client_data);}
-		state |= DIFF_CHANGED;
+		if (chgd_func) {state |= chgd_func(avp->name, avp->value, val2, client_data);}
 	    }
 	}
     }
     for (BU_AVS_FOR(avp, right_set)) {
 	const char *val1 = bu_avs_get(left_set, avp->name);
 	if (!val1) {
-	    if (add_func) {add_func(avp->name, avp->value, client_data);}
-	    state |= DIFF_ADDED;
+	    if (add_func) {state |= add_func(avp->name, avp->value, client_data);}
 	}
     }
     return state;
@@ -498,35 +514,59 @@ struct avs_set {
 HIDDEN int
 diff_dp_attr_add(const char *attr_name, const char *attr_val, void *data)
 {
-    struct avs_set *aset = (struct avs_set *)data;
-    bu_avs_add(aset->right_avs, attr_name, attr_val);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = DIFF_ADDED;
+    avp->name = bu_strdup(attr_name);
+    avp->right_value = bu_strdup(attr_val);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
 diff_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
 {
-    struct avs_set *aset = (struct avs_set *)data;
-    bu_avs_add(aset->left_avs, attr_name, attr_val);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = DIFF_REMOVED;
+    avp->name = bu_strdup(attr_name);
+    avp->left_value = bu_strdup(attr_val);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
 diff_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
 {
-    struct avs_set *aset = (struct avs_set *)data;
-    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
-    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = DIFF_CHANGED;
+    avp->name = bu_strdup(attr_name);
+    avp->left_value = bu_strdup(attr_val_left);
+    avp->right_value = bu_strdup(attr_val_right);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
 diff_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
 {
-    struct avs_set *aset = (struct avs_set *)data;
-    bu_avs_add(aset->left_avs, attr_name, attr_val);
-    bu_avs_add(aset->right_avs, attr_name, attr_val);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = DIFF_UNCHANGED;
+    avp->name = bu_strdup(attr_name);
+    avp->left_value = bu_strdup(attr_val);
+    avp->right_value = bu_strdup(attr_val);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 int
@@ -538,7 +578,6 @@ db_diff_dp(const struct db_i *left,
        	db_compare_criteria_t flags,
 	struct diff_result *ext_result)
 {
-    struct avs_set aset;
     int state = DIFF_EMPTY;
 
     struct diff_elements left_components;
@@ -554,7 +593,8 @@ db_diff_dp(const struct db_i *left,
     /* If we aren't populating a result struct for the
      * caller, use a local copy to keep the code simple */
     if (!ext_result) {
-	diff_init_result(&result, diff_tol, "tmp");
+	BU_GET(result, struct diff_result);
+	diff_init_result(result, diff_tol, "tmp");
     } else {
 	result = ext_result;
     }
@@ -565,32 +605,24 @@ db_diff_dp(const struct db_i *left,
     if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
 
 	if (diff_tol) {
-	    aset.left_avs = result->left_param_avs;
-	    aset.right_avs = result->right_param_avs;
-	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(&aset));
+	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(result->param_diffs));
 	}
-	/*compare the idb_ptr memory.*/
+	/*compare the idb_ptr memory, if the types are the same.*/
 	if (left_components.bin_params && right_components.bin_params && left_components.idb_ptr && right_components.idb_ptr) {
 	    if (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type) {
 		int memsize = rt_intern_struct_size(left_components.intern->idb_minor_type);
 		if (memcmp((void *)left_components.idb_ptr, (void *)right_components.idb_ptr, memsize)) {
-		    result->param_state |= DIFF_CHANGED;
-		    bu_avs_add(result->left_param_avs, "params_binary", "BINARY_ORIG");
-		    bu_avs_add(result->right_param_avs, "params_binary", "BINARY_NEW");
-
+		    /* If we didn't pick up differences in the avs comparison, we need to use this result to flag a parameter difference */
+		    if (result->param_state == DIFF_UNCHANGED || result->param_state == DIFF_EMPTY) result->param_state |= DIFF_CHANGED;
 		} else {
-		    result->param_state |= DIFF_UNCHANGED;
-		    bu_avs_add(result->left_param_avs, "params_binary", "BINARY_ORIG");
-		    bu_avs_add(result->right_param_avs, "params_binary", "BINARY_ORIG");
+		    if (result->param_state == DIFF_EMPTY) result->param_state |= DIFF_UNCHANGED;
 		}
 	    }
 	}
     }
 
     if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
-	aset.left_avs = result->left_attr_avs;
-	aset.right_avs = result->right_attr_avs;
-	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(&aset));
+	result->attr_state |= db_avs_diff(left_components.attrs, right_components.attrs, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(result->attr_diffs));
     }
 
     free_diff_components(&left_components);
@@ -614,8 +646,6 @@ db_diff(const struct db_i *dbip1,
 	db_compare_criteria_t flags,
 	struct bu_ptbl *results)
 {
-    int param_state = DIFF_EMPTY;
-    int attr_state = DIFF_EMPTY;
     int state = DIFF_EMPTY;
     struct directory *dp1, *dp2;
 
@@ -623,8 +653,9 @@ db_diff(const struct db_i *dbip1,
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
 	struct bu_external ext1, ext2;
 	int extern_state = DIFF_UNCHANGED;
-	struct diff_result *result = NULL;
-	diff_init_result(&result, diff_tol, dp1->d_namep);
+	struct diff_result *result;
+	BU_GET(result, struct diff_result);
+	diff_init_result(result, diff_tol, dp1->d_namep);
 
 	/* determine the status of this object in the other database */
 	dp2 = db_lookup(dbip2, dp1->d_namep, 0);
@@ -642,13 +673,11 @@ db_diff(const struct db_i *dbip1,
 
 	/* Do internal diffs */
 	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
-	    param_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
+	    state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
 	}
 	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
-	    attr_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
+	    state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
 	}
-	state |= param_state;
-	state |= attr_state;
 	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
 	    bu_log("Warning - internal comparison and bu_external comparison disagree when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
 
@@ -671,18 +700,17 @@ db_diff(const struct db_i *dbip1,
 
 	/* By this point, any differences will be additions */
 	if (dp1 == RT_DIR_NULL) {
-	    struct diff_result *result = NULL;
-	    diff_init_result(&result, diff_tol, dp2->d_namep);
+	    struct diff_result *result;
+	    BU_GET(result, struct diff_result);
+	    diff_init_result(result, diff_tol, dp2->d_namep);
 
 	    /* Do internal diffs */
 	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
-		param_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
+		state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_PARAM, result);
 	    }
 	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
-		attr_state = db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
+		state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
 	    }
-	    state |= param_state;
-	    state |= attr_state;
 
 	    if (results) {
 		bu_ptbl_ins(results, (long *)result);
@@ -690,7 +718,6 @@ db_diff(const struct db_i *dbip1,
 		diff_free_result(result);
 		BU_PUT(result, struct diff_result);
 	    }
-
 	}
 
     } FOR_ALL_DIRECTORY_END;
