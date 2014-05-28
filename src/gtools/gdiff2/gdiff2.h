@@ -65,6 +65,10 @@ extern void diff_summarize(struct bu_vls *diff_log,
 	const struct bu_ptbl *results,
 	struct diff_state *state);
 
+extern void diff3_summarize(struct bu_vls *diff_log,
+	const struct bu_ptbl *results,
+	struct diff_state *state);
+
 #endif
 
 /*

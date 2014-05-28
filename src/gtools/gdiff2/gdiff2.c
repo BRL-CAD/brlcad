@@ -83,6 +83,71 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
     return diff_state;
 }
 
+static int
+do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_dbip, struct diff_state *state) {
+    int diff3_state = DIFF_EMPTY;
+    struct bu_ptbl results;
+    BU_PTBL_INIT(&results);
+
+    diff3_state = db_diff3(left_dbip, ancestor_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &results);
+
+    /* Now we have our diff results, time to filter (if applicable) and report them */
+    if (state->have_search_filter) {
+	int i = 0;
+	int s_flags = 0;
+	int filtered_diff_state = DIFF_EMPTY;
+	struct bu_ptbl results_filtered;
+
+	/* In order to respect search filters involving depth, we have to build "allowed"
+	 * sets of objects from both databases based on straight-up search filtering of
+	 * the original databases.  We then check the filtered diff results against the
+	 * search-filtered original databases to make sure they are valid for the final
+	 * results-> */
+	struct bu_ptbl left_dbip_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl ancestor_dbip_filtered = BU_PTBL_INIT_ZERO;
+	struct bu_ptbl right_dbip_filtered = BU_PTBL_INIT_ZERO;
+	s_flags |= DB_SEARCH_HIDDEN;
+	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
+	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
+	(void)db_search(&ancestor_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
+	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+
+	BU_PTBL_INIT(&results_filtered);
+	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
+	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
+	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
+	    struct directory *dp_ancestor = db_lookup(ancestor_dbip, dr->obj_name, 0);
+	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
+
+	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
+		    (dp_ancestor != RT_DIR_NULL && (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)dp_ancestor) != -1)) ||
+		    (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
+		bu_ptbl_ins(&results_filtered, (long *)dr);
+		filtered_diff_state |= dr->param_state;
+		filtered_diff_state |= dr->attr_state;
+	    } else {
+		diff_free_result(dr);
+	    }
+	}
+
+	bu_ptbl_reset(&results);
+	bu_ptbl_cat(&results, &results_filtered);
+	diff3_state = filtered_diff_state;
+	bu_ptbl_free(&results_filtered);
+    }
+
+    if (state->verbosity) {
+	if (diff3_state == DIFF_UNCHANGED || diff3_state == DIFF_EMPTY) {
+	    bu_log("No differences found.\n");
+	} else {
+	    diff3_summarize(state->diff_log, &results, state);
+	    bu_log("%s", bu_vls_addr(state->diff_log));
+	}
+    }
+
+    return diff3_state;
+}
+
 static void
 gdiff_usage(const char *str) {
     bu_log("Usage: %s [-acmrv] file1.g file2.g\n", str);
@@ -203,7 +268,7 @@ main(int argc, char **argv)
 
 	diff_return = do_diff(left_dbip, right_dbip, state);
     }
-#if 0
+
     /* diff3 case */
     if (argc == 3) {
 	if (!bu_file_exists(argv[2], NULL)) {
@@ -253,7 +318,6 @@ main(int argc, char **argv)
 
 	diff_return = do_diff3(left_dbip, ancestor_dbip, right_dbip, state);
     }
-#endif
 
     diff_state_free(state);
     BU_PUT(state, struct diff_state);
