@@ -49,7 +49,8 @@
 #define DIFF3_CHANGED_CLEAN_MERGE 	       2048       /* ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) && (clean_merge)  */
 #define DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL   4096       /* (ancestor != left) && (right== NULL)                         */
 #define DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL   8192       /* (ancestor != right) && (left == NULL)                        */
-#define DIFF3_CONFLICT_BOTH_CHANGED	      16384       /* ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) && (!clean_merge)  */
+#define DIFF3_CONFLICT_ADDED_BOTH	      16384       /* (ancestor == NULL) && (left != right) && (!clean_merge)      */
+#define DIFF3_CONFLICT_CHANGED_BOTH	      32768       /* ((ancestor != left) && (ancestor != right)) && (left != right) && (!clean_merge)  */
 
 /**
  * The flags parameter is a bitfield is used to specify whether
@@ -91,15 +92,12 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	     /* DIFF3_ADDED_BOTH_IDENTICALLY, DIFF3_ADDED_LEFT_ONLY, DIFF3_ADDED_RIGHT_ONLY */
 	     int (*add_func)(const char *attr_name,
 		                const char *attr_val_left,
-			       	const char *attr_val_ancestor,
 			       	const char *attr_val_right,
 			       	int state,
 			       	void *data),
 	     /* DIFF3_REMOVED_BOTH_IDENTICALLY, DIFF3_REMOVED_LEFT_ONLY, DIFF3_REMOVED_RIGHT_ONLY */
 	     int (*del_func)(const char *attr_name,
-		                const char *attr_val_left,
 			       	const char *attr_val_ancestor,
-			       	const char *attr_val_right,
 			       	int state,
 			       	void *data),
 	     /* DIFF3_CHANGED_BOTH_IDENTICALLY, DIFF3_CHANGED_LEFT_ONLY, DIFF3_CHANGED_RIGHT_ONLY, DIFF3_CHANGED_CLEAN_MERGE */
@@ -118,10 +116,7 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 			       	void *data),
 	     /* DIFF3_UNCHANGED */
 	     int (*unchgd_func)(const char *attr_name,
-		                const char *attr_val_left,
 			       	const char *attr_val_ancestor,
-			       	const char *attr_val_right,
-			       	int state,
 			       	void *data),
 	     void *client_data);
 

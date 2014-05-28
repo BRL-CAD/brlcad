@@ -698,6 +698,148 @@ db_diff(const struct db_i *dbip1,
     return state;
 }
 
+int
+db_avs_diff3(const struct bu_attribute_value_set *left_set,
+	    const struct bu_attribute_value_set *ancestor_set,
+	    const struct bu_attribute_value_set *right_set,
+            const struct bn_tol *diff_tol,
+	    int (*add_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, int state, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val, int state, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data),
+	    int (*conflict_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data),
+	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
+	    void *client_data)
+{
+    int state = DIFF_EMPTY;
+    struct bu_attribute_value_pair *avp;
+    for (BU_AVS_FOR(avp, ancestor_set)) {
+	const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
+	const char *val_left = bu_avs_get(left_set, avp->name);
+	const char *val_right = bu_avs_get(right_set, avp->name);
+
+        /* The possibilities are:
+         *
+         * (!val_left && !val_right) && val_ancestor
+         * (val_left && !val_right) && (val_ancestor == val_left)
+         * (val_left && !val_right) && (val_ancestor != val_left)
+         * (!val_left && val_right) && (val_ancestor == val_right)
+         * (!val_left && val_right) && (val_ancestor != val_right)
+         * (val_left == val_right) && (val_ancestor == val_left)
+         * (val_left == val_right) && (val_ancestor != val_left)
+         * (val_left != val_right) && (val_ancestor == val_left)
+         * (val_left != val_right) && (val_ancestor == val_right)
+         * (val_left != val_right) && (val_ancestor != val_left && val_ancestor != val_right)
+         */
+
+        /* Removed from both - no conflict, nothing to merge */
+        if ((!val_left && !val_right) && val_ancestor) {
+	    state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
+	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
+        }
+
+        /* Removed from right_set only, left_set not changed - no conflict,
+         * right_set removal wins and left_set is not merged */
+        if ((val_left && !val_right) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+	    state |= DIFF3_REMOVED_RIGHT_ONLY;
+	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
+        }
+
+        /* Removed from right_set only, left_set changed - conflict */
+        if ((val_left && !val_right) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+	    state |= DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL;
+	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
+	}
+
+        /* Removed from left_set only, right_set not changed - no conflict,
+         * left_set change wins and right_set not merged */
+        if ((!val_left && val_right) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+	    state |= DIFF3_REMOVED_LEFT_ONLY;
+	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
+        }
+
+        /* Removed from left_set only, right_set changed - conflict,
+         * merge defaults to preserving information */
+        if ((!val_left && val_right) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+	    state |= DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL;
+	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
+	}
+
+        /* All values equal, unchanged and merged */
+        if (avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+	    state |= DIFF3_UNCHANGED;
+	    if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
+        }
+        /* Identical change to both - changed and merged */
+        if (avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+	    state |= DIFF3_CHANGED_BOTH_IDENTICALLY;
+	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
+        }
+        /* val_right changed, val_left not changed - val_right change wins and is merged */
+        if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+	    state |= DIFF3_CHANGED_RIGHT_ONLY;
+	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
+        }
+        /* val_left changed, val_right not changed - val_left change wins and is merged */
+        if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+	    state |= DIFF3_CHANGED_LEFT_ONLY;
+	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
+        }
+        /* val_left and val_right changed and incompatible - conflict,
+         * merge adds conflict a/v pairs */
+        if (!avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+	    state |= DIFF3_CONFLICT_CHANGED_BOTH;
+	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
+	}
+    }
+
+    /* Now do left_set - anything in ancestor has already been handled */
+    for (BU_AVS_FOR(avp, left_set)) {
+        const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
+        if (!val_ancestor) {
+	    int have_same_val = 0;
+	    const char *val_left = bu_avs_get(left_set, avp->name);
+            const char *val_right = bu_avs_get(right_set, avp->name);
+            /* The possibilities are:
+             *
+             * (val_left && !val_right)
+             * (val_left == val_right)
+             * (val_left != val_right)
+             */
+
+	    /* Added in left_set only - no conflict */
+	    if (val_left && !val_right) {
+		state |= DIFF3_ADDED_LEFT_ONLY;
+		if (add_func) {add_func(avp->name, val_left, NULL, DIFF3_ADDED_LEFT_ONLY, client_data);}
+	    } else {
+		have_same_val = avpp_val_compare(val_left,val_right, diff_tol);
+
+		/* Added in left_set and right_set with the same value - no conflict */
+		if (have_same_val) {
+		    state |= DIFF3_ADDED_BOTH_IDENTICALLY;
+		    if (add_func) {add_func(avp->name, val_left, val_right, DIFF3_ADDED_BOTH_IDENTICALLY, client_data);}
+		} else {
+		    /* Added in left_set and right_set with different values - conflict */
+		    state |= DIFF3_CONFLICT_ADDED_BOTH;
+		    if (conflict_func) {conflict_func(avp->name, val_left, NULL, val_right, DIFF3_CONFLICT_ADDED_BOTH, client_data);}
+		}
+	    }
+        }
+    }
+
+    /* Last but not least, right_set - anything in ancestor and/or left_set has already been handled */
+    for (BU_AVS_FOR(avp, right_set)) {
+        const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
+        const char *val_left = bu_avs_get(left_set, avp->name);
+        if (!val_ancestor && !val_left) {
+	    state |= DIFF3_ADDED_RIGHT_ONLY;
+	    if (add_func) {add_func(avp->name, NULL, avp->value, DIFF3_ADDED_RIGHT_ONLY, client_data);}
+	}
+    }
+
+    return state;
+}
+
+
 
 void
 diff3_init_result(struct diff3_result **result, const struct bn_tol *curr_diff_tol, const char *obj_name)
@@ -757,6 +899,88 @@ diff3_free_result(struct diff3_result *result)
     BU_PUT(result, struct diff3_result);
 }
 
+
+struct avs3_set {
+    int state;
+    struct bu_attribute_value_set *left_avs;
+    struct bu_attribute_value_set *ancestor_avs;
+    struct bu_attribute_value_set *right_avs;
+};
+
+HIDDEN int
+diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
+{
+    struct avs3_set *aset = (struct avs3_set *)data;
+    if (aset->state & DIFF3_ADDED_BOTH_IDENTICALLY || aset->state & DIFF3_ADDED_LEFT_ONLY)
+	bu_avs_add(aset->left_avs, attr_name, attr_val_left);
+    if (aset->state & DIFF3_ADDED_BOTH_IDENTICALLY || aset->state & DIFF3_ADDED_RIGHT_ONLY)
+	bu_avs_add(aset->right_avs, attr_name, attr_val_right);
+    return 0;
+}
+
+HIDDEN int
+diff3_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
+{
+    struct avs3_set *aset = (struct avs3_set *)data;
+    bu_avs_add(aset->ancestor_avs, attr_name, attr_val);
+    if (aset->state & DIFF3_REMOVED_LEFT_ONLY)
+	bu_avs_add(aset->right_avs, attr_name, attr_val);
+    if (aset->state & DIFF3_REMOVED_RIGHT_ONLY)
+	bu_avs_add(aset->left_avs, attr_name, attr_val);
+    return 0;
+}
+
+HIDDEN int
+diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
+{
+    struct avs3_set *aset = (struct avs3_set *)data;
+    bu_avs_add(aset->ancestor_avs, attr_name, attr_val_ancestor);
+    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
+    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
+    return 0;
+}
+
+HIDDEN int
+diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
+{
+    struct avs3_set *aset = (struct avs3_set *)data;
+    bu_avs_add(aset->ancestor_avs, attr_name, attr_val_ancestor);
+    if (aset->state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL || aset->state & DIFF3_CONFLICT_CHANGED_BOTH)
+    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
+    if (aset->state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL || aset->state & DIFF3_CONFLICT_CHANGED_BOTH)
+    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
+    return 0;
+}
+
+HIDDEN int
+diff3_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
+{
+    struct avs3_set *aset = (struct avs3_set *)data;
+    bu_avs_add(aset->ancestor_avs, attr_name, attr_val);
+    bu_avs_add(aset->left_avs, attr_name, attr_val);
+    bu_avs_add(aset->right_avs, attr_name, attr_val);
+    return 0;
+}
+
+int
+db_diff3_dp(const struct db_i *left,
+	const struct db_i *ancestor,
+	const struct db_i *right,
+	const struct directory *left_dp,
+	const struct directory *ancestor_dp,
+       	const struct directory *right_dp,
+       	const struct bn_tol *UNUSED(diff3_tol),
+       	db_compare_criteria_t UNUSED(flags),
+	struct diff3_result *UNUSED(result))
+{
+    int state = 0;
+
+    if (left == DBI_NULL && ancestor == DBI_NULL && right == DBI_NULL) return -1;
+    if (left_dp == RT_DIR_NULL && ancestor_dp == RT_DIR_NULL && right_dp == RT_DIR_NULL) return -1;
+
+
+    return state;
+}
 
 #if 0
 int
