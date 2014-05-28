@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+BEGIN {die "turned off in this dir"; }
 #===============================================================================
 #
 #         FILE:  csourceparser.pl
@@ -530,8 +531,14 @@ $opt_HELP and pod2usage( -verbose => 2 );
 if ($opt_ERRORS) {
     $::RD_HINT   = 1;                          # Print hints on errors
     $::RD_ERRORS = 1;                          # Print errors
+
+=pod
+
     open( Parse::RecDescent::ERROR, ">errfile" )
       or die "Can't open errfile: $!";
+
+=cut
+
 }
 # Die if no input files present
 @ARGV or pod2usage( -message => "Error: More arguments required.", -verbose => 0 );
@@ -787,6 +794,8 @@ Getopt::Long
 =item *
 
 Pod::Usage
+
+=back
 
 =head1 BUGS AND LIMITATIONS
 
