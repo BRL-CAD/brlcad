@@ -107,6 +107,7 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
     }
 
     for (i = 0; i < (int)BU_PTBL_LEN(results); i++) {
+	int changed = 2;
 	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(results, i);
 	if (dr->param_state == DIFF_ADDED && state->return_added == 1) {
 	    switch (state->verbosity) {
@@ -152,32 +153,45 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 		    break;
 	    }
 	}
-	if (((dr->param_state == DIFF_UNCHANGED && state->use_params) || !state->use_params) &&
-		((dr->attr_state == DIFF_UNCHANGED && state->use_attrs) || !state->use_attrs) &&
-	       	state->return_unchanged == 1) {
-		switch (state->verbosity) {
-		    case 1:
-			if (strlen(bu_vls_addr(&unchanged_tmp)) + strlen(dr->obj_name) + 2 > 80) {
-			    bu_vls_printf(&unchanged_list, "%s\n", bu_vls_addr(&unchanged_tmp));
-			    bu_vls_sprintf(&unchanged_tmp, "%s", dr->obj_name);
-			} else {
-			    if (strlen(bu_vls_addr(&unchanged_tmp)) > 0) bu_vls_printf(&unchanged_tmp, ", ");
-			    bu_vls_printf(&unchanged_tmp, "%s", dr->obj_name);
-			}
-			break;
-		    case 2:
-		    case 3:
-			bu_vls_printf(diff_log, "  %s\n", dr->obj_name);
-			break;
-		    case 4:
-			diff_attrs_print(dr, state, diff_log);
-			break;
-		    default:
-			break;
-		}
+
+	if ((state->use_params || state->use_attrs) && !(state->use_params && state->use_attrs)) changed--;
+	if (state->use_params && ((dr->param_state == DIFF_UNCHANGED) || (dr->param_state == DIFF_UNCHANGED))) changed--;
+	if (state->use_attrs && ((dr->attr_state == DIFF_UNCHANGED) || (dr->attr_state == DIFF_UNCHANGED))) changed--;
+	if (!changed && state->return_unchanged == 1) {
+	    switch (state->verbosity) {
+		case 1:
+		    if (strlen(bu_vls_addr(&unchanged_tmp)) + strlen(dr->obj_name) + 2 > 80) {
+			bu_vls_printf(&unchanged_list, "%s\n", bu_vls_addr(&unchanged_tmp));
+			bu_vls_sprintf(&unchanged_tmp, "%s", dr->obj_name);
+		    } else {
+			if (strlen(bu_vls_addr(&unchanged_tmp)) > 0) bu_vls_printf(&unchanged_tmp, ", ");
+			bu_vls_printf(&unchanged_tmp, "%s", dr->obj_name);
+		    }
+		    break;
+		case 2:
+		case 3:
+		    bu_vls_printf(diff_log, "  %s\n", dr->obj_name);
+		    break;
+		case 4:
+		    diff_attrs_print(dr, state, diff_log);
+		    break;
+		default:
+		    break;
+	    }
 	}
 
-	if (((dr->param_state != DIFF_UNCHANGED && state->use_params) || (dr->attr_state != DIFF_UNCHANGED && state->use_attrs)) && dr->param_state != DIFF_ADDED && dr->param_state != DIFF_REMOVED && state->return_changed == 1) {
+	changed = 0;
+	if (state->use_params) {
+	    if (dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY &&
+		    dr->param_state != DIFF_ADDED && dr->param_state != DIFF_REMOVED)
+		changed++;
+	}
+	if (state->use_attrs) {
+	    if (dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_EMPTY &&
+		    dr->attr_state != DIFF_ADDED && dr->attr_state != DIFF_REMOVED)
+		changed++;
+	}
+	if (changed && state->return_changed == 1) {
 	    switch (state->verbosity) {
 		case 1:
 
@@ -207,10 +221,14 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 	bu_vls_printf(&removed_list, "%s\n", bu_vls_addr(&removed_tmp));
 	bu_vls_printf(&changed_list, "%s\n", bu_vls_addr(&changed_tmp));
 	bu_vls_printf(&unchanged_list, "%s\n", bu_vls_addr(&unchanged_tmp));
-	if (state->return_added == 1) bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&added_list));
-	if (state->return_removed == 1) bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&removed_list));
-	if (state->return_changed == 1) bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&changed_list));
-	if (state->return_unchanged == 1) bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&unchanged_list));
+	if (state->return_added == 1 && strlen(bu_vls_addr(&added_tmp)) > 0)
+	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&added_list));
+	if (state->return_removed == 1 && strlen(bu_vls_addr(&removed_tmp)) > 0)
+	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&removed_list));
+	if (state->return_changed == 1 && strlen(bu_vls_addr(&changed_tmp)) > 0)
+	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&changed_list));
+	if (state->return_unchanged == 1 && strlen(bu_vls_addr(&unchanged_tmp)) > 0)
+	    bu_vls_printf(diff_log, "%s\n", bu_vls_addr(&unchanged_list));
     }
 }
 
