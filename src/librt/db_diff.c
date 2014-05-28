@@ -580,10 +580,8 @@ db_diff_dp(const struct db_i *left,
 
     struct diff_result *result = NULL;
 
-    if (!left_dp && !right_dp) {
-	return -1;
-    }
-
+    if (!left_dp && !right_dp) return -1;
+    if (!diff_tol) return -1;
 
     /* If we aren't populating a result struct for the
      * caller, use a local copy to keep the code simple */
@@ -599,9 +597,7 @@ db_diff_dp(const struct db_i *left,
 
     if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
 
-	if (diff_tol) {
-	    result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(result->param_diffs));
-	}
+	result->param_state |= db_avs_diff(left_components.params, right_components.params, diff_tol, diff_dp_attr_add, diff_dp_attr_del, diff_dp_attr_chgd, diff_dp_attr_unchgd, (void *)(result->param_diffs));
 	/*compare the idb_ptr memory, if the types are the same.*/
 	if (left_components.bin_params && right_components.bin_params && left_components.idb_ptr && right_components.idb_ptr) {
 	    if (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type) {
@@ -755,62 +751,52 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 
         /* Removed from both - no conflict, nothing to merge */
         if ((!val_left && !val_right) && val_ancestor) {
-	    state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
-	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
+	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
         }
 
         /* Removed from right_set only, left_set not changed - no conflict,
          * right_set removal wins and left_set is not merged */
         if ((val_left && !val_right) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    state |= DIFF3_REMOVED_RIGHT_ONLY;
-	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
+	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
         }
 
         /* Removed from right_set only, left_set changed - conflict */
         if ((val_left && !val_right) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    state |= DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL;
-	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
+	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
 	}
 
         /* Removed from left_set only, right_set not changed - no conflict,
          * left_set change wins and right_set not merged */
         if ((!val_left && val_right) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    state |= DIFF3_REMOVED_LEFT_ONLY;
-	    if (del_func) {del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
+	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
         }
 
         /* Removed from left_set only, right_set changed - conflict,
          * merge defaults to preserving information */
         if ((!val_left && val_right) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    state |= DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL;
-	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
+	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
 	}
 
         /* All values equal, unchanged and merged */
         if (avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    state |= DIFF3_UNCHANGED;
-	    if (unchgd_func) {unchgd_func(avp->name, avp->value, client_data);}
+	    if (unchgd_func) {state |= unchgd_func(avp->name, avp->value, client_data);}
         }
         /* Identical change to both - changed and merged */
         if (avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    state |= DIFF3_CHANGED_BOTH_IDENTICALLY;
-	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
+	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
         }
         /* val_right changed, val_left not changed - val_right change wins and is merged */
         if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    state |= DIFF3_CHANGED_RIGHT_ONLY;
-	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
+	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
         }
         /* val_left changed, val_right not changed - val_left change wins and is merged */
         if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    state |= DIFF3_CHANGED_LEFT_ONLY;
-	    if (chgd_func) {chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
+	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
         }
         /* val_left and val_right changed and incompatible - conflict,
          * merge adds conflict a/v pairs */
         if (!avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    state |= DIFF3_CONFLICT_CHANGED_BOTH;
-	    if (conflict_func) {conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
+	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
 	}
     }
 
@@ -818,31 +804,19 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
     for (BU_AVS_FOR(avp, left_set)) {
         const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
         if (!val_ancestor) {
-	    int have_same_val = 0;
 	    const char *val_left = bu_avs_get(left_set, avp->name);
             const char *val_right = bu_avs_get(right_set, avp->name);
-            /* The possibilities are:
-             *
-             * (val_left && !val_right)
-             * (val_left == val_right)
-             * (val_left != val_right)
-             */
-
-	    /* Added in left_set only - no conflict */
+	    /* (val_left && !val_right) */
 	    if (val_left && !val_right) {
-		state |= DIFF3_ADDED_LEFT_ONLY;
-		if (add_func) {add_func(avp->name, val_left, NULL, DIFF3_ADDED_LEFT_ONLY, client_data);}
+		if (add_func) {state |= add_func(avp->name, val_left, NULL, DIFF3_ADDED_LEFT_ONLY, client_data);}
 	    } else {
-		have_same_val = avpp_val_compare(val_left,val_right, diff_tol);
-
-		/* Added in left_set and right_set with the same value - no conflict */
+		int have_same_val = avpp_val_compare(val_left,val_right, diff_tol);
+		/* (val_left == val_right) */
 		if (have_same_val) {
-		    state |= DIFF3_ADDED_BOTH_IDENTICALLY;
-		    if (add_func) {add_func(avp->name, val_left, val_right, DIFF3_ADDED_BOTH_IDENTICALLY, client_data);}
+		    if (add_func) {state |= add_func(avp->name, val_left, val_right, DIFF3_ADDED_BOTH_IDENTICALLY, client_data);}
 		} else {
-		    /* Added in left_set and right_set with different values - conflict */
-		    state |= DIFF3_CONFLICT_ADDED_BOTH;
-		    if (conflict_func) {conflict_func(avp->name, val_left, NULL, val_right, DIFF3_CONFLICT_ADDED_BOTH, client_data);}
+		    /* (val_left != val_right) */
+		    if (conflict_func) {state |= conflict_func(avp->name, val_left, NULL, val_right, DIFF3_CONFLICT_ADDED_BOTH, client_data);}
 		}
 	    }
         }
@@ -850,11 +824,8 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 
     /* Last but not least, right_set - anything in ancestor and/or left_set has already been handled */
     for (BU_AVS_FOR(avp, right_set)) {
-        const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
-        const char *val_left = bu_avs_get(left_set, avp->name);
-        if (!val_ancestor && !val_left) {
-	    state |= DIFF3_ADDED_RIGHT_ONLY;
-	    if (add_func) {add_func(avp->name, NULL, avp->value, DIFF3_ADDED_RIGHT_ONLY, client_data);}
+        if (!bu_avs_get(ancestor_set, avp->name) && !bu_avs_get(left_set, avp->name)) {
+	    if (add_func) {state |= add_func(avp->name, NULL, avp->value, DIFF3_ADDED_RIGHT_ONLY, client_data);}
 	}
     }
 
@@ -951,534 +922,212 @@ db_diff3_dp(const struct db_i *left,
 	const struct directory *left_dp,
 	const struct directory *ancestor_dp,
        	const struct directory *right_dp,
-       	const struct bn_tol *UNUSED(diff3_tol),
-       	db_compare_criteria_t UNUSED(flags),
-	struct diff_result *UNUSED(result))
+       	const struct bn_tol *diff3_tol,
+       	db_compare_criteria_t flags,
+	struct diff_result *ext_result)
 {
-    int state = 0;
+    int state = DIFF3_EMPTY;
+
+    struct diff_elements left_components;
+    struct diff_elements ancestor_components;
+    struct diff_elements right_components;
+
+    struct diff_result *result = NULL;
 
     if (left == DBI_NULL && ancestor == DBI_NULL && right == DBI_NULL) return -1;
     if (left_dp == RT_DIR_NULL && ancestor_dp == RT_DIR_NULL && right_dp == RT_DIR_NULL) return -1;
+    if (!diff3_tol) return -1;
 
+    /* If we aren't populating a result struct for the
+     * caller, use a local copy to keep the code simple */
+    if (!ext_result) {
+	BU_GET(result, struct diff_result);
+	diff_init_result(result, diff3_tol, "tmp");
+    } else {
+	result = ext_result;
+    }
+
+    get_diff_components(&left_components, left, left_dp);
+    get_diff_components(&ancestor_components, ancestor, ancestor_dp);
+    get_diff_components(&right_components, right, right_dp);
+
+    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+
+	result->param_state |= db_avs_diff3(left_components.params, ancestor_components.params, right_components.params,
+		diff3_tol, diff3_dp_attr_add, diff3_dp_attr_del, diff3_dp_attr_chgd, diff3_dp_attr_conflict,
+		diff3_dp_attr_unchgd, (void *)(result->param_diffs));
+	/*compare the idb_ptr memory, if the types are the same.*/
+	if (left_components.bin_params && ancestor_components.bin_params && right_components.bin_params)
+	   if (left_components.idb_ptr && ancestor_components.idb_ptr && right_components.idb_ptr) {
+	    if ((left_components.intern->idb_minor_type == ancestor_components.intern->idb_minor_type) &&
+		    (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type)) {
+		int memsize = rt_intern_struct_size(left_components.intern->idb_minor_type);
+		if (memcmp((void *)left_components.idb_ptr, (void *)right_components.idb_ptr, memsize) &&
+			memcmp((void *)ancestor_components.idb_ptr, (void *)right_components.idb_ptr, memsize)) {
+		    /* If we didn't pick up differences in the avs comparison, we need to use this result to flag a parameter difference */
+		    if (result->param_state == DIFF_UNCHANGED || result->param_state == DIFF_EMPTY) result->param_state |= DIFF_CHANGED;
+		} else {
+		    if (result->param_state == DIFF_EMPTY) result->param_state |= DIFF_UNCHANGED;
+		}
+	    }
+	}
+    }
+
+    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+	result->param_state |= db_avs_diff3(left_components.attrs, ancestor_components.attrs, right_components.attrs,
+		diff3_tol, diff3_dp_attr_add, diff3_dp_attr_del, diff3_dp_attr_chgd, diff3_dp_attr_conflict,
+		diff3_dp_attr_unchgd, (void *)(result->attr_diffs));
+    }
+
+    free_diff_components(&left_components);
+    free_diff_components(&ancestor_components);
+    free_diff_components(&right_components);
+
+    state |= result->param_state;
+    state |= result->attr_state;
+
+    if (!ext_result) {
+	diff_free_result(result);
+	BU_PUT(result, struct diff_result);
+    }
 
     return state;
 }
 
-#if 0
 int
 db_diff3(const struct db_i *dbip_left,
 	const struct db_i *dbip_ancestor,
 	const struct db_i *dbip_right,
-	const struct bn_tol *diff_tol,
+	const struct bn_tol *diff3_tol,
 	db_compare_criteria_t flags,
-	int (*client_func)(const struct db_i *left_dbip,
-	                   const struct db_i *ancestor_dbip,
-			   const struct db_i *right_dbip,
-			   const struct directory *left,
-			   const struct directory *ancestor,
-			   const struct directory *right,
-			   int param_state,
-			   int attr_state,
-			   const struct bn_tol *diff_tol,
-			   db_compare_criteria_t flags,
-			   void *data),
-	void *client_data)
+	struct bu_ptbl *results)
 {
-    int has_diff = 0;
-    int error = 0;
+    int state = DIFF3_EMPTY;
     struct directory *dp_ancestor, *dp_left, *dp_right;
 
     /* Step 1: look at all objects in the ancestor database */
-    FOR_ALL_DIRECTORY_START(dp_ancestor, ancestor) {
-	struct bu_external ext_ancestor, ext_left, ext_right;
-#if 0
-	/* skip the _GLOBAL object for now - need to deal with this, however */
-	if (dp_ancestor->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	    continue;
-	}
-#endif
-	dp_left = db_lookup(left, dp_ancestor->d_namep, 0);
-	dp_right = db_lookup(right, dp_ancestor->d_namep, 0);
-	(void)db_get_external(&ext_ancestor, dp_ancestor, ancestor);
-	if (dp_left != RT_DIR_NULL) (void)db_get_external(&ext_left, dp_left, left);
-	if (dp_right != RT_DIR_NULL) (void)db_get_external(&ext_right, dp_right, right);
+    FOR_ALL_DIRECTORY_START(dp_ancestor, dbip_ancestor) {
+	struct bu_external ext_left, ext_ancestor, ext_right;
+	struct diff_result *result;
+	int ancestor_state = DIFF3_EMPTY;
+	int extern_state = DIFF_UNCHANGED;
+	BU_GET(result, struct diff_result);
+	diff_init_result(result, diff3_tol, dp_ancestor->d_namep);
 
-	/* (!dp_left && !dp_right) && dp_ancestor */
-	if ((dp_left == RT_DIR_NULL) && (dp_right == RT_DIR_NULL)) {
-	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
+	dp_left = db_lookup(dbip_left, dp_ancestor->d_namep, 0);
+	dp_right = db_lookup(dbip_right, dp_ancestor->d_namep, 0);
 
-	/* (dp_left && !dp_right) && (dp_ancestor == dp_left)  */
-	if ((dp_left != RT_DIR_NULL) && (dp_right == RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
-
-	/* (dp_left && !dp_right) && (dp_ancestor != dp_left)  */
-	if ((dp_left != RT_DIR_NULL) && (dp_right == RT_DIR_NULL) && db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (chgd_func && chgd_func(left, ancestor, DBI_NULL, dp_left, dp_ancestor, RT_DIR_NULL, client_data)) error--;
-	    has_diff++;
+	/* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
+	if (flags == DB_COMPARE_ALL &&
+	       	dp_left != RT_DIR_NULL && dp_left->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+	       	dp_ancestor != RT_DIR_NULL && dp_ancestor->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+	       	dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    if (db_get_external(&ext_left, dp_left, dbip_left) || db_get_external(&ext_ancestor, dp_ancestor, dbip_ancestor) || db_get_external(&ext_right, dp_right, dbip_right)) {
+		bu_log("Warning - Error getting bu_external form when comparing %s and %s\n", dp_left->d_namep, dp_ancestor->d_namep);
+	    } else {
+		if (db_diff_external(&ext_left, &ext_right) || db_diff_external(&ext_left, &ext_ancestor)) {extern_state = DIFF_CHANGED;}
+	    }
+	    bu_free_external(&ext_left);
+	    bu_free_external(&ext_ancestor);
+	    bu_free_external(&ext_right);
 	}
 
-	/* (!dp_left && dp_right) && (dp_ancestor == dp_right) */
-	if ((dp_left == RT_DIR_NULL) && (dp_right != RT_DIR_NULL) && !db_diff_external(&ext_ancestor, &ext_right)) {
-	    if (del_func && del_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
+	/* Do internal diffs */
+	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+	    ancestor_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_PARAM, result);
+	}
+	if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+	    ancestor_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
+	}
+	if (flags == DB_COMPARE_ALL && (ancestor_state == DIFF_UNCHANGED || ancestor_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
+	    bu_log("Warning - internal comparison and bu_external comparison disagree\n");
 	}
 
-	/* (!dp_left && dp_right) && (dp_ancestor != dp_right) */
-	if ((dp_left == RT_DIR_NULL) && (dp_right != RT_DIR_NULL) && db_diff_external(&ext_ancestor, &ext_right)) {
-	    if (chgd_func && chgd_func(DBI_NULL, ancestor, right, RT_DIR_NULL, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
+	if (results) {
+	    bu_ptbl_ins(results, (long *)result);
+	} else {
+	    diff_free_result(result);
+	    BU_PUT(result, struct diff_result);
 	}
+	state |= ancestor_state;
 
-	/* (dp_left == dp_right) && (dp_ancestor == dp_left)   */
-	if (!db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (unchgd_func && unchgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	}
-
-	/* (dp_left == dp_right) && (dp_ancestor != dp_left)   */
-	if (!db_diff_external(&ext_left, &ext_right) && db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
-
-	/* (dp_left != dp_right) && (dp_ancestor == dp_left)   */
-	if (db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_left)) {
-	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
-
-	/* (dp_left != dp_right) && (dp_ancestor == dp_right)  */
-	if (db_diff_external(&ext_left, &ext_right) && !db_diff_external(&ext_ancestor, &ext_right)) {
-	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
-
-	/* (dp_left != dp_right) && (dp_ancestor != dp_left && dp_ancestor != dp_right) */
-	if (db_diff_external(&ext_left, &ext_right) && db_diff_external(&ext_ancestor, &ext_left) && db_diff_external(&ext_ancestor, &ext_right)) {
-	    if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
     } FOR_ALL_DIRECTORY_END;
 
-    FOR_ALL_DIRECTORY_START(dp_left, left) {
-	dp_ancestor = db_lookup(ancestor, dp_left->d_namep, 0);
+    FOR_ALL_DIRECTORY_START(dp_left, dbip_left) {
+	dp_ancestor = db_lookup(dbip_ancestor, dp_left->d_namep, 0);
 	if (dp_ancestor == RT_DIR_NULL) {
 	    struct bu_external ext_left, ext_right;
-	    dp_right = db_lookup(right, dp_left->d_namep, 0);
-	    (void)db_get_external(&ext_left, dp_left, left);
-	    if (dp_right != RT_DIR_NULL) (void)db_get_external(&ext_right, dp_right, right);
-	    /* dp_left && !dp_right || dp_left == dp_right */
-	    if (dp_right == RT_DIR_NULL || !db_diff_external(&ext_left, &ext_right)) {
-		if (add_func && add_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-		has_diff++;
-	    }
-	    /* dp_left != dp_right */
-	    if (dp_right != RT_DIR_NULL && db_diff_external(&ext_left, &ext_right)) {
-		if (chgd_func && chgd_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-		has_diff++;
-	    }
-	}
-    } FOR_ALL_DIRECTORY_END;
+	    int left_state = DIFF3_EMPTY;
+	    int extern_state = DIFF_UNCHANGED;
+	    struct diff_result *result;
+	    BU_GET(result, struct diff_result);
+	    diff_init_result(result, diff3_tol, dp_left->d_namep);
 
-    FOR_ALL_DIRECTORY_START(dp_right, right) {
-	dp_ancestor = db_lookup(ancestor, dp_right->d_namep, 0);
-	dp_left = db_lookup(left, dp_right->d_namep, 0);
-	if (dp_ancestor == RT_DIR_NULL && dp_left == RT_DIR_NULL) {
-	    if (add_func && add_func(left, ancestor, right, dp_left, dp_ancestor, dp_right, client_data)) error--;
-	    has_diff++;
-	}
-    } FOR_ALL_DIRECTORY_END;
+	    dp_right = db_lookup(dbip_right, dp_left->d_namep, 0);
 
-    return has_diff;
-}
-
-
-
-
-/*******************************************************************/
-/* diff3 logic for attribute/value sets                            */
-/*******************************************************************/
-HIDDEN int
-bu_avs_diff3(struct bu_attribute_value_set *unchanged,
-	struct bu_attribute_value_set *removed_avs1_only,
-	struct bu_attribute_value_set *removed_avs2_only,
-	struct bu_attribute_value_set *removed_both,
-	struct bu_attribute_value_set *added_avs1_only,
-	struct bu_attribute_value_set *added_avs2_only,
-	struct bu_attribute_value_set *added_both,
-	struct bu_attribute_value_set *added_conflict_avs1,
-	struct bu_attribute_value_set *added_conflict_avs2,
-	struct bu_attribute_value_set *changed_avs1_only,
-	struct bu_attribute_value_set *changed_avs2_only,
-	struct bu_attribute_value_set *changed_both,
-	struct bu_attribute_value_set *changed_conflict_ancestor,
-	struct bu_attribute_value_set *changed_conflict_avs1,
-	struct bu_attribute_value_set *changed_conflict_avs2,
-	struct bu_attribute_value_set *merged,
-	const struct bu_attribute_value_set *ancestor,
-	const struct bu_attribute_value_set *avs1,
-	const struct bu_attribute_value_set *avs2,
-	const struct bn_tol *diff_tol)
-{
-    int have_diff = 0;
-    struct bu_attribute_value_pair *avp;
-    if (!BU_AVS_IS_INITIALIZED(unchanged)) BU_AVS_INIT(unchanged);
-    if (!BU_AVS_IS_INITIALIZED(removed_avs1_only)) BU_AVS_INIT(removed_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_avs2_only)) BU_AVS_INIT(removed_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(removed_both)) BU_AVS_INIT(removed_both);
-    if (!BU_AVS_IS_INITIALIZED(added_avs1_only)) BU_AVS_INIT(added_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(added_avs2_only)) BU_AVS_INIT(added_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(added_both)) BU_AVS_INIT(added_both);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs1)) BU_AVS_INIT(added_conflict_avs1);
-    if (!BU_AVS_IS_INITIALIZED(added_conflict_avs2)) BU_AVS_INIT(added_conflict_avs2);
-    if (!BU_AVS_IS_INITIALIZED(changed_avs1_only)) BU_AVS_INIT(changed_avs1_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_avs2_only)) BU_AVS_INIT(changed_avs2_only);
-    if (!BU_AVS_IS_INITIALIZED(changed_both)) BU_AVS_INIT(changed_both);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_ancestor)) BU_AVS_INIT(changed_conflict_ancestor);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs1)) BU_AVS_INIT(changed_conflict_avs1);
-    if (!BU_AVS_IS_INITIALIZED(changed_conflict_avs2)) BU_AVS_INIT(changed_conflict_avs2);
-    if (!BU_AVS_IS_INITIALIZED(merged)) BU_AVS_INIT(merged);
-
-    for (BU_AVS_FOR(avp, ancestor)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	const char *val1 = bu_avs_get(avs1, avp->name);
-	const char *val2 = bu_avs_get(avs2, avp->name);
-	/* The possibilities are:
-	 *
-	 * (!val1 && !val2) && val_ancestor
-	 * (val1 && !val2) && (val_ancestor == val1)
-	 * (val1 && !val2) && (val_ancestor != val1)
-	 * (!val1 && val2) && (val_ancestor == val2)
-	 * (!val1 && val2) && (val_ancestor != val2)
-	 * (val1 == val2) && (val_ancestor == val1)
-	 * (val1 == val2) && (val_ancestor != val1)
-	 * (val1 != val2) && (val_ancestor == val1)
-	 * (val1 != val2) && (val_ancestor == val2)
-	 * (val1 != val2) && (val_ancestor != val1 && val_ancestor != val2)
-	 */
-
-	/* Removed from both - no conflict, nothing to merge */
-	if ((!val1 && !val2) && val_ancestor) {
-	    (void)bu_avs_add(removed_both, avp->name, val_ancestor);
-	    have_diff++;
-	}
-
-	/* Removed from avs2 only, avs1 not changed - no conflict,
-	 * avs2 removal wins and avs1 is not merged */
-	if ((val1 && !val2) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    (void)bu_avs_add(removed_avs2_only, avp->name, val_ancestor);
-	    have_diff++;
-	}
-
-	/* Removed from avs2 only, avs1 changed - conflict
-	 * merge adds conflict a/v pairs */
-	if ((val1 && !val2) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    struct bu_vls avval = BU_VLS_INIT_ZERO;
-	    (void)bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    (void)bu_avs_add(changed_conflict_avs1, avp->name, val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
-	    bu_vls_sprintf(&avval, "%s", "REMOVED");
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
-	    bu_vls_free(&avname);
-	    bu_vls_free(&avval);
-	    have_diff++;
-	}
-
-	/* Removed from avs1 only, avs2 not changed - no conflict,
-	 * avs1 change wins and avs2 not merged */
-	if ((!val1 && val2) && avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    (void)bu_avs_add(removed_avs1_only, avp->name, val_ancestor);
-	    have_diff++;
-	}
-
-	/* Removed from avs1 only, avs2 changed - conflict,
-	 * merge defaults to preserving information */
-	if ((!val1 && val2) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    struct bu_vls avval = BU_VLS_INIT_ZERO;
-	    (void)bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    (void)bu_avs_add(changed_conflict_avs2, avp->name, val2);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(left):%s", avp->name);
-	    bu_vls_sprintf(&avval, "%s", "REMOVED");
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), bu_vls_addr(&avval));
-	    bu_vls_sprintf(&avname, "CONFLICT(right):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val2);
-	    bu_vls_free(&avname);
-	    bu_vls_free(&avval);
-	    have_diff++;
-	}
-
-	/* All values equal, unchanged and merged */
-	if (avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    (void)bu_avs_add(unchanged, avp->name, val_ancestor);
-	    (void)bu_avs_add(merged, avp->name, val_ancestor);
-	}
-	/* Identical change to both - changed and merged */
-	if (avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    (void)bu_avs_add(changed_both, avp->name, val1);
-	    (void)bu_avs_add(merged, avp->name, val1);
-	    have_diff++;
-	}
-	/* val2 changed, val1 not changed - val2 change wins and is merged */
-	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val1, diff_tol)) {
-	    (void)bu_avs_add(changed_avs2_only, avp->name, val2);
-	    (void)bu_avs_add(merged, avp->name, val2);
-	    have_diff++;
-	}
-	/* val1 changed, val2 not changed - val1 change wins and is merged */
-	if (!avpp_val_compare(val1, val2, diff_tol) && avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    (void)bu_avs_add(changed_avs1_only, avp->name, val1);
-	    (void)bu_avs_add(merged, avp->name, val1);
-	    have_diff++;
-	}
-	/* val1 and val2 changed and incompatible - conflict,
-	 * merge adds conflict a/v pairs */
-	if (!avpp_val_compare(val1, val2, diff_tol) && !avpp_val_compare(val_ancestor, val1, diff_tol) && !avpp_val_compare(val_ancestor, val2, diff_tol)) {
-	    struct bu_vls avname = BU_VLS_INIT_ZERO;
-	    (void)bu_avs_add(changed_conflict_ancestor, avp->name, val_ancestor);
-	    (void)bu_avs_add(changed_conflict_avs1, avp->name, val1);
-	    (void)bu_avs_add(changed_conflict_avs2, avp->name, val2);
-	    bu_vls_sprintf(&avname, "CONFLICT(ANCESTOR):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val_ancestor);
-	    bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val1);
-	    bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
-	    (void)bu_avs_add(merged, bu_vls_addr(&avname), val2);
-	    bu_vls_free(&avname);
-	    have_diff++;
-	}
-    }
-
-    /* Now do avs1 - anything in ancestor has already been handled */
-    for (BU_AVS_FOR(avp, avs1)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	if (!val_ancestor) {
-	    const char *val1 = bu_avs_get(avs1, avp->name);
-	    const char *val2 = bu_avs_get(avs2, avp->name);
-	    int have_same_val;
-	    have_diff++;
-	    /* The possibilities are:
-	     *
-	     * (val1 && !val2)
-	     * (val1 == val2)
-	     * (val1 != val2)
-	     */
-
-	    /* Added in avs1 only - no conflict */
-	    if (val1 && !val2) {
-		(void)bu_avs_add(added_avs1_only, avp->name, val1);
-		(void)bu_avs_add(merged, avp->name, val1);
+	    /* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
+	    if (flags == DB_COMPARE_ALL &&
+		    dp_left != RT_DIR_NULL && dp_left->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+		    dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+		if (db_get_external(&ext_left, dp_left, dbip_left) || db_get_external(&ext_right, dp_right, dbip_right)) {
+		    bu_log("Warning - Error getting bu_external form\n");
+		} else {
+		    if (db_diff_external(&ext_left, &ext_right)) {extern_state = DIFF_CHANGED;}
+		}
+		bu_free_external(&ext_left);
+		bu_free_external(&ext_right);
 	    }
 
-	    have_same_val = avpp_val_compare(val1,val2, diff_tol);
+	    /* Do internal diffs */
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+		left_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, NULL, dp_right, diff3_tol, DB_COMPARE_PARAM, result);
+	    }
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+		left_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, NULL, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
+	    }
+	    if (flags == DB_COMPARE_ALL && (left_state == DIFF_UNCHANGED || left_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
+		bu_log("Warning - internal comparison and bu_external comparison disagree");
+	    }
 
-	    /* Added in avs1 and avs2 with the same value - no conflict */
-	    if (have_same_val) {
-		(void)bu_avs_add(added_both, avp->name, val1);
-		(void)bu_avs_add(merged, avp->name, val1);
+	    if (results) {
+		bu_ptbl_ins(results, (long *)result);
 	    } else {
-		struct bu_vls avname = BU_VLS_INIT_ZERO;
-		(void)bu_avs_add(added_conflict_avs1, avp->name, val1);
-		(void)bu_avs_add(added_conflict_avs2, avp->name, val2);
-		bu_vls_sprintf(&avname, "CONFLICT(LEFT):%s", avp->name);
-		(void)bu_avs_add(merged, bu_vls_addr(&avname), val1);
-		bu_vls_sprintf(&avname, "CONFLICT(RIGHT):%s", avp->name);
-		(void)bu_avs_add(merged, bu_vls_addr(&avname), val2);
-		bu_vls_free(&avname);
+		diff_free_result(result);
+		BU_PUT(result, struct diff_result);
+	    }
+
+	    state |= left_state;
+	}
+
+    } FOR_ALL_DIRECTORY_END;
+
+    FOR_ALL_DIRECTORY_START(dp_right, dbip_right) {
+	dp_ancestor = db_lookup(dbip_ancestor, dp_right->d_namep, 0);
+	dp_left = db_lookup(dbip_left, dp_right->d_namep, 0);
+	if (dp_ancestor == RT_DIR_NULL && dp_left == RT_DIR_NULL) {
+	    struct diff_result *result;
+	    BU_GET(result, struct diff_result);
+	    diff_init_result(result, diff3_tol, dp_right->d_namep);
+
+	    /* Do internal diffs */
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_PARAM) {
+		state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_PARAM, result);
+	    }
+	    if (flags == DB_COMPARE_ALL || flags & DB_COMPARE_ATTRS) {
+		state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
+	    }
+
+	    if (results) {
+		bu_ptbl_ins(results, (long *)result);
+	    } else {
+		diff_free_result(result);
+		BU_PUT(result, struct diff_result);
 	    }
 	}
-    }
-
-    /* Last but not least, avs2 - anything in ancestor and/or avs1 has already been handled */
-    for (BU_AVS_FOR(avp, avs2)) {
-	const char *val_ancestor = bu_avs_get(ancestor, avp->name);
-	const char *val1 = bu_avs_get(avs1, avp->name);
-	if (!val_ancestor && !val1) {
-	    const char *val2 = bu_avs_get(avs2, avp->name);
-	    (void)bu_avs_add(added_avs2_only, avp->name, val1);
-	    (void)bu_avs_add(merged, avp->name, val2);
-	    have_diff++;
-	}
-    }
-
-    return (have_diff) ? 1 : 0;
-}
-
-int
-db_compare3(const struct rt_db_internal *left,
-	    const struct rt_db_internal *ancestor,
-	    const struct rt_db_internal *right,
-	    const struct bn_tol *diff_tol,
-	    db_compare_criteria_t flags,
-	    int (*client_func)(const struct rt_db_internal *left_obj,
-	                     const struct rt_db_internal *ancestor_obj,
-			     const struct rt_db_internal *right_obj,
-			     int param_state,
-			     int attr_state,
-			     const struct bn_tol *diff_tol,
-			     db_compare_criteria_t flags,
-			     void *data),
-	    void *client_data)
-{
-    int do_all = 0;
-    int state = DIFF3_UNCHANGED;
-    int param_state = DIFF3_UNCHANGED;
-    int attr_state = DIFF3_UNCHANGED;
-
-    if (!left && !ancestor && !right) return -1;
-    if (ancestor && !left && !right) {
-	param_state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
-	attr_state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
-	state |= DIFF3_REMOVED_BOTH_IDENTICALLY;
-    }
-
-    if (flags == DB_COMPARE_ALL) do_all = 1;
-
-    if ((flags == DB_COMPARE_PARAM || do_all) && (param_state == DIFF_UNCHANGED)) {
-	int ancestor_left = -1;
-	int ancestor_right = -1;
-	int left_right = -1;
-	/* Type is a valid basis on which to declare a DB_COMPARE_PARAM difference event,
-	 * but as a single value in the rt_<type>_get return it does not fit neatly into
-	 * the attribute/value paradigm used for the majority of the comparisons.  For
-	 * this reason, we handle it specially using the lower level database type
-	 * information directly.
-	 */
-	int a = -1;
-	int l = -1;
-	int r = -1;
-	int a_arb = 0;
-	int l_arb = 0;
-	int r_arb = 0;
-	if (ancestor) a = ancestor->idb_minor_type;
-	if (right) r = right->idb_minor_type;
-	if (left) l = left->idb_minor_type;
-	if (a == DB5_MINORTYPE_BRLCAD_ARB8 || l == DB5_MINORTYPE_BRLCAD_ARB8 || r == DB5_MINORTYPE_BRLCAD_ARB8) {
-	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-	    if (a == DB5_MINORTYPE_BRLCAD_ARB8) {a_arb = rt_arb_std_type(ancestor, &arb_tol);}
-	    if (l == DB5_MINORTYPE_BRLCAD_ARB8) {l_arb = rt_arb_std_type(left, &arb_tol);}
-	    if (r == DB5_MINORTYPE_BRLCAD_ARB8) {r_arb = rt_arb_std_type(right, &arb_tol);}
-	}
-
-	if (ancestor && left) {
-	    if (a != l || a_arb != l_arb) ancestor_left = 0;
-	    if (ancestor_left == -1) {
-		int memsize = rt_intern_struct_size(ancestor->idb_minor_type);
-		if (memcmp((void *)ancestor->idb_ptr, (void *)left->idb_ptr, memsize)) {
-		    ancestor_left = 0;
-		} else {
-		    ancestor_left = 1;
-		}
-	    }
-	}
-
-	if (ancestor && right) {
-	    if (a != r || a_arb != r_arb) ancestor_right = 0;
-	    if (ancestor_right == -1) {
-		int memsize = rt_intern_struct_size(ancestor->idb_minor_type);
-		if (memcmp((void *)ancestor->idb_ptr, (void *)right->idb_ptr, memsize)) {
-		    ancestor_right = 0;
-		} else {
-		    ancestor_right = 1;
-		}
-	    }
-	}
-
-	if (left && right) {
-	    if (l != r || l_arb != r_arb) left_right = 0;
-	    if (left_right == -1) {
-		int memsize = rt_intern_struct_size(left->idb_minor_type);
-		if (memcmp((void *)left->idb_ptr, (void *)right->idb_ptr, memsize)) {
-		    left_right = 0;
-		} else {
-		    left_right = 1;
-		}
-	    }
-	}
-
-	if (ancestor_right && !left) param_state |= DIFF3_REMOVED_LEFT_ONLY;
-	if (ancestor_left && !right) param_state |= DIFF3_REMOVED_RIGHT_ONLY;
-	if (!ancestor && left_right) param_state |= DIFF3_ADDED_BOTH_IDENTICALLY;
-	if (!ancestor && !left && right) param_state |= DIFF3_ADDED_RIGHT_ONLY;
-	if (!ancestor && left && !right) param_state |= DIFF3_ADDED_LEFT_ONLY;
-	if (!ancestor_left && !ancestor_right && left_right) param_state |= DIFF3_CHANGED_BOTH_IDENTICALLY;
-	if (!ancestor_left && ancestor_right) param_state |= DIFF3_CHANGED_LEFT_ONLY;
-	if (ancestor_left && !ancestor_right) param_state |= DIFF3_CHANGED_RIGHT_ONLY;
-	if ((!ancestor || (!ancestor_left && !ancestor_right)) && !left_right) param_state |= DIFF3_CONFLICT_BOTH_CHANGED;
-	if (ancestor && left && !ancestor_left && !right) param_state |= DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL;
-	if (ancestor && right && !ancestor_right && !left) param_state |= DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL;
-
-    }
-
-    if ((flags == DB_COMPARE_ATTRS || do_all) && !attr_state) {
-	struct bn_tol diff_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-	const struct bu_attribute_value_set *a;
-	const struct bu_attribute_value_set *l;
-	const struct bu_attribute_value_set *r;
-	struct bu_attribute_value_set at;
-	struct bu_attribute_value_set lt;
-	struct bu_attribute_value_set rt;
-	BU_AVS_INIT(&at);
-	BU_AVS_INIT(&lt);
-	BU_AVS_INIT(&rt);
-
-	if (ancestor && ancestor->idb_avs.magic == BU_AVS_MAGIC) {
-	    a = &(ancestor->idb_avs);
-	} else {
-	    a = &at;
-	}
-	if (left->idb_avs.magic == BU_AVS_MAGIC) {
-	    l = &(left->idb_avs);
-	} else {
-	    l = &lt;
-	}
-	if (right->idb_avs.magic == BU_AVS_MAGIC) {
-	    r = &(right->idb_avs);
-	} else {
-	    r = &rt;
-	}
-
-	attr_state |= bu_avs_diff3(NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, a, l, r, &diff_tol);
-
-	bu_avs_free(&at);
-	bu_avs_free(&lt);
-	bu_avs_free(&rt);
-
-    }
-
-    state |= param_state;
-    state |= attr_state;
-
-    /* We know enough now to identify the state of the diff - if we also have user functions, call them now */
-    if (((state & DIFF3_ADDED_BOTH_IDENTICALLY) || (state & DIFF3_ADDED_LEFT_ONLY) || (state & DIFF3_ADDED_RIGHT_ONLY)) && add_func)
-	add_func(left, ancestor, right, param_state, attr_state, flags, client_data);
-    if (((state & DIFF3_REMOVED_BOTH_IDENTICALLY) || (state & DIFF3_REMOVED_LEFT_ONLY) || (state & DIFF3_REMOVED_RIGHT_ONLY)) && del_func)
-       	del_func(left, ancestor, right, param_state, attr_state, flags, client_data);
-    if (((state & DIFF3_CHANGED_BOTH_IDENTICALLY) || (state & DIFF3_CHANGED_LEFT_ONLY) || (state & DIFF3_CHANGED_RIGHT_ONLY) ||
-		(state & DIFF3_CHANGED_CLEAN_MERGE)|| (state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL) ||
-		(state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL) || (state & DIFF3_CONFLICT_BOTH_CHANGED)) && chgd_func)
-       	chgd_func(left, ancestor, right, param_state, attr_state, flags, client_data);
-    if ((state == DIFF3_UNCHANGED) && unchgd_func)
-       	unchgd_func(left, ancestor, right, param_state, attr_state, flags, client_data);
+    } FOR_ALL_DIRECTORY_END;
 
     return state;
-
 }
-#endif
-
 
 /*
  * Local Variables:
