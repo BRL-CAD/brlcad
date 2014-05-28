@@ -1,5 +1,11 @@
+/.path_md5hash_tablestore
 /.svnignore
-/Calc.pm
-/RD_TRACE
-/t0
-/t
+/*.new
+/# auto-generated files
+/BH.pm
+/BE.pm
+/CGrammar.pm
+/parse-eyeapp-svn-trunk
+/tmp-mod-examples-tmp
+/bu.i
+/test-hdr.h
