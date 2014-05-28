@@ -175,25 +175,6 @@ db_diff_dp(const struct db_i *left_dbip,
 	   struct diff_result *result);
 
 
-/*
- * Results for a diff3 between three objects are held in a set
- * of avs structures.
- */
-struct diff3_result {
-    char *obj_name;
-    int param_state;  /* results of diff for parameters */
-    int attr_state;   /* results of diff for attributes */
-    struct bn_tol *diff_tol;
-    struct bu_attribute_value_set *left_param_avs;
-    struct bu_attribute_value_set *ancestor_param_avs;
-    struct bu_attribute_value_set *right_param_avs;
-    struct bu_attribute_value_set *left_attr_avs;
-    struct bu_attribute_value_set *ancestor_attr_avs;
-    struct bu_attribute_value_set *right_attr_avs;
-};
-RT_EXPORT extern void diff3_init_result(struct diff3_result **result, const struct bn_tol *curr_diff_tol, const char *object_name);
-RT_EXPORT extern void diff3_free_result(struct diff3_result *result);
-
 /**
  * Compare three database objects.
  *
@@ -221,7 +202,7 @@ db_diff3_dp(const struct db_i *left,
 	    const struct directory *right_dp,
 	    const struct bn_tol *diff_tol,
 	    db_compare_criteria_t flags,
-	    struct diff3_result *result);
+	    struct diff_result *result);
 
 /**
  * Compare two database instances.

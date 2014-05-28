@@ -506,11 +506,6 @@ free_diff_components(struct diff_elements *el)
     }
 }
 
-struct avs_set {
-    struct bu_attribute_value_set *left_avs;
-    struct bu_attribute_value_set *right_avs;
-};
-
 HIDDEN int
 diff_dp_attr_add(const char *attr_name, const char *attr_val, void *data)
 {
@@ -866,127 +861,87 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
     return state;
 }
 
-
-
-void
-diff3_init_result(struct diff3_result **result, const struct bn_tol *curr_diff_tol, const char *obj_name)
-{
-    if (!result) return;
-    BU_GET(*result, struct diff3_result);
-    if (obj_name) {
-	(*result)->obj_name = bu_strdup(obj_name);
-    } else {
-	(*result)->obj_name = NULL;
-    }
-    (*result)->param_state = DIFF_EMPTY;
-    (*result)->attr_state = DIFF_EMPTY;
-    BU_GET((*result)->diff_tol, struct bn_tol);
-    if (curr_diff_tol) {
-	(*result)->diff_tol->magic = BN_TOL_MAGIC;
-	(*result)->diff_tol->dist = curr_diff_tol->dist;
-	(*result)->diff_tol->dist_sq = curr_diff_tol->dist_sq;
-	(*result)->diff_tol->perp = curr_diff_tol->perp;
-	(*result)->diff_tol->para = curr_diff_tol->para;
-    } else {
-	BN_TOL_INIT((*result)->diff_tol);
-    }
-    BU_GET((*result)->left_param_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->ancestor_param_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->right_param_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->left_attr_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->ancestor_attr_avs, struct bu_attribute_value_set);
-    BU_GET((*result)->right_attr_avs, struct bu_attribute_value_set);
-    BU_AVS_INIT((*result)->left_param_avs);
-    BU_AVS_INIT((*result)->ancestor_param_avs);
-    BU_AVS_INIT((*result)->right_param_avs);
-    BU_AVS_INIT((*result)->left_attr_avs);
-    BU_AVS_INIT((*result)->ancestor_attr_avs);
-    BU_AVS_INIT((*result)->right_attr_avs);
-}
-
-
-void
-diff3_free_result(struct diff3_result *result)
-{
-    if (result->obj_name) {
-	bu_free(result->obj_name, "free name copy in diff result");
-    }
-    bu_avs_free(result->left_param_avs);
-    bu_avs_free(result->ancestor_param_avs);
-    bu_avs_free(result->right_param_avs);
-    bu_avs_free(result->left_attr_avs);
-    bu_avs_free(result->right_attr_avs);
-    BU_PUT(result->diff_tol, struct bn_tol);
-    BU_PUT(result->left_param_avs, struct bu_attribute_value_set);
-    BU_PUT(result->ancestor_param_avs, struct bu_attribute_value_set);
-    BU_PUT(result->right_param_avs, struct bu_attribute_value_set);
-    BU_PUT(result->left_attr_avs, struct bu_attribute_value_set);
-    BU_PUT(result->ancestor_attr_avs, struct bu_attribute_value_set);
-    BU_PUT(result->right_attr_avs, struct bu_attribute_value_set);
-    BU_PUT(result, struct diff3_result);
-}
-
-
-struct avs3_set {
-    int state;
-    struct bu_attribute_value_set *left_avs;
-    struct bu_attribute_value_set *ancestor_avs;
-    struct bu_attribute_value_set *right_avs;
-};
-
 HIDDEN int
-diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
+diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, int state, void *data)
 {
-    struct avs3_set *aset = (struct avs3_set *)data;
-    if (aset->state & DIFF3_ADDED_BOTH_IDENTICALLY || aset->state & DIFF3_ADDED_LEFT_ONLY)
-	bu_avs_add(aset->left_avs, attr_name, attr_val_left);
-    if (aset->state & DIFF3_ADDED_BOTH_IDENTICALLY || aset->state & DIFF3_ADDED_RIGHT_ONLY)
-	bu_avs_add(aset->right_avs, attr_name, attr_val_right);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = state;
+    avp->name = bu_strdup(attr_name);
+    if (attr_val_left) avp->left_value = bu_strdup(attr_val_left);
+    if (attr_val_right) avp->right_value = bu_strdup(attr_val_right);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
-diff3_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
+diff3_dp_attr_del(const char *attr_name, const char *attr_val, int state, void *data)
 {
-    struct avs3_set *aset = (struct avs3_set *)data;
-    bu_avs_add(aset->ancestor_avs, attr_name, attr_val);
-    if (aset->state & DIFF3_REMOVED_LEFT_ONLY)
-	bu_avs_add(aset->right_avs, attr_name, attr_val);
-    if (aset->state & DIFF3_REMOVED_RIGHT_ONLY)
-	bu_avs_add(aset->left_avs, attr_name, attr_val);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = state;
+    avp->name = bu_strdup(attr_name);
+    avp->ancestor_value = bu_strdup(attr_val);
+    if (state == DIFF3_REMOVED_LEFT_ONLY)
+	avp->right_value = bu_strdup(attr_val);
+    if (state == DIFF3_REMOVED_RIGHT_ONLY)
+	avp->left_value = bu_strdup(attr_val);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
-diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
+diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data)
 {
-    struct avs3_set *aset = (struct avs3_set *)data;
-    bu_avs_add(aset->ancestor_avs, attr_name, attr_val_ancestor);
-    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
-    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = state;
+    avp->name = bu_strdup(attr_name);
+    avp->ancestor_value = bu_strdup(attr_val_ancestor);
+    avp->right_value = bu_strdup(attr_val_right);
+    avp->left_value = bu_strdup(attr_val_left);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
-diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
+diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data)
 {
-    struct avs3_set *aset = (struct avs3_set *)data;
-    bu_avs_add(aset->ancestor_avs, attr_name, attr_val_ancestor);
-    if (aset->state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL || aset->state & DIFF3_CONFLICT_CHANGED_BOTH)
-    bu_avs_add(aset->left_avs, attr_name, attr_val_left);
-    if (aset->state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL || aset->state & DIFF3_CONFLICT_CHANGED_BOTH)
-    bu_avs_add(aset->right_avs, attr_name, attr_val_right);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = state;
+    avp->name = bu_strdup(attr_name);
+    avp->ancestor_value = bu_strdup(attr_val_ancestor);
+    if (state == DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
+    avp->right_value = bu_strdup(attr_val_right);
+    if (state == DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
+    avp->left_value = bu_strdup(attr_val_left);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 HIDDEN int
 diff3_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
 {
-    struct avs3_set *aset = (struct avs3_set *)data;
-    bu_avs_add(aset->ancestor_avs, attr_name, attr_val);
-    bu_avs_add(aset->left_avs, attr_name, attr_val);
-    bu_avs_add(aset->right_avs, attr_name, attr_val);
-    return 0;
+    struct bu_ptbl *diffs = (struct bu_ptbl *)data;
+    struct diff_avp *avp;
+    BU_GET(avp, struct diff_avp);
+    diff_init_avp(avp);
+    avp->state = DIFF3_UNCHANGED;
+    avp->name = bu_strdup(attr_name);
+    avp->ancestor_value = bu_strdup(attr_val);
+    avp->right_value = bu_strdup(attr_val);
+    avp->left_value = bu_strdup(attr_val);
+    bu_ptbl_ins(diffs, (long *)avp);
+    return avp->state;
 }
 
 int
@@ -998,7 +953,7 @@ db_diff3_dp(const struct db_i *left,
        	const struct directory *right_dp,
        	const struct bn_tol *UNUSED(diff3_tol),
        	db_compare_criteria_t UNUSED(flags),
-	struct diff3_result *UNUSED(result))
+	struct diff_result *UNUSED(result))
 {
     int state = 0;
 
