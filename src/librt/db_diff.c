@@ -698,6 +698,66 @@ db_diff(const struct db_i *dbip1,
     return state;
 }
 
+
+void
+diff3_init_result(struct diff3_result **result, const struct bn_tol *curr_diff_tol, const char *obj_name)
+{
+    if (!result) return;
+    BU_GET(*result, struct diff3_result);
+    if (obj_name) {
+	(*result)->obj_name = bu_strdup(obj_name);
+    } else {
+	(*result)->obj_name = NULL;
+    }
+    (*result)->param_state = DIFF_EMPTY;
+    (*result)->attr_state = DIFF_EMPTY;
+    BU_GET((*result)->diff_tol, struct bn_tol);
+    if (curr_diff_tol) {
+	(*result)->diff_tol->magic = BN_TOL_MAGIC;
+	(*result)->diff_tol->dist = curr_diff_tol->dist;
+	(*result)->diff_tol->dist_sq = curr_diff_tol->dist_sq;
+	(*result)->diff_tol->perp = curr_diff_tol->perp;
+	(*result)->diff_tol->para = curr_diff_tol->para;
+    } else {
+	BN_TOL_INIT((*result)->diff_tol);
+    }
+    BU_GET((*result)->left_param_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->ancestor_param_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->right_param_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->left_attr_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->ancestor_attr_avs, struct bu_attribute_value_set);
+    BU_GET((*result)->right_attr_avs, struct bu_attribute_value_set);
+    BU_AVS_INIT((*result)->left_param_avs);
+    BU_AVS_INIT((*result)->ancestor_param_avs);
+    BU_AVS_INIT((*result)->right_param_avs);
+    BU_AVS_INIT((*result)->left_attr_avs);
+    BU_AVS_INIT((*result)->ancestor_attr_avs);
+    BU_AVS_INIT((*result)->right_attr_avs);
+}
+
+
+void
+diff3_free_result(struct diff3_result *result)
+{
+    if (result->obj_name) {
+	bu_free(result->obj_name, "free name copy in diff result");
+    }
+    bu_avs_free(result->left_param_avs);
+    bu_avs_free(result->ancestor_param_avs);
+    bu_avs_free(result->right_param_avs);
+    bu_avs_free(result->left_attr_avs);
+    bu_avs_free(result->right_attr_avs);
+    BU_PUT(result->diff_tol, struct bn_tol);
+    BU_PUT(result->left_param_avs, struct bu_attribute_value_set);
+    BU_PUT(result->ancestor_param_avs, struct bu_attribute_value_set);
+    BU_PUT(result->right_param_avs, struct bu_attribute_value_set);
+    BU_PUT(result->left_attr_avs, struct bu_attribute_value_set);
+    BU_PUT(result->ancestor_attr_avs, struct bu_attribute_value_set);
+    BU_PUT(result->right_attr_avs, struct bu_attribute_value_set);
+    BU_PUT(result, struct diff3_result);
+}
+
+
 #if 0
 int
 db_diff3(const struct db_i *dbip_left,

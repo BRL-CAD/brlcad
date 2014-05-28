@@ -183,15 +183,15 @@ struct diff3_result {
     int param_state;  /* results of diff for parameters */
     int attr_state;   /* results of diff for attributes */
     struct bn_tol *diff_tol;
-    struct bu_attribute_value_set left_param_avs;
-    struct bu_attribute_value_set ancestor_param_avs;
-    struct bu_attribute_value_set right_param_avs;
-    struct bu_attribute_value_set left_attr_avs;
-    struct bu_attribute_value_set ancestor_attr_avs;
-    struct bu_attribute_value_set right_attr_avs;
+    struct bu_attribute_value_set *left_param_avs;
+    struct bu_attribute_value_set *ancestor_param_avs;
+    struct bu_attribute_value_set *right_param_avs;
+    struct bu_attribute_value_set *left_attr_avs;
+    struct bu_attribute_value_set *ancestor_attr_avs;
+    struct bu_attribute_value_set *right_attr_avs;
 };
-RT_EXPORT extern void diff3_init_result(struct diff_result *result, const struct bn_tol *curr_diff_tol, const char *object_name);
-RT_EXPORT extern void diff3_free_result(struct diff_result *result);
+RT_EXPORT extern void diff3_init_result(struct diff3_result **result, const struct bn_tol *curr_diff_tol, const char *object_name);
+RT_EXPORT extern void diff3_free_result(struct diff3_result *result);
 
 /**
  * Compare three database objects.
