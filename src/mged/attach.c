@@ -111,6 +111,7 @@ extern int Pex_dm_init();
 
 #ifdef DM_QT
 extern int Qt_dm_init();
+extern void Qt_fb_open();
 #endif /* DM_QT */
 
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
@@ -196,6 +197,10 @@ mged_fb_open(void)
     if (dmp->dm_type == DM_TYPE_RTGL)
 	Rtgl_fb_open();
 #endif /* DM_RTGL */
+#ifdef DM_QT
+    if (dmp->dm_type == DM_TYPE_QT)
+	Qt_fb_open();
+#endif /* DM_QT */
 }
 
 

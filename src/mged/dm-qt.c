@@ -156,6 +156,28 @@ Qt_dm_init(struct dm_list *o_dm_list,
     return TCL_OK;
 }
 
+void
+Qt_fb_open(void)
+{
+    char *Qt_name = "/dev/Qt";
+
+    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+	Tcl_AppendResult(INTERP, "Qt_fb_open: failed to allocate framebuffer memory\n",
+			 (char *)NULL);
+	return;
+    }
+
+    *fbp = qt_interface; /* struct copy */
+
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(Qt_name)+1, "if_name");
+    bu_strlcpy(fbp->if_name, Qt_name, strlen(Qt_name)+1);
+
+    /* Mark OK by filling in magic number */
+    fbp->if_magic = FB_MAGIC;
+
+    /*fbp->if_open(fbp, NULL, dmp->dm_width, dmp->dm_height);*/
+}
+
 
 /*
  * Local Variables:
