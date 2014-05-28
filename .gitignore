@@ -1,11 +1,16 @@
-/.path_md5hash_tablestore
-/.svnignore
-/*.new
-/# auto-generated files
+/# auto-generated files:
 /BH.pm
 /BE.pm
 /CGrammar.pm
+/# dirs:
 /parse-eyeapp-svn-trunk
 /tmp-mod-examples-tmp
+/# other files:
 /bu.i
 /test-hdr.h
+/t
+/t0
+/.path_md5hash_tablestore
+/.svnignore
+/*.new
+
