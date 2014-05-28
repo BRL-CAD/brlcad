@@ -129,13 +129,13 @@ on its standard error as it proceeds through encoding the image.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-H</option></term>
+  <term><option>-d</option></term>
   <listitem>
 <para>Debug mode.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-d</option></term>
+  <term><option>-H</option></term>
   <listitem>
 <para>“hi-res” flag.  Set both the height and width of the framebuffer
 to 1024.  The default is 512x512.</para>
