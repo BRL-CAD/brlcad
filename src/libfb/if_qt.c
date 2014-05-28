@@ -22,7 +22,7 @@
 /** @file if_qt.c
  *
  * A Qt Frame Buffer.
- * 
+ *
  */
 /** @} */
 
