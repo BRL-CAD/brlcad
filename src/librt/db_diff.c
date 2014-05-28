@@ -749,54 +749,57 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
          * (val_left != val_right) && (val_ancestor != val_left && val_ancestor != val_right)
          */
 
-        /* Removed from both - no conflict, nothing to merge */
-        if ((!val_left && !val_right) && val_ancestor) {
-	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
-        }
+	if (!val_left || !val_right) {
+	    /* Removed from both - no conflict, nothing to merge */
+	    if ((!val_left && !val_right) && val_ancestor) {
+		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
+	    }
 
-        /* Removed from right_set only, left_set not changed - no conflict,
-         * right_set removal wins and left_set is not merged */
-        if ((val_left && !val_right) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
-        }
+	    /* Removed from right_set only, left_set not changed - no conflict,
+	     * right_set removal wins and left_set is not merged */
+	    if ((val_left && !val_right) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
+	    }
 
-        /* Removed from right_set only, left_set changed - conflict */
-        if ((val_left && !val_right) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
-	}
+	    /* Removed from right_set only, left_set changed - conflict */
+	    if ((val_left && !val_right) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
+	    }
 
-        /* Removed from left_set only, right_set not changed - no conflict,
-         * left_set change wins and right_set not merged */
-        if ((!val_left && val_right) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
-        }
+	    /* Removed from left_set only, right_set not changed - no conflict,
+	     * left_set change wins and right_set not merged */
+	    if ((!val_left && val_right) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
+	    }
 
-        /* Removed from left_set only, right_set changed - conflict,
-         * merge defaults to preserving information */
-        if ((!val_left && val_right) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
-	}
+	    /* Removed from left_set only, right_set changed - conflict,
+	     * merge defaults to preserving information */
+	    if ((!val_left && val_right) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
+	    }
+	} else {
 
-        /* All values equal, unchanged and merged */
-        if (avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    if (unchgd_func) {state |= unchgd_func(avp->name, avp->value, client_data);}
-        }
-        /* Identical change to both - changed and merged */
-        if (avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
-        }
-        /* val_right changed, val_left not changed - val_right change wins and is merged */
-        if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
-        }
-        /* val_left changed, val_right not changed - val_left change wins and is merged */
-        if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
-        }
-        /* val_left and val_right changed and incompatible - conflict,
-         * merge adds conflict a/v pairs */
-        if (!avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-	    if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
+	    /* All values equal, unchanged and merged */
+	    if (avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+		if (unchgd_func) {state |= unchgd_func(avp->name, avp->value, client_data);}
+	    }
+	    /* Identical change to both - changed and merged */
+	    if (avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
+	    }
+	    /* val_right changed, val_left not changed - val_right change wins and is merged */
+	    if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
+	    }
+	    /* val_left changed, val_right not changed - val_left change wins and is merged */
+	    if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
+	    }
+	    /* val_left and val_right changed and incompatible - conflict,
+	     * merge adds conflict a/v pairs */
+	    if (!avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
+	    }
 	}
     }
 
@@ -890,7 +893,7 @@ diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const c
     diff_init_avp(avp);
     avp->state = state;
     avp->name = bu_strdup(attr_name);
-    avp->ancestor_value = bu_strdup(attr_val_ancestor);
+    if (attr_val_ancestor) avp->ancestor_value = bu_strdup(attr_val_ancestor);
     if (state == DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
     avp->right_value = bu_strdup(attr_val_right);
     if (state == DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
