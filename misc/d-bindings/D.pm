@@ -12,7 +12,7 @@ use lib('.');
 use CParse;
 use BP;
 use DS;
-use ParseCChunk2;
+use ParsePPCHeader;
 
 # no Windows for now
 Readonly our $WIN => 0;
@@ -221,8 +221,7 @@ HERE
       convert_with_gcc_E($cfil, $tfil1);
 
       # parse that file once
-      #ParseCChunk::parse_cfile($tfil1);
-      ParseCChunk2::parse_cfile($tfil1);
+      ParsePPCHeader::parse_cfile($tfil1);
 
       die "debug exit";
 

@@ -3,7 +3,7 @@ package CParse;
 use strict;
 use warnings;
 
-use ParseCChunk;
+use ParsePPCHeader;
 
 my $_WARNED = 0;
 
