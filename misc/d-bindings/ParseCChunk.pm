@@ -1,4 +1,6 @@
-package ParseCChunk;
+package ParsePPCHeader;
+
+# parse a pre-processed C header (with gcc -E)
 
 use strict;
 use warnings;
