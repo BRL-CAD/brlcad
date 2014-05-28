@@ -9,8 +9,35 @@ use CGrammar; # <== an auto-generated file
 
 sub parse_cfile {
   my $ifil = shift @_;
+  my $oref = shift @_;
+
+  $oref = 0 if !defined $oref;
+
   open my $fp, '<', $ifil
     or die "$ifil: $!";
+
+  # The diagnostics provided by the tracing mechanism always go to
+  # STDERR. If you need them to go elsewhere, localize and reopen
+  # STDERR prior to the parse.
+  #
+  # For example:
+  #
+  #  {
+  #      local *STDERR = IO::File->new(">$filename") or die $!;
+  #
+  #      my $result = $parser->startrule($text);
+  #  }
+
+
+  # IMPORTANT: namespaces as defined below are critical for use in the
+  # CGrammar module!!
+  package Parse::Recdescent::CGrammar;
+
+  my $errfil = 'PRD-errfile.txt';
+  local *STDERR = IO::File->new(">$errfil")
+    or die $!;
+  push @{$oref}, $errfil
+    if $oref;
 
   local $/;
   my @ilines = <$fp>;
@@ -18,57 +45,70 @@ sub parse_cfile {
 
   $::RD_HINT = 1;
   $::RD_AUTOACTION = q {%item};
+  $::opt_FUNCTIONS    = '1';
+  $::opt_DECLARATIONS = '1';
+  $::opt_STRUCTS      = '1';
+
+  $::functions_output = '';
+  $::declarations_output = '';
+  $::structs_output = '';
+
   my $parser = CGrammar->new();
 
-  my $parse_tree = $parser->translation_unit($text);
-  die "undef \$parse_tree" if !defined $parse_tree;
+  my $ptree = $parser->translation_unit($text);
+  if (!defined $ptree) {
+    warn "undef \$ptree";
+    return;
+  }
+
+  print "\nDefined Functions:\n\n$::functions_output\n\n"
+    if defined $::functions_output
+      and $::opt_FUNCTIONS;
+  print "\nDeclarations:\n\n$::declarations_output\n\n"
+    if defined $::declarations_output
+      and $::opt_DECLARATIONS;
+  print "\nStructures:\n\n$::structs_output\n\n"
+    if defined $::structs_output
+      and $::opt_STRUCTS;
 
   use Data::Dumper;
-  print Dumper(\@CGrammar::namespace000item);
+  print Dumper($ptree);
 
   die "debug exit";
 
 } # parse_cfile
 
-sub parse_chunk {
-  my $aref = shift @_;
 
-  my $text = join(' ', @{$aref});
+# IMPORTANT: namespaces as defined below are critical for use in the
+# CGrammar module!!
 
-  my $parser = CGrammar->new();
+package Parse::Recdescent::CGrammar;
 
-  #my $parse_tree = $parser->type_specifier($text);
-  #my $parse_tree = $parser->enum_specifier($text);
-  my $parse_tree = $parser->translation_unit($text);
+#===============================================================================
+# two functions (modified) from P::RD's 'csourceparser.pl'
+#===  FUNCTION  ================================================================
+#         NAME:  flatten_list
+#  DESCRIPTION:  Extracts values from a recursive list. Double whitespaces will
+#  				 be reduced
+# PARAMETER  1:  Array Reference
+#===============================================================================
 
-  if (!defined $parse_tree) {
-    print "=== DEBUG BAD C CODE : lines to be parsed:\n";
-    print "  $_\n" for @{$aref};
-    print "the single line:\n";
-    print "$text\n";
-  }
-  else {
-    print "=== GOOD PARSE : lines to be parsed:\n";
-    print "  $_\n" for @{$aref};
-    print "the single line:\n";
-    print "$text\n";
-  }
+sub ::flatten_list {
+    ( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
+    $tokens;
+}
 
-=pod
-
-    or
-      #{
-	#print "FATAL: lines:\n";
-	#print "  $_\n" for @{$aref};
-	warn "bad C code";
-      #}
-
-  #use Data::Dumper;
-  #warn Dumper [ $parse_tree ];
-
-=cut
-
-} # parse_chunk
+#===  FUNCTION  ================================================================
+#         NAME:  flatten_list_beautified
+#  DESCRIPTION:  Like flatten_list but inserts a newline after each semicolon
+# PARAMETER  1:  Array Reference
+#===============================================================================
+sub ::flatten_list_beautified {
+    ( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
+    $tokens =~ s/;/;\n/g;
+	$tokens =~ s/^\s*/\t/mg;
+    $tokens;
+}
 
 # mandatory true return for a Perl module
 1;

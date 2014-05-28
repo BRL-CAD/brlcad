@@ -1,7 +1,6 @@
 # C grammar from the Parse::RecDescent git repo in file:
 #   'demo_Cgrammar_v2.pl'
 # Quote:  This improved version of the C grammar was provided by Joe Buehler
-<autotree>
 
 primary_expression:
 	IDENTIFIER
@@ -101,6 +100,13 @@ constant_expression:
 
 declaration:
 	declaration_specifiers init_declarator_list ';'
+	{
+            if ($::opt_DECLARATIONS) {
+		$::declarations_output .= ::flatten_list($item[1]);
+		$::declarations_output .= ::flatten_list($item[2]);
+		$::declarations_output .= ::flatten_list($item[3]) . "\n";
+            }
+        }
 	| declaration_specifiers ';'
 
 declaration_specifiers:
@@ -124,6 +130,15 @@ type_specifier:
 
 struct_or_union_specifier:
 	struct_or_union IDENTIFIER '{' struct_declaration_list '}'
+	{
+		if ($::opt_STRUCTS) {
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]);
+		   $::structs_output .= ::flatten_list($item[3]) . "\n";
+		   $::structs_output .= ::flatten_list_beautified($item[4]);
+		   $::structs_output .= ::flatten_list($item[5]) . ";\n\n";
+		}
+        }
 	| struct_or_union '{' struct_declaration_list '}'
 	| struct_or_union IDENTIFIER
 
@@ -149,6 +164,15 @@ struct_declarator:
 
 enum_specifier:
 	ENUM '{' enumerator_list '}'
+	{
+		if (1 || $::opt_STRUCTS) { #
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]);
+		   $::structs_output .= ::flatten_list($item[3]) . "\n";
+		   $::structs_output .= ::flatten_list_beautified($item[4]);
+		   $::structs_output .= ::flatten_list($item[5]) . ";\n\n";
+		}
+        }
 	| ENUM IDENTIFIER '{' enumerator_list '}'
 	| ENUM IDENTIFIER
 
@@ -278,6 +302,13 @@ external_declaration:
 
 function_definition:
 	declaration_specifiers declarator(?) declaration_list(?) compound_statement
+	{
+		if ($::opt_FUNCTIONS) {
+		   $::functions_output .= ::flatten_list($item[1]);
+		   $::functions_output .= ::flatten_list($item[2]);
+		   $::functions_output .= ::flatten_list($item[3]) . ";\n";
+		}
+	}
 
 reserved_word:
 	/(auto|break|case|char|const|continue|default|do|double|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)(?![a-zA-Z0-9_])/

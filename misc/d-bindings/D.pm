@@ -168,36 +168,31 @@ sub convert {
 
       # note: handling of GCC constructs '__atribute__',
       # -__restrict', '__extension__', et al.:
-
-=pod
-
-Compatibility with non-GNU compilers
-
-Fortunately, the __attribute__ mechanism was cleverly designed in a
-way to make it easy to quietly eliminate them if used on platforms
-other than GNU C. Superficially, __attribute__ appears to have
-multiple parameters (which would typically rule out using a macro),
-but the two sets of parentheses effectively make it a single
-parameter, and in practice this works very nicely.
-
-/* If we're not using GNU C, elide __attribute__ */
-#ifndef __GNUC__
-#  define  __attribute__(x)  /*NOTHING*/
-#endif
-
-=cut
+      # Compatibility with non-GNU compilers
+      # ====================================
+      # Fortunately, the __attribute__ mechanism was cleverly designed in a
+      # way to make it easy to quietly eliminate them if used on platforms
+      # other than GNU C. Superficially, __attribute__ appears to have
+      # multiple parameters (which would typically rule out using a macro),
+      # but the two sets of parentheses effectively make it a single
+      # parameter, and in practice this works very nicely.
+      #
+      # /* If we're not using GNU C, elide __attribute__ */
+      # #ifndef __GNUC__
+      # #  define  __attribute__(x)  /*NOTHING*/
+      # #endif
 
       open my $fp, '>', $cfil
         or die "$cfil: $!";
 
-      print $fp <<'HERE';
-/* If we're not using GNU C, elide __attribute__, __extension__, __restrict, __const */
-/* #define __STRICT_ANSI__ */
-#define  __attribute__(x)  /* NOTHING  */
-#define  __extension__     /* NOTHING */
-#define  __restrict        /* NOTHING */
-#define  __const           const
-HERE
+      # some prelims:
+      print $fp "/* If we're not using GNU C, elide '__attribute__', '__extension__',\n";
+      print $fp "   and '__restrict' and rename '__const'.\n";
+      print $fp "*/\n";
+      print $fp "#define  __attribute__(x)  /* NOTHING  */\n";
+      print $fp "#define  __extension__     /* NOTHING */\n";
+      print $fp "#define  __restrict        /* NOTHING */\n";
+      print $fp "#define  __const           const\n";
 
       my @tflines = ();
       if (-f $tfil0) {
@@ -221,7 +216,7 @@ HERE
       convert_with_gcc_E($cfil, $tfil1);
 
       # parse that file once
-      ParsePPCHeader::parse_cfile($tfil1);
+      ParsePPCHeader::parse_cfile($tfil1, $ofils_ref);
 
       die "debug exit";
 
