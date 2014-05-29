@@ -101,14 +101,99 @@ sub parse_cfile {
     my $bar = eval($ptree);
     print ($@) if $@;
   }
-  elsif (1) {
+  elsif (0) {
     print Dumper $ptree;
+  }
+  elsif (1) {
+    inspect_syntax_tree($ptree);
   }
 
   printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
 } # parse_cfile
 
+sub inspect_syntax_tree {
+  my $uref = shift @_;
+
+  print "DEBUG:  syntax tree:\n";
+
+  my $level = 0;
+  my $s = get_spaces($level);
+  my $r = ref $uref;
+  if (!$r) {
+    print_scalar($uref, $level);
+  }
+  elsif ($r eq 'ARRAY') {
+    print_array($uref, ++$level);
+  }
+  elsif ($r eq 'HASH') {
+    print_hash($uref, ++$level);
+  }
+  else {
+    print "    WARNING:   unhandled ref type '$r'\n";
+    print "    scalar value: '$uref'\n";
+  }
+} # handle_ref
+
+sub print_scalar {
+  my $val   = shift @_;
+  my $level = shift @_; # use for number of leading spaces
+  my $s = get_spaces($level);
+  print "${s}scalar value: $val\n";
+
+} # print_scalar
+
+sub print_array {
+  my $aref  = shift @_;
+  my $level = shift @_; # use for number of leading spaces
+  my $s = get_spaces($level);
+  foreach my $val (@{$aref}) {
+    my $r = ref $val;
+    if (!$r) {
+      print_scalar($val, $level);
+    }
+    elsif ($r eq 'ARRAY') {
+      print_array($val, ++$level);
+    }
+    elsif ($r eq 'HASH') {
+      print_hash($val, ++$level);
+    }
+    else {
+      print "${s}WARNING:   unhandled ref type '$r'\n";
+      print "${s}scalar value: '$val'\n";
+    }
+  }
+} # print_array
+
+sub print_hash {
+  my $href  = shift @_;
+  my $level = shift @_; # use for number of leading spaces
+  my $s = get_spaces($level);
+  foreach my $k (keys %{$href}) {
+    my $val = $href->{$k};
+    my $r = ref $val;
+    if (!$r) {
+      print_scalar($val, $level);
+    }
+    elsif ($r eq 'ARRAY') {
+      print_array($val, ++$level);
+    }
+    elsif ($r eq 'HASH') {
+      print_hash($val, ++$level);
+    }
+    else {
+      print "${s}WARNING:   unhandled ref type '$r'\n";
+      print "${s}scalar value: '$val'\n";
+    }
+  }
+} # print_array
+
+sub get_spaces {
+  my $level = shift @_;
+  my $ns = $level * 3;
+  my $s = sprintf "%-*.*s", $ns, $ns, ' ';
+  return $s;
+} # get_spaces
 
 # mandatory true return for a Perl module
 1;
