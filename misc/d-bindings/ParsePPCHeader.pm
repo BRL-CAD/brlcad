@@ -52,12 +52,12 @@ sub parse_cfile {
 =cut
 
   $::opt_FUNCTIONS    = '';
-  $::opt_DECLARATIONS = '1';
+  $::opt_DECLARATIONS = '';
   $::opt_STRUCTS      = '';
 
-  $::functions_output = '';
+  $::functions_output    = '';
   $::declarations_output = '';
-  $::structs_output = '';
+  $::structs_output      = '';
 
   $::debug = 0;
   %::item  = (); # feed %items to it
@@ -83,7 +83,8 @@ sub parse_cfile {
   }
 
   use Data::Dumper;
-  print Dumper(\%::item);
+  #print Dumper(\%::item);
+  print Dumper($ptree);
 
   printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
