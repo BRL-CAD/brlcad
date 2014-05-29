@@ -8,9 +8,14 @@ use warnings;
 use CGrammar; # <== an auto-generated file
 
 sub parse_cfile {
+
+=pod
+
   # IMPORTANT: namespaces as defined below are critical for use in the
   # CGrammar module!!
   package Parse::Recdescent::CGrammar;
+
+=cut
 
   my $ifil = shift @_;
   my $oref = shift @_;
@@ -32,7 +37,6 @@ sub parse_cfile {
   #      my $result = $parser->startrule($text);
   #  }
 
-
   my $errfil = 'PRD-errfile.txt';
   local *STDERR = IO::File->new(">$errfil")
     or die $!;
@@ -49,8 +53,6 @@ sub parse_cfile {
     { $#item==1 ? $item[1] : "$item[0]_node"->new(@item[1..$#item]) };
   $::RD_HINT = 1;
 
-=cut
-
   $::opt_FUNCTIONS    = '';
   $::opt_DECLARATIONS = '';
   $::opt_STRUCTS      = '';
@@ -62,6 +64,8 @@ sub parse_cfile {
   $::debug = 0;
   %::item  = (); # feed %items to it
 
+=cut
+
   my $parser = CGrammar->new();
 
   my $ptree = $parser->translation_unit($text);
@@ -69,6 +73,8 @@ sub parse_cfile {
     warn "undef \$ptree";
     return;
   }
+
+=pod
 
   if (0) {
     print "\nDefined Functions:\n\n$::functions_output\n\n"
@@ -82,69 +88,27 @@ sub parse_cfile {
 	and $::opt_STRUCTS;
   }
 
+=cut
+
   use Data::Dumper;
-  #print Dumper(\%::item);
-  print Dumper($ptree);
+  $Data::Dumper::Terse  = 1;         # don't output names where feasible (doesn't work for my tree)
+  $Data::Dumper::Indent = 1;         # mild pretty print
+  $Data::Dumper::Purity = 1;
+
+  if (0) {
+    no strict 'subs';
+    #print Dumper(\%::item);
+    my $bar = eval($ptree);
+    print ($@) if $@;
+  }
+  elsif (1) {
+    print Dumper $ptree;
+  }
 
   printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
 } # parse_cfile
 
-
-# IMPORTANT: namespaces as defined below are critical for use in the
-# CGrammar module!!
-
-package Parse::Recdescent::CGrammar;
-
-#===============================================================================
-# two functions (modified) from P::RD's 'csourceparser.pl'
-#===  FUNCTION  ================================================================
-#         NAME:  flatten_list
-#  DESCRIPTION:  Extracts values from a recursive list. Double whitespaces will
-#  				 be reduced
-# PARAMETER  1:  Array Reference
-#===============================================================================
-
-sub ::flatten_list {
-  # @_: scalar, array ref, or array
-  my $tokens = ''; # we must have a defined value
-  return $tokens
-    if !defined $_;
-
-  if (ref($_) eq 'ARRAY') {
-    ( $tokens = join ' ', map { ::flatten_list(@$_) } @_ ) =~ s/[\s\n]+/ /g;
-  }
-  elsif (ref($_)) {
-    my $typ = ref $_;
-    die "\$_ is a ref to '$typ' which is not expected!";
-  }
-  else {
-    ( $tokens = join ' ', map { ($_) } @_ ) =~ s/[\s\n]+/ /g;
-  }
-
-  #( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/[\s\n]+/ /g;
-
-  #$tokens =~ s/[\s\n]+/ /g;
-
-  return $tokens;
-}
-
-#===  FUNCTION  ================================================================
-#         NAME:  flatten_list_beautified
-#  DESCRIPTION:  Like flatten_list but inserts a newline after each semicolon
-# PARAMETER  1:  Array Reference
-#===============================================================================
-sub ::flatten_list_beautified {
-  # @_: scalar, array ref, or array
-  my $tokens = '';
-  return $tokens
-    if !defined $_;
-
-  #( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
-  $tokens =~ s/;/;\n/g;
-  $tokens =~ s/^\s*/\t/mg;
-  $tokens;
-}
 
 # mandatory true return for a Perl module
 1;
