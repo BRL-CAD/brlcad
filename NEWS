@@ -13,13 +13,6 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
-* made the rcodes cmd messages a little more informative - Cliff Yapp
-* fixed inside command for ellipsoid primitives - Cliff Yapp
-* fixed loss of MGED bu_log output after running wdb_cmd - Cliff Yapp
-* added -s size option for rtwizard image output - Cliff Yapp
-* documented image size options in rtwizard man page - Cliff Yapp
-* added view center specification dialog to rtwizard - Cliff Yapp
-* increased rtwizard window size for button visibility - Cliff Yapp
 This patch release includes a plethora of significant bug fixes and
 improvements to BRL-CAD including fixing ADRT/TIE fast triangle ray
 tracing on 32-bit platforms, fixing an issue in our FASTGEN converter
@@ -31,6 +24,13 @@ Enhancements continue to be made to our boundary representation (BREP)
 NURBS infrastructure in support of hybrid representation modeling and
 improved geometry interchange with other CAD systems.
 
+* improved rcodes output to inform user what changed - Cliff Yapp
+* fixed inside command for ellipsoid primitives - Cliff Yapp
+* restored suppressed mged output after some commands - Cliff Yapp
+* added rtwizard -s square image size option - Cliff Yapp
+* documented image size options in rtwizard man page - Cliff Yapp
+* added view center specification dialog to rtwizard - Cliff Yapp
+* increased rtwizard window size for button visibility - Cliff Yapp
 * image conversion -R/-G/-B options now require weight - Mohit Daga
 * improved option consistency for image processing tools - Mohit Daga
 * improved pipe ray tracing grazing hit behavior - Keith Bowman
