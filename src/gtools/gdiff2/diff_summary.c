@@ -25,17 +25,6 @@
 /* Output generators for diff log */
 /*******************************************************************/
 
-static struct diff_avp *
-diff_ptbl_get(struct bu_ptbl *avp_array, const char *key)
-{
-    int i = 0;
-    for (i = 0; i < (int)BU_PTBL_LEN(avp_array); i++) {
-	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(avp_array, i);
-	if (BU_STR_EQUAL(avp->name, key)) return avp;
-    }
-    return NULL;
-}
-
 void
 diff_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls *diff_log) {
     if (state->use_params == 1) {

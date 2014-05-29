@@ -69,6 +69,12 @@ extern void diff3_summarize(struct bu_vls *diff_log,
 	const struct bu_ptbl *results,
 	struct diff_state *state);
 
+/*******************************************************************/
+/*                     utility functions                           */
+/*******************************************************************/
+extern struct diff_avp *
+diff_ptbl_get(struct bu_ptbl *avp_array, const char *key);
+
 #endif
 
 /*

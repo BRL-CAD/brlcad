@@ -1,4 +1,4 @@
-/*                     C O N T A I N E R S . C
+/*                      U T I L I T Y . C
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -49,6 +49,17 @@ diff_state_free(struct diff_state *state)
     BU_PUT(state->diff_tol, struct bn_tol);
     BU_PUT(state->diff_log, struct bu_vls);
     BU_PUT(state->search_filter, struct bu_vls);
+}
+
+struct diff_avp *
+diff_ptbl_get(struct bu_ptbl *avp_array, const char *key)
+{
+    int i = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(avp_array); i++) {
+	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(avp_array, i);
+	if (BU_STR_EQUAL(avp->name, key)) return avp;
+    }
+    return NULL;
 }
 
 
