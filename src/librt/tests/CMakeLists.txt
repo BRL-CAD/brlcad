@@ -27,18 +27,11 @@ add_test(test_nmg_mk test_nmg_mk)
 BRLCAD_ADDEXEC(test_nmg_copy test_nmg_copy.c "librt" NO_INSTALL)
 add_test(test_nmg_copy test_nmg_copy)
 
-# dirbuild test
-BRLCAD_ADDEXEC(test_dirbuild test_dirbuild.c "librt" NO_INSTALL)
-add_test(test_dirbuild test_dirbuild ${CMAKE_CURRENT_SOURCE_DIR}/dirbuild-test-1.g ${CMAKE_CURRENT_SOURCE_DIR}/dirbuild-test-0.g ${CMAKE_CURRENT_SOURCE_DIR}/dirbuild-test-2.g)
-
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
   nurbs_surfaces.g
   extreme_ssi_test.g
-  dirbuild-test-0.g
-  dirbuild-test-1.g
-  dirbuild-test-2.g
   )
 
 CMAKEFILES(${distcheck_files})
