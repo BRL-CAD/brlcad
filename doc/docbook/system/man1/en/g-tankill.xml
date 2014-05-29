@@ -62,18 +62,23 @@ option specifies the name of the file to receive the output
 (stdout is the default). The
 <option>-i</option>
 option specifies that ident numbers should be assigned sequentially
-rather than using the idents assigned in the BRL-CAD model. A list
+rather than using the idents assigned in the BRL-CAD model. (A list
 of the regions and the assigned idents are written to
 <emphasis remap='I'>idents_file</emphasis>
 along with the BRL-CAD ident number, aircode, gift material code,
 los, and any material name assigned through the
 <emphasis remap='I'>mater</emphasis>
-command. The
+command.) The
 <option>-s</option>
 option specifies that the provided surroundings code should be used for
 all the components in the
 <emphasis remap='I'>TANKILL</emphasis>
-output model.  The default is to use a surroundings code of 1000.</para>
+output model.  (The default is to use a surroundings code of 1000.)</para>
+The
+<option>-v</option> option is for verbose mode.
+The
+<option>-P</option> option is to enable core dumps (dummy argument is for
+number of processors, currently disabled).
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
