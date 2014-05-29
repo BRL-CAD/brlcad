@@ -1,6 +1,9 @@
 # C grammar from the Parse::RecDescent git repo in file:
 #   'demo_Cgrammar_v2.pl'
 # Quote:  This improved version of the C grammar was provided by Joe Buehler
+
+# Note:  This the pure version for default parsing with autotree.
+
 <autotree>
 
 primary_expression:
