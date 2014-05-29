@@ -18,4 +18,5 @@ cmd2="perl -MParse::RecDescent - c-grammar2.txt $PM2"
 `$cmd`
 `$cmd2`
 
+echo "====================================================="
 echo "See generated files '$PM.pm' and '$PM2.pm'."
