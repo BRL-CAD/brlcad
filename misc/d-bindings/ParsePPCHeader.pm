@@ -52,7 +52,7 @@ sub parse_cfile {
 =cut
 
   $::opt_FUNCTIONS    = '';
-  $::opt_DECLARATIONS = '';
+  $::opt_DECLARATIONS = '1';
   $::opt_STRUCTS      = '';
 
   $::functions_output = '';
@@ -105,8 +105,27 @@ package Parse::Recdescent::CGrammar;
 #===============================================================================
 
 sub ::flatten_list {
-    ( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
-    $tokens;
+  # @_: scalar, array ref, or array
+  my $tokens = ''; # we must have a defined value
+  return $tokens
+    if !defined $_;
+
+  if (ref($_) eq 'ARRAY') {
+    ( $tokens = join ' ', map { ::flatten_list(@$_) } @_ ) =~ s/[\s\n]+/ /g;
+  }
+  elsif (ref($_)) {
+    my $typ = ref $_;
+    die "\$_ is a ref to '$typ' which is not expected!";
+  }
+  else {
+    ( $tokens = join ' ', map { ($_) } @_ ) =~ s/[\s\n]+/ /g;
+  }
+
+  #( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/[\s\n]+/ /g;
+
+  #$tokens =~ s/[\s\n]+/ /g;
+
+  return $tokens;
 }
 
 #===  FUNCTION  ================================================================
@@ -115,10 +134,15 @@ sub ::flatten_list {
 # PARAMETER  1:  Array Reference
 #===============================================================================
 sub ::flatten_list_beautified {
-    ( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
-    $tokens =~ s/;/;\n/g;
-	$tokens =~ s/^\s*/\t/mg;
-    $tokens;
+  # @_: scalar, array ref, or array
+  my $tokens = '';
+  return $tokens
+    if !defined $_;
+
+  #( my $tokens = join ' ', map { ref($_) ? ::flatten_list(@$_) : ($_) } @_ ) =~ s/\s+/ /g;
+  $tokens =~ s/;/;\n/g;
+  $tokens =~ s/^\s*/\t/mg;
+  $tokens;
 }
 
 # mandatory true return for a Perl module
