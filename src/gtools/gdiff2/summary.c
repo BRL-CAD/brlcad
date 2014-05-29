@@ -364,7 +364,12 @@ diff3_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct d
 		    break;
 		case 2:
 		case 3:
-		    bu_vls_printf(diff_log, "A %s\n", dr->obj_name);
+		    if (dr->dp_left != RT_DIR_NULL && dr->dp_right != RT_DIR_NULL)
+			bu_vls_printf(diff_log, "A(B) %s\n", dr->obj_name);
+		    if (dr->dp_left != RT_DIR_NULL && dr->dp_right == RT_DIR_NULL)
+			bu_vls_printf(diff_log, "A(L) %s\n", dr->obj_name);
+		    if (dr->dp_left == RT_DIR_NULL && dr->dp_right != RT_DIR_NULL)
+			bu_vls_printf(diff_log, "A(R) %s\n", dr->obj_name);
 		    break;
 		case 4:
 		    diff3_attrs_print(dr, state, diff_log);
@@ -386,7 +391,12 @@ diff3_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct d
 		    break;
 		case 2:
 		case 3:
-		    bu_vls_printf(diff_log, "D %s\n", dr->obj_name);
+		    if (dr->dp_left == RT_DIR_NULL && dr->dp_right == RT_DIR_NULL)
+			bu_vls_printf(diff_log, "D(B) %s\n", dr->obj_name);
+		    if (dr->dp_left != RT_DIR_NULL && dr->dp_right == RT_DIR_NULL)
+			bu_vls_printf(diff_log, "D(R) %s\n", dr->obj_name);
+		    if (dr->dp_left == RT_DIR_NULL && dr->dp_right != RT_DIR_NULL)
+			bu_vls_printf(diff_log, "D(L) %s\n", dr->obj_name);
 		    break;
 		case 4:
 		    diff3_attrs_print(dr, state, diff_log);
@@ -411,6 +421,17 @@ diff3_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct d
 		    bu_vls_printf(diff_log, "C %s\n", dr->obj_name);
 		    break;
 		case 3:
+		    if (dr->dp_ancestor == RT_DIR_NULL) {
+			bu_vls_printf(diff_log, "C(LA!=RA) %s\n", dr->obj_name);
+		    } else {
+			if (dr->dp_left != RT_DIR_NULL && dr->dp_right == RT_DIR_NULL)
+			    bu_vls_printf(diff_log, "C(LM,RD) %s\n", dr->obj_name);
+			if (dr->dp_left == RT_DIR_NULL && dr->dp_right != RT_DIR_NULL)
+			    bu_vls_printf(diff_log, "C(LD,RM) %s\n", dr->obj_name);
+			if (dr->dp_left != RT_DIR_NULL && dr->dp_right != RT_DIR_NULL)
+			    bu_vls_printf(diff_log, "C(LM!=RM) %s\n", dr->obj_name);
+		    }
+		    break;
 		case 4:
 		    diff3_attrs_print(dr, state, diff_log);
 		    break;

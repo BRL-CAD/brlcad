@@ -272,6 +272,9 @@ diff_init_result(struct diff_result *result, const struct bn_tol *curr_diff_tol,
     } else {
 	result->obj_name = NULL;
     }
+    result->dp_left = RT_DIR_NULL;
+    result->dp_ancestor = RT_DIR_NULL;
+    result->dp_right = RT_DIR_NULL;
     result->param_state = DIFF_EMPTY;
     result->attr_state = DIFF_EMPTY;
     BU_GET(result->diff_tol, struct bn_tol);
@@ -595,6 +598,9 @@ db_diff_dp(const struct db_i *left,
     } else {
 	result = ext_result;
     }
+
+    if (left_dp) result->dp_left = left_dp;
+    if (right_dp) result->dp_right = right_dp;
 
     get_diff_components(&left_components, left, left_dp);
     get_diff_components(&right_components, right, right_dp);
@@ -951,6 +957,10 @@ db_diff3_dp(const struct db_i *left,
     } else {
 	result = ext_result;
     }
+
+    if (left_dp) result->dp_left = left_dp;
+    if (ancestor_dp) result->dp_ancestor = ancestor_dp;
+    if (right_dp) result->dp_right = right_dp;
 
     get_diff_components(&left_components, left, left_dp);
     get_diff_components(&ancestor_components, ancestor, ancestor_dp);

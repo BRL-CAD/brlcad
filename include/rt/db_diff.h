@@ -48,9 +48,12 @@ RT_EXPORT extern void diff_init_avp(struct diff_avp *attr_result);
 RT_EXPORT extern void diff_free_avp(struct diff_avp *attr_result);
 struct diff_result {
     char *obj_name;
+    struct bn_tol *diff_tol;
+    const struct directory *dp_left;
+    const struct directory *dp_ancestor;
+    const struct directory *dp_right;
     int param_state;  /* results of diff for all parameters */
     int attr_state;   /* results of diff for all attributes */
-    struct bn_tol *diff_tol;
     struct bu_ptbl *param_diffs;  /* ptbl of diff_avps of parameters */
     struct bu_ptbl *attr_diffs;   /* ptbl of diff_avps of attributes */
 };
