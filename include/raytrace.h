@@ -219,9 +219,8 @@ struct db_full_path {
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
 };
-#define DB_FULL_PATH_POP(_pp) { \
-	(_pp)->fp_len--; \
-    }
+#define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
+
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
 #define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
