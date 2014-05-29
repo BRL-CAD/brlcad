@@ -8,9 +8,10 @@ list(REMOVE_DUPLICATES GDIFF_INCLUDE_DIRS)
 include_directories(${GDIFF_INCLUDE_DIRS})
 
 set(gdiff_srcs
-  containers.c
+  diff3_summary.c
+  diff_summary.c
   gdiff2.c
-  summary.c
+  utility.c
   )
 
 BRLCAD_ADDEXEC(gdiff2 "${gdiff_srcs}" "librt")
