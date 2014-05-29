@@ -8,6 +8,10 @@ use warnings;
 use CGrammar; # <== an auto-generated file
 
 sub parse_cfile {
+  # IMPORTANT: namespaces as defined below are critical for use in the
+  # CGrammar module!!
+  package Parse::Recdescent::CGrammar;
+
   my $ifil = shift @_;
   my $oref = shift @_;
 
@@ -29,10 +33,6 @@ sub parse_cfile {
   #  }
 
 
-  # IMPORTANT: namespaces as defined below are critical for use in the
-  # CGrammar module!!
-  package Parse::Recdescent::CGrammar;
-
   my $errfil = 'PRD-errfile.txt';
   local *STDERR = IO::File->new(">$errfil")
     or die $!;
@@ -43,15 +43,24 @@ sub parse_cfile {
   my @ilines = <$fp>;
   my $text = join(' ', @ilines);
 
+=pod
+
+  $::RD_AUTOACTION = q {
+    { $#item==1 ? $item[1] : "$item[0]_node"->new(@item[1..$#item]) };
   $::RD_HINT = 1;
-  $::RD_AUTOACTION = q {%item};
-  $::opt_FUNCTIONS    = '1';
-  $::opt_DECLARATIONS = '1';
-  $::opt_STRUCTS      = '1';
+
+=cut
+
+  $::opt_FUNCTIONS    = '';
+  $::opt_DECLARATIONS = '';
+  $::opt_STRUCTS      = '';
 
   $::functions_output = '';
   $::declarations_output = '';
   $::structs_output = '';
+
+  $::debug = 0;
+  %::item  = (); # feed %items to it
 
   my $parser = CGrammar->new();
 
@@ -61,20 +70,22 @@ sub parse_cfile {
     return;
   }
 
-  print "\nDefined Functions:\n\n$::functions_output\n\n"
-    if defined $::functions_output
-      and $::opt_FUNCTIONS;
-  print "\nDeclarations:\n\n$::declarations_output\n\n"
-    if defined $::declarations_output
-      and $::opt_DECLARATIONS;
-  print "\nStructures:\n\n$::structs_output\n\n"
-    if defined $::structs_output
-      and $::opt_STRUCTS;
+  if (0) {
+    print "\nDefined Functions:\n\n$::functions_output\n\n"
+      if defined $::functions_output
+	and $::opt_FUNCTIONS;
+    print "\nDeclarations:\n\n$::declarations_output\n\n"
+      if defined $::declarations_output
+	and $::opt_DECLARATIONS;
+    print "\nStructures:\n\n$::structs_output\n\n"
+      if defined $::structs_output
+	and $::opt_STRUCTS;
+  }
 
   use Data::Dumper;
-  print Dumper($ptree);
+  print Dumper(\%::item);
 
-  die "debug exit";
+  printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
 } # parse_cfile
 

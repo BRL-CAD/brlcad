@@ -1,6 +1,7 @@
 # C grammar from the Parse::RecDescent git repo in file:
 #   'demo_Cgrammar_v2.pl'
 # Quote:  This improved version of the C grammar was provided by Joe Buehler
+<autotree>
 
 primary_expression:
 	IDENTIFIER
@@ -108,6 +109,12 @@ declaration:
             }
         }
 	| declaration_specifiers ';'
+	{
+            if ($::opt_DECLARATIONS) {
+		$::declarations_output .= ::flatten_list($item[1]);
+		$::declarations_output .= ::flatten_list($item[2]) . "\n";
+            }
+        }
 
 declaration_specifiers:
 	( storage_class_specifier | type_specifier | type_qualifier )(s)
@@ -140,7 +147,21 @@ struct_or_union_specifier:
 		}
         }
 	| struct_or_union '{' struct_declaration_list '}'
+	{
+		if ($::opt_STRUCTS) {
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]) . "\n";
+		   $::structs_output .= ::flatten_list_beautified($item[3]);
+		   $::structs_output .= ::flatten_list($item[4]) . ";\n\n";
+		}
+        }
 	| struct_or_union IDENTIFIER
+	{
+		if ($::opt_STRUCTS) {
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]) . "\n";
+		}
+        }
 
 struct_or_union:
 	/(struct|union)(?![a-zA-Z0-9_])/
@@ -165,7 +186,16 @@ struct_declarator:
 enum_specifier:
 	ENUM '{' enumerator_list '}'
 	{
-		if (1 || $::opt_STRUCTS) { #
+		if ($::opt_STRUCTS) {
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]) . "\n";
+		   $::structs_output .= ::flatten_list_beautified($item[3]);
+		   $::structs_output .= ::flatten_list($item[4]) . ";\n\n";
+		}
+        }
+	| ENUM IDENTIFIER '{' enumerator_list '}'
+	{
+		if ($::opt_STRUCTS) { #
 		   $::structs_output .= ::flatten_list($item[1]) . " ";
 		   $::structs_output .= ::flatten_list($item[2]);
 		   $::structs_output .= ::flatten_list($item[3]) . "\n";
@@ -173,8 +203,13 @@ enum_specifier:
 		   $::structs_output .= ::flatten_list($item[5]) . ";\n\n";
 		}
         }
-	| ENUM IDENTIFIER '{' enumerator_list '}'
 	| ENUM IDENTIFIER
+	{
+		if ($::opt_STRUCTS) { #
+		   $::structs_output .= ::flatten_list($item[1]) . " ";
+		   $::structs_output .= ::flatten_list($item[2]) . "\n";
+		}
+        }
 
 enumerator_list:
 	enumerator (',' enumerator)(s?)
@@ -297,8 +332,16 @@ translation_unit:
 	external_declaration(s)
 
 external_declaration:
-	function_definition { print "*** function\n"; }
-	| declaration { print "*** declaration\n"; }
+	function_definition
+	{
+		print "*** function\n";
+		$::item{$item[0]} = $item[1];
+	}
+	| declaration
+	{
+		print "*** declaration\n";
+		$::item{$item[0]} = $item[1];
+	}
 
 function_definition:
 	declaration_specifiers declarator(?) declaration_list(?) compound_statement
