@@ -54,6 +54,17 @@ changes made.  See document footer for additional details.
 --- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+This patch release includes a plethora of significant bug fixes and
+improvements to BRL-CAD including fixing ADRT/TIE fast triangle ray
+tracing on 32-bit platforms, fixing an issue in our FASTGEN converter
+that affected the import of very complex geometry models, upgrading
+one of our third-party dependencies (libpng) in response to a
+vulnerability report, and improving the 'comb' and 'search' commands
+with new options for restructuring and searching geometry.
+Enhancements continue to be made to our boundary representation (BREP)
+NURBS infrastructure in support of hybrid representation modeling and
+improved geometry interchange with other CAD systems.
+
 * image conversion -R/-G/-B options now require weight - Mohit Daga
 * improved option consistency for image processing tools - Mohit Daga
 * improved pipe ray tracing grazing hit behavior - Keith Bowman
