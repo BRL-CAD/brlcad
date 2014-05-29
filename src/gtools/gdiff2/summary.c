@@ -40,7 +40,7 @@ void
 diff_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls *diff_log) {
     if (state->use_params == 1) {
 	struct diff_avp *minor_type = diff_ptbl_get(dr->param_diffs, "DB5_MINORTYPE");
-	if ((!minor_type) || minor_type->state == DIFF_UNCHANGED || state->verbosity > 3) {
+	if ((!minor_type || minor_type->state == DIFF_UNCHANGED || state->verbosity > 3) && BU_PTBL_LEN(dr->param_diffs) > 1) {
 	    int i = 0;
 	    for (i = 0; i < (int)BU_PTBL_LEN(dr->param_diffs); i++) {
 		struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(dr->param_diffs, i);
