@@ -26,31 +26,12 @@
 /**
  * DIFF bit flags to select various types of results
  */
-#define DIFF_EMPTY	0      /* Nothing to diff */
-#define DIFF_UNCHANGED	1      /* (left == right) */
-#define DIFF_REMOVED	2      /* (right == NULL) */
-#define DIFF_ADDED	4      /* (left == NULL)  */
-#define DIFF_CHANGED	8      /* (left != right) */
-
-/**
- * DIFF3 bit flags to select various types of results
- */
-#define DIFF3_EMPTY                            0          /* Nothing to diff */
-#define DIFF3_UNCHANGED			       1          /* (ancestor == left) && (ancestor == right)                    */
-#define DIFF3_REMOVED_BOTH_IDENTICALLY 	       2          /* (ancestor) && (right == NULL) && (left == NULL)              */
-#define DIFF3_REMOVED_LEFT_ONLY 	       4          /* (ancestor == right) && (left == NULL)                        */
-#define DIFF3_REMOVED_RIGHT_ONLY 	       8          /* (ancestor == left) && (right == NULL)                        */
-#define DIFF3_ADDED_BOTH_IDENTICALLY 	       16         /* (ancestor == NULL) && (left == right)                        */
-#define DIFF3_ADDED_LEFT_ONLY 		       32         /* (ancestor == NULL) && (right == NULL) && (left)              */
-#define DIFF3_ADDED_RIGHT_ONLY 		       64         /* (ancestor == NULL) && (left == NULL) && (right)              */
-#define DIFF3_CHANGED_BOTH_IDENTICALLY         128        /* (ancestor != left) && (ancestor != right) && (left == right) */
-#define DIFF3_CHANGED_LEFT_ONLY 	       256        /* (ancestor != left) && (ancestor == right)                    */
-#define DIFF3_CHANGED_RIGHT_ONLY 	       1024       /* (ancestor == left) && (ancestor != right)                    */
-#define DIFF3_CHANGED_CLEAN_MERGE 	       2048       /* ((ancestor == NULL) || ((ancestor != left) && (ancestor != right))) && (left != right) && (clean_merge)  */
-#define DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL   4096       /* (ancestor != left) && (right== NULL)                         */
-#define DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL   8192       /* (ancestor != right) && (left == NULL)                        */
-#define DIFF3_CONFLICT_ADDED_BOTH	      16384       /* (ancestor == NULL) && (left != right) && (!clean_merge)      */
-#define DIFF3_CONFLICT_CHANGED_BOTH	      32768       /* ((ancestor != left) && (ancestor != right)) && (left != right) && (!clean_merge)  */
+#define DIFF_EMPTY	0
+#define DIFF_UNCHANGED	1
+#define DIFF_REMOVED	2
+#define DIFF_ADDED	4
+#define DIFF_CHANGED	8
+#define DIFF_CONFLICT	16
 
 /*
  * Results for a diff between two objects are held in a set
@@ -111,32 +92,25 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	     const struct bu_attribute_value_set *ancestor_set,
 	     const struct bu_attribute_value_set *right_set,
 	     const struct bn_tol *diff_tol,
-	     /* DIFF3_ADDED_BOTH_IDENTICALLY, DIFF3_ADDED_LEFT_ONLY, DIFF3_ADDED_RIGHT_ONLY */
 	     int (*add_func)(const char *attr_name,
 		                const char *attr_val_left,
 			       	const char *attr_val_right,
-			       	int state,
 			       	void *data),
-	     /* DIFF3_REMOVED_BOTH_IDENTICALLY, DIFF3_REMOVED_LEFT_ONLY, DIFF3_REMOVED_RIGHT_ONLY */
 	     int (*del_func)(const char *attr_name,
+			       	const char *attr_val_left,
 			       	const char *attr_val_ancestor,
-			       	int state,
+			       	const char *attr_val_right,
 			       	void *data),
-	     /* DIFF3_CHANGED_BOTH_IDENTICALLY, DIFF3_CHANGED_LEFT_ONLY, DIFF3_CHANGED_RIGHT_ONLY, DIFF3_CHANGED_CLEAN_MERGE */
 	     int (*chgd_func)(const char *attr_name,
 		                const char *attr_val_left,
 			       	const char *attr_val_ancestor,
 			       	const char *attr_val_right,
-			       	int state,
 			       	void *data),
-	     /* DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, DIFF3_CONFLICT_BOTH_CHANGED */
 	     int (*conflict_func)(const char *attr_name,
 		                const char *attr_val_left,
 			       	const char *attr_val_ancestor,
 			       	const char *attr_val_right,
-			       	int state,
 			       	void *data),
-	     /* DIFF3_UNCHANGED */
 	     int (*unchgd_func)(const char *attr_name,
 			       	const char *attr_val_ancestor,
 			       	void *data),

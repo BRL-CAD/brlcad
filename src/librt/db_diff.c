@@ -725,10 +725,10 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	    const struct bu_attribute_value_set *ancestor_set,
 	    const struct bu_attribute_value_set *right_set,
             const struct bn_tol *diff_tol,
-	    int (*add_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, int state, void *data),
-	    int (*del_func)(const char *attr_name, const char *attr_val, int state, void *data),
-	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data),
-	    int (*conflict_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data),
+	    int (*add_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
+	    int (*conflict_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
 	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
 	    void *client_data)
 {
@@ -756,30 +756,30 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	if (!val_left || !val_right) {
 	    /* Removed from both - no conflict, nothing to merge */
 	    if ((!val_left && !val_right) && val_ancestor) {
-		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_BOTH_IDENTICALLY, client_data);}
+		if (del_func) {state |= del_func(avp->name, NULL, avp->value, NULL, client_data);}
 	    }
 
 	    /* Removed from right_set only, left_set not changed - no conflict,
 	     * right_set removal wins and left_set is not merged */
 	    if ((val_left && !val_right) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_RIGHT_ONLY, client_data);}
+		if (del_func) {state |= del_func(avp->name, val_left, avp->value, NULL, client_data);}
 	    }
 
 	    /* Removed from right_set only, left_set changed - conflict */
 	    if ((val_left && !val_right) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL, client_data);}
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 
 	    /* Removed from left_set only, right_set not changed - no conflict,
 	     * left_set change wins and right_set not merged */
 	    if ((!val_left && val_right) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-		if (del_func) {state |= del_func(avp->name, avp->value, DIFF3_REMOVED_LEFT_ONLY, client_data);}
+		if (del_func) {state |= del_func(avp->name, NULL, avp->value, val_right, client_data);}
 	    }
 
 	    /* Removed from left_set only, right_set changed - conflict,
 	     * merge defaults to preserving information */
 	    if ((!val_left && val_right) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL, client_data);}
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 	} else {
 
@@ -789,20 +789,20 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	    }
 	    /* Identical change to both - changed and merged */
 	    if (avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_BOTH_IDENTICALLY, client_data);}
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 	    /* val_right changed, val_left not changed - val_right change wins and is merged */
 	    if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_left, diff_tol)) {
-		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_RIGHT_ONLY, client_data);}
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 	    /* val_left changed, val_right not changed - val_left change wins and is merged */
 	    if (!avpp_val_compare(val_left, val_right, diff_tol) && avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CHANGED_LEFT_ONLY, client_data);}
+		if (chgd_func) {state |= chgd_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 	    /* val_left and val_right changed and incompatible - conflict,
 	     * merge adds conflict a/v pairs */
 	    if (!avpp_val_compare(val_left, val_right, diff_tol) && !avpp_val_compare(val_ancestor, val_left, diff_tol) && !avpp_val_compare(val_ancestor, val_right, diff_tol)) {
-		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, DIFF3_CONFLICT_CHANGED_BOTH, client_data);}
+		if (conflict_func) {state |= conflict_func(avp->name, val_left, val_ancestor, val_right, client_data);}
 	    }
 	}
     }
@@ -815,15 +815,15 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
             const char *val_right = bu_avs_get(right_set, avp->name);
 	    /* (val_left && !val_right) */
 	    if (val_left && !val_right) {
-		if (add_func) {state |= add_func(avp->name, val_left, NULL, DIFF3_ADDED_LEFT_ONLY, client_data);}
+		if (add_func) {state |= add_func(avp->name, val_left, NULL, client_data);}
 	    } else {
 		int have_same_val = avpp_val_compare(val_left,val_right, diff_tol);
 		/* (val_left == val_right) */
 		if (have_same_val) {
-		    if (add_func) {state |= add_func(avp->name, val_left, val_right, DIFF3_ADDED_BOTH_IDENTICALLY, client_data);}
+		    if (add_func) {state |= add_func(avp->name, val_left, val_right, client_data);}
 		} else {
 		    /* (val_left != val_right) */
-		    if (conflict_func) {state |= conflict_func(avp->name, val_left, NULL, val_right, DIFF3_CONFLICT_ADDED_BOTH, client_data);}
+		    if (conflict_func) {state |= conflict_func(avp->name, val_left, NULL, val_right, client_data);}
 		}
 	    }
         }
@@ -832,7 +832,7 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
     /* Last but not least, right_set - anything in ancestor and/or left_set has already been handled */
     for (BU_AVS_FOR(avp, right_set)) {
         if (!bu_avs_get(ancestor_set, avp->name) && !bu_avs_get(left_set, avp->name)) {
-	    if (add_func) {state |= add_func(avp->name, NULL, avp->value, DIFF3_ADDED_RIGHT_ONLY, client_data);}
+	    if (add_func) {state |= add_func(avp->name, NULL, avp->value, client_data);}
 	}
     }
 
@@ -840,14 +840,14 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 }
 
 HIDDEN int
-diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, int state, void *data)
+diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
     struct diff_avp *avp;
     BU_GET(avp, struct diff_avp);
     diff_init_avp(avp);
-    avp->state = state;
     avp->name = bu_strdup(attr_name);
+    avp->state = DIFF_ADDED;
     if (attr_val_left) avp->left_value = bu_strdup(attr_val_left);
     if (attr_val_right) avp->right_value = bu_strdup(attr_val_right);
     bu_ptbl_ins(diffs, (long *)avp);
@@ -855,32 +855,32 @@ diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *
 }
 
 HIDDEN int
-diff3_dp_attr_del(const char *attr_name, const char *attr_val, int state, void *data)
+diff3_dp_attr_del(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
     struct diff_avp *avp;
     BU_GET(avp, struct diff_avp);
     diff_init_avp(avp);
-    avp->state = state;
     avp->name = bu_strdup(attr_name);
-    avp->ancestor_value = bu_strdup(attr_val);
-    if (state == DIFF3_REMOVED_LEFT_ONLY)
-	avp->right_value = bu_strdup(attr_val);
-    if (state == DIFF3_REMOVED_RIGHT_ONLY)
-	avp->left_value = bu_strdup(attr_val);
+    avp->state = DIFF_REMOVED;
+    avp->ancestor_value = bu_strdup(attr_val_ancestor);
+    if (attr_val_right)
+	avp->right_value = bu_strdup(attr_val_right);
+    if (attr_val_left)
+	avp->left_value = bu_strdup(attr_val_left);
     bu_ptbl_ins(diffs, (long *)avp);
     return avp->state;
 }
 
 HIDDEN int
-diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data)
+diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
     struct diff_avp *avp;
     BU_GET(avp, struct diff_avp);
     diff_init_avp(avp);
-    avp->state = state;
     avp->name = bu_strdup(attr_name);
+    avp->state = DIFF_CHANGED;
     avp->ancestor_value = bu_strdup(attr_val_ancestor);
     avp->right_value = bu_strdup(attr_val_right);
     avp->left_value = bu_strdup(attr_val_left);
@@ -889,19 +889,17 @@ diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char 
 }
 
 HIDDEN int
-diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, int state, void *data)
+diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
     struct diff_avp *avp;
     BU_GET(avp, struct diff_avp);
     diff_init_avp(avp);
-    avp->state = state;
     avp->name = bu_strdup(attr_name);
+    avp->state = DIFF_CONFLICT;
     if (attr_val_ancestor) avp->ancestor_value = bu_strdup(attr_val_ancestor);
-    if (state == DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
-    avp->right_value = bu_strdup(attr_val_right);
-    if (state == DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL || state == DIFF3_CONFLICT_CHANGED_BOTH)
-    avp->left_value = bu_strdup(attr_val_left);
+    if (attr_val_right) avp->right_value = bu_strdup(attr_val_right);
+    if (attr_val_left) avp->left_value = bu_strdup(attr_val_left);
     bu_ptbl_ins(diffs, (long *)avp);
     return avp->state;
 }
@@ -913,7 +911,7 @@ diff3_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
     struct diff_avp *avp;
     BU_GET(avp, struct diff_avp);
     diff_init_avp(avp);
-    avp->state = DIFF3_UNCHANGED;
+    avp->state = DIFF_UNCHANGED;
     avp->name = bu_strdup(attr_name);
     avp->ancestor_value = bu_strdup(attr_val);
     avp->right_value = bu_strdup(attr_val);
@@ -933,7 +931,7 @@ db_diff3_dp(const struct db_i *left,
        	db_compare_criteria_t flags,
 	struct diff_result *ext_result)
 {
-    int state = DIFF3_EMPTY;
+    int state = DIFF_EMPTY;
 
     struct diff_elements left_components;
     struct diff_elements ancestor_components;
@@ -1009,14 +1007,14 @@ db_diff3(const struct db_i *dbip_left,
 	db_compare_criteria_t flags,
 	struct bu_ptbl *results)
 {
-    int state = DIFF3_EMPTY;
+    int state = DIFF_EMPTY;
     struct directory *dp_ancestor, *dp_left, *dp_right;
 
     /* Step 1: look at all objects in the ancestor database */
     FOR_ALL_DIRECTORY_START(dp_ancestor, dbip_ancestor) {
 	struct bu_external ext_left, ext_ancestor, ext_right;
 	struct diff_result *result;
-	int ancestor_state = DIFF3_EMPTY;
+	int ancestor_state = DIFF_EMPTY;
 	int extern_state = DIFF_UNCHANGED;
 	BU_GET(result, struct diff_result);
 	diff_init_result(result, diff3_tol, dp_ancestor->d_namep);
@@ -1064,7 +1062,7 @@ db_diff3(const struct db_i *dbip_left,
 	dp_ancestor = db_lookup(dbip_ancestor, dp_left->d_namep, 0);
 	if (dp_ancestor == RT_DIR_NULL) {
 	    struct bu_external ext_left, ext_right;
-	    int left_state = DIFF3_EMPTY;
+	    int left_state = DIFF_EMPTY;
 	    int extern_state = DIFF_UNCHANGED;
 	    struct diff_result *result;
 	    BU_GET(result, struct diff_result);

@@ -235,49 +235,49 @@ diff_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct di
 void
 diff3_attrs_log(struct diff_result *dr, struct diff_state *state, struct bu_vls *diff_log, struct diff_avp *avp)
 {
-    if (state->return_removed && avp->state == DIFF3_REMOVED_BOTH_IDENTICALLY) {
+    if (state->return_removed && avp->state == DIFF_REMOVED && !avp->left_value && !avp->right_value) {
 	bu_vls_printf(diff_log, "D(B) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
     }
-    if (state->return_removed && avp->state == DIFF3_REMOVED_LEFT_ONLY) {
+    if (state->return_removed && avp->state == DIFF_REMOVED && avp->right_value) {
 	bu_vls_printf(diff_log, "D(L) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
     }
-    if (state->return_removed && avp->state == DIFF3_REMOVED_RIGHT_ONLY) {
+    if (state->return_removed && avp->state == DIFF_REMOVED && avp->left_value) {
 	bu_vls_printf(diff_log, "D(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
     }
-    if (state->return_added && avp->state == DIFF3_ADDED_BOTH_IDENTICALLY) {
+    if (state->return_added && avp->state == DIFF_ADDED && avp->left_value && avp->right_value) {
 	bu_vls_printf(diff_log, "A(B) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_added && avp->state == DIFF3_ADDED_LEFT_ONLY) {
+    if (state->return_added && avp->state == DIFF_ADDED && !avp->right_value) {
 	bu_vls_printf(diff_log, "A(L) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_added && avp->state == DIFF3_ADDED_RIGHT_ONLY) {
+    if (state->return_added && avp->state == DIFF_ADDED && !avp->left_value) {
 	bu_vls_printf(diff_log, "A(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
-    if (state->return_changed && avp->state == DIFF3_CHANGED_BOTH_IDENTICALLY) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && avp->left_value && avp->right_value) {
 	bu_vls_printf(diff_log, "M(B) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_changed && avp->state == DIFF3_CHANGED_LEFT_ONLY) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && !avp->right_value) {
 	bu_vls_printf(diff_log, "M(L) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_changed && avp->state == DIFF3_CHANGED_RIGHT_ONLY) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && !avp->left_value) {
 	bu_vls_printf(diff_log, "M(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
-    if (state->return_conflicts && avp->state == DIFF3_CONFLICT_ADDED_BOTH) {
-	bu_vls_printf(diff_log, "C(LA) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
-	bu_vls_printf(diff_log, "C(RA) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
+    if (state->return_conflicts && avp->state == DIFF_CONFLICT && !avp->ancestor_value) {
+	bu_vls_printf(diff_log, "C(L+) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
+	bu_vls_printf(diff_log, "C(R+) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
-    if (state->return_conflicts && avp->state == DIFF3_CONFLICT_CHANGED_BOTH) {
-	bu_vls_printf(diff_log, "C(AC) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
-	bu_vls_printf(diff_log, "C(LC) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
-	bu_vls_printf(diff_log, "C(RC) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
+    if (state->return_conflicts && avp->state == DIFF_CONFLICT && avp->ancestor_value && avp->left_value && avp->right_value) {
+	bu_vls_printf(diff_log, "C(A) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
+	bu_vls_printf(diff_log, "C(L) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
+	bu_vls_printf(diff_log, "C(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
-    if (state->return_conflicts && avp->state == DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL) {
-	bu_vls_printf(diff_log, "C(LC) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
-	bu_vls_printf(diff_log, "C(RD) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
+    if (state->return_conflicts && avp->state == DIFF_CONFLICT && avp->ancestor_value && avp->left_value && !avp->right_value) {
+	bu_vls_printf(diff_log, "C(LM) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
+	bu_vls_printf(diff_log, "C(R-) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
     }
-    if (state->return_conflicts && avp->state == DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL) {
-	bu_vls_printf(diff_log, "C(RC) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
-	bu_vls_printf(diff_log, "C(LD) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
+    if (state->return_conflicts && avp->state == DIFF_CONFLICT && avp->ancestor_value && !avp->left_value && avp->right_value) {
+	bu_vls_printf(diff_log, "C(RM) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
+	bu_vls_printf(diff_log, "C(L-) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->ancestor_value);
     }
 }
 
@@ -285,7 +285,7 @@ void
 diff3_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls *diff_log) {
     if (state->use_params == 1) {
 	struct diff_avp *minor_type = diff_ptbl_get(dr->param_diffs, "DB5_MINORTYPE");
-	if ((!minor_type) || minor_type->state == DIFF3_UNCHANGED || state->verbosity > 3) {
+	if ((!minor_type) || minor_type->state == DIFF_UNCHANGED || state->verbosity > 3) {
 	    int i = 0;
 	    for (i = 0; i < (int)BU_PTBL_LEN(dr->param_diffs); i++) {
 		struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(dr->param_diffs, i);
@@ -340,33 +340,12 @@ diff3_summarize(struct bu_vls *diff_log, const struct bu_ptbl *results, struct d
 	int unchanged = 0;
 	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(results, i);
 
-	if (state->use_params && ((dr->param_state == DIFF3_ADDED_BOTH_IDENTICALLY) ||
-		(dr->param_state == DIFF3_ADDED_LEFT_ONLY) ||
-		(dr->param_state == DIFF3_ADDED_RIGHT_ONLY)) ) {
-	    added = 1;
-	}
-
-	if (state->use_params && ((dr->param_state == DIFF3_REMOVED_BOTH_IDENTICALLY) ||
-		(dr->param_state == DIFF3_REMOVED_LEFT_ONLY) ||
-		(dr->param_state == DIFF3_REMOVED_RIGHT_ONLY)) ) {
-	    removed = 1;
-	}
-
-	if (state->use_params && ((dr->param_state & DIFF3_CONFLICT_CHANGED_BOTH) ||
-		(dr->param_state & DIFF3_CONFLICT_ADDED_BOTH) ||
-		(dr->param_state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL) ||
-		(dr->param_state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL)) ) {
-	    conflict = 1;
-	}
-	if (state->use_attrs && ((dr->attr_state & DIFF3_CONFLICT_CHANGED_BOTH) ||
-		(dr->attr_state & DIFF3_CONFLICT_ADDED_BOTH) ||
-		(dr->attr_state & DIFF3_CONFLICT_LEFT_CHANGE_RIGHT_DEL) ||
-		(dr->attr_state & DIFF3_CONFLICT_RIGHT_CHANGE_LEFT_DEL)) ) {
-	    conflict = 1;
-	}
+	if (state->use_params && dr->param_state == DIFF_ADDED) {added = 1;}
+	if (state->use_params && dr->param_state == DIFF_REMOVED) {removed = 1;}
+	if (state->use_params && dr->param_state & DIFF_CONFLICT) {conflict = 1;}
 	if (!conflict && !added && !removed) {
-	    if (state->use_params && dr->param_state != DIFF3_UNCHANGED && dr->param_state != DIFF3_EMPTY) changed = 1;
-	    if (state->use_attrs && dr->attr_state != DIFF3_UNCHANGED && dr->attr_state != DIFF3_EMPTY) changed = 1;
+	    if (state->use_params && dr->param_state != DIFF_UNCHANGED && dr->param_state != DIFF_EMPTY) changed = 1;
+	    if (state->use_attrs && dr->attr_state != DIFF_UNCHANGED && dr->attr_state != DIFF_EMPTY) changed = 1;
 	}
 	if (!conflict && !added && !removed && !changed) {
 	    unchanged = 1;
