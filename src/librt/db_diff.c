@@ -200,8 +200,12 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 	return 0;
     }
 
-    for (i = offset; i < list_c; i += 2) {
-	(void)bu_avs_add(avs, listv[i], listv[i+1]);
+    if (list_c > 2) {
+	for (i = offset; i < list_c; i += 2) {
+	    (void)bu_avs_add(avs, listv[i], listv[i+1]);
+	}
+    } else {
+	return -1;
     }
 
     Tcl_Free((char *)listv);

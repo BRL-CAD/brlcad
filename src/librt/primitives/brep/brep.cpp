@@ -4106,7 +4106,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	if (ok) {
 	    void *archive_cp = archive.CreateCopy();
 	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
-	    bu_vls_printf(logstr, " %s", brep64);
+	    bu_vls_printf(logstr, " \"%s\"", brep64);
 	    bu_free(archive_cp, "free archive copy");
 	    bu_free(brep64, "free encoded brep string");
 	    return 0;
