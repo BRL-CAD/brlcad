@@ -121,6 +121,12 @@ of the image.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>-F</option><replaceable> Frame_buffer</replaceable></term>
+  <listitem>
+<para>Specify frame buffer.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>-v</option></term>
   <listitem>
 <para>Verbose mode.
