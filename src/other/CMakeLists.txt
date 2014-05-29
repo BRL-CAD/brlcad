@@ -347,6 +347,11 @@ ELSE(BRLCAD_PNG_BUILD)
 
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
+
+# Make sure this value is in the cache, regardless of
+# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
+set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
+
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng-config)
