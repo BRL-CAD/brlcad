@@ -2,6 +2,7 @@
 /BH.pm
 /BE.pm
 /CGrammar.pm
+/CGrammar2.pm
 /# dirs:
 /parse-eyeapp-svn-trunk
 /tmp-mod-examples-tmp
@@ -13,4 +14,7 @@
 /.path_md5hash_tablestore
 /.svnignore
 /*.new
+/t2
+/t.dumper
+
 
