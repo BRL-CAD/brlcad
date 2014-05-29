@@ -194,12 +194,12 @@ sub convert {
       print $fp "#define  __restrict        /* NOTHING */\n";
       print $fp "#define  __const           const\n";
 
-      # if devloping, add a function to check parsing
+      # if developing, add a function to check its parsing
       if ($D::devel) {
 	print $fp "void\n";
 	print $fp "foo(int i)\n";
 	print $fp "{\n";
-	print $fp "  printf("value of i is '%d'\n", i);\n";
+	print $fp "  printf(\"value of i is '%%d'\\\\n\", i);\n";
 	print $fp "}\n";
       }
 
