@@ -25,7 +25,7 @@ die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::DIDIR' (see D
   if ! -d $BP::DIDIR;
 
 my $p = basename($0);
-my $usage  = "Usage:   $p mode [options...]\n\n";
+my $usage  = "Usage: $p mode [options...]\n\n";
 $usage    .= "  modes:   -r | -cN | -h=X | -b | -e\n";
 $usage    .= "  options: -f -d -C -h";
 if (!@ARGV) {
