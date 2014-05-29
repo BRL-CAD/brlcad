@@ -33,12 +33,15 @@ diff_state_init(struct diff_state *state)
     state->have_search_filter = 0;
     state->verbosity = 2;
     state->output_mode = 0;
+    state->merge = 0;
     BU_GET(state->diff_tol, struct bn_tol);
     state->diff_tol->dist = RT_LEN_TOL;
     BU_GET(state->diff_log, struct bu_vls);
     BU_GET(state->search_filter, struct bu_vls);
+    BU_GET(state->merge_file, struct bu_vls);
     bu_vls_init(state->diff_log);
     bu_vls_init(state->search_filter);
+    bu_vls_init(state->merge_file);
 }
 
 void
@@ -46,9 +49,11 @@ diff_state_free(struct diff_state *state)
 {
     bu_vls_free(state->diff_log);
     bu_vls_free(state->search_filter);
+    bu_vls_free(state->merge_file);
     BU_PUT(state->diff_tol, struct bn_tol);
     BU_PUT(state->diff_log, struct bu_vls);
     BU_PUT(state->search_filter, struct bu_vls);
+    BU_PUT(state->merge_file, struct bu_vls);
 }
 
 struct diff_avp *

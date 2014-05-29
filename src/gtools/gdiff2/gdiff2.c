@@ -53,10 +53,8 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
-	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
-	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
-
-	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) || (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
+	    if ((dr->dp_left  != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered,  (long *)dr->dp_left ) != -1)) ||
+		(dr->dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dr->dp_right) != -1))) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
 		filtered_diff_state |= dr->attr_state;
@@ -115,13 +113,9 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
-	    struct directory *dp_left = db_lookup(left_dbip, dr->obj_name, 0);
-	    struct directory *dp_ancestor = db_lookup(ancestor_dbip, dr->obj_name, 0);
-	    struct directory *dp_right = db_lookup(right_dbip, dr->obj_name, 0);
-
-	    if ((dp_left != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered, (long *)dp_left) != -1)) ||
-		    (dp_ancestor != RT_DIR_NULL && (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)dp_ancestor) != -1)) ||
-		    (dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dp_right) != -1))) {
+	    if ((dr->dp_left     != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered,     (long *)dr->dp_left)     != -1)) ||
+		(dr->dp_ancestor != RT_DIR_NULL && (bu_ptbl_locate(&ancestor_dbip_filtered, (long *)dr->dp_ancestor) != -1)) ||
+		(dr->dp_right    != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered,    (long *)dr->dp_right)    != -1))) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
 		filtered_diff_state |= dr->attr_state;
@@ -143,6 +137,15 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 	    diff3_summarize(state->diff_log, &results, state);
 	    bu_log("%s", bu_vls_addr(state->diff_log));
 	}
+    }
+
+    if (state->merge) {
+	bu_log("Merging into %s\n", bu_vls_addr(state->merge_file));
+	/*
+	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
+	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
+	}
+	*/
     }
 
     return diff3_state;
@@ -169,7 +172,7 @@ main(int argc, char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "aC:cF:rt:uv:xh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "aC:cF:M:rt:uv:xh?")) != -1) {
 	switch (c) {
 	    case 'a':
 		state->return_added = 1;
@@ -186,6 +189,10 @@ main(int argc, char **argv)
 	    case 'F':
 		state->have_search_filter = 1;
 		bu_vls_sprintf(state->search_filter, "%s", bu_optarg);
+		break;
+	    case 'M':
+		state->merge = 1;
+		bu_vls_sprintf(state->merge_file, "%s", bu_optarg);
 		break;
 	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
 		if (sscanf(bu_optarg, "%lf", &(state->diff_tol->dist)) != 1) {

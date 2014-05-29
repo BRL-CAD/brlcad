@@ -50,9 +50,11 @@ struct diff_state {
     int have_search_filter;
     int verbosity;
     int output_mode;
+    int merge;
     struct bn_tol *diff_tol;
     struct bu_vls *diff_log;
     struct bu_vls *search_filter;
+    struct bu_vls *merge_file;
 };
 
 extern void diff_state_init(struct diff_state *state);
