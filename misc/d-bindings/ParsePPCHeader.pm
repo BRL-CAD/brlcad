@@ -5,12 +5,13 @@ package ParsePPCHeader;
 use strict;
 use warnings;
 
-use CGrammar; # <== an auto-generated file
+use CGrammar;  # <== an auto-generated file
+use CGrammar2; # <== an auto-generated file
 
 # for debugging:
 my $COMP = 0;
 
-sub parse_cfile {
+sub parse_cfile_pure_autotree {
 
   my $ifil = shift @_;
   my $oref = shift @_;
@@ -56,7 +57,7 @@ sub parse_cfile {
   $Data::Dumper::Purity  = 1;
   $Data::Dumper::Deparse = 1;
 
-  if (1) {
+  if (0) {
     print Dumper $ptree;
   }
   elsif (1) {
@@ -65,11 +66,22 @@ sub parse_cfile {
 
   printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
-} # parse_cfile
+} # parse_cfile_pure_autotree
 
 sub inspect_PRD_syntax_pure_autotree {
-  my $treeref = shift @_;
+  my $tree = shift @_;
   print "DEBUG:  syntax tree:\n";
+
+  die "what ??" if !exists $tree->{'__RULE__'};
+  die "what ??" if !exists $tree->{'external_declaration(s)'};
+
+  my @extdecl_hrefs = @{$tree->{'external_declaration(s)'}};
+  foreach my $href (@extdecl_hrefs) {
+    die "what ??" if !exists $href->{'__RULE__'};
+    #die "what ??" if !exists $href->{'external_declaration'};
+  }
+
+  print "so far, so good\n";
 
 =pod
 

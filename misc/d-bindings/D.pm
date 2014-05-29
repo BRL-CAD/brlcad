@@ -225,7 +225,7 @@ sub convert {
       convert_with_gcc_E($cfil, $tfil1);
 
       # parse that file once
-      ParsePPCHeader::parse_cfile($tfil1, $ofils_ref);
+      ParsePPCHeader::parse_cfile_pure_autotree($tfil1, $ofils_ref);
 
       die "debug exit";
 
