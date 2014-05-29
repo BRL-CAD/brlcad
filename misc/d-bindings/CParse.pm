@@ -9,14 +9,19 @@ use warnings;
 # objects are useful members of the C parse tree defined in 'c-grammar.txt':
 #   key:   name
 #   value: type children (array, hash, scalar
+
+=pod
+
 our %obj
   = (
      'translation_unit'     => { type => 'array',
-				 children => ['external_declaration', => '', },
+				 children => ['external_declaration', => '', ,
      'external_declaration' => { type => 'array', parent => 'translation_unit', },
      'function_definition'  => { type => 'array', parent => 'external_declaration', },
      'declaration'          => { type => 'array', parent => 'external_declaration', },
     );
+
+=cut
 
 # mandatory true return for a Perl module
 1;
