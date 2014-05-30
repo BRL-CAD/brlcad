@@ -78,6 +78,82 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	}
     }
 
+    if (state->merge) {
+	int diff3_state = DIFF_EMPTY;
+	struct bu_ptbl diff3_results;
+	struct db_i *inmem_dbip;
+	int i;
+	BU_PTBL_INIT(&diff3_results);
+	BU_GET(inmem_dbip, struct db_i);
+	inmem_dbip->dbi_eof = (off_t)-1L;
+	inmem_dbip->dbi_fp = NULL;
+	inmem_dbip->dbi_mf = NULL;
+	inmem_dbip->dbi_read_only = 0;
+
+	/* Initialize fields */
+	for (i = 0; i <RT_DBNHASH; i++) {
+	    inmem_dbip->dbi_Head[i] = RT_DIR_NULL;
+	}
+
+	inmem_dbip->dbi_local2base = 1.0;         /* mm */
+	inmem_dbip->dbi_base2local = 1.0;
+	inmem_dbip->dbi_title = bu_strdup("Untitled BRL-CAD Database");
+	inmem_dbip->dbi_uses = 1;
+	inmem_dbip->dbi_filename = NULL;
+	inmem_dbip->dbi_filepath = NULL;
+	inmem_dbip->dbi_version = 5;
+
+	bu_ptbl_init(&inmem_dbip->dbi_clients, 128, "dbi_clients[]");
+	inmem_dbip->dbi_magic = DBI_MAGIC;                /* Now it's valid */
+
+	diff3_state = db_diff3(left_dbip, inmem_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &diff3_results);
+
+	/* Now we have our diff results, time to filter (if applicable) and report them */
+	if (state->have_search_filter) {
+	    int s_flags = 0;
+	    struct bu_ptbl diff3_results_filtered;
+	    /* In order to respect search filters involving depth, we have to build "allowed"
+	     * sets of objects from both databases based on straight-up search filtering of
+	     * the original databases.  We then check the filtered diff results against the
+	     * search-filtered original databases to make sure they are valid for the final
+	     * results-> */
+	    struct bu_ptbl left_dbip3_filtered = BU_PTBL_INIT_ZERO;
+	    struct bu_ptbl right_dbip3_filtered = BU_PTBL_INIT_ZERO;
+	    s_flags |= DB_SEARCH_HIDDEN;
+	    s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
+
+	    (void)db_search(&left_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
+	    (void)db_search(&right_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+
+	    BU_PTBL_INIT(&diff3_results_filtered);
+	    for (i = 0; i < (int)BU_PTBL_LEN(&diff3_results); i++) {
+		struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&diff3_results, i);
+		if ((dr->dp_left  != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip3_filtered,  (long *)dr->dp_left)  != -1)) ||
+	            (dr->dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip3_filtered, (long *)dr->dp_right) != -1))) {
+		    bu_ptbl_ins(&diff3_results_filtered, (long *)dr);
+		} else {
+		    diff_free_result(dr);
+		}
+	    }
+
+	    bu_ptbl_reset(&diff3_results);
+	    bu_ptbl_cat(&diff3_results, &diff3_results_filtered);
+	    bu_ptbl_free(&diff3_results_filtered);
+	}
+
+	(void)diff3_merge(left_dbip, inmem_dbip, right_dbip, state, &diff3_results);
+
+	bu_ptbl_free(&inmem_dbip->dbi_clients);
+	for (i = 0; i < (int)BU_PTBL_LEN(&diff3_results); i++) {
+	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&diff3_results, i);
+	    diff_free_result(dr);
+	}
+	bu_ptbl_free(&diff3_results);
+	BU_PUT(inmem_dbip, struct db_i);
+    }
+
+    bu_ptbl_free(&results);
+
     return diff_state;
 }
 
@@ -139,9 +215,11 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 	}
     }
 
-   if (state->merge) {
-       (void)diff3_merge(left_dbip, ancestor_dbip, right_dbip, state, &results);
+    if (state->merge) {
+	(void)diff3_merge(left_dbip, ancestor_dbip, right_dbip, state, &results);
     }
+
+    bu_ptbl_free(&results);
 
     return diff3_state;
 }
