@@ -77,7 +77,7 @@ our $force   = 0;
 our $verbose = 0;
 our $debug   = 0;
 our $clean   = 0;
-our $devel   = 1;
+our $devel   = 0;
 
 # global vars
 Readonly our $NEW  => -1;
