@@ -60,17 +60,23 @@ while (defined(my $line = <$fp>)) {
   $line = strip_comment($line);
   if ($line !~ /\S+/) {
     print "DEBUG:  skipping empty line '$line'.\n"
-      if $debug;
+      if (0 && $debug);
     next;
   }
 
-  if ($debug) {
+  if (0 && $debug) {
     chomp $line;
     print "DEBUG: non-empty line '$line'\n";
   }
 
   # add some spaces on the line for more reliable tokenizing
-  my $have_colon = $line =~ /:/ ? 1 : 0;
+  my $have_colon = ($line =~ m{\A [a-zA-Z_]+\:}x) ? 1 : 0;
+  # check for malformed lines (or my misunderstanding)
+  if ($line =~ m{\A [a-zA-Z_]+ \:\S}x) {
+    chomp $line;
+    die "bad colon line '$line'";
+  }
+
   if ($have_colon) {
     if ($debug) {
       my $s = $line;
@@ -78,7 +84,8 @@ while (defined(my $line = <$fp>)) {
       print "DEBUG: original line with colon:\n";
       print "  '$s'\n";
     }
-    $line =~ s{([\S]*)\:}{$1 \:};
+    # affect only colons at end (or beginning?) of identifiers
+    $line =~ s{\A ([a-zA-Z_]+)\:}{$1 \:}x;
     if ($debug) {
       my $s = $line;
       chomp $s;
