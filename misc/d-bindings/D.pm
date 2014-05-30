@@ -481,7 +481,7 @@ sub convert1final {
   print $fpo "extern (C) {\n";
   print $fpo "\n";
 
-  foreach my $line (@lines) {
+  foreach my $line (@olines) {
     print $fpo $line;
   }
 
