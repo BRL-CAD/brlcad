@@ -211,8 +211,9 @@ sub extract_object {
     chomp $line;
 
     # skip blank lines
-    my @d = split(' ', $line);
-    next LINE if !defined $d[0];
+    next LINE if ($line !~ /\S+/);
+    #my @d = split(' ', $line);
+    #next LINE if !defined $d[0];
 
     ++$nactual_lines;
 
