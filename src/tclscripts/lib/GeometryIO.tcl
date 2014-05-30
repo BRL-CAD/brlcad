@@ -64,6 +64,46 @@ proc geom_load {input_file gui_feedback} {
  		catch {eval exec $cmd} _conv_log
             }
 	}
+	".bdf" {
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	            -d \
+	    	    $input_file \
+		    $output_file]
+ 		catch {eval exec $cmd} _conv_log
+            }
+	}
+	".fg" {
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	            -d \
+	    	    $input_file \
+		    $output_file]
+ 		catch {eval exec $cmd} _conv_log
+            }
+	}
+	".fg4" {
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	            -d \
+	    	    $input_file \
+		    $output_file]
+ 		catch {eval exec $cmd} _conv_log
+            }
+	}
+
 	".stl" {
             if {[string compare $gui_feedback "1"] == 0} {
                set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
@@ -103,7 +143,13 @@ proc geom_load {input_file gui_feedback} {
             }
 	}
 	default {
-	    return -code error "File format $input_ext is not supported."
+            if {[string compare $gui_feedback "1"] == 0} {
+               set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+                   [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+	       catch {eval exec $gui_cmd} _conv_log
+            } else {
+	       return -code error "File format $input_ext is not supported."
+	    }
 	}
     }
 

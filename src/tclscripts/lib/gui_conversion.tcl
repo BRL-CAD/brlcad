@@ -183,6 +183,114 @@ proc ::rhino_build_cmd {} {
 
 #################################################################
 #
+#                 FASTGEN 4 specific logic
+#
+#################################################################
+
+proc fast4_options {} {
+    set w [frame .[clock seconds]]
+    wm resizable . 800 600
+    wm title . "FASTGEN 4 File Importer options"
+
+    label $w.ofl -text "Output file"
+    entry $w.ofe -textvariable ::output_file -width 40 -bg white
+    grid $w.ofl  -column 0  -row 0  -sticky e
+    grid $w.ofe  -column 1 -columnspan 2  -row 0  -sticky news
+
+    label $w.debugl      -text "Print Debugging Info"
+    checkbutton $w.debuge -variable ::print_debug_info
+    grid $w.debugl  -column 0  -row 1  -sticky e
+    grid $w.debuge  -column 1 -row 1  -sticky news
+
+    label $w.quietl     -text "Quiet Mode (only report errors)"
+    checkbutton $w.quiete -variable ::print_quiet
+    grid $w.quietl  -column 0  -row 2  -sticky e
+    grid $w.quiete  -column 1 -row 2  -sticky news
+
+    label $w.dnamesl     -text "Warn when creating default names"
+    checkbutton $w.dnamese -variable ::print_dnames
+    grid $w.dnamesl  -column 0  -row 3  -sticky e
+    grid $w.dnamese  -column 1 -row 3  -sticky news
+
+    label $w.listregionsl -text "Process only listed region ids:\nSupply list (1, 4, 7) or range (2-57)"
+    entry $w.listregionse -textvariable ::region_list -bg white
+    grid $w.listregionsl  -column 0  -row 4  -sticky e
+    grid $w.listregionse  -column 1 -columnspan 2  -row 4  -sticky news
+
+    label $w.muvesl    -text "MUVES input file:\n(CHGCOMP and CBACKING elements)"
+    entry $w.muvese -textvariable ::muves -bg white
+    grid $w.muvesl  -column 0  -row 5  -sticky e
+    grid $w.muvese  -column 1 -columnspan 2  -row 5  -sticky news
+
+    label $w.plotl    -text "libplot3 plot file:\n(CTRI and CQUAD elements)"
+    entry $w.plote -textvariable ::plot -bg white
+    grid $w.plotl  -column 0  -row 6  -sticky e
+    grid $w.plote  -column 1 -columnspan 2  -row 6  -sticky news
+
+    label $w.libbudebugl  -text "Set LIBBU debug flag:"
+    entry $w.libbudebuge -textvariable ::libbudebug -bg white
+    grid $w.libbudebugl  -column 0  -row 7  -sticky e
+    grid $w.libbudebuge  -column 1 -columnspan 2  -row 7  -sticky news
+
+    label $w.rtdebugl  -text "Set RT debug flag:"
+    entry $w.rtdebuge -textvariable ::rtdebug -bg white
+    grid $w.rtdebugl  -column 0  -row 8  -sticky e
+    grid $w.rtdebuge  -column 1 -columnspan 2  -row 8  -sticky news
+
+    # Application buttons
+    button $w.ok     -text OK     -command {set done 1}
+    button $w.c      -text Clear  -command "set $w {}"
+    button $w.cancel -text Cancel -command "set $w {}; set ::cancel_process 1; set done 1"
+    grid $w.ok -column 0 -row 9 -sticky es
+    grid $w.c -column 1 -row 9 -sticky s
+    grid $w.cancel -column 2 -row 9 -sticky w
+
+    grid columnconfigure $w 1 -weight 1
+
+    pack $w -expand true -fill x
+    vwait done
+
+    destroy $w
+}
+
+proc ::fast4_build_cmd {} {
+    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]]]
+
+    if {$::print_debug_info == 1} {
+       append cmd " -d" { }
+    }
+    if {$::print_quiet == 1} {
+       append cmd " -q" { }
+    }
+    if {$::print_dnames == 1} {
+       append cmd " -w" { }
+    }
+    if {[llength "$::region_list"] > 0} {
+       append cmd " -c $::region_list" { }
+    }
+    if {[llength "$::muves"] > 0} {
+       append cmd " -m $::muves" { }
+    }
+    if {[llength "$::plot"] > 0} {
+       append cmd " -o $::plot" { }
+    }
+    if {[llength "$::libbudebug"] > 0} {
+       append cmd " -b $::libbudebug" { }
+    }
+    if {[llength "$::rtdebug"] > 0} {
+       append cmd " -x $::rtdebug" { }
+    }
+
+    append cmd " $::input_file" { }
+
+    append cmd " $::output_file" { }
+
+    set ::fast4_cmd $cmd
+}
+
+
+#################################################################
+#
 #            STerolithography (STL) specific logic
 #
 #################################################################
@@ -319,36 +427,118 @@ if {[llength $::log_file] == 0} {
 }
 set ::cancel_process 0
 
-switch -nocase "$::input_ext" {
-    ".3dm" {
-	::rhino_options
-	::rhino_build_cmd
+proc ::select_conv { } {
+    set w [frame .[clock seconds]]
+    wm resizable . 800 600
+    wm title . "Format Selection"
 
-        if {$::cancel_process == 1} {exit 0}
-        gui_conversion $rhino_cmd $::log_file
-    }
-    ".stl" {
-	::stl_options
-        ::stl_build_cmd
-        if {$::cancel_process == 1} {exit 0}
-        gui_conversion $::stl_cmd $::log_file
-    }
-    ".stp" {
-	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
-	                    -v -o $::output_file \
-			    $::input_file]
-        gui_conversion $step_cmd $::log_file
-    }
-    ".step" {
-	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
-	                    -v -o $::output_file \
-			    $::input_file]
-        gui_conversion $step_cmd $::log_file
-    }
-    default {
-	exit 1
-    }
+    set ::conv_format "BRL-CAD (.g)"
+
+    label $w.l -text "Select the format of the input file:"
+    grid $w.l -column 0 -columnspan 2 -row 0  -sticky news
+    ::ttk::combobox $w.conv_format \
+        -state readonly \
+        -textvariable ::conv_format \
+	-values {{BRL-CAD (.g)} {Rhino (.3dm)} {FASTGEN 4} {STEP} {STeroLithography (.stl)}}
+    grid $w.conv_format  -column 0 -columnspan 2 -row 1  -sticky news
+
+    # Application buttons
+    button $w.ok     -text OK     -command {set done 1}
+    button $w.cancel -text Cancel -command "set $w {}; set ::cancel_process 1; set done 1"
+    grid $w.ok -column 0 -row 2 -sticky es
+    grid $w.cancel -column 1 -row 2 -sticky ws
+
+    grid columnconfigure $w 1 -weight 1
+
+    pack $w -expand true -fill x
+    vwait done
+
+    destroy $w
 }
+
+proc ::set_input_ext { } {
+   switch -nocase "$::conv_format" {
+       "BRL-CAD (.g)" {
+	   set ::input_ext ".g"
+       }
+       "Rhino (.3dm)" {
+	   set ::input_ext ".3dm"
+       }
+       "FASTGEN 4" {
+	   set ::input_ext ".fg"
+       }
+       "STeroLithography (.stl)" {
+	   set ::input_ext ".stl"
+       }
+       "STEP" {
+	   set ::input_ext ".step"
+       }
+   }
+
+}
+
+proc ::conversion_config { } {
+   switch -nocase "$::input_ext" {
+       ".g" {
+	   if {$::cancel_process == 1} {exit 0}
+	   set $::output_file $::input_file
+       }
+       ".3dm" {
+   	::rhino_options
+   	::rhino_build_cmd
+
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::rhino_cmd $::log_file
+       }
+       ".bdf" {
+   	::fast4_options
+   	::fast4_build_cmd
+
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::fast4_cmd $::log_file
+       }
+       ".fg" {
+   	::fast4_options
+   	::fast4_build_cmd
+
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::fast4_cmd $::log_file
+       }
+       ".fg4" {
+   	::fast4_options
+   	::fast4_build_cmd
+
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::fast4_cmd $::log_file
+       }
+       ".stl" {
+   	::stl_options
+           ::stl_build_cmd
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::stl_cmd $::log_file
+       }
+       ".stp" {
+   	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+   	                    -v -o $::output_file \
+   			    $::input_file]
+           gui_conversion $step_cmd $::log_file
+       }
+       ".step" {
+   	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+   	                    -v -o $::output_file \
+   			    $::input_file]
+           gui_conversion $step_cmd $::log_file
+       }
+       default {
+	   ::select_conv
+	   ::set_input_ext
+	   ::conversion_config
+   	exit 1
+       }
+   }
+}
+
+::conversion_config
 
 # Local Variables:
 # tab-width: 8
