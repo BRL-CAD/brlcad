@@ -497,6 +497,13 @@ proc ::conversion_config { } {
            if {$::cancel_process == 1} {exit 0}
            gui_conversion $::fast4_cmd $::log_file
        }
+       ".fas" {
+   	::fast4_options
+   	::fast4_build_cmd
+
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::fast4_cmd $::log_file
+       }
        ".fg" {
    	::fast4_options
    	::fast4_build_cmd
