@@ -184,9 +184,9 @@ our %key2;
 
 sub extract_object {
 
-  my $lines_aref = shift @_; # \@lines
-  my $i          = shift @_; # $i - current @lines index
-  my $fp         = shift @_; # ouput file pointer
+  my $lines_aref  = shift @_; # \@lines
+  my $i           = shift @_; # $i - current @lines index
+  my $olines_aref = shift @_; # \@olines
 
   my $nl = scalar @{$lines_aref};
 
@@ -254,7 +254,7 @@ sub extract_object {
     push @olines, $line;
   }
 
-  if (1) {
+  if (0) {
     # try Parse::RecDescent instead of my kludges below
     ParseCChunk::parse_chunk(\@olines);
     return $last_index;
@@ -387,17 +387,30 @@ sub extract_object {
     $t = $typ;
   }
 
-  # print good lines to output file
-  print  $fp "\n";
-  printf $fp "//=== starting extracted code at input line %d:\n", $first_index + 1;
-  printf $fp "//  object type '$t'\n";
-  #printf $fp "// N original lines: $norig_lines\n";
-  #printf $fp "// N actual lines:   $nactual_lines\n";
-  print  $fp "$_\n" for @olines;
-  printf $fp "//=== ending extracted code at input line %d:\n", $last_index + 1;
-  print  $fp "\n";
+  # print good lines to output
+  my @xlines_1
+    = (
+        "\n";
+        "//=== starting extracted code at input line { $first_index + 1 }:\n",
+        "//  object type '$t'\n";
+       #"// N original lines: $norig_lines\n";
+       #"// N actual lines:   $nactual_lines\n";
+      );
 
-  return $last_index;
+  push @{$olines_aref}, @xlines_1;
+
+  push @{$olines_aref}, @olines;
+
+  my @xlines_2
+    = (
+       "//=== ending extracted code at input line { $last_index + 1 }:\n", ;
+      );
+
+  push @{$olines_aref}, @xlines_2;
+
+  my $prev_line_was_space = 0;
+
+  return ($last_index, $prev_line_was_space);
 
 } # extract_object
 
