@@ -9,6 +9,9 @@ interpret and instantiate the C syntax tree (derived with P::RD):
 
 Try parsing individual chunks to fit individual classes by type.
 
+Also don't forget saving state of files (or freezing them) and hash
+checking to eliminate unnecessary rebuilds.
+
 Decide how the D interface system fits into the build system
 ============================================================
 
