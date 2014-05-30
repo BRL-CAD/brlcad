@@ -212,8 +212,6 @@ sub extract_object {
 
     # skip blank lines
     next LINE if ($line !~ /\S+/);
-    #my @d = split(' ', $line);
-    #next LINE if !defined $d[0];
 
     ++$nactual_lines;
 
@@ -390,11 +388,11 @@ sub extract_object {
   # print good lines to output
   my @xlines_1
     = (
-        "\n";
+        "\n",
         "//=== starting extracted code at input line { $first_index + 1 }:\n",
-        "//  object type '$t'\n";
-       #"// N original lines: $norig_lines\n";
-       #"// N actual lines:   $nactual_lines\n";
+        "//  object type '$t'\n",
+       #"// N original lines: $norig_lines\n",
+       #"// N actual lines:   $nactual_lines\n",
       );
 
   push @{$olines_aref}, @xlines_1;
@@ -403,7 +401,7 @@ sub extract_object {
 
   my @xlines_2
     = (
-       "//=== ending extracted code at input line { $last_index + 1 }:\n", ;
+       "//=== ending extracted code at input line { $last_index + 1 }:\n",
       );
 
   push @{$olines_aref}, @xlines_2;
