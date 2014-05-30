@@ -14,11 +14,13 @@ my $ifil = 'c-grammar.txt';
 my $pm   = 'GS';
 my $ofil = "${pm}.pm";
 
+my $debug = 1;
+
 if (!@ARGV) {
   print <<"HERE";
 $usage
 
-Extracts garammar from file '' and creates a Perl
+Extracts grammar from file '$ifil' and creates a Perl
 data module named '${ofil}'.
 
 HERE
@@ -32,11 +34,31 @@ die "FATAL:  Unable to find grammar file '$ifil'.\n"
 open my $fp, '<', $ifil
   or die "$ifil: $!";
 
-while (defined my $line = <$fp>)) {
+my %prods        = ();
+my $inprod       = 0;
+my $currprod     = '';
+my @currchildren = ();
+while (defined(my $line = <$fp>)) {
   $line = strip_comment($line);
   my @d = split(' ', $line);
   next if !defined $d[0];
 
+  if ($debug) {
+    chomp $line;
+    print "DEBUG: line '$line'\n";
+  }
+
+  my $key  = shift @d;
+  my $newprod = ($key =~ s{\: \z}{}x} : 1 : 0;
+  my $key2 = $newprod ? '' : shift @d;
+  if ($newprod || (defined $key2 && $key2 eq ':')) {
+    # beginning of a production rule with non-empty @d as subrules
+    if ($inprod) {
+
+      # if we are inprod, we need to close the current one
+    }
+    $inprod = 1;
+  }
 }
 
 #### subroutines ####
