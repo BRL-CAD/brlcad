@@ -19,6 +19,7 @@
 		<cmdsynopsis>
 			<command>g-tankill</command>
 			<arg choice='opt'>-v </arg>
+			<arg choice='opt'>-P <replaceable>dummy_arg</replaceable></arg>
 			<arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
 			<arg choice='opt'>-i <replaceable>idents_file</replaceable></arg>
 			<arg choice='opt'>-s <replaceable>surroundings_code</replaceable></arg>
