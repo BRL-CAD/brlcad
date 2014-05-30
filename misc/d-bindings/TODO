@@ -7,6 +7,8 @@ interpret and instantiate the C syntax tree (derived with P::RD):
   CC/
    CC.pm # base class
 
+Try parsing individual chunks to fit individual classes by type.
+
 Decide how the D interface system fits into the build system
 ============================================================
 
