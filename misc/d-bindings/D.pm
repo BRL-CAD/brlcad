@@ -463,7 +463,7 @@ sub convert1final {
 
   }
 
-=pod
+  # now process @olines and write them out
 
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
@@ -481,16 +481,15 @@ sub convert1final {
   print $fpo "extern (C) {\n";
   print $fpo "\n";
 
-
-
+  foreach my $line (@lines) {
+    print $fpo $line;
+  }
 
   # ender
   print $fpo "\n"
     if !$prev_line_was_space;
 
   print $fpo "} // extern (C) {\n";
-
-=cut
 
 } # convert1final
 
