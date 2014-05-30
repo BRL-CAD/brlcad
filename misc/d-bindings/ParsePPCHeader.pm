@@ -52,12 +52,14 @@ sub parse_cfile_pure_autotree {
   }
 
   use Data::Dumper;
-  $Data::Dumper::Terse   = 1;         # don't output names where feasible (doesn't work for my tree)
-  $Data::Dumper::Indent  = 1;         # mild pretty print
-  $Data::Dumper::Purity  = 1;
-  $Data::Dumper::Deparse = 1;
+  $Data::Dumper::Terse    = 1;         # don't output names where feasible (doesn't work for my tree)
+  $Data::Dumper::Indent   = 1;         # mild pretty print
+  #$Data::Dumper::Indent   = 3;         # pretty print with array indices
+  $Data::Dumper::Purity   = 1;
+  $Data::Dumper::Deparse  = 1;
+  $Data::Dumper::Sortkeys = 1;         # sort hash keys
 
-  if (0) {
+  if (1) {
     print Dumper $ptree;
   }
   elsif (1) {
