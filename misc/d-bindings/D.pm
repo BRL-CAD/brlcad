@@ -72,12 +72,13 @@ my %sysmod
     );
 
 #==========================================================================
-# vars for export
-our $force   = 0;
-our $verbose = 0;
-our $debug   = 0;
-our $clean   = 0;
-our $devel   = 0;
+# option vars for export
+our $force      = 0;
+our $verbose    = 0;
+our $debug      = 0;
+our $clean      = 0;
+our $devel      = 0;
+our $chunkparse = 0; # 1 - parse input in chunks
 
 # global vars
 Readonly our $NEW  => -1;
@@ -224,8 +225,12 @@ sub convert {
       # use g++ -E
       convert_with_gcc_E($cfil, $tfil1);
 
-      # parse that file once
-      ParsePPCHeader::parse_cfile_pure_autotree($tfil1, $ofils_ref);
+      # default is to parse that file once
+      if (!$D::chunkparse) {
+	ParsePPCHeader::parse_cfile_pure_autotree($tfil1, $ofils_ref);
+      }
+      else {
+      }
 
       die "debug exit";
 
