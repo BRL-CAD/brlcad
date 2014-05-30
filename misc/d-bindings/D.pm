@@ -9,7 +9,7 @@ use File::Copy;
 use File::Basename;
 
 use lib('.');
-use CParse;
+use CExtract;
 use BP;
 use DS;
 use ParsePPCHeader;

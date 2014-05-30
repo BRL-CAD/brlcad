@@ -1,4 +1,4 @@
-package CParse;
+package CExtract;
 
 use strict;
 use warnings;
