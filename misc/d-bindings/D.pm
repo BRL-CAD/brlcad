@@ -212,24 +212,25 @@ sub convert {
       print $fp $_ for @tflines;
       close $fp;
 
-      # use g++ -E
+      # use g++ -E to preprocess the file
       convert_with_gcc_E($cinfil, $ppfil);
+
+=pod
 
       # default is to parse that file once
       if (!$D::chunkparse) {
 	ParsePPCHeader::parse_cfile_pure_autotree($ppfil, $ofils_ref);
       }
       else {
+	CExtract::object
       }
 
       die "debug exit";
 
-=pod
-
-      # dress up the file and convert it to "final" form (eventually)
-      convert1final($ofil, $ppfil, \%syshdr, $stem);
-
 =cut
+
+      # convert it to "final" form (eventually)
+      convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
 
     }
     #==== method 2 ====
@@ -388,10 +389,12 @@ sub process_tu_file {
 =cut
 
 sub convert1final {
-  my $ofil = shift @_; # $ofil
-  my $ifil = shift @_; # $tfil1
-  my $sref = shift @_; # \%syshdr
-  my $stem = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+  my $ofil      = shift @_; # $ofil
+  my $ifil      = shift @_; # $ppfil
+  my $sref      = shift @_; # \%syshdr
+  my $stem      = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+  my $ofils_ref = shift @_; # \@ofils
+  my $tfils_ref = shift @_; # \@tmpfils
 
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
@@ -453,17 +456,17 @@ sub convert1final {
       }
     }
 
-    if (!exists $CParse::key{$key}) {
+    if (!exists $CExtract::key{$key}) {
       warn "unknown key '$key' at line $lnum, file '$ifil'...";
     }
 
     # capture second token, if any
     my $key2 = (1 < @d) ? $d[1] : '';
-    if ($key2 && !exists $CParse::key2{$key2}) {
+    if ($key2 && !exists $CExtract::key2{$key2}) {
       warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
     }
 
-    $i = CParse::extract_object(\@lines, $i, $fpo);
+    $i = CExtract::extract_object(\@lines, $i, $fpo);
 
     #print $fpo $line;
     $prev_line_was_space = 0;
