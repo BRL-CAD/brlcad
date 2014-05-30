@@ -127,9 +127,15 @@ HERE
 
 sub strip_comment {
   my $line = shift @_;
-  my $idx = index $line, '#';
-  if ($idx >= 0) {
-    $line = substr $line, 0, $idx;
+
+  if (1) {
+    $line =~ s{\A ([^\#]+) \# [\s\S]* \z}{$1}x;
+  }
+  else {
+    my $idx = index $line, '#';
+    if ($idx >= 0) {
+      $line = substr $line, 0, $idx;
+    }
   }
   return $line;
 } # strip_comment
