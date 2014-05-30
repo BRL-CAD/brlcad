@@ -201,7 +201,7 @@ sub convert {
 	print $fp "void\n";
 	print $fp "foo(int i)\n";
 	print $fp "{\n";
-	print $fp "  printf(\"value of i is '%%d'\\\\n\", i);\n";
+	print $fp "  printf(\"value of i is '%d'\\n\", i);\n";
 	print $fp "}\n";
       }
 
