@@ -139,13 +139,8 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 	}
     }
 
-    if (state->merge) {
-	bu_log("Merging into %s\n", bu_vls_addr(state->merge_file));
-	/*
-	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
-	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
-	}
-	*/
+   if (state->merge) {
+       (void)diff3_merge(left_dbip, ancestor_dbip, right_dbip, state, &results);
     }
 
     return diff3_state;

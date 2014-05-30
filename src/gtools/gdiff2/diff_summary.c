@@ -47,7 +47,8 @@ diff_attrs_print(struct diff_result *dr, struct diff_state *state, struct bu_vls
 		}
 	    }
 	} else {
-	    bu_vls_printf(diff_log, "M \"%s\" %s->%s\n", dr->obj_name, minor_type->left_value, minor_type->right_value);
+	    if (minor_type)
+		bu_vls_printf(diff_log, "M \"%s\" %s->%s\n", dr->obj_name, minor_type->left_value, minor_type->right_value);
 	}
 
     }

@@ -77,6 +77,13 @@ extern void diff3_summarize(struct bu_vls *diff_log,
 extern struct diff_avp *
 diff_ptbl_get(struct bu_ptbl *avp_array, const char *key);
 
+extern int
+diff3_merge(struct db_i *left_dbip,
+       	    struct db_i *ancestor_dbip,
+	    struct db_i *right_dbip,
+	    struct diff_state *state,
+	    struct bu_ptbl *results);
+
 #endif
 
 /*

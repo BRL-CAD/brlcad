@@ -11,6 +11,7 @@ set(gdiff_srcs
   diff3_summary.c
   diff_summary.c
   gdiff2.c
+  merge.c
   utility.c
   )
 
