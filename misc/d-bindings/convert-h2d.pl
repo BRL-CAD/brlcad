@@ -128,11 +128,12 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $convert = 1;
 
-    $D::force   = 1;
-    $D::verbose = 1;
-    $D::debug   = 1;
-    $D::clean   = 1;
-    $D::devel   = 1;
+    $D::force      = 1;
+    $D::verbose    = 1;
+    $D::debug      = 1;
+    $D::clean      = 1;
+    $D::devel      = 1;
+    $D::chunkparse = 1;
 
   }
 
