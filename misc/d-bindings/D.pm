@@ -396,31 +396,22 @@ sub convert1final {
   my $ofils_ref = shift @_; # \@ofils
   my $tfils_ref = shift @_; # \@tmpfils
 
-  open my $fpo, '>', $ofil
-    or die "$ofil: $!";
-
-  print $fpo "module $stem;\n";
-  print $fpo "\n";
-
-  print $fpo "extern (C) {\n";
-  print $fpo "\n";
+  # before we open the final output file we need more intermediate
+  # processing: the $ppfil has to be parsed, either by chunks or as a
+  # whole file, and some fancy extraction and class processing done
 
   # avoid multiple blank lines
   my $prev_line_was_space = 1;
 
-  foreach my $h (sort keys %sysmod) {
-    my $mod = $sysmod{$h};
-    next if !$mod;
-    print $fpo "import $mod;\n";
-  }
-  print $fpo "\n";
-
+  # process the $ppfil
   open my $fpi, '<', $ifil
     or die "$ifil: $!";
 
   my @lines = <$fpi>;
   my $nl = @lines;
 
+  # save processed lines for later
+  my @olines = ();
 
  LINE:
 
@@ -433,7 +424,7 @@ sub convert1final {
     # ignore or collapse blank lines?
     if (!defined $d[0]) {
       if (!$prev_line_was_space) {
-	print $fpo "\n";
+	push @olines, "\n";
 	$prev_line_was_space = 1;
       }
       next LINE;
@@ -445,7 +436,7 @@ sub convert1final {
       if (1) {
 	# replace cpp comment lines with a space unless prev line was a space
 	if (!$prev_line_was_space) {
-	  print $fpo "\n";
+	  push @olines, "\n";
 	  $prev_line_was_space = 1;
 	}
 	next LINE;
@@ -466,19 +457,40 @@ sub convert1final {
       warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
     }
 
-    $i = CExtract::extract_object(\@lines, $i, $fpo);
-
-    #print $fpo $line;
-    $prev_line_was_space = 0;
-    #next LINE;
+    if ($D::chunkparse) {
+      ($i, $prev_line_was_space) = CExtract::extract_object(\@lines, $i, \@olines);
+    }
 
   }
+
+=pod
+
+  open my $fpo, '>', $ofil
+    or die "$ofil: $!";
+
+  print $fpo "module $stem;\n";
+  print $fpo "\n";
+
+  foreach my $h (sort keys %sysmod) {
+    my $mod = $sysmod{$h};
+    next if !$mod;
+    print $fpo "import $mod;\n";
+  }
+  print $fpo "\n";
+
+  print $fpo "extern (C) {\n";
+  print $fpo "\n";
+
+
+
 
   # ender
   print $fpo "\n"
     if !$prev_line_was_space;
 
   print $fpo "} // extern (C) {\n";
+
+=cut
 
 } # convert1final
 
