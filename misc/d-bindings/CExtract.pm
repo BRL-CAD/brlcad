@@ -386,10 +386,13 @@ sub extract_object {
   }
 
   # print good lines to output
+  my $first_line = $first_index + 1;
+  my $last_line  = $last_index + 1;
+
   my @xlines_1
     = (
         "\n",
-        "//=== starting extracted code at input line { $first_index + 1 }:\n",
+        "//=== starting extracted code at input line $first_line:\n",
         "//  object type '$t'\n",
        #"// N original lines: $norig_lines\n",
        #"// N actual lines:   $nactual_lines\n",
@@ -401,7 +404,7 @@ sub extract_object {
 
   my @xlines_2
     = (
-       "//=== ending extracted code at input line { $last_index + 1 }:\n",
+       "//=== ending extracted code at input line $last_line:\n",
       );
 
   push @{$olines_aref}, @xlines_2;
