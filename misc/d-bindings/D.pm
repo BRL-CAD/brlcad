@@ -97,7 +97,11 @@ sub convert {
   die "ERROR:  Unknown conversion method $meth."
     if (!defined $meth || $meth !~ m{\A [1-3]{1} \z}x);
 
+  # the input files array should contain C header files to be
+  # processed (typically with a .h suffix)
+
   foreach my $ifil (@{$ifils_ref}) {
+
     my $stem = basename $ifil;
     $stem =~ s{$Hsuf \z}{}x;
 
@@ -142,16 +146,10 @@ sub convert {
     # get rid of system headers (but record their use)
     my %syshdr = ();
 
-    # first intermediate file
-    my $tfil0 = "${BP::DIDIR}/${stem}.inter0";
-    push @tmpfils, $tfil0;
-    push @{$ofils_ref}, $tfil0
-	if $debug;
-
-    # second intermediate file
-    my $tfil1 = "${BP::DIDIR}/${stem}.i";
-    push @tmpfils, $tfil1;
-    push @{$ofils_ref}, $tfil1
+    # intermediate file after gcc preprocessing
+    my $ppfil = "${BP::DIDIR}/${stem}.i";
+    push @tmpfils, $ppfil;
+    push @{$ofils_ref}, $ppfil
       if $debug;
 
     #==== method 1 ====
@@ -165,7 +163,10 @@ sub convert {
 =cut
 
       # use gcc; need a C input file
-      my $cfil = "./di/$stem.h.c";
+      my $cinfil = "./di/$stem.h.c";
+      push @tmpfils, $cinfil;
+      push @{$ofils_ref}, $cinfil
+	if $debug;
 
       # note: handling of GCC constructs '__atribute__',
       # -__restrict', '__extension__', et al.:
@@ -183,8 +184,8 @@ sub convert {
       # #  define  __attribute__(x)  /*NOTHING*/
       # #endif
 
-      open my $fp, '>', $cfil
-        or die "$cfil: $!";
+      open my $fp, '>', $cinfil
+        or die "$cinfil: $!";
 
       # some prelims:
       print $fp "/* If we're not using GNU C, elide '__attribute__', '__extension__',\n";
@@ -204,30 +205,19 @@ sub convert {
 	print $fp "}\n";
       }
 
-      my @tflines = ();
-      if (-f $tfil0) {
-        open my $fpi, '<', $tfil0
-          or die "$tfil0: $!";
-        @tflines = <$fpi>;
-      }
-      else {
-        open my $fpi, '<', $ifil
-          or die "$ifil: $!";
-        @tflines = <$fpi>;
-      }
+      # now add the lines from the original C header
+      open my $fpi, '<', $ifil
+	or die "$ifil: $!";
+      my @tflines = <$fpi>;
       print $fp $_ for @tflines;
       close $fp;
 
-      push @tmpfils, $cfil;
-      push @{$ofils_ref}, $cfil
-	if $debug;
-
       # use g++ -E
-      convert_with_gcc_E($cfil, $tfil1);
+      convert_with_gcc_E($cinfil, $ppfil);
 
       # default is to parse that file once
       if (!$D::chunkparse) {
-	ParsePPCHeader::parse_cfile_pure_autotree($tfil1, $ofils_ref);
+	ParsePPCHeader::parse_cfile_pure_autotree($ppfil, $ofils_ref);
       }
       else {
       }
@@ -237,7 +227,7 @@ sub convert {
 =pod
 
       # dress up the file and convert it to "final" form (eventually)
-      convert1final($ofil, $tfil1, \%syshdr, $stem);
+      convert1final($ofil, $ppfil, \%syshdr, $stem);
 
 =cut
 
@@ -245,14 +235,21 @@ sub convert {
     #==== method 2 ====
     elsif ($meth == 2) {
 
+=pod
+
       # use dstep
       convert_with_dstep($tfil0, $tfil1);
 
       # dress up the file and convert it to "final" form (eventually)
       convert1final($ofil, $tfil1, \%syshdr, $stem);
+
+=cut
+
     }
     #==== method 3 ====
     elsif ($meth == 3) {
+
+=pod
 
       # use gcc; need a C input file
       my $cfil = "./di/$stem.h.c";
@@ -278,6 +275,9 @@ sub convert {
 
       # dress up the file and convert it to "final" form (eventually)
       #convert3final($ofil, $pfil, \%syshdr, $stem);
+
+=cut
+
     }
 
     # eliminate unneeded intermediate files;
