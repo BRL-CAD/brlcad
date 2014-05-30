@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
 * fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
 * fixed mged -c crash running view-modifying commands - Sean Morrison
