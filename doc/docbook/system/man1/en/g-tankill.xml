@@ -1,110 +1,112 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gtankill1'>
-<refmeta>
-    <refentrytitle>G-TANKILL
-</refentrytitle>
-<manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
-<refmiscinfo class='manual'>User Commands</refmiscinfo>
-</refmeta>
+	<refmeta>
+		<refentrytitle>G-TANKILL
+		</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+		<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+		<refmiscinfo class='manual'>User Commands</refmiscinfo>
+	</refmeta>
 
-<refnamediv>
-<refname>g-tankill</refname>
-<refpurpose>TANKILL Translator (BRL-CAD to TANKILL)</refpurpose>
-</refnamediv>
-<!-- body begins here -->
-<refsynopsisdiv xml:id='synopsis'>
-<cmdsynopsis>
-  <command>g-tankill</command>
-    <arg choice='opt'>-v </arg>
-    <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
-    <arg choice='opt'>-i <replaceable>idents_file</replaceable></arg>
-    <arg choice='opt'>-s <replaceable>surroundings_code</replaceable></arg>
-    <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
-    <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
-    <arg choice='opt'>-o <replaceable>tankill_file</replaceable></arg>
-    <arg choice='plain'><replaceable>database.g</replaceable></arg>
-    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
-</cmdsynopsis>
-</refsynopsisdiv>
+	<refnamediv>
+		<refname>g-tankill</refname>
+		<refpurpose>TANKILL Translator (BRL-CAD to TANKILL)</refpurpose>
+	</refnamediv>
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id='synopsis'>
+		<cmdsynopsis>
+			<command>g-tankill</command>
+			<arg choice='opt'>-v </arg>
+			<arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
+			<arg choice='opt'>-i <replaceable>idents_file</replaceable></arg>
+			<arg choice='opt'>-s <replaceable>surroundings_code</replaceable></arg>
+			<arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
+			<arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
+			<arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+			<arg choice='opt'>-o <replaceable>tankill_file</replaceable></arg>
+			<arg choice='plain'><replaceable>database.g</replaceable></arg>
+			<arg choice='plain'><replaceable>object(s)</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
 
 
-<refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-tankill</emphasis>
-converts the specified
-<emphasis remap='I'>object(s)</emphasis>
-from a BRL-CAD
-<emphasis remap='I'>database.g</emphasis>
-file to the
-<emphasis remap='I'>TANKILL</emphasis>
-format.
-The
-<emphasis remap='I'>tankill_file</emphasis>
-represents each object as a series
-of triangular faces.
-This converter creates a region for each object ident number by unioning
-together all the objects with the same ident number. The
-<option>-x</option>
-option specifies a LIBRT debug flag, and the
-<option>-X</option>
-option specifies an NMG-Library debug flag. The
-<option>-a</option>
-,
-<option>-r</option>
-, and
-<option>-n</option>
-options specify tessellation tolerances. The
-<option>-o</option>
-option specifies the name of the file to receive the output
-(stdout is the default). The
-<option>-i</option>
-option specifies that ident numbers should be assigned sequentially
-rather than using the idents assigned in the BRL-CAD model. (A list
-of the regions and the assigned idents are written to
-<emphasis remap='I'>idents_file</emphasis>
-along with the BRL-CAD ident number, aircode, gift material code,
-los, and any material name assigned through the
-<emphasis remap='I'>mater</emphasis>
-command.) The
-<option>-s</option>
-option specifies that the provided surroundings code should be used for
-all the components in the
-<emphasis remap='I'>TANKILL</emphasis>
-output model.  (The default is to use a surroundings code of 1000.)</para>
-The
-<option>-v</option> option is for verbose mode.
-The
-<option>-P</option> option is to enable core dumps (dummy argument is for
-number of processors, currently disabled).
-</refsect1>
+	<refsection xml:id='description'>
+		<title>DESCRIPTION</title>
+		<para><emphasis remap='I'>g-tankill</emphasis>
+			converts the specified
+			<emphasis remap='I'>object(s)</emphasis>
+			from a BRL-CAD
+			<emphasis remap='I'>database.g</emphasis>
+			file to the
+			<emphasis remap='I'>TANKILL</emphasis>
+			format.
+			The
+			<emphasis remap='I'>tankill_file</emphasis>
+			represents each object as a series
+			of triangular faces.
+			This converter creates a region for each object ident number by unioning
+			together all the objects with the same ident number. The
+			<option>-x</option>
+			option specifies a LIBRT debug flag, and the
+			<option>-X</option>
+			option specifies an NMG-Library debug flag. The
+			<option>-a</option>
+			,
+			<option>-r</option>
+			, and
+			<option>-n</option>
+			options specify tessellation tolerances. The
+			<option>-o</option>
+			option specifies the name of the file to receive the output
+			(stdout is the default). The
+			<option>-i</option>
+			option specifies that ident numbers should be assigned sequentially
+			rather than using the idents assigned in the BRL-CAD model. (A list
+			of the regions and the assigned idents are written to
+			<emphasis remap='I'>idents_file</emphasis>
+			along with the BRL-CAD ident number, aircode, gift material code,
+			los, and any material name assigned through the
+			<emphasis remap='I'>mater</emphasis>
+			command.) The
+			<option>-s</option>
+			option specifies that the provided surroundings code should be used for
+			all the components in the
+			<emphasis remap='I'>TANKILL</emphasis>
+			output model.  (The default is to use a surroundings code of 1000.)
+			The
+			<option>-v</option> option is for verbose mode.
+			The
+			<option>-P</option> option is to enable core dumps (dummy argument is for
+			number of processors, currently disabled).
+		</para>
+	</refsection>
 
-<refsect1 xml:id='example'><title>EXAMPLE</title>
-<synopsis>
-$ <emphasis remap='I'>g-tankill -o sample.tankill sample.g sample_object</emphasis>
-</synopsis>
-</refsect1>
+	<refsection xml:id='example'><title>EXAMPLE</title>
+		<synopsis>
+			$ <emphasis remap='I'>g-tankill -o sample.tankill sample.g sample_object</emphasis>
+		</synopsis>
+	</refsection>
 
-<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
-<para>Error messages are intended to be self-explanatory.</para>
+	<refsection xml:id='diagnostics'><title>DIAGNOSTICS</title>
+		<para>Error messages are intended to be self-explanatory.</para>
 
-</refsect1>
+	</refsection>
 
-<refsect1 xml:id='author'><title>AUTHOR</title>
-<para>BRL-CAD Team</para>
+	<refsection xml:id='author'><title>AUTHOR</title>
+		<para>BRL-CAD Team</para>
 
-</refsect1>
+	</refsection>
 
-<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1992-2014 by the United States
-Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+	<refsection xml:id='copyright'><title>COPYRIGHT</title>
+		<para>This software is Copyright (c) 1992-2014 by the United States
+			Government as represented by U.S. Army Research Laboratory.</para>
+	</refsection>
 
-<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
-<para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+	<refsection xml:id='bug_reports'><title>BUG REPORTS</title>
+		<para>Reports of bugs or problems should be submitted via electronic
+			mail to &lt;devs@brlcad.org&gt;.</para>
+	</refsection>
 </refentry>
 
