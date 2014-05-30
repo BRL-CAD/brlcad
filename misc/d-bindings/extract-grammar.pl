@@ -38,6 +38,9 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ m{\A -h}x) {
     longhelp();
   }
+  elsif ($arg =~ m{\A [\-]*[^dfh]*}x) {
+    ; # okay
+  }
   else {
     die "FATAL:  Unknown arg '$arg'.\n";
   }
@@ -55,7 +58,7 @@ my $currprod     = '';
 my @currchildren = ();
 while (defined(my $line = <$fp>)) {
   $line = strip_comment($line);
-  if ($line =~ m{\A [\S]+ \z}x) {
+  if ($line !~ /\S+/) {
     print "DEBUG:  skipping empty line '$line'.\n"
       if $debug;
     next;
