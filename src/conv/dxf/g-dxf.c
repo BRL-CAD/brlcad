@@ -79,7 +79,7 @@ usage(const char *argv0)
  -D #	Specify a calculation distance tolerance (in mm)\n\n");
 
     bu_log("\
- -P #	Specify number of CPUS to be used, and turn on flag to enable receiving of core dumps\n\n");
+ -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
 
     bu_log("\
  -o dxf	Output to the specified dxf filename\n\n---\n");

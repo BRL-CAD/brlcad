@@ -24,6 +24,7 @@
     <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>dummy_arg</replaceable></arg>
     <arg choice='opt'>-o <replaceable>DXF_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -72,6 +73,9 @@ option requests the output file units to be inches (the default is mm). The
 <option>-p</option>
 option requests that the output consist entirely of POLYFACE MESH entities.
 (The default is all 3DFACE entities.)
+The
+<option>-P</option> option is to enable core dumps (dummy argument is for
+number of processors, currently disabled).
 The
 <option>-o</option>
 option specifies the name of the file to receive the output
