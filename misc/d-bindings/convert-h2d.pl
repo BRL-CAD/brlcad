@@ -100,6 +100,9 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ m{\A -C}xms) {
     $D::clean = 1;
   }
+  elsif ($arg =~ m{\A -ch}xms) {
+    $D::chunkparse = 1;
+  }
 
   # modes
   elsif ($arg =~ m{\A -r}xms) {
@@ -314,6 +317,7 @@ options:
   -d    debug
   -h    help
   -C    cleans out all generated files and the stored file hashes
+  -ch   parse in chunks instead of the entire file
 
 Notes:
 
