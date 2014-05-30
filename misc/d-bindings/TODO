@@ -1,4 +1,14 @@
-Decide how the D interface system fits into the build system:
+C grammar parser
+================
+
+Make a C grammar parser that creates a Perl class hierarchy to
+interpret and instantiate the C syntax tree (derived with P::RD):
+
+  CC/
+   CC.pm # base class
+
+Decide how the D interface system fits into the build system
+============================================================
 
 1.  We need to know some system characteristics to properly create
     modules.
@@ -8,7 +18,7 @@ Decide how the D interface system fits into the build system:
 3.  What is the status of D standard modules vs. the C library?
 
 Proposed layout in the build directory
-
+======================================
   # all public api (for headers found in installed dir
   # "$BRLCAD_ROOT/include/brlcad" and its sub-dirs)
   ./di/X.d       # module: brlcad.X (includes all X/* headers)
@@ -36,7 +46,8 @@ will be recursively installed to:
 
    $BRLCAD_ROOT/d
 
-=== Current librt Dependencies
+Current librt dependencies
+==========================
 
 To be successful, the BRL-CAD core library librt must be available,
 and its current, external dependencies on my system are (from ldd):
