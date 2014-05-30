@@ -268,6 +268,7 @@ sub extract_object {
   # do some rudimentary analysis
   # make lines one string
   my $s = join ' ', @olines;
+
   # add spaces around some items
   my @ch = ('{', '(', '[', ']', ')', '}', ';', '*');
   my %ch;
@@ -292,6 +293,12 @@ sub extract_object {
   while ($ss =~ s{\*[\s]+\*}{\*\*}) {
     ; # noopt
   }
+
+  # trim leading and trailing white space
+  $ss =~ s{\A \s*}{}x;
+  $ss =~ s{\s* \z}{}x;
+  # collapse multiple spaces into one
+  $ss =~ s{\s{2,}}{ }g;
 
   # get new length
   $s = $ss;
@@ -400,7 +407,8 @@ sub extract_object {
 
   push @{$olines_aref}, @xlines_1;
 
-  push @{$olines_aref}, @olines;
+  # the one-liner
+  push @{$olines_aref}, "$s\n"; #@olines;
 
   my @xlines_2
     = (
