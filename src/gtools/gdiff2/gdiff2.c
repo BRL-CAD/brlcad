@@ -317,6 +317,10 @@ main(int argc, char **argv)
 	bu_exit(1, "Cannot stat file %s\n", argv[2]);
     }
 
+    if (state->merge && bu_file_exists(bu_vls_addr(state->merge_file), NULL)) {
+	bu_exit(1, "File %s already exists.\n", bu_vls_addr(state->merge_file));
+    }
+
     /* diff case */
     if (argc == 2) {
 	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
