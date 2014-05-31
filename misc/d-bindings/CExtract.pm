@@ -249,6 +249,9 @@ sub extract_object {
   my $i           = shift @_; # $i - current @lines index
   my $olines_aref = shift @_; # \@olines
 
+  my $ofils_ref   = shift @_; # \@ofils
+  my $tfils_ref   = shift @_; # \@tmpfils
+
   my $nl = scalar @{$lines_aref};
 
   # we're at the first line of the unknown object
@@ -313,6 +316,8 @@ sub extract_object {
     push @olines, $line;
   }
 
+=pod
+
   if (0) {
     # try Parse::RecDescent instead of my kludges below
     ParseCChunk::parse_chunk(\@olines);
@@ -323,6 +328,8 @@ sub extract_object {
       __FILE__, __LINE__;
     $_WARNED = 1;
   }
+
+=cut
 
   my $norig_lines = $last_index - $first_index + 1;
 
@@ -453,7 +460,7 @@ sub extract_object {
     $t = $typ;
   }
 
-  # print good lines to output
+  # print good lines to output .d file
   my $first_line = $first_index + 1;
   my $last_line  = $last_index + 1;
 
@@ -473,10 +480,34 @@ sub extract_object {
 
   my @xlines_2
     = (
-       "//=== ending extracted code at input line $last_line:\n",
+       "//=== ending extracted code at input line $last_line\n",
       );
 
   push @{$olines_aref}, @xlines_2;
+
+  if ($D::chunkparse) {
+    my $efil = sprintf "di/tree-dump-line-%04d.txt", $first_line;
+    open my $fp, '>', $efil
+      or die "$efil: $!";
+    push @{$tfils_ref}, $efil;
+    push @{$ofils_ref}, $efil
+      if $D::debug;
+    print $fp "#=== starting dump of extracted code at input line $first_line:\n";
+    print $fp "#text: $s\n";
+
+    my $res = ParsePPCHeader::parse_cfile_pure_autotree
+      ({
+	ityp => 'str',
+	ival => $s,
+	otyp => 'fp',
+	oval => $fp,
+	first_line => $first_line,
+       });
+    print $fp "#=== ending dump of extracted code at input line $last_line\n";
+    close $fp;
+    unlink $efil
+      if !defined $res;
+  }
 
   my $prev_line_was_space = 0;
 

@@ -395,6 +395,9 @@ sub convert1final {
   my $stem      = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
   my $ofils_ref = shift @_; # \@ofils
   my $tfils_ref = shift @_; # \@tmpfils
+  my $nchunks   = shift @_;
+
+  $nchunks = 0 if !defined $nchunks;
 
   # before we open the final output file we need more intermediate
   # processing: the $ppfil has to be parsed, either by chunks or as a
@@ -419,16 +422,16 @@ sub convert1final {
     my $lnum = $i + 1;
     my $line = $lines[$i];
 
-    my @d = split(' ', $line);
-
-    # ignore or collapse blank lines?
-    if (!defined $d[0]) {
+    # ignore or collapse blank lines
+    if ($line !~ /\S+/) {
       if (!$prev_line_was_space) {
 	push @olines, "\n";
 	$prev_line_was_space = 1;
       }
       next LINE;
     }
+
+    my @d = split(' ', $line);
 
     my $key = $d[0];
 
@@ -447,18 +450,24 @@ sub convert1final {
       }
     }
 
-    if (!exists $CExtract::key{$key}) {
+=pod
+
+    if (!exists $CExtract::crw{$key} && !exists $CExtract::bkw{$key}) {
       warn "unknown key '$key' at line $lnum, file '$ifil'...";
     }
 
     # capture second token, if any
     my $key2 = (1 < @d) ? $d[1] : '';
-    if ($key2 && !exists $CExtract::key2{$key2}) {
+    if ($key2 && !exists $CExtract::bkw{$key2} && !exists $CExtract::crw{$key2}) {
       warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
     }
 
+=cut
+
     if ($D::chunkparse) {
-      ($i, $prev_line_was_space) = CExtract::extract_object(\@lines, $i, \@olines);
+      ($i, $prev_line_was_space)
+	= CExtract::extract_object(\@lines, $i, \@olines,
+				   $ofils_ref, $tfils_ref);
     }
 
   }

@@ -8,18 +8,43 @@ use warnings;
 use CGrammar;  # <== an auto-generated file
 use CGrammar2; # <== an auto-generated file
 
+# for globals
+use G;
+
 # for debugging:
 my $COMP = 0;
 
 sub parse_cfile_pure_autotree {
+  # input can be on of four types:
+  #   a file name of lines
+  #   a file ptr to a file of lines
+  #   an array ref of lines
+  #   a string
+  my $argref = shift @_;
+  my $r = ref $argref;
+  die "FATAL:  Input arg is NOT a HASH ref."
+    if $r ne 'HASH';
 
-  my $ifil = shift @_;
-  my $oref = shift @_;
+  my $ityp = $argref->{ityp};
+  die "FATAL:  Input arg 'ityp' not found."
+    if (!defined $ityp || !exists $G::ityp{$ityp});
 
+  my $ival = $argref->{ival};
+  die "FATAL:  Input arg 'ival' not found."
+    if !defined $ival;
+
+  my $otyp = $argref->{otyp};
+  $otyp = 0 if !defined $otyp;
+  die "FATAL:  Output arg 'otyp' not found."
+    if ($otyp && !exists $G::otyp{$otyp});
+
+  my $oval = $argref->{oval};
+  $oval = 0 if !defined $oval;
+  die "FATAL:  Output arg 'oval' not found."
+    if ($otyp && !$oval);
+
+  my $oref = $argref->{oref};
   $oref = 0 if !defined $oref;
-
-  open my $fp, '<', $ifil
-    or die "$ifil: $!";
 
   # The diagnostics provided by the tracing mechanism always go to
   # STDERR. If you need them to go elsewhere, localize and reopen
@@ -33,22 +58,49 @@ sub parse_cfile_pure_autotree {
   #      my $result = $parser->startrule($text);
   #  }
 
-  my $errfil = 'PRD-errfile.txt';
-  local *STDERR = IO::File->new(">$errfil")
-    or die $!;
-  push @{$oref}, $errfil
-    if $oref;
+  if ($oref) {
+    my $errfil = 'PRD-errfile.txt';
+    local *STDERR = IO::File->new(">$errfil")
+      or die $!;
+    push @{$oref}, $errfil
+      if $oref;
+  }
 
-  local $/;
-  my @ilines = <$fp>;
-  my $text = join(' ', @ilines);
+  my $text;
+
+  if ($argref->{ityp} eq 'fnam') {
+    local $/;
+    open my $fp, '<', $ival
+      or die "$ival: $!";
+    my @ilines = <$fp>;
+    $text = join(' ', @ilines)
+  }
+  elsif ($argref->{ityp} eq 'fp') {
+    local $/;
+    my $fp = $ival;
+    my @ilines = <$fp>;
+    $text = join(' ', @ilines);
+  }
+  elsif ($argref->{ityp} eq 'str') {
+    $text = $ival;
+  }
+  elsif ($argref->{ityp} eq 'arr') {
+    local $/;
+    $text = join(' ', @{$ival});
+  }
 
   my $parser = CGrammar->new();
 
   my $ptree = $parser->translation_unit($text);
   if (!defined $ptree) {
     warn "undef \$ptree";
-    return;
+    my $line = $argref->{first_line};
+    $line = -1 if !defined $line;
+    if ($D::debug) {
+      print "DEBUG: test input (line: $line)\n";
+      print "  $text\n";
+    }
+    return undef;
   }
 
   use Data::Dumper;
@@ -60,13 +112,18 @@ sub parse_cfile_pure_autotree {
   $Data::Dumper::Sortkeys = 1;         # sort hash keys
 
   if (1) {
-    print Dumper $ptree;
+    if ($oval && $otyp eq 'fp') {
+      print $oval Dumper [$ptree];
+    }
+    else {
+      print Dumper [$ptree];
+    }
   }
   elsif (1) {
     inspect_PRD_syntax_pure_autotree($ptree);
   }
 
-  printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
+  # printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
 } # parse_cfile_pure_autotree
 
