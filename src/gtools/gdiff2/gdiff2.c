@@ -79,7 +79,6 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
     }
 
     if (state->merge) {
-	int diff3_state = DIFF_EMPTY;
 	struct bu_ptbl diff3_results;
 	struct db_i *inmem_dbip;
 	int i;
@@ -106,7 +105,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	bu_ptbl_init(&inmem_dbip->dbi_clients, 128, "dbi_clients[]");
 	inmem_dbip->dbi_magic = DBI_MAGIC;                /* Now it's valid */
 
-	diff3_state = db_diff3(left_dbip, inmem_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &diff3_results);
+	(void)db_diff3(left_dbip, inmem_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &diff3_results);
 
 	/* Now we have our diff results, time to filter (if applicable) and report them */
 	if (state->have_search_filter) {
