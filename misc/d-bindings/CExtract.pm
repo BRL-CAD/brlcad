@@ -485,6 +485,7 @@ sub extract_object {
 
   push @{$olines_aref}, @xlines_2;
 
+  my $res;
   if ($D::chunkparse) {
     my $efil = sprintf "di/tree-dump-line-%04d.txt", $first_line;
     open my $fp, '>', $efil
@@ -495,7 +496,7 @@ sub extract_object {
     print $fp "#=== starting dump of extracted code at input line $first_line:\n";
     print $fp "#text: $s\n";
 
-    my $res = ParsePPCHeader::parse_cfile_pure_autotree
+    $res = ParsePPCHeader::parse_cfile_pure_autotree
       ({
 	ityp => 'str',
 	ival => $s,
