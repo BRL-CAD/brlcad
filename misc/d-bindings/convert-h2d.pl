@@ -135,6 +135,8 @@ foreach my $arg (@ARGV) {
     $G::clean      = 1;
     $G::devel      = 1;
     $G::chunkparse = 1;
+    $G::quitundef  = 1;
+    $G::maxchunks  = 1;
 
   }
 
