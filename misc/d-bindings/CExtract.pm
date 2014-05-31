@@ -8,7 +8,7 @@ use ParsePPCHeader;
 my $_WARNED = 0;
 
 # official C reserved words (from 'c-grammar.txt')
-our %rw
+our %crw
   = (
      'char'     => {},
      'double'   => {},
@@ -45,7 +45,7 @@ our %rw
 
 # 64-bit mapping from C types to D types
 #   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-my d64map
+my %d64map
   = (
      'long double'        => 'real',
      'unsigned long long' => 'ulong',
@@ -65,7 +65,7 @@ my d64map
 
 # 32-bit mapping from C types to D types
 #   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-my d32map
+my %d32map
   = (
      'long double'        => 'real',
      'unsigned long long' => 'ulong',
@@ -240,8 +240,8 @@ our @bkw
      'volatile',
      'wait',
     );
-our %key2;
-@key2{@keys2} = ();
+our %bkw;
+@bkw{@bkw} = ();
 
 sub extract_object {
 
