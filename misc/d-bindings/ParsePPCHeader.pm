@@ -96,7 +96,7 @@ sub parse_cfile_pure_autotree {
     warn "undef \$ptree";
     my $line = $argref->{first_line};
     $line = -1 if !defined $line;
-    if ($D::debug) {
+    if ($G::debug) {
       print "DEBUG: test input (line: $line)\n";
       print "  $text\n";
     }
@@ -119,7 +119,8 @@ sub parse_cfile_pure_autotree {
       print Dumper [$ptree];
     }
   }
-  elsif (1) {
+
+  if ($G::inspect_tree) {
     inspect_PRD_syntax_pure_autotree($ptree);
   }
 

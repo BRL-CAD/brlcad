@@ -129,14 +129,15 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $convert = 1;
 
-    $G::force      = 1;
-    $G::verbose    = 1;
-    $G::debug      = 1;
-    $G::clean      = 1;
-    $G::devel      = 1;
-    $G::chunkparse = 1;
-    $G::quitundef  = 1;
-    $G::maxchunks  = 1;
+    $G::force        = 1;
+    $G::verbose      = 1;
+    $G::debug        = 1;
+    $G::clean        = 1;
+    $G::devel        = 1;
+    $G::chunkparse   = 1;
+    $G::quitundef    = 0;
+    $G::maxchunks    = 1;
+    $G::inspect_tree = 1;
 
   }
 

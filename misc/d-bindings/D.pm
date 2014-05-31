@@ -176,8 +176,9 @@ sub convert {
       print $fp "#define  __restrict        /* NOTHING */\n";
       print $fp "#define  __const           const\n";
 
-      # if developing, add a function to check its parsing
-      if ($D::devel) {
+      # if developing, have possibility to add a function to check its
+      # parsing (but MUCH later after all else is well)
+      if (0 && $G::addfunc) {
 	print $fp "void\n";
 	print $fp "foo(int i)\n";
 	print $fp "{\n";
@@ -194,20 +195,6 @@ sub convert {
 
       # use g++ -E to preprocess the file
       convert_with_gcc_E($cinfil, $ppfil);
-
-=pod
-
-      # default is to parse that file once
-      if (!$D::chunkparse) {
-	ParsePPCHeader::parse_cfile_pure_autotree($ppfil, $ofils_ref);
-      }
-      else {
-	CExtract::object
-      }
-
-      die "debug exit";
-
-=cut
 
       # convert it to "final" form (eventually)
       convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
@@ -292,7 +279,7 @@ sub convert {
 
 sub collect_files {
 
-  # deletes generated files if $D::clean
+  # deletes generated files if $G::clean
   my $href = shift @_; # @h
   my $dref = shift @_; # @d
 
@@ -445,19 +432,24 @@ sub convert1final {
 =cut
 
     my $res = 0;
-    if ($D::chunkparse) {
+    if ($G::chunkparse) {
       ++$nchunks;
       if ($nchunks < $G::maxchunks) {
 	($i, $prev_line_was_space, $res)
 	  = CExtract::extract_object(\@lines, $i, \@olines,
 				     $ofils_ref, $tfils_ref);
-	last LINE if ($G::quitundef && !defined $res);
       }
       else {
+	print "DEBUG:  last line after $nchunks chunks.\n"
+	  if $G::debug;
 	last LINE;
       }
     }
-
+    if ($G::quitundef && !defined $res) {
+      print "DEBUG:  last line after parse chunk failure.\n"
+	if $G::debug;
+      last LINE;
+    }
   }
 
   # now process @olines and write them out

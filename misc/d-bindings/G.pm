@@ -13,14 +13,16 @@ Readonly our $Dsuf => '.d';
 
 #==========================================================================
 # global option vars
-our $force      = 0;
-our $verbose    = 0;
-our $debug      = 0;
-our $clean      = 0;
-our $devel      = 0;
-our $chunkparse = 0; # 1 - parse input in chunks
-our $quitundef  = 0; # 1 - stop at first undef chunk
-our $maxchunks  = 0; # >0 - stop after N successful chunks
+our $force        = 0;
+our $verbose      = 0;
+our $debug        = 0;
+our $clean        = 0;
+our $devel        = 0;
+our $chunkparse   = 0; # >0 - parse input in chunks
+our $quitundef    = 0; # >0 - stop at first undef chunk
+our $maxchunks    = 0; # >0 - stop after N successful chunks
+our $inspect_tree = 0; # >0 - try to interpret parse tree
+our $addfunc      = 0; # >0 - add a function to the top of the header for devel
 
 Readonly our $NEW  => -1;
 Readonly our $SAME =>  0;

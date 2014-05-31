@@ -485,14 +485,14 @@ sub extract_object {
 
   push @{$olines_aref}, @xlines_2;
 
-  my $res;
-  if ($D::chunkparse) {
+  my $res = 0;
+  if ($G::chunkparse) {
     my $efil = sprintf "di/tree-dump-line-%04d.txt", $first_line;
     open my $fp, '>', $efil
       or die "$efil: $!";
     push @{$tfils_ref}, $efil;
     push @{$ofils_ref}, $efil
-      if $D::debug;
+      if $G::debug;
     print $fp "#=== starting dump of extracted code at input line $first_line:\n";
     print $fp "#text: $s\n";
 
@@ -512,7 +512,7 @@ sub extract_object {
 
   my $prev_line_was_space = 0;
 
-  return ($last_index, $prev_line_was_space);
+  return ($last_index, $prev_line_was_space, $res);
 
 } # extract_object
 
