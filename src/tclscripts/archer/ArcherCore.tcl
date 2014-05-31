@@ -2129,7 +2129,7 @@ namespace eval ArcherCore {
     package require cadwidgets::GeometryIO
 
     set typelist {
-	{"BRL-CAD Database" {".g"}}
+	{"BRL-CAD Database" {".g" ".asc"}}
 	{"3dm (Rhino)" {".3dm"}}
 	{"FASTGEN 4" {".bdf" ".fas" ".fg" ".fg4"}}
 	{"STEP" {".stp" ".step"}}

@@ -490,6 +490,12 @@ proc ::conversion_config { } {
            if {$::cancel_process == 1} {exit 0}
            gui_conversion $::rhino_cmd $::log_file
        }
+       ".asc" {
+   	set asc_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] asc2g$::exe_ext]] \
+   	                    $::input_file \
+   			    $::output_file]
+           gui_conversion $asc_cmd $::log_file
+       }
        ".bdf" {
    	::fast4_options
    	::fast4_build_cmd
