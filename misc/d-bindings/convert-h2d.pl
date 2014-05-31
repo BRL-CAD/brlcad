@@ -8,6 +8,7 @@ use warnings;
 use File::Basename;
 use lib('.');
 
+use G; # globals
 use D; # local convenience module
 use BP;
 
@@ -63,45 +64,45 @@ foreach my $arg (@ARGV) {
   my $idx = index $arg, '=';
   if ($idx >= 0) {
     print "DEBUG: input arg is '$arg'\n"
-      if $D::debug;
+      if $G::debug;
 
     $val = substr $arg, $idx+1;
-    if ((!defined $val || !$val) && !$D::debug) {
+    if ((!defined $val || !$val) && !$G::debug) {
       die "ERROR:  For option '$arg' \$val is empty.'\n";
     }
     $arg = substr $arg, 0, $idx;
-    if ($D::debug) {
+    if ($G::debug) {
       print "arg is now '$arg', val is '$val'\n";
       die "debug exit";
     }
   }
 
   if ($arg =~ m{\A -f}xms) {
-    $D::force = 1;
+    $G::force = 1;
   }
   elsif ($arg =~ m{\A -d}xms) {
-    $D::debug = 1;
+    $G::debug = 1;
   }
   elsif ($arg =~ m{\A -v}xms) {
-    $D::verbose = 1;
+    $G::verbose = 1;
   }
   elsif ($val && $arg =~ m{\A -h}xms ) {
     my $f = $val;
     die "ERROR:  Input file '$f' not found.\n"
       if (! -e $f);
     # one more check: must be a '.h' file
-    die "ERROR:  Input file '$f' must be a '$D::Hsuf' file.\n"
-      if ($f !~ m{$D::Hsuf \z}xms);
+    die "ERROR:  Input file '$f' must be a '$G::Hsuf' file.\n"
+      if ($f !~ m{$G::Hsuf \z}xms);
     @ifils = ($f);
   }
   elsif ($arg =~ m{\A -h}xms) {
     help();
   }
   elsif ($arg =~ m{\A -C}xms) {
-    $D::clean = 1;
+    $G::clean = 1;
   }
   elsif ($arg =~ m{\A -ch}xms) {
-    $D::chunkparse = 1;
+    $G::chunkparse = 1;
   }
 
   # modes
@@ -128,12 +129,12 @@ foreach my $arg (@ARGV) {
     zero_modes(1);
     $convert = 1;
 
-    $D::force      = 1;
-    $D::verbose    = 1;
-    $D::debug      = 1;
-    $D::clean      = 1;
-    $D::devel      = 1;
-    $D::chunkparse = 1;
+    $G::force      = 1;
+    $G::verbose    = 1;
+    $G::debug      = 1;
+    $G::clean      = 1;
+    $G::devel      = 1;
+    $G::chunkparse = 1;
 
   }
 
@@ -146,14 +147,14 @@ foreach my $arg (@ARGV) {
 die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
-if ($D::devel) {
+if ($G::devel) {
   @ifils = ("${BP::IDIR}/bu.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
 # and are so indicated inside the following function
 my (@h, @d) = ();
-D::collect_files(\@h, \@d); # deletes generated files if $D::clean
+D::collect_files(\@h, \@d); # deletes generated files if $G::clean
 my $nh   = @h;
 my $nd  = @d;
 my @fils = (@h, @d);
@@ -173,7 +174,7 @@ if ($report) {
   print "  unchanged: $stats{h}{sam}\n";
   print "  changed:   $stats{h}{dif}\n";
 
-  if ($D::verbose) {
+  if ($G::verbose) {
     print "  Files:\n";
     print "    $_\n" for (@h);
   }
@@ -184,7 +185,7 @@ if ($report) {
   print "  unchanged: $stats{di}{sam}\n";
   print "  changed:   $stats{di}{dif}\n";
 
-  if ($D::verbose) {
+  if ($G::verbose) {
     print "  Files:\n";
     print "    $_\n" for (@d);
   }
@@ -194,19 +195,19 @@ elsif ($convert) {
     if !@ifils;
   print "Mode is '-c$convert' (convert method $convert)...\n\n";
   die "debug exit"
-    if (0 && $D::debug);
+    if (0 && $G::debug);
 
   D::convert(\@ifils, \@ofils, \%f, \%stats, $convert);
 }
 elsif ($Bgen) {
-  BP::get_brlcad_inc_data(\@ofils, $D::debug);
+  BP::get_brlcad_inc_data(\@ofils, $G::debug);
 }
 elsif ($Egen) {
   # requires BH.pm
   my $f = 'BH.pm';
   die "ERROR:  Need auto-generated file '$f'.\n"
     if ! -f $f;
-  BP::get_brlcad_ext_inc_data(\@ofils, $D::debug);
+  BP::get_brlcad_ext_inc_data(\@ofils, $G::debug);
 }
 
 print "Normal end.\n";
@@ -231,20 +232,20 @@ sub get_status {
 
   foreach my $f (keys %{$fref}) {
     my $s = file_status($f);
-    my $typ = $f =~ m{$D::Hsuf \z}xms ? 'h' : 'd';
+    my $typ = $f =~ m{$G::Hsuf \z}xms ? 'h' : 'd';
     die "ERROR:  Uknown file type for file '$f'!"
-      if ($typ eq 'd' && $f !~ m{$D::Dsuf \z}xms);
+      if ($typ eq 'd' && $f !~ m{$G::Dsuf \z}xms);
 
     $fref->{$f}{status} = $s;
     $fref->{$f}{typ}    = $typ;
 
-    if ($s == $D::NEW) {
+    if ($s == $G::NEW) {
       ++$sref->{$typ}{new};
     }
-    elsif ($s == $D::SAME) {
+    elsif ($s == $G::SAME) {
       ++$sref->{$typ}{sam};
     }
-    elsif ($s == $D::DIFF) {
+    elsif ($s == $G::DIFF) {
       ++$sref->{$typ}{dif};
     }
     else {
@@ -264,16 +265,16 @@ sub file_status {
 
   my $status = undef;
   if (!$prev_hash) {
-    $status = $D::NEW;
+    $status = $G::NEW;
     #print "Note that '$f' is new or unprocessed.\n";
   }
   elsif ($prev_hash eq $curr_hash) {
-    $status = $D::SAME;
+    $status = $G::SAME;
     #print "Note that '$f' has not changed.\n";
   }
   else {
     DS::store_md5hash($f, $curr_hash);
-    $status = $D::DIFF;
+    $status = $G::DIFF;
     #print "Note that '$f' has changed.\n";
   }
 

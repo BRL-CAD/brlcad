@@ -3,23 +3,17 @@ package D;
 use strict;
 use warnings;
 
-use Readonly;
 use Data::Dumper;
 use File::Copy;
 use File::Basename;
 
 use lib('.');
+
+use G;
 use CExtract;
 use BP;
 use DS;
 use ParsePPCHeader;
-
-# no Windows for now
-Readonly our $WIN => 0;
-
-# file type suffixes
-Readonly our $Hsuf => '.h';
-Readonly our $Dsuf => '.d';
 
 # ignored top-level original .h files
 my @ignore
@@ -71,20 +65,6 @@ my %sysmod
      #'<stdio.h>'     => 'std.stdio',
     );
 
-#==========================================================================
-# option vars for export
-our $force      = 0;
-our $verbose    = 0;
-our $debug      = 0;
-our $clean      = 0;
-our $devel      = 0;
-our $chunkparse = 0; # 1 - parse input in chunks
-
-# global vars
-Readonly our $NEW  => -1;
-Readonly our $SAME =>  0;
-Readonly our $DIFF =>  1;
-
 #### subroutines ####
 
 sub convert {
@@ -103,7 +83,7 @@ sub convert {
   foreach my $ifil (@{$ifils_ref}) {
 
     my $stem = basename $ifil;
-    $stem =~ s{$Hsuf \z}{}x;
+    $stem =~ s{$G::Hsuf \z}{}x;
 
     my ($process, $stat) = (0, 0);
     my ($curr_hash, $prev_hash, $fpo);
@@ -117,28 +97,28 @@ sub convert {
       DS::store_md5hash($ifil, $curr_hash);
     }
     $process = 1
-      if ($force);
+      if ($G::force);
 
     # final output file
-    my $ofil = "${BP::DIDIR}/${stem}${Dsuf}";
+    my $ofil = "${BP::DIDIR}/${stem}${G::Dsuf}";
     $prev_hash = DS::retrieve_md5hash($ofil);
     if (!$prev_hash) {
       $process = 1;
     }
 
     # don't overwrite
-    if (-e $ofil && !$force) {
+    if (-e $ofil && !$G::force) {
       $process = 0;
     }
 
     if (!$process) {
       print "D::convert(): Skipping input file '$ifil'...\n"
-	if $verbose;
+	if $G::verbose;
       next;
     }
 
     print "D::convert(): Processing file '$ifil' => '$ofil'...\n"
-      if $verbose;
+      if $G::verbose;
 
     # container for tmp files
     my @tmpfils = ();
@@ -150,7 +130,7 @@ sub convert {
     my $ppfil = "${BP::DIDIR}/${stem}.i";
     push @tmpfils, $ppfil;
     push @{$ofils_ref}, $ppfil
-      if $debug;
+      if $G::debug;
 
     #==== method 1 ====
     if ($meth == 1) {
@@ -166,7 +146,7 @@ sub convert {
       my $cinfil = "./di/$stem.h.c";
       push @tmpfils, $cinfil;
       push @{$ofils_ref}, $cinfil
-	if $debug;
+	if $G::debug;
 
       # note: handling of GCC constructs '__atribute__',
       # -__restrict', '__extension__', et al.:
@@ -261,7 +241,7 @@ sub convert {
       my $tufil = "$cfil.001t.tu";
       push @tmpfils, $tufil;
       push @{$ofils_ref}, $tufil
-	if $debug;
+	if $G::debug;
 
       convert_with_gcc_fdump_tu($cfil);
 
@@ -270,7 +250,7 @@ sub convert {
       my $pfil = "$tufil.dat";
       push @tmpfils, $pfil;
       push @{$ofils_ref}, $pfil
-	if $debug;
+	if $G::debug;
 
       process_tu_file($tufil, $pfil);
 
@@ -283,17 +263,17 @@ sub convert {
 
     # eliminate unneeded intermediate files;
     unlink @tmpfils
-      if !$debug;
+      if !$G::debug;
 
     # update hash for the new, final output file
     $curr_hash = DS::calc_md5hash($ofil);
 
     if (!-f $ofil) {
       print "D::convert(): Output file '$ofil' does not exist.\n"
-	if $verbose;
+	if $G::verbose;
     }
     elsif (!$prev_hash || $prev_hash ne $curr_hash) {
-      if ($verbose) {
+      if ($G::verbose) {
 	print "D::convert(): Output file '$ofil' hashes:\n";
 	print "  prev '$prev_hash'\n";
 	print "  curr '$curr_hash'\n";
@@ -303,7 +283,7 @@ sub convert {
     }
     else {
       print "D::convert(): Output file '$ofil' has not changed.\n"
-	if $verbose;
+	if $G::verbose;
     }
 
   } # iterate over input files
@@ -316,8 +296,8 @@ sub collect_files {
   my $href = shift @_; # @h
   my $dref = shift @_; # @d
 
-  my @d = glob("${BP::DIDIR}/*${Dsuf}");
-  if ($clean) {
+  my @d = glob("${BP::DIDIR}/*${G::Dsuf}");
+  if ($G::clean) {
     unlink @d;
     DS::remove_md5hash_store();
   }
@@ -326,14 +306,14 @@ sub collect_files {
   }
 
   # main API headers
-  my @h  = glob("${BP::IDIR}/*${Hsuf}");
+  my @h  = glob("${BP::IDIR}/*${G::Hsuf}");
   foreach my $f (@h) {
     next if exists $ignore{$f};
     push @{$href}, $f;
   }
 
   # other headers
-  #my @oh  = glob("${BP::IDIR}/*${Hsuf}");
+  #my @oh  = glob("${BP::IDIR}/*${G::Hsuf}");
 
 } # collect_files
 
@@ -526,7 +506,7 @@ sub convert_with_gcc_E {
 
   my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
   print "debug-cmd: '$cmd'\n"
-    if $debug;
+    if $G::debug;
 
   my $msg = qx($cmd);
 
@@ -546,7 +526,7 @@ sub convert_with_gcc_fdump_tu {
 
   my $cmd = "gcc -fdump-translation-unit -c $incdirs -o $ofil $cfil";
   print "debug-cmd: '$cmd'\n"
-    if $debug;
+    if $G::debug;
 
   my $msg = qx($cmd);
 
@@ -597,7 +577,7 @@ sub flatten_c_header {
     or die "$ifil: $!";
   push @parfils, $ifil;
 
-  if (0 && $debug) {
+  if (0 && $G::debug) {
     # use g++ -E
     my $tfil = 'temp-bu-cpp-file.txt';
     convert_with_gcc($ifil, $tfil);
@@ -615,7 +595,7 @@ sub flatten_c_header {
 
  LINE:
   while (defined(my $line = readline $fpi[$level])) {
-    if (0 && $debug) {
+    if (0 && $G::debug) {
       my $s = $line;
       chomp $s;
       print "debug: line = '$s'\n";
@@ -628,7 +608,7 @@ sub flatten_c_header {
       $s =~ s{\A \"}{}x;
       $s =~ s{\" \z}{}x;
       print "debug: \$1 (\$s) = '$s'\n"
-	if (0 && $debug);
+	if (0 && $G::debug);
 
       # get a new file
       my $f = $s;
@@ -636,7 +616,7 @@ sub flatten_c_header {
       # ignore <> files
       if (is_syshdr($f)) {
 	print "WARNING: ignoring sys include file '$f' for now...\n"
-	  if (0 && $debug);
+	  if (0 && $G::debug);
 	$sysref->{$s} = 1;
 	# don't print
 	next LINE;
@@ -645,7 +625,7 @@ sub flatten_c_header {
       # some files are ignored for now
       if (exists $tignore{$f}) {
 	print "WARNING: ignoring include file '$f' for now...\n"
-	  if (0 && $debug);
+	  if (0 && $G::debug);
 	next LINE;
       }
 
@@ -653,7 +633,7 @@ sub flatten_c_header {
       if (exists $is_mapped{$f}) {
 	my $ff = $is_mapped{$f};
 	print "WARNING: using mapped file '$f' => '$ff' for now...\n"
-	  if (0 && $debug);
+	  if (0 && $G::debug);
 	$f = $ff;
       }
 
@@ -666,7 +646,7 @@ sub flatten_c_header {
 	$s =~ s{\A \./}{}x;
 	my $ff = "${BP::IDIR}/${s}";
 	print "NOTE: using file '$f' => '$ff'...\n"
-	  if (0 && $debug);
+	  if (0 && $G::debug);
 	$f = $ff;
       }
 
@@ -679,7 +659,7 @@ sub flatten_c_header {
       die "ERROR:  Include file '$f' (in '$parfils[$level]') not found."
 	if !-f $f;
       print "DEBUG:  opening include file '$f' (in '$parfils[$level]')\n"
-	if $debug;
+	if $G::debug;
       open $fpi[++$level], '<', $f
 	or die "$f: $!";
       $parfils[$level] = $f;
