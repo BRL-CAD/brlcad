@@ -86,6 +86,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* kill material_head static global in src/librt/mater.c
+
 * add an mk_extrude() routine to libwdb.
 
 * Teach CMake to respect and use user-defined CMAKE_C_FLAGS and
