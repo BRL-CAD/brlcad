@@ -395,9 +395,9 @@ sub convert1final {
   my $stem      = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
   my $ofils_ref = shift @_; # \@ofils
   my $tfils_ref = shift @_; # \@tmpfils
-  my $nchunks   = shift @_;
+  my $maxchunks = shift @_;
 
-  $nchunks = 0 if !defined $nchunks;
+  $maxchunks = 0 if !defined $maxchunks;
 
   # before we open the final output file we need more intermediate
   # processing: the $ppfil has to be parsed, either by chunks or as a
@@ -415,6 +415,9 @@ sub convert1final {
 
   # save processed lines for later
   my @olines = ();
+
+  # limit chunk processing
+  my $nchunks = 0;
 
  LINE:
 
@@ -465,9 +468,15 @@ sub convert1final {
 =cut
 
     if ($D::chunkparse) {
-      ($i, $prev_line_was_space)
-	= CExtract::extract_object(\@lines, $i, \@olines,
-				   $ofils_ref, $tfils_ref);
+      ++$nchunks;
+      if ($nchunks < $maxchunks) {
+	($i, $prev_line_was_space)
+	  = CExtract::extract_object(\@lines, $i, \@olines,
+				     $ofils_ref, $tfils_ref);
+      }
+      else {
+	last LINE;
+      }
     }
 
   }
