@@ -168,8 +168,12 @@ sub convert {
         or die "$cinfil: $!";
 
       # some prelims:
-      print $fp "/* If we're not using GNU C, elide '__attribute__', '__extension__',\n";
+      print $fp "/* HEADER ADDITION FOR D LANGUAGE INTERFACE:\n";
+      print $fp "\n";
+      print $fp "   Since we're not using GNU C output, elide unused\n";
+      print $fp "   funcstions (or macros) '__attribute__', '__extension__',\n";
       print $fp "   and '__restrict' and rename '__const'.\n";
+      print $fp "\n";
       print $fp "*/\n";
       print $fp "#define  __attribute__(x)  /* NOTHING  */\n";
       print $fp "#define  __extension__     /* NOTHING */\n";
@@ -356,12 +360,12 @@ sub process_tu_file {
 =cut
 
 sub convert1final {
-  my $ofil      = shift @_; # $ofil
-  my $ifil      = shift @_; # $ppfil
-  my $sref      = shift @_; # \%syshdr
-  my $stem      = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
-  my $ofils_ref = shift @_; # \@ofils
-  my $tfils_ref = shift @_; # \@tmpfils
+  my $ofil       = shift @_; # $ofil
+  my $ifil       = shift @_; # $ppfil
+  my $sref       = shift @_; # \%syshdr
+  my $stem       = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+  my $ofils_aref = shift @_; # \@ofils
+  my $tfils_aref = shift @_; # \@tmpfils
 
   # before we open the final output file we need more intermediate
   # processing: the $ppfil has to be parsed, either by chunks or as a
@@ -437,7 +441,7 @@ sub convert1final {
       if ($nchunks < $G::maxchunks) {
 	($i, $prev_line_was_space, $res)
 	  = CExtract::extract_object(\@lines, $i, \@olines,
-				     $ofils_ref, $tfils_ref);
+				     $ofils_aref, $tfils_aref);
       }
       else {
 	print "DEBUG:  last line after $nchunks chunks.\n"

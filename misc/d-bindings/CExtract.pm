@@ -249,8 +249,8 @@ sub extract_object {
   my $i           = shift @_; # $i - current @lines index
   my $olines_aref = shift @_; # \@olines
 
-  my $ofils_ref   = shift @_; # \@ofils
-  my $tfils_ref   = shift @_; # \@tmpfils
+  my $ofils_aref  = shift @_; # \@ofils
+  my $tfils_aref  = shift @_; # \@tmpfils
 
   my $nl = scalar @{$lines_aref};
 
@@ -372,7 +372,6 @@ sub extract_object {
   $s = $ss;
   $slen = length $s;
 
-
   # track '{}', '()', '[]' first and last positions
   my $cfirst   = -1; # curly braces
   my $pfirst   = -1; # parentheses
@@ -490,8 +489,8 @@ sub extract_object {
     my $efil = sprintf "di/tree-dump-line-%04d.txt", $first_line;
     open my $fp, '>', $efil
       or die "$efil: $!";
-    push @{$tfils_ref}, $efil;
-    push @{$ofils_ref}, $efil
+    push @{$tfils_aref}, $efil;
+    push @{$ofils_aref}, $efil
       if $G::debug;
     print $fp "#=== starting dump of extracted code at input line $first_line:\n";
     print $fp "#text: $s\n";
