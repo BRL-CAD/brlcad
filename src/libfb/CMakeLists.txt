@@ -86,8 +86,9 @@ set(libfb_ignore_files
   if_X.c
   if_X24.c
   if_ogl.c
-  if_wgl.c
+  if_qt.c
   if_tk.c
+  if_wgl.c
   )
 CMAKEFILES(${libfb_ignore_files})
 
