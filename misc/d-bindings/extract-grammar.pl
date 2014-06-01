@@ -5,6 +5,10 @@
 use strict;
 use warnings;
 
+use Data::Dumper; $Data::Dumper::Indent = 1;
+
+
+
 use File::Basename;
 use lib('.');
 my $p = basename($0);
@@ -25,7 +29,7 @@ HERE
   exit;
 }
 
-my $debug = 1;
+my $debug = 0;
 my $force = 1;
 
 foreach my $arg (@ARGV) {
@@ -52,41 +56,71 @@ die "FATAL:  Unable to find grammar file '$ifil'.\n"
 open my $fp, '<', $ifil
   or die "$ifil: $!";
 
-my %prods        = ();
-my $inprod       = 0;
-my $currprod     = '';
-my @currchildren = ();
+my %prods = (); # hash of production names and their children
+
+# process each production as we encounter it
+my $curr_prod     = ''; # name
+my @curr_children = (); # all children
+
+my $linenum = 0;
 while (defined(my $line = <$fp>)) {
+  ++$linenum;
+
   $line = strip_comment($line);
   if ($line !~ /\S+/) {
     print "DEBUG:  skipping empty line '$line'.\n"
       if (0 && $debug);
     next;
   }
+  next if $line =~ /<autotree>/;
+  chomp $line;
 
   if (0 && $debug) {
-    chomp $line;
     print "DEBUG: non-empty line '$line'\n";
   }
 
+  # trim
+  $line =~ s{\A \s+}{}x;
+  $line =~ s{\s+ \z}{}x;
+
   # add some spaces on the line for more reliable tokenizing
-  my $have_colon = ($line =~ m{\A [a-zA-Z_]+\:}x) ? 1 : 0;
+  # careful, ignore chars between '/' and '/', etc.
+  my $t1 = $line;
+  if ($line ne '/(typedef|extern|static|auto|register)(?![a-zA-Z0-9_])/'
+      && $line ne '/(void|char|short|int|long|float|double|signed|unsigned)(?![a-zA-Z0-9_])/'
+      && $line ne '/(struct|union)(?![a-zA-Z0-9_])/'
+      && $line ne '/(const|volatile)(?![a-zA-Z0-9_])/'
+      && $line ne '/(auto|break|case|char|const|continue|default|do|double|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)(?![a-zA-Z0-9_])/'
+      && $line ne 'CONSTANT:       /[+-]?(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?/'
+     ) {
+    $line =~ s{([a-zA-Z]) (\|)}{$1 $2}xg;
+    $line =~ s{(\|) (a-zA-Z])}{$1 $2}xg;
+    my $t2 = $line;
+    if (0 && $debug && $t1 ne $t2) {
+      print "DEBUG: original line with pipes:\n";
+      print "  '$t1'\n";
+      print "DEBUG: line with spaced pipes:\n";
+      print "  '$t2'\n";
+    }
+  }
+
+  # check for a production line
+  my $have_colon = ($line =~ m{\A [a-zA-Z_]+\s*\:}x) ? 1 : 0;
+
   # check for malformed lines (or my misunderstanding)
-  if ($line =~ m{\A [a-zA-Z_]+ \:\S}x) {
-    chomp $line;
+  if ($line =~ m{\A [a-zA-Z_]+\s*\:\S}x) {
     die "bad colon line '$line'";
   }
 
   if ($have_colon) {
-    if ($debug) {
+    if (0 && $debug) {
       my $s = $line;
-      chomp $s;
       print "DEBUG: original line with colon:\n";
       print "  '$s'\n";
     }
     # affect only colons at end (or beginning?) of identifiers
     $line =~ s{\A ([a-zA-Z_]+)\:}{$1 \:}x;
-    if ($debug) {
+    if (0 && $debug) {
       my $s = $line;
       chomp $s;
       print "       line with colon separated:\n";
@@ -95,17 +129,68 @@ while (defined(my $line = <$fp>)) {
   }
 
   my @d = split(' ', $line);
+
   my $key  = shift @d;
   my $newprod = ($key =~ s{\: \z}{}x) ? 1 : 0;
   my $key2 = $newprod ? '' : shift @d;
-  if ($newprod || (defined $key2 && $key2 eq ':')) {
-    # beginning of a production rule with non-empty @d as subrules
-    if ($inprod) {
-
-      # if we are inprod, we need to close the current one
+  if (defined $key2) {
+    if ($key2 eq ':') {
+      $newprod = 1;
+      $key2 = '';
     }
-    $inprod = 1;
+    else {
+      unshift @d, $key2;
+    }
   }
+
+  if ($newprod) {
+    # beginning of a production rule with non-empty @d as subrules
+    if ($curr_prod) {
+      # we may need to save the current one
+      die "FATAL: dup production rule '$curr_prod'"
+	if exists $prods{$curr_prod};
+      if (@curr_children) {
+	$prods{$curr_prod} = [@curr_children];
+	@curr_children = ();
+      }
+      else {
+	$prods{$curr_prod} = [];
+	print "WARNING:  production rule '$curr_prod' has no children.\n";
+      }
+    }
+    $curr_prod = $key;
+    push @curr_children, @d;
+  }
+  else {
+    if ($curr_prod) {
+      push @curr_children, $key;
+      push @curr_children, @d;
+    }
+    else {
+      print "ERROR: No \$curr_prod for line $linenum:\n";
+      chomp $line;
+      print "  line: '$line'\n";
+      die "FATAL:  No \$curr_prod.";
+    }
+  }
+}
+
+# any remaining?
+# we may need to save the current one
+die "FATAL: dup production rule '$curr_prod'"
+  if exists $prods{$curr_prod};
+if (@curr_children) {
+  $prods{$curr_prod} = [@curr_children];
+  @curr_children = ();
+}
+else {
+  $prods{$curr_prod} = [];
+  print "WARNING:  production rule '$curr_prod' has no children.\n";
+}
+
+if ($debug) {
+  print "DEBUG: dumping results:\n";
+  print Dumper(\%prods);
 }
 
 #### subroutines ####
@@ -129,7 +214,7 @@ sub strip_comment {
   my $line = shift @_;
 
   if (1) {
-    $line =~ s{\A ([^\#]+) \# [\s\S]* \z}{$1}x;
+    $line =~ s{\A ([^\#]*) \# [\s\S]* \z}{$1}x;
   }
   else {
     my $idx = index $line, '#';
