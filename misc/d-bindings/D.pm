@@ -379,6 +379,7 @@ sub convert1final {
     or die "$ifil: $!";
 
   my @lines = <$fpi>;
+  close $fpi;
   my $nl = @lines;
 
   # save processed lines for later
@@ -440,8 +441,13 @@ sub convert1final {
       ++$nchunks;
       if ($nchunks < $G::maxchunks) {
 	($i, $prev_line_was_space, $res)
-	  = CExtract::extract_object(\@lines, $i, \@olines,
-				     $ofils_aref, $tfils_aref);
+	  = CExtract::extract_object({
+				      lines_aref  => \@lines,
+				      curr_index  => $i,
+				      olines_aref => \@olines,
+				      ofils_aref  => $ofils_aref,
+				      tfils_aref  => $tfils_aref
+				     });
       }
       else {
 	print "DEBUG:  last line after $nchunks chunks.\n"

@@ -78,7 +78,7 @@ my %d32map
      'signed char'        => 'byte',
      'unsigned char'      => 'ubyte',
      'wchar_t'            => 'wchar', # or dchar
-     'bool'               => 'bool', # byte, int
+     'bool'               => 'bool',  # byte, int
      'size_t'             => 'size_t',
      'ptrdiff_t'          => 'ptrdiff_t',
     );
@@ -244,13 +244,17 @@ our %bkw;
 @bkw{@bkw} = ();
 
 sub extract_object {
+  my $argref = shift @_;
+  my $r = ref $argref;
+  die "FATAL:  \$argref is not a 'HASH' ref, it's a '$r'."
+    if $r ne 'HASH';
 
-  my $lines_aref  = shift @_; # \@lines
-  my $i           = shift @_; # $i - current @lines index
-  my $olines_aref = shift @_; # \@olines
+  my $lines_aref  = $argref->{lines_iref};  # shift @_; # \@lines
+  my $i           = $argref->{curr_index};  # shift @_; # $i - current @lines index
+  my $olines_aref = $argref->{olines_aref}; # shift @_; # \@olines
 
-  my $ofils_aref  = shift @_; # \@ofils
-  my $tfils_aref  = shift @_; # \@tmpfils
+  my $ofils_aref  = $argref->{ofils_aref};  # shift @_; # \@ofils
+  my $tfils_aref  = $argref->{tfils_aref};  # shift @_; # \@tmpfils
 
   my $nl = scalar @{$lines_aref};
 
