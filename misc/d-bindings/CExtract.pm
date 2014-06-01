@@ -454,9 +454,9 @@ sub extract_object {
 
   my @xlines_1
     = (
-        "\n",
-        "//=== starting extracted code at input line $first_line:\n",
-        "//  object type '$t'\n",
+       "\n",
+       "//=== starting extracted code at input line $first_line:\n",
+       #"//  object type '$t'\n",
        #"// N original lines: $norig_lines\n",
        #"// N actual lines:   $nactual_lines\n",
       );
@@ -484,7 +484,7 @@ sub extract_object {
     print $fp "#=== starting dump of extracted code at input line $first_line:\n";
     print $fp "#text: $s\n";
 
-    $res = ParsePPCHeader::parse_cfile_pure_autotree
+    $res = ParsePPCHeader::parse_cfile
       ({
 	ityp => 'str',
 	ival => $s,

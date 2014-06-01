@@ -14,7 +14,7 @@ use G;
 # for debugging:
 my $COMP = 0;
 
-sub parse_cfile_pure_autotree {
+sub parse_cfile {
   # input can be on of four types:
   #   a file name of lines
   #   a file ptr to a file of lines
@@ -123,29 +123,12 @@ sub parse_cfile_pure_autotree {
 
   if ($G::inspect_tree) {
     #inspect_PRD_syntax_pure_autotree($ptree);
-    inspect_syntax_tree2([$ptree]);
+    inspect_syntax_tree($ptree);
   }
 
   # printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
 
-} # parse_cfile_pure_autotree
-
-sub inspect_PRD_syntax_pure_autotree {
-  my $tree = shift @_;
-  print "DEBUG:  syntax tree:\n";
-
-  die "what ??" if !exists $tree->{'__RULE__'};
-  die "what ??" if !exists $tree->{'external_declaration(s)'};
-
-  my @extdecl_hrefs = @{$tree->{'external_declaration(s)'}};
-  foreach my $href (@extdecl_hrefs) {
-    die "what ??" if !exists $href->{'__RULE__'};
-    #die "what ??" if !exists $href->{'external_declaration'};
-  }
-
-  print "so far, so good\n";
-
-} # inspect_PRD_syntax_pure_autotree
+} # parse_cfile
 
 sub get_spaces {
   my $level = shift @_;
@@ -154,14 +137,14 @@ sub get_spaces {
   return $s;
 } # get_spaces
 
-sub inspect_syntax_tree2 {
+sub inspect_syntax_tree {
   my $obj = shift @_;
 
   print "DEBUG:  syntax tree:\n";
 
   print_object($obj, 1);
 
-} # inspect_syntax_tree2
+} # inspect_syntax_tree
 
 sub print_object {
   my $obj   = shift @_;

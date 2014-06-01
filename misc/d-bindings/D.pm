@@ -463,6 +463,25 @@ sub convert1final {
     }
   }
 
+  # need to parse the whole C header for correct results
+  if (!$G::chunkparse) {
+    my ($i, $prev_line_was_space, $res) = (0, 0, 0);
+    ($i, $prev_line_was_space, $res)
+      = CExtract::extract_object({
+				  lines_aref  => \@lines,
+				  curr_index  => $i,
+				  olines_aref => \@olines,
+				  ofils_aref  => $ofils_aref,
+				  tfils_aref  => $tfils_aref
+				 });
+    if ($G::quitundef && !defined $res) {
+      print "DEBUG:  last line after parse chunk failure.\n"
+	if $G::debug;
+      last LINE;
+    }
+  }
+
+
   # now process @olines and write them out
 
   open my $fpo, '>', $ofil
