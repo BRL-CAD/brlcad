@@ -316,21 +316,6 @@ sub extract_object {
     push @olines, $line;
   }
 
-=pod
-
-  if (0) {
-    # try Parse::RecDescent instead of my kludges below
-    ParseCChunk::parse_chunk(\@olines);
-    return $last_index;
-  }
-  elsif (!$_WARNED) {
-    printf "WARNING: Parse::RecDescent not being used (file: '%s', line: %d).\n",
-      __FILE__, __LINE__;
-    $_WARNED = 1;
-  }
-
-=cut
-
   my $norig_lines = $last_index - $first_index + 1;
 
   # do some rudimentary analysis

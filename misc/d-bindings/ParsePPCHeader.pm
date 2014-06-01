@@ -121,7 +121,8 @@ sub parse_cfile_pure_autotree {
   }
 
   if ($G::inspect_tree) {
-    inspect_PRD_syntax_pure_autotree($ptree);
+    #inspect_PRD_syntax_pure_autotree($ptree);
+    inspect_syntax2($ptree);
   }
 
   # printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
@@ -143,29 +144,6 @@ sub inspect_PRD_syntax_pure_autotree {
 
   print "so far, so good\n";
 
-=pod
-
-  my $level = 0;
-  my $s = get_spaces($level);
-  my $r = ref $uref;
-  if (!$r) {
-    print_scalar($uref, $level);
-  }
-  elsif ($r eq 'ARRAY') {
-    print_array($uref, ++$level);
-  }
-  elsif ($r eq 'HASH') {
-    print_hash($uref, ++$level);
-  }
-  elsif ($COMP && $uref =~ /=/) {
-    print_scalar($uref, $level);
-  }
-  else {
-    warn_ref($r, $uref, $s, __FILE__, __LINE__);
-  }
-
-=cut
-
 } # inspect_PRD_syntax_pure_autotree
 
 sub get_spaces {
@@ -175,46 +153,52 @@ sub get_spaces {
   return $s;
 } # get_spaces
 
-# mandatory true return for a Perl module
-1;
-
-
-
-
-
-
-
-
-########## EOF ###########
-__END__
-# currently unneeded routines
-
-=pod
-
 sub inspect_syntax_tree2 {
-  my $uref = shift @_;
+  my $obj = shift @_;
 
   print "DEBUG:  syntax tree:\n";
 
-  my $level = 0;
-  my $s = get_spaces($level);
-  my $r = ref $uref;
+  print_object($obj, 1);
+
+} # inspect_syntax_tree2
+
+sub print_object {
+  my $obj   = shift @_;
+  my $level = shift @_; # use for number of leading spaces
+
+  $level = 0 if !defined $level;
+  my $s = $level ? get_spaces($level) : '';
+
+  # get type of object
+  my $r = ref $obj;
+
   if (!$r) {
-    print_scalar($uref, $level);
+    print "${s}scalar value: $obj\n";
   }
   elsif ($r eq 'ARRAY') {
-    print_array($uref, ++$level);
+    foreach my $val (@{$obj}) {
+      print_object($val, $level + 1);
+    }
   }
   elsif ($r eq 'HASH') {
-    print_hash($uref, ++$level);
-  }
-  elsif ($COMP && $uref =~ /=/) {
-    print_scalar($uref, $level);
+    while (my ($key, $val) = each %{$obj}) {
+      print "${s}hash key: $key\n";
+      print_object($val, $level + 1);
+    }
   }
   else {
-    warn_ref($r, $uref, $s, __FILE__, __LINE__);
+    warn_ref($r, $obj, $s, __FILE__, __LINE__);
   }
-} # inspect_syntax_tree2
+
+=pod
+
+    elsif ($COMP && $val =~ /=/) {
+      print_scalar($val, $level);
+    }
+
+=key
+
+} # print_object
 
 sub warn_ref {
   my ($r, $uref, $s, $fil, $linenum) = @_;
@@ -223,11 +207,11 @@ sub warn_ref {
   print "${s}file '$fil', line $linenum\n";
 } # warn_ref
 
+=pod
+
 sub print_scalar {
   my $val = shift @_;
   my $level = shift @_; # use for number of leading spaces
-
-=pod
 
   # note that a scalar may be a disguised ref, e.g.,
   #   translation_unit=HASH(0x1347858)
@@ -238,12 +222,8 @@ sub print_scalar {
     $val = substr $val, 0, $idx+1; # save the '=' for output
   }
 
-=cut
-
   my $s = get_spaces($level);
   print "${s}scalar value: $val\n";
-
-=pod
 
   if (defined $val2) {
     my $r = ref $val2;
@@ -262,59 +242,10 @@ sub print_scalar {
     else {
       warn_ref($r, $val2, $s, __FILE__, __LINE__);
     }
-  }
-
-=cut
 
 } # print_scalar
 
-sub print_array {
-  my $aref  = shift @_;
-  my $level = shift @_; # use for number of leading spaces
-  my $s = get_spaces($level);
-  foreach my $val (@{$aref}) {
-    my $r = ref $val;
-    if (!$r) {
-      print_scalar($val, $level);
-    }
-    elsif ($r eq 'ARRAY') {
-      print_array($val, ++$level);
-    }
-    elsif ($r eq 'HASH') {
-      print_hash($val, ++$level);
-    }
-    elsif ($COMP && $val =~ /=/) {
-      print_scalar($val, $level);
-    }
-    else {
-      warn_ref($r, $val, $s, __FILE__, __LINE__);
-    }
-  }
-} # print_array
-
-sub print_hash {
-  my $href  = shift @_;
-  my $level = shift @_; # use for number of leading spaces
-  my $s = get_spaces($level);
-  foreach my $k (keys %{$href}) {
-    my $val = $href->{$k};
-    my $r = ref $val;
-    if (!$r) {
-      print_scalar($val, $level);
-    }
-    elsif ($r eq 'ARRAY') {
-      print_array($val, ++$level);
-    }
-    elsif ($r eq 'HASH') {
-      print_hash($val, ++$level);
-    }
-    elsif ($COMP && $val =~ /=/) {
-      print_scalar($val, $level);
-    }
-    else {
-      warn_ref($r, $val, $s, __FILE__, __LINE__);
-    }
-  }
-} # print_array
-
 =cut
+
+# mandatory true return for a Perl module
+1;
