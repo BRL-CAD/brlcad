@@ -104,25 +104,26 @@ sub parse_cfile_pure_autotree {
   }
 
   use Data::Dumper;
+  use Data::Structure::Util qw(unbless);
   $Data::Dumper::Terse    = 1;         # don't output names where feasible (doesn't work for my tree)
   $Data::Dumper::Indent   = 1;         # mild pretty print
   #$Data::Dumper::Indent   = 3;         # pretty print with array indices
   $Data::Dumper::Purity   = 1;
   $Data::Dumper::Deparse  = 1;
-  $Data::Dumper::Sortkeys = 1;         # sort hash keys
+  #$Data::Dumper::Sortkeys = 1;         # sort hash keys
 
   if (1) {
     if ($oval && $otyp eq 'fp') {
-      print $oval Dumper [$ptree];
+      print $oval Dumper(unbless($ptree));
     }
     else {
-      print Dumper [$ptree];
+      print Dumper(unbless($ptree));
     }
   }
 
   if ($G::inspect_tree) {
     #inspect_PRD_syntax_pure_autotree($ptree);
-    inspect_syntax2($ptree);
+    inspect_syntax_tree2([$ptree]);
   }
 
   # printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
@@ -173,30 +174,32 @@ sub print_object {
   my $r = ref $obj;
 
   if (!$r) {
-    print "${s}scalar value: $obj\n";
+    print "${s}scalar value: '$obj'\n";
   }
   elsif ($r eq 'ARRAY') {
+    print "${s}array ref: '$obj'\n";
     foreach my $val (@{$obj}) {
+      if (!defined $val) {
+	print "${s}value: 'undef'\n";
+	next;
+      }
       print_object($val, $level + 1);
     }
   }
   elsif ($r eq 'HASH') {
+    print "${s}hash ref: '$obj'\n";
     while (my ($key, $val) = each %{$obj}) {
-      print "${s}hash key: $key\n";
+      print "${s}hash key: '$key'\n";
+      if (!defined $val) {
+	print "${s}value: 'undef'\n";
+	next;
+      }
       print_object($val, $level + 1);
     }
   }
   else {
     warn_ref($r, $obj, $s, __FILE__, __LINE__);
   }
-
-=pod
-
-    elsif ($COMP && $val =~ /=/) {
-      print_scalar($val, $level);
-    }
-
-=key
 
 } # print_object
 
@@ -206,46 +209,6 @@ sub warn_ref {
   print "${s}scalar value: '$uref'\n";
   print "${s}file '$fil', line $linenum\n";
 } # warn_ref
-
-=pod
-
-sub print_scalar {
-  my $val = shift @_;
-  my $level = shift @_; # use for number of leading spaces
-
-  # note that a scalar may be a disguised ref, e.g.,
-  #   translation_unit=HASH(0x1347858)
-  my $val2 = undef;
-  my $idx = index $val, '=';
-  if ($idx >= 0) {
-    $val2 = substr $val, $idx+1;
-    $val = substr $val, 0, $idx+1; # save the '=' for output
-  }
-
-  my $s = get_spaces($level);
-  print "${s}scalar value: $val\n";
-
-  if (defined $val2) {
-    my $r = ref $val2;
-    if (!$r) {
-      print_scalar($val2, $level);
-    }
-    elsif ($r eq 'ARRAY') {
-      print_array($val2, ++$level);
-    }
-    elsif ($r eq 'HASH') {
-      print_hash($val2, ++$level);
-    }
-    elsif ($COMP && $val2 =~ /=/) {
-      print_scalar($val2, $level);
-    }
-    else {
-      warn_ref($r, $val2, $s, __FILE__, __LINE__);
-    }
-
-} # print_scalar
-
-=cut
 
 # mandatory true return for a Perl module
 1;

@@ -249,7 +249,7 @@ sub extract_object {
   die "FATAL:  \$argref is not a 'HASH' ref, it's a '$r'."
     if $r ne 'HASH';
 
-  my $lines_aref  = $argref->{lines_iref};  # shift @_; # \@lines
+  my $lines_aref  = $argref->{lines_aref};  # shift @_; # \@lines
   my $i           = $argref->{curr_index};  # shift @_; # $i - current @lines index
   my $olines_aref = $argref->{olines_aref}; # shift @_; # \@olines
 
@@ -475,7 +475,7 @@ sub extract_object {
 
   my $res = 0;
   if ($G::chunkparse) {
-    my $efil = sprintf "di/tree-dump-line-%04d.txt", $first_line;
+    my $efil = sprintf "./di/tree-dump-line-%04d.txt", $first_line;
     open my $fp, '>', $efil
       or die "$efil: $!";
     push @{$tfils_aref}, $efil;

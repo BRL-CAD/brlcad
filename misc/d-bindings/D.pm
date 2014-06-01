@@ -438,7 +438,6 @@ sub convert1final {
 
     my $res = 0;
     if ($G::chunkparse) {
-      ++$nchunks;
       if ($nchunks < $G::maxchunks) {
 	($i, $prev_line_was_space, $res)
 	  = CExtract::extract_object({
@@ -450,10 +449,12 @@ sub convert1final {
 				     });
       }
       else {
-	print "DEBUG:  last line after $nchunks chunks.\n"
+	my $s = $nchunks > 1 ? 's' : '';
+	print "DEBUG:  last line after $nchunks chunk${s}.\n"
 	  if $G::debug;
 	last LINE;
       }
+      ++$nchunks;
     }
     if ($G::quitundef && !defined $res) {
       print "DEBUG:  last line after parse chunk failure.\n"
