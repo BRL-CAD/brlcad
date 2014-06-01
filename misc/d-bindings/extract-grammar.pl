@@ -122,7 +122,6 @@ while (defined(my $line = <$fp>)) {
     $line =~ s{\A ([a-zA-Z_]+)\:}{$1 \:}x;
     if (0 && $debug) {
       my $s = $line;
-      chomp $s;
       print "       line with colon separated:\n";
       print "  '$s'\n";
     }
@@ -130,7 +129,8 @@ while (defined(my $line = <$fp>)) {
 
   my @d = split(' ', $line);
 
-  my $key  = shift @d;
+  # is this a production definition line"
+  my $key = shift @d;
   my $newprod = ($key =~ s{\: \z}{}x) ? 1 : 0;
   my $key2 = $newprod ? '' : shift @d;
   if (defined $key2) {
@@ -159,17 +159,33 @@ while (defined(my $line = <$fp>)) {
       }
     }
     $curr_prod = $key;
-    push @curr_children, @d;
+    # rejoin the line and reprocess it
+    my $pline = join(' ', @d);
+    my @t = split('\|', $pline);
+    foreach my $t (@t) {
+      # trim
+      $t =~ s{\A \s*}{}x;
+      $t =~ s{\s* \z}{}x;
+      push @curr_children, $t
+	if $t;
+    }
   }
   else {
     if ($curr_prod) {
-      push @curr_children, $key;
-      push @curr_children, @d;
+      # rejoin the line and reprocess it
+      my $pline = join(' ', ($key, @d));
+      my @t = split('\|', $pline);
+      foreach my $t (@t) {
+	# trim
+	$t =~ s{\A \s*}{}x;
+	$t =~ s{\s* \z}{}x;
+	push @curr_children, $t
+	  if $t;
+      }
     }
     else {
-      print "ERROR: No \$curr_prod for line $linenum:\n";
-      chomp $line;
-      print "  line: '$line'\n";
+      print STDERR "ERROR: No \$curr_prod for line $linenum:\n";
+      print STDERR "  line: '$line'\n";
       die "FATAL:  No \$curr_prod.";
     }
   }
