@@ -59,19 +59,35 @@ open my $fp, '<', $ifil
 my %prod  = (); # hash of production names and their children
 my @prods = (); # retain order as read
 
-extract_grammar(\%prod, \@prods);
+my $maxCAPSlen = extract_grammar(\%prod, \@prods);
 
 if ($debug) {
+  # chars allowed for CAPS prod name plus a colon plus two spaces
+  my $spaces = $maxCAPSlen + 3;
+
   print "# C grammar:\n";
   foreach my $p (@prods) {
     my $caps = ($p =~ m{\A [A-Z_]+ \z}x) ? 1 : 0;
     my @c = @{$prod{$p}};
     my $nc = @c;
-    print "$p:";
-    print "\n" if !$caps;
+    if (!$caps) {
+      print "$p:\n";
+    }
+    else {
+      my $len = length $p;
+      my $sp  = $spaces;
+      $sp -= $len - 1; # space for prod name plus colon
+      printf "$p:%-*.*s", $sp, $sp, ' ';
+    }
     for (my $i = 0; $i < $nc; ++$i) {
       my $c = $c[$i];
-      print "\t";
+      if ($caps && $i) {
+	my $sp = $spaces;
+	printf "%-*.*s", $sp, $sp, ' ';
+      }
+      if (!$caps) {
+	print "\t";
+      }
       print "| " if $i;
       print "$c";
       print "\n";
@@ -104,6 +120,9 @@ sub extract_grammar {
   # process each production as we encounter it
   my $curr_prod     = ''; # name
   my @curr_children = (); # all children
+
+  # track some prod name lengths
+  my $maxCAPSlen = 0;
 
   my $linenum = 0;
   while (defined(my $line = <$fp>)) {
@@ -209,6 +228,10 @@ sub extract_grammar {
 	push @{$prods_aref}, $curr_prod;
       }
       $curr_prod = $key;
+      my $len = length $key;
+      $maxCAPSlen = $len
+	if $len > $maxCAPSlen;
+
       # rejoin the line and reprocess it
       my $pline = join(' ', @d);
       # split on space-separated pipes
@@ -261,6 +284,8 @@ sub extract_grammar {
     $prod_href->{$curr_prod} = [];
     print "WARNING:  production rule '$curr_prod' has no children.\n";
   }
+
+  return $maxCAPSlen;
 
 } # extract_grammar
 
