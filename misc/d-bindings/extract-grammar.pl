@@ -278,7 +278,7 @@ sub extract_grammar {
     }
   }
 
-  # any remaining?
+  # the last prod is remaining
   # we may need to save the current one
   die "FATAL: dup production rule '$curr_prod'"
     if exists $prod{$curr_prod};
