@@ -44,7 +44,7 @@
       </para>
       <para>
 	<literallayout class="normal">
-build_region eac edcodes edcomb em idents item lm r rcodes read_muves red redraw_vlist
+build_region eac edcodes edcomb em idents item lm r rcodes read_muves red
 regdef regions reid remat summary wcodes whatid whichair whichid
 	</literallayout>
       </para>

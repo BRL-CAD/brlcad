@@ -163,7 +163,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
+    intern.idb_meth = &OBJ[ID_COMBINATION];
     intern.idb_ptr = (genptr_t)comb;
     comb->tree = final_tree;
 

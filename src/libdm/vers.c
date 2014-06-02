@@ -23,7 +23,7 @@
 #include "bio.h"
 
 #include "dm.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /**

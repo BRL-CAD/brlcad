@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_blend.c
  *
- *  Comments -
- *      Texture Library - Uses the R and B channels to blend 2 colors
+ * Comments -
+ * Texture Library - Uses the R and B channels to blend 2 colors
  *
  */
 
@@ -42,10 +42,12 @@ texture_blend_init(struct texture_s *texture, vect_t color1, vect_t color2) {
     VMOVE(sd->color2, color2);
 }
 
+
 void
 texture_blend_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_blend_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), vect_t *pixel) {
@@ -59,6 +61,7 @@ texture_blend_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray
     *pixel[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
     *pixel[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
 }
+
 
 /*
  * Local Variables:

@@ -41,6 +41,9 @@
 #define GENERIC_NAME "rhino"
 #define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
 
+/* UUID buffers must be >= 37 chars per openNURBS API */
+#define UUID_LEN 50
+
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
 typedef std::map< std::string, int> REGION_CNT_MAP;
@@ -52,33 +55,8 @@ STR_STR_MAP layer_name_uuid_map;
 REGION_CNT_MAP region_cnt_map;
 MEMBER_MAP member_map;
 
-char *
-itoa(int num)
-{
-    static char line[10];
 
-    sprintf(line, "%d", num);
-    return line;
-}
-
-
-void
-printPoints(struct rt_brep_internal* bi, ON_TextLog* dump)
-{
-    ON_Brep* brep = bi->brep;
-    if (brep) {
-	const int count = brep->m_V.Count();
-	for (int i = 0; i < count; i++) {
-	    ON_BrepVertex& bv = brep->m_V[i];
-	    bv.Dump(*dump);
-	}
-    } else {
-	dump->Print("brep was NULL!\n");
-    }
-}
-
-
-int
+static size_t
 RegionCnt(std::string &name)
 {
     REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
@@ -87,7 +65,7 @@ RegionCnt(std::string &name)
 	region_cnt_map.insert(std::pair<std::string, int>(name, 1));
 	return 1;
     } else {
-	int cnt = iter->second + 1;
+	size_t cnt = iter->second + 1;
 	region_cnt_map.erase(iter);
 	region_cnt_map.insert(std::pair<std::string, int>(name, cnt));
 	return cnt;
@@ -95,10 +73,10 @@ RegionCnt(std::string &name)
 }
 
 
-void
+static void
 MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 {
-    char uuidstr[50];
+    char uuidstr[UUID_LEN] = {0};
     std::string parent_uuid;
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
@@ -113,7 +91,7 @@ MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 }
 
 
-void
+static void
 MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
 {
     layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
@@ -136,10 +114,10 @@ MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
 }
 
 
-void
+static void
 BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 {
-    static int groupcnt = 1;
+    static long groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
 
@@ -155,7 +133,10 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 	}
     }
     if (groupname.empty()) {
-	groupname = "g" + groupcnt;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "g%ld", groupcnt);
+        groupname = bu_vls_addr(&str);
+	bu_vls_free(&str);
     }
 
     MEMBER_MAP::iterator iter = member_map.find(uuid);
@@ -171,19 +152,20 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 		std::string uuid2 = siter->second;
 		BuildHierarchy(outfp, uuid2, dump);
 	    }
-	    viter++;
+	    ++viter;
 	}
-	iter++;
+	++iter;
     }
     mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
 }
 
 
-void
+static void
 BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 {
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
     MEMBER_MAP::iterator iter = member_map.find(root_uuid);
+
     if (iter != member_map.end()) {
 	std::string uuid = iter->first;
 	BuildHierarchy(outfp, uuid, dump);
@@ -191,20 +173,22 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 }
 
 
-void
+static void
 ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 {
-    char name[256];
-    char uuidstr[50];
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    char uuidstr[UUID_LEN] = {0};
     std::string layer_name, uuid, parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
+
     dump->Print("Number of layers: %d\n", count);
-    for (i=0; i < count; i++) {
+    for (i=0; i < count; ++i) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
-	bu_strlcpy(name, ON_String(lname), sizeof(name));
-	layer_name = name;
+
+	bu_vls_strcpy(&name, ON_String(lname));
+	layer_name = bu_vls_addr(&name);
 	uuid = ON_UuidToString(layer.m_layer_id, uuidstr);
 	parent_uuid = ON_UuidToString(layer.m_parent_layer_id, uuidstr);
 	MapLayer(layer_name, uuid, parent_uuid);
@@ -215,7 +199,7 @@ ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 int
 main(int argc, char** argv)
 {
-    int mcount = 0;
+    size_t mcount = 0;
     int verbose_mode = 0;
     int random_colors = 0;
     int use_uuidnames = 0;
@@ -297,7 +281,7 @@ main(int argc, char** argv)
 	model.Audit(true, &repair_count, dump, &warnings); // repair
 
 	dump->Print("%d objects were repaired.\n", repair_count);
-	for (warn_i=0; warn_i < warnings.Count(); warn_i++) {
+	for (warn_i=0; warn_i < warnings.Count(); ++warn_i) {
 	    dump->Print("%s\n", warnings[warn_i]);
 	}
 
@@ -316,7 +300,7 @@ main(int argc, char** argv)
     BU_LIST_INIT(&all_regions.l);
 
     dump->Print("\n");
-    for (int i = 0; i < model.m_object_table.Count(); i++) {
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
 	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
 
@@ -330,7 +314,7 @@ main(int argc, char** argv)
 	dump->Print("\n");
 
 	if (use_uuidnames) {
-	    char uuidstring[37];
+	    char uuidstring[UUID_LEN] = {0};
 	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
 	    ON_String constr(uuidstring);
 	    const char* cstr = constr;
@@ -339,32 +323,38 @@ main(int argc, char** argv)
 	    ON_String constr(myAttributes.m_name);
 	    if (constr == NULL) {
 		std::string genName = "";
-		char name[256];
+		struct bu_vls name = BU_VLS_INIT_ZERO;
+
 		/* Use layer name to help name un-named regions/objects */
 		if (myAttributes.m_layer_index > 0) {
 		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
 		    ON_wString layer_name = layer.LayerName();
-		    bu_strlcpy(name, ON_String(layer_name), sizeof(name));
-		    genName = name;
+		    bu_vls_strcpy(&name, ON_String(layer_name));
+		    genName = bu_vls_addr(&name);
 		    if (genName.length() <= 0) {
 			genName = GENERIC_NAME;
 		    }
-		    dump->Print("\n\nlayername:\"%s\"\n\n", name);
+		    dump->Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
 		} else {
 		    genName = GENERIC_NAME;
 		}
+
 		/* For layer named regions use layer region count
 		 * instead of global region count
 		 */
 		if (genName.compare(GENERIC_NAME) == 0) {
-		    genName+=itoa(mcount++);
+		    bu_vls_printf(&name, "%zd", mcount++);
+		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		} else {
-		    int region_cnt = RegionCnt(genName);
-		    genName+=itoa(region_cnt);
+		    size_t region_cnt = RegionCnt(genName);
+		    bu_vls_printf(&name, "%zd", region_cnt);
+		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		}
+
 		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+		bu_vls_free(&name);
 	    } else {
 		const char* cstr = constr;
 		geom_base = cstr;
@@ -434,6 +424,26 @@ main(int argc, char** argv)
 		    brep->Dump(*dump);
 	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("Type: HasBrepForm\n");
+
+		ON_Brep *new_brep = pGeometry->BrepForm();
+
+		dump->Print("primitive is %s.\n", geom_name.c_str());
+		dump->Print("region created is %s.\n", region_name.c_str());
+
+		mk_brep(outfp, geom_name.c_str(), new_brep);
+
+		unsigned char rgb[3];
+		rgb[RED] = (unsigned char)r;
+		rgb[GRN] = (unsigned char)g;
+		rgb[BLU] = (unsigned char)b;
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		if (verbose_mode > 0)
+		    new_brep->Dump(*dump);
+
+		delete new_brep;
+
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
 		dump->Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(*dump);

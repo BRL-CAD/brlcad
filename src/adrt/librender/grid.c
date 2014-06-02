@@ -33,38 +33,40 @@ render_grid_free(render_t *UNUSED(render))
 {
 }
 
+
 void
 render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
-	struct tie_id_s id;
-	vect_t vec;
-	tfloat angle;
+    struct tie_id_s id;
+    vect_t vec;
+    tfloat angle;
 
 
-	if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
-		/* if X or Y lie in the grid paint it white else make it gray */
-		if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
-			*pixel[0] = (tfloat)0.9;
-			*pixel[1] = (tfloat)0.9;
-			*pixel[2] = (tfloat)0.9;
-		} else {
-			*pixel[0] = (tfloat)0.1;
-			*pixel[1] = (tfloat)0.1;
-			*pixel[2] = (tfloat)0.1;
-		}
+    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
+	/* if X or Y lie in the grid paint it white else make it gray */
+	if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
+	    *pixel[0] = (tfloat)0.9;
+	    *pixel[1] = (tfloat)0.9;
+	    *pixel[2] = (tfloat)0.9;
 	} else {
-		return;
+	    *pixel[0] = (tfloat)0.1;
+	    *pixel[1] = (tfloat)0.1;
+	    *pixel[2] = (tfloat)0.1;
 	}
+    } else {
+	return;
+    }
 
-	VSUB2(vec,  ray->pos,  id.pos);
-	VUNITIZE(vec);
-	angle = VDOT(vec,  id.norm);
-	VSCALE(*pixel, *pixel, (angle*0.9));
+    VSUB2(vec, ray->pos, id.pos);
+    VUNITIZE(vec);
+    angle = VDOT(vec, id.norm);
+    VSCALE(*pixel, *pixel, (angle*0.9));
 
-	*pixel[0] += (tfloat)0.1;
-	*pixel[1] += (tfloat)0.1;
-	*pixel[2] += (tfloat)0.1;
+    *pixel[0] += (tfloat)0.1;
+    *pixel[1] += (tfloat)0.1;
+    *pixel[2] += (tfloat)0.1;
 }
+
 
 int
 render_grid_init(render_t *render, const char *UNUSED(usr))
@@ -73,6 +75,7 @@ render_grid_init(render_t *render, const char *UNUSED(usr))
     render->free = render_grid_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

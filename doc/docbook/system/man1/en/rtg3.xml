@@ -194,11 +194,11 @@ and
 <citerefentry><refentrytitle>covart</refentrytitle><manvolnum>1V</manvolnum></citerefentry>.</para>
 
 <para>A color vector display of ray-model intersections can be written to
-<emphasis remap='I'>rtg3.pl</emphasis>
+<emphasis remap='I'>rtg3.plot3</emphasis>
 by specifying the
 <option>-X80000000</option>
 option.
-The resulting plot file can be displayed with <emphasis remap='I'>pl-fb</emphasis> or <emphasis remap='I'>pl-sgi</emphasis>.</para>
+The resulting plot file can be displayed with <emphasis remap='I'>plot3-fb</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='format'><title>FORMAT</title>
@@ -262,14 +262,14 @@ rtg3 -s32 -x80000000 model.g
 </literallayout> <!-- .fi -->
 
 <para>The bounding boxes for the objects in the database specified will
-automatically be put into a file called <emphasis remap='I'>rtrpp.plot</emphasis>.  Now,
+automatically be put into a file called <emphasis remap='I'>rtrpp.plot3</emphasis>.  Now,
 to compute the color rays use</para>
 
 <literallayout remap='.nf'>
 Irtg3 -s32 -X80000000 model.g
 </literallayout> <!-- .fi -->
 
-<para>The results will be automatically stored in <emphasis remap='I'>rtg3.pl</emphasis>.  The rays
+<para>The results will be automatically stored in <emphasis remap='I'>rtg3.plot3</emphasis>.  The rays
 will be colored green where they traverse solids in the model, and blue
 where they traverse air within the model.</para>
 
@@ -277,7 +277,7 @@ where they traverse air within the model.</para>
 displayed:</para>
 
 <literallayout remap='.nf'>
-cat rtrpp.plot rtg3.pl | pl-sgi
+cat rtrpp.plot3 rtg3.plot3 | plot3-fb
 </literallayout> <!-- .fi -->
 
 </refsect1>

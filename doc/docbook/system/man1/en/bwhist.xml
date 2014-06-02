@@ -29,7 +29,6 @@ displays a histogram of the pixel values in a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file.  If a file is not given, standard input is read.
 The output will be displayed on the frambuffer selected via the
-<!-- B elided -->
 <envar>FB_FILE</envar>
 environment variable (see
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>).</para>

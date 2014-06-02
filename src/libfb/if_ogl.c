@@ -1189,35 +1189,6 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 	SGI(ifp)->mi_parent = bu_process_id();
 
 	signal(SIGUSR1, sigkid);
-
-#if 0
-	if ((f = fork()) != 0) {
-	    /* Parent process */
-	    int k;
-	    int f;
-	    int status;
-
-	    /* parent doesn't need these any more */
-	    for (k=0; k < 20; k++) {
-		close(k);
-	    }
-
-	    /*
-	     * Wait until the child dies, of whatever cause,
-	     * or until the child kills us.
-	     * Pretty vicious, this computer society.
-	     */
-	    while ((k = wait(&status)) != -1 && k != f)
-		; /* NULL */
-
-	    exit(0);
-	    /* NOTREACHED */
-	} else if (f < 0) {
-	    fb_log("fb_ogl_open:  linger-mode fork failure\n");
-	    return -1;
-	}
-	/* Child Process falls through */
-#endif
     }
 
     /* use defaults if invalid width and height specified */

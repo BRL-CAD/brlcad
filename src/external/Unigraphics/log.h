@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file log.h
- *
- */
+
+#include "common.h"
 
 #include <stdarg.h>
+
 extern void log(const char *fmt, ...);
 extern void dialog(const char *fmt, ...);
 extern void log_init(void);

@@ -224341,10 +224341,6 @@ FEFEFD
 FEFEFD
 EOF
 
-export ITCL_LIBRARY="$TOP_SRCDIR/src/other/incrTcl/itcl/library/"
-export TCL_LIBRARY="$TOP_SRCDIR/src/other/libtcl/library/"
-export BRLCAD_DATA="$TOP_SRCDIR/src"
-
 cat > shaders.mged <<EOF
 opendb shaders.g y
 

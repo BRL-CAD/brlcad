@@ -96,7 +96,7 @@ struct flat_specific flat_defaults = {
  * transparency := a color intensity triplet mask to indicate how much of
  * background object light are visible through this object.
  * alpha := similar to bright, sets this object's alpha transparency to a
- * single mask value that gets set for each channel.  e.g 40% opaque
+ * single mask value that gets set for each channel.  e.g. 40% opaque
  * is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
  */
 struct bu_structparse flat_parse_tab[] = {

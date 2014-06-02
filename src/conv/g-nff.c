@@ -144,7 +144,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -184,7 +184,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -323,7 +323,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%%\n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
@@ -387,10 +387,10 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -410,7 +410,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -418,8 +418,8 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'e':		/* Error file name. */
 		error_file = bu_optarg;
@@ -433,13 +433,11 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
-    if (!output_file) {
+    if (!output_file)
 	bu_exit(1, "No output file specified!\n");
-    }
 
     /* Open output file */
     if ((fpf = fopen(output_file, "wb+")) == NULL) {
@@ -468,21 +466,11 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 	perror(argv[0]);
 	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", argv[0]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
-
-    fprintf(fpe, "Model: %s\n", argv[0]);
-    fprintf(fpe, "Objects:");
-    for (i = 1; i < argc; i++)
-	fprintf(fpe, " %s", argv[i]);
-    fprintf(fpe, "\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
-    fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
 
     bu_log("Model: %s\n", argv[0]);
     bu_log("Objects:");
@@ -517,7 +505,6 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     }
 
     bu_log("%ld triangles written\n", tot_polygons);
-    fprintf(fpe, "%ld triangles written\n", tot_polygons);
 
     /* Release dynamic storage */
     nmg_km(the_model);

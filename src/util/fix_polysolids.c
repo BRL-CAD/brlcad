@@ -23,9 +23,33 @@
  *
  */
 
+/* === for auto-man-page use: === */
+/*
+ * purpose: fix polysolids with bad normals
+ *
+ * description:
+ *
+ * Manually edited or auto-generated polysolids can have bad normals.
+ * This program attempts to correct those.
+ *
+ *
+ * opt: -v turn on verbose mode
+ *
+ * opt: -x <librt debug flag> turn on librt debugging
+ *          (option may used more than once)
+ *
+ * opt: -X <nmg debug flag> turn on nmg debugging
+ *         (option may used more than once)
+ *
+ * opt: -h brief help
+ *
+ * opt: -? brief help
+ *
+ */
+
 #include "common.h"
 
-#include <stdio.h>
+#include <bio.h>
 #include <math.h>
 #include <string.h>
 
@@ -37,21 +61,25 @@
 #include "bn.h"
 #include "bu.h"
 
-
 /*
  * M A I N
  */
 int
 main(int argc, char *argv[])
 {
+
+    const char usage[] =
+      "Usage: %s [-v] [-x LDEBUG_FLAG] [-X NDEBUG_FLAG] < old_db.g > new_db.g\n"
+      "\n"
+      "Options:\n"
+      "  v - verbose\n"
+      "  x - librt debug flag\n"
+      "  X - nmg debug flag\n"
+      ;
+    const char optstring[] = "vx:X:h?";
+
     static int verbose;
     static struct bn_tol tol;
-
-    static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
-	options:\n\
-		v - verbose\n\
-		x - librt debug flag\n\
-		X - nmg debug flag\n";
 
     union record rec;
     int c;
@@ -68,10 +96,13 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	bu_exit(1, usage, argv[0]);
+
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "vx:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    unsigned int debug;
 	    case 'v':
@@ -79,11 +110,11 @@ main(int argc, char *argv[])
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", &debug);
-		rt_g.debug = debug;
+		RTG.debug = debug;
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", &debug);
-		rt_g.NMG_debug = debug;
+		RTG.NMG_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
@@ -129,13 +160,13 @@ main(int argc, char *argv[])
 		    if (done)
 			break;
 
-		    for (i=0; i<5; i++)
+		    for (i = 0; i < 5; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, rec2.q.q_count);
 		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-		    for (i=0; i<rec2.q.q_count; i++) {
+		    for (i = 0; i < rec2.q.q_count; i++) {
 			VMOVE(pt, rec2.q.q_verts[i]);
 			nmg_vertex_gv(eu->vu_p->v_p, pt);
 			eu = BU_LIST_NEXT(edgeuse, &eu->l);

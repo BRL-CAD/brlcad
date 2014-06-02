@@ -52,15 +52,15 @@ rt_pr_soltab(register const struct soltab *stp)
     }
     bu_log("------------ %s (bit %ld) %s ------------\n",
 	   stp->st_dp->d_namep, stp->st_bit,
-	   rt_functab[id].ft_name);
+	   OBJ[id].ft_name);
     VPRINT("Bound Sph CENTER", stp->st_center);
     bu_log("Approx Sph Radius = %g\n", INTCLAMP(stp->st_aradius));
     bu_log("Bounding Sph Radius = %g\n", INTCLAMP(stp->st_bradius));
     VPRINT("Bound RPP min", stp->st_min);
     VPRINT("Bound RPP max", stp->st_max);
     bu_pr_ptbl("st_regions", &stp->st_regions, 1);
-    if (rt_functab[id].ft_print)
-	rt_functab[id].ft_print(stp);
+    if (OBJ[id].ft_print)
+	OBJ[id].ft_print(stp);
 }
 
 
@@ -150,13 +150,13 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
     stp = pp->pt_inseg->seg_stp;
     bu_vls_printf(v, "%s (%s#%ld) ",
 		  stp->st_dp->d_namep,
-		  rt_functab[stp->st_id].ft_name+3,
+		  OBJ[stp->st_id].ft_name+3,
 		  stp->st_bit);
 
     stp = pp->pt_outseg->seg_stp;
     bu_vls_printf(v, "%s (%s#%ld) ",
 		  stp->st_dp->d_namep,
-		  rt_functab[stp->st_id].ft_name+3,
+		  OBJ[stp->st_id].ft_name+3,
 		  stp->st_bit);
 
     bu_vls_printf(v, "(%g, %g)",

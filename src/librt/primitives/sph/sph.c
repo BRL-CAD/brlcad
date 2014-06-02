@@ -140,7 +140,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * This ELL is really an SPH
      */
     stp->st_id = ID_SPH;		/* "fix" soltab ID */
-    stp->st_meth = &rt_functab[ID_SPH];
+    stp->st_meth = &OBJ[ID_SPH];
 
     /* Solid is OK, compute constant terms now */
     BU_GET(sph, struct sph_specific);

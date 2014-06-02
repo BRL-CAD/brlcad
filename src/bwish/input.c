@@ -321,7 +321,6 @@ processChar(char ch)
 	    break;
 	case CTRL_N:                  /* Next history command */
 	case CTRL_P:                  /* Last history command */
-#if 1
 	    /* Work the history routines to get the right string */
 	    if (freshline) {
 		if (ch == CTRL_P) {
@@ -364,7 +363,6 @@ processChar(char ch)
 	    bu_log("%V", &input_str);
 	    input_str_index = bu_vls_strlen(&input_str);
 	    escaped = bracketed = 0;
-#endif
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
 	    {

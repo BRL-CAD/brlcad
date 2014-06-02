@@ -260,13 +260,10 @@ make_bond(int sp1, int sp2)
     rgb[1] = 142;
     rgb[2] = 57;
 
-#if 1
-    /* Use this for mol-cube.dat */
-    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.15);
-#else
-    /* Use this for chemical molecules */
-    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.5);
-#endif
+    /* TODO: make the scaling factor configurable or autosize based on
+     * overall complexity.
+     */
+    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.25);
 
     BU_LIST_INIT(&reg_head.l);
     (void)mk_addmember(nm, &reg_head.l, NULL, WMOP_UNION);

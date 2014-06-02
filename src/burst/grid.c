@@ -423,7 +423,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
        and imagined (implicit).
     */
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw) {
-	fastf_t	los = 0.0;
 	int	voidflag = 0;
 	struct partition *np = pp->pt_forw;
 	struct partition *cp;
@@ -445,6 +444,8 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	/* Check for voids. */
 	if (np != pt_headp) {
+	    fastf_t los = 0.0;
+
 #if DEBUG_GRID
 	    brst_log("\tprocessing region '%s', \tid=%d\taircode=%d\n",
 		     pp->pt_regionp->reg_name,
@@ -1611,7 +1612,12 @@ burstRay()
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 		     phi, gammaval);
-	    plotRay(&a_spall.a_ray);
+
+	    if (plotline)
+		plotRayPoint(&a_spall.a_ray);
+	    else
+		plotRayLine(&a_spall.a_ray);
+
 	    bu_semaphore_acquire(RT_SEM_WORKER);
 	    a_spall.a_user = a_burst.a_user++;
 	    bu_semaphore_release(RT_SEM_WORKER);

@@ -76,6 +76,7 @@ render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, v
     }
 }
 
+
 int
 render_surfel_init(render_t *render, const char *buf)
 {
@@ -92,8 +93,8 @@ render_surfel_init(render_t *render, const char *buf)
     d->num = 0;
     d->list = NULL;
     /*
-       d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
-       */
+      d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
+    */
     /* do something to extract num and list from buf */
     return 0;
 }

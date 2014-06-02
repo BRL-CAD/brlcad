@@ -573,6 +573,23 @@ static char *p_pnts[] = {
 };
 
 
+static char *p_hrt[] = {
+    "Enter X, Y, Z of the heart vertex: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector xdir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector ydir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector zdir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter distance to cusps: "
+};
+
+
 /**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
@@ -692,7 +709,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     BU_ALLOC(ebm, struct rt_ebm_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
-    intern->idb_meth = &rt_functab[ID_EBM];
+    intern->idb_meth = &OBJ[ID_EBM];
     intern->idb_ptr = (genptr_t)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -719,7 +736,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     BU_ALLOC(sip, struct rt_submodel_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
-    intern->idb_meth = &rt_functab[ID_SUBMODEL];
+    intern->idb_meth = &OBJ[ID_SUBMODEL];
     intern->idb_ptr = (genptr_t)sip;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
@@ -745,7 +762,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     BU_ALLOC(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
-    intern->idb_meth = &rt_functab[ID_DSP];
+    intern->idb_meth = &OBJ[ID_DSP];
     intern->idb_ptr = (genptr_t)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -782,7 +799,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     BU_ALLOC(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
-    intern->idb_meth = &rt_functab[ID_DSP];
+    intern->idb_meth = &OBJ[ID_DSP];
     intern->idb_ptr = (genptr_t)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -842,7 +859,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     BU_ALLOC(hf, struct rt_hf_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
-    intern->idb_meth = &rt_functab[ID_HF];
+    intern->idb_meth = &OBJ[ID_HF];
     intern->idb_ptr = (genptr_t)hf;
     hf->magic = RT_HF_INTERNAL_MAGIC;
 
@@ -903,7 +920,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     BU_ALLOC(vol, struct rt_vol_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
-    intern->idb_meth = &rt_functab[ID_VOL];
+    intern->idb_meth = &OBJ[ID_VOL];
     intern->idb_ptr = (genptr_t)vol;
     vol->magic = RT_VOL_INTERNAL_MAGIC;
 
@@ -985,7 +1002,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_BOT;
-    intern->idb_meth = &rt_functab[ID_BOT];
+    intern->idb_meth = &OBJ[ID_BOT];
 
     BU_ALLOC(bot, struct rt_bot_internal);
     intern->idb_ptr = (genptr_t)bot;
@@ -1058,7 +1075,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARBN;
-    intern->idb_meth = &rt_functab[ID_ARBN];
+    intern->idb_meth = &OBJ[ID_ARBN];
 
     BU_ALLOC(intern->idb_ptr, struct rt_arbn_internal);
     arbn = (struct rt_arbn_internal *)intern->idb_ptr;
@@ -1110,7 +1127,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PIPE;
-    intern->idb_meth = &rt_functab[ID_PIPE];
+    intern->idb_meth = &OBJ[ID_PIPE];
 
     BU_ALLOC(intern->idb_ptr, struct rt_pipe_internal);
     pipeip = (struct rt_pipe_internal *)intern->idb_ptr;
@@ -1161,7 +1178,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	num_pts = atoi(argv[3]);
 	if (num_pts < 3) {
 	    bu_vls_printf(gedp->ged_result_str, "points per waterline must be >= 3\n");
-	    intern->idb_meth = &rt_functab[ID_ARS];
+	    intern->idb_meth = &OBJ[ID_ARS];
 	    return GED_ERROR;
 	}
     }
@@ -1170,7 +1187,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	num_curves = atoi(argv[4]);
 	if (num_curves < 3) {
 	    bu_vls_printf(gedp->ged_result_str, "points per waterline must be >= 3\n");
-	    intern->idb_meth = &rt_functab[ID_ARS];
+	    intern->idb_meth = &OBJ[ID_ARS];
 	    return GED_ERROR;
 	}
     }
@@ -1246,7 +1263,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARS;
-    intern->idb_meth = &rt_functab[ID_ARS];
+    intern->idb_meth = &OBJ[ID_ARS];
 
     BU_ALLOC(intern->idb_ptr, struct rt_ars_internal);
     arip = (struct rt_ars_internal *)intern->idb_ptr;
@@ -1335,7 +1352,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARB8;
-    intern->idb_meth = &rt_functab[ID_ARB8];
+    intern->idb_meth = &OBJ[ID_ARB8];
     BU_ALLOC(intern->idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1413,7 +1430,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ELL;
-    intern->idb_meth = &rt_functab[ID_ELL];
+    intern->idb_meth = &OBJ[ID_ELL];
     BU_ALLOC(intern->idb_ptr, struct rt_ell_internal);
     eip = (struct rt_ell_internal *)intern->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
@@ -1485,7 +1502,7 @@ tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TOR;
-    intern->idb_meth = &rt_functab[ID_TOR];
+    intern->idb_meth = &OBJ[ID_TOR];
     BU_ALLOC(intern->idb_ptr, struct rt_tor_internal);
     tip = (struct rt_tor_internal *)intern->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
@@ -1524,7 +1541,7 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
-    intern->idb_meth = &rt_functab[ID_TGC];
+    intern->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1573,7 +1590,7 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
-    intern->idb_meth = &rt_functab[ID_TGC];
+    intern->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1616,7 +1633,7 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
-    intern->idb_meth = &rt_functab[ID_TGC];
+    intern->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1655,7 +1672,7 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
-    intern->idb_meth = &rt_functab[ID_TGC];
+    intern->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1694,7 +1711,7 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
-    intern->idb_meth = &rt_functab[ID_TGC];
+    intern->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1741,7 +1758,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARB8;
-    intern->idb_meth = &rt_functab[ID_ARB8];
+    intern->idb_meth = &OBJ[ID_ARB8];
     BU_ALLOC(intern->idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1873,7 +1890,7 @@ part_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PARTICLE;
-    intern->idb_meth = &rt_functab[ID_PARTICLE];
+    intern->idb_meth = &OBJ[ID_PARTICLE];
     BU_ALLOC(intern->idb_ptr, struct rt_part_internal);
     part_ip = (struct rt_part_internal *)intern->idb_ptr;
     part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
@@ -1908,7 +1925,7 @@ rpc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_RPC;
-    intern->idb_meth = &rt_functab[ID_RPC];
+    intern->idb_meth = &OBJ[ID_RPC];
     BU_ALLOC(intern->idb_ptr, struct rt_rpc_internal);
     rip = (struct rt_rpc_internal *)intern->idb_ptr;
     rip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
@@ -1943,7 +1960,7 @@ rhc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_RHC;
-    intern->idb_meth = &rt_functab[ID_RHC];
+    intern->idb_meth = &OBJ[ID_RHC];
     BU_ALLOC(intern->idb_ptr, struct rt_rhc_internal);
     rip = (struct rt_rhc_internal *)intern->idb_ptr;
     rip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
@@ -1979,7 +1996,7 @@ epa_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EPA;
-    intern->idb_meth = &rt_functab[ID_EPA];
+    intern->idb_meth = &OBJ[ID_EPA];
     BU_ALLOC(intern->idb_ptr, struct rt_epa_internal);
     rip = (struct rt_epa_internal *)intern->idb_ptr;
     rip->epa_magic = RT_EPA_INTERNAL_MAGIC;
@@ -2020,7 +2037,7 @@ ehy_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EHY;
-    intern->idb_meth = &rt_functab[ID_EHY];
+    intern->idb_meth = &OBJ[ID_EHY];
     BU_ALLOC(intern->idb_ptr, struct rt_ehy_internal);
     rip = (struct rt_ehy_internal *)intern->idb_ptr;
     rip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
@@ -2071,7 +2088,7 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HYP;
-    intern->idb_meth = &rt_functab[ID_HYP];
+    intern->idb_meth = &OBJ[ID_HYP];
     BU_ALLOC(intern->idb_ptr, struct rt_hyp_internal);
     rip = (struct rt_hyp_internal *)intern->idb_ptr;
     rip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
@@ -2135,7 +2152,7 @@ eto_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ETO;
-    intern->idb_meth = &rt_functab[ID_ETO];
+    intern->idb_meth = &OBJ[ID_ETO];
     BU_ALLOC(intern->idb_ptr, struct rt_eto_internal);
     eip = (struct rt_eto_internal *)intern->idb_ptr;
     eip->eto_magic = RT_ETO_INTERNAL_MAGIC;
@@ -2178,7 +2195,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EXTRUDE;
-    intern->idb_meth = &rt_functab[ID_EXTRUDE];
+    intern->idb_meth = &OBJ[ID_EXTRUDE];
     BU_ALLOC(intern->idb_ptr, struct rt_extrude_internal);
     eip = (struct rt_extrude_internal *)intern->idb_ptr;
     eip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
@@ -2225,7 +2242,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_REVOLVE;
-    intern->idb_meth = &rt_functab[ID_REVOLVE];
+    intern->idb_meth = &OBJ[ID_REVOLVE];
     BU_ALLOC(intern->idb_ptr, struct rt_revolve_internal);
     rip = (struct rt_revolve_internal *)intern->idb_ptr;
     rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
@@ -2274,7 +2291,7 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_GRIP;
-    intern->idb_meth = &rt_functab[ID_GRIP];
+    intern->idb_meth = &OBJ[ID_GRIP];
     BU_ALLOC(intern->idb_ptr, struct rt_grip_internal);
     gip = (struct rt_grip_internal *)intern->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
@@ -2304,7 +2321,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
     n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
     intern->idb_type = ID_SUPERELL;
-    intern->idb_meth = &rt_functab[ID_SUPERELL];
+    intern->idb_meth = &OBJ[ID_SUPERELL];
     BU_ALLOC(intern->idb_ptr, struct rt_superell_internal);
     eip = (struct rt_superell_internal *)intern->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
@@ -2382,7 +2399,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_METABALL;
-    intern->idb_meth = &rt_functab[ID_METABALL];
+    intern->idb_meth = &OBJ[ID_METABALL];
 
     BU_ALLOC(intern->idb_ptr, struct rt_metaball_internal);
     metaball = (struct rt_metaball_internal *)intern->idb_ptr;
@@ -2625,7 +2642,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* init database structure */
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PNTS;
-    intern->idb_meth = &rt_functab[ID_PNTS];
+    intern->idb_meth = &OBJ[ID_PNTS];
     BU_ALLOC(intern->idb_ptr, struct rt_pnts_internal);
 
     /* init internal structure */
@@ -2773,6 +2790,37 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     return GED_OK;
 }
 
+/* H R T _ I N () :   	reads heart parameters from keyboard
+ * returns 0 if successfully read
+ * returns 1 if unsuccessful read
+ */
+static int
+hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+{
+    fastf_t vals[13];
+    int i, n;
+    struct rt_hrt_internal *hip;
+    n = 13;
+
+    intern->idb_type = ID_HRT;
+    intern->idb_meth = &OBJ[ID_HRT];
+    intern->idb_ptr = bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
+    hip = (struct rt_hrt_internal *)intern->idb_ptr;
+    hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+
+    for(i = 0; i < n - 1; i++) {
+	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    vals[12] = atof(cmd_argv[3 + 12]);
+
+    VMOVE(hip->v, &vals[0]);
+    VMOVE(hip->xdir, &vals[3]);
+    VMOVE(hip->ydir, &vals[6]);
+    VMOVE(hip->zdir, &vals[9]);
+    hip->d = vals[12];
+
+    return GED_OK;
+}
 
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
@@ -2817,7 +2865,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     /*
      * Decide which solid to make and get the rest of the args
      * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell>
+     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell|hrt>
     */
     if (BU_STR_EQUAL(argv[2], "ebm")) {
 	nvals = 4;
@@ -3031,6 +3079,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*4 + 2;
 	menu = p_superell;
 	fn_in = superell_in;
+    } else if (BU_STR_EQUAL(argv[2], "hrt")) {
+	nvals = 3*4 + 1;
+	menu = p_hrt;
+	fn_in = hrt_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:

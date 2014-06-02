@@ -1,4 +1,5 @@
 # makefile for libpng under FreeBSD
+# Copyright (C) 2014 Glenn Randers-Pehrson and Andrey A. Chernov
 # Copyright (C) 2002, 2007, 2009 Glenn Randers-Pehrson and Andrey A. Chernov
 #
 # This code is released under the libpng license.
@@ -6,7 +7,7 @@
 # and license in png.h
 
 PREFIX?=        /usr/local
-SHLIB_VER?=     15
+SHLIB_VER?=     16
 
 LIB=		png
 SHLIB_MAJOR=	${SHLIB_VER}
@@ -26,19 +27,28 @@ SYMLINKS=       libpng/png.h ${INCSDIR}/../png.h \
 		libpng/pngconf.h ${INCSDIR}/../pngconf.h \
 		libpng/pnglibconf.h ${INCSDIR}/../pnglibconf.h
 
-LDADD+=         -lm -lz
-#LDADD+=         -lm -lz -lssp_nonshared   # for OSVERSION >= 800000 ?
+# where make install finds libz.a and zlib.h
+ZLIBLIB=	/usr/lib
+ZLIBINC=	/usr/include
 
-DPADD+=         ${LIBM} ${LIBZ}
+LDADD+=		-lm -lz
+#LDADD+=	-lm -lz -lssp_nonshared   # for OSVERSION < 800000 ?
 
-CFLAGS+= -I.
+DPADD+=		${LIBM} ${LIBZ}
+
+CPPFLAGS+=	-I. -I${ZLIBINC}
+CFLAGS+=	-W -Wall
 
 SRCS=	png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c \
 	pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
 	pngwtran.c pngmem.c pngerror.c pngpread.c
 
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
 pngtest: pngtest.o libpng.a
-	${CC} ${CFLAGS} -L. -static -o pngtest pngtest.o -lpng -lz -lm
+	${CC} ${CFLAGS} -L. -static -o pngtest pngtest.o -L${ZLIBLIB} \
+	-lpng ${LDADD}
 
 CLEANFILES= pngtest pngtest.o pngout.png
 

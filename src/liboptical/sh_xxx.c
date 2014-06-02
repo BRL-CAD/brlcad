@@ -50,7 +50,7 @@
  * 3) Edit init.c to add extern for xxx_mfuncs and a call to
  * mlib_add_shader().
  *
- * 4) Edit Makefile.am to add shader file to the compilation
+ * 4) Edit CMakeLists.txt to add shader file to the compilation
  *
  * 5) replace this list with a description of the shader, its
  * parameters and use.

@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_bump.c
  *
- *  Comments -
- *      Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
+ * Comments -
+ * Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
  *
  */
 
@@ -41,10 +41,12 @@ texture_bump_init(struct texture_s *texture, vect_t coef) {
     VMOVE(sd->coef, coef);
 }
 
+
 void
 texture_bump_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_bump_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -59,11 +61,12 @@ texture_bump_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_
     n[2] = id->norm[2] + sd->coef[2]*(2* *pixel[2]-1.0);
     VUNITIZE(n);
 
-    d = VDOT( n,  id->norm);
+    d = VDOT(n,  id->norm);
     if (d < 0)
 	VSCALE(n,  n,  -1.0);
     VMOVE(id->norm, n);
 }
+
 
 /*
  * Local Variables:

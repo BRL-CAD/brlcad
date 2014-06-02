@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbcmrot</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-i <replaceable>increment</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>steps_per_second</replaceable></arg>
 </cmdsynopsis>
@@ -48,7 +48,7 @@ direction (toward larger values).</para>
 
 <para>By default, the framebuffer is assumed to be 512x512 pixels.
 Specifying the
-<option>-h</option>
+<option>-H</option>
 flag changes this to 1024x1024.
 This is only important for devices such as the Adage framebuffers
 which operate differently depending on the display size.</para>

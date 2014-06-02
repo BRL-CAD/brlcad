@@ -329,7 +329,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 	case NMG_LOOPUSE_MAGIC:
 	    return nmg_find_fu_of_lu(vu->up.lu_p);
 	case NMG_SHELL_MAGIC:
-	    if (rt_g.NMG_debug & DEBUG_BASIC)
+	    if (RTG.NMG_debug & DEBUG_BASIC)
 		bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell, can't find faceuse\n", vu);
 	    return (struct faceuse *)NULL;
 	case NMG_EDGEUSE_MAGIC:
@@ -337,7 +337,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 		case NMG_LOOPUSE_MAGIC:
 		    return nmg_find_fu_of_lu(vu->up.eu_p->up.lu_p);
 		case NMG_SHELL_MAGIC:
-		    if (rt_g.NMG_debug & DEBUG_BASIC)
+		    if (RTG.NMG_debug & DEBUG_BASIC)
 			bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell/edgeuse, can't find faceuse\n", vu);
 		    return (struct faceuse *)NULL;
 	    }
@@ -492,7 +492,7 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
     NMG_CK_LOOPUSE(lu);
 
     if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) {
-	if (rt_g.NMG_debug & DEBUG_BASIC) bu_log("lu up is not faceuse\n");
+	if (RTG.NMG_debug & DEBUG_BASIC) bu_log("lu up is not faceuse\n");
 	ret = 0;
 	goto out;
     }
@@ -500,7 +500,7 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
     NMG_CK_FACEUSE(fu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-	if (rt_g.NMG_debug & DEBUG_BASIC) bu_log("lu down is not edgeuse\n");
+	if (RTG.NMG_debug & DEBUG_BASIC) bu_log("lu down is not edgeuse\n");
 	ret = 0;
 	goto out;
     }
@@ -540,7 +540,7 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
     }
     ret = 1;
  out:
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_loop_is_a_crack(lu=x%x) ret=%d\n", lu, ret);
     }
     return ret;
@@ -585,7 +585,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
     }
 
  out:
-    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC)) {
+    if (UNLIKELY(RTG.NMG_debug & DEBUG_BASIC)) {
 	bu_log("nmg_loop_is_ccw(lu=x%x) ret=%d\n", lu, ret);
     }
 
@@ -742,7 +742,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	eup_orientation = OT_SAME;
     }
 
-    if (rt_g.NMG_debug & DEBUG_FINDEU)
+    if (RTG.NMG_debug & DEBUG_FINDEU)
 	bu_log("nmg_findeu() seeking eu!=%8x/%8x between (%8x, %8x) %s\n",
 	       eup, eup_mate, v1, v2,
 	       dangling_only ? "[dangling]" : "[any]");
@@ -758,7 +758,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	/* Ignore edgeuses which don't run between the right verts */
 	if (eu->eumate_p->vu_p->v_p != v2) continue;
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU) {
+	if (RTG.NMG_debug & DEBUG_FINDEU) {
 	    bu_log("nmg_findeu: check eu=%8x vertex=(%8x, %8x)\n",
 		   eu, eu->vu_p->v_p,
 		   eu->eumate_p->vu_p->v_p);
@@ -766,21 +766,21 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 
 	/* Ignore the edgeuse to be excluded */
 	if (eu == eup || eu->eumate_p == eup) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring -- excluded edgeuse\n");
 	    continue;
 	}
 
 	/* See if this edgeuse is in the proper shell */
 	if (s && nmg_find_s_of_eu(eu) != s) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring x%x -- eu in wrong shell s=%x\n", eu, eu->up.s_p);
 	    continue;
 	}
 
 	/* If it's not a dangling edge, skip on */
 	if (dangling_only && eu->eumate_p != eu->radial_p) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU) {
+	    if (RTG.NMG_debug & DEBUG_FINDEU) {
 		bu_log("\tIgnoring %8x/%8x (radial=x%x)\n",
 		       eu, eu->eumate_p,
 		       eu->radial_p);
@@ -788,7 +788,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	    continue;
 	}
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	if (RTG.NMG_debug & DEBUG_FINDEU)
 	    bu_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -799,7 +799,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
     }
     eu = (struct edgeuse *)NULL;
  out:
-    if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
+    if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_findeu() returns x%x\n", eu);
 
     return (struct edgeuse *)eu;
@@ -839,7 +839,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	eup_orientation = OT_SAME;
     }
 
-    if (rt_g.NMG_debug & DEBUG_FINDEU)
+    if (RTG.NMG_debug & DEBUG_FINDEU)
 	bu_log("nmg_find_eu_in_face() seeking eu!=%8x/%8x between (%8x, %8x) %s\n",
 	       eup, eup_mate, v1, v2,
 	       dangling_only ? "[dangling]" : "[any]");
@@ -855,7 +855,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	/* Ignore edgeuses which don't run between the right verts */
 	if (eu->eumate_p->vu_p->v_p != v2) continue;
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU) {
+	if (RTG.NMG_debug & DEBUG_FINDEU) {
 	    bu_log("nmg_find_eu_in_face: check eu=%8x vertex=(%8x, %8x)\n",
 		   eu, eu->vu_p->v_p,
 		   eu->eumate_p->vu_p->v_p);
@@ -863,21 +863,21 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 
 	/* Ignore the edgeuse to be excluded */
 	if (eu == eup || eu->eumate_p == eup) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring -- excluded edgeuse\n");
 	    continue;
 	}
 
 	/* See if this edgeuse is in the proper faceuse */
 	if (fu && nmg_find_fu_of_eu(eu) != fu) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring x%x -- eu not in faceuse\n", eu);
 	    continue;
 	}
 
 	/* If it's not a dangling edge, skip on */
 	if (dangling_only && eu->eumate_p != eu->radial_p) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU) {
+	    if (RTG.NMG_debug & DEBUG_FINDEU) {
 		bu_log("\tIgnoring %8x/%8x (radial=x%x)\n",
 		       eu, eu->eumate_p,
 		       eu->radial_p);
@@ -885,7 +885,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	    continue;
 	}
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	if (RTG.NMG_debug & DEBUG_FINDEU)
 	    bu_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -896,7 +896,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
     }
     eu = (struct edgeuse *)NULL;
  out:
-    if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
+    if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_find_eu_in_face() returns x%x\n", eu);
 
     return (struct edgeuse *)eu;
@@ -928,7 +928,7 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
     NMG_CK_VERTEX(v2);
     if (s) NMG_CK_SHELL(s);
 
-    if (rt_g.NMG_debug & DEBUG_FINDEU) {
+    if (RTG.NMG_debug & DEBUG_FINDEU) {
 	bu_log("nmg_find_e() seeking e!=%8x between (%8x, %8x)\n",
 	       ep, v1, v2);
     }
@@ -945,7 +945,7 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	/* We know that this eu starts at v1 */
 	if (eu->eumate_p->vu_p->v_p != v2) continue;
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU) {
+	if (RTG.NMG_debug & DEBUG_FINDEU) {
 	    bu_log("nmg_find_e: check eu=%8x vertex=(%8x, %8x)\n",
 		   eu, eu->vu_p->v_p,
 		   eu->eumate_p->vu_p->v_p);
@@ -953,19 +953,19 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
 
 	/* Ignore the edge to be excluded */
 	if (eu->e_p == ep) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring -- excluded edge\n");
 	    continue;
 	}
 
 	/* See if this edgeuse is in the proper shell */
 	if (s && nmg_find_s_of_eu(eu) != s) {
-	    if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    if (RTG.NMG_debug & DEBUG_FINDEU)
 		bu_log("\tIgnoring x%x -- eu in wrong shell s=%x\n", eu, eu->up.s_p);
 	    continue;
 	}
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	if (RTG.NMG_debug & DEBUG_FINDEU)
 	    bu_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -977,7 +977,7 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
     }
     eu = (struct edgeuse *)NULL;
  out:
-    if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
+    if (RTG.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	bu_log("nmg_find_e() returns x%x\n", eu);
 
     return (struct edgeuse *)eu;
@@ -1172,7 +1172,7 @@ nmg_find_edge_between_2fu(const struct faceuse *fu1, const struct faceuse *fu2, 
 	}
     }
 
-    if (rt_g.NMG_debug & DEBUG_BASIC)
+    if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_find_edge_between_2fu(fu1=x%x, fu2=x%x) edgeuse=x%x\n", fu1, fu2, ret);
 
     return ret;
@@ -1422,7 +1422,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
     }
 
     VCROSS(left, Norm, edgevect);
-    if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+    if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	vect_t edge_unit;
 	vect_t norm_x_edge;
 
@@ -1437,7 +1437,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 	       V3ARGS(Norm), V3ARGS(edgevect), V3ARGS(left));
     }
     VUNITIZE(left);
-    if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+    if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	bu_log("\tUnitized left=(%f %f %f)\n", V3ARGS(left));
     }
     return 0;

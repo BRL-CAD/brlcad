@@ -38,7 +38,7 @@ rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane)
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
 

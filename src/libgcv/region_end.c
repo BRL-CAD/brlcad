@@ -38,7 +38,7 @@ union tree *
 _gcv_cleanup(int state, union tree *tp)
 {
     /* restore previous debug state */
-    rt_g.NMG_debug = state;
+    RTG.NMG_debug = state;
 
     /* Dispose of original tree, so that all associated dynamic memory
      * is released now, not at the end of all regions.  A return of
@@ -106,7 +106,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
      */
-    NMG_debug_state = rt_g.NMG_debug;
+    NMG_debug_state = RTG.NMG_debug;
 
     /* Begin bomb protection */
     if (BU_SETJUMP) {

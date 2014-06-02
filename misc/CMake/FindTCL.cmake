@@ -283,8 +283,10 @@ macro(TK_GRAPHICS_SYSTEM wishcmd resultvar)
   set(${resultvar} "wm-NOTFOUND")
   file(WRITE ${tkwin_scriptfile} ${tkwin_script})
   EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-  file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
-  string(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
+  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM)
+    file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
+    string(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
+  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM)
 endmacro()
 
 
@@ -307,7 +309,7 @@ endmacro()
 
 
 # Set up the logic for determining if a particular Tcl is compiled threaded.
-set(tclthreaded_script"
+set(tclthreaded_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED\"
 set fileId [open $filename \"w\"]
 if {[info exists tcl_platform(threaded)]} {puts $fileId 1}

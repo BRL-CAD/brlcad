@@ -28,7 +28,7 @@
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 int do_projection = 1;
@@ -167,14 +167,14 @@ main(int argc, char *argv [])
 		solid_name = bu_optarg;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		if (RT_G_DEBUG & DEBUG_MEM)
 		    bu_debug |= BU_DEBUG_MEM_LOG;
 		if (RT_G_DEBUG & DEBUG_MEM_FULL)
 		    bu_debug |= BU_DEBUG_MEM_CHECK;
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
 		break;
 	    default:
 		usage(argv[0]);

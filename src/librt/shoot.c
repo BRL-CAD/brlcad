@@ -783,7 +783,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
     RT_CK_RTI(ssp->ap->a_rt_i);
     ap = ssp->ap;
 
-    sprintf(buf, "cell%d.pl", fnum++);
+    sprintf(buf, "cell%d.plot3", fnum++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
       perror(buf);
@@ -916,18 +916,6 @@ rt_shootray(register struct application *ap)
 		   V3ARGS(ap->a_ray.r_dir));
 	}
     }
-#ifndef NO_BADRAY_CHECKING
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********shootray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_shootray() bad ray\n");
-    }
-#endif
 
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
@@ -1613,18 +1601,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	       ap->a_onehit);
 	VPRINT("Dir", ap->a_ray.r_dir);
     }
-#ifndef NO_BADRAY_CHECKING
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********cell_n_on_ray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_cell_n_on_ray() bad ray\n");
-    }
-#endif
 
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);	/* Stay on our CPU */

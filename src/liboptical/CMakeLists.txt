@@ -126,7 +126,6 @@ CMAKEFILES(
 
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

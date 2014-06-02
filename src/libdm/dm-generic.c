@@ -36,9 +36,9 @@
 
 #include "dm-Null.h"
 
-
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
@@ -70,6 +70,9 @@ extern void wgl_fogHint();
 extern int wgl_share_dlist();
 #endif /* DM_WGL */
 
+#ifdef DM_QT
+extern struct dm *qt_open();
+#endif /* DM_QT */
 
 HIDDEN struct dm *
 null_open(Tcl_Interp *interp, int argc, const char *argv[])
@@ -94,6 +97,8 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
     switch (type) {
 	case DM_TYPE_NULL:
 	    return null_open(interp, argc, argv);
+	case DM_TYPE_TXT:
+	    return txt_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
 	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
@@ -121,6 +126,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
 	    return wgl_open(interp, argc, argv);
+#endif
+#ifdef DM_QT
+	case DM_TYPE_QT:
+	    return qt_open(interp, argc, argv);
 #endif
 	default:
 	    break;

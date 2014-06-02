@@ -226,7 +226,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 		if (ncpu<1) ncpu = 1;
 		break;
 	    case 'd':
-		rt_g.debug |= DEBUG_TREEWALK;
+		RTG.debug |= DEBUG_TREEWALK;
 		break;
 	    case '?':
 	    default:
@@ -262,7 +262,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	    gpip->back->forw = gpip->forw;
 	    bu_free((genptr_t)gpip, "Push ident");
 	}
-	rt_g.debug = old_debug;
+	RTG.debug = old_debug;
 	BU_PUT(gpdp, struct push_data);
 	bu_vls_printf(gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
 	return GED_ERROR;
@@ -313,7 +313,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	bu_free((genptr_t)gpip, "Push ident");
     }
 
-    rt_g.debug = old_debug;
+    RTG.debug = old_debug;
     push_error = gpdp->push_error;
     BU_PUT(gpdp, struct push_data);
 

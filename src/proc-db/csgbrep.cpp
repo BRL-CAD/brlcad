@@ -122,7 +122,7 @@ main(int argc, char** argv)
     VSET(arb4.pt[7], -1000, 1000, -1000);
     tmp_internal.idb_ptr = (genptr_t)&arb4;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb4", &tol);
 
     bu_log("ARB5\n");
@@ -138,7 +138,7 @@ main(int argc, char** argv)
     VSET(arb5.pt[7], -1000, 0, 0);
     tmp_internal.idb_ptr = (genptr_t)&arb5;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb5", &tol);
 
     bu_log("ARB6\n");
@@ -154,7 +154,7 @@ main(int argc, char** argv)
     VSET(arb6.pt[7], -1000, 0, 1000);
     tmp_internal.idb_ptr = (genptr_t)&arb6;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb6", &tol);
 
     bu_log("ARB7\n");
@@ -170,7 +170,7 @@ main(int argc, char** argv)
     VSET(arb7.pt[7], -1000, -1000, -500);
     tmp_internal.idb_ptr = (genptr_t)&arb7;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb7", &tol);
 
     bu_log("ARB8\n");
@@ -186,7 +186,7 @@ main(int argc, char** argv)
     VSET(arb8.pt[7], -985, -1000, 1005);
     tmp_internal.idb_ptr = (genptr_t)&arb8;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb8", &tol);
 
     bu_log("ARBN\n");
@@ -212,7 +212,7 @@ main(int argc, char** argv)
     arbn.eqn[7][3] = 1000;
     tmp_internal.idb_ptr = (genptr_t)&arbn;
     tmp_internal.idb_minor_type = ID_ARBN;
-    tmp_internal.idb_meth = &rt_functab[ID_ARBN];
+    tmp_internal.idb_meth = &OBJ[ID_ARBN];
     write_out(outfp, &tmp_internal, "arbn", &tol);
     bu_free(arbn.eqn, "free arbn eqn");
 
@@ -243,12 +243,12 @@ main(int argc, char** argv)
     ttol.norm = 0.0;
     tmp_internal.idb_ptr = (genptr_t)&arbnmg8;
     tmp_internal.idb_minor_type = ID_ARB8;
-    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth = &OBJ[ID_ARB8];
     tmp_internal.idb_meth->ft_tessellate(&r, m, &tmp_internal, &ttol, &tol);
 
     tmp_internal.idb_ptr = m;
     tmp_internal.idb_minor_type = ID_NMG;
-    tmp_internal.idb_meth = &rt_functab[ID_NMG];
+    tmp_internal.idb_meth = &OBJ[ID_NMG];
     write_out(outfp, &tmp_internal, "nmg", &tol);
     FREE_MODEL(m);
 
@@ -261,7 +261,7 @@ main(int argc, char** argv)
     VSET(sph.c, 0.0, 0.0, 5.0);
     tmp_internal.idb_ptr = (genptr_t)&sph;
     tmp_internal.idb_minor_type = ID_SPH;
-    tmp_internal.idb_meth = &rt_functab[ID_SPH];
+    tmp_internal.idb_meth = &OBJ[ID_SPH];
     write_out(outfp, &tmp_internal, "sph", &tol);
 
     bu_log("ELL\n");
@@ -273,7 +273,7 @@ main(int argc, char** argv)
     VSET(ell.c, 0.0, 0.0, 1.0);
     tmp_internal.idb_ptr = (genptr_t)&ell;
     tmp_internal.idb_minor_type = ID_ELL;
-    tmp_internal.idb_meth = &rt_functab[ID_ELL];
+    tmp_internal.idb_meth = &OBJ[ID_ELL];
     write_out(outfp, &tmp_internal, "ell", &tol);
 
     bu_log("RHC\n");
@@ -286,7 +286,7 @@ main(int argc, char** argv)
     rhc.rhc_c = 400.0;
     tmp_internal.idb_ptr = (genptr_t)&rhc;
     tmp_internal.idb_minor_type = ID_RHC;
-    tmp_internal.idb_meth = &rt_functab[ID_RHC];
+    tmp_internal.idb_meth = &OBJ[ID_RHC];
     write_out(outfp, &tmp_internal, "rhc", &tol);
 
     bu_log("RPC\n");
@@ -300,7 +300,7 @@ main(int argc, char** argv)
     rpc.rpc_r = 1000.0;
     tmp_internal.idb_ptr = (genptr_t)&rpc;
     tmp_internal.idb_minor_type = ID_RPC;
-    tmp_internal.idb_meth = &rt_functab[ID_RPC];
+    tmp_internal.idb_meth = &OBJ[ID_RPC];
     write_out(outfp, &tmp_internal, "rpc", &tol);
 
     bu_log("EPA\n");
@@ -313,7 +313,7 @@ main(int argc, char** argv)
     epa.epa_r2 = 500.0;
     tmp_internal.idb_ptr = (genptr_t)&epa;
     tmp_internal.idb_minor_type = ID_EPA;
-    tmp_internal.idb_meth = &rt_functab[ID_EPA];
+    tmp_internal.idb_meth = &OBJ[ID_EPA];
     write_out(outfp, &tmp_internal, "epa", &tol);
 
     bu_log("EHY\n");
@@ -327,7 +327,7 @@ main(int argc, char** argv)
     ehy.ehy_c = 400;
     tmp_internal.idb_ptr = (genptr_t)&ehy;
     tmp_internal.idb_minor_type = ID_EHY;
-    tmp_internal.idb_meth = &rt_functab[ID_EHY];
+    tmp_internal.idb_meth = &OBJ[ID_EHY];
     write_out(outfp, &tmp_internal, "ehy", &tol);
 
     bu_log("HYP\n");
@@ -340,7 +340,7 @@ main(int argc, char** argv)
     hyp.hyp_bnr = 0.5;
     tmp_internal.idb_ptr = (genptr_t)&hyp;
     tmp_internal.idb_minor_type = ID_HYP;
-    tmp_internal.idb_meth = &rt_functab[ID_HYP];
+    tmp_internal.idb_meth = &OBJ[ID_HYP];
     write_out(outfp, &tmp_internal, "hyp", &tol);
 
     bu_log("TGC\n");
@@ -354,7 +354,7 @@ main(int argc, char** argv)
     VSET(tgc.d, 0, 500, 0);
     tmp_internal.idb_ptr = (genptr_t)&tgc;
     tmp_internal.idb_minor_type = ID_TGC;
-    tmp_internal.idb_meth = &rt_functab[ID_TGC];
+    tmp_internal.idb_meth = &OBJ[ID_TGC];
     write_out(outfp, &tmp_internal, "tgc", &tol);
 
     bu_log("TOR\n");
@@ -366,7 +366,7 @@ main(int argc, char** argv)
     tor.r_h = 2.0;
     tmp_internal.idb_ptr = (genptr_t)&tor;
     tmp_internal.idb_minor_type = ID_TOR;
-    tmp_internal.idb_meth = &rt_functab[ID_TOR];
+    tmp_internal.idb_meth = &OBJ[ID_TOR];
     write_out(outfp, &tmp_internal, "tor", &tol);
 
     bu_log("ETO\n");
@@ -379,7 +379,7 @@ main(int argc, char** argv)
     eto.eto_rd = 100;
     tmp_internal.idb_ptr = (genptr_t)&eto;
     tmp_internal.idb_minor_type = ID_ETO;
-    tmp_internal.idb_meth = &rt_functab[ID_ETO];
+    tmp_internal.idb_meth = &OBJ[ID_ETO];
     write_out(outfp, &tmp_internal, "eto", &tol);
 
     bu_log("PIPE\n");
@@ -416,7 +416,7 @@ main(int argc, char** argv)
     }
     tmp_internal.idb_ptr = (genptr_t)&pipe;
     tmp_internal.idb_minor_type = ID_PIPE;
-    tmp_internal.idb_meth = &rt_functab[ID_PIPE];
+    tmp_internal.idb_meth = &OBJ[ID_PIPE];
     write_out(outfp, &tmp_internal, "pipe", &tol);
 
     bu_log("SKETCH\n");
@@ -483,7 +483,7 @@ main(int argc, char** argv)
 
     tmp_internal.idb_ptr = (genptr_t)&skt;
     tmp_internal.idb_minor_type = ID_SKETCH;
-    tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
+    tmp_internal.idb_meth = &OBJ[ID_SKETCH];
     write_out(outfp, &tmp_internal, "sketch", &tol);
 
     bu_log("EXTRUDE\n");
@@ -498,7 +498,7 @@ main(int argc, char** argv)
     extrude.skt = &skt;
     tmp_internal.idb_ptr = (genptr_t)&extrude;
     tmp_internal.idb_minor_type = ID_EXTRUDE;
-    tmp_internal.idb_meth = &rt_functab[ID_EXTRUDE];
+    tmp_internal.idb_meth = &OBJ[ID_EXTRUDE];
     write_out(outfp, &tmp_internal, "extrude", &tol);
 
     bu_log("REVOLVE\n");
@@ -513,7 +513,7 @@ main(int argc, char** argv)
     revolve.skt = &skt;
     tmp_internal.idb_ptr = (genptr_t)&revolve;
     tmp_internal.idb_minor_type = ID_REVOLVE;
-    tmp_internal.idb_meth = &rt_functab[ID_REVOLVE];
+    tmp_internal.idb_meth = &OBJ[ID_REVOLVE];
     write_out(outfp, &tmp_internal, "revolve", &tol);
 
 /*
@@ -534,7 +534,7 @@ main(int argc, char** argv)
   dsp.dsp_datasrc = RT_DSP_SRC_FILE;
   tmp_internal.idb_ptr = (genptr_t)&dsp;
   tmp_internal.idb_minor_type = ID_DSP;
-  tmp_internal.idb_meth = &rt_functab[ID_DSP];
+  tmp_internal.idb_meth = &OBJ[ID_DSP];
   write_out(outfp, &tmp_internal, "dsp", &tol);
   bu_vls_free(&dsp.dsp_name);
 */

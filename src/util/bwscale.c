@@ -190,7 +190,11 @@ init_buffer(size_t len)
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
+    if (max < iny)
+	buflines = max;
+    else
+	buflines = iny;
+
     buf_start = (-buflines);
     buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
 }

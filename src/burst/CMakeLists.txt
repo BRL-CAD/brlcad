@@ -40,7 +40,6 @@ if(HAVE_TERMLIB)
     trie.h
     )
   CMAKEFILES(${burst_noinst_HEADERS} burst.format)
-  CMAKEFILES(Makefile.am)
 endif(HAVE_TERMLIB)
 
 # Local Variables:

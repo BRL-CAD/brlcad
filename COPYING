@@ -41,11 +41,11 @@ the prefix "lib" in the src/ directory (e.g. src/librt/).  All of
 BRL-CAD's libraries, applications, and any content lacking a license
 specification are covered by the terms of the LGPL.
 
-Most of BRL-CAD's build infrastructure including files required by the
-GNU Build System (such as the configure.ac and all Makefile.am files),
-a variety of scripts located in the misc/ and sh/ directories, and the
-testing infrastructure (scripts and resources) are provided either
-under the BSD license or are in the public domain.  Similarly, most of
+Most of BRL-CAD's build infrastructure including files required by
+the GNU Build System (such as the CMakeLists.txt files), a variety
+of scripts located in the misc/ and sh/ directories, and the testing
+infrastructure (scripts and resources) are provided either under
+the BSD license or are in the public domain.  Similarly, most of
 the geometric models, images, and other data resources are also
 provided under the BSD license.  Refer to each individual file for
 specific terms.

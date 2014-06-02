@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_mix.c
  *
- *  Comments -
- *      Texture Library - Mix two textures
+ * Comments -
+ * Texture Library - Mix two textures
  *
  */
 
@@ -44,10 +44,12 @@ texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct t
     td->coef = coef;
 }
 
+
 void
 texture_mix_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_mix_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, vect_t *pixel) {
@@ -62,6 +64,7 @@ texture_mix_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray, s
     VSCALE(t,  t,  (1.0 - td->coef));
     VADD2((*pixel),  (*pixel),  t);
 }
+
 
 /*
  * Local Variables:

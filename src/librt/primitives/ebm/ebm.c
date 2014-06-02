@@ -107,6 +107,47 @@ extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
 #define BIT(_eip, _xx, _yy) \
     ((unsigned char *)((_eip)->mp->apbuf))[ ((_yy)+BIT_YWIDEN)*((_eip)->xdim + BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
+
+/**
+ * R T _ E B M _ C E N T R O I D
+ *
+ * Computes centroid of an extruded bitmap
+ */
+void
+rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ebm_internal *eip;
+    register unsigned int x, y;
+    unsigned long int xsum, ysum, totalcells;
+    fastf_t avgx, avgy, avgz;
+    point_t bmcentroid;
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    bu_log("WARNING: EBM centroids have not been verified\n");
+
+    xsum = 0;
+    ysum = 0;
+    totalcells = 0;
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) == 1) {
+		xsum += x;
+		ysum += y;
+		totalcells++;
+	    }
+	}
+    }
+    avgx = (fastf_t)xsum / totalcells + 0.5;
+    avgy = (fastf_t)ysum / totalcells + 0.5;
+    avgz = eip->tallness / 2;
+    VSET(bmcentroid, avgx, avgy, avgz);
+    MAT4X3VEC(*cent, eip->mat, bmcentroid);
+}
+
+
 /**
  * R T _ S E G _ P L A N E C L I P
  *
@@ -329,20 +370,6 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 		rp->r_pt[Y]) * invdir[Y];
 	delta[Y] = ebmp->ebm_cellsize[Y] * fabs(invdir[Y]);
     }
-#if 0
-    /* Z setup */
-    if (ZERO(rp->r_dir[Z])) {
-	t[Z] = INFINITY;
-    } else {
-	/* Consider igrid[Z] to be either 0 or 1 */
-	if (rp->r_dir[Z] < 0) {
-	    t[Z] = (ebmp->ebm_origin[Z] + ebmp->ebm_cellsize[Z] -
-		    rp->r_pt[Z]) * invdir[Z];
-	} else {
-	    t[Z] = (ebmp->ebm_origin[Z] - rp->r_pt[Z]) * invdir[Z];
-	}
-    }
-#endif
 
     /* The delta[] elements *must* be positive, as t must increase */
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
@@ -528,7 +555,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
-    ip->idb_meth = &rt_functab[ID_EBM];
+    ip->idb_meth = &OBJ[ID_EBM];
     BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -674,7 +701,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
-    ip->idb_meth = &rt_functab[ID_EBM];
+    ip->idb_meth = &OBJ[ID_EBM];
     BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -1707,7 +1734,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
     BU_ALLOC(ebm, struct rt_ebm_internal);

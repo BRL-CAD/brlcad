@@ -1,0 +1,64 @@
+Documentation for the BRL-CAD program 'burst'.
+
+Debian requires packages groff and groff-base.
+
+The original source file ('burst.mm') has been modified slightly to
+ensure correct handling by Eric Raymond's doclifter
+(http://www.catb.org/~esr/doclifter/).  From an e-mail from Eric:
+
+from:	   Eric S. Raymond <esr@thyrsus.com>
+reply-to:  esr@thyrsus.com
+to:	   Tom Browder <tom.browder@gmail.com>
+date:	   Tue, Aug 20, 2013 at 8:48 AM
+subject:   Re: doclifter (master) failing on troff mm source
+mailed-by: thyrsus.com
+
+<quote>
+Tom Browder <tom.browder@gmail.com>:
+> I have checked all macros and they are valid mm macros so I  can't
+> figure out why doclifter is failing.  I can send you the whole source
+> zipped if you're interested.
+
+What you sent is sufficient.  The problem is that your mm file
+contains none of the three trigger macros doclifter is looking for as
+a way to recognize that it's dealing with mm - .MT, .SA, or .COVER.
+The relevant table looks like this:
+
+# This is how we autodetect the right macro set:
+
+interpreter_dispatch = {
+    "pp": MeInterpreter,
+    "Dt": MdocInterpreter,
+    "Dd": MdocInterpreter,
+    "Nm": MdocInterpreter,
+    "AU": MsInterpreter,
+    "NH": MsInterpreter,
+    "TH": ManInterpreter,
+    "MT": MmInterpreter,
+    "SA": MmInterpreter,
+    "COVER": MmInterpreter,
+    # Extension macro sets
+    "supplemental macros used in Tcl/Tk": TkManInterpreter,
+    "BS": TkManInterpreter,
+    "the F register is turned on": Pod2ManInterpreter,
+    "ZN": XManInterpreter,
+    "Pn": XManInterpreter,
+    "ny0": XManInterpreter,
+    "reStructuredText": reStructuredTextInterpreter,
+    "reStructeredText": reStructuredTextInterpreter,
+    "DocBook XSL Stylesheets" : DocBookInterpreter,
+    "pdfdest" : FoojzsInterpreter,
+    "H0": ASTInterpreter,
+    # These are all of the supported Mwww tags
+    "URL": MwwwInterpreter,
+    "FTP": MwwwInterpreter,
+    "MTO": MwwwInterpreter,
+    "PIMG": MwwwInterpreter,
+    "IMG": MwwwInterpreter,
+    "TAG": MwwwInterpreter,
+    }
+
+Inserting a dummy .MT 0 call should fix your problem.
+</quote>
+
+

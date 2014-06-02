@@ -73,6 +73,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
  * that spaces got inserted incorrectly.
  */
 #define COMMA ','
+#define STRCOMMA ","
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -690,9 +691,14 @@ parse_args(int ac, char *av[])
 		    units_ap = units_name;
 
 		    /* acquire unit names */
-		    *units_ap = strtok(ptr, ", ");
 		    for (i = 0; i < 3 && ptr; i++) {
 			int found_unit;
+
+			if (i == 0) {
+			    *units_ap = strtok(ptr, STRCOMMA);
+			} else {
+			    *units_ap = strtok(NULL, STRCOMMA);
+			}
 
 			/* got something? */
 			if (*units_ap == NULL)
@@ -714,7 +720,6 @@ parse_args(int ac, char *av[])
 			}
 
 			++units_ap;
-			*units_ap = strtok(NULL, ", ");
 		    }
 
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units: ");
@@ -1620,7 +1625,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
-	char *name = "volume.pl";
+	char *name = "volume.plot3";
 	if (volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
@@ -1651,7 +1656,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	}
     }
     if (analysis_flags & ANALYSIS_GAP) {
-	char *name = "gaps.pl";
+	char *name = "gaps.plot3";
 	if (plot_files)
 	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
@@ -1662,7 +1667,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (!ZERO(overlap_tolerance))
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
-	    char *name = "overlaps.pl";
+	    char *name = "overlaps.plot3";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1676,7 +1681,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
-	    char *name = "adj_air.pl";
+	    char *name = "adj_air.plot3";
 	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1685,7 +1690,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
-	    char *name = "exp_air.pl";
+	    char *name = "exp_air.plot3";
 	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1799,7 +1804,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
 		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
 		    obj_tbl[obj].o_name,
 		    (tmp / num_views) / units[WGT]->val,
@@ -1847,7 +1852,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
 		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
 		    obj_tbl[obj].o_name,
 		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
@@ -1921,7 +1926,7 @@ terminate_check(struct cstate *state)
 	    /* since we've found an overlap, we can quit */
 	    return 0;
 	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list is empty\n");
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing);
 	}
     }
     if ((analysis_flags & ANALYSIS_GAP)) {
@@ -2016,9 +2021,9 @@ summary_reports(struct cstate *state)
     struct region *regp;
 
     if (multiple_analyses)
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gridSpacing*2);
     else
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing*2);
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
@@ -2468,14 +2473,14 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	gridSpacing *= 0.25;
 	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
 
-	bu_log("Trying estimated initial grid spacing: %g %s\n", 
+	bu_log("Trying estimated initial grid spacing: %g %s\n",
 	    gridSpacing / units[LINE]->val, units[LINE]->name);
     } else {
-	bu_log("Trying initial grid spacing: %g %s\n", 
+	bu_log("Trying initial grid spacing: %g %s\n",
 	    gridSpacing / units[LINE]->val, units[LINE]->name);
     }
 
-    bu_log("Using grid spacing lower limit: %g %s\n", 
+    bu_log("Using grid spacing lower limit: %g %s\n",
 	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;

@@ -38,8 +38,7 @@ short ibuf[1024] = {0};
 
 int verbose = 0;
 
-static const char usage[] = "\
-Usage: ihist [-v] < shorts\n";
+static const char usage[] = "Usage: ihist [-v] < shorts\n";
 
 int main(int argc, char **argv)
 {

@@ -173,6 +173,7 @@ package provide cadwidgets::Ged 1.0
 	method center {args}
 	method clear {args}
 	method clone {args}
+	method coil {args}
 	method color {args}
 	method comb {args}
 	method comb_color {args}
@@ -1405,6 +1406,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed clone $args
 }
 
+::itcl::body cadwidgets::Ged::coil {args} {
+    eval $mGed coil $args
+}
+
 ::itcl::body cadwidgets::Ged::color {args} {
     eval $mGed color $args
 }
@@ -2090,8 +2095,25 @@ package provide cadwidgets::Ged 1.0
 	return "make_image: no database is open"
     }
 
-    return [cadwidgets::rtimage $dbfile $_port $_w $_n $_viewsize $_orientation $_eye_pt $_perspective \
-		$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects]
+    set rtimage_dict [dict create \
+        _dbfile $dbFile \
+        _port $_port \
+        _w $_w \
+        _n $_n \
+        _viewsize $_viewsize \
+        _orientation $_orientation \
+        _eye_pt $_eye_pt \
+        _perspective $_perspective \
+        _bgcolor $_bgcolor \
+        _ecolor $_ecolor \
+        _necolor $_necolor \
+        _occmode $_occmode \
+        _gamma $_gamma \
+        _color_objects $_color_objects \
+        _ghost_objects $_ghost_objects \
+        _edge_objects $_edge_objects ]
+
+    return [cadwidgets::rtimage $rtimage_dict]
 }
 
 
@@ -6018,6 +6040,7 @@ package provide cadwidgets::Ged 1.0
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}
+    $help add coil		{{[options] object} {make a coil shape}}
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
@@ -6152,7 +6175,7 @@ package provide cadwidgets::Ged 1.0
     $help add orotate		{{x y z} {rotate object}}
     $help add oscale		{{sf} {scale object}}
     $help add otranslate 	{{x y z} {translate object}}
-    $help add overlay		{{file.pl [name]} {overlay the specified 2D/3D UNIX plot file}}
+    $help add overlay		{{file.plot3 [name]} {overlay the specified 2D/3D UNIX plot file}}
     $help add pathlist		{{name(s)}	{list all paths from name(s) to leaves}}
     $help add paths		{{pattern} {lists all paths matching input path}}
     $help add perspective	{{[angle]} {set/get the perspective angle}}

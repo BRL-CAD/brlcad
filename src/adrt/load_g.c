@@ -279,7 +279,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client

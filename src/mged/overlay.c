@@ -36,7 +36,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* Usage:  overlay file.pl [name] */
+/* Usage:  overlay file.plot3 [name] */
 int
 cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -52,7 +52,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringInit(&ds);
 
     if (argc == 1) {
-	Tcl_DStringAppend(&ds, "file.pl [name]", -1);
+	Tcl_DStringAppend(&ds, "file.plot3 [name]", -1);
 	Tcl_DStringResult(interp, &ds);
 	return TCL_OK;
     }

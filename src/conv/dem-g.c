@@ -163,11 +163,12 @@ flip_high_low_bytes(long int in_value, unsigned char *out_string)
 {
     /* it is expected the out_string points to */
     /* a string of at least 3 characters */
-    unsigned char highbyte = '\0';
-    unsigned char lowbyte = '\0';
     int status = BRLCAD_ERROR;
 
     if ((in_value >= 0) && (in_value <= 65535)) {
+	unsigned char highbyte = '\0';
+	unsigned char lowbyte = '\0';
+
 	highbyte = (unsigned char)floor(in_value / 256);
 	lowbyte = (unsigned char)(in_value - (highbyte * 256));
 	out_string[0] = highbyte;
@@ -296,8 +297,6 @@ int read_element(ResultStruct *io_struct)
     int sub_element = 0;
     char *search_result_uppercase;
     char *search_result_lowercase;
-    double tmp_dbl = 0;
-    long tmp_long = 0;
     char *endp;
     char *buf = '\0';
     int status = BRLCAD_ERROR;
@@ -376,6 +375,8 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_integer) {
+	long tmp_long = 0;
+
 	/* sub_element was defined as a integer */
 	tmp_long = strtol(tmp_str, &endp, 10);
 	if ((tmp_str != endp) && (*endp == '\0')) {
@@ -396,6 +397,8 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_double) {
+	double tmp_dbl = 0;
+
 	/* sub_element was defined as a double */
 	if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
 	    /* uppercase 'D' found, replace with 'E' */
@@ -412,6 +415,7 @@ int read_element(ResultStruct *io_struct)
 		}
 	    }
 	}
+
 	/* convert to double */
 	tmp_dbl = strtod(tmp_str, &endp);
 	if ((tmp_str != endp) && (*endp == '\0')) {
@@ -766,8 +770,6 @@ int process_manual_scale_factor(
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    long int dem_max_raw_clipped_elevation = 0;
-    double dem_max_real_clipped_elevation = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 0;
 
@@ -791,6 +793,9 @@ int process_manual_scale_factor(
 	bu_log("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
     } else {
 	if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr > *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
+	    long int dem_max_raw_clipped_elevation = 0;
+	    double dem_max_real_clipped_elevation = 0;
+
 	    /* clipping.  manual scale factor > auto scale factor
 	     * derived_dem_max_raw_elevation is any value 0-999999
 	     */
@@ -858,7 +863,6 @@ int process_manual_dem_max_raw_elevation(
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    double dem_max_real_clipped_elevation = 0;
     long int manual_dem_max_raw_elevation_lowerlimit = 1;
     long int manual_dem_max_raw_elevation_upperlimit = 999999;
 
@@ -888,6 +892,8 @@ int process_manual_dem_max_raw_elevation(
 	bu_log("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr);
     } else {
 	if (*in_manual_dem_max_raw_elevation_ptr < *in_derived_dem_max_raw_elevation_ptr) {
+	    double dem_max_real_clipped_elevation = 0;
+
 	    /* clipping.  user input 'dem max raw elevation' <
 	     * 'derived dem max raw elevation'
 	     * derived_dem_max_raw_elevation is any value 0-999999

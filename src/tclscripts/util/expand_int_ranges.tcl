@@ -60,7 +60,7 @@ proc expand_int_ranges {spec} {
 	} elseif {[regexp {^([0-9]+)$} $block match n]} {
 	    lappend result $n
 	} else {
-	    error "Invalid intger range: $block"
+	    error "Invalid integer range: $block"
 	}
     }
     return $result

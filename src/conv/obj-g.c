@@ -2854,7 +2854,7 @@ output_to_nmg(struct ga_t *ga,
 	/* Sometimes the NMG library adds debugging bits when it
 	 * detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug; /* restore mode */
+	RTG.NMG_debug = NMG_debug; /* restore mode */
 
 	if (verts)
 	    bu_free(verts, "verts");
@@ -3343,14 +3343,14 @@ main(int argc, char **argv)
 		debug = 1;
 		break;
 	    case 'x': /* set librt debug level */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X': /* set nmg debug level */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
-		bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug,
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug,
 			  NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;

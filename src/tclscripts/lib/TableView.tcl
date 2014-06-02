@@ -229,7 +229,7 @@
 	# keeps track of data row that gets highlighted
 	variable highlightRow 0
 
-	# keeps track of column colors (i.e background and foreground)
+	# keeps track of column colors (i.e. background and foreground)
 	variable colColors
 
 	# entry options

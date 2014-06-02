@@ -59,6 +59,7 @@ unsigned char pixmiss[3]  = { 200, 200, 200 }; /* shot missed target */
 unsigned char pixtarg[3]  = { 255, 255, 255 }; /* shot hit target */
 Trie *cmdtrie = NULL;
 
+int plotline = 0; /* boolean for plot lines (otherwise plots points) */
 int batchmode = 0;		/* are we processing batch input now */
 int cantwarhead = 0;	/* pitch or yaw will be applied to warhead */
 int deflectcone = DFL_DEFLECT;	/* cone axis deflects towards normal */

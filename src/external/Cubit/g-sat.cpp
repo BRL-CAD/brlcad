@@ -382,13 +382,13 @@ int parse_args( int ac, char **av )
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf( bu_optarg, "%x", &rt_g.debug );
+		sscanf( bu_optarg, "%x", &RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    default:
@@ -1052,7 +1052,7 @@ primitive_func( db_tree_state *tsp,
 
 		NMG_CK_MODEL(m);
 
-		if (rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
+		if (OBJ[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
 		    bu_exit(1, "Failed to tessellate!\n");
 		}
 

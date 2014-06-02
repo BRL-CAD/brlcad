@@ -30,7 +30,7 @@
 int
 main(int ac, char *av[])
 {
-    int pass = 0;
+    int fail = 0;
     const char *label;
     const char *ans;
     const char *res;
@@ -52,7 +52,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
     /* CASE 1: try again unset */
@@ -64,7 +64,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset#2", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
     /* CASE 2: set NULL, then get */
@@ -77,7 +77,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "NULL", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
     /* CASE 3: set, then get */
@@ -90,11 +90,12 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "av[0]", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
     /* CASE 4: set full, then get */
     label = "CASE 4";
+    bu_setprogname(av[0]);
     bu_setprogname(bu_argv0_full_path());
     res = bu_getprogname();
     ans = bu_argv0_full_path();
@@ -103,14 +104,9 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
-/* These two tests only make sense if bu_setprogname is supposed to override
- * a program name from argv0 - until that is decided (and if so decided, the
- * behavior of bu_setprogname and bu_getprogname needs to be made to match that)
- * turn off these two tests.*/
-#if 0
     /* CASE 5: set 2x, then get */
     label = "CASE 5";
     bu_setprogname(av[0]);
@@ -122,7 +118,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
 
     /* CASE 6: set 2x full path, then get */
@@ -136,10 +132,34 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "/monkey/see/monkey/do", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-	pass++;
+	fail++;
     }
-#endif
-    return pass;
+
+    /* CASE 7: get the full path */
+    label = "CASE 7";
+    bu_setprogname(av[0]);
+    res = bu_argv0_full_path();
+    if (res[0] == BU_DIR_SEPARATOR) {
+	printf("%s: %24s -> %24s [PASSED]\n", label, bu_basename(res), res);
+    } else {
+	printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
+	fail++;
+    }
+
+    /* CASE 8: make sure bu_getprogname leaves a full path */
+    label = "CASE 8";
+    bu_setprogname("/monkey/see/monkey/do");
+    res = bu_getprogname();
+    res = bu_argv0_full_path();
+    if (BU_STR_EQUAL(res, "/monkey/see/monkey/do")) {
+	printf("%s: %24s -> %24s [PASSED]\n", label, res, res);
+    } else {
+	printf("%24s -> %24s (should match %s) [FAIL]\n", label, res, "/monkey/see/monkey/do");
+	fail++;
+    }
+
+
+    return fail;
 }
 
 

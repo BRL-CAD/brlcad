@@ -41,14 +41,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-
-char *progname ="(noname)";
-
-void usage(void)
-{
-    fprintf(stderr, "Usage: %s db_file.g\n", progname);
-}
-
+static const char usage[] = "Usage: wdb_example db_file.g\n";
 
 int
 main(int ac, char *av[])
@@ -59,11 +52,8 @@ main(int ac, char *av[])
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
 
-    progname = *av;
-
     if (ac < 2) {
-	usage();
-	return 1;
+	bu_exit(1, usage);
     }
 
     if ((db_fp = wdb_fopen(av[1])) == NULL) {

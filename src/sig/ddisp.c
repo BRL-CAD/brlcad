@@ -46,8 +46,7 @@ void lineout(double *dat, int n);
 void disp_inten(double *buf, int size);
 void disp_bars(double *buf, int size);
 
-static const char usage[] = "\
-Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
+static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
 int
 main(int argc, char **argv)

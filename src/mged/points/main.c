@@ -18,6 +18,8 @@
  * information.
  */
 
+#include "common.h"
+
 #include <stdio.h>
 
 #include "./count.h"

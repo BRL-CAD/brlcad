@@ -795,8 +795,7 @@ frame(struct rt_wdb *fd)
 
     /* put all the studding in a region */
     snprintf(sol_name, 64, "r.%s.studs", obj_name);
-    mk_lcomb(fd, sol_name, &wm_hd, 1,
-	     stud_properties[0], stud_properties[1], color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, stud_properties[0], stud_properties[1], color, 0);
 }
 
 
@@ -843,21 +842,21 @@ sheetrock(struct rt_wdb *fd)
     }
 
     snprintf(sol_name, 64, "r.%s.sr1", obj_name);
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, color, 0);
 }
 
 
 void
-mortar_brick(struct rt_wdb *UNUSED(fd))
+mortar_brick(struct rt_wdb *fd)
 {
     struct wmember wm_hd;
-#if 0
     int horiz_bricks;
     int vert_bricks;
     double mortar_height;
     double mortar_width;
     point_t pts[8];
+
+    bu_log("WARNING: the mortar brick type option is untested\n");
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
@@ -892,11 +891,9 @@ mortar_brick(struct rt_wdb *UNUSED(fd))
     *sol_name = 'r';
 
     if (rand_brick_color)
-	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-		 (char *)NULL, 0);
+	mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, (const unsigned char *)NULL, 0);
     else
-	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-		 brick_color, 0);
+	mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, brick_color, 0);
 
 
     /* make prototype mortar upon which brick will sit */
@@ -915,8 +912,7 @@ mortar_brick(struct rt_wdb *UNUSED(fd))
 
     (void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
     *sol_name = 'r';
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     mortar_color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, mortar_color, 0);
 
 
     /* make the mortar that goes between
@@ -937,28 +933,21 @@ mortar_brick(struct rt_wdb *UNUSED(fd))
 
     (void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
     *sol_name = 'r';
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     mortar_color, 0);
-#else
-    BU_LIST_INIT(&wm_hd.l);
-
-    bu_exit(0, "Not Yet Implemented\n");
-
-#endif
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, mortar_color, 0);
 }
 
 
 void
-brick(struct rt_wdb *UNUSED(fd))
+brick(struct rt_wdb *fd)
 {
     struct wmember wm_hd;
-#if 0
     int horiz_bricks;
-    int vert_bricks;
     double mortar_height;
     double mortar_width;
     point_t pts[8];
     char proto_brick[64];
+
+    bu_log("WARNING: the brick type option is untested\n");
 
     if (!color)
 	color = brick_color;
@@ -967,9 +956,7 @@ brick(struct rt_wdb *UNUSED(fd))
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
     mortar_width /= horiz_bricks;
 
-    vert_bricks = WALL_HEIGHT / brick_height;
     mortar_height = 0.0;
-
 
     /* make prototype brick */
 
@@ -988,14 +975,7 @@ brick(struct rt_wdb *UNUSED(fd))
     (void)mk_addmember(proto_brick, &wm_hd.l, NULL, WMOP_UNION);
     *proto_brick = 'r';
 
-    mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     (char *)NULL, 0);
-#else
-    BU_LIST_INIT(&wm_hd.l);
-
-    bu_exit(0, "Not Yet Implemented\n");
-
-#endif
+    mk_lcomb(fd, proto_brick, &wm_hd, 1, (const char *)NULL, (const char *)NULL, (const unsigned char *)NULL, 0);
 }
 
 

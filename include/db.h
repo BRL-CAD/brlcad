@@ -439,27 +439,14 @@ union record  {
 #define DB_RECORD_NULL	((union record *)0)
 
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#if __STDC__
-#  define DB_ARGS(args) args
-#else
-#  define DB_ARGS(args) ()
-#endif
-
+/* DEPRECATED: do not use. */
+DEPRECATED void rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip);
 
 /* DEPRECATED: do not use. */
-DEPRECATED void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n, int flip) );
+DEPRECATED void rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip);
 
 /* DEPRECATED: do not use. */
-DEPRECATED void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp, int flip) );
-
-/* DEPRECATED: do not use. */
-DEPRECATED void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
+DEPRECATED void rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
 
 #endif	/* __DB_H__ */
 

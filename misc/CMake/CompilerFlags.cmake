@@ -123,10 +123,10 @@ macro(BRLCAD_CHECK_FLAG)
   if(${ARGC} LESS 3)
 
     # Handle default (global) case
-    CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-    if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+    CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+    if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
       ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG ALL)
-    endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+    endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 
   else(${ARGC} LESS 3)
 
@@ -135,34 +135,34 @@ macro(BRLCAD_CHECK_FLAG)
 
     # Iterate over listed Build types and append the flag to them if successfully tested.
     foreach(build_type ${FLAG_BUILD_TYPES})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 	ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG "${build_type}")
-      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
     endforeach(build_type ${FLAG_BUILD_TYPES})
 
     # Append flag to a group of flags (this apparently needs to be
     # a string build, not a CMake list build.  Do this for all supplied
     # group variables.
     foreach(flag_group ${FLAG_GROUPS})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 	if(${flag_group})
 	  set(${flag_group} "${${flag_group}} ${NEW_FLAG}")
 	else(${flag_group})
 	  set(${flag_group} "${NEW_FLAG}")
 	endif(${flag_group})
-      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
     endforeach(flag_group ${FLAG_GROUPS})
 
     # If a variable does not have a value, check the flag and if valid assign
     # the flag as the variable's value.  Do this for all supplied variables.
     foreach(flag_var ${FLAG_VARS})
       if(NOT ${flag_var})
-	CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-	if(${UPPER_FLAG}_COMPILER_FLAG_FOUND AND NOT "${${flag_var}}")
+	CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+	if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
 	  set(${flag_var} "${NEW_FLAG}")
-	endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND AND NOT "${${flag_var}}")
+	endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
       endif(NOT ${flag_var})
     endforeach(flag_var ${FLAG_VARS})
   endif(${ARGC} LESS 3)

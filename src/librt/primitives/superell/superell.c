@@ -438,7 +438,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      * point, which contains a translation along the ray direction to the
      * closest approach to vertex of the superell.  Translating the ray
      * along the direction of the ray to the closest point near the
-     * primitives center vertex.  New ray origin is hence, normalized.
+     * primitive's center vertex.  New ray origin is hence, normalized.
      */
     VSCALE(normalizedShotPoint, newShotDir,
 	   VDOT(newShotPoint, newShotDir));
@@ -824,7 +824,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
-    ip->idb_meth = &rt_functab[ID_SUPERELL];
+    ip->idb_meth = &OBJ[ID_SUPERELL];
     BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -914,14 +914,14 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
-    ip->idb_meth = &rt_functab[ID_SUPERELL];
+    ip->idb_meth = &OBJ[ID_SUPERELL];
     BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -974,7 +974,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     vec[4*ELEMENTS_PER_VECT + 1] = eip->e;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
 
     return 0;
 }

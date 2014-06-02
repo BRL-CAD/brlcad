@@ -66,16 +66,17 @@ void bartwin(double *data, int L);
 void hamwin(double *data, int length);
 void coswin(double *data, int length, double percent);
 
-static const char usage[] = "\
-Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n\
-  Options:\n\
-  -w  apply window (80%% split Cosine)\n\
-  -H  apply Hamming window\n\
-  -b  apply Bartlett window (triangle)\n\
-  -B  apply bias window (half triangle)\n\
-  -e  start first sample at end of buffer\n\
-  -m  start first sample at middle of buffer\n\
-";
+static const char usage[] =
+  "Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n"
+  "\n"
+  "Options:\n"
+  "  -w  apply window (80% split Cosine)\n"
+  "  -H  apply Hamming window\n"
+  "  -b  apply Bartlett window (triangle)\n"
+  "  -B  apply bias window (half triangle)\n"
+  "  -e  start first sample at end of buffer\n"
+  "  -m  start first sample at middle of buffer\n"
+  ;
 
 int main(int argc, char **argv)
 {

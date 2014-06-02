@@ -263,10 +263,6 @@ set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{DEPRECATED: read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
-set mged_help_data(redraw_vlist)	{{object(s)}	{given the name(s) of database objects, re-generate the vlist
-    associated with every solid in view which references the
-    named object(s), either solids or regions. Particularly
-    useful with outboard .inmem database modifications.}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}

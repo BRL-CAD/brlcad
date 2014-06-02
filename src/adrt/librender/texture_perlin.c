@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_perlin.c
  *
- *  Comments -
- *      Texture Library - Perlin Utility
+ * Comments -
+ * Texture Library - Perlin Utility
  *
  */
 
@@ -31,24 +31,25 @@
 #include "bn.h"
 
 
-#define	B	0x100
-#define	BM	0xff
-#define	N	0x1000
+#define B 0x100
+#define BM 0xff
+#define N 0x1000
 
 
-#define	PRAND (int)(bn_randmt()*16384)
-#define	S_CURVE(t) (t * t * (3.0 - 2.0 * t))
-#define	AT3(rx, ry, rz) (rx*q[0] + ry*q[1] + rz*q[2]);
-#define	LERP(t, a, b) (a+t*(b-a))
+#define PRAND (int)(bn_randmt()*16384)
+#define S_CURVE(t) (t * t * (3.0 - 2.0 * t))
+#define AT3(rx, ry, rz) (rx*q[0] + ry*q[1] + rz*q[2]);
+#define LERP(t, a, b) (a+t*(b-a))
 
 
-void	texture_perlin_init(struct texture_perlin_s *P);
-void	texture_perlin_free(struct texture_perlin_s *P);
-fastf_t	texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
-fastf_t	texture_perlin_omega(struct texture_perlin_s *P, vect_t V);
+void texture_perlin_init(struct texture_perlin_s *P);
+void texture_perlin_free(struct texture_perlin_s *P);
+fastf_t texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
+fastf_t texture_perlin_omega(struct texture_perlin_s *P, vect_t V);
 
 void
-texture_perlin_init(struct texture_perlin_s *P) {
+texture_perlin_init(struct texture_perlin_s *P)
+{
     int i, j, k;
 
     P->PV = (int *)bu_malloc(sizeof(int)*(2*B+2), "PV");
@@ -76,14 +77,18 @@ texture_perlin_init(struct texture_perlin_s *P) {
     }
 }
 
+
 void
-texture_perlin_free(struct texture_perlin_s *P) {
+texture_perlin_free(struct texture_perlin_s *P)
+{
     bu_free(P->PV, "PV");
     bu_free(P->RV, "RV");
 }
 
+
 fastf_t
-texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth) {
+texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth)
+{
     int i;
     fastf_t sum;
 
@@ -96,12 +101,14 @@ texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int De
     return sum;
 }
 
+
 fastf_t
-texture_perlin_omega(struct texture_perlin_s *P, vect_t V) {
-    vect_t		q;
-    fastf_t	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
-    int		b0[3], b1[3], b00, b10, b01, b11;
-    int		i, j;
+texture_perlin_omega(struct texture_perlin_s *P, vect_t V)
+{
+    vect_t q;
+    fastf_t r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
+    int b0[3], b1[3], b00, b10, b01, b11;
+    int i, j;
 
 
     for (i = 0; i < 3; i++) {
@@ -154,6 +161,7 @@ texture_perlin_omega(struct texture_perlin_s *P, vect_t V) {
 
     return LERP(sz, c, d);
 }
+
 
 /*
  * Local Variables:

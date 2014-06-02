@@ -298,20 +298,16 @@ _ged_cm_lookat_pt(int argc, char **argv)
     VSUB2(dir, pt, _ged_eye_model);
     VUNITIZE(dir);
 
-#if 1
     /*
-      At the moment bn_mat_lookat will return NAN's if the direction vector
-      is aligned with the Z axis. The following is a temporary workaround.
-    */
+     * At the moment bn_mat_lookat() will return NAN's if the
+     * direction vector is aligned with the Z axis. The following is a
+     * workaround.
+     */
     {
-	vect_t neg_Z_axis;
-
-	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
+	vect_t neg_Z_axis = VINIT_ZERO;
+	neg_Z_axis[Z] = -1.0;
 	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
     }
-#else
-    bn_mat_lookat(_ged_viewrot, dir, yflip);
-#endif
 
     /* Final processing is deferred until ged_cm_end(), but eye_pt
      * must have been specified before here (for now)

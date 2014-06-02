@@ -65,20 +65,20 @@ usage(const char *argv0)
 {
     bu_log("Usage:  %s [options] model.g objects...\n", argv0);
     bu_log("Options:\n");
-    bu_log(" -s #       Square grid size in pixels (default 512)\n");
-    bu_log(" -w # -n #  Grid size width and height in pixels\n");
-    bu_log(" -V #       View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -a #       Azimuth in degrees\n");
-    bu_log(" -e #       Elevation in degrees\n");
-    bu_log(" -g #       Grid cell width\n");
-    bu_log(" -G #       Grid cell height\n");
-    bu_log(" -M         Read matrix, cmds on stdin\n");
+    bu_log(" -s #           Square grid size in pixels (default 512)\n");
+    bu_log(" -w # -n #      Grid size width and height in pixels\n");
+    bu_log(" -V #           View (pixel) aspect ratio (width/height)\n");
+    bu_log(" -a #           Azimuth in degrees\n");
+    bu_log(" -e #           Elevation in degrees\n");
+    bu_log(" -g #           Grid cell width\n");
+    bu_log(" -G #           Grid cell height\n");
+    bu_log(" -M             Read matrix, cmds on stdin\n");
     bu_log(" -N #	    Set NMG debug flags\n");
-    bu_log(" -o file.pl Specify UNIX-plot output file\n");
-    bu_log(" -x #       Set librt debug flags\n");
-    bu_log(" -X #       Set rt debug flags\n");
-    bu_log(" -r         Report only unique overlaps\n");
-    bu_log(" -P #       Set number of processors\n");
+    bu_log(" -o file.plot3  Specify UNIX-plot output file\n");
+    bu_log(" -x #           Set librt debug flags\n");
+    bu_log(" -X #           Set rt debug flags\n");
+    bu_log(" -r             Report only unique overlaps\n");
+    bu_log(" -P #           Set number of processors\n");
 }
 
 
@@ -238,7 +238,7 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
 	outfp = stdout;
 
     if (!output_is_binary) {
-	bu_log("Displaying plot data in TEXT mode\n");
+	bu_log("Displaying plot3 data in TEXT mode\n");
 	pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
     }
 

@@ -123,58 +123,48 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    union tree *comb_leaf;
-	    int done=0;
-	    int changed=0;
+	    if (nflag) {
+		union tree *comb_leaf;
+		int done=0;
 
+		if (!(dp->d_flags & RT_DIR_COMB)) continue;
+		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) continue;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		bu_ptbl_reset(&stack);
+		/* visit each leaf in the combination */
+		comb_leaf = comb->tree;
+		if (comb_leaf) {
+		    while (!done) {
+			while (comb_leaf->tr_op != OP_DB_LEAF) {
+			    bu_ptbl_ins(&stack, (long *)comb_leaf);
+			    comb_leaf = comb_leaf->tr_b.tb_left;
+			}
 
-	    if (!(dp->d_flags & RT_DIR_COMB))
-		continue;
-
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-		continue;
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	    bu_ptbl_reset(&stack);
-	    /* visit each leaf in the combination */
-	    comb_leaf = comb->tree;
-	    if (comb_leaf) {
-		while (!done) {
-		    while (comb_leaf->tr_op != OP_DB_LEAF) {
-			bu_ptbl_ins(&stack, (long *)comb_leaf);
-			comb_leaf = comb_leaf->tr_b.tb_left;
-		    }
-
-		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
-			if (nflag)
+			if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
 			    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
-			else {
-			    bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-			    comb_leaf->tr_l.tl_name = bu_strdup(new);
-			    changed = 1;
+			}
+
+			if (BU_PTBL_END(&stack) < 1) {
+			    done = 1;
+			    break;
+			}
+			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
+			if (comb_leaf->tr_op != OP_DB_LEAF) {
+			    bu_ptbl_rm(&stack, (long *)comb_leaf);
+			    comb_leaf = comb_leaf->tr_b.tb_right;
 			}
 		    }
-
-		    if (BU_PTBL_END(&stack) < 1) {
-			done = 1;
-			break;
-		    }
-		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
-		    if (comb_leaf->tr_op != OP_DB_LEAF) {
-			bu_ptbl_rm(&stack, (long *)comb_leaf);
-			comb_leaf = comb_leaf->tr_b.tb_right;
-		    }
 		}
-	    }
-
-	    if (changed) {
-		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+		rt_db_free_internal(&intern);
+	    } else {
+		int comb_mvall_status = db_comb_mvall(dp, gedp->ged_wdbp->dbip, old, new, &stack);
+		if (!comb_mvall_status) continue;
+		if (comb_mvall_status == 2) {
 		    bu_ptbl_free(&stack);
 		    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 		    return GED_ERROR;
 		}
-	    } else
-		rt_db_free_internal(&intern);
+	    }
 	}
     }
 

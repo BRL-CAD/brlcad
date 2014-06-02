@@ -114,7 +114,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
     intern.idb_ptr = (genptr_t)bip;
-    intern.idb_meth = &rt_functab[ID_BINUNIF];
+    intern.idb_meth = &OBJ[ID_BINUNIF];
 
     /* create body portion of external form */
     ret = -1;

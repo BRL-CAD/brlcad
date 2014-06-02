@@ -109,6 +109,8 @@
 #define DM_TYPE_WGL	7
 #define DM_TYPE_TK	8
 #define DM_TYPE_RTGL	9
+#define DM_TYPE_TXT	10
+#define DM_TYPE_QT	11
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -124,6 +126,8 @@
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
 #define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
+#define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
+#define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
@@ -252,13 +256,14 @@ struct dm {
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     void (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
+    void (*dm_processEvents)(struct dm *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
     double dm_bound;		/**< @brief zoom-in limit */
     int dm_boundFlag;
-    char *dm_name;		/**< @brief short name of device */
-    char *dm_lname;		/**< @brief long name of device */
+    const char *dm_name;		/**< @brief short name of device */
+    const char *dm_lname;		/**< @brief long name of device */
     int dm_type;			/**< @brief display manager type */
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
@@ -324,6 +329,7 @@ struct dm {
 #define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 #define DM_MAKE_CURRENT(_dmp) _dmp->dm_makeCurrent(_dmp)
+#define DM_PROCESS_EVENTS(_dmp) _dmp->dm_processEvents(_dmp)
 
 __BEGIN_DECLS
 
@@ -334,6 +340,8 @@ DM_EXPORT extern struct dm dm_rtgl;
 DM_EXPORT extern struct dm dm_tk;
 DM_EXPORT extern struct dm dm_wgl;
 DM_EXPORT extern struct dm dm_X;
+DM_EXPORT extern struct dm dm_txt;
+DM_EXPORT extern struct dm dm_qt;
 
 DM_EXPORT extern int Dm_Init();
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,

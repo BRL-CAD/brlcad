@@ -108,8 +108,8 @@ rt_db_get_internal(
 
     /* ip is already initialized and should not be re-initialized */
     ret = -1;
-    if (rt_functab[id].ft_import4) {
-	ret = rt_functab[id].ft_import4(ip, &ext, mat, dbip, resp);
+    if (OBJ[id].ft_import4) {
+	ret = OBJ[id].ft_import4(ip, &ext, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_get_internal(%s):  import failure\n",
@@ -120,7 +120,7 @@ rt_db_get_internal(
     }
     bu_free_external(&ext);
     RT_CK_DB_INTERNAL(ip);
-    ip->idb_meth = &rt_functab[id];
+    ip->idb_meth = &OBJ[id];
 
     /* prior to version 5, there are no attributes ... */
     bu_avs_init_empty(&ip->idb_avs);

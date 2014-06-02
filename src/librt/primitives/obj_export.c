@@ -43,7 +43,7 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
 

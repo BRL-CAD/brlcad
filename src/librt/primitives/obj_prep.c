@@ -40,7 +40,7 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_prep)

@@ -22,7 +22,7 @@
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
       <arg choice="plain" rep="norepeat">&gt;</arg>
-      <arg choice="plain" rep="norepeat"><replaceable>overlaps.pl</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>overlaps.plot3</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -33,7 +33,7 @@
       <emphasis remap="I">Rtcheck</emphasis> operates on the indicated
       <emphasis remap="I">objects</emphasis> in the input
       <emphasis remap="I">model.g</emphasis> and produces a floating point 3-D BRL-style
-      <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>
       format file on standard output, in millimeters.
     </para>
 
@@ -153,8 +153,7 @@
       which is most useful when used from
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
       The output can be independently viewed using the UNIX-plot viewers like
-      <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>tplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       etc.
     </para>
@@ -163,8 +162,8 @@
   <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para>
-      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
   </refsection>
 

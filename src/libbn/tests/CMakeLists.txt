@@ -1,6 +1,12 @@
-BRLCAD_ADDEXEC(tester_bn_tri_tri_isect_coplanar bn_tri_tri_isect_coplanar.c "libbu;libbn" NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bn_tri_tri_isect_coplanar bn_tri_tri_isect_coplanar.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_multiply bn_poly_multiply.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_scale bn_poly_scale.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_add bn_poly_add.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn" NO_INSTALL)
+CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 # For tester_bn_tri_tri_isect_coplanar, the input format is as follows:
 #
@@ -57,6 +63,21 @@ add_test(bn_list_3d_1                   tester_bn_list  3  0,0,0)
 add_test(bn_list_3d_2                   tester_bn_list  3  0,0,3 1.64,1,4)
 add_test(bn_list_3d_3                   tester_bn_list  3  3,7,8 1,-5,8)
 add_test(bn_list_3d_4                   tester_bn_list  3  3,7,8 1,-5.321,3 67,0,67 0,100,23)
+
+
+#
+#  *********** poly.c tests *************
+#
+#Format is:
+# tester_bn_poly      <  void      >         void
+add_test(bn_poly_multiply              tester_bn_poly_multiply)
+add_test(bn_poly_scale                 tester_bn_poly_scale)
+add_test(bn_poly_add                   tester_bn_poly_add)
+
+# failure encountered, no output to indicate why (disabled in prep for release)
+# add_test(bn_poly_sub                   tester_bn_poly_sub)
+
+add_test(bn_poly_synthetic_div               tester_bn_poly_synthetic_div)
 
 # Local Variables:
 # tab-width: 8

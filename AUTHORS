@@ -141,7 +141,7 @@ nicknames gdurf
 1992 August
 ARL Student Hire / Carnegie Mellon University
 
-Anderson, John R.  <jra@arl.army.mil>  **
+Anderson, John R.  <jra@arl.army.mil>
 nicknames jra, johnranderson
 1993 May
 U.S. Army Ballistic Research Laboratory
@@ -206,13 +206,14 @@ nicknames starseeker
 2007 September
 Open Source
 Quantum Research International, Inc.
+U.S. Army Research Laboratory
 
-Bowman, W. Keith
+Bowman, W. Keith  **
 nicknames indianlarry
 SURVICE Engineering, Inc.
 U.S. Army Research Laboratory
 
-Weiss, Richard
+Weiss, Richard  **
 nicknames r_weiss
 2008 December
 U.S. Army Research Laboratory
@@ -531,6 +532,10 @@ Shinn, Rob
 2010 April
 Open Source
 
+nicknames Alexandrus
+2010 July
+Open Source
+
 Hinesley, Brandon
 nicknames bhinesley
 2011 March
@@ -556,7 +561,7 @@ nicknames abhi2011
 Open Source (SOCIS)
 
 Moore, Jr., Carl G.
-nicknames cmoore
+nicknames cmoore, carlmoore
 2011 October
 U.S. Army Research Laboratory
 
@@ -628,6 +633,11 @@ nicknames caen23
 2012 November
 Open Source (GCI)
 
+Huang, Michael
+nicknames fernozzle
+2012 November
+Open Source (GCI)
+
 nicknames Reikaze
 2012 December
 Open Source (GCI)
@@ -651,6 +661,36 @@ Open Source (GCI)
 Nagy, Csaba
 nicknames ncsaba
 2013 April
+Open Source
+
+Shah, Kesha
+nicknames keshashah
+2013 April
+Open Source (GSoC)
+
+Bogolin, Vlad
+nicknames vladbogo
+2013 May
+Open Source (GSoC)
+
+Kaur, Avneet
+nicknames avneetkhalsa
+2013 May
+Open Source (GSoC)
+
+Daga, Mohit
+nicknames zero_level
+2013 June
+Open Source (GSoC)
+
+Huff, Emory
+nicknames hknoll
+2013 July
+U.S. Army Research Laboratory (SEAP)
+
+Engbert, Jonathan
+nicknames ejno
+2013 July
 Open Source
 
 
@@ -920,6 +960,11 @@ Saxena, Amit
 nicknames amit.daBeast
 2012 December
 Open Source (GCI)
+
+Saini, Talwinder
+nicknames talwindersaini
+2013 July
+Open Source
 
 
 CORPORATE AND ORGANIZATION SUPPORT

@@ -321,10 +321,10 @@ plot_ray_img(struct application *ap,
     char name[256];
     point_t pt;
 
-    sprintf(name, "bbd_%d.pl", plot_num++);
+    sprintf(name, "bbd_%d.plot3", plot_num++);
     bu_log("plotting %s\n", name);
     if ((pfd = fopen(name, "wb")) == (FILE *)NULL) {
-	bu_bomb("can't open plot file\n");
+	bu_bomb("can't open plot3 file\n");
     }
 
     /* red line from ray origin to hit point */

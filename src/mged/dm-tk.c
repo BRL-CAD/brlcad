@@ -166,17 +166,8 @@ dirty_hook(void)
 static void
 zclip_hook(void)
 {
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 /*
  * Local Variables:

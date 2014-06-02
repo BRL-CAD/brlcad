@@ -2010,7 +2010,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind);
 
 /**
  * ZAP the display -- then edit anew
@@ -2035,7 +2035,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     if (argc == 1) /* "B" alone is same as "Z" */
 	return TCL_OK;
 
-    return edit_com(argc, argv, 1, 1);
+    return edit_com(argc, argv, 1);
 }
 
 
@@ -2055,7 +2055,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 	gvp->gv_y_samples = dmp->dm_height;
     }
 
-    return edit_com(argc, argv, 1, 1);
+    return edit_com(argc, argv, 1);
 }
 
 
@@ -2084,7 +2084,7 @@ cmd_ev(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
-    return edit_com(argc, argv, 3, 1);
+    return edit_com(argc, argv, 3);
 }
 
 
@@ -2100,7 +2100,7 @@ cmd_E(ClientData UNUSED(clientData),
       int argc,
       const char *argv[])
 {
-    return edit_com(argc, argv, 2, 1);
+    return edit_com(argc, argv, 2);
 }
 
 

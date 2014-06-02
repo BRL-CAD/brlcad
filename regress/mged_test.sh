@@ -945,7 +945,7 @@ EOF
 #  NOTE : generates output file
 cat > overlay.mged_regress << EOF
 Z
-overlay mged_plot_test.pl
+overlay mged_plot_test.plot3
 make overlay_additional_shape.s epa
 e overlay_additional_shape.s
 ps mged_overlay_test.ps
@@ -972,7 +972,7 @@ cat > plot.mged_regress << EOF
 autoview
 ae 35 25 0
 B clone4.c
-plot mged_plot_test.pl
+plot mged_plot_test.plot3
 EOF
 
 #
@@ -1544,12 +1544,12 @@ EOF
 # included as part of the diff process.
 #cat mged_saveview_test.rt >> mged_files
 #cat mged_ps_test.ps >> mged_files
-#cat mged_plot_test.pl >> mged_files
+#cat mged_plot_test.plot3 >> mged_files
 #cat mged_overlay_test.ps >> mged_files
 
 # clean up files
 
-rm -f *.mged_regress mged_saveview_test.rt mged_ps_test.ps mged_plot_test.pl mged_overlay_test.ps
+rm -f *.mged_regress mged_saveview_test.rt mged_ps_test.ps mged_plot_test.plot3 mged_overlay_test.ps
 
 # Local Variables:
 # tab-width: 8

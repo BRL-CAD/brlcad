@@ -36,7 +36,7 @@
 #include "db.h"
 
 
-struct rt_g rt_g;
+struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource;
 
@@ -81,8 +81,8 @@ const int db5_enc_len[4] = {
     8
 };
 
-/* see table.c for primitive function table definition */
-extern const struct rt_functab rt_functab[];
+/* see table.c for primitive object function table definition */
+extern const struct rt_functab OBJ[];
 
 /**
  * face definitions for each arb type

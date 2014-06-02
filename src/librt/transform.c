@@ -36,8 +36,8 @@ rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt
     RT_CK_RESOURCE(resource);
 
     ret = -1;
-    if (rt_functab[input->idb_type].ft_xform) {
-	ret = rt_functab[input->idb_type].ft_xform(output, matrix, input, freeflag, dbip, resource);
+    if (OBJ[input->idb_type].ft_xform) {
+	ret = OBJ[input->idb_type].ft_xform(output, matrix, input, freeflag, dbip, resource);
     }
 
     return ret;

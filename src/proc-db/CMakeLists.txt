@@ -10,8 +10,8 @@ BRLCAD_ADDEXEC(bottest bottest.c libwdb)
 BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "libwdb;${OPENNURBS_LIBRARY}")
 
-# NOSTRICT used due to openNURBS header overflow warning
-BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
+# NO_STRICT used due to openNURBS header overflow warning
+BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brickwall brickwall.c libwdb)
 BRLCAD_ADDEXEC(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}")
@@ -38,14 +38,15 @@ BRLCAD_ADDEXEC(sketch sketch.c libwdb)
 BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(spltest spltest.c libwdb)
 
-# NOSTRICT used due to openNURBS header inlining warning
-BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
+# NO_STRICT used due to openNURBS header inlining warning
+BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT)
 BRLCAD_ADDEXEC(tea tea.c libwdb)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb)
 BRLCAD_ADDEXEC(wavy wavy.c libwdb)
 BRLCAD_ADDEXEC(torii torii.c libwdb)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(cchannel cchannel.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb)
 
 set(proc-db_ignore_files
@@ -59,7 +60,6 @@ set(proc-db_ignore_files
   vegetation.h
   )
 CMAKEFILES(${proc-db_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

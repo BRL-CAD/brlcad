@@ -70,7 +70,7 @@ usage(char *str)
 		   progname,
 		   "\tCreate NMG to mged database ",
 		   mfilename,
-		   "\tand plot file ",
+		   "\tand plot3 file ",
 		   plotfilename);
     bu_exit(1, NULL);
 }
@@ -90,7 +90,7 @@ parse_args(int ac, char **av)
 	++progname;
 
     bu_strlcpy(plotfilename, progname, sizeof(plotfilename));
-    bu_strlcat(plotfilename, ".pl", sizeof(plotfilename));
+    bu_strlcat(plotfilename, ".plot3", sizeof(plotfilename));
 
     bu_strlcpy(mfilename, progname, sizeof(mfilename));
     bu_strlcat(mfilename, ".g", sizeof(mfilename));

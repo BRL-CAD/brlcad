@@ -1761,8 +1761,8 @@ main(int argc, char **argv)
 		bot = 1;
 		break;
 	    case 'X':	/* nmg debug flags */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_log("%s: setting rt_g.NMG_debug to x%x\n", argv[0], rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_log("%s: setting RTG.NMG_debug to x%x\n", argv[0], RTG.NMG_debug);
 		break;
 	}
     }

@@ -36,11 +36,12 @@
 #include "fb.h"
 #include "pkg.h"
 
-char *options = "vf:F:";
+char *options = "vf:F:h?";
 
 static char usage[] = "\
 Usage: fbgammamod [-v] [-f in_file] [-F framebuffer] \
-	r+ r* r_gam g+ g* g_gam b+ b* b_gam global_pre_gam global+ global* global_post_gam\n";
+	r+ r* r_gam g+ g* g_gam b+ b* b_gam global_pre_gam global+ global* global_post_gam\n\
+       (last 13 items after '-F framebuffer' are numbers which are input to program variables)\n";
 
 int verbose = 0;
 char *framebuffer = (char *)NULL;
@@ -171,9 +172,9 @@ main(int argc, char **argv)
     post_gam = atof(argv[bu_optind+12]);
 
     if (verbose) {
-	fprintf(stderr, "r+ = %g, r* = %g, r gam=%g\n", ra, rm, rg);
-	fprintf(stderr, "g+ = %g, g* = %g, g gam=%g\n", ga, gm, gg);
-	fprintf(stderr, "b+ = %g, b* = %g, b gam=%g\n", ba, bm, bg);
+	fprintf(stderr, "r+ = %g, r* = %g, r_gam=%g\n", ra, rm, rg);
+	fprintf(stderr, "g+ = %g, g* = %g, g_gam=%g\n", ga, gm, gg);
+	fprintf(stderr, "b+ = %g, b* = %g, b_gam=%g\n", ba, bm, bg);
 	fprintf(stderr, "pre_gam = %g, + = %g, * = %g, post_gam = %g\n",
 		pre_gam, add, mul, post_gam);
     }

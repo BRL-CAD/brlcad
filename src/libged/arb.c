@@ -85,16 +85,17 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
-    internal.idb_meth = &rt_functab[ID_ARB8];
+    internal.idb_meth = &OBJ[ID_ARB8];
     internal.idb_ptr = (genptr_t)arb;
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-#if 1
+    /* FIXME: we should be creating the arb at the center of the
+     * screen.  Extract bounding box code from both autoview.c and
+     * get_autoview.c into a general bounding rpp function, and use
+     * accordingly.  Should combin autoview.c with get_autoview.c
+     * (perhaps as a flag).
+     */
     VSET(arb->pt[0], 0.0, 0.0, 0.0);
-#else
-    /* put vertex of new solid at center of screen */
-    VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-#endif
 
     /* calculate normal vector defined by rot, fb */
     norm1[0] = cos(fb) * cos(rota);

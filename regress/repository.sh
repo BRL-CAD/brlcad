@@ -2,7 +2,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2013 United States Government as represented by
+# Copyright (c) 2008-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,24 +47,33 @@ fi
 
 FAILED=0
 
-if test ! -f "${TOPSRC}/include/common.h" ; then
+# go to the source directory so we don't have to get fancy parsing the
+# file lists of directories with odd names
+cd "${TOPSRC}"
+
+if test ! -f "./include/common.h" ; then
     echo "Unable to find include/common.h, aborting"
     exit 1
 fi
 
 # get a source and header file list so we only walk the sources once
 
-SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
-INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+
+BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+CMakeLists.txt"
 
 
 ###
-# TEST: make sure nobody includes private headers like bio.h in a public header
+# TEST: make sure nobody includes private headers like bio.h in a
+# public header
 echo "running public header private header checks..."
 
 for i in bio.h bin.h bselect.h ; do
-    if test ! -f "${TOPSRC}/include/$i" ; then
+    if test ! -f "include/$i" ; then
 	echo "Unable to find include/$i, aborting"
 	exit 1
     fi
@@ -80,26 +89,108 @@ done
 
 
 ###
-# TEST: make sure common.h is always included first
-echo "running common.h inclusion order check..."
+# TEST: make sure bio.h isn't redundant with system headers
+echo "running bio.h redundancy check..."
 
-COMMONSRCS="`grep -n -I -e '#[[:space:]]*include' $SRCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
-COMMONINCS="`grep -n -I -e '#[[:space:]]*include' $INCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
-
+# limit our search to files containing bio.h
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | sed 's/:.*//g' | sort | uniq`"
 FOUND=
-for file in $COMMONSRCS $COMMONINCS ; do
-    if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then
-	continue
-    fi
-    MATCH="`grep '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"' | sed 's/:.*//g'`"
-    if test ! "x$MATCH" = "x" ; then
-	if test "x`head $file | grep BRL-CAD`" = "x" ; then
-	    # not a BRL-CAD file (or it's lexer-generated) , so skip it
+for file in $FILES ; do
+
+    for header in "<stdio.h>" "<windows.h>" "<io.h>" "<unistd.h>" "<fcntl.h>" ; do
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | grep $header`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: #include $header is unnecessary with bio.h; remove $MATCH"
+	    FOUND=1
 	    continue
 	fi
-	echo "ERROR: Header (common.h) out of order: $MATCH"
-	FOUND=1
+    done
+done
+if test "x$FOUND" = "x" ; then
+    echo "-> bio.h check succeeded"
+else
+    echo "-> bio.h check FAILED"
+# TODO: uncomment after fixing the existing cases
+#    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure bin.h isn't redundant with system headers
+echo "running bin.h redundancy check..."
+
+# limit our search to files containing bin.h
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bin.h' | grep -v 'bin.h:' | sed 's/:.*//g' | sort | uniq`"
+FOUND=
+for file in $FILES ; do
+
+    for header in "<winsock2.h>" "<netinet/in.h>" "<netinet/tcp.h>" "<arpa/inet.h>" ; do
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | grep $header`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: #include $header is unnecessary with bin.h; remove $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    done
+done
+if test "x$FOUND" = "x" ; then
+    echo "-> bin.h check succeeded"
+else
+    echo "-> bin.h check FAILED"
+# TODO: uncomment after fixing the existing cases
+#    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure common.h is always included first when included
+echo "running common.h inclusion order check..."
+
+# limit our search to files containing common.h or system headers for
+# small performance savings.
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.h|<' | sed 's/:.*//g' | sort | uniq`"
+
+# This is how to do it if we needed to accommodate screwy filepaths
+#FILES="`echo \"$SRCFILES
+#$INCFILES\" | while read file ; do
+#    if test \"x\`grep -I -e '#[[:space:]]*include' $file | grep -E 'common.h|<'\`\" != \"x\" ; then
+#	echo $file
+#    fi
+#done`"
+
+LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
+EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
+
+FOUND=
+for file in $FILES ; do
+    # some files are exempt
+    basefile="`basename $file`"
+    if test ! "x`echo $EXEMPT | grep $basefile`" = "x" ; then
+	continue
     fi
+
+    # test files that include common.h
+    if test ! "x`grep -I -e '#[[:space:]]*include' $file | grep '\"common.h\"'`" = "x" ; then
+	# common.h is first?
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"'`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: common.h include needs to be moved before: $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    fi
+
+    # test files that include system headers
+    if test ! "x`grep -I -e '#[[:space:]]*include' $file | grep '<'`" = "x" ; then
+	# non-system header is first?
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"'`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: common.h needs to be included before: $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    fi
+
 done
 if test "x$FOUND" = "x" ; then
     echo "-> common.h check succeeded"
@@ -120,15 +211,17 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
 
     # handle implementation exceptions
     MATCH="`echo \"$MATCH\" \
 | sed 's/.*\/bomb\.c:.*abort.*//g' \
-| sed 's/.*\/bu\.h.*//' \
+| sed 's/.*\/bu\/str\.h.*//' \
+| sed 's/.*\/bu\/log\.h.*//' \
 | sed 's/.*\/cursor\.c.*//g' \
+| sed 's/.*\/CONFIG_CONTROL_DESIGN.*//' \
 | sed 's/.*\/db\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
@@ -156,6 +249,92 @@ if test "x$FOUND" = "x" ; then
     echo "-> API usage check succeeded"
 else
     echo "-> API usage check FAILED"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure we don't get worse when it comes to testing for a
+# platform feature vs. assuming a platform always had, has, and will
+# have some characteristic feature.
+
+echo "running platform symbol usage check"
+PLATFORMS="WIN32 _WIN32 WIN64 _WIN64"
+FOUND=0
+for platform in $PLATFORMS ; do
+    echo "Searching headers for $platform ..."
+    MATCH=
+    for file in $INCFILES /dev/null ; do
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -e $regex $file /dev/null | grep -v pstdint.h`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt header instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + 1`
+    fi
+done
+
+
+for platform in $PLATFORMS ; do
+    echo "Searching sources for $platform ..."
+    MATCH=
+    for file in $SRCFILES /dev/null ; do
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -E $regex $file /dev/null | grep -v uce-dirent.h`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt source instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + $cnt`
+    fi
+done
+
+for platform in $PLATFORMS ; do
+    echo "Searching build files for $platform ..."
+    MATCH=
+    for file in $BLDFILES /dev/null ; do
+	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
+	this="`grep -n -E $regex $file /dev/null`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt build system instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + $cnt`
+    fi
+done
+
+# make sure no more WIN32 issues are introduced than existed
+# previously.  for cases where it "seems" necessary, can find and fix
+# a case that is not before adding another.  lets not increase this.
+NEED_FIXING=236
+if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
+    if test $FOUND -ne $NEED_FIXING ; then
+	echo "********************************************************"
+	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0"
+	echo "********************************************************"
+    fi
+    echo "-> platform symbol usage check succeeded"
+else
+    echo "-> platform symbol usage check FAILED"
     FAILED="`expr $FAILED + 1`"
 fi
 

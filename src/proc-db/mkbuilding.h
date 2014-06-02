@@ -17,18 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proc-db/mkbuilding.h
- *
- *
- *
- */
 
 #ifndef __MKBUILDING_H__
 #define __MKBUILDING_H__
 
-#define USE2X4   1
-#define USE2X6   2
-
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -40,6 +33,10 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
+
+#define USE2X4   1
+#define USE2X6   2
 
 
 void mkbldg_makeWallSegment(char *name, struct rt_wdb *db_filepointer, point_t p1, point_t p2);

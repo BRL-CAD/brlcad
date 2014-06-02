@@ -613,7 +613,7 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     }
 
     /* Set a new value */
-    if (sscanf(cp, "%x", (unsigned int *)&rt_g.debug) == 1) {
+    if (sscanf(cp, "%x", (unsigned int *)&RTG.debug) == 1) {
 	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
 	bu_log("\n");
     } else {

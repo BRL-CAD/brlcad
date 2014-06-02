@@ -365,8 +365,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#read_muves"><FONT SIZE=2>read_muves</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#red"><FONT SIZE=2>red</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#redraw_vlist"><FONT SIZE=2>redraw_vlist</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#refresh"><FONT SIZE=2>refresh</FONT></A></TD>
 </TR>
@@ -1032,9 +1030,7 @@
 
 </B><FONT SIZE=2><P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db adjust sphere.s V [center]</B> </P>
-<P><BR>
-</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>redraw_vlist sphere.s</B> <BR>
--- Update the &quot;V&quot; vertex of shape sphere.s in the database to be located at the current center of the view, and recreate the vector display lists of only those object(s) that were affected by the change. </P></DIR>
+</DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2707,11 +2703,6 @@ foo.r_xpand/R
 </B><FONT SIZE=2><P>-- Edit the combination <I>group2</I> with the user�s editor of choice. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="redraw_vlist"></A>redraw_vlist</B> <I>object</DT>
-</I><DD>Given the name(s) of database objects, re-generate the vlist associated with every shape in view that references the named object(s), either shapes or regions. Particularly useful with outboard .inmem database modifications.</DD>
-</DL>
-<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="refresh"></A>refresh</DT>
 </B><DD>The &quot;refresh&quot; command updates the MGED display.</DD>

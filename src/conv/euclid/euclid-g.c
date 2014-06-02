@@ -173,10 +173,10 @@ main(int argc, char **argv)
 		polysolids = 0;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);

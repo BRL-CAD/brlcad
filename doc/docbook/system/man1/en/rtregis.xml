@@ -31,7 +31,7 @@ makes it easy and fast to overlay a UNIX-Plot file produced with <emphasis remap
 or <emphasis remap='B'>rtrange</emphasis> onto its equivalent color shaded image produced with <emphasis remap='B'>rt</emphasis> or <emphasis remap='B'>cell-fb</emphasis>.</para>
 
 <para><command>rtregis</command>
-produces a script containing a call to <emphasis remap='B'>plrot</emphasis> with the <option>-m</option> and <option>-S</option> parameters to
+produces a script containing a call to <emphasis remap='B'>plot3rot</emphasis> with the <option>-m</option> and <option>-S</option> parameters to
 supply it with a registration matrix and a space command.  The registration
 matrix is produced by <command>rtregis</command> from the
 <emphasis remap='B'>RT</emphasis>
@@ -41,11 +41,11 @@ ray-traced from the same orientation.  The output from
 <command>rtregis</command>
 is a matrix and a space command that are to be used as input parameters
 to
-<emphasis remap='B'>plrot.</emphasis>
+<emphasis remap='B'>plot3rot.</emphasis>
 They may not be used together with
 <option>-a, -e, -s, -g</option>
 options to
-<emphasis remap='B'>plrot.</emphasis>
+<emphasis remap='B'>plot3rot.</emphasis>
 Output is written to standard out unless it is redirected.
 The output can often be included directly in a shell script using
 grave accents.</para>
@@ -59,11 +59,11 @@ grave accents.</para>
 </literallayout> <!-- .fi -->
 
 <para>results in a file containing the registration matrix and alternate
-space command for <emphasis remap='B'>plrot</emphasis>.  It also contains a call to <emphasis remap='B'>plrot</emphasis> and
-can be edited to send the <emphasis remap='B'>plrot</emphasis> output a file.</para>
+space command for <emphasis remap='B'>plot3rot</emphasis>.  It also contains a call to <emphasis remap='B'>plot3rot</emphasis> and
+can be edited to send the <emphasis remap='B'>plot3rot</emphasis> output a file.</para>
 
 <literallayout remap='.nf'>
-	 <emphasis remap='I'>sh registration.matrix.file &gt; file.pl</emphasis>
+	 <emphasis remap='I'>sh registration.matrix.file &gt; file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>This results in a registered plot file.</para>
@@ -72,7 +72,7 @@ can be edited to send the <emphasis remap='B'>plrot</emphasis> output a file.</p
 
 <literallayout remap='.nf'>
 	<emphasis remap='I'>pix-fb file.pix</emphasis>
-	<emphasis remap='I'>pl-fb -o file.pl</emphasis>
+	<emphasis remap='I'>plot3-fb -o file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>This command pair results in the plot file being overlaid on top of
@@ -90,7 +90,7 @@ to a printer:</para>
 <para><citerefentry><refentrytitle>bw-impress</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-ps</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>cell-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
 </refsect1>

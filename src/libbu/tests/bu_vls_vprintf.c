@@ -281,6 +281,22 @@ main(int argc, char *argv[])
 	    return test_vls("%'d", 123000);
 	case 57:
 	    return test_vls("%c", 'r');
+	case 58:
+	    return test_vls("%20s", "right");
+	case 59:
+	    return test_vls("%-20s", "left");
+	case 60:
+	    return test_vls("%10.20s", "12345");
+	case 61:
+	    return test_vls("%-10.20s", "12345");
+	case 62:
+	    return test_vls("%10.20s", "123456789012345");
+	case 63:
+	    return test_vls("%-10.20s", "123456789012345");
+	case 64:
+	    return test_vls("%20.10s", "123456789012345");
+	case 65:
+	    return test_vls("%-20.10s", "123456789012345");
 
 	/* this test needs a relook
 	    return test_vls("%H", 123);

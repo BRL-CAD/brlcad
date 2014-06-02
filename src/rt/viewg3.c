@@ -163,9 +163,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
     output_is_binary = 0;		/* output is printable ascii */
 
     if (R_DEBUG & RDEBUG_RAYPLOT) {
-	plotfp = fopen("rtg3.pl", "w");
+	plotfp = fopen("rtg3.plot3", "w");
 	if (npsw > 1) {
-	    bu_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
+	    bu_log("Note: writing rtg3.plot3 file can only be done using only 1 processor\n");
 	    npsw = 1;
 	}
     }
@@ -280,7 +280,7 @@ view_pixel(struct application *UNUSED(ap))
  * of the grid cell CENTERS (in screen space coordinates) are needed.
  * Second, the ACTUAL h, v coordinates fired from are needed.
  *
- * An optional rtg3.pl UnixPlot file is written, permitting a color
+ * An optional rtg3.plot3 UnixPlot file is written, permitting a color
  * vector display of ray-model intersections.
  */
 int
@@ -604,7 +604,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    card_count = 0;
 	}
 
-	/* A color rtg3.pl UnixPlot file of output commands is
+	/* A color rtg3.plot3 UnixPlot file of output commands is
 	 * generated.  This is processed by plot(1) plotting filters
 	 * such as pl-fb.  Portions of a ray passing through air
 	 * within the model are represented in blue, while portions

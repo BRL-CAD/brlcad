@@ -196,6 +196,7 @@ static int	mode=0;			/* Plate mode (1) or volume mode (2), of current component 
 static int	group_id=(-1);		/* Group identification number from SECTION card */
 static int	comp_id=(-1);		/* Component identification number from SECTION card */
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
+static int	region_id_max=0;
 static char	field[9];		/* Space for storing one field from an input line */
 static char	vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
 static int	name_count;		/* Count of number of times this name_name has been used */
@@ -210,7 +211,8 @@ static int	f4_do_skips=0;		/* flag indicating that not all components will be pr
 static int	*region_list;		/* array of region_ids to be processed */
 static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
 static int	f4_do_plot=0;		/* flag indicating plot file should be created */
-static struct wmember  group_head[11];	/* Lists of regions for groups */
+static struct wmember *group_head = (struct wmember *)NULL; /* Lists of regions for groups */
+static ssize_t group_head_cnt=0;
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
@@ -247,14 +249,19 @@ usage() {
 static int
 get_line(void)
 {
-    int len;
+    int len, done;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    len = bu_vls_gets(&buffer, fpin);
-
-    /* eof? */
-    if (len < 0)
-	return 0;
+    done = 0;
+    while (!done) {
+	len = bu_vls_gets(&buffer, fpin);
+	if (len < 0) goto out; /* eof or error */
+	if (len == 0) continue;
+	bu_vls_trimspace(&buffer);
+	len = bu_vls_strlen(&buffer);
+	if (len == 0) continue;
+	done = 1;
+    }
 
     if (len > MAX_LINE_SIZE)
 	bu_log("WARNING: long line truncated\n");
@@ -262,6 +269,7 @@ get_line(void)
     memset((void *)line, 0, MAX_LINE_SIZE);
     snprintf(line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
 
+out:
     bu_vls_free(&buffer);
 
     return len >= 0;
@@ -483,7 +491,6 @@ Insert_region_name(char *name, int reg_id)
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
     int foundn, foundr;
-    int diff;
 
     if (debug)
 	bu_log("Insert_region_name(name=%s, reg_id=%d\n", name, reg_id);
@@ -514,9 +521,15 @@ Insert_region_name(char *name, int reg_id)
     new_ptr->name = bu_strdup(name);
     new_ptr->magic = NAME_TREE_MAGIC;
 
+    if (reg_id > region_id_max) {
+	region_id_max = reg_id;
+    }
+
     if (!name_root) {
 	name_root = new_ptr;
     } else {
+	int diff;
+
 	diff = bu_strcmp(name, nptr_model->name);
 
 	if (diff > 0) {
@@ -876,6 +889,33 @@ Add_stragglers_to_groups(void)
 
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
+
+	    if (!group_head || ptr->region_id > region_id_max) {
+		struct wmember *new_head;
+		ssize_t new_cnt, i;
+		struct bu_list *list_first;
+
+		new_cnt = (ssize_t)ceil(region_id_max/1000.0);
+		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, region_id_max, new_cnt);
+
+		for (i = 0 ; i < new_cnt ; i++) {
+		    BU_LIST_INIT(&new_head[i].l);
+		    if (i < group_head_cnt) {
+			if (BU_LIST_NON_EMPTY(&group_head[i].l)) {
+			    list_first = BU_LIST_FIRST(bu_list, &group_head[i].l);
+			    BU_LIST_DEQUEUE(&group_head[i].l);
+			    BU_LIST_INSERT(list_first, &new_head[i].l);
+			}
+		    }
+		}
+		if (group_head) {
+		    bu_free(group_head, "old group_head");
+		}
+		group_head = new_head;
+		group_head_cnt = new_cnt;
+	    }
+
 	    (void)mk_addmember(ptr->name, &group_head[ptr->region_id/1000].l, NULL, WMOP_UNION);
 	    ptr->in_comp_group = 1;
 	}
@@ -898,7 +938,7 @@ f4_do_groups(void)
 
     Add_stragglers_to_groups();
 
-    for (group_no=0; group_no < 11; group_no++) {
+    for (group_no=0; group_no < group_head_cnt; group_no++) {
 	char name[MAX_LINE_SIZE] = {0};
 
 	if (BU_LIST_IS_EMPTY(&group_head[group_no].l))
@@ -2828,7 +2868,6 @@ read_fast4_colors(char *color_file)
 int
 main(int argc, char **argv)
 {
-    int i;
     int c;
     char *plot_file = NULL;
     char *color_file = NULL;
@@ -2905,8 +2944,8 @@ main(int argc, char **argv)
 	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (rt_g.NMG_debug) {
-	bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+    if (RTG.NMG_debug) {
+	bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 	bu_log("\n");
     }
 
@@ -2933,9 +2972,6 @@ main(int argc, char **argv)
 
     bu_ptbl_init(&stack, 64, " &stack ");
     bu_ptbl_init(&stack2, 64, " &stack2 ");
-
-    for (i=0; i<11; i++)
-	BU_LIST_INIT(&group_head[i].l);
 
     BU_LIST_INIT(&hole_head.l);
 
@@ -2978,6 +3014,8 @@ main(int argc, char **argv)
 
     if (!quiet)
 	bu_log("%d components converted\n", comp_count);
+
+    bu_free(group_head, "group_head");
 
     return 0;
 }

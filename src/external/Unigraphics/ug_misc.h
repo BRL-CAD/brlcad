@@ -19,15 +19,13 @@
  */
 /** @file ug_misc.h
  *
- */
-
-#include <setjmp.h>
-extern jmp_buf my_env;
-
-/* This macro and function support a compact error-checking interface to the
+ * This macro and function support a compact error-checking interface to the
  * UG library routines
+ *
  */
+
 #define UF_func(X) report(#X, __FILE__, __LINE__, (X))
+
 extern int report(char *call, char *file, int line, int code);
 extern void Add_lists(uf_list_p_t dest, uf_list_p_t src);
 extern const char *feature_sign(tag_t feat);

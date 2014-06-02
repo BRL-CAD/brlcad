@@ -885,11 +885,12 @@ process_entities_polyline_code(int code)
 			polyline_vertex_count = 0;
 		    }
 		} else {
-		    int i;
 		    struct edgeuse *eu;
 		    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
 
 		    if (polyline_vertex_count > 1) {
+			int i;
+
 			if (!layers[curr_layer]->m) {
 			    create_nmg();
 			}
@@ -1898,10 +1899,6 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
     char *copyOfText;
     char *c, *cp;
     vect_t diff;
-    double allowedLength;
-    double xScale=1.0;
-    double yScale=1.0;
-    double scale;
     struct bu_list vhead;
     int maxLineLen=0;
 
@@ -1916,6 +1913,11 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
     stringLength = strlen(copyOfText);
 
     if (horizAlignment == FIT && vertAlignment == BASELINE) {
+	double allowedLength;
+	double xScale=1.0;
+	double yScale=1.0;
+	double scale;
+
 	/* fit along baseline */
 	VSUB2(diff, firstAlignmentPoint, secondAlignmentPoint);
 	allowedLength = MAGNITUDE(diff);

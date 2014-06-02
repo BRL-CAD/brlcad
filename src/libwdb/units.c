@@ -38,16 +38,6 @@
 double mk_conv2mm = 1.0;		/* Conversion factor to mm */
 
 
-/**
- * M K _ C O N V E R S I O N
- *
- * Given a string conversion value, find the appropriate factor, and
- * establish it.
- *
- * Returns -
- * -1 error
- * 0 OK
- */
 int
 mk_conversion(char *str)
 {
@@ -58,15 +48,6 @@ mk_conversion(char *str)
 }
 
 
-/**
- * M K _ S E T _ C O N V E R S I O N
- *
- * Establish a new conversion factor for LIBWDB routines.
- *
- * Returns -
- * -1 error
- * 0 OK
- */
 int
 mk_set_conversion(double val)
 {

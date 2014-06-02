@@ -43,7 +43,7 @@
 #
 #   sh/header.sh BSD configure.ac
 #
-#   find . -type f -name Makefile.am -not -regex '.*src/other.*' -exec sh/header.sh BSD {} \;
+#   find . -type f -name CMakeLists.txt -not -regex '.*src/other.*' -exec sh/header.sh BSD {} \;
 #
 #   find src/lib* -type f \( -name \*.c -or -name \*.h \) -exec sh/header.sh LGPL {} \;
 #

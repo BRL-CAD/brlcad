@@ -103,9 +103,6 @@
 #define HAVE_WINSOCK2_H		1
 #define HAVE_WINSOCK_H		1
 
-#define HAVE_SBRK 1
-#define sbrk(i) (NULL)
-
 #define fb_log bu_log
 
 #define HAVE_TK 1

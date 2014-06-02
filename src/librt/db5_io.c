@@ -937,8 +937,8 @@ rt_db_external5_to_internal5(
 	 * v6.
 	 */
 	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
-    } else if (rt_functab[id].ft_import5) {
-	ret = rt_functab[id].ft_import5(ip, &raw.body, mat, dbip, resp);
+    } else if (OBJ[id].ft_import5) {
+	ret = OBJ[id].ft_import5(ip, &raw.body, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
@@ -951,7 +951,7 @@ rt_db_external5_to_internal5(
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = raw.major_type;
     ip->idb_minor_type = raw.minor_type;
-    ip->idb_meth = &rt_functab[id];
+    ip->idb_meth = &OBJ[id];
 
     return id;			/* OK */
 }

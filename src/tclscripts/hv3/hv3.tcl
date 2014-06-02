@@ -1183,7 +1183,7 @@ namespace eval ::hv3::hv3 {
     set O(myImageData) ""
 
     # If this variable is not set to the empty string, it is the id of an
-    # [after] event that will refresh the current document (i.e from a
+    # [after] event that will refresh the current document (i.e. from a
     # Refresh header or <meta type=http-equiv> markup). This scheduled
     # event should be cancelled when the [reset] method is called.
     #

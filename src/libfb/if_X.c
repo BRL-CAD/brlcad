@@ -1532,11 +1532,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
     register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
     register unsigned char *mpbuffer;          /* monochrome byte buffer */
     register int row, col, bit;
-#if 1
     static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
-#else
-    static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
-#endif
     register unsigned char *bits = MSB;	/*XXX - for RT, Sun, etc.  */
 
     error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));

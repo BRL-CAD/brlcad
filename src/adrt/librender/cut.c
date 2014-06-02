@@ -30,15 +30,19 @@
 #include "vmath.h"
 
 #ifndef TIE_PRECISION
-# define TIE_PRECISION 0
+#  define TIE_PRECISION 0
 #endif
 
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "render.h"
 
+
+extern struct tie_s *tie;
+
 void* render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 void render_cut(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
+
 
 typedef struct render_cut_s {
     point_t ray_pos;
@@ -54,6 +58,7 @@ typedef struct render_cut_hit_s {
     tfloat mod;
 } render_cut_hit_t;
 
+
 void *
 render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
@@ -61,7 +66,6 @@ render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id
     return NULL;
 }
 
-extern struct tie_s *tie;
 
 void
 render_cut_free(render_t *render)
@@ -146,43 +150,22 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
      */
 
     /* flipped normal */
-    dot = fabs(VDOT( ray->dir,  hit.id.norm));
+    dot = fabs(VDOT(ray->dir, hit.id.norm));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
 	VSET(color, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
     } else {
-	/* Mix actual color with white 4:1, shade 50% darker */
-#if 0
-	VSET(color, 1.0, 1.0, 1.0);
-	VSCALE(color,  color,  3.0);
-	VADD2(color,  color,  hit.mesh->attributes->color);
-	VSCALE(color,  color,  0.125);
-#else
 	VSET(color, (tfloat)0.8, (tfloat)0.8, (tfloat)0.7);
-#endif
     }
 
-#if 0
-    if (dot < 0) {
-#endif
-	/* Shade using inhit */
-	VSCALE((*pixel),  color,  (dot*0.90));
-#if 0
-    } else {
-	TIE_3 vec;
-	fastf_t angle;
-	/* shade solid */
-	VSUB2(vec,  ray->pos,  hit.id.pos);
-	VUNITIZE(vec);
-	angle = vec[0]*hit.mod*-hit.plane[0] + vec[1]*-hit.mod*hit.plane[1] + vec[2]*-hit.mod*hit.plane[2];
-	VSCALE((*pixel),  color,  (angle*0.90));
-    }
-#endif
+    /* Shade using inhit */
+    VSCALE((*pixel), color, (dot*0.90));
 
     *pixel[0] += (tfloat)0.1;
     *pixel[1] += (tfloat)0.1;
     *pixel[2] += (tfloat)0.1;
 }
+
 
 int
 render_cut_init(render_t *render, const char *buf)
@@ -190,21 +173,21 @@ render_cut_init(render_t *render, const char *buf)
     int i;
     render_cut_t *d;
     static TIE_3 list[6];
-	TIE_3 **tlist;
+    TIE_3 **tlist;
     vect_t up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
     struct tie_id_s id;
     struct tie_ray_s ray;
     double step, f[6];
 
-    if(buf == NULL)
-	    return -1;
+    if (buf == NULL)
+	return -1;
 
-    sscanf(buf, "#(%lf %lf %lf) #(%lf %lf %lf)",
-	    f, f+1, f+2,
-	    f+3, f+3+1, f+3+2);
-	VMOVE(ray_pos, f);
-	VMOVE(ray_dir, f);
+    bu_sscanf(buf, "#(%lf %lf %lf) #(%lf %lf %lf)",
+	      f, f+1, f+2,
+	      f+3, f+3+1, f+3+2);
+    VMOVE(ray_pos, f);
+    VMOVE(ray_dir, f+3);
     VUNITIZE(ray_dir);
 
     shot_width = 0.01 * render->tie->radius;
@@ -238,11 +221,11 @@ render_cut_init(render_t *render, const char *buf)
 
     /* Calculate the normal to be used for the plane */
     VSET(up, 0, 0, 1);
-    VCROSS(d->plane,  ray_dir,  up);
+    VCROSS(d->plane, ray_dir, up);
     VUNITIZE(d->plane);
 
     /* Construct the plane */
-    d->plane[3] = -VDOT( d->plane,  ray_pos); /* up is really new ray_pos */
+    d->plane[3] = -VDOT(d->plane, ray_pos); /* up is really new ray_pos */
 
     /* generate the shtuff for the blue line */
     tie_init(&d->tie, 2, TIE_KDTREE_FAST);
@@ -261,7 +244,7 @@ render_cut_init(render_t *render, const char *buf)
     VMOVE(list[5].v, ray_pos);
     list[5].v[2] += shot_width;
 
-    for(i=0;i<6;i++)
+    for (i=0;i<6;i++)
 	tlist[i] = &list[i];
 
     tie_push(&d->tie, tlist, 2, NULL, 0);

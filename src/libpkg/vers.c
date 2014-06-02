@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include "pkg.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /**

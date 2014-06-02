@@ -24,11 +24,11 @@
 #ifndef _ISST_DISPATCHER_H
 #define _ISST_DISPATCHER_H
 
-#define DISPATCHER_TILE_NUM	8
+#define DISPATCHER_TILE_NUM 8
 
-extern	void	dispatcher_init();
-extern	void	dispatcher_free();
-extern	void	dispatcher_generate(void *data, int data_len, int img_w, int img_h, int image_format);
+extern void dispatcher_init();
+extern void dispatcher_free();
+extern void dispatcher_generate(void *data, int data_len, int img_w, int img_h, int image_format);
 
 #endif
 

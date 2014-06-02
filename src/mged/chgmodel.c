@@ -49,7 +49,7 @@
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind);
 
 /* defined in buttons.c */
 extern int be_s_trans();
@@ -113,7 +113,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[1] = "-R";
 	av[2] = argv[argc-2];
 	av[3] = NULL;
-	edit_com(3, av, 1, 1);
+	edit_com(3, av, 1);
     } else {
 	return TCL_ERROR;
     }

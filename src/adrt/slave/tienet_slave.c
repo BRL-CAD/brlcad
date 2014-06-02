@@ -24,6 +24,8 @@
  *
  */
 
+#include "common.h"
+
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/select.h>

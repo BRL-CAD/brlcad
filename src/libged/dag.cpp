@@ -276,7 +276,7 @@ void
 decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
 {
     int new_entry;
-    struct bu_hash_entry *hsh_entry = bu_hash_add_entry(dag->object_types, (unsigned char *)object_name, strlen(object_name) + 1, &new_entry);
+    struct bu_hash_entry *hsh_entry = bu_hash_tbl_add(dag->object_types, (unsigned char *)object_name, strlen(object_name) + 1, &new_entry);
 
     char *type = (char *)bu_malloc((size_t)1, "hash entry value");
     sprintf(type, "%d", object_type);
@@ -313,7 +313,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     /* Look for the ID of the current combination */
-    if ((hsh_entry_comb = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx))) {
+    if ((hsh_entry_comb = bu_hash_tbl_find(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx))) {
 	comb_id = atoi((const char*)hsh_entry_comb->value);
     }
 
@@ -391,7 +391,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
 	bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
 	struct bu_hash_entry *hsh_entry;
-	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+	hsh_entry = bu_hash_tbl_find(objects, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
 
 	if (hsh_entry) {
 	    subnode_id = atoi((const char*)hsh_entry->value);
@@ -461,7 +461,7 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
 
 	/* Check if this solid is in the objects list. */
 	prev = NULL;
-	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+	hsh_entry = bu_hash_tbl_find(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
 	if (hsh_entry) {
 	    object_id = atoi((const char*)hsh_entry->value);
@@ -499,7 +499,7 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
     } else {
 	bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
 	prev = NULL;
-	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+	hsh_entry = bu_hash_tbl_find(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
 	if (hsh_entry) {
 	    o->non_geometries.reserve(o->non_geometries.size() + 1);
@@ -532,9 +532,9 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     /* Create the master "objects" hash table. It will have at most 64 entries. */
-    objects = bu_create_hash_tbl(1);
-    dag->ids = bu_create_hash_tbl(1);
-    dag->object_types = bu_create_hash_tbl(1);
+    objects = bu_hash_tbl_create(1);
+    dag->ids = bu_hash_tbl_create(1);
+    dag->object_types = bu_hash_tbl_create(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
 #if defined LIBAVOID_LATEST_API
@@ -563,7 +563,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 		/* Check if this object is already in the hash table. If not, add it to the objects hash table. */
 		int new_entry;
 
-		hsh_entry1 = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+		hsh_entry1 = bu_hash_tbl_find(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
 		if (!hsh_entry1) {
 		    bu_log("Adding object [%s]\n", bu_vls_addr(&dp_name_vls));
@@ -571,7 +571,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 		    /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
 		    object_nr++;
 
-		    struct bu_hash_entry *hsh_entry = bu_hash_add_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
+		    struct bu_hash_entry *hsh_entry = bu_hash_tbl_add(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
 		    char *id = (char *)bu_malloc((size_t)6, "hash entry value");
 		    sprintf(id, "%d", object_nr);
 
@@ -579,7 +579,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 		    bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
 		    /* Add the ID of this object as a key and its name as a value. */
-		    hsh_entry = bu_hash_add_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &new_entry);
+		    hsh_entry = bu_hash_tbl_add(dag->ids, (unsigned char *)id, strlen(id) + 1, &new_entry);
 		    bu_set_hash_value(hsh_entry, (unsigned char *)dp->d_namep);
 		}
 	    } else {
@@ -641,7 +641,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	sprintf(root, "%u", root_ids[i]);
 	struct bu_hash_entry *prev_root = NULL;
 	unsigned long idx_root;
-	struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
+	struct bu_hash_entry *hsh_entry_root = bu_hash_tbl_find(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
 
 	if (hsh_entry_root) {
 	    level = 0;
@@ -666,7 +666,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 
 	struct bu_hash_entry *prev = NULL;
 	unsigned long idx;
-	struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
+	struct bu_hash_entry *hsh_entry = bu_hash_tbl_find(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
 	if(hsh_entry) {
 #if defined LIBAVOID_LATEST_API
 	  Box bbox = (*it)->polygon().offsetBoundingBox(0);
@@ -678,7 +678,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 #endif
 	    prev = NULL;
-	    struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
+	    struct bu_hash_entry *hsh_entry_type = bu_hash_tbl_find(dag->object_types, hsh_entry->value,
 								      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
 	    if(hsh_entry_type) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,

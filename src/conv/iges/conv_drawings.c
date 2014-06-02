@@ -415,7 +415,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     BU_LIST_INIT(&vhead);
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
+    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     sina = sin(ang);
     cosa = cos(ang);

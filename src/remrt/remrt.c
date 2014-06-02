@@ -70,7 +70,7 @@
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 #ifndef HAVE_VFORK
@@ -3496,9 +3496,9 @@ cd_memprint(int argc, char **argv)
 	return 1;
 
     if (BU_STR_EQUAL(argv[1], "on")) {
-	rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
+	RTG.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
     } else if (BU_STR_EQUAL(argv[1], "off")) {
-	rt_g.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
+	RTG.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
     } else {
 	bu_prmem("memprint command");
     }

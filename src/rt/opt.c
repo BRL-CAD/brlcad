@@ -157,7 +157,12 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
-#if 0
+
+/* TODO: need a run-time mechanism for toggling spatial partitioning
+ * methods.  Use this compile-time switch to toggle between different
+ * spatial partitioning methods.
+ */
+#ifdef USE_NUGRID
 /* Non-uniform grid/mesh discretized spatial partitioning */
 RT_PART_NUGRID;
 #else
@@ -359,8 +364,8 @@ get_args(int argc, const char *argv[])
 		finalframe = atoi( bu_optarg );
 		break;
 	    case 'N':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_log("NMG_debug=0x%x\n", RTG.NMG_debug);
 		break;
 	    case 'M':
 		matflag = 1;
@@ -369,7 +374,7 @@ get_args(int argc, const char *argv[])
 		AmbientIntensity = atof( bu_optarg );
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
@@ -623,7 +628,7 @@ get_args(int argc, const char *argv[])
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
+    if (RT_G_DEBUG || R_DEBUG || RTG.NMG_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)

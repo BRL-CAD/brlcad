@@ -493,7 +493,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     }
 
     stp->st_id = ip->idb_type;
-    stp->st_meth = &rt_functab[ip->idb_type];
+    stp->st_meth = &OBJ[ip->idb_type];
     if (mat) {
 	mat = stp->st_matp;
     } else {

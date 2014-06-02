@@ -36,7 +36,6 @@ BRLCAD_ADDEXEC(chan_mult chan_mult.c libbu)
 BRLCAD_ADDEXEC(chan_permute chan_permute.c libbu)
 
 CMAKEFILES(cattrack.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

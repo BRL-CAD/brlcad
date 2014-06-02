@@ -168,9 +168,9 @@ else (WIN32)
 
   get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
   if(SEARCH_64BIT)
-    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu")
   endif(SEARCH_64BIT)
 
   set(OPENGL_LIB_SEARCH_PATH

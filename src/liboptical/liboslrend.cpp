@@ -86,8 +86,10 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
     return sh_ref;
 }
 
-Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 
+Color3
+OSLRenderer::QueryColor(RenderInfo *info) const
+{
     if(info->depth >= 5){
 	return Color3(0.0f);
     }
@@ -108,32 +110,6 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
     const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
 
 // Ray-tracing (local illumination)
-#if 0
-
-    if(prim){
-	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
-	    // evaluate bsdf closure
-	    BSDFClosure *bsdf = (BSDFClosure*)prim;
-
-	    // Eval the reflection weight from each light source
-	    size_t nlights = info->light_dirs.size();
-	    float pdf = 0.0;
-	    for(size_t li = 0; li < nlights; li++){
-		info->reflect_weight += bsdf->eval_reflect(globals.I, info->light_dirs[li], pdf);
-	    }
-	    info->reflect_weight *= weight/nlights;
-	}
-	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
-	    // evaluate emissive closure
-	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
-	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
-	    return l;
-	}
-    }
-    return Color3(0.0);
-
-// Path-tracing (global illumination)
-#else
 
     if(prim) {
 	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
@@ -172,12 +148,13 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	}
     }
     return Color3(0.0f);
-
-#endif
-
 }
+
+
 /* Return thread specific information */
-void* OSLRenderer::CreateThreadInfo(){
+void*
+OSLRenderer::CreateThreadInfo()
+{
     return ssi->create_thread_info();
 }
 
@@ -187,8 +164,8 @@ void* OSLRenderer::CreateThreadInfo(){
  * ----------------------------------------------- */
 
 const ClosureColor * OSLRenderer::
-ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const {
-
+ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const
+{
     memset(&globals, 0, sizeof(globals));
 
     VMOVE(globals.P, info->P);

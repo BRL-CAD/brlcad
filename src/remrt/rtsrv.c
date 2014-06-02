@@ -112,7 +112,7 @@ static int	avail_cpus;		/* # of cpus avail on this system */
 
 int	save_overlaps=0;
 
-struct icv_image_file *bif = NULL;
+struct icv_image *bif = NULL;
 
 /*
  * Package Handlers.
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 	if ( BU_STR_EQUAL( argv[1], "-d" ) )  {
 	    debug++;
 	} else if ( BU_STR_EQUAL( argv[1], "-x" ) )  {
-	    sscanf( argv[2], "%x", (unsigned int *)&rt_g.debug );
+	    sscanf( argv[2], "%x", (unsigned int *)&RTG.debug );
 	    argc--; argv++;
 	} else if ( BU_STR_EQUAL( argv[1], "-X" ) )  {
 	    sscanf( argv[2], "%x", (unsigned int *)&rdebug );
@@ -296,9 +296,9 @@ main(int argc, char **argv)
     /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
     if ( npsw > 1 )  {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
     } else
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
     bu_semaphore_init( RT_SEM_LAST );
 
     bu_log("using %d of %d cpus\n",
@@ -538,9 +538,9 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 
     /* In case it changed from startup time via an OPT command */
     if ( npsw > 1 )  {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
     } else
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 
     seen_gettrees = 1;
     (void)free(buf);
@@ -754,7 +754,7 @@ ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 }
 
 /**** Other replacement routines from libbu/log.c ****/
-int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
+int	bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
 /*
  *			B U _ L O G _ I N D E N T _ D E L T A
  *

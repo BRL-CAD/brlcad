@@ -31,6 +31,7 @@ render_depth_free(render_t *UNUSED(render))
     return;
 }
 
+
 void
 render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
@@ -41,6 +42,7 @@ render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s 
 	*pixel[0] = 0.0075 * ray->kdtree_depth;
 }
 
+
 int
 render_depth_init(render_t *render, const char *UNUSED(usr))
 {
@@ -48,6 +50,7 @@ render_depth_init(render_t *render, const char *UNUSED(usr))
     render->free = render_depth_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

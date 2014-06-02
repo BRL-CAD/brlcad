@@ -613,7 +613,7 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:")) != -1) {
@@ -646,11 +646,11 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'u':
 		units = bu_strdup(bu_optarg);
@@ -955,15 +955,16 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	    }
 	    if (strlen(mat.tx_file)) {
 		int tex_fd;
-		int nbytes;
-		long tex_len;
-		long bytes_read = 0;
 		unsigned char tex_buf[TXT_BUF_LEN * 3];
 
 		if ((tex_fd = open(mat.tx_file, O_RDONLY | O_BINARY)) == (-1)) {
 		    bu_log("Cannot open texture file (%s)\n", mat.tx_file);
 		    perror("g-vrml: ");
 		} else {
+		    long tex_len;
+		    long bytes_read = 0;
+		    long bytes_to_go = 0;
+
 		    /* Johns note - need to check (test) the texture stuff */
 		    fprintf(fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
 		    fprintf(fp_out, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
@@ -973,7 +974,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
 		    tex_len = mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
-			long bytes_to_go=tex_len;
+			int nbytes;
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
@@ -997,6 +998,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 		    }
 		    fprintf(fp_out, "\t\t\t\t}\n");
+
+		    close(tex_fd);
 		}
 	    }
 	} else if (mater->ma_color_valid) {
@@ -1016,11 +1019,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		: thou == 7 ? fprintf(fp_out, "\t\t\tmaterial USE Material_7999\n")
 		: thou == 8 ? fprintf(fp_out, "\t\t\tmaterial USE Material_8999\n")
 		: fprintf(fp_out, "\t\t\tmaterial USE Material_9999\n");
-#if 0
-	    fprintf(fp, "\t\t\t\tmaterial Material {\n");
-	    fprintf(fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
-	    fprintf(fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
-#endif
 	}
     }
 
@@ -1298,7 +1296,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug; /* restore mode */
+	RTG.NMG_debug = NMG_debug; /* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

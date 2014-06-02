@@ -97,8 +97,8 @@ main(int argc, char **argv)
     }
 
     if ( (dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL )  {
-        perror( argv[in_arg] );
-        return 2;
+	perror( argv[in_arg] );
+	return 2;
     }
 
     version = db_version(dbip);

@@ -114,7 +114,7 @@ wrobj(struct rt_wdb *wdbp,
 	    intern.idb_ptr = (genptr_t)arb;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_ARB8;
-	    intern.idb_meth = &rt_functab[ID_ARB8];
+	    intern.idb_meth = &OBJ[ID_ARB8];
 	}
 	    break;
 	case ID_TGC: {
@@ -134,7 +134,7 @@ wrobj(struct rt_wdb *wdbp,
 	    intern.idb_ptr = (genptr_t)tgc;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_TGC;
-	    intern.idb_meth = &rt_functab[ID_TGC];
+	    intern.idb_meth = &OBJ[ID_TGC];
 	}
 	    break;
 	default:
@@ -638,7 +638,7 @@ track_mk_comb(
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_ptr = (genptr_t)comb;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;
     }

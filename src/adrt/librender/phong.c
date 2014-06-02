@@ -34,26 +34,28 @@ render_phong_free(render_t *UNUSED(render))
     return;
 }
 
+
 void
 render_phong_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
-    struct tie_id_s		id;
-    adrt_mesh_t		*mesh;
+    struct tie_id_s id;
+    adrt_mesh_t *mesh;
 
     if ((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL)) != NULL) {
-	vect_t		vec;
+	vect_t vec;
 
 	VMOVE(*pixel, mesh->attributes->color.v);
 
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
 
-	VSUB2(vec,  ray->pos,  id.pos);
+	VSUB2(vec, ray->pos, id.pos);
 	VUNITIZE(vec);
-	VSCALE(*pixel, *pixel, VDOT(vec,  id.norm));
+	VSCALE(*pixel, *pixel, VDOT(vec, id.norm));
     }
     return;
 }
+
 
 int
 render_phong_init(render_t *render, const char *UNUSED(usr))
@@ -62,6 +64,7 @@ render_phong_init(render_t *render, const char *UNUSED(usr))
     render->free = render_phong_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

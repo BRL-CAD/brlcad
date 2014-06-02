@@ -74,9 +74,9 @@ main(int argc, char **argv)
     if (npsw > MAX_PSW)
 	npsw = MAX_PSW;
     if (npsw > 1)
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
     else
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
     bu_semaphore_init(RT_SEM_LAST);
 
     init_Lgts();

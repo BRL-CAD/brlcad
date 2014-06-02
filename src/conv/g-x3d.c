@@ -110,7 +110,7 @@ static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
@@ -162,7 +162,7 @@ clean_pmp( struct plate_mode *pmp )
 	    intern.idb_ptr = (genptr_t) pmp->bots[i];
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_BOT;
-	    intern.idb_meth = &rt_functab[ID_BOT];
+	    intern.idb_meth = &OBJ[ID_BOT];
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_meth->ft_ifree( &intern );
 	    pmp->bots[i] = NULL;
@@ -388,7 +388,7 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     BARRIER_CHECK;
     /* Get command line arguments. */
@@ -416,14 +416,14 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		rt_g.debug = 1;
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'u':
 		units = bu_strdup( bu_optarg );
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 
 	/* walk trees selecting only light source regions */
 	(void)db_walk_tree(dbip, 1, (const char **)(&argv[i]),
-			   1,				/* ncpu */
+			   ncpu,
 			   &tree_state,
 			   select_lights,
 			   do_region_end,
@@ -510,7 +510,7 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,				/* ncpu */
+		       ncpu,
 		       &tree_state,
 		       select_non_lights,
 		       do_region_end,
@@ -1002,7 +1002,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

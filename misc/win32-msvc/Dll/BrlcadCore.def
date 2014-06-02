@@ -291,7 +291,7 @@ rt_defoverlap
 rt_dirbuild
 rt_free_rti
 rt_functab
-rt_g
+RTG
 rt_get_functab_by_label
 rt_gettree
 rt_gettrees_and_attrs

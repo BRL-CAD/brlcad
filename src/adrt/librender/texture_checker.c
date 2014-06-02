@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_checker.c
  *
- *  Comments -
- *      Texture Library - Checker pattern with tile parameter
+ * Comments -
+ * Texture Library - Checker pattern with tile parameter
  *
  */
 
@@ -32,7 +32,7 @@
 
 void
 texture_checker_init(struct texture_s *texture, int tile) {
-    struct texture_checker_s   *td;
+    struct texture_checker_s *td;
 
     BU_ALLOC(texture->data, struct texture_checker_s);
     texture->free = texture_checker_free;
@@ -42,16 +42,18 @@ texture_checker_init(struct texture_s *texture, int tile) {
     td->tile = tile;
 }
 
+
 void
 texture_checker_free(struct texture_s *texture) {
     bu_free(texture->data, "checker data");
 }
 
+
 void
 texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
-    struct texture_checker_s	*td;
-    vect_t			pt;
-    int			u, v;
+    struct texture_checker_s *td;
+    vect_t pt;
+    int u, v;
 
 
     td = (struct texture_checker_s *)texture->data;
@@ -66,6 +68,7 @@ texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UN
 
     *pixel[0] = *pixel[1] = *pixel[2] = u ^ v ? 1.0 : 0.0;
 }
+
 
 /*
  * Local Variables:

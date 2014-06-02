@@ -476,7 +476,7 @@
     <example><title>Rtedge rendering of havoc.g</title>
 
       <para>
-      <userinput>rtedge -s 1024 -Fnew.pix havoc.g havoc</userinput>
+      <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
       </para>
       <para>
 	results in a 1024 by 1024 BRL-CAD image file showing the
@@ -488,13 +488,13 @@
 
       <para>
 	The command
-	<userinput>rtedge -s1024 -Fnew.pix -c"set fg=0,255,0 bg=255,0,0" havoc.g havoc</userinput>
+	<userinput>rtedge -s1024 -o new.pix -c"set fg=0,255,0 bg=255,0,0" havoc.g havoc</userinput>
 	changes the edge color to be green and the background color to be red.
       </para>
 
       <para>
 	The command
-	<userinput>rtedge -s1024 -Fnew.pix -c"set rc=1 dr=1" havoc.g havoc</userinput>
+	<userinput>rtedge -s1024 -o new.pix -c"set rc=1 dr=1" havoc.g havoc</userinput>
 	activates region detection and uses the region colors for the edges.
       </para>
 
@@ -515,7 +515,7 @@
 
 	<literallayout remap=".nf" class="normal">
 #!/bin/sh
-rt -M -s1280 -Fnew.pix -C255/255/255\
+rt -M -s1280 -o new.pix -C255/255/255\
  $*\
  havoc.g\
  havoc\
@@ -529,7 +529,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -Fnew.pix \
+rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 ov=1"\
  -c"set fg=255,200,0" \
  $*\
@@ -558,7 +558,7 @@ EOF
 	<literallayout remap=".nf" class="normal">
 #!/bin/sh
 
-rt -M -s1280 -Fnew.pix -C255/255/255 \
+rt -M -s1280 -o new.pix -C255/255/255 \
  $*\
  havoc.g\
  weapons\
@@ -572,7 +572,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -Fnew.pix \
+rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 om=3"\
  -c"set fg=0,0,0 bg=200,200,200"\
  -c"set oo=\"weapons\" "\

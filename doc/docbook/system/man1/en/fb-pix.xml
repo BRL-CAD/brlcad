@@ -33,7 +33,6 @@ will take a region of a framebuffer display and save it as a color
 format file.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <emphasis remap="I">brlcad(1)</emphasis>).

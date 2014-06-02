@@ -19,7 +19,6 @@ install(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c libmultispectral)
 
 CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

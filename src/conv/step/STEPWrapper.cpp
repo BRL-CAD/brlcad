@@ -27,6 +27,12 @@
 #include <cctype>
 #include <algorithm>
 
+#ifdef AP203e2
+#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
+#else
+#  define SCHEMA_NAMESPACE config_control_design
+#endif
+
 /* inteface header */
 #include "./STEPWrapper.h"
 
@@ -42,11 +48,10 @@
 #include "ContextDependentShapeRepresentation.h"
 
 STEPWrapper::STEPWrapper()
+    : registry(NULL), sfile(NULL), dotg(NULL)
 {
-    instance_list = new InstMgr();
-    registry = NULL;
-    sfile = NULL;
-    dotg = NULL;
+    int ownsInstanceMemory = 1;
+    instance_list = new InstMgr(ownsInstanceMemory);
 }
 
 
@@ -76,7 +81,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	std::string name = sse->EntityName();
 	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
 
-	if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_advanced_brep_shape_representation))) {
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_advanced_brep_shape_representation))) {
 	    AdvancedBrepShapeRepresentation *aBrep = new AdvancedBrepShapeRepresentation();
 
 	    if (!aBrep) {
@@ -118,8 +123,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		bu_exit(1, "ERROR: failure loading advanced boundary representation from %s\n", stepfile.c_str());
 	    }
 	}
-#if 0
-	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_product_definition))) {
+#ifdef NOT_YET_TESTED
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_product_definition))) {
 	    ProductDefinition *pd = new ProductDefinition();
 
 	    if (!pd) {
@@ -134,7 +139,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
 #ifdef AP203e2
-	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_product_definition_context_association))) {
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_product_definition_context_association))) {
 	    ProductDefinitionContextAssociation *pdca = new ProductDefinitionContextAssociation();
 
 	    if (!pdca) {
@@ -150,9 +155,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	}
 #endif
 #endif
-#if 0
+#ifdef NOT_YET_TESTED
 	// ContextDependentShapeRepresentation
-	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_context_dependent_shape_representation))) {
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_shape_representation))) {
 	    ContextDependentShapeRepresentation *cdsr = new ContextDependentShapeRepresentation();
 	    if (!cdsr) {
 		bu_exit(1, "ERROR: unable to allocate a 'ContextDependentShapeRepresentation' entity\n");
@@ -167,7 +172,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		cdsr->Print(0);
 		delete cdsr;
 	    }
-	} else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_product_related_product_category))) {
+	} else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_product_related_product_category))) {
 	    ProductRelatedProductCategory *prpc = new ProductRelatedProductCategory();
 
 	    if (!prpc) {
@@ -1028,7 +1033,7 @@ STEPWrapper::parseListOfReals(const char *in)
     RealAggregate *ra = new RealAggregate();
 
     //ra->StrToVal(in, &errdesc, SDAI_Real, instance_list, 0);
-    ra->StrToVal(in, &errdesc, config_control_design::t_parameter_value, instance_list, 0);
+    ra->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::t_parameter_value, instance_list, 0);
     RealNode *rn = (RealNode *)ra->GetHead();
     while (rn != NULL) {
 	l->push_back(rn->value);
@@ -1061,7 +1066,7 @@ STEPWrapper::parseListOfPointEntities(const char *in)
     ErrorDescriptor errdesc;
     EntityAggregate *ag = new EntityAggregate();
 
-    ag->StrToVal(in, &errdesc, config_control_design::e_cartesian_point, instance_list, 0);
+    ag->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::e_cartesian_point, instance_list, 0);
     EntityNode *sn = (EntityNode *)ag->GetHead();
 
     SDAI_Application_instance *sse;
@@ -1088,7 +1093,7 @@ STEPWrapper::parseListOfPatchEntities(const char *in)
     ErrorDescriptor errdesc;
     EntityAggregate *ag = new EntityAggregate();
 
-    ag->StrToVal(in, &errdesc, config_control_design::e_cartesian_point, instance_list, 0);
+    ag->StrToVal(in, &errdesc, SCHEMA_NAMESPACE::e_cartesian_point, instance_list, 0);
     EntityNode *sn = (EntityNode *)ag->GetHead();
 
     SDAI_Application_instance *sse;

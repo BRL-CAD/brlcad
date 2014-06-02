@@ -37,8 +37,8 @@ int BRLCADWrapper::sol_reg_cnt = 0;
 
 
 BRLCADWrapper::BRLCADWrapper()
+    : outfp(NULL), dbip(NULL)
 {
-    outfp = NULL;
 }
 
 
@@ -47,20 +47,37 @@ BRLCADWrapper::~BRLCADWrapper()
     Close();
 }
 
+bool
+BRLCADWrapper::load(std::string &flnm)
+{
+
+    /* open brlcad instance */
+    if ((dbip = db_open(flnm.c_str(), DB_OPEN_READONLY)) == DBI_NULL) {
+	bu_log("Cannot open input file (%s)\n", flnm.c_str());
+	return false;
+    }
+    if (db_dirbuild(dbip)) {
+	bu_log("ERROR: db_dirbuild failed: (%s)\n", flnm.c_str());
+	return false;
+    }
+
+    return true;
+}
+
 
 bool
-BRLCADWrapper::OpenFile(const char *flnm)
+BRLCADWrapper::OpenFile(std::string &flnm)
 {
     //TODO: need to check to make sure we aren't overwriting
 
     /* open brlcad instance */
-    if ((outfp = wdb_fopen(flnm)) == NULL) {
-	bu_log("Cannot open output file (%s)\n", flnm);
+    if ((outfp = wdb_fopen(flnm.c_str())) == NULL) {
+	bu_log("Cannot open output file (%s)\n", flnm.c_str());
 	return false;
     }
 
     // hold on to output filename
-    filename = flnm;
+    filename = flnm.c_str();
 
     mk_id(outfp, "Output from STEP converter step-g.");
 
@@ -114,6 +131,12 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
     return true;
 }
 
+struct db_i *
+BRLCADWrapper::GetDBIP()
+{
+    return dbip;
+}
+
 
 bool
 BRLCADWrapper::Close()
@@ -122,6 +145,10 @@ BRLCADWrapper::Close()
     if (outfp) {
 	wdb_close(outfp);
 	outfp = NULL;
+    }
+    if (dbip) {
+	db_close(dbip);
+	dbip = NULL;
     }
 
     return true;

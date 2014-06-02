@@ -455,7 +455,6 @@ static void
 dgo_eraseobj(struct dg_obj *dgop,
 	     struct directory **dpp)
 {
-#if 1
     /*XXX
      * Temporarily put back the old behavior (as seen in Brlcad5.3),
      * as the behavior after the #else is identical to dgo_eraseobjall.
@@ -497,41 +496,6 @@ dgo_eraseobj(struct dg_obj *dgop,
 	    bu_log("dgo_eraseobj: db_dirdelete failed\n");
 	}
     }
-#else
-    struct directory **tmp_dpp;
-    struct solid *sp;
-    struct solid *nsp;
-    struct db_full_path subpath;
-
-    if (dgop->dgo_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == RT_DIR_NULL)
-	return;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != RT_DIR_NULL; ++tmp_dpp) {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	if (db_full_path_subset(&sp->s_fullpath, &subpath, 0)) {
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &_FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
-	if (db_dirdelete(dgop->dgo_wdbp->dbip, *dpp) < 0) {
-	    bu_log("dgo_eraseobj: db_dirdelete failed\n");
-	}
-    }
-    db_free_full_path(&subpath);
-#endif
 }
 
 
@@ -1172,7 +1136,7 @@ dgo_overlay_cmd(struct dg_obj *dgop,
 
 /*
  * Usage:
- * procname overlay file.plot char_size [name]
+ * procname overlay file.plot3 char_size [name]
  */
 static int
 dgo_overlay_tcl(void *clientData, int argc, const char **argv)
@@ -2485,12 +2449,8 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     /* As parent, send view information down pipe */
     (void)close(o_pipe[0]);
     fp = fdopen(o_pipe[1], "w");
-#if 1
     VSET(temp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye_model, vop->vo_view2model, temp);
-#else
-    dgo_rt_set_eye_model(dgop, vop, eye_model);
-#endif
     dgo_rt_write(dgop, vop, fp, eye_model);
 
     (void)fclose(fp);
@@ -2634,12 +2594,8 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     fp = _fdopen(_open_osfhandle((intptr_t)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
-#if 1
     VSET(temp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye_model, vop->vo_view2model, temp);
-#else
-    dgo_rt_set_eye_model(dgop, vop, eye_model);
-#endif
     dgo_rt_write(dgop, vop, fp, eye_model);
     (void)fclose(fp);
 
@@ -2746,12 +2702,12 @@ dgo_assoc_tcl(void *clientData, int argc, const char **argv)
     /* Set associated database object */
     if (argc == 3) {
 	/* search for database object */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l)) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 		break;
 	}
 
-	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
+	if (BU_LIST_IS_HEAD(wdbp, &RTG.rtg_headwdb.l))
 	    wdbp = RT_WDB_NULL;
 
 	if (dgop->dgo_wdbp != RT_WDB_NULL)
@@ -3363,19 +3319,34 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
-		    /* Has normal vector, not location */
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
+		case BN_VLIST_POINT_SIZE:
+		case BN_VLIST_LINE_WIDTH:
+		    /* attribute, not location */
 		    break;
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    V_MIN(xmin, (*pt)[X]);
 		    V_MAX(xmax, (*pt)[X]);
 		    V_MIN(ymin, (*pt)[Y]);
 		    V_MAX(ymax, (*pt)[Y]);
 		    V_MIN(zmin, (*pt)[Z]);
 		    V_MAX(zmax, (*pt)[Z]);
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    V_MIN(xmin, (*pt)[X]-1.0);
+		    V_MAX(xmax, (*pt)[X]+1.0);
+		    V_MIN(ymin, (*pt)[Y]-1.0);
+		    V_MAX(ymax, (*pt)[Y]+1.0);
+		    V_MIN(zmin, (*pt)[Z]-1.0);
+		    V_MAX(zmax, (*pt)[Z]+1.0);
 		    break;
 		default: {
 		    struct bu_vls tmp_vls;
@@ -4580,12 +4551,12 @@ dgo_open_tcl(ClientData UNUSED(clientData),
     }
 
     /* search for database object */
-    for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+    for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
+    if (BU_LIST_IS_HEAD(wdbp, &RTG.rtg_headwdb.l))
 	wdbp = RT_WDB_NULL;
 
     /* first, delete any commands by this name */

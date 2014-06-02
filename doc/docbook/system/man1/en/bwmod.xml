@@ -107,7 +107,7 @@ the mean, this can be done by:
 Where 1.409 results from (255-100)/(210-100) which is what one would use
 by boost the max value (210) to full scale (255) after subtracting the
 mean (100).  Subtracting and adding 100 make the multiply occur
-"about that point", i.e value less than 100 will get smaller; those
+"about that point", i.e. value less than 100 will get smaller; those
 above, higher.</para>
 </refsect1>
 

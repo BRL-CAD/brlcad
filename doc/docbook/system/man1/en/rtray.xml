@@ -203,9 +203,9 @@ In order to convert a ray file into a minimal monochrome
 UNIX-plot image for viewing, run:</para>
 
 <para>  /vld/bin/rayvect -mMM &lt; file.ray &gt; file.vect
-  /vld/bin/vectplot -mMM &lt; file.vect &gt; file.plot
-  tplot -Tmeg file.plot		# or other plot filter
-  pl-sgi &lt; file.plot</para>
+  /vld/bin/vectplot -mMM &lt; file.vect &gt; file.plot3
+  tplot -Tmeg file.plot3	# or other plot filter
+  plot3-fb &lt; file.plot3</para>
 
 </refsect1>
 

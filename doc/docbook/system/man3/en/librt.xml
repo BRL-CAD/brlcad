@@ -15,63 +15,79 @@
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
+<para>This file seems to be out of date with the sources.
+Consult the headers for up-to-date information.
+Use the below interface documentation at your own discretion.
+</para>
+
 <funcsynopsis>
+
 <funcsynopsisinfo>
 #include "vmath.h"
 #include "raytrace.h"
 
-</funcsynopsisinfo>
-</funcsynopsis>
-<para>This file seems to be out of date with the sources.
-Consult the headers for up-to-date information.
-Use the below interface documentation at your own discretion.
-extern struct rt_functab rt_functab[];</para>
-<funcsynopsis>
-<funcsynopsisinfo>
+extern struct rt_functab OBJ[];
 extern struct rt_g rt_g;
 
 </funcsynopsisinfo>
+
 <funcprototype>
 <funcdef>struct <function>rt_i</function> *rt_dirbuild</funcdef>
     <paramdef>char * <parameter>mged_file_name</parameter></paramdef>
     <paramdef>char * <parameter>buf</parameter></paramdef>
     <paramdef>int <parameter>len</parameter></paramdef>
 </funcprototype>
+
 <funcprototype>
 <funcdef>int <function>rt_gettree</function></funcdef>
     <paramdef>struct rt_i * <parameter>rtip</parameter></paramdef>
     <paramdef>char * <parameter>object_name</parameter></paramdef>
 </funcprototype>
+
 <funcprototype>
 <funcdef>void <function>rt_prep</function></funcdef>
     <paramdef>struct rt_i * <parameter>rtip</parameter></paramdef>
 </funcprototype>
+
 <funcprototype>
 <funcdef>int <function>rt_shootray</function></funcdef>
     <paramdef>struct application * <parameter>ap</parameter></paramdef>
 </funcprototype>
+
 <funcprototype>
 <funcdef>void <function>rt_prep_timer</function></funcdef>
-<void/></funcprototype>
+<void/>
+</funcprototype>
+
 <funcprototype>
-<funcdef>double <function>rt_read_timer</function></funcdef>
-    <paramdef>char * <parameter>buf</parameter></paramdef>
+<funcdef>double<function>rt_read_timer</function></funcdef>
+    <paramdef>char *<parameter>buf</parameter></paramdef>
     <paramdef>int <parameter>len</parameter></paramdef>
 </funcprototype>
+
 <funcprototype>
 <funcdef>void <function>rt_pr_partitions</function></funcdef>
-    <paramdef>struct rt_i *rtip struct partition * <parameter>phead</parameter></paramdef>
-    <paramdef>char * <parameter>title</parameter></paramdef>
-    <paramdef>void <parameter>rt_pr_seg</parameter>( segp )</paramdef>
+    <paramdef>struct rt_i *rtip struct partition *<parameter>phead</parameter></paramdef>
+    <paramdef>char *<parameter>title</parameter></paramdef>
 </funcprototype>
+
+<funcprototype>
+<funcdef>void <function>rt_pr_seg</function></funcdef>
+     <paramdef>struct seg *<parameter>segp</parameter></paramdef>
+</funcprototype>
+
 <funcsynopsisinfo>
-struct seg *segp;
+segp;
 
 </funcsynopsisinfo>
+
 <funcprototype>
 <funcdef>struct <function>soltab</function> *rt_find_solid</funcdef>
 <void/></funcprototype>
+
+
 </funcsynopsis>
+
 </refsynopsisdiv>
 
 
@@ -337,76 +353,76 @@ architecture.</para>
 <literallayout remap='.nf'>
 #include &lt;vmath.h&gt;
 #include &lt;raytrace.h&gt;
-main( argc, argv )
-int argc;
-char *argv[];
+int
+main(int argc, char argv[])
 {
-	static int do_if_hit(), do_if_miss();	/* Application routines */
-	register int h, v;
-	int grid_sz;
-	struct application ap;		/* Set up for rt_shootray() */
-	struct rt_i *rtip;
-	/* <?troff ps +2?>...<?troff ps 0?> */
+  static int do_if_hit(), do_if_miss(); /* Application routines */
+  register int h, v;
+  int grid_sz;
+  struct application ap; /* Set up for rt_shootray() */
+  struct rt_i *rtip;
+  /* ... */
 
-	/* Build the directory.	*/
-	rtip = rt_dirbuild( argv[bu_optind++] );
+  /* Build the directory.	*/
+  rtip = rt_dirbuild( argv[bu_optind++] );
 
-	/* Load the desired portion of the model. */
-	while( argv[bu_optind] != NULL )
-		rt_gettree( rtip, argv[bu_optind++] );
+  /* Load the desired portion of the model. */
+  while (argv[bu_optind] != NULL)
+    rt_gettree(rtip, argv[bu_optind++]);
 
-	ap.a_hit = do_if_hit;		/* Supply routine for hit */
-	ap.a_miss = do_if_missed;	/* Supply routine for miss */
-	ap.a_overlap = 0;
-	ap.a_rt_i = rtip;
-	ap.a_level = 0;
-	ap.a_onehit = 0;		/* Return all objects along ray */
-	ap.a_resource = 0;
+  ap.a_hit = do_if_hit;     /* Routine for hit */
+  ap.a_miss = do_if_missed; /* Routine for miss */
+  ap.a_overlap = 0;
+  ap.a_rt_i = rtip;
+  ap.a_level = 0;
+  ap.a_onehit = 0;          /* Return all objects along ray */
+  ap.a_resource = 0;
 
-	for( v = 0; v &lt; grid_sz; ++v )	/* For each scanline */
-		for( h = 0; h &lt; grid_sz; ++h )  {
-			/* Set up ray origin. */
-			VMOVE( ap.a_ray.r_pt, get_grid( h, v ) );
-			/* Compute ray direction. */
-			VMOVE( ap.a_ray.r_dir, get_dir( h, v ) );
-			/* Must be unit vector. */
-			VUNITIZE( ap.a_ray.r_dir );
-			(void) rt_shootray( &amp;ap );
-		}
-	/* <?troff ps +2?>...<?troff ps 0?> */
+  for (v = 0; v &lt; grid_sz; ++v) /* For each scanline */
+    for (h = 0; h &lt; grid_sz; ++h) {
+      /* Set up ray origin. */
+      VMOVE( ap.a_ray.r_pt, get_grid(h, v));
+      /* Compute ray direction. */
+      VMOVE( ap.a_ray.r_dir, get_dir(h, v));
+      /* Must be unit vector. */
+      VUNITIZE(ap.a_ray.r_dir);
+      (void)rt_shootray(&amp;ap);
+    }
+   /* ... */
 }
 
 static int
-do_if_hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+do_if_hit(register struct application *ap,
+          struct partition *PartHeadp)
 {
-	extern void put_component();
-	struct curvature incurv;
-	register struct partition *pp;
+  extern void put_component();
+  struct curvature incurv;
+  register struct partition *pp;
 
-	for( pp = PartHeadp-&gt;pt_forw; pp != PartHeadp; pp = pp-&gt;pt_forw )  {
+  for (pp = PartHeadp-&gt;pt_forw; pp != PartHeadp;
+       pp = pp-&gt;pt_forw)  {
 
-		/* Fill in all inhit info, but just the exit location for outhit. */
-		RT_HIT_NORMAL(pp-&gt;pt_inhit-&gt;hit_normal, pp-&gt;pt_inhit, pp-&gt;pt_inseg-&gt;seg_stp, &amp;ap-&gt;a_ray, pp-&gt;pt_inflip);
-		RT_CURVE( &amp;incurv, pp-&gt;pt_inhit, pp-&gt;pt_inseg-&gt;seg_stp );
-		VJOIN1( pp-&gt;pt_outhit-&gt;hit_point, ap-&gt;a_ray.r_pt,
-				pp-&gt;pt_outhit-&gt;hit_dist, ap-&gt;a_ray.r_dir );
+  /* Fill in all inhit info, but just the exit location for outhit. */
+  RT_HIT_NORMAL(pp-&gt;pt_inhit-&gt;hit_normal, pp-&gt;pt_inhit,
+                pp-&gt;pt_inseg-&gt;seg_stp, &amp;ap-&gt;a_ray,
+                pp-&gt;pt_inflip);
+  RT_CURVE(&amp;incurv, pp-&gt;pt_inhit, pp-&gt;pt_inseg-&gt;seg_stp);
+  VJOIN1(pp-&gt;pt_outhit-&gt;hit_point, ap-&gt;a_ray.r_pt,
+         pp-&gt;pt_outhit-&gt;hit_dist, ap-&gt;a_ray.r_dir);
 
-		/* Do something based on information in partition structure
-		 *	such as output a shotline component data record.
-		 */
-		put_component( pp-&gt;pt_inhit, &amp;incurv, pp-&gt;pt_outhit );
-		/* <?troff ps +2?>...<?troff ps 0?> */
-	}
-	return	1;			/* Report hit to main routine */
+  /* Do something based on information in partition structure
+   *	such as output a shotline component data record.
+   */
+  put_component( pp-&gt;pt_inhit, &amp;incurv, pp-&gt;pt_outhit );
+  /* ... */
+  }
+  return 1; /* Report hit to main routine */
 }
 
 static int
-do_if_missed( ap )
-register struct application *ap;
+do_if_missed(register struct application *ap)
 {
-	return	0;			/* Report miss to main routine */
+  return 0; /* Report miss to main routine */
 }
   </literallayout></blockquote> <!-- remap='RE' -->
 

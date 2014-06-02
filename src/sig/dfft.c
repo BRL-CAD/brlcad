@@ -57,24 +57,27 @@ void fftphase(double *dat, int N);
 void rfft(double *dat, int N);
 void LintoLog(double *in, double *out, int num);
 
-static const char usage[] = "\
-Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
-  Options are:\n\
-  -d dB  minimum dB (default 120)\n\
-  -l     log frequency scale\n\
-  -c     critical band filter (3rd octave)\n\
-  -p     phase\n\
-  -N     normalized PSD to max magnitude\n\
-  -L     linear output (no dB mag)\n\
-  -A     ascii output\n\
-";
+static const char usage[] =
+  "Usage: dfft [options] [width (1024)] < doubles > 512logmags\n"
+  "\n"
+  "Options:\n"
+  "  -d dB  minimum dB (default 120)\n"
+  "  -l     log frequency scale\n"
+  "  -c     critical band filter (3rd octave)\n"
+  "  -p     phase\n"
+  "  -N     normalized PSD to max magnitude\n"
+  "  -L     linear output (no dB mag)\n"
+  "  -A     ascii output\n"
+  ;
+
+static const char optstring[] = "d:clpLANh?";
 
 int main(int argc, char **argv)
 {
     int i, n, c;
     int L = 1024;
 
-    while ((c = bu_getopt(argc, argv, "d:clpLANh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;
@@ -184,14 +187,6 @@ fftdisp(double *dat, int N)
 	    printf("%g %g\n", i/(double)N, mags[i]);
 	}
     } else {
-
-#if 0
-	/* normalize dB range from 0 to 1 */
-	value = (dB/mindB) + 1.0;
-	if (value < 0) value = 0;
-	else if (value > 1.0) value = 1.0;
-#endif
-
 	ret = fwrite(mags, sizeof(*mags), N/2, stdout);
 	if (ret != (size_t)(N/2))
 	    perror("fwrite");

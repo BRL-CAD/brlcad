@@ -292,7 +292,6 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	       xmin * (tp->tx_w-1), ymin * (tp->tx_n-1),
 	       xmax * (tp->tx_w-1), ymax * (tp->tx_n-1));
 
-#if 1
     dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
     dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
 
@@ -396,51 +395,6 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 
     if (rdebug & RDEBUG_SHADE)
 	bu_log(" average: %g %g %g\n", r, g, b);
-#else
-
-    x = xmin * (tp->tx_w-1);
-    y = ymin * (tp->tx_n-1);
-    dx = (xmax - xmin) * (tp->tx_w-1);
-    dy = (ymax - ymin) * (tp->tx_n-1);
-    if (dx < 1) dx = 1;
-    if (dy < 1) dy = 1;
-
-    if (rdebug & RDEBUG_SHADE)
-	bu_log(" in txt_render(): x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy);
-
-    r = g = b = 0;
-    for (line=0; line<dy; line++) {
-	register unsigned char *cp;
-	register unsigned char *ep;
-
-	if (tp->tx_mp) {
-	    cp = ((unsigned char *)(tp->tx_mp->buf)) +
-		(y+line) * tp->tx_w * 3 + x * 3;
-	} else if (tp->tx_binunifp) {
-	    cp = ((unsigned char *)(tp->tx_binunifp->u.unit8)) +
-		(y+line) * tp->tx_w * 3 + x * 3;
-	} else {
-	    /* not reachable */
-	    bu_bomb("sh_text.c -- Unable to read datasource\n");
-	}
-
-	ep = cp + 3*dx;
-	while (cp < ep) {
-	    if (rdebug & RDEBUG_SHADE)
-		bu_log("\tAdding %d %d %d\n", *cp, *(cp+1), *(cp+2));
-	    r += *cp++;
-	    g += *cp++;
-	    b += *cp++;
-	}
-    }
-    if (rdebug & RDEBUG_SHADE)
-	bu_log("Totals: %d %d %d, ", r, g, b);
-    r /= (dx*dy);
-    g /= (dx*dy);
-    b /= (dx*dy);
-    if (rdebug & RDEBUG_SHADE)
-	bu_log(" average: %d %d %d\n", r, g, b);
-#endif
 
     if (!tp->tx_trans_valid) {
     opaque:

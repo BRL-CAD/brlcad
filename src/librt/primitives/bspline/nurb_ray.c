@@ -49,7 +49,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
     int rational;
     int i;
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
@@ -92,7 +92,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
 		mp1[2] * plane2[2] - plane2[3];
 	}
 
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+	if (RTG.NMG_debug & DEBUG_RT_ISECT) {
 	    if (rational)
 		bu_log("\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS(mp1), mp2[0], mp2[1]);
 	    else
@@ -289,7 +289,9 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
     register int i;
     struct face_g_snurb *region;
     struct knot_vector new_knots;
-    fastf_t knot_vec[40];
+    /* FIXME: gcc 4.8.1 report array overrun with size 40, temp  change to 400 */
+    /* fastf_t knot_vec[40]; */
+    fastf_t knot_vec[400];
 
     /* Build the new knot vector in the local array */
     /* XXX fill in magic number here? */

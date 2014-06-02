@@ -20,8 +20,8 @@
 /**
  * @file librender/texture_image.c
  *
- *  Comments -
- *      Texture Library - Projects an Image onto a Surface
+ * Comments -
+ * Texture Library - Projects an Image onto a Surface
  *
  */
 
@@ -48,6 +48,7 @@ texture_image_init(struct texture_s *texture, short w, short h, unsigned char *i
     memcpy(td->image, image, 3*w*h);
 }
 
+
 void
 texture_image_free(struct texture_s *texture) {
     struct texture_image_s *td;
@@ -56,6 +57,7 @@ texture_image_free(struct texture_s *texture) {
     bu_free(td->image, "texture image");
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -79,6 +81,7 @@ texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUS
     *pixel[1] = td->image[ind+1] / 255.0;
     *pixel[2] = td->image[ind+0] / 255.0;
 }
+
 
 /*
  * Local Variables:

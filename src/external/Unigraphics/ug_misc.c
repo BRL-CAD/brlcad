@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ug_misc.c
- *
- */
 
+#include "common.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <uf.h>
@@ -33,7 +33,6 @@
 #include <uf_object_types.h>
 #include <uf_facet.h>
 #include <uf_modl.h>
-#include <malloc.h>
 #include <tcl.h>
 
 
@@ -131,8 +130,6 @@ int ufusr_ask_unload ( void )
 }
 
 
-jmp_buf my_env;
-
 /*	R E P O R T
  *
  */
@@ -151,11 +148,8 @@ int report(char *call, char *file, int line, int code)
 	fprintf(stderr, "%s Error in %s:%d\ncall: %s\nmessage:%s\n",
 		progname, file, line, call, message);
     }
-#if 1
+
     bu_exit( 1, NULL );
-#else
-    longjmp(my_env, 1);
-#endif
 
     return 0; /* NOTREACHED */
 }

@@ -491,7 +491,7 @@ f_SetFbSize(char **args)
 static int
 f_Raytrace()
 {
-    if (rt_g.rtg_parallel)
+    if (RTG.rtg_parallel)
 	bu_log("Will use %d processors.\n", npsw);
 
     user_interrupt = FALSE;	/* Set by interrupt handler. */
@@ -591,7 +591,7 @@ static int
 f_Debug(char **args)
 {
     if (args == NULL || args[0] == NULL
-	|| args[1] == NULL || sscanf(args[1], "%x", (unsigned int *)&rt_g.debug) != 1
+	|| args[1] == NULL || sscanf(args[1], "%x", (unsigned int *)&RTG.debug) != 1
 	)
     {
 	HMitem *itemptr;
@@ -609,9 +609,9 @@ f_Debug(char **args)
 	    )
 	{
 	    if (itemptr->data > 0)
-		rt_g.debug |= itemptr->data;
+		RTG.debug |= itemptr->data;
 	    else
-		rt_g.debug = 0;
+		RTG.debug = 0;
 	}
     }
     if (RT_G_DEBUG & DEBUG_OCTREE)
@@ -2008,7 +2008,7 @@ f_Parallel(char **args)
 	maxpsw = MAX_PSW;
 
     if (maxpsw == 1) {
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 	return 1;
     }
 
@@ -2026,9 +2026,9 @@ f_Parallel(char **args)
 
     npsw = npsw > maxpsw ? maxpsw : npsw;
     if (npsw > 1)
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
     else
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 
     bu_semaphore_init(RT_SEM_LAST);
 

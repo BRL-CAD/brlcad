@@ -1293,7 +1293,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_meth = &OBJ[ID_ELL];
     BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1369,14 +1369,14 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_meth = &OBJ[ID_ELL];
     BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1424,7 +1424,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&vec[3*ELEMENTS_PER_VECT], eip->c, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
 
     return 0;
 }
@@ -1829,33 +1829,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 int
 rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
-#if 0
-    struct rt_ell_internal *eip;
-    eip = (struct rt_ell_internal *)ip->idb_ptr;
-
-    if (!pcs) return 0;
-
-    pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
-    pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
-
-    bu_vls_strcpy(&(pcs->ps[0].name), "V");
-    pcs->ps[0].ptype = pc_point;
-    pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
-
-    bu_vls_strcpy(&(pcs->ps[1].name), "A");
-    pcs->ps[1].ptype = pc_vector;
-    pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
-
-    bu_vls_strcpy(&(pcs->ps[2].name), "B");
-    pcs->ps[2].ptype = pc_vector;
-    pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
-
-    bu_vls_strcpy(&(pcs->ps[3].name), "C");
-    pcs->ps[3].ptype = pc_value;
-    pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
-#endif
-
-    return 0;			/* OK */
+    return -1;			/* FAIL */
 }
 
 

@@ -44,7 +44,6 @@
  * ehy
  * metaball
  * nmg
- * pipe
  * rhc
  */
 
@@ -195,20 +194,10 @@ void print_volume_table(struct ged *gedp
 
     /* the three data rows */
     for (i = 0; i < table.nrows; ++i) {
-#if 1
-	char tbuf[FBUFSIZ];
-	sprintf(tbuf, "%-*.*s| %-*.*s = %*.*s |\n",
-		indent, indent, " ",
-		maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
-		maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
-	bu_vls_printf(gedp->ged_result_str, "%s", tbuf);
-#else
-	/* bu_vls_printf can't handle this at the moment */
 	bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s = %*.*s |\n",
 		      indent, indent, " ",
 		      maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
 		      maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
-#endif
     }
 
     /* closing table row */
@@ -290,30 +279,6 @@ void print_edges_table(struct ged *gedp, table_t *table)
     /* header row 2 */
     /* print titles in 4 sets */
 
-#if 1
-    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-    sprintf(buf, "%-*.*s| %-*.*s %*.*s ",
-	    indent, indent, " ",
-	    maxwidth[0], maxwidth[0], EDGE,
-	    maxwidth[1], maxwidth[1], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s ",
-	    maxwidth[2], maxwidth[2], EDGE,
-	    maxwidth[3], maxwidth[3], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s ",
-	    maxwidth[4], maxwidth[4], EDGE,
-	    maxwidth[5], maxwidth[5], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s |\n",
-	    maxwidth[6], maxwidth[6], EDGE,
-	    maxwidth[7], maxwidth[7], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-#elif 0
     /* bu_vls_printf can't handle this at the moment */
     bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s %*.*s ",
 		  indent, indent, " ",
@@ -328,7 +293,6 @@ void print_edges_table(struct ged *gedp, table_t *table)
     bu_vls_printf(gedp->ged_result_str, "| %-*.*s %*.*s |\n",
 		  maxwidth[6], maxwidth[6], EDGE,
 		  maxwidth[7], maxwidth[7], LEN);
-#endif
 
     /* header row 3 */
     /* print dashes in 4 sets */
@@ -659,8 +623,18 @@ HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area = -1;
-    rt_functab[ip->idb_minor_type].ft_volume(&vol, ip);
-    rt_functab[ip->idb_minor_type].ft_surf_area(&area, ip);
+    point_t centroid;
+
+    OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+    OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+
+    if (OBJ[ip->idb_minor_type].ft_centroid != NULL) {
+        OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+    }
 
     print_volume_table(gedp,
 	    vol
@@ -945,7 +919,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    rt_functab[ID_ARB8].ft_volume(&tot_vol, ip);
+    OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
 	    tot_vol
@@ -1236,13 +1210,7 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
+    fastf_t ecc, major_mag, minor_mag;
     fastf_t vol, sur_area;
     int type;
 
@@ -1266,13 +1234,13 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	if (mc > ma) {
 	    /* oblate spheroid */
 	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
+	    major_mag = mc;
+	    minor_mag = ma;
 	} else {
 	    /* prolate spheroid */
 	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
+	    major_mag = ma;
+	    minor_mag = mc;
 	}
     } else
 	if (fabs(ma-mc) < .00001) {
@@ -1280,13 +1248,13 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	    if (mb > ma) {
 		/* oblate spheroid */
 		type = OBLATE;
-		major = mb;
-		minor = ma;
+		major_mag = mb;
+		minor_mag = ma;
 	    } else {
 		/* prolate spheroid */
 		type = PROLATE;
-		major = ma;
-		minor = mb;
+		major_mag = ma;
+		minor_mag = mb;
 	    }
 	} else
 	    if (fabs(mb-mc) < .00001) {
@@ -1294,25 +1262,25 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 		if (ma > mb) {
 		    /* oblate spheroid */
 		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
+		    major_mag = ma;
+		    minor_mag = mb;
 		} else {
 		    /* prolate spheroid */
 		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
+		    major_mag = mb;
+		    minor_mag = ma;
 		}
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
 		return;
 	    }
-    ecc = sqrt(major*major - minor*minor) / major;
+    ecc = sqrt(major_mag*major_mag - minor_mag*minor_mag) / major_mag;
     if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor * minor +
-	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * M_PI * minor_mag * minor_mag +
+	    (2.0 * M_PI * (major_mag*minor_mag/ecc) * asin(ecc));
     } else { /* type == OBLATE */
-	sur_area = 2.0 * M_PI * major * major +
-	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
+	sur_area = 2.0 * M_PI * major_mag * major_mag +
+	    (M_PI * (minor_mag*minor_mag/ecc) * log((1.0+ecc)/(1.0-ecc)));
     }
 
 print_results:
@@ -1329,53 +1297,6 @@ print_results:
 }
 
 
-/* analyze rhc */
-/* XXX: this is completely incorrect, better to have nothing instead? */
-#if 0
-HIDDEN void
-analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
-    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
-
-    RT_RHC_CK_MAGIC(rhc);
-
-    b = MAGNITUDE(rhc->rhc_B);
-    h = MAGNITUDE(rhc->rhc_H);
-    r = rhc->rhc_r;
-    c = rhc->rhc_c;
-
-    /* area of one hyperbolic side (from macsyma) WRONG!!!! */
-    work1 = sqrt(b*(b + 2.*c));
-    area_hyperb = -2.*r*work1*(.5*(b+c) + c*c*log(c/(work1 + b + c)));
-
-    /* volume of rhc */
-    vol_hyperb = area_hyperb*h;
-
-    /* surface area of hyperbolic body */
-    area_body=0.0;
-#if 0
-    k = (b+c)*(b+c) - c*c;
-#define X_eval(y) sqrt(1.0 + (4.*k)/(r*r*k*k*(y)*(y) + r*r*c*c))
-#define L_eval(y) .5*k*(y)*X_eval(y) \
-	+ r*k*(r*r*c*c + 4.*k - r*r*c*c/k)*arcsinh((y)*sqrt(k)/c)
-    area_body = 2.*(L_eval(r) - L_eval(0.0));
-#endif
-
-    bu_vls_printf(gedp->ged_result_str, "\n");
-
-    bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
-		  area_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  2*r*h*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_body*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
-		  (2*area_hyperb+2*r*h+2*area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_hyperb/GALLONS_TO_MM3);
-}
-#endif
-
-
 /**
  * A N A L Y Z E _ S K E T C H
  */
@@ -1383,7 +1304,7 @@ HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area;
-    rt_functab[ID_SKETCH].ft_surf_area(&area, ip);
+    OBJ[ID_SKETCH].ft_surf_area(&area, ip);
     bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
 	    area
 	    * gedp->ged_wdbp->dbip->dbi_local2base
@@ -1462,9 +1383,13 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	analyze_general(gedp, ip);
 	break;
 
+    case ID_PIPE:
+	analyze_general(gedp, ip);
+	break;
+
     default:
 	bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
-		rt_functab[ip->idb_type].ft_name);
+		OBJ[ip->idb_type].ft_name);
 	break;
     }
 }

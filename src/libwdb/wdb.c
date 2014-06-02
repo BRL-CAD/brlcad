@@ -552,6 +552,23 @@ mk_ehy(
 }
 
 
+int mk_hrt(struct rt_wdb *wdbp, const char *name, const point_t center, const vect_t x, const vect_t y, const vect_t z, const fastf_t dist)
+{
+    struct rt_hrt_internal *hrt;
+
+    BU_ALLOC(hrt, struct rt_hrt_internal);
+    hrt->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+
+    VMOVE(hrt->v, center);
+    VMOVE(hrt->xdir, x);
+    VMOVE(hrt->ydir, y);
+    VMOVE(hrt->zdir, z);
+    hrt->d = dist;
+
+    return wdb_export(wdbp, name, (genptr_t)hrt, ID_HRT, mk_conv2mm);
+}
+
+
 int
 mk_eto(
     struct rt_wdb *wdbp,

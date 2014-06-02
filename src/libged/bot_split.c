@@ -115,7 +115,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		RT_DB_INTERNAL_INIT(&bot_intern);
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
-		bot_intern.idb_meth = &rt_functab[ID_BOT];
+		bot_intern.idb_meth = &OBJ[ID_BOT];
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
 		/* Save new bot name for later use */

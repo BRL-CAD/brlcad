@@ -559,7 +559,7 @@ dotitles(struct bu_vls *overlay_vls)
 
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
-		      rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
+		      OBJ[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
 		      es_keypoint[X] * base2local,
 		      es_keypoint[Y] * base2local,

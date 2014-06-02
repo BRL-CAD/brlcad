@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3tek1'>
+<refmeta>
+    <refentrytitle>PLOT3-TEK
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>plot3-tek</refname>
+<refpurpose>convert UnixPlot to Tektronix 4014 command stream</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>plot3-tek</command>
+    <arg choice='opt'>-e </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.plot3</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>&gt;</replaceable></arg><arg choice='plain'><replaceable>file.tek</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>plot3-tek</command>
+converts an extended UnixPlot file to a Tektronix 4014 command stream
+suitable for viewing on a Tektronix display,
+or a Tektronix-compatible emulator.
+The (binary) Tektronix command stream is written to stdout.</para>
+
+<para>The
+<option>-e</option>
+option expands the drawing area on the Tektronix to the full 4096x4096,
+which is more than a real Tektronix can display.
+It it not known if this feature is useful.</para>
+
+<para>The
+<option>-v</option>
+option turns on <emphasis remap='I'>verbose</emphasis> mode, and each command is logged to stderr.
+Occasionally useful for debugging Tektronix emulator problems,
+but is very verbose.</para>
+
+<para>To send a Unix-plot to an Imagen printer, this command can be used:</para>
+
+<literallayout remap='.nf'>
+plot3-tek &lt; file.plot3 | ipr -Ltektronix -q im101
+</literallayout> <!-- .fi -->
+
+
+<para>All UnixPlot line types are supported.</para>
+
+<para>If no UnixPlot
+<emphasis remap='B'>space</emphasis>
+directive is seen, the default space ranges from
+(-32767, -32767) to (32767, 32767).</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Circle and arc directives are not supported.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>plot3debug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-ps</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -100,10 +100,15 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
 	tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
+	/* looks like this is intentionally injected to give the
+	 * compiler something to do if/while v1 and tri->data are
+	 * preloaded, instead of just getting set in the preceding
+	 * conditional above.
+	 */
 	if (i1 == 0 && i2 == 1)
-	    tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
+	    tri->b = tri->b + 2;
 	else if (i1 == 0)
-	    tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
+	    tri->b = tri->b + 1;
 
 	/* Compute DotVN */
 	VSCALE(v1.v,  tri->data[0].v,  -1.0);
@@ -134,7 +139,7 @@ void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdm
     tie->tri_num = 0;
     tie->tri_num_alloc = tri_num;
     /* set to NULL if tri_num == 0. bu_malloc(0) causes issues. */
-    tie->tri_list = tri_num?(struct tie_tri_s *)bu_malloc(sizeof(struct tie_tri_s) * tri_num, "tie_init"):NULL;
+    tie->tri_list = tri_num?(struct tie_tri_s *)bu_calloc(tri_num, sizeof(struct tie_tri_s), "tie_init"):NULL;
     tie->stat = 0;
     tie->rays_fired = 0;
 }
@@ -153,12 +158,14 @@ void TIE_VAL(tie_free)(struct tie_s *tie)
     unsigned int i;
 
     /* Free Triangle Data */
-    for (i = 0; i < tie->tri_num; i++)
-	free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
-    bu_free (tie->tri_list, "tie_free");
+    for (i = 0; i < tie->tri_num; i++) {
+	tfloat *ptr = tie->tri_list[i].v;
+	bu_free(ptr, "free tfloat list");
+    }
+    bu_free(tie->tri_list, "tie_free");
 
     /* Free KDTREE Nodes */
-    tie_kdtree_free (tie);
+    tie_kdtree_free(tie);
 }
 
 
@@ -207,13 +214,12 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     struct tie_id_s t = {{0,0,0},{0,0,0},0,0,0}, id_list[256];
     struct tie_tri_s *hit_list[256], *tri;
     struct tie_geom_s *data;
-    struct tie_kdtree_s *node_aligned, *temp[2];
+    struct tie_kdtree_s *node, *temp[2];
     tfloat near, far, dirinv[3], dist;
-    unsigned int i, n, hit_count;
+    unsigned int i, n;
+    uint8_t hit_count;
     int ab[3], split, stack_ind;
     void *result;
-
-    memset(stack, 0, sizeof(stack));
 
     if (!tie->kdtree)
 	return NULL;
@@ -231,8 +237,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
     }
 
-    /* Extracting value of splitting plane from tie->kdtree pointer */
-    split = ((intptr_t)(((struct tie_kdtree_s *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
+    /* Extracting value of splitting plane from the kdtree */
+    split = tie->kdtree->b & (uint32_t)0x3L;
 
     /* Initialize ray segment */
     if (ray->dir[split] < 0.0)
@@ -249,12 +255,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     do {
 	near = stack[stack_ind].near;
 	far = stack[stack_ind].far;
-
-	/*
-	 * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
-	 * give a valid ptr address.
-	 */
-	node_aligned = (struct tie_kdtree_s *)((intptr_t)stack[stack_ind].node & ~0x7L);
+	node = stack[stack_ind].node;
 	stack_ind--;
 
 	/*
@@ -267,20 +268,20 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	 *
 	 * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
 	 */
-	while (TIE_HAS_CHILDREN(node_aligned->data)) {
+	while (node && node->data && TIE_HAS_CHILDREN(node->b)) {
 	    ray->kdtree_depth++;
 
 	    /* Retrieve the splitting plane */
-	    split = ((intptr_t)(node_aligned->data)) & 0x3;
+	    split = node->b & (uint32_t)0x3L;
 
 	    /* Calculate the projected 1d distance to splitting axis */
-	    dist = (node_aligned->axis - ray->pos[split]) * dirinv[split];
+	    dist = (node->axis - ray->pos[split]) * dirinv[split];
 
-	    temp[0] = &((struct tie_kdtree_s *)(node_aligned->data))[ab[split]];
-	    temp[1] = &((struct tie_kdtree_s *)(node_aligned->data))[1-ab[split]];
+	    temp[0] = &((struct tie_kdtree_s *)(node->data))[ab[split]];
+	    temp[1] = &((struct tie_kdtree_s *)(node->data))[1-ab[split]];
 
 	    i = near >= dist; /* Node B Only? */
-	    node_aligned = (struct tie_kdtree_s *)((intptr_t)(temp[i]) & ~0x7L);
+	    node = temp[i];
 
 	    if (far < dist || i)
 		continue;
@@ -293,16 +294,19 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    far = dist;
 	}
 
+	if (!node || !node->data) {
+	    /* bu_log("INTERNAL ERROR: Unexpected TIE tree traversal encountered\n"); */
+	    continue;
+	}
 
 	/*
 	 * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
 	 * This part of the function is being executed because the KDTREE Traversal is Complete.
 	 */
-	data = (struct tie_geom_s *)(node_aligned->data);
-	if (data->tri_num == 0)
-	    continue;
 
 	hit_count = 0;
+	data = (struct tie_geom_s *)(node->data);
+
 	for (i = 0; i < data->tri_num; i++) {
 	    /*
 	     * Triangle Intersection Code
@@ -328,11 +332,11 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    VSCALE(t.pos,  ray->dir,  t.dist);
 	    VADD2(t.pos,  ray->pos,  t.pos);
 
-	    /* Extract i1 and i2 indices from lower bits of the v pointer */
-	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
+	    /* Extract i1 and i2 indices from the 'b' field */
+	    v = tri->v;
 
-	    i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
-	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
+	    i1 = TIE_TAB1[tri->b & (uint32_t)0x7L];
+	    i2 = TIE_TAB1[3 + (tri->b & (uint32_t)0x7L)];
 
 	    /* Compute U and V */
 	    u0 = t.pos[i1] - tri->data[0].v[i1];
@@ -358,7 +362,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 		continue;
 
 	    /* Triangle Intersected, append it in the list */
-	    if (hit_count < 0xff) {
+	    if (hit_count < 0xFF) {
 		hit_list[hit_count] = tri;
 		id_list[hit_count] = t;
 		hit_count++;
@@ -405,7 +409,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
  * @param tnum is the number of triangles (tlist = 3 * tnum of TIE_3's).
  * @param plist is a list of pointer data that gets assigned to the ptr of each triangle.
  * This will typically be 4-byte (32-bit architecture) spaced array of pointers that
- * associate the triangle pointer with your arbitrary structure, i.e a mesh.
+ * associate the triangle pointer with your arbitrary structure, i.e. a mesh.
  * @param pstride is the number of bytes to increment the pointer list as it assigns
  * a pointer to each mesh, typically a value of 4 (for 32-bit machines).  If you have
  * a single pointer that groups all triangles to a common structure then you can use
@@ -450,9 +454,8 @@ void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void
 	    plist = (void *)((intptr_t)plist + pstride);
 
 	/* ??? this looks like it might cause fragmentation? use a memory pool? */
-	tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
-	if(tie->tri_list[tie->tri_num].v == NULL)
-	    bu_log("Bad malloc! %s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__);
+	tie->tri_list[tie->tri_num].v = (tfloat *)bu_calloc(2, sizeof(tfloat), "alloc tfloat list");
+	tie->tri_list[tie->tri_num].b = 0;
 	tie->tri_num++;
     }
     return;

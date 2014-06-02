@@ -1,12 +1,56 @@
 						 -*- coding: utf-8 -*-
-BRL-CAD Deprecation Log
-=======================
+BRL-CAD Interface Change Policy
+===============================
 
-Included below is a deprecation log and notes for BRL-CAD public
-interface changes that potentially impact external developers and
-users.  Public interfaces include developer application programming
-interface (API) calls as well as user application command-line
-interface (CLI) and graphical user interface (GUI) behaviors.
+Included below are details of BRL-CAD public interface changes that
+potentially impact external developers and users.  Public interfaces
+include developer application programming interface (API) calls as
+well as user application command-line interface (CLI) and graphical
+user interface (GUI) behaviors.  Changes are characterized as:
+
+    1) changing a new interface,
+    2) being minimally impacting, or
+    3) requiring adherence to deprecation policy.
+
+This policy is intentionally designed to balance developer agility,
+helping accelerate development, with interface stability, helping
+preserve application developer and user investments.
+
+All changes to BRL-CAD are expected to conform to this change policy.
+
+
+NEW INTERFACE
+-------------
+
+Changes to interfaces that have been recently introduced are often
+subject to change and should not yet be relied upon by application
+developers or users.  They may be changed as needed from release to
+release and are not subject to change policy restrictions until they
+have been included in at least TWO releases without change.
+
+
+MINIMALLY IMPACTING
+-------------------
+
+If a change to an interface has a suitable and completely equivalent
+alternative, the change is deemed to be "minimally impacting" and can
+be made during any release.  Examples of such changes include renaming
+an interface, reordering parameters, adding additional parameters for
+previously implicit behavior, and removing unused parameters.
+
+Basically, the impact can usually be considered minimally impacting if
+a static regular expression search-and-replace is all that is needed
+to update calling code, and no change is imposed on the user.
+
+
+DEPRECATION POLICY
+------------------
+
+If a change will intentionally change, replace, or remove
+functionality that has been documented and published in at least TWO
+releases should be first marked as DEPRECATED.  Otherwise, changes to
+interfaces that have not been publicly announced or are not publicly
+documented for at least two releases may be changed without notice.
 
 The general practice is that public interface changes may go from
 deprecated to obsolete, whereby previous behavior is removed or
@@ -16,59 +60,83 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
-   given via i) two minor releases included the deprecation notice,
-   and ii) at least three months (90 days) have passed since the
+   given via i) TWO minor releases included the deprecation notice,
+   and ii) at least THREE months (90 days) have passed since the
    deprecation was announced
 
-c) during a minor release provided there still exists an equivalent
-   alternative interface that will not impose an undue burden on users
-   or developers (see "MINIMALLY IMPACTING API CHANGES" below)
+c) during any release provided there still exists an EQUIVALENT
+   alternative interface that does not impose an undue burden on users
+   or developers (see "MINIMALLY IMPACTING")
 
-d) during a patch release provided you can correctly prove P = NP
+Public interfaces scheduled for removal should be visibly marked as
+deprecated during compilation with the DEPRECATED keyword on function
+declarations, with #warning "DEPRECATED ..." pre-processor statements,
+and with @DEPRECATED in source code comments.  Where users are not
+adversely affected, a run-time DEPRECATION statement may be printed.
 
-If a change will intentionally replace or remove functionality, then
-they should be then marked as deprecated first.  Otherwise, changes to
-interfaces that are never publicly announced, not installed, or are
-not part of publicly available documentation are fair game to change
-as needed.
+Whenever published functionality is finally removed, move its entry
+from the DEPRECATED section below to the OBSOLETE section for the
+version in which it was removed.  Make sure the entry retains a
+reference to the version in which the item was marked as deprecated.
 
-Where feasible, interfaces should be visibly marked as deprecated
-either during compile-time with #warning pre-processor declarations or
-during run-time with print statements.
 
-Example: Say we decided during 7.50.3 development to remove
-rt_shootray() from our API without a replacement that would qualify as
-"minimally impacting".  We'd annotate the deprecation here, mark the
+EXAMPLES
+--------
+
+Example #1: Say we decided during 7.50.3 development to remove
+rt_shootray() from the API without a replacement. That does NOT
+qualify as "minimally impacting" because there's no replacement and
+rt_shootray() has been published and documented in more than two
+releases.  We'd annotate the deprecation in the CHANGES file, mark the
 function as DEPRECATED in the API header, and post the 7.50.4 release.
 The soonest that function could be removed would be in the 7.54.0
 release during 7.53 development.  It could NOT be removed in 7.54.2
 since it's a patch version, prior to the 7.54 release line, nor even
 during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
 
-When it is finally removed, remove its entry in the DEPRECATED section
-and move it to the OBSOLETE section under the version entry in which
-it was removed.  Make sure the entry has a reference to the version
-in which the item was first classified as deprecated.  See the %S
-entry for an example.
-
-DEPRECATED/OBSOLETE Items
--------------------------
-
-The items listed below are interfaces that are deprecated or obsolete,
-categorized by the release in which the change was made.  If the
-change involved a rename/removal of a routine, both the original and
-new names should be listed for reference.
+Example #2: Say we decide during 7.48.0 development to modify bu_log()
+by adding a new additional enum parameter denoting a message type.
+This change is considered minimally impacting because it can be
+characterized by a simple regular expression (e.g.,
+s/bu_log(/bu_log(PRINT, /g).  Updates to calling codes are considered
+trivial.  The change would get documented in the CHANGES file and all
+calls that can be updated must be updated at that time.
 
 
 **************
 * DEPRECATED *
 **************
 
+The items listed below are interfaces that are deprecated.  They are
+categorized by the release in which the change was made.  If the
+change involved a removal of a command or function, both the original
+and new names should be listed for reference.
+
+
+7.26
+----
+pixcut, pixpaste
+        copyright cleanup [deprecated 7.26]
+librt, fast4-g
+	removal of CLINE entity support [deprecated 7.26]
 
 7.24
 ----
+include/bu
+        hist.h bu_hist bu_hist_t BU_HIST_NULL BU_HIST_INIT_ZERO [deprecated 7.24]
+        BU_HIST_IS_INITIALIZED BU_HIST_TALLY BU_HIST_TALLY_MULTIPLE [deprecated 7.24]
+        bu_hist_free bu_hist_init bu_hist_range bu_hist_pr [deprecated 7.24]
+        functions, macros, and header will be renamed for clarity [deprecated 7.24]
+fbed, pp-fb
+        removes termcap use, no known users [deprecated 7.24]
+include/raytrace librt
+        db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+        db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+        db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
+src/irprep
+        all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
-        RT_DBHASH and RT_DBNHASH [deprecation 7.24]
+        RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
 7.22
 ----
@@ -178,12 +246,6 @@ reserved attributes and case-sensitivity
 	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
-.pl file suffix
-	.pl -> .plot3 [deprecated 7.16]
-*-pl
-	*-pl -> *-plot3 [deprecated 7.16]
-pl*
-	pl* -> plot3* [deprecated 7.16]
 any-png.sh
 	use pix tools [deprecated 7.16]
 cadbug.sh
@@ -250,6 +312,19 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+Below are the interfaces that have followed deprecation policy and are
+now no longer a part of BRL-CAD.
+
+
+7.24.2
+------
+.pl file suffix
+	.pl -> .plot3 [deprecated 7.16]
+*-pl
+	*-pl -> *-plot3 [deprecated 7.16]
+pl*
+	pl* -> plot3* [deprecated 7.16]
 
 7.24.0
 ------
@@ -407,15 +482,6 @@ include/[library].h (several)
 * MINIMALLY IMPACTING API CHANGES *
 ***********************************
 
-If a change to an interface has a suitable and completely equivalent
-alternative, the change is deemed to be "minimally impacting" and can
-be made during any minor release.  Examples of such changes include
-renaming an interface, reordering parameters, adding new parameters to
-an interface for previously implicit or restricted behavior, and
-removing unused parameters.
-
-Basically, the impact can usually be considered minor if a static
-regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
 have been identified in chronological order.  As expressions are not
 extensively tested, use with caution.
@@ -885,7 +951,43 @@ s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 
 7.24
 ----
-s/bu_set_realtime([[:space:]]);//g
+s/bu_set_realtime\([[:space:]]\);//g
         didn't do anything [7.23]
-s/.*bu_cpulimit_[sg]et([[:space:]]);//g
+s/.*bu_cpulimit_[sg]et\([[:space:]]\);//g
         didn't do anything [7.23]
+s/rt_g\./RTG\./g
+        renamed rt_g global to RTG so it doesn't match the struct name [7.24]
+s/rt_functab\[/OBJ\[/g
+        renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
+s/redraw_vlist/draw/g
+        removed redraw_vlist mged command, just call draw or refresh [7.24]
+s/RT_BADNUM/INVALID/g
+s/RT_BADVAL/VINVALID/g
+        moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
+s/bu_create_hash_tbl/bu_hash_tbl_create/g
+s/bu_find_hash_entry/bu_hash_tbl_find/g
+s/bu_hash_add_entry/bu_hash_tbl_add/g
+s/bu_hash_tbl_pr/bu_hash_tbl_print/g
+	renamed for better consistency in hash table API and with other libbu API [7.24]
+s/dm_applicationfocus\([[:space:]]\);//g
+	only useful in older os x versions, users can now do the same thing via XQuartz preferences
+s/bu_vls_trunc2/bu_vls_trunc/g
+        removed duplicitous function in favor of more general version
+s/bn_pi/M_PI/g
+s/bn_twopi/M_2PI/g
+s/bn_halfpi/M_PI_2/g
+s/bn_quarterpi/M_PI_4/g
+s/bn_invpi/M_1_PI/g
+s/bn_inv2pi/M_1_2PI/g
+s/bn_inv4pi/M_1_4PI)/g
+s/bn_inv255/(1.0 \/ 255.0)/g
+s/bn_degtorad/DEG2RAD/g
+s/bn_radtodeg/RAD2DEG/g
+s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
+        eliminated a number of libbn globals in favor of existing constants
+s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont-if.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
+        library-specific public headers moved into a subdir [7.24]
+s/([^_])([nh]to[hn][fd])/\1bu_cv_\2/g
+        ntohf, ntohd, htonf, htond renamed with bu_cv_ prefix [7.24]

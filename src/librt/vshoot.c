@@ -58,8 +58,8 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* skip call if solid table pointer is NULL */
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
-	    if (rt_functab[stp[i]->st_id].ft_shot) {
-		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+	    if (OBJ[stp[i]->st_id].ft_shot) {
+		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;
@@ -238,8 +238,8 @@ rt_vshootray(struct application *ap)
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
-	if (rt_functab[id].ft_vshot) {
-	    rt_functab[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
+	if (OBJ[id].ft_vshot) {
+	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
 	}

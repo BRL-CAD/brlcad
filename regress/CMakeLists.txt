@@ -31,7 +31,7 @@ if(SH_EXEC)
     )
   add_custom_target(regress-iges
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/iges.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS iges-g g-iges mged
+    DEPENDS iges-g g-iges mged asc2g
     )
   add_custom_target(regress-weight
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
@@ -53,10 +53,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
     DEPENDS rt
     )
-  add_custom_target(regress-repository
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS rt
-    )
+#  add_custom_target(regress-repository
+#    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
+#    DEPENDS rt
+#    )
   add_custom_target(regress-red
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
@@ -75,7 +75,7 @@ if(SH_EXEC)
     )
   add_custom_target(regress-gnff
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-nff.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged g-nff
+    DEPENDS mged g-nff asc2g
     )
   add_custom_target(regress-gdot
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
@@ -106,15 +106,15 @@ if(SH_EXEC)
     DEPENDS regress-mged regress-moss regress-lights
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
-    regress-repository regress-red regress-nirt
+    regress-red regress-nirt
     regress-comgeom regress-gnff regress-gdot
     regress-dsp regress-asc2dsp
     )
+# regress-repository
 
 endif(SH_EXEC)
 
 CMAKEFILES(
-  Makefile.am
   analyze.asc
   asc2dsp.sh
   bots.sh
@@ -193,7 +193,7 @@ CMAKEFILES(
 # list of temporary files
 set(regress_outfiles
   .density
-  adj_air.pl
+  adj_air.plot3
   asc2dsp-new.dsp
   asc2dsp-old.bw
   asc2dsp-old.dsp
@@ -301,7 +301,7 @@ set(regress_outfiles
   dsp-3-8.rt.pix
   eagleCAD-512x438.pix
   ebm.bw
-  exp_air.pl
+  exp_air.plot3
   fastgen_box.fast4
   fastgen_dos.g
   fastgen_unix.g
@@ -313,7 +313,7 @@ set(regress_outfiles
   g-nff.m35.asc
   g-nff.m35.g
   g-nff.m35.nff
-  gaps.pl
+  gaps.plot3
   gqa.g
   gqa.log
   gqa.mged
@@ -352,7 +352,7 @@ set(regress_outfiles
   nirt.out
   nirt.ref
   nirt_g.log
-  overlaps.pl
+  overlaps.plot3
   red.air.empty.out
   red.air.empty.out.new
   red.air.safe.out
@@ -491,7 +491,7 @@ set(regress_outfiles
   spdi_ref.pix
   t.g
   vdeck.log
-  volume.pl
+  volume.plot3
   )
 
 foreach(outfile ${regress_outfiles})

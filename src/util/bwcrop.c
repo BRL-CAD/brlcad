@@ -40,7 +40,7 @@
 
 
 #define round(x) ((int)(x+0.5))
-#define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
+#define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
@@ -71,11 +71,11 @@ init_buffer(int len)
     max = MAXBUFBYTES / len;
 
     /*
-     * Do a max of 512.  We really should see how big
+     * Do a max of 4096.  We really should see how big
      * the input file is to decide if we should buffer
      * less than our max.
      */
-    if (max > 512) max = 512;
+    if (max > 4096) max = 4096;
 
     buflines = max;
     buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");

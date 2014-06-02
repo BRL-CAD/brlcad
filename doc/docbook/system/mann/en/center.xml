@@ -106,7 +106,7 @@
       </variablelist>
     </example>
     <example><title>Update the vertex of a shape in the database to be located at the current
-      center of the view and recreate the vector display lists of objects that were affected by the change.</title>
+      view center.</title>
 
       <variablelist>
 	<varlistentry>
@@ -116,16 +116,6 @@
 	<varlistentry>
 	  <term><prompt>mged</prompt> <userinput>db adjust sphere.s  V [center]</userinput></term>
       <listitem><para/></listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><prompt>mged</prompt> <userinput>redraw_vlist sphere.s</userinput></term>
-	  <listitem>
-	    <para>
-	      Updates the "V" vertex of shape sphere.s in the database to be located at
-	      the current center of the view, and recreates the vector display lists of
-	      only those object(s) that were affected by the change.
-	    </para>
-	  </listitem>
 	</varlistentry>
       </variablelist>
     </example>

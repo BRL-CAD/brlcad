@@ -86,11 +86,6 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* convert  to network order for the dsp */
     netshort = htons(hostshort);
 
-#if 0 /* keep this debuggery until peer review is passed satisfactorily */
-    /* debug */
-    fprintf(stderr, "DEBUG: buf = '%s', hostshort = %hu\n", buf, hostshort);
-#endif
-
     /* now output it */
     ret = fwrite(&netshort, sizeof(uint16_t), 1, fpo);
     if (UNLIKELY(ret != 1)) {

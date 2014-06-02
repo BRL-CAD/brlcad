@@ -37,7 +37,6 @@ y coordinate of
 i.e. a value of zero indicates the bottom line of the display.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the input display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).

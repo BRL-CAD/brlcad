@@ -553,6 +553,9 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
 	pp3 = (struct wdb_pipept *)NULL;
     }
 
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     VMOVE(curr_pt, pp1->pp_coord);
     curr_od = pp1->pp_od;
     curr_id = pp1->pp_id;
@@ -630,7 +633,8 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
 
 
 HIDDEN void
-pipe_elements_free(struct bu_list *head) {
+pipe_elements_free(struct bu_list *head)
+{
     if (head != 0) {
 	struct id_pipe *p;
 
@@ -642,8 +646,6 @@ pipe_elements_free(struct bu_list *head) {
 		BU_PUT(p, struct bend_pipe);
 	    }
 	}
-
-	BU_PUT(head, struct bu_list);
     }
 }
 
@@ -1531,13 +1533,13 @@ rt_pipe_elim_dups(
 	hitp = &hit[hitNo];
 	next_hit = &hit[hitNo + 1];
 
-	if (NEAR_EQUAL(hitp->hit_dist, next_hit->hit_dist, 0.00001) &&
+	if (NEAR_EQUAL(hitp->hit_dist, next_hit->hit_dist, stp->st_rtip->rti_tol.dist) &&
 	    hitp->hit_surfno == next_hit->hit_surfno) {
 	    int i;
-	    for (i = hitNo ; i < (*nh) ; i++) {
-		hit[i] = hit[i + 1];
+	    for (i = hitNo ; i < (*nh-2) ; i++) {
+		hit[i] = hit[i + 2];
 	    }
-	    (*nh)--;
+	    (*nh)=(*nh)-2;
 	} else {
 	    hitNo++;
 	}
@@ -1549,19 +1551,6 @@ rt_pipe_elim_dups(
     }
 
     if ((*nh) == 0 || (*nh) == 2) {
-	return;
-    }
-
-    /* handle cases where this pipe overlaps with itself */
-    hitp = &hit[0];
-    if (VDOT(hitp->hit_normal, rp->r_dir) > 0.0) {
-
-	bu_log("ERROR: first hit on %s (surfno = %d) is an exit at (%g %g %g)\n",
-	       stp->st_dp->d_namep, hitp->hit_surfno, V3ARGS(hitp->hit_point));
-	bu_log("\tray start = (%.12e %.12e %.12e), ray dir = (%.12e %.12e %.12e)\n",
-	       V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
-
-	(*nh) = 0;
 	return;
     }
 
@@ -1844,6 +1833,7 @@ rt_pipe_free(struct soltab *stp)
 {
     if (stp != NULL) {
 	pipe_elements_free((struct bu_list *)stp->st_specific);
+	BU_PUT(stp->st_specific, struct bu_list);
     }
 }
 
@@ -3980,7 +3970,7 @@ rt_pipe_import4(
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PIPE;
-    ip->idb_meth = &rt_functab[ID_PIPE];
+    ip->idb_meth = &OBJ[ID_PIPE];
     BU_ALLOC(ip->idb_ptr, struct rt_pipe_internal);
 
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -3997,16 +3987,16 @@ rt_pipe_import4(
 	mat = bn_mat_identity;
     }
     for (exp_pipept = &rp->pwr.pwr_data[pip->pipe_count - 1]; exp_pipept >= &rp->pwr.pwr_data[0]; exp_pipept--) {
-	ntohd((unsigned char *)&scan[0], exp_pipept->epp_id, 1);
+	bu_cv_ntohd((unsigned char *)&scan[0], exp_pipept->epp_id, 1);
 	tmp.pp_id = scan[0]; /* convert double to fastf_t */
 
-	ntohd((unsigned char *)&scan[1], exp_pipept->epp_od, 1);
+	bu_cv_ntohd((unsigned char *)&scan[1], exp_pipept->epp_od, 1);
 	tmp.pp_od = scan[1]; /* convert double to fastf_t */
 
-	ntohd((unsigned char *)&scan[2], exp_pipept->epp_bendradius, 1);
+	bu_cv_ntohd((unsigned char *)&scan[2], exp_pipept->epp_bendradius, 1);
 	tmp.pp_bendradius = scan[2]; /* convert double to fastf_t */
 
-	ntohd((unsigned char *)scan, exp_pipept->epp_coord, ELEMENTS_PER_VECT);
+	bu_cv_ntohd((unsigned char *)scan, exp_pipept->epp_coord, ELEMENTS_PER_VECT);
 	VMOVE(tmp.pp_coord, scan); /* convert double to fastf_t */
 
 	/* Apply modeling transformations */
@@ -4093,16 +4083,16 @@ rt_pipe_export4(
 
 
 	VMOVE(scan, tmp.pp_coord); /* convert fastf_t to double */
-	htond(epp->epp_coord, (unsigned char *)scan, ELEMENTS_PER_POINT);
+	bu_cv_htond(epp->epp_coord, (unsigned char *)scan, ELEMENTS_PER_POINT);
 
 	scan[0] = tmp.pp_id; /* convert fastf_t to double */
-	htond(epp->epp_id, (unsigned char *)&scan[0], 1);
+	bu_cv_htond(epp->epp_id, (unsigned char *)&scan[0], 1);
 
 	scan[1] = tmp.pp_od; /* convert fastf_t to double */
-	htond(epp->epp_od, (unsigned char *)&scan[1], 1);
+	bu_cv_htond(epp->epp_od, (unsigned char *)&scan[1], 1);
 
 	scan[2] = tmp.pp_bendradius; /* convert fastf_t to double */
-	htond(epp->epp_bendradius, (unsigned char *)&scan[2], 1);
+	bu_cv_htond(epp->epp_bendradius, (unsigned char *)&scan[2], 1);
     }
 
     return 0;
@@ -4145,7 +4135,7 @@ rt_pipe_import5(
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PIPE;
-    ip->idb_meth = &rt_functab[ID_PIPE];
+    ip->idb_meth = &OBJ[ID_PIPE];
     BU_ALLOC(ip->idb_ptr, struct rt_pipe_internal);
 
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -4155,7 +4145,7 @@ rt_pipe_import5(
     vec = (double *)bu_malloc(byte_count, "rt_pipe_import5: vec");
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
+    bu_cv_ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
 
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -4244,7 +4234,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 
     /* Convert from internal (host) to database (network) format */
-    htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
+    bu_cv_htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
 
     bu_free((genptr_t)vec, "rt_pipe_export5: vec");
     return 0;
@@ -4281,8 +4271,6 @@ rt_pipe_describe(
 	return 0;
     }
 
-#if 1
-    /* Too much for the MGED Display!!!! */
     for (BU_LIST_FOR(ptp, wdb_pipept, &pip->pipe_segs_head)) {
 	sprintf(buf, "\t%d ", segno++);
 	bu_vls_strcat(str, buf);
@@ -4303,7 +4291,7 @@ rt_pipe_describe(
 	bu_vls_strcat(str, buf);
 
     }
-#endif
+
     return 0;
 }
 
@@ -4680,6 +4668,260 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     }
 
     return 0;			/* OK */
+}
+
+
+/**
+ * R T _ P I P E _ S U R F A C E _ A R E A
+ *
+ */
+void
+rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
+{
+    struct bu_list head;
+    point_t min, max;
+    struct id_pipe *p;
+    fastf_t len_sq;
+    struct lin_pipe *lin;
+    struct bend_pipe *bend;
+    fastf_t prev_ir, prev_or, start_ir, start_or, end_ir, end_or, tmpval;
+    point_t last_end, first_start;
+    vect_t *end_normal, *start_normal;
+    int connected;
+    char overlap;
+
+    BU_LIST_INIT(&head);
+
+    pipe_elements_calculate(&head, ip, &min, &max);
+
+    /* The following calculation establishes if the last pipe segment
+     * is in fact connected to the first one. The last end point is
+     * checked to be equal to the first start point, and the normals
+     * are checked to be either 0 or 180 degree to each other: abs(dot product) == 1.
+     * If the first/last segments are connected, the starting/ending
+     * surfaces will cancel each other where overlapping.
+     */
+    p = BU_LIST_LAST(id_pipe, &head);
+    if (!p->pipe_is_bend) {
+	lin = (struct lin_pipe *)p;
+	prev_ir = lin->pipe_ritop;
+	prev_or = lin->pipe_rotop;
+	VJOIN1(last_end, lin->pipe_V, lin->pipe_len, lin->pipe_H);
+	end_normal = &(lin->pipe_H);
+    } else {
+	bend = (struct bend_pipe *)p;
+	prev_ir = bend->bend_ir;
+	prev_or = bend->bend_or;
+	VMOVE(last_end, bend->bend_end);
+	end_normal = &(bend->bend_endNorm);
+    }
+
+    p = BU_LIST_FIRST(id_pipe, &head);
+    if (!p->pipe_is_bend) {
+	lin = (struct lin_pipe *)p;
+	VMOVE(first_start, lin->pipe_V);
+	start_normal = &(lin->pipe_H);
+    } else {
+	bend = (struct bend_pipe *)p;
+	VMOVE(first_start, bend->bend_start);
+	start_normal = &(bend->bend_startNorm);
+    }
+
+    connected = VNEAR_EQUAL(first_start, last_end, RT_LEN_TOL)
+	&& NEAR_EQUAL(fabs(VDOT(*start_normal, *end_normal)), 1.0, RT_DOT_TOL);
+
+    *area = 0;
+    /* The the total surface area is calculated as a sum of the areas for:
+     * + outer lateral pipe surface;
+     * + inner lateral pipe surface;
+     * + unconnected/non-overlapping cross-section surface at the ends of the pipe segments;
+     */
+    for (BU_LIST_FOR(p, id_pipe, &head)) {
+	if (!p->pipe_is_bend) {
+	    lin = (struct lin_pipe *)p;
+	    /* Lateral Surface Area = PI * (r_base + r_top) * sqrt(pipe_len^2 + (r_base-r_top)^2) */
+	    len_sq = lin->pipe_len * lin->pipe_len;
+	    *area += M_PI * (lin->pipe_robase + lin->pipe_rotop)
+		* (sqrt(len_sq + lin->pipe_rodiff_sq)      /* outer surface */
+		   + sqrt(len_sq + lin->pipe_ridiff_sq));  /* inner surface */
+	    start_or = lin->pipe_robase;
+	    start_ir = lin->pipe_ribase;
+	    end_or = lin->pipe_rotop;
+	    end_ir = lin->pipe_ritop;
+	} else {
+	    bend = (struct bend_pipe *)p;
+	    /* Torus Surface Area = 4 * PI^2 * r_bend * r_pipe
+	     * Bend Surface Area = torus_area * (bend_angle / (2*PI))
+	     *                   = 2 * PI * bend_angle * r_bend * r_pipe
+	     * Inner + Outer Area = 2 * PI * bend_angle * r_bend * (r_outer + r_inner)
+	     */
+	    *area += 2 * M_PI * bend->bend_angle * bend->bend_radius * (bend->bend_ir + bend->bend_or);
+	    start_or = end_or = bend->bend_or;
+	    start_ir = end_ir = bend->bend_ir;
+	}
+	if (connected) {
+	    overlap = 0;
+	    /* For the case of equality we consider only the start overlapping,
+	     * to not have both start and prev report an overlap at the same time.
+	     * This way we have simplified cases to handle, as overlaps will always
+	     * come in pairs, and some pairs can be excluded too.
+	     */
+	    if (start_ir >= prev_ir && start_ir <= prev_or) {
+		overlap += 1;
+	    }
+	    if (start_or >= prev_ir && start_or <= prev_or) {
+		overlap += 2;
+	    }
+	    if (prev_ir > start_ir && prev_ir < start_or) {
+		overlap += 4;
+	    }
+	    if (prev_or > start_ir && prev_or < start_or) {
+		overlap += 8;
+	    }
+	    /* Overlaps are expected always in pairs, so the sum of the set digits should be always 2 */
+	    switch (overlap) {
+		case 0: /* no overlap between the cross sections, the areas are both added, nothing to fix */
+		    break;
+		case 3: /* start cross section contained completely by the prev cross section, we swap start_ir with prev_or */
+		case 9: /* section between start_ir and prev_or overlap, we swap them */
+		case 12: /* prev cross section contained completely by the start cross section, we swap start_ir with prev_or */
+		    tmpval = start_ir;
+		    start_ir = prev_or;
+		    prev_or = tmpval;
+		    break;
+		case 6: /* section between prev_ir and start_or overlap, we swap them */
+		    tmpval = prev_ir;
+		    prev_ir = start_or;
+		    start_or = tmpval;
+		    break;
+		default:
+		    bu_log("rt_pipe_surf_area: Unexpected cross-section overlap code: (%d)\n", overlap);
+		    break;
+	    }
+	} else {
+	    /* not connected, both areas are added regardless of overlaps */
+	    /* this can happen only on the first segment, and all further segments will be connected: */
+	    connected = 1;
+	}
+	tmpval = 0;
+	/* start cross section */
+	if (!NEAR_EQUAL(start_or, start_ir, RT_LEN_TOL)) {
+	    tmpval += (start_or + start_ir) * (start_or - start_ir);
+	}
+	/* previous end cross section */
+	if (!NEAR_EQUAL(start_or, start_ir, RT_LEN_TOL)) {
+	    tmpval += (prev_or + prev_ir) * (prev_or - prev_ir);
+	}
+	*area += M_PI * tmpval;
+	prev_or = end_or;
+	prev_ir = end_ir;
+    }
+
+    pipe_elements_free(&head);
+
+}
+
+
+HIDDEN void
+pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
+{
+    fastf_t crt_vol, cs;
+    point_t cp;
+
+    /* Note: the centroid is premultiplied with the corresponding partial volume ! */
+    if (!p->pipe_is_bend) {
+	struct lin_pipe *lin = (struct lin_pipe *)p;
+	/* Volume = PI * (r_base*r_base + r_top*r_top + r_base*r_top) * pipe_len / 3 */
+	crt_vol = M_PI * lin->pipe_len / 3
+	    * (lin->pipe_robase*lin->pipe_robase + lin->pipe_robase*lin->pipe_rotop + lin->pipe_rotop*lin->pipe_rotop
+	       - lin->pipe_ribase*lin->pipe_ribase - lin->pipe_ribase*lin->pipe_ritop - lin->pipe_ritop*lin->pipe_ritop);
+	*vol += crt_vol;
+
+	if (cent != NULL) {
+	    /* centroid coefficient from the middle-point of the base
+	     * (premultiplied with the volume):
+	     * cbase = 1/12 * PI * pipe_len * pipe_len * (3*rtop^2 + 2*rtop*rbase + rbase^2)
+	     */
+	    cs = M_PI * lin->pipe_len * lin->pipe_len / 12.0
+		* (3*(lin->pipe_rotop + lin->pipe_ritop)*(lin->pipe_rotop - lin->pipe_ritop)
+		   + 2*(lin->pipe_robase*lin->pipe_rotop - lin->pipe_ribase*lin->pipe_ritop)
+		   + (lin->pipe_robase + lin->pipe_ribase)*(lin->pipe_robase - lin->pipe_ribase));
+	    VCOMB2(cp, crt_vol, lin->pipe_V, cs, lin->pipe_H);
+	    VADD2(*cent, *cent, cp);
+	}
+    } else {
+	struct bend_pipe *bend = (struct bend_pipe *)p;
+	/* Torus Volume = 2 * PI^2 * r_bend * r_pipe^2
+	 * Bend Volume = torus_area * (bend_angle / (2*PI))
+	 *             = PI * bend_angle * r_bend * r_pipe^2
+	 * Mass Volume = Displacement Volume - Inner Volume = PI * bend_angle * r_bend * (r_outer^2 - r_inner^2)
+	 */
+	crt_vol = M_PI * bend->bend_angle * bend->bend_radius * (bend->bend_or + bend->bend_ir) * (bend->bend_or - bend->bend_ir);
+	*vol += crt_vol;
+
+	if (cent != NULL) {
+	    /* The centroid sits on the line between bend_V and the
+	     * middle point of bend_start, at distance
+	     * cos(bend->bend_angle/4)*bend->bend_radius */
+	    VCOMB2(cp, 0.5, bend->bend_start, 0.5, bend->bend_end);
+	    VSUB2(cp, cp, bend->bend_V);
+	    VUNITIZE(cp);
+	    cs = crt_vol * cos(bend->bend_angle/4) * bend->bend_radius;
+	    VCOMB2(cp, crt_vol, bend->bend_V, cs, cp);
+	    VADD2(*cent, *cent, cp);
+	}
+    }
+}
+
+
+/**
+ * R T _ P I P E _ V O L U M E
+ *
+ */
+void
+rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
+{
+    struct bu_list head;
+    point_t min, max;
+    struct id_pipe *p;
+
+    BU_LIST_INIT(&head);
+
+    pipe_elements_calculate(&head, ip, &min, &max);
+
+    *vol = 0;
+    for (BU_LIST_FOR(p, id_pipe, &head)) {
+	pipe_elem_volume_and_centroid(p, vol, NULL);
+    }
+
+    pipe_elements_free(&head);
+}
+
+
+/**
+ * R T _ P I P E _ C E N T R O I D
+ *
+ */
+void
+rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
+{
+    struct bu_list head;
+    point_t min, max;
+    struct id_pipe *p;
+    fastf_t vol;
+
+    BU_LIST_INIT(&head);
+
+    pipe_elements_calculate(&head, ip, &min, &max);
+
+    VSETALL(*cent, 0);
+    vol = 0;
+
+    for (BU_LIST_FOR(p, id_pipe, &head)) {
+	pipe_elem_volume_and_centroid(p, &vol, cent);
+    }
+    VSCALE(*cent, *cent, 1/vol);
+    pipe_elements_free(&head);
 }
 
 

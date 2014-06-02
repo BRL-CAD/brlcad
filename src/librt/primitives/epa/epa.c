@@ -284,7 +284,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * EPA is ok
      */
     stp->st_id = ID_EPA;	/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EPA];
+    stp->st_meth = &OBJ[ID_EPA];
 
     BU_GET(epa, struct epa_specific);
     stp->st_specific = (genptr_t)epa;
@@ -1641,7 +1641,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
+    ip->idb_meth = &OBJ[ID_EPA];
     BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -1771,14 +1771,14 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
+    ip->idb_meth = &OBJ[ID_EPA];
     BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1856,7 +1856,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+1] = xip->epa_r2 * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 11);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }

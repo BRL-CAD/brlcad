@@ -31,8 +31,7 @@
 #include "vmath.h"
 
 
-static const char usage[] = "\
-Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
+static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
 
 int rflag = 0;
 int iflag = 0;

@@ -1071,7 +1071,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 
     NMG_CK_EDGEUSE(eu);
 
-    sprintf(buf, "eu_vicinity%d.pl", num++);
+    sprintf(buf, "eu_vicinity%d.plot3", num++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
 	perror(buf);

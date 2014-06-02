@@ -78,7 +78,21 @@ if(opt_conf_list)
   ADD_NEW_FLAG(CXX OPTIMIZE_CXX_FLAGS "${opt_conf_list}")
 endif(opt_conf_list)
 
-# verbose warning flags
+# enable stack protection for unoptimized debug builds.  this is
+# intended to help make it easier to identify problematic code but
+# only when compiling unoptimized (because the extra barrier checks
+# can affect the memory footprint and runtime performance.
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  BRLCAD_CHECK_C_FLAG(fstack-protector-all)
+  BRLCAD_CHECK_CXX_FLAG(fstack-protector-all)
+  # checking both in case compiling c/c++ with different compilers
+  BRLCAD_CHECK_C_FLAG(qstackprotect)
+  BRLCAD_CHECK_CXX_FLAG(qstackprotect)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+
+# verbose warning flags.  we intentionally try to turn on as many as
+# possible.  adding more is encouraged (as long as all issues are
+# fixed first).
 if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
@@ -86,7 +100,8 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_C_FLAG(pedantic)
   BRLCAD_CHECK_CXX_FLAG(pedantic)
 
-  # The Wall warnings are too verbose with Visual C++
+  # FIXME: The Wall warnings are too verbose with Visual C++ (for
+  # now).  we have a lot to clean up.
   if(NOT MSVC)
     BRLCAD_CHECK_C_FLAG(Wall)
     BRLCAD_CHECK_CXX_FLAG(Wall)

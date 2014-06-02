@@ -58,7 +58,7 @@ BRLCAD_ADDEXEC(orle-fb orle-fb.c "libfb;liborle")
 BRLCAD_ADDEXEC(pix-fb pix-fb.c libfb)
 BRLCAD_ADDEXEC(pixautosize pixautosize.c libfb)
 BRLCAD_ADDEXEC(pixflip-fb pixflip-fb.c libfb)
-BRLCAD_ADDEXEC(pl-fb pl-fb.c libfb)
+BRLCAD_ADDEXEC(plot3-fb plot3-fb.c libfb)
 BRLCAD_ADDEXEC(png-fb png-fb.c "libfb;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(polar-fb polar-fb.c "libfb;${M_LIBRARY}")
 if(HAVE_TERMLIB)
@@ -73,7 +73,6 @@ BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
 add_subdirectory(tests)
 
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

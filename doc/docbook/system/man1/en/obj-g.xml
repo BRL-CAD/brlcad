@@ -180,7 +180,7 @@
       <listitem>
 	<para>
 	 Plot open edges when creating bots which are not a closed
-	 volume. A plot/overlay (.pl) file will be created with the
+	 volume. A plot/overlay (.plot3) file will be created with the
 	 same name as the bot primitive and be placed in the current
 	 directory. If a plot file already exists, it will be
 	 overwritten. Closed edges are closed but open edges are not

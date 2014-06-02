@@ -1,0 +1,45 @@
+/** @mainpage
+ *
+ * Documentation of BRL-CAD<sup>tm</sup> libraries.
+ *
+ * This
+ * is the second iteration of the documentation.  Pages have been subdivided
+ * and should load much more quickly in your browser now.
+ *
+ * At this point, only the libbu module has been fully converted to the
+ * new format.  Other modules should follow soon.
+ */
+
+/** @defgroup librt librt geometry, raytracing
+ *
+ * @defgroup dbio Database IO
+ * @ingroup librt
+ *
+ * @defgroup db5 Database5
+ * @ingroup dbio
+ *
+ * @defgroup db4 Database4
+ * @ingroup dbio
+ *
+ * @defgroup primitives Primitives
+ * @ingroup librt
+ *
+ * @defgroup nmg N-Manifold Geometry
+ * @ingroup primitives
+ *
+ * @defgroup nurb NURBS
+ * @ingroup primitives
+ *
+ * @defgroup ray Ray Tracing
+ * @ingroup librt
+ *
+ * @defgroup timer Timer
+ * @ingroup librt
+ *
+ * @defgroup fort Fortran
+ * @ingroup librt
+ *
+ * @defgroup wdb WriteDatabase
+ * @ingroup dbio
+ */
+

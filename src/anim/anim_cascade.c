@@ -83,16 +83,16 @@ int get_args(int argc, char **argv)
 	    case 'f':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", fcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", fcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", fcenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", fcenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", fcenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", fcenter+2);
 		    bu_optind += 3;
 		    cmd_fcen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", fypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", fypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", fypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", fypr+2);
 		    bu_optind += 3;
 		    cmd_fypr = 1;
 		    break;
@@ -103,16 +103,16 @@ int get_args(int argc, char **argv)
 	    case 'r':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", rcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", rcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", rcenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", rcenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", rcenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", rcenter+2);
 		    bu_optind += 3;
 		    cmd_rcen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", rypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", rypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", rypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", rypr+2);
 		    bu_optind += 3;
 		    cmd_rypr = 1;
 		    break;
@@ -123,16 +123,16 @@ int get_args(int argc, char **argv)
 	    case 'a':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", acenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", acenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", acenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", acenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", acenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", acenter+2);
 		    bu_optind += 3;
 		    cmd_acen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", aypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", aypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", aypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", aypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", aypr+2);
 		    bu_optind += 3;
 		    cmd_aypr = 1;
 		    break;

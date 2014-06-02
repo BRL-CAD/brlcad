@@ -2575,7 +2575,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE 4	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 6	/* Maximum Poly Order */
 
 /**
  * Polynomial data type
@@ -2589,6 +2589,7 @@ typedef struct bn_poly {
 
 #define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL   ((struct bn_poly *)NULL)
+#define BN_POLY_INIT_ZERO { BN_POLY_MAGIC, 0, {0.0} }
 
 
 /**
@@ -2993,6 +2994,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 /**
  * random numbers between the closed interval -0.5 to 0.5 inclusive,
  * except when benchmark flag is set, when this becomes a constant 0.0
+ *
+ * @param _p float pointer type initialized by bn_rand_init()
+ *
  */
 #define bn_rand_half(_p)	\
     ((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
@@ -3001,6 +3005,11 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
 /**
  * initialize the seed for the large random number table (halftab)
+ *
+ * @param _p float pointer to be initialized, used for bn_rand0to1()
+ * and bn_rand_half()
+ * @param _seed Integer SEED for offset in the table.
+ *
  */
 #define bn_rand_init(_p, _seed)	\
     (_p) = &bn_rand_halftab[ \
@@ -3011,6 +3020,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 /**
  * random numbers in the closed interval 0.0 to 1.0 range (inclusive)
  * except when benchmarking, when this is always 0.5
+ *
+ * @param _q float pointer type initialized by bn_rand_init()
+ *
  */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
@@ -4095,8 +4107,10 @@ struct bn_vlist  {
 #define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
 #define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
 #define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpolation */
-#define BN_VLIST_POINT_DRAW	12	/**< @brief  Draw a single point */
-#define BN_VLIST_CMD_MAX	12	/**< @brief  Max command number */
+#define BN_VLIST_POINT_DRAW	12	/**< @brief Draw a single point */
+#define BN_VLIST_POINT_SIZE	13	/**< @brief specify point pixel size */
+#define BN_VLIST_LINE_WIDTH	14	/**< @brief specify line pixel width */
+#define BN_VLIST_CMD_MAX	14	/**< @brief Max command number */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
@@ -4133,6 +4147,32 @@ struct bn_vlist  {
 	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
     }
+
+/** Set a point size to apply to the vlist elements that follow. */
+#define BN_VLIST_SET_POINT_SIZE(_free_hd, _dest_hd, _size) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	_vp->pt[_vp->nused][0] = (_size); \
+	_vp->cmd[_vp->nused++] = BN_VLIST_POINT_SIZE; \
+}
+
+/** Set a line width to apply to the vlist elements that follow. */
+#define BN_VLIST_SET_LINE_WIDTH(_free_hd, _dest_hd, _width) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	_vp->pt[_vp->nused][0] = (_width); \
+	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
+}
 
 /**
  * B N _ V L B L O C K

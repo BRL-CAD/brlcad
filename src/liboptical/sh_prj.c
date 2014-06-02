@@ -456,8 +456,8 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     BU_LIST_INIT(&prj_sp->prj_images.l);
 
     if (rdebug&RDEBUG_SHADE) {
-	if ((prj_sp->prj_plfd=fopen("prj.pl", "wb")) == (FILE *)NULL) {
-	    bu_log("ERROR creating plot file prj.pl");
+	if ((prj_sp->prj_plfd=fopen("prj.plot3", "wb")) == (FILE *)NULL) {
+	    bu_log("ERROR creating plot3 file prj.plot3");
 	}
     } else {
 	prj_sp->prj_plfd = (FILE *)NULL;

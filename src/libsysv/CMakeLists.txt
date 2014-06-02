@@ -25,7 +25,6 @@ add_definitions(
 BRLCAD_ADDLIB(libsysv "${LIBSYSV_SOURCES}" "${TCL_LIBRARY}")
 SET_TARGET_PROPERTIES(libsysv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

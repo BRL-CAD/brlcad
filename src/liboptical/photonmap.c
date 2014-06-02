@@ -121,7 +121,7 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
     if (Max[1] > Max[0] && Max[1] > Max[2]) Axis = 1;
     if (Max[2] > Max[0] && Max[2] > Max[1]) Axis = 2;
 
-    /* Find Median Photon to splt by. */
+    /* Find Median Photon to split by. */
     MedianIndex = FindMedian(EList, ESize, Axis);
 
     /* Build Left and Right Lists and make sure the Median Photon is not included in either list. */
@@ -696,7 +696,7 @@ PMiss(struct application *UNUSED(ap))
  * have been emitted from the light source.  Scale = 1/(#emitted photons).
  * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
- * on the size of the scene, i.e power of light source */
+ * on the size of the scene, i.e. power of light source */
 void
 ScalePhotonPower(int map)
 {

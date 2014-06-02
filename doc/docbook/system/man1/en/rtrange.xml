@@ -22,7 +22,7 @@
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
-    <arg choice='plain'><replaceable>model.pl</replaceable></arg>
+    <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -109,7 +109,7 @@ to the given value.</para>
   <varlistentry>
   <term><option>-o</option></term>
   <listitem>
-<para><emphasis remap='B'>output.pl</emphasis>
+<para><emphasis remap='B'>output.plot3</emphasis>
 specifies a named file for output.
 By default, the plot is written to standard out.</para>
   </listitem>
@@ -121,36 +121,36 @@ By default, the plot is written to standard out.</para>
 <para>This section shows the ordinary usage of <command>rtrange</command>.  For example,</para>
 
 <literallayout remap='.nf'>
-	<userinput>rtrange -s32 model.g all.g &gt; file.pl</userinput>
+	<userinput>rtrange -s32 model.g all.g &gt; file.plot3</userinput>
 </literallayout> <!-- .fi -->
 
 <para>results in a 32 by 32 range data UNIX-plot file of the named model.</para>
 
 <para>The plotfile resulting from an <command>rtrange</command> can be viewed directly
-via <emphasis remap='I'>pl-sgi</emphasis>:</para>
+via <emphasis remap='I'>plot3-fb</emphasis>:</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>pl-sgi file.pl</emphasis>
+	<emphasis remap='I'>plot3-fb file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
-<para>It can also be rotated by <emphasis remap='B'>plrot</emphasis> and sent to a framebuffer:</para>
+<para>It can also be rotated by <emphasis remap='B'>plot3rot</emphasis> and sent to a framebuffer:</para>
 
 <literallayout remap='.nf'>
-	<userinput>plrot -a# -e# -g file.pl | pl-fb</userinput>
+	<userinput>plot3rot -a# -e# -g file.plot3 | plot3-fb</userinput>
 </literallayout> <!-- .fi -->
 
 <para>Likewise, it can be overlaid onto a solid model in <emphasis remap='I'>mged</emphasis>:</para>
 
 <literallayout remap='.nf'>
 	<emphasis remap='I'>mged&gt;</emphasis>
-	<emphasis remap='I'>overlay hide.pl</emphasis>
+	<emphasis remap='I'>overlay hide.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
 </refsect1>
 

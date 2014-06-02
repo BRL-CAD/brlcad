@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_gradient.c
  *
- *  Comments -
- *      Texture Library - Produces Gradient to be used with Blend
+ * Comments -
+ * Texture Library - Produces Gradient to be used with Blend
  *
  */
 
@@ -42,10 +42,12 @@ texture_gradient_init(struct texture_s *texture, int axis) {
     td->axis = axis;
 }
 
+
 void
 texture_gradient_free(struct texture_s *texture) {
     bu_free(texture->data, "gradient data");
 }
+
 
 void
 texture_gradient_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -65,6 +67,7 @@ texture_gradient_work(struct texture_s *texture, void *mesh, struct tie_ray_s *U
 	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[1]) : 0.0;
     }
 }
+
 
 /*
  * Local Variables:

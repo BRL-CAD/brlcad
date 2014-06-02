@@ -31,8 +31,8 @@
  * second log file.  Also for the moment it is expected that the first
  * log will correspond to a Unix-Plot file, whereas the second will
  * correspond to a pixel file.  If both images where Unix-Plot files,
- * they can be overlaid by simply concatenating them: "cat file.pl
- * file.pl >> out.pl"
+ * they can be overlaid by simply concatenating them: "cat file.plot3
+ * file.plot3 >> out.plot3"
  *
  * The program consists of three parts:
 
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
     mat_t view2model;		/* matrix for converting from view to model space */
     int ret;			/* function return code */
 
-    char usage[] = "Usage:  rtregis plot.log pix.log\n";
+    char usage[] = "Usage:  rtregis plot3.log pix.log\n";
 
     FILE *fp;
 
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 
     if (verbose) {
 	bn_mat_inv(view2model, mod2view1);
-	bn_mat_print("mod2view1-plot.log", mod2view1);
+	bn_mat_print("mod2view1-plot3.log", mod2view1);
 	bn_mat_print("mod2view2-pix.log", mod2view2);
 	fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
 		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);

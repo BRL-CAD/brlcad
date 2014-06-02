@@ -80,33 +80,40 @@ typedef double tfloat;
 	*(_t *)&((uint8_t *)_tv)[_ti] = *(_t *)&((uint8_t *)_fv)[_fi]; }
 
 typedef struct TIE_3_s {
-    tfloat v[3];
+    tfloat v[3];	/* 12-bytes or 24-bytes */
 } TIE_3;
 
 struct tie_ray_s {
-    point_t pos;    /* Position */
-    vect_t dir;    /* Direction */
-    short depth;  /* Depth */
-    short kdtree_depth;
+    point_t pos;	/* 24-bytes, Position */
+    vect_t dir;		/* 24-bytes, Direction */
+    short depth;	/* 2-bytes, Depth */
+    short kdtree_depth;	/* 2-bytes */
 };
 
 struct tie_id_s {
-    point_t pos;    /* Point */
-    vect_t norm;   /* Normal */
-    fastf_t dist;   /* Distance */
-    fastf_t alpha;	/* Barycentric Coordinate Alpha */
-    fastf_t beta;	/* Barycentric Coordinate Beta */
+    point_t pos;	/* 24-bytes, Point */
+    vect_t norm;	/* 24-bytes, Normal */
+    fastf_t dist;	/* 8-bytes, Distance */
+    fastf_t alpha;	/* 8-bytes, Barycentric Coordinate Alpha */
+    fastf_t beta;	/* 8-bytes, Barycentric Coordinate Beta */
 };
 
 struct tie_tri_s {
-    TIE_3 data[3];	/* 36-bytes, Data[0] = Point, Data[1] = Normal, Data[2] = DotProduct, VectorU, VectorV */
-    tfloat *v;		/* 8-bytes */
-    void *ptr;		/* 4-bytes */
+    TIE_3 data[3];	/* 12*3=36-bytes or 24*3=72-bytes,
+			 *
+			 * Data[0] = Point,
+			 * Data[1] = Normal,
+			 * Data[2] = DotProduct, VectorU, VectorV
+			 */
+    tfloat *v;		/* 4-bytes or 8-bytes */
+    void *ptr;		/* 4-bytes or 8-bytes */
+    uint32_t b;		/* 4-bytes (way more than we need, but helps keep alignment) */
 };
 
 struct tie_kdtree_s {
-    fastf_t axis;
-    void *data;
+    float axis; /* 4-bytes, intentionally float */
+    uint32_t b; /* 4-bytes, bit array to store data about the kdtree node */
+    void *data; /* 4-bytes or 8-bytes */
 };
 
 
@@ -117,8 +124,8 @@ struct tie_s {
     unsigned int tri_num;
     unsigned int tri_num_alloc;
     struct tie_tri_s *tri_list;
-    int stat;		/* used for testing various statistics */
-    unsigned int kdmethod;		/* Optimal or Fast */
+    int stat;			/* used for testing various statistics */
+    unsigned int kdmethod;	/* Optimal or Fast */
     point_t min, max;
     vect_t amin, amax, mid;
     fastf_t radius;

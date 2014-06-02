@@ -159,8 +159,6 @@ macro(CMAKEFILES_IN_DIR filestoignore targetdir)
   endif(NOT BRLCAD_IS_SUBBUILD)
 endmacro(CMAKEFILES_IN_DIR)
 
-
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

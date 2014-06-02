@@ -63,9 +63,9 @@ main(int argc, char **argv)
     bu_log("result: %d\n", actual_result);
 
     if(expected_result == actual_result) {
-      return 0;
+	return 0;
     } else {
-      return -1;
+	return -1;
     }
 }
 

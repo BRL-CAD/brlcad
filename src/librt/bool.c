@@ -215,7 +215,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    !(segp->seg_in.hit_dist >= -INFINITY &&
 	      segp->seg_out.hit_dist <= INFINITY)) {
 	    bu_log("rt_boolweave:  Defective %s segment %s (%.18e, %.18e) %d, %d\n",
-		   rt_functab[segp->seg_stp->st_id].ft_name,
+		   OBJ[segp->seg_stp->st_id].ft_name,
 		   segp->seg_stp->st_name,
 		   segp->seg_in.hit_dist,
 		   segp->seg_out.hit_dist,
@@ -225,7 +225,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	}
 	if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
 	    bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e, %.18e) %d, %d\n",
-		   rt_functab[segp->seg_stp->st_id].ft_name,
+		   OBJ[segp->seg_stp->st_id].ft_name,
 		   segp->seg_stp->st_name,
 		   segp->seg_in.hit_dist,
 		   segp->seg_out.hit_dist,

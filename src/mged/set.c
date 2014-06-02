@@ -368,7 +368,7 @@ set_dlist(void)
     if (mged_variables->mv_dlist) {
 	/* create display lists */
 
-	/* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
+	/* for each display manager dlp1 that shares its dml_mged_variables with save_dlp */
 	FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
 	    if (dlp1->dml_mged_variables != save_dlp->dml_mged_variables) {
 		continue;
@@ -387,7 +387,7 @@ set_dlist(void)
 	 * Free display lists if not being used by another display manager
 	 */
 
-	/* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
+	/* for each display manager dlp1 that shares its dml_mged_variables with save_dlp */
 	FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
 	    if (dlp1->dml_mged_variables != save_dlp->dml_mged_variables)
 		continue;

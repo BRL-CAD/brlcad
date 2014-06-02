@@ -34,6 +34,7 @@ extern "C" {
     /* brlcad headers */
 #include <bu.h>
 #include <wdb.h>
+#include <raytrace.h>
 }
 
 
@@ -44,15 +45,18 @@ class BRLCADWrapper
 private:
     std::string filename;
     struct rt_wdb *outfp;
+    struct db_i *dbip;
     static int sol_reg_cnt;
 
 public:
     BRLCADWrapper();
     virtual ~BRLCADWrapper();
-    bool OpenFile(const char *filename);
+    bool load(std::string &filename);
+    bool OpenFile(std::string &filename);
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
     bool WriteBrep(std::string name, ON_Brep *brep);
+    struct db_i * GetDBIP();
     bool Close();
 };
 

@@ -296,7 +296,7 @@ rt_comb_import4(
     RT_DB_INTERNAL_INIT(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
-    ip->idb_meth = &rt_functab[ID_COMBINATION];
+    ip->idb_meth = &OBJ[ID_COMBINATION];
 
     BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
@@ -1107,6 +1107,62 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
     return 0;
 }
 
+int
+db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, const char *new_name, struct bu_ptbl *stack)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *comb_leaf;
+    int done=0;
+    int changed=0;
+
+    /* Make sure the stack bu_ptbl is ready */
+    bu_ptbl_reset(stack);
+
+    if (!(dp->d_flags & RT_DIR_COMB)) return 0;
+
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    comb_leaf = comb->tree;
+
+    if (comb_leaf) {
+	while (!done) {
+	    while (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_ins(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_left;
+	    }
+
+	    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old_name)) {
+		bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+		comb_leaf->tr_l.tl_name = bu_strdup(new_name);
+		changed = 1;
+	    }
+
+	    if (BU_PTBL_END(stack) < 1) {
+		done = 1;
+		break;
+	    }
+	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_END(stack)-1);
+	    if (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_rm(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_right;
+	    }
+	}
+    }
+
+    if (changed) {
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource)) {
+	    rt_db_free_internal(&intern);
+	    return 2;
+	}
+    }
+
+    rt_db_free_internal(&intern);
+
+    /* success */
+    return 1;
+}
 
 /** @} */
 /*

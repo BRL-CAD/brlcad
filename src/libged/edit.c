@@ -1464,17 +1464,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
-#if 0
-	/* This assertion, as it is currently, is always true. */
-
-	/* A 'from' position is set; only flags that were possible
-	 * when this function was last updated should be handled.
-	 */
-	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
-				    EDIT_NATURAL_ORIGIN |
-				    EDIT_USE_TARGETS));
-#endif
-
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
 	    goto err_option_unknown;
@@ -1489,19 +1478,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	 * be called.
 	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
-
-#if 0
-	/* This assertion, as it is currently, is always true. */
-
-	/* A 'TO' position is set; only flags that were possible when
-	 * this function was last updated should be handled.
-	 */
-	BU_ASSERT(cur_arg->type ^ ~(EDIT_TO |
-				    EDIT_NATURAL_ORIGIN |
-				    EDIT_REL_DIST |
-				    EDIT_ABS_POS |
-				    EDIT_USE_TARGETS));
-#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1543,15 +1519,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			      cmd->cmd->name, cmd->cmd->usage);
 	    return GED_ERROR;
 	}
-#if 0
-	else {
-	    /* a target obj is set; only flags that were possible when
-	     * this function was last updated should be handled
-	     */
-	    BU_ASSERT(cur_arg->type ^ ~(EDIT_TARGET_OBJ |
-					EDIT_NATURAL_ORIGIN));
-	}
-#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')

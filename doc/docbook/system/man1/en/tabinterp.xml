@@ -373,13 +373,13 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:</para>
 
-<para>   cut -f5,6,7 table.final | xyz-pl &gt; aim.pl
+<para>   cut -f5,6,7 table.final | xyz-pl &gt; aim.plot3
 <!-- .br -->
-   cut -f1,5,6,7 table.final | txyz-pl &gt; aim.pl</para>
+   cut -f1,5,6,7 table.final | txyz-pl &gt; aim.plot3</para>
 
 <para>Similarly, the position of the main object can be viewed with</para>
 
-<para>   cut -f2,3,4 table.final | xyz-pl &gt; obj.pl</para>
+<para>   cut -f2,3,4 table.final | xyz-pl &gt; obj.plot3</para>
 
 <para><command>tabinterp</command>
 uses 0-based column numbering, while
@@ -390,14 +390,12 @@ Also, the first output column from
 is always the time.  The 0-th data column comes second.</para>
 
 <para>The plot file just created can be viewed using
-<citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 or it can be viewed in
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 by giving the command</para>
 
-<para>   overlay aim.pl</para>
+<para>   overlay aim.plot3</para>
 
 <para>to
 <emphasis remap='I'>mged.</emphasis>

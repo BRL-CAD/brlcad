@@ -33,19 +33,9 @@
 
 #include "bu.h"
 
-
-char *options = "h";
-char *progname = "(noname)";
-
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void
-usage(void)
-{
-    bu_exit(1, "Usage: %s [ file ]\n", progname);
-}
-
+static const char usage[]     = "Usage: %s [ file ]\n";
+static const char optstring[] = "h?";
+static const char progname[]  = "ustats";
 
 /*
  * P A R S E _ A R G S --- Parse through command line flags
@@ -55,19 +45,17 @@ parse_args(int ac, char **av)
 {
     int c;
 
-    if (!(progname=strrchr(*av, '/')))
-	progname = *av;
-
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    case '?':
 	    case 'h':
 	    default:
-		usage(); break;
+		bu_exit(1, usage, progname);
+		break;
 	}
 
     return bu_optind;
@@ -133,7 +121,7 @@ main(int ac, char *av[])
 	}
 	bu_free(ifname, "ifname alloc from bu_realpath");
     } else if (isatty((int)fileno(stdin))) {
-	usage();
+	bu_exit(1, usage, progname);
     }
 
     comp_stats(stdin);

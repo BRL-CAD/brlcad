@@ -43,7 +43,6 @@ Some information pertaining to the color assignment of region identification
 numbers and the background color is prompted for on the standard input.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).

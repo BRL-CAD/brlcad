@@ -23,66 +23,85 @@
  * color one by replicating each value three times.
  *
  */
-
 #include "common.h"
-
 #include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <stdio.h>
 #include "bio.h"
-
+#include "icv.h"
 #include "bu.h"
 
-void
-printusage(void) {
-	bu_exit(3, "Usage: bw-pix [in.bw] [out.pix]\n");
+char usage[] = "\
+Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
+[-o out_file.pix] [file.pix] > [out_file.pix]\n";
+
+char *out_file = NULL;
+char *in_file = NULL;
+int inx=0, iny=0;
+
+int
+get_args(int argc, char **argv)
+{
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "s:w:n:o:h?")) != -1) {
+	switch (c) {
+	    case 'o':
+		out_file = bu_optarg;
+		break;
+	    case 's' :
+               inx = iny = atoi(bu_optarg);
+               break;
+            case 'w' :
+               inx = atoi(bu_optarg);
+               break;
+            case 'n' :
+               iny = atoi(bu_optarg);
+               break;
+	    case 'h':
+	    default:		/* '?' */
+		return 0;
+	}
+    }
+
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
+	    return 0;
+	}
+    } else {
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
+    }
+
+
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
+	return 0;
+    }
+
+    if (argc > ++bu_optind) {
+	bu_log("bw-pix: excess argument(s) ignored\n");
+    }
+
+    return 1;		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-    unsigned char ibuf[1024], obuf[3*1024];
-    size_t in, out, num;
-    FILE *finp, *foutp;
-
-    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
-	printusage();
-
-    /* check for input file */
-    if (argc > 1) {
-	if ((finp = fopen(argv[1], "rb")) == NULL) {
-	    bu_exit(1, "bw-pix: can't open \"%s\" for reading\n", argv[1]);
-	}
-    } else
-	finp = stdin;
-
-    /* check for output file */
-    if (argc > 2) {
-	if ((foutp = fopen(argv[2], "wb")) == NULL) {
-	    bu_exit(2, "bw-pix: can't open \"%s\" for writing\n", argv[2]);
-	}
-    } else
-	foutp = stdout;
-
-    if (argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp)))
-	printusage();
-
-    while ((num = fread(ibuf, sizeof(char), 1024, finp)) > 0) {
-	size_t ret;
-	for (in = out = 0; in < num; in++, out += 3) {
-	    obuf[out] = ibuf[in];
-	    obuf[out+1] = ibuf[in];
-	    obuf[out+2] = ibuf[in];
-	}
-	ret = fwrite(obuf, sizeof(char), 3*num, foutp);
-	if (ret == 0) {
-	    perror("fwrite");
-	    break;
-	}
+    icv_image_t *img;
+    if (!get_args(argc, argv)) {
+	bu_log("%s", usage);
+	return 1;
     }
+
+    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    if (img == NULL)
+	return 1;
+    icv_gray2rgb(img);
+    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_destroy(img);
     return 0;
 }
-
 
 /*
  * Local Variables:

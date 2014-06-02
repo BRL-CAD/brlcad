@@ -1126,13 +1126,13 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 't':		/* calculational tolerance */

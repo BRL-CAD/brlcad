@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file subroutines.c
- *
- *  Author -
- *	S.Coates - 18 November 1991
- *
- */
-
-/*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */
 
 #include "common.h"
 
@@ -32,26 +24,27 @@
 #include "vmath.h"
 
 
-/*  Subroutine to rotate a point, given a point (3 coordinates)  */
-/*  and three angles (in radians).  */
-
-void rotate(double *p, double *a, double *np)
+/* Subroutine to rotate a point, given a point (3 coordinates) and
+ * three angles (in radians).
+ */
+void
+rotate(double *p, double *a, double *np)
 {
 
-    /*  p[3]  - The point brought in where p[0] is the x-coordinate,  */
-    /*	    p[1] is the y-coordinate, and p[2] is the z-  */
+    /* p[3]  - The point brought in where p[0] is the x-coordinate,  */
+    /*	    p[1] is the y-coordinate, and p[2] is the z- */
     /*	    coordinate.  */
-    /*  a[3]  - The angle (in degrees) for rotation brought in,  */
+    /* a[3]  - The angle (in degrees) for rotation brought in,  */
     /*	    where a[0] is the rotation about the x-axis,  */
     /*	    a[1] is the rotation about the y-axis, and a[2]  */
     /*	    is the rotation about the z-axis.  */
-    /*  np[3] - The rotated point that is passed back, where np[0]  */
+    /* np[3] - The rotated point that is passed back, where np[0]  */
     /*	    is the x-coordinate, np[1] is the y-coordinate,  */
     /*	    and np[2] is the z-coordinate.  */
 
-    double sa[3], ca[3];	/*  Sine and cosine of each angle.  */
+    double sa[3], ca[3];	/* Sine and cosine of each angle.  */
 
-    /*  Find sine and cosine of each angle.  */
+    /* Find sine and cosine of each angle.  */
     sa[0] = sin(a[0]);
     sa[1] = sin(a[1]);
     sa[2] = sin(a[2]);
@@ -60,8 +53,8 @@ void rotate(double *p, double *a, double *np)
     ca[1] = cos(a[1]);
     ca[2] = cos(a[2]);
 
-    /*  Do rotation.  The rotation is as follows.  */
-    /*      R[z] * R[y] * R[x] * P  */
+    /* Do rotation.  The rotation is as follows.  */
+    /* R[z] * R[y] * R[x] * P */
     np[0] = p[0]         * ca[1] * ca[2]
 	+ p[1] * sa[0] * sa[1] * ca[2]
 	+ p[2] * ca[0] * sa[1] * ca[2]
@@ -73,34 +66,31 @@ void rotate(double *p, double *a, double *np)
 	+ p[1] * ca[0]         * ca[2]
 	- p[2] * sa[0]         * ca[2];
     np[2] = (-p[0])         * sa[1]
-	+   p[1]  * sa[0] * ca[1]
-	+   p[2]  * ca[0] * ca[1];
-
-/*
- *	printf("End of subroutine\n");
- *	(void)fflush(stdout);
- */
+	+ p[1]  * sa[0] * ca[1]
+	+ p[2]  * ca[0] * ca[1];
 
     return;
 
 }
 
 
-/*  Subroutine to receive an angle in degrees and return  */
-/*  the angle in radians.  */
-
-double radians(double a)
+/* Subroutine to receive an angle in degrees and return the angle in
+ * radians.
+ */
+double
+radians(double a)
 {
 
-    /*  a - Angle in degrees.  */
+    /* a - Angle in degrees.  */
 
-    double b;	/*  Angle in radians.  */
+    double b;	/* Angle in radians.  */
 
     b = a * DEG2RAD;
 
     return b;
 
 }
+
 
 /*
  * Local Variables:
