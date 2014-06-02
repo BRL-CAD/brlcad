@@ -290,6 +290,7 @@ sub extract_grammar {
     $prod_href->{$curr_prod} = [];
     print "WARNING:  production rule '$curr_prod' has no children.\n";
   }
+  push @{$prods_aref}, $curr_prod;
 
   return $maxCAPSlen;
 
