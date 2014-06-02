@@ -5218,7 +5218,7 @@
 	  this is incredibly presumptuous and volatile to struct member
 	  type sizes, 32-bit vs 64-bit compilation, implicit
 	  padding/alignment issues, and more.
-	  
+
 	  This gets TIE working on 32-bit compilation (and generally more
 	  portably all around) by extracting those bit values that were
 	  being packed into their own struct element (for both the kdtree
