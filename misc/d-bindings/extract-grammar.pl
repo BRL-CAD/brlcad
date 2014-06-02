@@ -60,10 +60,12 @@ my %prod  = (); # hash of production names and their children
 my @prods = (); # retain order as read
 
 my $maxCAPSlen = extract_grammar(\%prod, \@prods);
+print  "# DEBUG: max caps len = $maxCAPSlen\n"
+  if $debug;
 
 if ($debug) {
-  # chars allowed for CAPS prod name plus a colon plus two spaces
-  my $spaces = $maxCAPSlen + 3;
+  # chars allowed for CAPS prod name plus a colon plus one space
+  my $spaces = $maxCAPSlen + 2;
 
   print "# C grammar:\n";
   foreach my $p (@prods) {
@@ -76,7 +78,7 @@ if ($debug) {
     else {
       my $len = length $p;
       my $sp  = $spaces;
-      $sp -= $len - 1; # space for prod name plus colon
+      $sp -= ($len + 1); # space for prod name plus colon
       printf "$p:%-*.*s", $sp, $sp, ' ';
     }
     for (my $i = 0; $i < $nc; ++$i) {
@@ -228,9 +230,13 @@ sub extract_grammar {
 	push @{$prods_aref}, $curr_prod;
       }
       $curr_prod = $key;
-      my $len = length $key;
-      $maxCAPSlen = $len
-	if $len > $maxCAPSlen;
+
+      # prod names in CAPS are special
+      if ($key =~ m{[A-Z]+}) {
+	my $len = length $key;
+	$maxCAPSlen = $len
+	  if $len > $maxCAPSlen;
+      }
 
       # rejoin the line and reprocess it
       my $pline = join(' ', @d);
