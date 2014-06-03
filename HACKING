@@ -1310,7 +1310,7 @@ Release steps are as follows:
     # NON-AUTO: NEWS
     # NON-AUTO: README
     # NON-AUTO: include/conf/PATCH
-    # NON-AUTO: include/conv/MINOR (See VERSION NUMBERS & COMPATIBILITY section.)
+    # NON-AUTO: include/conf/MINOR (See VERSION NUMBERS & COMPATIBILITY section.)
     # NON-AUTO: misc/debian/changelog
     # NON-AUTO: misc/macosx/Resources/ReadMe.rtfd/TXT.rtf
     # NON-AUTO: misc/macosx/Resources/Welcome.rtfd/TXT.rtf
