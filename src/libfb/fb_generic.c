@@ -128,6 +128,9 @@ FBIO *_if_list[] = {
 #ifdef IF_TK
     &tk_interface,
 #endif
+#ifdef IF_QT
+    &qt_interface,
+#endif
 
     &debug_interface,
 /* never get any of the following by default */

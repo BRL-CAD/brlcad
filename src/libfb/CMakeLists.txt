@@ -36,8 +36,14 @@ if(BRLCAD_ENABLE_TK)
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_QT)
+  CHECK_CXX_FLAG(Wno-float-equal)
+
   set(FBQTDEFS "-DIF_QT")
-  set(fbqt_srcs if_qt.c)
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+  set(LINKLIBS ${LINKLIBS} ${Qt5Widgets_LIBRARIES})
+  set(fbqt_srcs if_qt.cpp)
 endif(BRLCAD_ENABLE_QT)
 
 set(LIBFB_SOURCES
@@ -86,7 +92,7 @@ set(libfb_ignore_files
   if_X.c
   if_X24.c
   if_ogl.c
-  if_qt.c
+  if_qt.cpp
   if_tk.c
   if_wgl.c
   )

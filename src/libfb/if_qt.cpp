@@ -1,4 +1,4 @@
-/*                       I F _ Q T . C
+/*                       I F _ Q T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup if */
 /** @{ */
-/** @file if_qt.c
+/** @file if_qt.cpp
  *
  * A Qt Frame Buffer.
  *
@@ -28,15 +28,185 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <ctype.h>
+
+#include <QApplication>
+#include <QWindow>
 
 #include "fb.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
+struct qtinfo {
+    QApplication *qapp;
+    QWindow *win;
+
+    unsigned long qi_mode;
+    unsigned long qi_flags;
+
+    int qi_iwidth;
+    int qi_iheight;
+
+    int qi_qwidth;	/* Width of Qwindow */
+    int qi_qheight;	/* Height of Qwindow */
+};
+#define QI(ptr) ((struct qtinfo *)((ptr)->u1.p))
+#define QI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
+
+/* Flags in qi_flags */
+#define FLG_INIT    0x40	/* Display is fully initialized */
+
+/* Mode flags for open */
+#define MODE1_MASK	(1<<1)
+#define MODE1_TRANSIENT	(0<<1)
+#define MODE1_LINGERING (1<<1)
+
+#define MODEV_MASK	(7<<1)
+
+#define MODE10_MASK	(1<<10)
+#define MODE10_MALLOC	(0<<10)
+#define MODE10_SHARED	(1<<10)
+
+#define MODE11_MASK	(1<<11)
+#define MODE11_NORMAL	(0<<11)
+#define MODE11_ZAP	(1<<11)
+
+static struct modeflags {
+    char c;
+    unsigned long mask;
+    unsigned long value;
+    const char *help;
+} modeflags[] = {
+    { 'l',	MODE1_MASK, MODE1_LINGERING,
+      "Lingering window" },
+    { 't',	MODE1_MASK, MODE1_TRANSIENT,
+      "Transient window" },
+    { 's',  MODE10_MASK, MODE10_SHARED,
+      "Use shared memory backing store" },
+    { '\0', 0, 0, "" },
+};
 
 HIDDEN int
-qt_open(FBIO *UNUSED(ifp), const char *UNUSED(file), int UNUSED(width), int UNUSED(height))
+qt_setup(FBIO *ifp, int width, int height)
 {
+    struct qtinfo *qi = QI(ifp);
+    int argc = 1;
+    char *argv[] = {(char *)"Frame buffer"};
+    FB_CK_FBIO(ifp);
+
+    qi->qi_qwidth = width;
+    qi->qi_qheight = height;
+
+    qi->qapp = new QApplication(argc, argv);
+
+    qi->win = new QWindow();
+    qi->win->setWidth(width);
+    qi->win->setHeight(height);
+    qi->win->show();
+
+    return 0;
+}
+
+HIDDEN void
+qt_destroy(struct qtinfo *qi)
+{
+    if (qi) {
+	free(qi);
+    }
+}
+
+HIDDEN int
+qt_open(FBIO *ifp, const char *file, int width, int height)
+{
+    struct qtinfo *qi;
+
+    unsigned long mode;
+  /*  int getmem_stat; */
+
+    FB_CK_FBIO(ifp);
+
+    mode = MODE1_LINGERING;
+
+    if (file != NULL) {
+	const char *cp;
+	char modebuf[80];
+	char *mp;
+	int alpha;
+	struct modeflags *mfp;
+
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	    mode = 0;
+	} else {
+	    alpha = 0;
+	    mp = &modebuf[0];
+	    cp = &file[sizeof("/dev/Qt")-1];
+	    while (*cp != '\0' && !isspace((int)(*cp))) {
+		*mp++ = *cp;
+		if (isdigit((int)(*cp))) {
+		    cp++;
+		    continue;
+		}
+		alpha++;
+		for (mfp = modeflags; mfp->c != '\0'; mfp++) {
+		    if (mfp->c == *cp) {
+			mode = (mode&~mfp->mask)|mfp->value;
+			break;
+		    }
+		}
+		if (mfp->c == '\0' && *cp != '-') {
+		    fb_log("if_qt: unknown option '%c' ignored\n", *cp);
+		}
+		cp++;
+	    }
+	    *mp = '\0';
+	    if (!alpha)
+		mode |= atoi(modebuf);
+	}
+    }
+
+    if (width <= 0)
+	width = ifp->if_width;
+    if(height <= 0)
+	height = ifp->if_height;
+    if (width > ifp->if_max_width)
+	width = ifp->if_max_width;
+    if (height > ifp->if_max_height)
+	height = ifp->if_max_height;
+
+    ifp->if_width = width;
+    ifp->if_height = height;
+
+    ifp->if_xzoom = 1;
+    ifp->if_yzoom = 1;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
+
+    if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
+	NULL) {
+	fb_log("qt_open: qtinfo malloc failed\n");
+	return -1;
+    }
+    QI_SET(ifp, qi);
+
+    qi->qi_mode = mode;
+    qi->qi_iwidth = width;
+    qi->qi_iheight = height;
+
+    /* TODO allocate backing store */
+
+    /* Set up an Qt window */
+    if (qt_setup(ifp, width, height) < 0) {
+	qt_destroy(qi);
+	return -1;
+    }
+
+    /* Mark display ready */
+    qi->qi_flags |= FLG_INIT;
+
     fb_log("qt_open\n");
 
     return 0;
@@ -44,11 +214,13 @@ qt_open(FBIO *UNUSED(ifp), const char *UNUSED(file), int UNUSED(width), int UNUS
 
 
 HIDDEN int
-qt_close(FBIO *UNUSED(ifp))
+qt_close(FBIO *ifp)
 {
+    struct qtinfo *qi = QI(ifp);
+
     fb_log("qt_close\n");
 
-    return 0;
+    return qi->qapp->exec();
 }
 
 
@@ -73,7 +245,7 @@ qt_read(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(p
 HIDDEN ssize_t
 qt_write(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
-    fb_log("qt_write\n");
+    /*fb_log("qt_write\n");*/
 
     return count;
 }
@@ -225,10 +397,10 @@ FBIO qt_interface =  {
     qt_flush,		/* flush output */
     qt_free,		/* free resources */
     qt_help,		/* help message */
-    "Qt Device",	/* device description */
+    (char *)"Qt Device",/* device description */
     32*1024,		/* max width */
     32*1024,		/* max height */
-    "/dev/Qt",	/* short device name */
+    (char *)"/dev/Qt",	/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
     -1,			/* select fd */
