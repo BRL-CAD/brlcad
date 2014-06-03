@@ -25,7 +25,7 @@ set(LIBBREP_SOURCES
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
-  #opennurbs_fit.cpp
+  opennurbs_fit.cpp
   px_event.cpp
   PullbackCurve.cpp
   ssx_event.cpp
