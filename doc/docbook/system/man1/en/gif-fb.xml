@@ -28,9 +28,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<!-- .lg 0  IGNORED -->
-<para>­gif-fb
-<!-- .lg  IGNORED -->
+<para><command>g-x3d</command>
 displays on a frame buffer the images described by a
 CompuServe GIF (Graphics Interchange Format) file.</para>
 
