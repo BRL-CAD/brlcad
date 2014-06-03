@@ -52,7 +52,7 @@ extern fastf_t epsilon;
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
-struct vfont	font;
+struct vfont_file font;
 
 static void	temp_To_RGB(unsigned char *rgb, int temp);
 

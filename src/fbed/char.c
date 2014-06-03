@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bu/color.h"
 #include "fb.h"
 
 /* FIXME */
