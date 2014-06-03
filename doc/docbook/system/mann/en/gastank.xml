@@ -59,7 +59,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-h#</option></term>
+      <term><option>-H#</option></term>
       <listitem>
 	<para>
 	 Height of gas tank in millimeters.
