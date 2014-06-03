@@ -35,8 +35,6 @@
 #include <set>
 #include <map>
 
-#include "tnt.h"
-#include "jama_lu.h"
 #include "brep.h"
 
 /* interface header */
@@ -1790,97 +1788,6 @@ getKnotInterval(BSpline& bspline, double u)
     return k;
 }
 
-
-int
-getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
-{
-    // evaluate the b-spline basis function for the given parameter u
-    // place the results in N[]
-    N = 0.0;
-    if (NEAR_EQUAL(u, bspline.knots[0], PBC_TOL)) {
-	N[0] = 1.0;
-	return 0;
-    } else if (NEAR_EQUAL(u, bspline.knots[bspline.m], PBC_TOL)) {
-	N[bspline.n] = 1.0;
-	return bspline.n;
-    }
-    int k = getKnotInterval(bspline, u);
-    N[k] = 1.0;
-    for (int d = 1; d <= bspline.p; d++) {
-	double uk_1 = bspline.knots[k + 1];
-	double uk_d_1 = bspline.knots[k - d + 1];
-	N[k - d] = ((uk_1 - u) / (uk_1 - uk_d_1)) * N[k - d + 1];
-	for (int i = k - d + 1; i <= k - 1; i++) {
-	    double ui = bspline.knots[i];
-	    double ui_1 = bspline.knots[i + 1];
-	    double ui_d = bspline.knots[i + d];
-	    double ui_d_1 = bspline.knots[i + d + 1];
-	    N[i] = ((u - ui) / (ui_d - ui)) * N[i] + ((ui_d_1 - u) / (ui_d_1 - ui_1)) * N[i + 1];
-	}
-	double uk = bspline.knots[k];
-	double uk_d = bspline.knots[k + d];
-	N[k] = ((u - uk) / (uk_d - uk)) * N[k];
-    }
-    return k;
-}
-
-
-void
-printMatrix(TNT::Array1D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	printf("% 5.5f ", m[i]);
-    }
-    printf("\n");
-}
-
-
-// FIXME: this function sucks...
-void
-generateParameters(BSpline& bspline)
-{
-    double lastT = 0.0;
-    bspline.params.resize(bspline.n + 1);
-    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n + 1);
-    for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
-	double t = (double) i / (UNIVERSAL_SAMPLE_COUNT - 1);
-	TNT::Array1D<double> n = TNT::Array1D<double> (N.dim2(), N[i]);
-	getCoefficients(bspline, n, t);
-	//printMatrix(n);
-    }
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	double max = 0.0; //real.min();
-	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
-	    double f = N[j][i];
-	    double t = (double) j / (UNIVERSAL_SAMPLE_COUNT - 1);
-	    if (f > max) {
-		max = f;
-		if (j == UNIVERSAL_SAMPLE_COUNT - 1)
-		    bspline.params[i] = t;
-	    } else if (f < max) {
-		bspline.params[i] = lastT;
-		break;
-	    }
-	    lastT = t;
-	}
-    }
-}
-
-
-void
-printMatrix(TNT::Array2D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	for (int j = 0; j < m.dim2(); j++) {
-	    printf("% 5.5f ", m[i][j]);
-	}
-	printf("\n");
-    }
-}
-
 ON_NurbsCurve*
 interpolateLocalCubicCurve(ON_2dPointArray &Q)
 {
@@ -1943,7 +1850,6 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -2039,7 +1945,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -2073,39 +1978,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
 }
 
 
-void
-generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
-{
-    TNT::Array2D<double> bigN(bspline.n + 1, bspline.n + 1);
-    //printMatrix(bigN);
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
-	getCoefficients(bspline, n, bspline.params[i]);
-	//printMatrix(bigN);
-    }
-    TNT::Array2D<double> bigD(bspline.n + 1, 2);
-    for (int i = 0; i < bspline.n + 1; i++) {
-	bigD[i][0] = samples[i].x;
-	bigD[i][1] = samples[i].y;
-    }
-
-    //printMatrix(bigD);
-    //printMatrix(bigN);
-
-    JAMA::LU<double> lu(bigN);
-    assert(lu.isNonsingular() > 0);
-    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-
-    // extract the control points
-    for (int i = 0; i < bspline.n + 1; i++) {
-	ON_2dPoint& p = bspline.controls.AppendNew();
-	p.x = bigP[i][0];
-	p.y = bigP[i][1];
-    }
-}
-
-
 ON_NurbsCurve*
 newNURBSCurve(BSpline& spline, int dimension = 3)
 {
@@ -2136,26 +2008,8 @@ interpolateCurve(ON_2dPointArray &samples)
 	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
 
-#ifdef DEBUG_USE_BEZIER_CURVE_INTERPOLATION
-    ON_NurbsCurve nurbcurve;
-    ON_BezierCurve *bezier = new ON_BezierCurve(samples);
-    if (bezier->GetNurbForm(nurbcurve)) {
-	return ON_NurbsCurve::New(*bezier);
-    }
-    // build a NURBS curve, then see if it can be simplified!
-    BSpline spline;
-    spline.p = 3;
-    spline.n = samples.Count() - 1;
-    spline.m = spline.n + spline.p + 1;
-    generateKnots(spline);
-    generateParameters(spline);
-    generateControlPoints(spline, samples);
-
-    nurbs = newNURBSCurve(spline);
-#else
     // local vs. global interpolation for large point sampled curves
     nurbs = interpolateLocalCubicCurve(samples);
-#endif
 
     return nurbs;
 }

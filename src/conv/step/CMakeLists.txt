@@ -16,7 +16,6 @@ set(STEP_INCLUDE_DIRS
   ${STEPCODE_DIR}/src/cldai
   ${STEPCODE_DIR}/src/test
   ${CMAKE_BINARY_DIR}/src/other/stepcode/include
-  ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
