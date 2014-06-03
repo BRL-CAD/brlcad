@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	    numtnk = maxnumtnk;
 
 	/* Find the dimensions of the gas tanks. */
-	printf("Enter the height, width, and depth of the gas tank.\n\t");
+	printf("Enter the height, width, and depth of the gas tank (units mm).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
 	if (ret == 0) {
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 	if (dpt < SMALL_FASTF)
 	    dpt = SMALL_FASTF;
 
-	printf("Enter the radius of the corners.\n\t");
+	printf("Enter the radius of the corners (units mm).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
 	if (ret == 0) {
