@@ -4122,7 +4122,7 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
     struct rt_brep_internal *bi=(struct rt_brep_internal *)intern->idb_ptr;
     char *decoded;
     ONX_Model model;
-    if (argv[0]) {
+    if (argc == 1 && argv[0]) {
 	int decoded_size = bu_b64_decode(&decoded, argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
