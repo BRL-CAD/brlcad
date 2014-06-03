@@ -3044,112 +3044,61 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 
 PBCData *
-pullback_samples(const brlcad::SurfaceTree* surfacetree,
-		 const ON_Surface* surf,
+pullback_samples(const ON_Surface* surf,
 		 const ON_Curve* curve,
 		 double tolerance,
 		 double flatness)
 {
-    if (surfacetree) {
-	if (!surf)
-	    return NULL;
+    if (!surf)
+	return NULL;
 
-	PBCData *data = new PBCData;
-	data->tolerance = tolerance;
-	data->flatness = flatness;
-	data->curve = curve;
-	data->surf = surf;
-	data->surftree = (brlcad::SurfaceTree*)surfacetree;
+    PBCData *data = new PBCData;
+    data->tolerance = tolerance;
+    data->flatness = flatness;
+    data->curve = curve;
+    data->surf = surf;
+    data->surftree = NULL;
 
-	double tmin, tmax;
-	data->curve->GetDomain(&tmin, &tmax);
+    double tmin, tmax;
+    data->curve->GetDomain(&tmin, &tmax);
 
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    if ((tmin < 0.0) && (tmax > 0.0)) {
-		ON_2dPoint uv;
-		if (toUV(*data, uv, 0.0, PBC_TOL)) {
-		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
-			if (samples1 != NULL) {
-			    data->segments.push_back(samples1);
-			}
-			if (samples2 != NULL) {
-			    data->segments.push_back(samples2);
-			}
-		    } else {
-			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-			if (samples != NULL) {
-			    data->segments.push_back(samples);
-			}
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	if ((tmin < 0.0) && (tmax > 0.0)) {
+	    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+	    ON_3dPoint p = curve->PointAt(0.0);
+	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,quadrant,BREP_EDGE_MISS_TOLERANCE)) {
+		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
+		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
+		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+		    if (samples1 != NULL) {
+			data->segments.push_back(samples1);
+		    }
+		    if (samples2 != NULL) {
+			data->segments.push_back(samples2);
 		    }
 		} else {
-		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		    delete data;
-		    return NULL;
+		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+		    if (samples != NULL) {
+			data->segments.push_back(samples);
+		    }
 		}
 	    } else {
-		pullback_samples_from_closed_surface(data, tmin, tmax);
+		std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
+		delete data;
+		return NULL;
 	    }
 	} else {
-	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-	    if (samples != NULL) {
-		data->segments.push_back(samples);
-	    }
+	    pullback_samples_from_closed_surface(data, tmin, tmax);
 	}
-	return data;
     } else {
-	if (!surf)
-	    return NULL;
-
-	PBCData *data = new PBCData;
-	data->tolerance = tolerance;
-	data->flatness = flatness;
-	data->curve = curve;
-	data->surf = surf;
-	data->surftree = NULL;
-
-	double tmin, tmax;
-	data->curve->GetDomain(&tmin, &tmax);
-
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    if ((tmin < 0.0) && (tmax > 0.0)) {
-		ON_2dPoint uv = ON_2dPoint::UnsetPoint;
-		ON_3dPoint p = curve->PointAt(0.0);
-		ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-		int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-		if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,quadrant,BREP_EDGE_MISS_TOLERANCE)) {
-		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
-			if (samples1 != NULL) {
-			    data->segments.push_back(samples1);
-			}
-			if (samples2 != NULL) {
-			    data->segments.push_back(samples2);
-			}
-		    } else {
-			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-			if (samples != NULL) {
-			    data->segments.push_back(samples);
-			}
-		    }
-		} else {
-		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		    delete data;
-		    return NULL;
-		}
-	    } else {
-		pullback_samples_from_closed_surface(data, tmin, tmax);
-	    }
-	} else {
-	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-	    if (samples != NULL) {
-		data->segments.push_back(samples);
-	    }
+	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	if (samples != NULL) {
+	    data->segments.push_back(samples);
 	}
-	return data;
     }
+    return data;
 }
 
 

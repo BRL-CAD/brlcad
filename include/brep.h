@@ -961,8 +961,7 @@ extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim
 extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint pt,const ON_2dPoint &prev_pt, int &udir, int &vdir);
 
 extern BREP_EXPORT PBCData *
-pullback_samples(const brlcad::SurfaceTree *surfacetree,
-		 const ON_Surface *surf,
+pullback_samples(const ON_Surface *surf,
 		 const ON_Curve *curve,
 		 double tolerance = 1.0e-6,
 		 double flatness = 1.0e-3);

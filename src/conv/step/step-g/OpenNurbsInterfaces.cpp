@@ -1399,7 +1399,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	data = pullback_samples(NULL, surface, curve);
+	data = pullback_samples(surface, curve);
 	if (data == NULL) {
 	    continue;
 	}
