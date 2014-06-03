@@ -17,17 +17,21 @@
 		<cmdsynopsis>
 			<command>gdiff2</command>
 			<arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
-			<arg choice='plain'><replaceable>model1.g</replaceable></arg>
-			<arg choice='plain'><replaceable>model2.g</replaceable></arg>
+			<arg choice='plain'><replaceable>left_model.g</replaceable></arg>
+			<arg choice='opt'><replaceable>ancestor_model.g</replaceable></arg>
+			<arg choice='plain'><replaceable>right_model.g</replaceable></arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 
 
 	<refsect1 xml:id='description'><title>DESCRIPTION</title>
 		<para>
-			<emphasis remap='I'>gdiff2</emphasis> compares the two BRL-CAD models
+			<emphasis remap='I'>gdiff2</emphasis> compares BRL-CAD models
 			specified on the command line, reporting differences according to the
-			specified options.
+			specified options.  It supports a plain "diff" comparision between two
+			files, as well as a "3-way" comparison that accepts a third file with
+			"ancestoral" information that provides a context for the left and right
+			files.
 		</para>
 		<para>The following options are recognized:</para>
 		<variablelist remap="TP">
@@ -48,12 +52,12 @@
 				<listitem><para>Report objects that are the same in both model1.g and model2.g</para></listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-c</option></term>
-				<listitem><para>Report objects changed in model2.g</para></listitem>
+				<term><option>-C</option></term>
+				<listitem><para>Report objects with conflits</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-v #</option></term>
-				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, and two will go into detail on what changed in each object.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceeded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-t #</option></term>
@@ -62,6 +66,10 @@
 			<varlistentry>
 				<term><option>-F "filter_string"</option></term>
 				<listitem><para>Apply filters to the diff output, using the same set of filters available in the <command>search</command> command's search.  See the <command>search</command> manual page for more details.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-M merged_file.g</option></term>
+				<listitem><para>Merge the files being diffed into one ouput file.</para></listitem>
 			</varlistentry>
 		</variablelist>
 
