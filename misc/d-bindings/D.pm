@@ -368,8 +368,8 @@ sub convert1final {
   my $tfils_aref = shift @_; # \@tmpfils
 
   # before we open the final output file we need more intermediate
-  # processing: the $ppfil has to be parsed, either by chunks or as a
-  # whole file, and some fancy extraction and class processing done
+  # processing: the $ppfil has to be parsed and some fancy extraction
+  # and class processing done
 
   # avoid multiple blank lines
   my $prev_line_was_space = 1;
@@ -385,7 +385,7 @@ sub convert1final {
   # save processed lines for later
   my @olines = ();
 
-  # use for limiting chunk processing
+  # use for limiting chunk (object) processing
   my $nchunks = 0;
 
  LINE:
@@ -422,51 +422,8 @@ sub convert1final {
       }
     }
 
-=pod
-
-    if (!exists $CExtract::crw{$key} && !exists $CExtract::bkw{$key}) {
-      warn "unknown key '$key' at line $lnum, file '$ifil'...";
-    }
-
-    # capture second token, if any
-    my $key2 = (1 < @d) ? $d[1] : '';
-    if ($key2 && !exists $CExtract::bkw{$key2} && !exists $CExtract::crw{$key2}) {
-      warn "unknown key2 '$key2' at line $lnum, file '$ifil'...";
-    }
-
-=cut
-
-    my $res = 0;
-    if ($G::chunkparse) {
-      if ($nchunks < $G::maxchunks) {
-	($i, $prev_line_was_space, $res)
-	  = CExtract::extract_object({
-				      lines_aref  => \@lines,
-				      curr_index  => $i,
-				      olines_aref => \@olines,
-				      ofils_aref  => $ofils_aref,
-				      tfils_aref  => $tfils_aref
-				     });
-      }
-      else {
-	my $s = $nchunks > 1 ? 's' : '';
-	print "DEBUG:  last line after $nchunks chunk${s}.\n"
-	  if $G::debug;
-	last LINE;
-      }
-      ++$nchunks;
-    }
-    if ($G::quitundef && !defined $res) {
-      print "DEBUG:  last line after parse chunk failure.\n"
-	if $G::debug;
-      last LINE;
-    }
-  }
-
-  # need to parse the whole C header for correct results
-  if (!$G::chunkparse) {
-    my ($i, $prev_line_was_space, $res) = (0, 0, 0);
-    ($i, $prev_line_was_space, $res)
+    # always getting chunks
+    ($i, $prev_line_was_space)
       = CExtract::extract_object({
 				  lines_aref  => \@lines,
 				  curr_index  => $i,
@@ -474,13 +431,51 @@ sub convert1final {
 				  ofils_aref  => $ofils_aref,
 				  tfils_aref  => $tfils_aref
 				 });
-    if ($G::quitundef && !defined $res) {
-      print "DEBUG:  last line after parse chunk failure.\n"
+
+    # update number of chunks processed
+    ++$nchunks;
+
+    if ($G::maxchunks && $G::maxchunks == $nchunks) {
+      my $s = $nchunks > 1 ? 's' : '';
+      print "DEBUG:  last line after $nchunks chunk${s}.\n"
 	if $G::debug;
       last LINE;
     }
+
   }
 
+  # report number of chunks found
+  print "DEBUG:  Processed $nchunks objects...\n"
+    if $G::debug;
+
+=pod
+
+  my $res = 0;
+  if ($G::chunkparse) {
+    my $efil = sprintf "./di/tree-dump-line-%04d.txt", $first_line;
+    open my $fp, '>', $efil
+      or die "$efil: $!";
+    push @{$tfils_aref}, $efil;
+    push @{$ofils_aref}, $efil
+      if $G::debug;
+    print $fp "#=== starting dump of extracted code at input line $first_line:\n";
+    print $fp "#text: $s\n";
+
+    $res = ParsePPCHeader::parse_cfile
+      ({
+	ityp => 'str',
+	ival => $s,
+	otyp => 'fp',
+	oval => $fp,
+	first_line => $first_line,
+       });
+    print $fp "#=== ending dump of extracted code at input line $last_line\n";
+    close $fp;
+    unlink $efil
+      if !defined $res;
+  }
+
+=cut
 
   # now process @olines and write them out
 

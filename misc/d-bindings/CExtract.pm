@@ -473,34 +473,9 @@ sub extract_object {
 
   push @{$olines_aref}, @xlines_2;
 
-  my $res = 0;
-  if ($G::chunkparse) {
-    my $efil = sprintf "./di/tree-dump-line-%04d.txt", $first_line;
-    open my $fp, '>', $efil
-      or die "$efil: $!";
-    push @{$tfils_aref}, $efil;
-    push @{$ofils_aref}, $efil
-      if $G::debug;
-    print $fp "#=== starting dump of extracted code at input line $first_line:\n";
-    print $fp "#text: $s\n";
-
-    $res = ParsePPCHeader::parse_cfile
-      ({
-	ityp => 'str',
-	ival => $s,
-	otyp => 'fp',
-	oval => $fp,
-	first_line => $first_line,
-       });
-    print $fp "#=== ending dump of extracted code at input line $last_line\n";
-    close $fp;
-    unlink $efil
-      if !defined $res;
-  }
-
   my $prev_line_was_space = 0;
 
-  return ($last_index, $prev_line_was_space, $res);
+  return ($last_index, $prev_line_was_space);
 
 } # extract_object
 
