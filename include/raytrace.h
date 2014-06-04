@@ -904,16 +904,6 @@ struct directory {
 #define RT_DIR_USED     0x80  /**< @brief One bit, used similar to d_nref */
 #define RT_DIR_INMEM    0x100 /**< @brief object is in memory (only) */
 
-
-#define DIR_NULL     RT_DIR_NULL     /* DEPRECATED */
-#define DIR_SOLID    RT_DIR_SOLID    /* DEPRECATED */
-#define DIR_COMB     RT_DIR_COMB     /* DEPRECATED */
-#define DIR_REGION   RT_DIR_REGION   /* DEPRECATED */
-#define DIR_HIDDEN   RT_DIR_HIDDEN   /* DEPRECATED */
-#define DIR_NON_GEOM RT_DIR_NON_GEOM /* DEPRECATED */
-#define DIR_USED     RT_DIR_USED     /* DEPRECATED */
-
-
 /**< @brief Args to db_lookup() */
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
@@ -3035,37 +3025,6 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  * Return the new pointer for what was previously the last element.
  */
 RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
-
-/* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a, b, 0.001)) */
-
-/**
- * Compares two floating point numbers.  If they are within "epsilon"
- * of each other, they are considered the same.
- *
- * NOTE: This is a "fuzzy" difference.  It is important NOT to use the
- * results of this function in compound comparisons, because a return
- * of 0 makes no statement about the PRECISE relationships between the
- * two numbers.  E.g., * if (rt_fdiff(a, b) <= 0) is poison!
- *
- * Returns -
- * -1 if a < b
- *  0 if a ~= b
- * +1 if a > b
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
-DEPRECATED RT_EXPORT extern int rt_fdiff(double a, double b);
-/* DEPRECATED: Relative Difference (use EQUAL(a, b)) */
-
-/**
- * Compute the relative difference of two floating point numbers.
- *
- * Returns 0.0 if exactly the same, otherwise ratio of difference,
- * relative to the larger of the two (range 0.0-1.0)
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
-DEPRECATED RT_EXPORT extern double rt_reldiff(double a, double b);
 
 /* Print a soltab */
 RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
