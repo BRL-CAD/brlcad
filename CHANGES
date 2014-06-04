@@ -235,7 +235,6 @@ SGI-specific tools
 Dunn camera and Canon printer tools
 	dunncolor [ deprecated 7.16 ]
 	dunnsnap [ deprecated 7.16 ]
-	canonize [ deprecated 7.16 ]
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]

@@ -89,7 +89,6 @@ set(level_3_dirs
   brlman
   burst
   bwish
-  canon
   conv
   fb
   fbed
