@@ -34,7 +34,7 @@
 #include "fb.h"
 
 /* FIXME */
-#include "../vfont/vfont.h"
+#include "../libbu/vfont.h"
 
 #include "./std.h"
 #include "./ascii.h"

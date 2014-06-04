@@ -40,6 +40,7 @@ set(LIBBU_SOURCES
   file.c
   fnmatch.c
   getcwd.c
+  getfont.c
   gethostname.c
   getopt.c
   globals.c
@@ -104,6 +105,9 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
+BRLCAD_ADDDATA(fix.6r vfont)
+BRLCAD_ADDDATA(nonie.r.12 vfont)
+
 add_subdirectory(tests)
 
 set(bu_ignore_files
@@ -111,6 +115,7 @@ set(bu_ignore_files
   parallel.h
   rb_internals.h
   uce-dirent.h
+  vfont.h
   vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})
