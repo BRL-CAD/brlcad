@@ -16,55 +16,50 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>gif-fb</command>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-F </arg><arg choice="plain" rep="norepeat"><replaceable>frame</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>buffer</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-F </arg><arg choice="plain" rep="norepeat"><replaceable>frame_buffer_file</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat">-c </arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-i </arg><arg choice="plain" rep="norepeat"><replaceable>image</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>number</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-i </arg><arg choice="plain" rep="norepeat"><replaceable>image_number</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat">-o </arg>
     <arg choice="opt" rep="norepeat">-v </arg>
     <arg choice="opt" rep="norepeat">-z </arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>GIF</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>file</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>GIF_file_name</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><command>g-x3d</command>
+<para><command>gif-fb</command>
 displays on a frame buffer the images described by a
 CompuServe GIF (Graphics Interchange Format) file.</para>
 
 <refsection xml:id="options"><title>Options</title>
 <variablelist remap="TP">
   <varlistentry>
-  <term>-F <emphasis remap="I">frame buffer name</emphasis></term>
+  <term><option>-F </option><replaceable>frame_buffer_name</replaceable></term>
   <listitem>
 <para>Outputs to the specified frame buffer
 instead of the one specified by the
-<!-- .lg 0  IGNORED -->
-­FB_FILE<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
+<option>FB_FILE</option>
 environment variable
 (or the default frame buffer, if
-<!-- .lg 0  IGNORED -->
-­</emphasis>FB_FILE<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
+<option>FB_FILE</option>
 is not set).
 The frame buffer size requested will be the same as
 the input GIF screen size.
-The actual size obtained depends on details of the specific frame buffer.</emphasis></para>
+The actual size obtained depends on details of the specific frame buffer.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>­-c<emphasis remap="P-&gt;I"/></term>
+  <term><option>-c</option></term>
   <listitem>
-<!-- .lg  IGNORED -->
 <para>Uses all 8 bits per channel for color maps supplied in the GIF file,
 overriding the color resolution specified in the GIF file.
-(While technically a violation of the GIF “standard”,
+(While technically a violation of the GIF standard,
 apparently some GIF implementations assume this interpretation.)</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-i<emphasis remap="P-&gt;I"> image number</emphasis></term>
+  <term><option>-i</option></term>
   <listitem>
 <para>Displays just the specified image
 (starting counting with 1),
@@ -72,26 +67,24 @@ rather than displaying all images as the GIF specification requires.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>­-o<emphasis remap="P-&gt;I"/></term>
+  <term><option>-o</option></term>
   <listitem>
-<!-- .lg  IGNORED -->
-<para>(“overlay”)Skips the initial clearing of the frame buffer
+<para>(overlay) Skips the initial clearing of the frame buffer
 to the background color specified in the GIF file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>­-v<emphasis remap="P-&gt;I"/></term>
+  <term><option>-v</option></term>
   <listitem>
-<!-- .lg  IGNORED -->
-<para>(“verbose”)Also prints information about the GIF images
+<para>(verbose) Also prints information about the GIF images
 on the standard error output.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>­-z<emphasis remap="P-&gt;I"/></term>
+  <term><option>-z</option></term>
   <listitem>
 <!-- .lg  IGNORED -->
-<para>(“zoom”)Uses the zoom capability of the current framebuffer to
+<para>(zoom) Uses the zoom capability of the current framebuffer to
 make the image as large as possible on the screen while
 preserving a square aspect ratio to the pixels.
 This means that the zoom factor in X and Y will be equal to
@@ -99,7 +92,7 @@ the smaller of the two possible zooms.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap="I">GIF file name</emphasis></term>
+  <term><emphasis remap="I">GIF_file_name</emphasis></term>
   <listitem>
 <para>Specifies the GIF input file to be translated,
 rather than reading the file from the standard input.</para>
@@ -110,16 +103,14 @@ rather than reading the file from the standard input.</para>
 </refsection>
 
 <refsection xml:id="discussion"><title>DISCUSSION</title>
-<para>The GIF “standard” is far from an ideal specification for frame buffer images,
+<para>The GIF standard is far from an ideal specification for frame buffer images,
 but it has been widely accepted in the personal computer arena,
 and consequently there are a large number of images stored in GIF format
 on bulletin-board systems and other information services.
 Since most personal computer systems have GIF translators available for them,
-<!-- .lg 0  IGNORED -->
-­gif-fb<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
+<option>gif-fb</option>
 provides a means of converting most images from such systems
-into a form suitable for processing with other BRL-CAD utilities.</emphasis></para>
+into a form suitable for processing with other BRL-CAD utilities.</para>
 
 <para>Notice that multiple images within a single GIF file
 can achieve animation effects.</para>
@@ -128,16 +119,16 @@ can achieve animation effects.</para>
 <refsection xml:id="example"><title>EXAMPLE</title>
 <para>The following is a typical invocation:</para>
 <literallayout remap="RS" class="normal">
-<emphasis remap="I">$</emphasis>  gif-fb  image.gif<emphasis remap="P-&gt;I">
-</emphasis></literallayout> <!-- remap='RE' -->
+<option>gif-fb</option> image.gif
+</literallayout> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para>“A Standard Defining a Mechanism for the Storage and Transmission of
-Raster-Based Graphics Information”,
+<para>A Standard Defining a Mechanism for the Storage and Transmission of
+Raster-Based Graphics Information,
 June 15, 1987 (CompuServe Incorporated).
 <!-- .br -->
-<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
