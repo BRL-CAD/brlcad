@@ -377,6 +377,7 @@ typedef struct {
     mat_t		gdps_view2model;
     mat_t		gdps_model2view;
     ged_polygons	gdps_polygons;
+    fastf_t		gdps_data_vZ;
 } ged_data_polygon_state;
 
 struct ged_grid_state {
