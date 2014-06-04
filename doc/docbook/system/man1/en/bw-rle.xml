@@ -31,13 +31,13 @@
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file, converts it into a Utah Raster Toolkit
-Run-Length Encoded (RLE) format file format, and writes it to standard out.
+Run-Length Encoded (RLE) format file format, and writes it to standard output.
 If
 <emphasis remap='I'>file.bw</emphasis>
 is not specified, standard input is read.</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-C</option><replaceable>bg_val</replaceable></term>
+  <term><option>-C </option><replaceable>bg_val</replaceable></term>
   <listitem>
 <para>This option permits
 the user to specify a background color
