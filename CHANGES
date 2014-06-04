@@ -245,8 +245,6 @@ include/bu.h
 include/raytrace.h
 	rt_prep_timer() -> bu_timer() [deprecated 7.16]
 	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
-mged
-	make_bb -> bb [deprecated 7.16]
 
 7.14
 ----
@@ -300,6 +298,7 @@ include/vmath.h
 	VSCALE_2D -> V2SCALE [deprecated 7.14]
 	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
 mged
+	make_bb -> bb [deprecated 7.16]
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 	per_line [deprecated 7.14]

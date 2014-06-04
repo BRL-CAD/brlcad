@@ -1113,7 +1113,6 @@ static struct to_cmdtab to_cmds[] = {
     {"lt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_lt},
     {"m2v_point",	"x y z", 5, to_view_func, ged_m2v_point},
     {"make",	(char *)0, TO_UNLIMITED, to_make, GED_FUNC_PTR_NULL},
-    {"make_bb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_bb},
     {"make_name",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_name},
     {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_make_pnts},
     {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_match},

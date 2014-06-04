@@ -148,7 +148,7 @@ add_test arb mged
 add_test comb mged
 add_test g mged
 add_test r mged
-add_test make_bb mged
+add_test bb mged
 add_test cp mged
 add_test cpi mged
 add_test mv mged

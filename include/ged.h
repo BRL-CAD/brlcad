@@ -1407,11 +1407,6 @@ GED_EXPORT extern int ged_make(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_make_pnts(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Make a bounding box (rpp) around the specified objects
- */
-GED_EXPORT extern int ged_make_bb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Make a unique object name.
  */
 GED_EXPORT extern int ged_make_name(struct ged *gedp, int argc, const char *argv[]);

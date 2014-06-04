@@ -130,7 +130,6 @@ set(docbook_mann_EN
   lookat.xml
   ls.xml
   make.xml
-  make_bb.xml
   make_pnts.xml
   mater.xml
   matpick.xml
