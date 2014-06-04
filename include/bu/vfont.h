@@ -1,4 +1,4 @@
-/*                      V F O N T - I F . H
+/*                         V F O N T . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -20,7 +20,7 @@
 
 /** @addtogroup vfont */
 /** @{ */
-/** @file vfont-if.h
+/** @file vfont.h
  *
  * This header file describes the in-memory format used by the BRL-CAD
  * Package routines for manipulating fonts stored in the Berkeley
@@ -63,8 +63,8 @@
  *
  */
 
-#ifndef VFONT_IF_H
-#define VFONT_IF_H
+#ifndef VFONT_H
+#define VFONT_H
 
 #include "common.h"
 
@@ -125,7 +125,7 @@ BU_EXPORT extern void vfont_free(struct vfont *font);
 
 __END_DECLS
 
-#endif /* VFONT_IF_H */
+#endif /* VFONT_H */
 
 /** @} */
 /*
