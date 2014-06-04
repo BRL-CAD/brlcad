@@ -1243,7 +1243,8 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    int found_first_pt = 0;
 	    while (!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
-		if (get_closest_point(pt_2d, &face, pt_3d, st)) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			loop_anchor = pt_2d;
@@ -1252,7 +1253,13 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 			istart++;
                     }
 		} else {
-		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
 		    istart++;
 		}
@@ -1265,26 +1272,40 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	if (!trim_rev) {
 	    for (int i = istart; i < 50; i++) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if (get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
 		}
 	    }
 	} else {
 	    for (int i = 50; i > istart; i--) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if (get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
                 }
 	    }
@@ -1307,7 +1328,6 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
     if (info->brep->LoopDirection(loop) != -1 && loop_type == ON_BrepLoop::inner) {
 	info->brep->FlipLoop(loop);
     }
-    delete st;
 }
 
 
