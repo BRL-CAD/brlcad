@@ -63,7 +63,6 @@ set(level_2_dirs
   libanalyze
   libged
   liboptical
-  liborle
   libcursor
   libdm
   libfft

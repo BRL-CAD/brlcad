@@ -153,9 +153,6 @@ mged
 
 7.20
 ----
-liborle
-	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
-	pix-orle [deprecated 7.20]
 tclscripts/lib
 	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 librt
@@ -295,6 +292,9 @@ include/vmath.h
 	VMOVE_2D -> V2MOVE [deprecated 7.14]
 	VSCALE_2D -> V2SCALE [deprecated 7.14]
 	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
+liborle
+	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	pix-orle [deprecated 7.20]
 mged
 	make_bb -> bb [deprecated 7.16]
 	tops -g -u -> now default behavior [deprecated 7.14]
