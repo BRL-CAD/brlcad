@@ -26,6 +26,7 @@
     <arg choice='opt'>-x <replaceable>librt_debug_flag</replaceable></arg>
     <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
     <arg choice='opt'>-u <replaceable>units_name</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>#_of_CPUs</replaceable></arg>
     <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
     <arg choice='plain'><replaceable>infile.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
