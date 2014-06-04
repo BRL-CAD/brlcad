@@ -105,9 +105,9 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_ARB8;
     new_intern.idb_meth = &OBJ[ID_ARB8];
-    new_intern.idb_ptr = (genptr_t)arb;
+    new_intern.idb_ptr = (void *)arb;
 
-    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	return GED_ERROR;

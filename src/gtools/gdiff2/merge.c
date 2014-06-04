@@ -26,7 +26,7 @@ dp_copy(struct db_i *merged_dbip, struct db_i *source_dbip, const struct directo
     struct directory *new_dp;
     if (source_dp->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	struct rt_db_internal ip;
-	if ((new_dp = db_diradd(merged_dbip, new_name, RT_DIR_PHONY_ADDR, 0, source_dp->d_flags, (genptr_t)&source_dp->d_minor_type)) == RT_DIR_NULL) {
+	if ((new_dp = db_diradd(merged_dbip, new_name, RT_DIR_PHONY_ADDR, 0, source_dp->d_flags, (void *)&source_dp->d_minor_type)) == RT_DIR_NULL) {
 	    return -1;
 	}
 	if (rt_db_get_internal(&ip, source_dp, source_dbip, NULL, &rt_uniresource) < 0) {
@@ -111,7 +111,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
     }
     switch (avp_diff(dr)) {
 	case 0:
-	    if ((new_dp = db_diradd(merged_dbip, dr->dp_ancestor->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (genptr_t)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
+	    if ((new_dp = db_diradd(merged_dbip, dr->dp_ancestor->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (void *)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
 	    if (rt_db_get_internal(&ip, dr->dp_ancestor, ancestor_dbip, NULL, &rt_uniresource) < 0) {
@@ -122,7 +122,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		return -1;
 	    }
 	case 1:
-	    if ((new_dp = db_diradd(merged_dbip, dr->dp_left->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (genptr_t)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
+	    if ((new_dp = db_diradd(merged_dbip, dr->dp_left->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (void *)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
 	    if (rt_db_get_internal(&ip, dr->dp_left, left_dbip, NULL, &rt_uniresource) < 0) {
@@ -134,7 +134,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	    }
 	    break;
 	case 2:
-	    if ((new_dp = db_diradd(merged_dbip, dr->dp_right->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (genptr_t)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
+	    if ((new_dp = db_diradd(merged_dbip, dr->dp_right->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (void *)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
 	    if (rt_db_get_internal(&ip, dr->dp_right, right_dbip, NULL, &rt_uniresource) < 0) {
@@ -151,7 +151,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		struct bu_vls left_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_left;
 		bu_vls_sprintf(&left_name, "CONFLICT(%s).left", dr->dp_left->d_namep);
-		if ((new_dp_left = db_diradd(merged_dbip, bu_vls_addr(&left_name), RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (genptr_t)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
+		if ((new_dp_left = db_diradd(merged_dbip, bu_vls_addr(&left_name), RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (void *)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
 		if (rt_db_get_internal(&ip_left, dr->dp_left, left_dbip, NULL, &rt_uniresource) < 0) {
@@ -169,7 +169,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		struct bu_vls right_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_right;
 		bu_vls_sprintf(&right_name, "CONFLICT(%s).right", dr->dp_right->d_namep);
-		if ((new_dp_right = db_diradd(merged_dbip, bu_vls_addr(&right_name), RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (genptr_t)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
+		if ((new_dp_right = db_diradd(merged_dbip, bu_vls_addr(&right_name), RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (void *)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
 		if (rt_db_get_internal(&ip_right, dr->dp_right, right_dbip, NULL, &rt_uniresource) < 0) {
@@ -186,7 +186,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		struct bu_vls ancestor_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_ancestor;
 		bu_vls_sprintf(&ancestor_name, "CONFLICT(%s).ancestor", dr->dp_ancestor->d_namep);
-		if ((new_dp_ancestor = db_diradd(merged_dbip, bu_vls_addr(&ancestor_name), RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (genptr_t)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
+		if ((new_dp_ancestor = db_diradd(merged_dbip, bu_vls_addr(&ancestor_name), RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (void *)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
 		if (rt_db_get_internal(&ip_ancestor, dr->dp_ancestor, ancestor_dbip, NULL, &rt_uniresource) < 0) {

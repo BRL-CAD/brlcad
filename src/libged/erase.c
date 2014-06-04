@@ -202,7 +202,7 @@ ged_splitGDL(struct ged *gedp,
 	    sp->s_fullpath.fp_len = savelen;
 
 	    new_gdlp = ged_addToDisplay(gedp, pathname);
-	    bu_free((genptr_t)pathname, "ged_splitGDL pathname");
+	    bu_free((void *)pathname, "ged_splitGDL pathname");
 
 	    BU_LIST_DEQUEUE(&sp->l);
 	    BU_LIST_INSERT(&new_gdlp->gdl_headSolid, &sp->l);
@@ -219,7 +219,7 @@ ged_splitGDL(struct ged *gedp,
 		sp->s_fullpath.fp_len = savelen;
 
 		new_gdlp = ged_addToDisplay(gedp, pathname);
-		bu_free((genptr_t)pathname, "ged_splitGDL pathname");
+		bu_free((void *)pathname, "ged_splitGDL pathname");
 
 		BU_LIST_DEQUEUE(&sp->l);
 		BU_LIST_INSERT(&new_gdlp->gdl_headSolid, &sp->l);

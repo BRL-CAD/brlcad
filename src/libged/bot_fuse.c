@@ -301,9 +301,9 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern2.idb_type = ID_BOT;
     intern2.idb_meth = &OBJ[ID_BOT];
-    intern2.idb_ptr = (genptr_t)bot;
+    intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern2.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, GED_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);

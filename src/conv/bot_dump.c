@@ -87,7 +87,7 @@ main(int argc, char *argv[])
     ged_close(gedp);
     if (gedp)
 	BU_PUT(gedp, struct ged);
-    bu_free((genptr_t)av, "free argv copy");
+    bu_free((void *)av, "free argv copy");
 
     return 0;
 }

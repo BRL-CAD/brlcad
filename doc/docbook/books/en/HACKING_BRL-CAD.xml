@@ -2198,7 +2198,7 @@ main(int argc, char **argv)
  * a given combination tree hierarchy.
  */
 int
-incr_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t data)
+incr_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, void *data)
 {
   int *counter = (int*)data;
   bu_log("...incrementing...\n");

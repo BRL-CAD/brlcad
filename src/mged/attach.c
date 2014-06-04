@@ -294,7 +294,7 @@ release(char *name, int need_close)
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
     BU_LIST_DEQUEUE(&curr_dm_list->l);
     mged_slider_free_vls(curr_dm_list);
-    bu_free((genptr_t)curr_dm_list, "release: curr_dm_list");
+    bu_free((void *)curr_dm_list, "release: curr_dm_list");
 
     if (save_dm_list != DM_LIST_NULL)
 	curr_dm_list = save_dm_list;
@@ -530,28 +530,28 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
 	if (strlen(bu_vls_addr(&tmp_dmp->dm_dName))) {
 	    if (gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR) {
-		bu_free((genptr_t)curr_dm_list, "f_attach: dm_list");
+		bu_free((void *)curr_dm_list, "f_attach: dm_list");
 		curr_dm_list = o_dm_list;
 		bu_vls_free(&tmp_dmp->dm_pathName);
 		bu_vls_free(&tmp_dmp->dm_dName);
 		bu_vls_free(&tmp_vls);
-		bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
+		bu_free((void *)tmp_dmp, "mged_attach: tmp_dmp");
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
-	    bu_free((genptr_t)curr_dm_list, "f_attach: dm_list");
+	    bu_free((void *)curr_dm_list, "f_attach: dm_list");
 	    curr_dm_list = o_dm_list;
 	    bu_vls_free(&tmp_dmp->dm_pathName);
 	    bu_vls_free(&tmp_dmp->dm_dName);
 	    bu_vls_free(&tmp_vls);
-	    bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
+	    bu_free((void *)tmp_dmp, "mged_attach: tmp_dmp");
 	    return TCL_ERROR;
 	}
 
 	bu_vls_free(&tmp_dmp->dm_pathName);
 	bu_vls_free(&tmp_dmp->dm_dName);
 	bu_vls_free(&tmp_vls);
-	bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
+	bu_free((void *)tmp_dmp, "mged_attach: tmp_dmp");
     }
 
     BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
@@ -810,7 +810,7 @@ dm_var_init(struct dm_list *initial_dm_list)
     *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
     BU_ALLOC(view_state->vs_gvp, struct ged_view);
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
-    view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
+    view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;
     view_state->vs_gvp->gv_redraw_on_zoom = 0;
     view_state->vs_gvp->gv_point_scale = 1.0;

@@ -83,7 +83,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * and a distance.
      */
     BU_GET(halfp, struct half_specific);
-    stp->st_specific = (genptr_t)halfp;
+    stp->st_specific = (void *)halfp;
 
     VMOVE(halfp->half_eqn, hip->eqn);
     halfp->half_eqn[W] = hip->eqn[W];
@@ -486,7 +486,7 @@ rt_hlf_xform(
 	RT_DB_INTERNAL_INIT(op);
 	BU_ALLOC(hop, struct rt_half_internal);
 	hop->magic = RT_HALF_INTERNAL_MAGIC;
-	op->idb_ptr = (genptr_t)hop;
+	op->idb_ptr = (void *)hop;
 	op->idb_meth = &OBJ[ID_HALF];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_HALF;
@@ -760,7 +760,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "hlf ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

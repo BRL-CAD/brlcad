@@ -44,7 +44,7 @@ mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *t
     bu_vls_strcpy(&in->treetop, treetop);
     in->meth = meth;
 
-    return wdb_export(fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm);
+    return wdb_export(fp, name, (void *)in, ID_SUBMODEL, mk_conv2mm);
 }
 
 

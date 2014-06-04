@@ -671,9 +671,9 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 
-	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
+	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Failed to add ", comb_name,
 			     " to directory, aborting\n", (char *)NULL);

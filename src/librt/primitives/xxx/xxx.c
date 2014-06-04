@@ -330,7 +330,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "xxx external");
+    ep->ext_buf = (void *)bu_calloc(1, ep->ext_nbytes, "xxx external");
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
@@ -389,7 +389,7 @@ rt_xxx_ifree(struct rt_db_internal *ip)
     xxx_ip->magic = 0;			/* sanity */
 
     bu_free((char *)xxx_ip, "xxx ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

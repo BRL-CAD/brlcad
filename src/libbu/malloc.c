@@ -53,7 +53,7 @@ typedef enum {
 #define MDB_MAGIC 0x12348969
 struct memdebug {
     uint32_t magic;		/* corruption can be everywhere */
-    genptr_t mdb_addr;
+    void *mdb_addr;
     const char *mdb_str;
     size_t mdb_len;
 };
@@ -81,7 +81,7 @@ extern const char bu_strdup_message[];
  * Add another entry to the memory debug table
  */
 HIDDEN void
-memdebug_add(genptr_t ptr, size_t cnt, const char *str)
+memdebug_add(void *ptr, size_t cnt, const char *str)
 {
     register struct memdebug *mp = NULL;
 
@@ -146,7 +146,7 @@ again:
  * Check an entry against the memory debug table, based upon its address.
  */
 HIDDEN struct memdebug *
-memdebug_check(register genptr_t ptr, const char *str)
+memdebug_check(register void *ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
     register uint32_t *ip;
@@ -191,10 +191,10 @@ extern int bu_bomb_failsafe_init(void);
  *
  * type is 0 for malloc, 1 for calloc
  */
-HIDDEN genptr_t
+HIDDEN void *
 alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
-    genptr_t ptr = 0;
+    void *ptr = 0;
     register size_t size = sz;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
@@ -284,7 +284,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	*((uint32_t *)(((char *)ptr) + (cnt*size) - sizeof(uint32_t))) = MDB_MAGIC;
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mp = (struct memqdebug *)ptr;
-	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
+	ptr = (void *)(((struct memqdebug *)ptr)+1);
 	mp->m.magic = MDB_MAGIC;
 	mp->m.mdb_addr = ptr;
 	mp->m.mdb_len = cnt*size;
@@ -303,14 +303,14 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 }
 
 
-genptr_t
+void *
 bu_malloc(size_t size, const char *str)
 {
     return alloc(MALLOC, 1, size, str);
 }
 
 
-genptr_t
+void *
 bu_calloc(size_t nelem, size_t elsize, const char *str)
 {
     return alloc(CALLOC, nelem, elsize, str);
@@ -318,7 +318,7 @@ bu_calloc(size_t nelem, size_t elsize, const char *str)
 
 
 void
-bu_free(genptr_t ptr, const char *str)
+bu_free(void *ptr, const char *str)
 {
     const char *nul = "(null)";
     if (!str)
@@ -345,7 +345,7 @@ bu_free(genptr_t ptr, const char *str)
 	if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&(mp->q), MDB_MAGIC))) {
 	    fprintf(stderr, "ERROR bu_free(%p, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", ptr, str);
 	} else {
-	    ptr = (genptr_t)mp;
+	    ptr = (void *)mp;
 	    bu_semaphore_acquire(BU_SEM_MALLOC);
 	    BU_LIST_DEQUEUE(&(mp->q));
 	    bu_semaphore_release(BU_SEM_MALLOC);
@@ -373,11 +373,11 @@ bu_free(genptr_t ptr, const char *str)
 }
 
 
-genptr_t
-bu_realloc(register genptr_t ptr, size_t siz, const char *str)
+void *
+bu_realloc(register void *ptr, size_t siz, const char *str)
 {
     struct memdebug *mp=NULL;
-    genptr_t original_ptr;
+    void *original_ptr;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
     /* If bu_realloc receives a NULL pointer and zero size then bomb
@@ -443,7 +443,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	     */
 	    return ptr;
 	}
-	ptr = (genptr_t)mqp;
+	ptr = (void *)mqp;
 	BU_LIST_DEQUEUE(&(mqp->q));
     }
 
@@ -491,7 +491,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	struct memqdebug *mqp;
 	bu_semaphore_acquire(BU_SEM_MALLOC);
 	mqp = (struct memqdebug *)ptr;
-	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
+	ptr = (void *)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
 	mqp->m.mdb_len = siz;
@@ -605,7 +605,7 @@ bu_malloc_len_roundup(register int nbytes)
 
 
 void
-bu_ck_malloc_ptr(genptr_t ptr, const char *str)
+bu_ck_malloc_ptr(void *ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
     register uint32_t *ip;

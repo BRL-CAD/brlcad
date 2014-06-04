@@ -149,7 +149,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 
 
 static void
-nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
+nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -192,7 +192,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
     st.manifolds = manifolds;
     st.count = 0;
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
     return st.count;
@@ -1173,7 +1173,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct model *m;
     struct nmgregion *r1 = (struct nmgregion *)NULL;
@@ -1239,7 +1239,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct nmgregion *r1;
     union tree *curtree;

@@ -90,7 +90,7 @@ static void add_to_table (unsigned char *rgb)
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
-	    bu_realloc((genptr_t) color_tbl,
+	    bu_realloc((void *) color_tbl,
 		       color_tbl_size * 3 * sizeof(unsigned char),
 		       "color table");
     }
@@ -275,7 +275,7 @@ main (int argc, char **argv)
 		       color_tbl[best_color][GRN],
 		       color_tbl[best_color][BLU]);
 	}
-	if (fwrite((genptr_t) color_tbl[best_color],
+	if (fwrite((void *) color_tbl[best_color],
 		   3 * sizeof(unsigned char), 1, outfp) != 1)
 	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }

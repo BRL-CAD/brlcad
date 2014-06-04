@@ -82,11 +82,11 @@ __BEGIN_DECLS
 struct bu_mapped_file {
     struct bu_list l;
     char *name;		/**< bu_strdup() of file name */
-    genptr_t buf;	/**< In-memory copy of file (may be mmapped)  */
+    void *buf;	/**< In-memory copy of file (may be mmapped)  */
     size_t buflen;	/**< # bytes in 'buf'  */
     int is_mapped;	/**< 1=mmap() used, 0=bu_malloc/fread */
     char *appl;		/**< bu_strdup() of tag for application using 'apbuf'  */
-    genptr_t apbuf;	/**< opt: application-specific buffer */
+    void *apbuf;	/**< opt: application-specific buffer */
     size_t apbuflen;	/**< opt: application-specific buflen */
     time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */

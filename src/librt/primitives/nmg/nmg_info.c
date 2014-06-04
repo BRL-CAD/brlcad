@@ -1147,7 +1147,7 @@ struct fen2d_state {
 
 
 static void
-nmg_find_e_pt2_handler(uint32_t *lp, genptr_t state, int UNUSED(unused))
+nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
 {
     register struct fen2d_state *sp = (struct fen2d_state *)state;
     register struct edge *e = (struct edge *)lp;
@@ -1213,7 +1213,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
     st.ep = (struct edge *)NULL;
     st.tol = tol;
 
-    nmg_visit(magic_p, &htab, (genptr_t)&st);
+    nmg_visit(magic_p, &htab, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 
@@ -1964,7 +1964,7 @@ struct vf_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2rvf_handler(uint32_t *vp, genptr_t state, int UNUSED(unused))
+nmg_2rvf_handler(uint32_t *vp, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertex *v = (struct vertex *)vp;
@@ -2002,7 +2002,7 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2014,7 +2014,7 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_vert_a_handler(uint32_t *vp, genptr_t state, int UNUSED(unused))
+nmg_vert_a_handler(uint32_t *vp, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertexuse_a_plane *va;
@@ -2055,7 +2055,7 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2067,7 +2067,7 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edgeuse_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
+nmg_2edgeuse_handler(uint32_t *eup, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)eup;
@@ -2105,7 +2105,7 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2117,7 +2117,7 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edge_handler(uint32_t *ep, genptr_t state, int UNUSED(unused))
+nmg_2edge_handler(uint32_t *ep, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edge *e = (struct edge *)ep;
@@ -2155,7 +2155,7 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2167,7 +2167,7 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_edge_g_handler(uint32_t *ep, genptr_t state, int UNUSED(unused))
+nmg_edge_g_handler(uint32_t *ep, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
 
@@ -2214,7 +2214,7 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2226,7 +2226,7 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2face_handler(uint32_t *fp, genptr_t state, int UNUSED(unused))
+nmg_2face_handler(uint32_t *fp, void *state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct face *f = (struct face *)fp;
@@ -2264,7 +2264,7 @@ nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p)
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2309,7 +2309,7 @@ struct edge_line_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_line_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
+nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct edge_line_state *sp = (struct edge_line_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)longp;
@@ -2382,7 +2382,7 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }
@@ -2402,7 +2402,7 @@ struct e_and_v_state {
  * in the eventual application.
  */
 static void
-nmg_e_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
+nmg_e_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct edge *e = (struct edge *)longp;
@@ -2420,7 +2420,7 @@ nmg_e_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
  * A private support routine for nmg_e_and_v_tabulate().
  */
 static void
-nmg_v_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
+nmg_v_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct vertex *v = (struct vertex *)longp;
@@ -2462,7 +2462,7 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
     (void)bu_ptbl_init(eutab, 64, " eutab");
     (void)bu_ptbl_init(vtab, 64, " vtab");
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
 }

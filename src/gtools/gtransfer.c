@@ -364,7 +364,7 @@ run_server(int port)
  * returns 1 if successful
  */
 void
-send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
+send_to_server(struct db_i *dbip, struct directory *dp, void *connection)
 {
     my_data *stash;
     struct bu_external ext;
@@ -460,7 +460,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 		bu_log("Unable to lookup %s\n", geomv[i]);
 		bu_exit(EXIT_FAILURE, "ERROR: requested geometry could not be found\n");
 	    }
-	    db_functree(dbip, dp, send_to_server, send_to_server, &rt_uniresource, (genptr_t)&stash);
+	    db_functree(dbip, dp, send_to_server, send_to_server, &rt_uniresource, (void *)&stash);
 	}
     } else {
 	/* no geometry was specified so traverse the array of linked
@@ -468,7 +468,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	 * everything.
 	 */
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-	    send_to_server(dbip, dp, (genptr_t)&stash);
+	    send_to_server(dbip, dp, (void *)&stash);
 	} FOR_ALL_DIRECTORY_END;
     }
 

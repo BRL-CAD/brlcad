@@ -210,7 +210,7 @@ rt_comb_import4(
 
     for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
-	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
+	    bu_free((void *)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
 	    return -1;
 	}
@@ -302,7 +302,7 @@ rt_comb_import4(
 
     comb->tree = tree;
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
@@ -389,7 +389,7 @@ rt_comb_import4(
     if (comb->region_flag)
 	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
     return 0;
 }
@@ -671,7 +671,7 @@ db_tree_flatten_describe(
 	bu_vls_printf(vls, "\n");
     }
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, resp);
 }
 
@@ -853,9 +853,9 @@ rt_comb_ifree(struct rt_db_internal *ip)
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
 	RT_FREE_COMB_INTERNAL(comb);
-	bu_free((genptr_t)comb, "comb ifree");
+	bu_free((void *)comb, "comb ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

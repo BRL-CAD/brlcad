@@ -80,7 +80,7 @@
 	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
     } \
     ip->idb_type = ID_NULL; \
-    ip->idb_ptr = (genptr_t)NULL; \
+    ip->idb_ptr = (void *)NULL; \
     return -2
 
 
@@ -1025,7 +1025,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
     BU_GET(dsp, struct dsp_specific);
-    stp->st_specific = (genptr_t) dsp;
+    stp->st_specific = (void *) dsp;
 
     /* this works ok, because the mapped file keeps track of the
      * number of uses.  However, the binunif interface does not.
@@ -4601,7 +4601,7 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 
 
     bu_free((char *)dsp_ip, "dsp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -4778,7 +4778,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     BU_ALLOC(dsp, struct rt_dsp_internal);
 
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, "/dev/null");

@@ -569,7 +569,7 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 	    dgo_eraseobj(dgop, dpp);
 
     end:
-	bu_free((genptr_t)dpp, "eraseobjpath: directory pointers");
+	bu_free((void *)dpp, "eraseobjpath: directory pointers");
 	Tcl_Free((char *)av_orig);
     }
     bu_vls_free(&vls);
@@ -886,7 +886,7 @@ dgo_build_dpp(struct dg_obj *dgop,
 	    /* object is not currently being displayed */
 	    Tcl_AppendResult(dgop->interp, "-1", (char *)NULL);
 
-	    bu_free((genptr_t)dpp, "dgo_build_dpp: directory pointers");
+	    bu_free((void *)dpp, "dgo_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;
@@ -958,7 +958,7 @@ dgo_how_cmd(struct dg_obj *dgop,
 
 good:
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	bu_free((void *)dpp, "dgo_how_cmd: directory pointers");
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1585,9 +1585,9 @@ dgo_rt_output_handler(void *clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "dgo_rt_output_handler: run_rtp");
+	bu_free((void *)run_rtp, "dgo_rt_output_handler: run_rtp");
 
-	bu_free((genptr_t)drcdp, "dgo_rt_output_handler: drcdp");
+	bu_free((void *)drcdp, "dgo_rt_output_handler: drcdp");
 
 	return;
     }
@@ -1684,9 +1684,9 @@ dgo_rt_output_handler(void *clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "dgo_rt_output_handler: run_rtp");
+	bu_free((void *)run_rtp, "dgo_rt_output_handler: run_rtp");
 
-	bu_free((genptr_t)drcdp, "dgo_rt_output_handler: drcdp");
+	bu_free((void *)drcdp, "dgo_rt_output_handler: drcdp");
 
 	return;
     }
@@ -2112,7 +2112,7 @@ struct rtcheck {
 #ifdef TCL_OK
     Tcl_Channel chan;
 #else
-    genptr_t chan;
+    void *chan;
 #endif
 #else
     int fd;
@@ -2204,7 +2204,7 @@ dgo_rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	dgo_notify(rtcp->dgop);
 
 	/* free rtcp */
-	bu_free((genptr_t)rtcp, "dgo_rtcheck_vector_handler: rtcp");
+	bu_free((void *)rtcp, "dgo_rtcheck_vector_handler: rtcp");
 
 	return;
     }
@@ -2237,7 +2237,7 @@ dgo_rtcheck_output_handler(void *clientData, int UNUSED(mask))
 	if (rtcop->dgop->dgo_rtCmdNotify != (void (*)())0)
 	    rtcop->dgop->dgo_rtCmdNotify();
 
-	bu_free((genptr_t)rtcop, "dgo_rtcheck_output_handler: rtcop");
+	bu_free((void *)rtcop, "dgo_rtcheck_output_handler: rtcop");
 	return;
     }
 
@@ -2283,7 +2283,7 @@ dgo_rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	dgo_notify(rtcp->dgop);
 
 	/* free rtcp */
-	bu_free((genptr_t)rtcp, "dgo_rtcheck_vector_handler: rtcp");
+	bu_free((void *)rtcp, "dgo_rtcheck_vector_handler: rtcp");
 
 	return;
     }
@@ -2317,7 +2317,7 @@ dgo_rtcheck_output_handler(void *clientData, int UNUSED(mask))
 	if (rtcop->dgop->dgo_rtCmdNotify != (void (*)())0)
 	    rtcop->dgop->dgo_rtCmdNotify();
 
-	bu_free((genptr_t)rtcop, "dgo_rtcheck_output_handler: rtcop");
+	bu_free((void *)rtcop, "dgo_rtcheck_output_handler: rtcop");
 
 	return;
     }
@@ -3070,7 +3070,7 @@ dgo_set_outputHandler_cmd(struct dg_obj *dgop,
     /* We're now going to set the output handler script */
     /* First, we zap any previous script */
     if (dgop->dgo_outputHandler != NULL) {
-	bu_free((genptr_t)dgop->dgo_outputHandler, "dgo_set_outputHandler: zap");
+	bu_free((void *)dgop->dgo_outputHandler, "dgo_set_outputHandler: zap");
 	dgop->dgo_outputHandler = NULL;
     }
 
@@ -3198,7 +3198,7 @@ dgo_set_transparency_cmd(struct dg_obj *dgop,
     }
 
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "dgo_set_transparency_cmd: directory pointers");
+	bu_free((void *)dpp, "dgo_set_transparency_cmd: directory pointers");
 
     return TCL_OK;
 }
@@ -3278,7 +3278,7 @@ dgo_shaded_mode_tcl(void *clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
+dgo_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *UNUSED(client_data))
 {
     return curtree;
 }
@@ -3451,7 +3451,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     union tree *curtree;
     int dashflag;		/* draw with dashed lines */
@@ -3470,7 +3470,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 	Tcl_AppendResult(dgcdp->interp, "dgo_wireframe_leaf(",
 			 ip->idb_meth->ft_name,
 			 ") path='", sofar, "'\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     if (dgcdp->draw_solid_lines_only)
@@ -3531,7 +3531,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
  * A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
 static int
-dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *client_data)
 {
     union tree *tp;
     struct directory *dp;
@@ -3544,7 +3544,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("dgo_nmg_region_start(%s)\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
 	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
     }
@@ -3650,7 +3650,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 	Tcl_AppendResult(interp, "WARNING: Boolean evaluation of ", sofar,
 			 " failed!!!\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     } BU_UNSETJUMP;
 
     return result;
@@ -3675,7 +3675,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 	Tcl_AppendResult(interp, "WARNING: Triangulation of ", sofar,
 			 " failed!!!\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
 
     } BU_UNSETJUMP;
 
@@ -3687,7 +3687,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct nmgregion *r;
     struct bu_list vhead;
@@ -3706,12 +3706,12 @@ dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
 	Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
 			 "'\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     } else {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_log("%s:\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     if (curtree->tr_op == OP_NOP) return curtree;
@@ -3787,7 +3787,7 @@ static union tree *
 dgo_bot_check_region_end(struct db_tree_state *UNUSED(tsp),
 			 const struct db_full_path *UNUSED(pathp),
 			 union tree *curtree,
-			 genptr_t UNUSED(client_data))
+			 void *UNUSED(client_data))
 {
     return curtree;
 }
@@ -3797,7 +3797,7 @@ static union tree *
 dgo_bot_check_leaf(struct db_tree_state *tsp,
 		   const struct db_full_path *pathp,
 		   struct rt_db_internal *ip,
-		   genptr_t client_data)
+		   void *client_data)
 {
     union tree *curtree;
     int ac = 1;
@@ -3894,7 +3894,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 	    break;
     }
 
-    bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
+    bu_free((void *)av[0], "dgo_bot_check_leaf: av[0]");
 
     return curtree;
 }
@@ -4046,7 +4046,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 		    break;
 		default: {
 		    bu_log("ERROR: unexpected tree drawing option\n");
-		    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+		    bu_free((void *)dgcdp, "dgo_drawtrees: dgcdp");
 
 		    return TCL_ERROR;
 		}
@@ -4076,7 +4076,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
     switch (kind) {
 	default:
 	    bu_log("ERROR: bad kind\n");
-	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+	    bu_free((void *)dgcdp, "dgo_drawtrees: dgcdp");
 	    return -1;
 	case 1:		/* Wireframes */
 	    /*
@@ -4109,7 +4109,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 				       0,
 				       dgo_bot_check_region_end,
 				       dgo_bot_check_leaf,
-				       (genptr_t)dgcdp);
+				       (void *)dgcdp);
 		}
 	    } else
 		ret = db_walk_tree(dgop->dgo_wdbp->dbip,
@@ -4120,11 +4120,11 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 				   0,			/* take all regions */
 				   dgo_wireframe_region_end,
 				   dgo_wireframe_leaf,
-				   (genptr_t)dgcdp);
+				   (void *)dgcdp);
 	    break;
 	case 2:		/* Big-E */
 	    Tcl_AppendResult(dgop->interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
-	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+	    bu_free((void *)dgcdp, "dgo_drawtrees: dgcdp");
 	    return -1;
 	case 3: {
 	    /* NMG */
@@ -4141,7 +4141,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 			       dgo_enable_fastpath ? dgo_nmg_region_start : 0,
 			       dgo_nmg_region_end,
 			       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-			       (genptr_t)dgcdp);
+			       (void *)dgcdp);
 
 	    if (dgcdp->draw_edge_uses) {
 		dgo_cvt_vlblock_to_solids(dgop, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
@@ -4159,7 +4159,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 	       dgcdp->fastpath_count, dgcdp->fastpath_count == 1 ? "" : "s");
     }
 
-    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+    bu_free((void *)dgcdp, "dgo_drawtrees: dgcdp");
 
     if (ret < 0)
 	return -1;
@@ -4206,7 +4206,7 @@ dgo_invent_solid(struct dg_obj *dgop,
 	dgo_eraseobjall(dgop, dpp);
     }
     /* Need to enter phony name in directory structure */
-    dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&type);
+    dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &_FreeSolid.l);
@@ -4489,7 +4489,7 @@ dgo_deleteProc(void *clientData)
     dgo_free_qray(dgop);
 
     BU_LIST_DEQUEUE(&dgop->l);
-    bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
+    bu_free((void *)dgop, "dgo_deleteProc: dgop");
 }
 
 

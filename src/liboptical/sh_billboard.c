@@ -165,7 +165,7 @@ new_image(const struct bu_structparse *UNUSED(sdp),
  * -1 failure
  */
 HIDDEN int
-bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct bbd_specific *bbd_sp;
     struct rt_db_internal intern;
@@ -290,14 +290,14 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct
 
 
 HIDDEN void
-bbd_print(struct region *rp, genptr_t dp)
+bbd_print(struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, bbd_print_tab, (char *)dp);
 }
 
 
 HIDDEN void
-bbd_free(genptr_t cp)
+bbd_free(void *cp)
 {
     BU_PUT(cp, struct bbd_specific);
 }
@@ -505,7 +505,7 @@ imgdist_compare(const void *a, const void *b, void *UNUSED(arg))
  * dp is a pointer to the shader-specific struct
  */
 int
-bbd_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+bbd_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct bbd_specific *bbd_sp = (struct bbd_specific *)dp;
     union tree *tp;

@@ -3083,9 +3083,9 @@ nmg_wire_edges_to_sketch(struct model *m)
     skt->curve.count = BU_PTBL_LEN(&segs);
     skt->curve.reverse = (int *)bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
     memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
-    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (genptr_t), "curve segments");
+    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (void *), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
-	genptr_t ptr = BU_PTBL_GET(&segs, idx);
+	void *ptr = BU_PTBL_GET(&segs, idx);
 	skt->curve.segment[idx] = ptr;
     }
 

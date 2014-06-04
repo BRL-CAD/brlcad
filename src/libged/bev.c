@@ -42,7 +42,7 @@ static struct model *bev_nmg_model;
 
 
 static union tree *
-bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct bu_list vhead;
     struct ged *gedp = (struct ged *)client_data;
@@ -53,7 +53,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     if (curtree->tr_op == OP_NOP) return curtree;
@@ -176,7 +176,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 			 0,			/* take all regions */
 			 bev_facetize_region_end,
 			 nmg_booltree_leaf_tess,
-			 (genptr_t)gedp);
+			 (void *)gedp);
 
 	if (i < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
@@ -294,10 +294,10 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (genptr_t)bev_nmg_model;
+    intern.idb_ptr = (void *)bev_nmg_model;
     bev_nmg_model = (struct model *)NULL;
 
-    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;

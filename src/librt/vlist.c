@@ -125,10 +125,10 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 	if (BU_LIST_IS_EMPTY(&vbp->head[n]))
 	    vbp->head[n].forw = BU_LIST_NULL;
 
-    vbp->head = (struct bu_list *)bu_realloc((genptr_t)vbp->head,
+    vbp->head = (struct bu_list *)bu_realloc((void *)vbp->head,
 					     vbp->max * sizeof(struct bu_list),
 					     "head[]");
-    vbp->rgb = (long *)bu_realloc((genptr_t)vbp->rgb,
+    vbp->rgb = (long *)bu_realloc((void *)vbp->rgb,
 				  vbp->max * sizeof(long),
 				  "rgb[]");
 

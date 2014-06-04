@@ -258,7 +258,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
 	while (BU_LIST_NON_EMPTY(&head)) {
 	    new_ps = BU_LIST_FIRST(wdb_pipept, &head);
 	    BU_LIST_DEQUEUE(&new_ps->l);
-	    bu_free((genptr_t)new_ps, "pipe_scale_radius: new_ps");
+	    bu_free((void *)new_ps, "pipe_scale_radius: new_ps");
 	}
 	return;
     }
@@ -267,7 +267,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
     while (BU_LIST_NON_EMPTY(&head)) {
 	new_ps = BU_LIST_FIRST(wdb_pipept, &head);
 	BU_LIST_DEQUEUE(&new_ps->l);
-	bu_free((genptr_t)new_ps, "pipe_scale_radius: new_ps");
+	bu_free((void *)new_ps, "pipe_scale_radius: new_ps");
     }
 
     /* make changes to the original */
@@ -356,7 +356,7 @@ add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 		    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 			/* won't work here, so refuse to do it */
 			BU_LIST_DEQUEUE(&newpp->l);
-			bu_free((genptr_t)newpp, "add_pipept: newpp ");
+			bu_free((void *)newpp, "add_pipept: newpp ");
 			return pp;
 		    } else
 			return newpp;
@@ -406,7 +406,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 		    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 			/* won't work here, so refuse to do it */
 			BU_LIST_DEQUEUE(&newpp->l);
-			bu_free((genptr_t)newpp, "ins_pipept: newpp ");
+			bu_free((void *)newpp, "ins_pipept: newpp ");
 		    }
 }
 
@@ -450,7 +450,7 @@ del_pipept(struct wdb_pipept *ps)
 
 				return ps;
     } else
-	bu_free((genptr_t)ps, "del_pipept: ps");
+	bu_free((void *)ps, "del_pipept: ps");
 
     if (prev)
 	return prev;

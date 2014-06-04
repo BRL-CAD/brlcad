@@ -59,7 +59,7 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
     /* We're now going to set the output handler script */
     /* First, we zap any previous script */
     if (gedp->ged_output_script != NULL) {
-	bu_free((genptr_t)gedp->ged_output_script, "ged_set_output_script: zap");
+	bu_free((void *)gedp->ged_output_script, "ged_set_output_script: zap");
 	gedp->ged_output_script = NULL;
     }
 

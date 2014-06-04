@@ -70,7 +70,7 @@
  * -1 Fatal Error
  */
 int
-db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, size_t, int, genptr_t), int do_old_matter, genptr_t client_data)
+db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, size_t, int, void *), int do_old_matter, void *client_data)
 
 
 /* argument for handler */

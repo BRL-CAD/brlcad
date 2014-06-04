@@ -159,10 +159,10 @@ db_preorder_traverse(struct directory *dp,
 void
 db_functree_subtree(struct db_i *dbip,
 		    union tree *tp,
-		    void (*comb_func) (struct db_i *, struct directory *, genptr_t),
-		    void (*leaf_func) (struct db_i *, struct directory *, genptr_t),
+		    void (*comb_func) (struct db_i *, struct directory *, void *),
+		    void (*leaf_func) (struct db_i *, struct directory *, void *),
 		    struct resource *resp,
-		    genptr_t client_data)
+		    void *client_data)
 {
     struct directory *dp;
 
@@ -199,10 +199,10 @@ db_functree_subtree(struct db_i *dbip,
 void
 db_functree(struct db_i *dbip,
 	    struct directory *dp,
-	    void (*comb_func) (struct db_i *, struct directory *, genptr_t),
-	    void (*leaf_func) (struct db_i *, struct directory *, genptr_t),
+	    void (*comb_func) (struct db_i *, struct directory *, void *),
+	    void (*leaf_func) (struct db_i *, struct directory *, void *),
 	    struct resource *resp,
-	    genptr_t client_data)
+	    void *client_data)
 {
     register size_t i;
 

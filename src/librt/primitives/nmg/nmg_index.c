@@ -725,7 +725,7 @@ nmg_pr_m_struct_counts(const struct model *m, const char *str)
     NMG_CK_MODEL(m);
 
     tab = nmg_m_struct_count(&cnts, m);
-    bu_free((genptr_t)tab, "nmg_m_struct_count");
+    bu_free((void *)tab, "nmg_m_struct_count");
     nmg_pr_struct_counts(&cnts, str);
 }
 

@@ -441,7 +441,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	BU_ALLOC(bs, struct brep_specific);
 	bs->brep = bi->brep;
 	bi->brep = NULL;
-	stp->st_specific = (genptr_t)bs;
+	stp->st_specific = (void *)bs;
     }
 
     vbp = rt_vlblock_init();

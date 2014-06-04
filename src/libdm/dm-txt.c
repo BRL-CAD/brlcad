@@ -175,7 +175,7 @@ txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 
 
 HIDDEN int
-txt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+txt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     bu_log("draw called\n");
     return dmp == NULL && callback_function == NULL && data == NULL;

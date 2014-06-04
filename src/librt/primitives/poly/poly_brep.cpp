@@ -53,9 +53,9 @@ rt_pg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *to
     struct model *polym = nmg_mm();
     struct nmgregion *polyr;
 
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_pg_tess(&polyr, polym, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)polym;
+    tmp_internal->idb_ptr = (void *)polym;
     rt_nmg_brep(b, tmp_internal, tol);
 
     FREE_MODEL(polym);

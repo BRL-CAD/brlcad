@@ -696,7 +696,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path*)NULL;
     }
     if (arg->vector) {
@@ -880,7 +880,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 
     if (!coord) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_full_path");
+	bu_free((void *)arg->object, "db_full_path");
 	arg->object = (struct db_full_path *)NULL;
     }
 
@@ -1874,7 +1874,7 @@ convert_obj:
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
@@ -1883,7 +1883,7 @@ convert_obj:
     }
     if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"

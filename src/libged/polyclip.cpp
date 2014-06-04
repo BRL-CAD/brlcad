@@ -42,7 +42,7 @@ struct segment_node {
     struct bu_list l;
     int reverse;
     int used;
-    genptr_t segment;
+    void *segment;
 };
 
 struct contour_node {
@@ -282,7 +282,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
     sketch_ip->curve.count = num_verts;
     sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
-    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
+    sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
     bn_mat_inv(invRot, gdpsp->gdps_rotation);
     VSET(view, 1.0, 0.0, 0.0);
@@ -317,7 +317,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
 	    if (k) {
 		BU_ALLOC(lsg, struct line_seg);
-		sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+		sketch_ip->curve.segment[n-1] = (void *)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = n-1;
 		lsg->end = n;
@@ -328,7 +328,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
 	if (k) {
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[n-1] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = n-1;
 	    lsg->end = cstart;
@@ -336,7 +336,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     }
 
 
-    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
@@ -460,13 +460,13 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	}
 
 	/* free contour node */
-	bu_free((genptr_t)curr_cnode, "curr_cnode");
+	bu_free((void *)curr_cnode, "curr_cnode");
 
 	++j;
     }
 
     /* Clean up */
-    bu_free((genptr_t)all_segment_nodes, "all_segment_nodes");
+    bu_free((void *)all_segment_nodes, "all_segment_nodes");
     rt_db_free_internal(&intern);
 
     return gpp;
@@ -875,14 +875,14 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 end:
 
     for (i = 0; i < polyA->gp_num_contours; ++i)
-	bu_free((genptr_t)polyA_2d.p_contour[i].pc_point, "pc_point");
+	bu_free((void *)polyA_2d.p_contour[i].pc_point, "pc_point");
     for (i = 0; i < polyB->gp_num_contours; ++i)
-	bu_free((genptr_t)polyB_2d.p_contour[i].pc_point, "pc_point");
+	bu_free((void *)polyB_2d.p_contour[i].pc_point, "pc_point");
 
-    bu_free((genptr_t)polyA_2d.p_hole, "p_hole");
-    bu_free((genptr_t)polyA_2d.p_contour, "p_contour");
-    bu_free((genptr_t)polyB_2d.p_hole, "p_hole");
-    bu_free((genptr_t)polyB_2d.p_contour, "p_contour");
+    bu_free((void *)polyA_2d.p_hole, "p_hole");
+    bu_free((void *)polyA_2d.p_contour, "p_contour");
+    bu_free((void *)polyB_2d.p_hole, "p_hole");
+    bu_free((void *)polyB_2d.p_contour, "p_contour");
 
     return ret;
 }

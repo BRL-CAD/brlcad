@@ -291,7 +291,7 @@ decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
  * Avoid::ShapeRef object to the graph.
  */
 static void
-dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_data *dag, struct bu_hash_tbl *objects)
+dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_data *dag, struct bu_hash_tbl *objects)
 {
     size_t i;
     struct rt_db_internal intern;

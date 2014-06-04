@@ -112,7 +112,7 @@ fbo_deleteProc(void *clientData)
 
     bu_vls_free(&fbop->fbo_name);
     BU_LIST_DEQUEUE(&fbop->l);
-    bu_free((genptr_t)fbop, "fbo_deleteProc: fbop");
+    bu_free((void *)fbop, "fbo_deleteProc: fbop");
 }
 
 

@@ -47,7 +47,7 @@
 
 
 extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
-			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);
+			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 
@@ -346,7 +346,7 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
     RT_SKETCH_CK_MAGIC(skt);
 
     RT_DB_INTERNAL_INIT(&db_skt);
-    db_skt.idb_ptr = (genptr_t)skt;
+    db_skt.idb_ptr = (void *)skt;
 
     rt_sketch_surf_area(&area, &db_skt);
 
@@ -398,7 +398,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     }
 
     BU_GET(extr, struct extrude_specific);
-    stp->st_specific = (genptr_t)extr;
+    stp->st_specific = (void *)extr;
 
     VMOVE(extr->unit_h, eip->h);
     VUNITIZE(extr->unit_h);
@@ -1135,7 +1135,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    hits[hit_count].hit_surfno = surfno;
 	    switch (*lng) {
 		case CURVE_CARC_MAGIC:
-		    hits[hit_count].hit_private = (genptr_t)csg;
+		    hits[hit_count].hit_private = (void *)csg;
 		    VMOVE(hits[hit_count].hit_vpriv, tmp);
 		    break;
 		case CURVE_LSEG_MAGIC:
@@ -1464,7 +1464,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
 
 void
-get_indices(genptr_t seg, int *start, int *end)
+get_indices(void *seg, int *start, int *end)
 {
     struct carc_seg *csg;
     struct nurb_seg *nsg;
@@ -1501,7 +1501,7 @@ get_indices(genptr_t seg, int *start, int *end)
 
 
 static void
-get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
+get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 {
     struct edge_g_cnurb eg;
     point_t tmp_pt;
@@ -1950,7 +1950,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
     struct bn_tol tol;
     point2d_t pta, ptb;
     point2d_t dir;
-    genptr_t seg;
+    void *seg;
     fastf_t inv_len;
     int loopa_count = 0, loopb_count = 0;
     int ret=UNKNOWN;
@@ -1966,9 +1966,9 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
     tol.para = 1.0 - tol.perp;
 
     /* find points on a midpoint of a segment for each loop */
-    seg = (genptr_t)BU_PTBL_GET(loopa, 0);
+    seg = (void *)BU_PTBL_GET(loopa, 0);
     get_seg_midpoint(seg, ip, pta);
-    seg = (genptr_t)BU_PTBL_GET(loopb, 0);
+    seg = (void *)BU_PTBL_GET(loopb, 0);
     get_seg_midpoint(seg, ip, ptb);
 
     V2SUB2(dir, ptb, pta);
@@ -2058,7 +2058,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     used_seg = (int *)bu_calloc(crv->count, sizeof(int), "used_seg");
     bu_ptbl_init(&loops, 5, "loops");
     for (i = 0; i < crv->count; i++) {
-	genptr_t cur_seg;
+	void *cur_seg;
 	int loop_start = 0, loop_end = 0;
 	int seg_start = 0, seg_end = 0;
 
@@ -2171,9 +2171,9 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	BU_LIST_INIT(&RTG.rtg_vlfree);
     }
     for (i = 0; outer_loop && i<(size_t)BU_PTBL_END(outer_loop); i++) {
-	genptr_t seg;
+	void *seg;
 
-	seg = (genptr_t)BU_PTBL_GET(outer_loop, i);
+	seg = (void *)BU_PTBL_GET(outer_loop, i);
 	if (seg_to_vlist(&vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg))
 	    goto failed;
     }
@@ -2239,9 +2239,9 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	}
 
 	for (j = 0; j < (size_t)BU_PTBL_END(aloop); j++) {
-	    genptr_t seg;
+	    void *seg;
 
-	    seg = (genptr_t)BU_PTBL_GET(aloop, j);
+	    seg = (void *)BU_PTBL_GET(aloop, j);
 	    if (seg_to_vlist(&vhead, ttol, extrude_ip->V,
 			     extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg))
 		goto failed;
@@ -2604,7 +2604,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	RT_DB_INTERNAL_INIT(&tmp_ip);
 	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	tmp_ip.idb_type = ID_SKETCH;
-	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
+	tmp_ip.idb_ptr = (void *)extrude_ip->skt;
 	tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 	tmp_ip.idb_meth->ft_ifree(&tmp_ip);
     }
@@ -2612,7 +2612,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 
     bu_free(extrude_ip->sketch_name, "Extrude sketch_name");
     bu_free((char *)extrude_ip, "extrude ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -2644,7 +2644,7 @@ rt_extrude_xform(
 	BU_ALLOC(eop, struct rt_extrude_internal);
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);
-	op->idb_ptr = (genptr_t)eop;
+	op->idb_ptr = (void *)eop;
 	op->idb_meth = &OBJ[ID_EXTRUDE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_EXTRUDE;

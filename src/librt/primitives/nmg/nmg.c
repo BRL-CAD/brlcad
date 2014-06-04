@@ -107,9 +107,9 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
 
     BU_GET(nmg_s, struct nmg_specific);
-    stp->st_specific = (genptr_t)nmg_s;
+    stp->st_specific = (void *)nmg_s;
     nmg_s->nmg_model = m;
-    ip->idb_ptr = (genptr_t)NULL;
+    ip->idb_ptr = (void *)NULL;
     nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
     nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
 
@@ -355,7 +355,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * you get a new copy from disk.
      */
     nmg_merge_models(m, lm);
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 
     return 0;
 }
@@ -946,7 +946,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
  * -1 substitute pointer to within-struct list head when imported.
  */
 HIDDEN int
-reindex(genptr_t p, struct nmg_exp_counts *ecnt)
+reindex(void *p, struct nmg_exp_counts *ecnt)
 {
     long idx;
     long ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
@@ -983,12 +983,12 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
-#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((genptr_t)((i)->elem), ecnt))
+#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((void *)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) {						\
-	uint32_t _f = reindex((genptr_t)((ii)->elem.forw), ecnt);	\
+	uint32_t _f = reindex((void *)((ii)->elem.forw), ecnt);	\
 	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	*(uint32_t *)((oo)->elem.forw) = htonl(_f);			\
-	*(uint32_t *)((oo)->elem.back) = htonl(reindex((genptr_t)((ii)->elem.back), ecnt)); }
+	*(uint32_t *)((oo)->elem.back) = htonl(reindex((void *)((ii)->elem.back), ecnt)); }
 #define PUTMAGIC(_magic) *(uint32_t *)d->magic = htonl(_magic)
 
 
@@ -998,7 +998,7 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
  * Scale geometry by 'local2mm'
  */
 void
-rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
+rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
 /* base of disk array */
 /* ptr to in-memory structure */
 
@@ -1104,7 +1104,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_FACE_MAGIC);
 	    INDEXL(d, f, l);	/* face is member of fg list */
 	    INDEX(d, f, fu_p);
-	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(f->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((void *)(f->g.magic_p), ecnt));
 	    *(uint32_t *)d->flip = htonl(f->flip);
 	}
 	    return;
@@ -1163,7 +1163,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_LOOPUSE(lu);
 	    PUTMAGIC(DISK_LOOPUSE_MAGIC);
 	    INDEXL(d, lu, l);
-	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(lu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((void *)(lu->up.magic_p), ecnt));
 	    INDEX(d, lu, lumate_p);
 	    *(uint32_t *)d->orientation = htonl(lu->orientation);
 	    INDEX(d, lu, l_p);
@@ -1211,13 +1211,13 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	     * at the top of the edgeuse.  Beware on import.
 	     */
 	    INDEXL(d, eu, l2);
-	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(eu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((void *)(eu->up.magic_p), ecnt));
 	    INDEX(d, eu, eumate_p);
 	    INDEX(d, eu, radial_p);
 	    INDEX(d, eu, e_p);
 	    *(uint32_t *)d->orientation = htonl(eu->orientation);
 	    INDEX(d, eu, vu_p);
-	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(eu->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((void *)(eu->g.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_EDGE: {
@@ -1289,10 +1289,10 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_VERTEXUSE(vu);
 	    PUTMAGIC(DISK_VERTEXUSE_MAGIC);
 	    INDEXL(d, vu, l);
-	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(vu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((void *)(vu->up.magic_p), ecnt));
 	    INDEX(d, vu, v_p);
 	    if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
-	    *(uint32_t *)d->a = htonl(reindex((genptr_t)(vu->a.magic_p), ecnt));
+	    *(uint32_t *)d->a = htonl(reindex((void *)(vu->a.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_VERTEXUSE_A_PLANE: {
@@ -1403,7 +1403,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
  * Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
+rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
 /* ptr to in-memory structure */
 /* base of disk array */
 
@@ -2140,7 +2140,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     for (i=1; i < maxindex; i++) {
 	/* If we made it to the last kind, stop.  Nothing follows */
 	if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
-	if (rt_nmg_idisk((genptr_t)(ptrs[i]), (genptr_t)cp,
+	if (rt_nmg_idisk((void *)(ptrs[i]), (void *)cp,
 			 ecnt, i, ptrs, mat, (unsigned char *)(rp+1)) < 0)
 	    return -1;	/* FAIL */
 	cp += rt_nmg_disk_sizes[ecnt[i].kind];
@@ -2165,7 +2165,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
     ip->idb_meth = &OBJ[ID_NMG];
-    ip->idb_ptr = (genptr_t)m;
+    ip->idb_ptr = (void *)m;
 
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
@@ -2225,7 +2225,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     int i;
     int subscript;
     int kind_counts[NMG_N_KINDS];
-    genptr_t disk_arrays[NMG_N_KINDS];
+    void *disk_arrays[NMG_N_KINDS];
     int additional_grans;
     int tot_size;
     int kind;
@@ -2341,7 +2341,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     tot_size = 0;
     for (i = 0; i < NMG_N_KINDS; i++) {
 	if (kind_counts[i] <= 0) {
-	    disk_arrays[i] = GENPTR_NULL;
+	    disk_arrays[i] = ((void *)0);
 	    continue;
 	}
 	tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
@@ -2368,7 +2368,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
     cp = (char *)(rp+1);	/* advance one granule */
     for (i=0; i < NMG_N_KINDS; i++) {
-	disk_arrays[i] = (genptr_t)cp;
+	disk_arrays[i] = (void *)cp;
 	cp += kind_counts[i] * rt_nmg_disk_sizes[i];
     }
     /* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
@@ -2379,12 +2379,12 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
-	rt_nmg_edisk((genptr_t)(disk_arrays[kind]),
-		     (genptr_t)(ptrs[i]), ecnt, i, local2mm);
+	rt_nmg_edisk((void *)(disk_arrays[kind]),
+		     (void *)(ptrs[i]), ecnt, i, local2mm);
     }
 
-    bu_free((genptr_t)ptrs, "ptrs[]");
-    bu_free((genptr_t)ecnt, "ecnt[]");
+    bu_free((void *)ptrs, "ptrs[]");
+    bu_free((void *)ecnt, "ecnt[]");
 
     return 0;
 }
@@ -2447,7 +2447,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     int kind;
     int kind_counts[NMG_N_KINDS];
     unsigned char *dp;		/* data pointer */
-    genptr_t startdata;	/* data pointer */
+    void *startdata;	/* data pointer */
     uint32_t **real_ptrs;
     uint32_t **ptrs;
     struct nmg_exp_counts *ecnt;
@@ -2503,7 +2503,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     for (i=1; i < maxindex; i++) {
 	/* We know that the DOUBLE_ARRAY is the last thing to process */
 	if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
-	if (rt_nmg_idisk((genptr_t)(ptrs[i]), (genptr_t)dp, ecnt,
+	if (rt_nmg_idisk((void *)(ptrs[i]), (void *)dp, ecnt,
 			 i, ptrs, mat, (unsigned char *)startdata) < 0) {
 	    return -1;
 	}
@@ -2517,7 +2517,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
     ip->idb_meth = &OBJ[ ID_NMG ];
-    ip->idb_ptr = (genptr_t)m;
+    ip->idb_ptr = (void *)m;
     NMG_CK_MODEL(m);
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
@@ -2565,7 +2565,7 @@ rt_nmg_export5(
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;
     int kind_counts[NMG_N_KINDS];
-    genptr_t disk_arrays[NMG_N_KINDS];
+    void *disk_arrays[NMG_N_KINDS];
     int tot_size;
     int kind;
     int double_count;
@@ -2681,7 +2681,7 @@ rt_nmg_export5(
     tot_size = 0;
     for (i=0; i< NMG_N_KINDS; i++) {
 	if (kind_counts[i] <= 0) {
-	    disk_arrays[i] = GENPTR_NULL;
+	    disk_arrays[i] = ((void *)0);
 	    continue;
 	}
 	tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
@@ -2714,8 +2714,8 @@ rt_nmg_export5(
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
-	rt_nmg_edisk((genptr_t)(disk_arrays[kind]),
-		     (genptr_t)(ptrs[i]), ecnt, i, local2mm);
+	rt_nmg_edisk((void *)(disk_arrays[kind]),
+		     (void *)(ptrs[i]), ecnt, i, local2mm);
     }
 
     bu_free((char *)ptrs, "ptrs[]");
@@ -2761,7 +2761,7 @@ rt_nmg_ifree(struct rt_db_internal *ip)
 	nmg_km(m);
     }
 
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -3031,7 +3031,7 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     struct model *m;
 
     m = nmg_mm();
-    intern->idb_ptr = (genptr_t)m;
+    intern->idb_ptr = (void *)m;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_NMG;
     intern->idb_meth = ftp;

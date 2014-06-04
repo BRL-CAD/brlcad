@@ -72,7 +72,7 @@ void usage(void)
 }
 
 
-void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
+void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
     unsigned char *value = (unsigned char *)image->buf;

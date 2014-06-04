@@ -2866,7 +2866,7 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
 
 #ifdef USE_FBSERV
 HIDDEN void
-dmo_fbs_callback(genptr_t clientData)
+dmo_fbs_callback(void *clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -2999,7 +2999,7 @@ dmo_deleteProc(ClientData clientData)
     bu_vls_free(&dmop->dmo_name);
     DM_CLOSE(dmop->dmo_dmp);
     BU_LIST_DEQUEUE(&dmop->l);
-    bu_free((genptr_t)dmop, "dmo_deleteProc: dmop");
+    bu_free((void *)dmop, "dmo_deleteProc: dmop");
 
 }
 
@@ -3186,13 +3186,13 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 				   argv[name_index],
 				   "\n",
 				   (char *)NULL);
-	    bu_free((genptr_t)av, "dmo_open_tcl: av");
+	    bu_free((void *)av, "dmo_open_tcl: av");
 
 	    Tcl_SetObjResult(interp, obj);
 	    return TCL_ERROR;
 	}
 
-	bu_free((genptr_t)av, "dmo_open_tcl: av");
+	bu_free((void *)av, "dmo_open_tcl: av");
     }
 
     /* acquire dm_obj struct */

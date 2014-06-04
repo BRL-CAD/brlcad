@@ -350,7 +350,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     char *layer_name;
     int color_num;
@@ -522,7 +522,7 @@ main(int argc, char *argv[])
 		       0,			/* take all regions */
 		       get_layer,
 		       NULL,
-		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+		       (void *)NULL);	/* in librt/nmg_bool.c */
 
     /* end of layers section, start of ENTITIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
@@ -540,7 +540,7 @@ main(int argc, char *argv[])
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)&gcvwriter);	/* callback for gcv_region_end */
+			(void *)&gcvwriter);	/* callback for gcv_region_end */
 
     percent = 0;
     if (regions_tried>0) {

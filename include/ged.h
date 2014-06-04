@@ -424,7 +424,7 @@ struct ged_run_rt {
 #  ifdef TCL_OK
     Tcl_Channel chan;
 #  else
-    genptr_t chan;
+    void *chan;
 #  endif
 #else
     int fd;
@@ -501,7 +501,7 @@ struct ged_view {
     mat_t			gv_view2model;
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
     void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
-    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
+    void *			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;

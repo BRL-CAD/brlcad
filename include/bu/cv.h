@@ -120,7 +120,7 @@ __BEGIN_DECLS
  * @param outfmt	output format
  *
  */
-BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, size_t count);
+BU_EXPORT extern size_t bu_cv(void *out, char *outfmt, size_t size, void *in, char *infmt, size_t count);
 
 /**
  * Sets a bit vector after parsing an input string.
@@ -244,7 +244,7 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
 	done
  @endcode
  */
-BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count);
+BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count);
 
 /**
  * bu_cv_ntohss
@@ -265,33 +265,33 @@ BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size,
  */
 BU_EXPORT extern size_t bu_cv_ntohss(signed short *in, /* FIXME: in/out right? */
 				     size_t count,
-				     genptr_t out,
+				     void *out,
 				     size_t size);
 BU_EXPORT extern size_t bu_cv_ntohus(unsigned short *,
 				     size_t,
-				     genptr_t,
+				     void *,
 				     size_t);
 BU_EXPORT extern size_t bu_cv_ntohsl(signed long int *,
 				     size_t,
-				     genptr_t,
+				     void *,
 				     size_t);
 BU_EXPORT extern size_t bu_cv_ntohul(unsigned long int *,
 				     size_t,
-				     genptr_t,
+				     void *,
 				     size_t);
-BU_EXPORT extern size_t bu_cv_htonss(genptr_t,
+BU_EXPORT extern size_t bu_cv_htonss(void *,
 				     size_t,
 				     signed short *,
 				     size_t);
-BU_EXPORT extern size_t bu_cv_htonus(genptr_t,
+BU_EXPORT extern size_t bu_cv_htonus(void *,
 				     size_t,
 				     unsigned short *,
 				     size_t);
-BU_EXPORT extern size_t bu_cv_htonsl(genptr_t,
+BU_EXPORT extern size_t bu_cv_htonsl(void *,
 				     size_t,
 				     long *,
 				     size_t);
-BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
+BU_EXPORT extern size_t bu_cv_htonul(void *,
 				     size_t,
 				     unsigned long *,
 				     size_t);

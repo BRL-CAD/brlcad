@@ -121,8 +121,8 @@
 
 
 struct thread_data {
-    void (*user_func)(int, genptr_t);
-    genptr_t user_arg;
+    void (*user_func)(int, void *);
+    void *user_arg;
     int cpu_id;
     int counted;
     int affinity;
@@ -390,7 +390,7 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 
 
 void
-bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
+bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 {
     /* avoid using the 'register' keyword in here "just in case" */
 

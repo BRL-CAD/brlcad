@@ -240,8 +240,6 @@ reserved attributes and case-sensitivity
 	AIRCODE -> air [deprecated 7.16]
 	rgb -> color [deprecated 7.16]
 	oshader -> shader [deprecated 7.16]
-genptr_t/GENPTR_NULL
-	genptr_t -> void* [deprecated 7.16]
 include/bu.h
 	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/raytrace.h
@@ -278,6 +276,9 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+genptr_t/GENPTR_NULL
+	genptr_t -> void* [deprecated 7.16]
+
 any-png.sh
 	use pix tools [deprecated 7.16]
 cadbug.sh

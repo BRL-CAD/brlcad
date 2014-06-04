@@ -329,7 +329,7 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
     NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
     myhit->outbound_use = (long *)vu_p;
     myhit->inbound_use = (long *)vu_p;
-    myhit->hit.hit_private = (genptr_t)vu_p->v_p;
+    myhit->hit.hit_private = (void *)vu_p->v_p;
 
     /* get build_vertex_miss() to compute this */
     myhit->dist_in_plane = -1.0;
@@ -933,15 +933,15 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	case HMG_HIT_OUT_OUT:	/* fallthrough */
 	case HMG_HIT_IN_ON:	/* fallthrough */
 	case HMG_HIT_ON_IN:	/* two hits */
-	    myhit->hit.hit_private = (genptr_t)North_vu;
+	    myhit->hit.hit_private = (void *)North_vu;
 	    break;
 	case HMG_HIT_IN_OUT:	/* one hit - outbound */
 	case HMG_HIT_ON_OUT:	/* one hit - outbound */
-	    myhit->hit.hit_private = (genptr_t)South_vu;
+	    myhit->hit.hit_private = (void *)South_vu;
 	    break;
 	case HMG_HIT_OUT_IN:	/* one hit - inbound */
 	case HMG_HIT_OUT_ON:	/* one hit - inbound */
-	    myhit->hit.hit_private = (genptr_t)North_vu;
+	    myhit->hit.hit_private = (void *)North_vu;
 	    break;
 	default:
 	    bu_log("%s %d: vertex_neighborhood() Bad vertex in_out state = %d\n",
@@ -989,7 +989,7 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
     /* using the unit vector for ray direction */
     myhit->hit.hit_dist = VDOT(v, r_dir_unit);	  /* distance along ray */
     VMOVE(myhit->hit.hit_point, vu_p->v_p->vg_p->coord);
-    myhit->hit.hit_private = (genptr_t) vu_p->v_p;
+    myhit->hit.hit_private = (void *) vu_p->v_p;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("\tray = (%g %g %g), dir=(%g %g %g), dist=%g\n",
@@ -1117,7 +1117,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 
     NMG_GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
-    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
+    myhit->hit.hit_private = (void *)eu_p->e_p;
 
     BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
     BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -1141,7 +1141,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 	    ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
 	NMG_GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
-	myhit->hit.hit_private = (genptr_t)eu_p->e_p; \
+	myhit->hit.hit_private = (void *)eu_p->e_p; \
 	\
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
 	BU_LIST_INSERT(&rd->rd_miss, &myhit->l); \
@@ -1248,7 +1248,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     if (!inb_fu || !outb_fu) {
 	/* we hit a wire edge */
 	myhit->in_out = HMG_HIT_ANY_ANY;
-	myhit->hit.hit_private = (genptr_t)eu;
+	myhit->hit.hit_private = (void *)eu;
 	myhit->inbound_use = myhit->outbound_use = (long *)eu;
 	return;
     }
@@ -1331,19 +1331,19 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	case HMG_HIT_ON_IN:	/* two hits */
 	    myhit->inbound_use = (long *)inb_eu;
 	    myhit->outbound_use = (long *)outb_eu;
-	    myhit->hit.hit_private = (genptr_t)inb_eu;
+	    myhit->hit.hit_private = (void *)inb_eu;
 	    break;
 	case HMG_HIT_IN_OUT:	/* one hit - outbound */
 	case HMG_HIT_ON_OUT:	/* one hit - outbound */
 	    myhit->inbound_use = (long *)outb_eu;
 	    myhit->outbound_use = (long *)outb_eu;
-	    myhit->hit.hit_private = (genptr_t)outb_eu;
+	    myhit->hit.hit_private = (void *)outb_eu;
 	    break;
 	case HMG_HIT_OUT_IN:	/* one hit - inbound */
 	case HMG_HIT_OUT_ON:	/* one hit - inbound */
 	    myhit->inbound_use = (long *)inb_eu;
 	    myhit->outbound_use = (long *)inb_eu;
-	    myhit->hit.hit_private = (genptr_t)inb_eu;
+	    myhit->hit.hit_private = (void *)inb_eu;
 	    break;
 	default:
 	    bu_log("%s %d: Bad edge in/out state = %d\n",
@@ -1398,7 +1398,7 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     /* build the hit structure */
     myhit->hit.hit_dist = dist_along_ray;
     VMOVE(myhit->hit.hit_point, pt);
-    myhit->hit.hit_private = (genptr_t) eu_p->e_p;
+    myhit->hit.hit_private = (void *) eu_p->e_p;
 
     edge_hit_ray_state(rd, eu_p, myhit);
 
@@ -1451,7 +1451,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
-	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
+	    myhit->hit.hit_private = (void *)eu_p->e_p;
 
 	    if (vhit1 || vhit2) {
 		/* we hit the vertex */
@@ -1479,7 +1479,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    /* record the fact that we missed the edge */
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
-	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
+	    myhit->hit.hit_private = (void *)eu_p->e_p;
 
 	    BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -1494,7 +1494,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
-	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
+	    myhit->hit.hit_private = (void *)eu_p->e_p;
 
 	    BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -1690,7 +1690,7 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
 
     /* also rd->ray_dist_to_plane */
     myhit->hit.hit_dist = dist;
-    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+    myhit->hit.hit_private = (void *)fu_p->f_p;
 
 
     /* compute what the ray-state is before and after this
@@ -1955,7 +1955,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu->f_p, myhit);
-	    myhit->hit.hit_private = (genptr_t)fu->f_p;
+	    myhit->hit.hit_private = (void *)fu->f_p;
 	    myhit->inbound_use = myhit->outbound_use = (long *)&fu->l.magic;
 
 	    /* calculate actual hit point (x y z) */
@@ -2136,7 +2136,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 
     NMG_GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+    myhit->hit.hit_private = (void *)fu_p->f_p;
     myhit->hit.hit_surfno = fu_p->f_p->index;
     myhit->inbound_use = myhit->outbound_use = (long *)&fu_p->l.magic;
 
@@ -2160,7 +2160,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 		/* also rd->ray_dist_to_plane */
 		myhit->hit.hit_dist = dist;
 
-		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+		myhit->hit.hit_private = (void *)fu_p->f_p;
 		BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		NMG_CK_HITMISS(myhit);
 	    } else {
@@ -2253,7 +2253,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	if (code < 1) {
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+	    myhit->hit.hit_private = (void *)fu_p->f_p;
 	    myhit->hit.hit_surfno = fu_p->f_p->index;
 	    BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -2267,7 +2267,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+	    myhit->hit.hit_private = (void *)fu_p->f_p;
 	    myhit->hit.hit_surfno = fu_p->f_p->index;
 	    BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -2283,7 +2283,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 			  fu_p->f_p->min_pt, fu_p->f_p->max_pt)) {
 	NMG_GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+	myhit->hit.hit_private = (void *)fu_p->f_p;
 	myhit->hit.hit_surfno = fu_p->f_p->index;
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -2775,7 +2775,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	while (BU_LIST_WHILE(hitp, hitmiss, &rt_uniresource.re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
-	    bu_free((genptr_t)hitp, "struct hitmiss");
+	    bu_free((void *)hitp, "struct hitmiss");
 	}
     }
 

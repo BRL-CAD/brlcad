@@ -661,7 +661,7 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] != '=');
 		if (p[i] != '=') {
 		    /* cannot find '=' */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
@@ -669,17 +669,17 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] == '\0');
 		if (p[i] == '\0') {
 		    /* cannot find value */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
 		*id = atoi(&p[i]);
-		bu_free((genptr_t)copy, "getMaMID");
+		bu_free((void *)copy, "getMaMID");
 		return true;
 	    }
 	}
     }
-    bu_free((genptr_t)copy, "getMaMID");
+    bu_free((void *)copy, "getMaMID");
     return false;
 
 }

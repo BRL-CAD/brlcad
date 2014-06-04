@@ -490,7 +490,7 @@ fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int 
 	}
     }
 
-    bu_free((genptr_t)scanline, "fb_write_to_pix_fp(): scanline");
+    bu_free((void *)scanline, "fb_write_to_pix_fp(): scanline");
     return BRLCAD_OK;
 }
 

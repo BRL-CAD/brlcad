@@ -1906,7 +1906,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 
 
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

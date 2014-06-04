@@ -163,8 +163,8 @@ print_path_with_bools(struct db_full_path *full_path)
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
 			     void (*traverse_func) (struct db_full_path *path,
-						    genptr_t),
-			     genptr_t client_data)
+						    void *),
+			     void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
@@ -235,7 +235,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  */
 HIDDEN void
 db_fullpath_list(struct db_full_path *path,
-		     genptr_t client_data)
+		     void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
@@ -2073,7 +2073,7 @@ _db_search_full_paths(void *searchplan,
 	bu_ptbl_ins(full_paths, (long *)start_path);
 	lcd.dbip = dbip;
 	lcd.full_paths = full_paths;
-	db_fullpath_list(start_path, (genptr_t *)&lcd);
+	db_fullpath_list(start_path, (void **)&lcd);
 
 	for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 	    curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
@@ -2252,7 +2252,7 @@ db_search(struct bu_ptbl *search_results,
 		    bu_ptbl_ins(full_paths, (long *)start_path);
 		    /* Use the initial path to tree-walk and build a set of all paths below
 		     * start_path */
-		    db_fullpath_list(start_path, (genptr_t *)&lcd);
+		    db_fullpath_list(start_path, (void **)&lcd);
 		}
 	    }
 	}

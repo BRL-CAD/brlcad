@@ -101,9 +101,9 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
 	    /* found a match, replace it fully */
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
-		bu_free((genptr_t)app->name, "app->name");
+		bu_free((void *)app->name, "app->name");
 	    if (app->value && AVS_IS_FREEABLE(avsp, app->value))
-		bu_free((genptr_t)app->value, "app->value");
+		bu_free((void *)app->value, "app->value");
 	    app->name = bu_strdup(name);
 	    if (value) {
 		app->value = bu_strdup(value);
@@ -210,10 +210,10 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 	if (!BU_STR_EQUAL(app->name, name))
 	    continue;
 	if (app->name && AVS_IS_FREEABLE(avsp, app->name))
-	    bu_free((genptr_t)app->name, "app->name");
+	    bu_free((void *)app->name, "app->name");
 	app->name = NULL;	/* sanity */
 	if (app->value && AVS_IS_FREEABLE(avsp, app->value))
-	    bu_free((genptr_t)app->value, "app->value");
+	    bu_free((void *)app->value, "app->value");
 	app->value = NULL;	/* sanity */
 
 	/* Move last one down to replace it */
@@ -244,18 +244,18 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name)) {
-		bu_free((genptr_t)app->name, "app->name");
+		bu_free((void *)app->name, "app->name");
 	    }
 	    app->name = NULL;	/* sanity */
 	    if (app->value && AVS_IS_FREEABLE(avsp, app->value)) {
-		bu_free((genptr_t)app->value, "app->value");
+		bu_free((void *)app->value, "app->value");
 	    }
 	    app->value = NULL;	/* sanity */
 	}
 	avsp->count = 0;
     }
     if (LIKELY(avsp->avp != NULL)) {
-	bu_free((genptr_t)avsp->avp, "bu_avs_free avsp->avp");
+	bu_free((void *)avsp->avp, "bu_avs_free avsp->avp");
 	avsp->avp = NULL; /* sanity */
 	avsp->max = 0;
     }

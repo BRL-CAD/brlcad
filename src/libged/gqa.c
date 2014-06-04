@@ -826,7 +826,7 @@ get_densities_from_database(struct rt_i *rtip)
     buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
     ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free((genptr_t)buf, "density buffer");
+    bu_free((void *)buf, "density buffer");
 
     return ret;
 }
@@ -1313,7 +1313,7 @@ get_next_row(struct cstate *state)
  * This routine must be prepared to run in parallel
  */
 void
-plane_worker (int cpu, genptr_t ptr)
+plane_worker (int cpu, void *ptr)
 {
     struct application ap;
     int u, v;
@@ -2521,7 +2521,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    state.v_dir[state.i_axis] = 0;
 	    state.v = 1;
 
-	    bu_parallel(plane_worker, ncpu, (genptr_t)&state);
+	    bu_parallel(plane_worker, ncpu, (void *)&state);
 
 	    if (aborted)
 		goto aborted;

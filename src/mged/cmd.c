@@ -119,7 +119,7 @@ mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
  * Useful for user interface building.
  */
 int
-gui_output(genptr_t clientData, genptr_t str)
+gui_output(void *clientData, void *str)
 {
     int len;
     Tcl_DString tclcommand;
@@ -235,7 +235,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av[argc] = (const char *)NULL;
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)av);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
-	    bu_free((genptr_t)av, "cmd_ged_info_wrapper: av");
+	    bu_free((void *)av, "cmd_ged_info_wrapper: av");
 	} else {
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
@@ -733,7 +733,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 	return TCL_ERROR;
     }
 
-    bu_log_delete_hook(gui_output, (genptr_t)interpreter);/* Delete the existing hook */
+    bu_log_delete_hook(gui_output, (void *)interpreter);/* Delete the existing hook */
 
     if (argc < 2)
 	return TCL_OK;
@@ -762,7 +762,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
     /* Set up the hook! */
     bu_vls_init(&tcl_output_hook);
     bu_vls_strcpy(&tcl_output_hook, argv[1]);
-    bu_log_add_hook(gui_output, (genptr_t)interpreter);
+    bu_log_add_hook(gui_output, (void *)interpreter);
 
     Tcl_ResetResult(interpreter);
     return TCL_OK;
@@ -855,7 +855,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	    clp->cl_tie->dml_tie = CMD_LIST_NULL;
 	bu_vls_free(&clp->cl_more_default);
 	bu_vls_free(&clp->cl_name);
-	bu_free((genptr_t)clp, "cmd_close: clp");
+	bu_free((void *)clp, "cmd_close: clp");
 
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -1625,7 +1625,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 
     vsp = view_state;  /* save state info pointer */
 
-    bu_free((genptr_t)menu_state, "f_ps: menu_state");
+    bu_free((void *)menu_state, "f_ps: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;
@@ -1681,7 +1681,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     view_state = dml->dml_view_state;  /* use dml's state info */
     *mged_variables = *dml->dml_mged_variables; /* struct copy */
 
-    bu_free((genptr_t)menu_state, "f_pl: menu_state");
+    bu_free((void *)menu_state, "f_pl: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;

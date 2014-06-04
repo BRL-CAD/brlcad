@@ -153,7 +153,7 @@ struct bu_structparse noise_parse_tab[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
 {
@@ -233,14 +233,14 @@ found:
 
 
 HIDDEN void
-noise_print(register struct region *rp, genptr_t dp)
+noise_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, noise_print_tab, (char *)dp);
 }
 
 
 HIDDEN void
-noise_free(genptr_t cp)
+noise_free(void *cp)
 {
     BU_PUT(cp, struct noise_specific);
 }
@@ -320,7 +320,7 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
  * structure.
  */
 int
-fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

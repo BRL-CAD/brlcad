@@ -3854,7 +3854,7 @@ struct nmg_split_loops_state
 
 
 void
-nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
+nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -4059,7 +4059,7 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
     sl_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_split_loops_into_faces: flags");
     sl_state.tol = tol;
 
-    nmg_visit(magic_p, &htab, (genptr_t)&sl_state);
+    nmg_visit(magic_p, &htab, (void *)&sl_state);
 
     count = sl_state.split;
 
@@ -4521,7 +4521,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (genptr_t)m;
+    intern.idb_ptr = (void *)m;
 
     if (db_version(fp->dbip) < 5) {
 	BU_EXTERNAL_INIT(&ext);
@@ -4572,7 +4572,7 @@ struct nmg_unbreak_state
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
+nmg_unbreak_handler(uint32_t *eup, void *state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
     struct edge *e;
@@ -4669,7 +4669,7 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
     ub_state.unbroken = 0;
     ub_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_unbreak_region_edges: flags");
 
-    nmg_visit(magic_p, &htab, (genptr_t)&ub_state);
+    nmg_visit(magic_p, &htab, (void *)&ub_state);
 
     count = ub_state.unbroken;
 

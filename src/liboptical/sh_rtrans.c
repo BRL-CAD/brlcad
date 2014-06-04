@@ -62,10 +62,10 @@ struct bu_structparse rtrans_parse[] = {
 };
 
 
-HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void rtrans_print(register struct region *rp, genptr_t dp);
-HIDDEN void rtrans_free(genptr_t cp);
+HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void rtrans_print(register struct region *rp, void *dp);
+HIDDEN void rtrans_free(void *cp);
 
 struct mfuncs rtrans_mfuncs[] = {
     {MF_MAGIC,	"rtrans",	0,		0,	0,     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
@@ -79,7 +79,7 @@ struct mfuncs rtrans_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -109,14 +109,14 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
 
 HIDDEN void
-rtrans_print(register struct region *rp, genptr_t dp)
+rtrans_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, rtrans_parse, (char *)dp);
 }
 
 
 HIDDEN void
-rtrans_free(genptr_t cp)
+rtrans_free(void *cp)
 {
     BU_PUT(cp, struct rtrans_specific);
 }
@@ -127,7 +127,7 @@ rtrans_free(genptr_t cp)
  * once for each hit point to be shaded.
  */
 int
-rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct rtrans_specific *rtrans_sp =
 	(struct rtrans_specific *)dp;

@@ -3163,9 +3163,9 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     /* Consider the next assignment to have been sent "now" */
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
-    bu_struct_wrap_buf(&ext, (genptr_t) buf);
+    bu_struct_wrap_buf(&ext, (void *) buf);
 
-    cnt = bu_struct_import((genptr_t)&info, desc_line_info, &ext);
+    cnt = bu_struct_import((void *)&info, desc_line_info, &ext);
     if (cnt < 0) {
 	bu_log("bu_struct_import error, %zu\n", cnt);
 	drop_server(sp, "bu_struct_import error");

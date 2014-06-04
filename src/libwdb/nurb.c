@@ -54,7 +54,7 @@ mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs)
     for (ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++)
 	; /* NIL */
 
-    return wdb_export(wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ni, ID_BSPLINE, mk_conv2mm);
 }
 
 

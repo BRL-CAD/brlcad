@@ -47,7 +47,7 @@
 
 
 void
-nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -62,7 +62,7 @@ nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr
 
 
 void
-nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -81,7 +81,7 @@ nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab,
 
 
 void
-nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -93,7 +93,7 @@ nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t s
 
 
 void
-nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -113,7 +113,7 @@ nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, gen
 
 
 void
-nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -128,7 +128,7 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t s
 
 
 void
-nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -154,7 +154,7 @@ nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, gen
 
 
 void
-nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -168,7 +168,7 @@ nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t s
 
 
 void
-nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -190,7 +190,7 @@ nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, gen
 
 
 void
-nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -221,7 +221,7 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t
 
 
 void
-nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -241,7 +241,7 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, gen
     if (htab->aft_region) htab->aft_region((uint32_t *)r, state, 1);
 }
 void
-nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, void *state)
 
 
 /* Handler's private state */
@@ -261,7 +261,7 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genp
 
 
 void
-nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, void *state)
 /* Handler's private state */
 {
     switch (*magicp) {
