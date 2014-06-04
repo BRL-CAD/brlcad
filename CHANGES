@@ -253,7 +253,7 @@ mged
 7.14
 ----
 mged
-	bots [deprecated 7.14]
+	src/tclscripts/mged/bots.tcl [deprecated 7.14]
 
 7.12
 ----
