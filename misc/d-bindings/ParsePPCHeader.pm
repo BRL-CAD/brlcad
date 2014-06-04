@@ -33,16 +33,6 @@ sub parse_cfile {
   die "FATAL:  Input arg 'ival' not found."
     if !defined $ival;
 
-  my $otyp = $argref->{otyp};
-  $otyp = 0 if !defined $otyp;
-  die "FATAL:  Output arg 'otyp' not found."
-    if ($otyp && !exists $G::otyp{$otyp});
-
-  my $oval = $argref->{oval};
-  $oval = 0 if !defined $oval;
-  die "FATAL:  Output arg 'oval' not found."
-    if ($otyp && !$oval);
-
   my $oref = $argref->{oref};
   $oref = 0 if !defined $oref;
 
@@ -91,7 +81,9 @@ sub parse_cfile {
 
   my $parser = CGrammar->new();
 
+  # the absolute top level
   my $ptree = $parser->translation_unit($text);
+
   if (!defined $ptree) {
     warn "undef \$ptree";
     my $line = $argref->{first_line};
@@ -100,8 +92,15 @@ sub parse_cfile {
       print "DEBUG: test input (line: $line)\n";
       print "  text '$text'\n";
     }
-    return undef;
   }
+
+  return $ptree;
+
+} # parse_cfile
+
+sub dump_parse_tree {
+  my $fp    = shift @_;
+  my $ptree = shift @_;
 
   use Data::Dumper;
   use Data::Structure::Util qw(unbless);
@@ -112,23 +111,9 @@ sub parse_cfile {
   $Data::Dumper::Deparse  = 1;
   #$Data::Dumper::Sortkeys = 1;         # sort hash keys
 
-  if (1) {
-    if ($oval && $otyp eq 'fp') {
-      print $oval Dumper(unbless($ptree));
-    }
-    else {
-      print Dumper(unbless($ptree));
-    }
-  }
+  print $fp Dumper(unbless($ptree));
 
-  if ($G::inspect_tree) {
-    #inspect_PRD_syntax_pure_autotree($ptree);
-    inspect_syntax_tree($ptree);
-  }
-
-  # printf "DEBUG exit, file '%s', line %d\n", __FILE__, __LINE__; exit;
-
-} # parse_cfile
+} # dump_parse_tree
 
 sub get_spaces {
   my $level = shift @_;
@@ -137,14 +122,14 @@ sub get_spaces {
   return $s;
 } # get_spaces
 
-sub inspect_syntax_tree {
+sub print_parse_tree {
   my $obj = shift @_;
 
   print "DEBUG:  syntax tree:\n";
 
   print_object($obj, 1);
 
-} # inspect_syntax_tree
+} # print_parse_tree
 
 sub print_object {
   my $obj   = shift @_;

@@ -21,5 +21,31 @@ via local install:
 libclang
 
 
+general work flow
+=================
+
+foreach header X.h
+  copy the file to X.h.c
+  preprocess it with gcc -e to yield a X.i file
+
+  foreach line in the X.i file
+    next if blank line
+    extract the object into an Hobj instance
+    push the Hobj->line onto the @lines array
+    push the Hobj instance onto the @obj array
+    last line if desired number of objects has neen extracted
+  end foreach line
+
+  use P::RD on the @lines array to yield the parse tree
+  
+  dump the parse tree to a file X.h.dump.txt
+  analyze the parse tree
+
+  # the objects array is for debugging more if needed
+
+  convert the parse tree to the output X.d module
+
+end foreach header
+
 
 

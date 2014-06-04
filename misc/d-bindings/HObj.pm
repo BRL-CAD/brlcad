@@ -1,6 +1,4 @@
-package Biblio;
-
-# based on "Biblio.pm"
+package Hobj;
 
 use strict;
 # get compile-time warnings with Class::Struct when overriding an accessor
@@ -10,8 +8,11 @@ use Class::Struct;
 
 our %tag
   = (
+     'num'        => '$', # the inout sequence number (indexed from 0)
      'type'       => '$', # see 'C-BNF.txt'
      'orig_line'  => '$', # originally extracted array flattened to one line
+     'first_line' => '$', # line number of first line
+     'last_line'  => '$', # line number of last line
 
      # arrays need special accessors
      'tokens'     => '@', # original line tokenized
@@ -25,8 +26,11 @@ sub get_new_hobj {
   # provide a default initialization
   my $b
     = HObj->new(
+		'num'        => '',
 		'type'       => '',
 		'orig_line'  => '',
+		'first_line' => '',
+		'last_line'  => '',
 
 		# arrays initially empty
 		'tokens'     => [], # original line tokenized
@@ -34,57 +38,35 @@ sub get_new_hobj {
 	       );
 
   return $b;
-} # get_new_biblio
+} # get_new_hobj
 
 # arrays need special accessors
-sub summary {
+sub tokens {
   my $self = shift @_;
   my $aref = shift @_;
   if (defined $aref) {
-    $self->{summary} = [@{$aref}];
+    $self->{tokens} = [@{$aref}];
   }
   else {
-    return $self->{summary};
+    return $self->{tokens};
   }
 } # special accessor
 
-sub pubsummary {
+sub orig_array {
   my $self = shift @_;
   my $aref = shift @_;
   if (defined $aref) {
-    $self->{pubsummary} = [@{$aref}];
+    $self->{orig_array} = [@{$aref}];
   }
   else {
-    return $self->{pubsummary};
-  }
-} # special accessor
-
-sub dtic_abstract {
-  my $self = shift @_;
-  my $aref = shift @_;
-  if (defined $aref) {
-    $self->{dtic_abstract} = [@{$aref}];
-  }
-  else {
-    return $self->{dtic_abstract};
-  }
-} # special accessor
-
-sub notes {
-  my $self = shift @_;
-  my $aref = shift @_;
-  if (defined $aref) {
-    $self->{notes} = [@{$aref}];
-  }
-  else {
-    return $self->{notes};
+    return $self->{orig_array};
   }
 } # special accessor
 
 sub dump {
   my $self = shift @_;
-  print  "Dumping a biblio object:\n";
-  printf "  id: %s\n",         $self->id();
+  print  "Dumping an Hobj object:\n";
+  printf "  num: %d\n",        $self->num();
   printf "  file: %s\n",       $self->file();
   printf "  title: %s\n",      $self->title();
   printf "  subtitle: %s\n",   $self->subtitle();

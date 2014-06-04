@@ -249,19 +249,32 @@ sub extract_object {
   die "FATAL:  \$argref is not a 'HASH' ref, it's a '$r'."
     if $r ne 'HASH';
 
-  my $lines_aref  = $argref->{lines_aref};  # shift @_; # \@lines
-  my $i           = $argref->{curr_index};  # shift @_; # $i - current @lines index
-  my $olines_aref = $argref->{olines_aref}; # shift @_; # \@olines
+  # the input lines
+  my $lines_aref  = $argref->{lines_aref};  # \@ilines
+
+  # the current index
+  my $i           = $argref->{curr_index};  # $i - current @lines index
+
+  # an object instance
+  my $obj         = $argref->{obj};
+
+=pod
+
+  my $olines_raw_aref = $argref->{olines_raw_aref}; # shift @_; # \@olines_raw
+  my $olines_cmt_aref = $argref->{olines_cmt_aref}; # shift @_; # \@olines_cmt
 
   my $ofils_aref  = $argref->{ofils_aref};  # shift @_; # \@ofils
   my $tfils_aref  = $argref->{tfils_aref};  # shift @_; # \@tmpfils
 
   my $chunk_num   = $argref->{chunk_num};   # shift @_; # $nchunks
 
+=cut
+
   my $nl = scalar @{$lines_aref};
 
   # we're at the first line of the unknown object
   # get all lines til the last
+  # temp output lines
   my @olines = ();
 
   # track '{}', '()', '[]' levels
@@ -450,9 +463,13 @@ sub extract_object {
     $t = $typ;
   }
 
-  # print good lines to output .d file
+  # object gets info
   my $first_line = $first_index + 1;
   my $last_line  = $last_index + 1;
+
+  $obj->orig_line("$s\n");
+  $obj->first_line($first_line);
+  $obj->last_line($first_line);
 
 =pod
 
@@ -465,27 +482,22 @@ sub extract_object {
        #"// N actual lines:   $nactual_lines\n",
       );
 
-  push @{$olines_aref}, @xlines_1;
-
-=cut
+  push @{$olines_cmt_aref}, @xlines_1;
 
   # the one-liner
-  push @{$olines_aref}, "$s\n"; #@olines;
-
-=pod
+  push @{$olines_cmt_aref}, "$s\n";;
+  push @{$olines_raw_aref}, "$s\n";;
 
   my @xlines_2
     = (
        "//=== ending extracted code at input line $last_line\n",
       );
 
-  push @{$olines_aref}, @xlines_2;
+  push @{$olines_cmt_aref}, @xlines_2;
 
 =cut
 
-  my $prev_line_was_space = 0;
-
-  return ($last_index, $prev_line_was_space);
+  return ($last_index);
 
 } # extract_object
 

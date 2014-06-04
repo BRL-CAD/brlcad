@@ -14,6 +14,7 @@ use CExtract;
 use BP;
 use DS;
 use ParsePPCHeader;
+use HObj;
 
 # ignored top-level original .h files
 my @ignore
@@ -206,6 +207,7 @@ sub convert {
       # convert it to "final" form (eventually)
       print "DEBUG:  converting '$ppfil' to D module '$ofil'...\n"
 	if $G::debug;
+
       convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
 
     }
@@ -369,6 +371,7 @@ sub convert1final {
   my $ifil       = shift @_; # $ppfil
   my $sref       = shift @_; # \%syshdr
   my $stem       = shift @_; # stem of .h file name (e.g., stem of 'bu.h' is 'bu'
+
   my $ofils_aref = shift @_; # \@ofils
   my $tfils_aref = shift @_; # \@tmpfils
 
@@ -376,19 +379,19 @@ sub convert1final {
   # processing: the $ppfil has to be parsed and some fancy extraction
   # and class processing done
 
-  # avoid multiple blank lines
-  my $prev_line_was_space = 1;
-
-  # process the $ppfil
+  # process the input file ($ppfil)
   open my $fpi, '<', $ifil
     or die "$ifil: $!";
 
-  my @lines = <$fpi>;
+  my @ilines = <$fpi>;
   close $fpi;
-  my $nl = @lines;
+  my $nl = @ilines;
 
   # save processed lines for later
   my @olines = ();
+
+  # chunks go into an array
+  my @objs = ();
 
   # use for limiting chunk (object) processing
   my $nchunks = 0;
@@ -397,18 +400,13 @@ sub convert1final {
 
   for (my $i = 0; $i < $nl; ++$i) {
     my $lnum = $i + 1;
-    my $line = $lines[$i];
+    my $line = $ilines[$i];
 
     # ignore or collapse blank lines
     if ($line !~ /\S+/) {
       printf "DEBUG: skipping blank line at line %d (%s)...\n",
 	__LINE__, __FILE__
 	  if (0 && $G::debug);
-
-      if (!$prev_line_was_space) {
-	push @olines, "\n";
-	$prev_line_was_space = 1;
-      }
       next LINE;
     }
 
@@ -417,32 +415,24 @@ sub convert1final {
     my $key = $d[0];
 
     if ($key =~ m{\A \s* \#}x) {
-      if (1) {
-	# replace cpp comment lines with a space unless prev line was a space
-	if (!$prev_line_was_space) {
-	  push @olines, "\n";
-	  $prev_line_was_space = 1;
-	}
-	next LINE;
-      }
-      elsif (0) {
-	# ignore cpp comment lines
-	next LINE;
-      }
+      # ignore cpp comment lines
+      next LINE;
     }
 
     # always getting chunks
-    ($i, $prev_line_was_space)
-      = CExtract::extract_object({
-				  lines_aref  => \@lines,
-				  curr_index  => $i,
-				  olines_aref => \@olines,
-				  ofils_aref  => $ofils_aref,
-				  tfils_aref  => $tfils_aref,
-				  chunk_num   => $nchunks + 1,
+    my $obj = Hobj::get_new_hobj();
+    $obj->num($nchunks);
+
+    $i = CExtract::extract_object({
+				   lines_aref      => \@ilines,
+				   curr_index      => $i,
+				   obj             => $obj,
 				 });
 
-    # update number of chunks processed
+    push @olines, $obj->orig_line();
+    push @objs, $obj;
+
+    # update number of chunks being processed
     ++$nchunks;
 
     if ($G::maxchunks && $G::maxchunks == $nchunks) {
@@ -458,22 +448,26 @@ sub convert1final {
   print "DEBUG:  Processed $nchunks objects...\n"
     if $G::debug;
 
-  my $efil = "${ifil}.dump.txt";
-  open my $fp, '>', $efil
-    or die "$efil: $!";
-  push @{$tfils_aref}, $efil;
-  push @{$ofils_aref}, $efil
-    if $G::debug;
-  my $res = ParsePPCHeader::parse_cfile
+  # parse the tree
+  my $ptree = ParsePPCHeader::parse_cfile
     ({
       ityp => 'aref',
       ival => \@olines,
-      otyp => 'fp',
-      oval => $fp,
      });
-  close $fp;
-  unlink $efil
-    if !defined $res;
+
+  if (defined $ptree) {
+    # dump it
+    my $efil = "${ifil}.dump.txt";
+    open my $fp, '>', $efil
+      or die "$efil: $!";
+    push @{$tfils_aref}, $efil;
+    push @{$ofils_aref}, $efil
+      if $G::debug;
+    ParsePPCHeader::dump_parse_tree($fp, $ptree);
+
+    # inspect it (print to stdout)
+    ParsePPCHeader::print_parse_tree($ptree);
+  }
 
   # now process @olines and write them out
 
@@ -483,12 +477,15 @@ sub convert1final {
   print $fpo "module $stem;\n";
   print $fpo "\n";
 
-  foreach my $h (sort keys %sysmod) {
-    my $mod = $sysmod{$h};
-    next if !$mod;
-    print $fpo "import $mod;\n";
+  my @sysmods = (sort keys %sysmod);
+  if (@sysmods) {
+    foreach my $h (@sysmods) {
+      my $mod = $sysmod{$h};
+      next if !$mod;
+      print $fpo "import $mod;\n";
+    }
+    print $fpo "\n";
   }
-  print $fpo "\n";
 
   print $fpo "extern (C) {\n";
   print $fpo "\n";
@@ -498,9 +495,7 @@ sub convert1final {
   }
 
   # ender
-  print $fpo "\n"
-    if !$prev_line_was_space;
-
+  print $fpo "\n";
   print $fpo "} // extern (C) {\n";
 
 } # convert1final
