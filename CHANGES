@@ -264,8 +264,6 @@ mged
 
 7.14
 ----
-include/fb.h
-	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 mged
 	bots, per_line [deprecated 7.14]
 
@@ -292,6 +290,9 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+include/fb.h
+	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
+
 include/raytrace.h
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
