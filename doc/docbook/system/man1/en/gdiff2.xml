@@ -28,9 +28,9 @@
 		<para>
 			<emphasis remap='I'>gdiff2</emphasis> compares BRL-CAD models
 			specified on the command line, reporting differences according to the
-			specified options.  It supports a plain "diff" comparision between two
+			specified options.  It supports a plain "diff" comparison between two
 			files, as well as a "3-way" comparison that accepts a third file with
-			"ancestoral" information that provides a context for the left and right
+			"ancestral" information that provides a context for the left and right
 			files.
 		</para>
 		<para>The following options are recognized:</para>
@@ -53,11 +53,11 @@
 			</varlistentry>
 			<varlistentry>
 				<term><option>-C</option></term>
-				<listitem><para>Report objects with conflits</para></listitem>
+				<listitem><para>Report objects with conflicts</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-v #</option></term>
-				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceeded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-t #</option></term>
@@ -69,7 +69,7 @@
 			</varlistentry>
 			<varlistentry>
 				<term><option>-M merged_file.g</option></term>
-				<listitem><para>Merge the files being diffed into one ouput file.</para></listitem>
+				<listitem><para>Merge the files being diffed into one output file.</para></listitem>
 			</varlistentry>
 		</variablelist>
 
