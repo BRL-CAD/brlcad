@@ -84,7 +84,7 @@ sub parse_cfile {
   elsif ($argref->{ityp} eq 'str') {
     $text = $ival;
   }
-  elsif ($argref->{ityp} eq 'arr') {
+  elsif ($argref->{ityp} eq 'aref') {
     local $/;
     $text = join(' ', @{$ival});
   }
@@ -98,7 +98,7 @@ sub parse_cfile {
     $line = -1 if !defined $line;
     if ($G::debug) {
       print "DEBUG: test input (line: $line)\n";
-      print "  $text\n";
+      print "  text '$text'\n";
     }
     return undef;
   }

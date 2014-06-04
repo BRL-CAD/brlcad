@@ -256,6 +256,8 @@ sub extract_object {
   my $ofils_aref  = $argref->{ofils_aref};  # shift @_; # \@ofils
   my $tfils_aref  = $argref->{tfils_aref};  # shift @_; # \@tmpfils
 
+  my $chunk_num   = $argref->{chunk_num};   # shift @_; # $nchunks
+
   my $nl = scalar @{$lines_aref};
 
   # we're at the first line of the unknown object
@@ -268,7 +270,7 @@ sub extract_object {
   my $slevel = 0; # square brackets
 
   my $first_index = $i;
-  my $last_index;
+  my $last_index  = $i;
 
   my $nactual_lines = 0;
 
@@ -452,6 +454,8 @@ sub extract_object {
   my $first_line = $first_index + 1;
   my $last_line  = $last_index + 1;
 
+=pod
+
   my @xlines_1
     = (
        "\n",
@@ -463,8 +467,12 @@ sub extract_object {
 
   push @{$olines_aref}, @xlines_1;
 
+=cut
+
   # the one-liner
   push @{$olines_aref}, "$s\n"; #@olines;
+
+=pod
 
   my @xlines_2
     = (
@@ -472,6 +480,8 @@ sub extract_object {
       );
 
   push @{$olines_aref}, @xlines_2;
+
+=cut
 
   my $prev_line_was_space = 0;
 

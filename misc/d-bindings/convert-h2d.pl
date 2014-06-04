@@ -71,7 +71,7 @@ foreach my $arg (@ARGV) {
       die "ERROR:  For option '$arg' \$val is empty.'\n";
     }
     $arg = substr $arg, 0, $idx;
-    if ($G::debug) {
+    if (0&& $G::debug) {
       print "arg is now '$arg', val is '$val'\n";
       die "debug exit";
     }
@@ -140,7 +140,7 @@ foreach my $arg (@ARGV) {
     $G::devel        = 1;
     $G::quitundef    = 0;
     $G::maxchunks    = 1;
-    $G::inspect_tree = 1;
+    $G::inspect_tree = 0;
 
   }
 
@@ -202,6 +202,8 @@ elsif ($convert) {
   print "Mode is '-c$convert' (convert method $convert)...\n\n";
   die "debug exit"
     if (0 && $G::debug);
+  die "FATAL:  No input files selected.\n"
+    if !@ifils;
 
   D::convert(\@ifils, \@ofils, \%f, \%stats, $convert);
 }
@@ -221,6 +223,9 @@ if (@ofils) {
   my $s = (1 < @ofils) ? 's' : '';
   print "See output file$s:\n";
   print "  $_\n" for @ofils;
+}
+else {
+  print "No output files were generated (no input file was changed from previous runs).\n";
 }
 
 #### subroutines ####

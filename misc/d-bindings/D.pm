@@ -20,8 +20,8 @@ my @ignore
   = (
      # don't use these at the moment
      #'conf.h',
-     #'dvec.h',
-     #'redblack.h',
+     'dvec.h',
+     'redblack.h',
     );
 my %ignore = ();
 @ignore{@ignore} = ();
@@ -197,10 +197,15 @@ sub convert {
       print $fp $_ for @tflines;
       close $fp;
 
-      # use g++ -E to preprocess the file
+      # use gcc -E to preprocess the file
+      print "DEBUG:  preprocessing '$cinfil' to '$ppfil' using gcc -E...\n"
+	if $G::debug;
+
       convert_with_gcc_E($cinfil, $ppfil);
 
       # convert it to "final" form (eventually)
+      print "DEBUG:  converting '$ppfil' to D module '$ofil'...\n"
+	if $G::debug;
       convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
 
     }
@@ -299,7 +304,7 @@ sub collect_files {
   # main API headers
   my @h  = glob("${BP::IDIR}/*${G::Hsuf}");
   foreach my $f (@h) {
-    next if exists $ignore{$f};
+    next if exists $ignore{ basename $f };
     push @{$href}, $f;
   }
 
@@ -396,6 +401,10 @@ sub convert1final {
 
     # ignore or collapse blank lines
     if ($line !~ /\S+/) {
+      printf "DEBUG: skipping blank line at line %d (%s)...\n",
+	__LINE__, __FILE__
+	  if (0 && $G::debug);
+
       if (!$prev_line_was_space) {
 	push @olines, "\n";
 	$prev_line_was_space = 1;
@@ -429,7 +438,8 @@ sub convert1final {
 				  curr_index  => $i,
 				  olines_aref => \@olines,
 				  ofils_aref  => $ofils_aref,
-				  tfils_aref  => $tfils_aref
+				  tfils_aref  => $tfils_aref,
+				  chunk_num   => $nchunks + 1,
 				 });
 
     # update number of chunks processed
@@ -448,34 +458,22 @@ sub convert1final {
   print "DEBUG:  Processed $nchunks objects...\n"
     if $G::debug;
 
-=pod
-
-  my $res = 0;
-  if ($G::chunkparse) {
-    my $efil = sprintf "./di/tree-dump-line-%04d.txt", $first_line;
-    open my $fp, '>', $efil
-      or die "$efil: $!";
-    push @{$tfils_aref}, $efil;
-    push @{$ofils_aref}, $efil
-      if $G::debug;
-    print $fp "#=== starting dump of extracted code at input line $first_line:\n";
-    print $fp "#text: $s\n";
-
-    $res = ParsePPCHeader::parse_cfile
-      ({
-	ityp => 'str',
-	ival => $s,
-	otyp => 'fp',
-	oval => $fp,
-	first_line => $first_line,
-       });
-    print $fp "#=== ending dump of extracted code at input line $last_line\n";
-    close $fp;
-    unlink $efil
-      if !defined $res;
-  }
-
-=cut
+  my $efil = "${ifil}.dump.txt";
+  open my $fp, '>', $efil
+    or die "$efil: $!";
+  push @{$tfils_aref}, $efil;
+  push @{$ofils_aref}, $efil
+    if $G::debug;
+  my $res = ParsePPCHeader::parse_cfile
+    ({
+      ityp => 'aref',
+      ival => \@olines,
+      otyp => 'fp',
+      oval => $fp,
+     });
+  close $fp;
+  unlink $efil
+    if !defined $res;
 
   # now process @olines and write them out
 
