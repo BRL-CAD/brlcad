@@ -28,7 +28,7 @@ die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::DIDIR' (see D
 my $p = basename($0);
 my $usage  = "Usage: $p mode [options...]\n\n";
 $usage    .= "  modes:   -r | -cN | -h=X | -b | -e\n";
-$usage    .= "  options: -f -d -C -h";
+$usage    .= "  options: -f -d -c -n=X -h";
 if (!@ARGV) {
   print <<"HERE";
 $usage
@@ -67,7 +67,7 @@ foreach my $arg (@ARGV) {
       if $G::debug;
 
     $val = substr $arg, $idx+1;
-    if ((!defined $val || !$val) && !$G::debug) {
+    if ((!defined $val) && !$G::debug) {
       die "ERROR:  For option '$arg' \$val is empty.'\n";
     }
     $arg = substr $arg, 0, $idx;
@@ -98,11 +98,15 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ m{\A -h}xms) {
     help();
   }
-  elsif ($arg =~ m{\A -C}xms) {
+  elsif ($arg =~ m{\A -C \z}xms) {
     $G::clean = 1;
   }
-  elsif ($arg =~ m{\A -ch}xms) {
-    $G::chunkparse = 1;
+  elsif ($arg =~ m{\A -n}xms) {
+    if ($val !~ m{\A (?: 0 | [1-9][0-9]*) \z}x) {
+      print "ERROR:  X in option '-n=X' must be a positive integer,\n";
+      die   "        but it's value is '$val'.\n";
+    }
+    $G::maxchunks = $val;
   }
 
   # modes
@@ -134,7 +138,6 @@ foreach my $arg (@ARGV) {
     $G::debug        = 1;
     $G::clean        = 1;
     $G::devel        = 1;
-    $G::chunkparse   = 1;
     $G::quitundef    = 0;
     $G::maxchunks    = 1;
     $G::inspect_tree = 1;
@@ -322,7 +325,7 @@ options:
   -d    debug
   -h    help
   -C    cleans out all generated files and the stored file hashes
-  -ch   parse in chunks instead of the entire file
+  -n=X  parse after reading X chunks instead of the entire file
 
 Notes:
 

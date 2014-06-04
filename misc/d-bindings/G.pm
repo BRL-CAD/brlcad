@@ -18,7 +18,6 @@ our $verbose      = 0;
 our $debug        = 0;
 our $clean        = 0;
 our $devel        = 0;
-our $chunkparse   = 0; # >0 - parse input in chunks
 our $quitundef    = 0; # >0 - stop at first undef chunk
 our $maxchunks    = 0; # >0 - stop after N successful chunks
 our $inspect_tree = 0; # >0 - try to interpret parse tree
