@@ -161,8 +161,7 @@ librt
 	hf primitive [deprecated 7.20]
 include/bu.h
 	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
-autogen.sh && configure
-	GNU Autotools build system -> CMake build system [deprecated 7.20]
+GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
@@ -267,6 +266,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+autogen.sh && configure
+	GNU Autotools build system -> CMake build system [deprecated 7.20]
 Dunn camera and Canon printer tools
 	dunncolor [ deprecated 7.16 ]
 	dunnsnap [ deprecated 7.16 ]
