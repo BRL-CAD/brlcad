@@ -106,11 +106,6 @@ CMAKEFILES(bu_arg_parse_private.h)
 # end TCLAP testing
 #=====================================================
 
-# Not fixing these for Windows - they're on their way out (deprecated)
-if(NOT WIN32)
-  BRLCAD_ADDEXEC(dunncolor "dunncolor.c;dunncomm.c" libbu)
-  BRLCAD_ADDEXEC(dunnsnap "dunnsnap.c;dunncomm.c" "libfb;libbu")
-endif(NOT WIN32)
 BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)

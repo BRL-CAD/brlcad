@@ -232,9 +232,6 @@ struct bu_structparse 'i' format
        'i' -> '%p' [deprecated 7.16]
 SGI-specific tools
 	pl-sgi -> pl-fb [ deprecated 7.16 ]
-Dunn camera and Canon printer tools
-	dunncolor [ deprecated 7.16 ]
-	dunnsnap [ deprecated 7.16 ]
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]
@@ -303,6 +300,11 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+Dunn camera and Canon printer tools
+	dunncolor [ deprecated 7.16 ]
+	dunnsnap [ deprecated 7.16 ]
+	canonize [ deprecated 7.16 ]
+
 include/vmath.h
 	VADD2_2D -> V2ADD2 [deprecated 7.14]
 	VSUB2_2D -> V2SUB2 [deprecated 7.14]

@@ -55,8 +55,6 @@ set(docbook_man1_EN
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
-  dunncolor.xml
-  dunnsnap.xml
   dxf-g.xml
   enf-g.xml
   euclid-g.xml
