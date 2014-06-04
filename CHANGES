@@ -987,7 +987,7 @@ s/bn_degtorad/DEG2RAD/g
 s/bn_radtodeg/RAD2DEG/g
 s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
         eliminated a number of libbn globals in favor of existing constants
-s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont-if.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
         library-specific public headers moved into a subdir [7.24]

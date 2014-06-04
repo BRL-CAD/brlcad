@@ -96,7 +96,7 @@ __END_DECLS
 #include "./bu/str.h"
 #include "./bu/time.h"
 #include "./bu/units.h"
-#include "./bu/vfont-if.h"
+#include "./bu/vfont.h"
 #include "./bu/vlb.h"
 #include "./bu/vls.h"
 

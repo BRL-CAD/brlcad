@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "bu/file.h"
 #include "bu/malloc.h"
-#include "bu/vfont-if.h"
+#include "bu/vfont.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
 #define DEFAULT_FONT "nonie.r.12"
