@@ -3597,6 +3597,7 @@ to_data_polygons(struct ged *gedp,
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    gdpsp->gdps_data_vZ = gdvp->gdv_view->gv_data_vZ;
     VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
     MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);

@@ -297,7 +297,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, gdpsp->gdps_model2view, gdpsp->gdps_origin);
-    vorigin[Z] = 1.0;
+    vorigin[Z] = gdpsp->gdps_data_vZ;
 
     /* Convert back to model coordinates for storage */
     MAT4X3PNT(sketch_ip->V, gdpsp->gdps_view2model, vorigin);
