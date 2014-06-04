@@ -230,8 +230,6 @@ mged
 ----
 struct bu_structparse 'i' format
        'i' -> '%p' [deprecated 7.16]
-SGI-specific tools
-	pl-sgi -> pl-fb [ deprecated 7.16 ]
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]
@@ -302,6 +300,8 @@ mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 	per_line [deprecated 7.14]
+SGI-specific tools
+	pl-sgi -> pl-fb [ deprecated 7.16 ]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
 src/librt/cmd.c
