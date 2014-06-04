@@ -253,7 +253,7 @@ mged
 7.14
 ----
 mged
-	bots, per_line [deprecated 7.14]
+	bots [deprecated 7.14]
 
 7.12
 ----
@@ -303,6 +303,7 @@ include/raytrace.h
 mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
+	per_line [deprecated 7.14]
 
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
