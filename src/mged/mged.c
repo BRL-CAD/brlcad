@@ -1077,7 +1077,7 @@ main(int argc, char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -1088,9 +1088,6 @@ main(int argc, char *argv[])
 	    case 'r':
 		read_only_flag = 1;
 		break;
-	    case 'n':           /* "not new" == "classic" */
-		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
-		/* fall through */
 	    case 'c':
 		classic_mged = 1;
 		break;
