@@ -65,7 +65,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-h#</option></term>
+      <term><option>-H#</option></term>
       <listitem>
 	<para>
 	 Height of handle in millimeters.
@@ -126,7 +126,7 @@ number of handles:  3
   <example><title>Single-Line <command>handle</command> Command</title>
 
     <para>
-      <userinput>handle -fhandle.g -n3 -l200 -h100 -r120 -r210</userinput>
+      <userinput>handle -fhandle.g -n3 -l200 -H100 -r120 -r210</userinput>
     </para>
   </example>
 
