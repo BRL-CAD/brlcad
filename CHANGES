@@ -240,8 +240,6 @@ reserved attributes and case-sensitivity
 	AIRCODE -> air [deprecated 7.16]
 	rgb -> color [deprecated 7.16]
 	oshader -> shader [deprecated 7.16]
-include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/raytrace.h
 	rt_prep_timer() -> bu_timer() [deprecated 7.16]
 	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
@@ -280,6 +278,8 @@ Dunn camera and Canon printer tools
 	canonize [ deprecated 7.16 ]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
+include/bu.h
+	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
