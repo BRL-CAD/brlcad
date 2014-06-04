@@ -17,7 +17,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>halftone</command>
-    <arg choice='opt'>-hRSa </arg>
+    <arg choice='opt'>-RSa </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
@@ -25,6 +25,7 @@
     <arg choice='opt'>-I <replaceable>Number_Intensity_Levels</replaceable></arg>
     <arg choice='opt'>-M <replaceable>Method</replaceable></arg>
     <arg choice='opt'>-T <replaceable>Tone_Scale_Curve_Points</replaceable></arg>
+    <arg choice='opt'>-D <replaceable>debug_level</replaceable></arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
 </cmdsynopsis>
@@ -43,13 +44,11 @@ information as possible by applying dither.</para>
 <para>By default, the
 <emphasis remap='I'>bw</emphasis>
 file is assumed to be 512x512 pixels.
-Specifying the
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
+</para>
 
 <para>If the
 <option>-R</option>
-flag is specified random noise is added to the dither which can sometimes
+flag is specified random noise is added to the dither, and this can sometimes
 improve the results.</para>
 
 <para>The
@@ -101,6 +100,11 @@ Digital Halftoning
 is
 -T  0  0  15  0  128  100  200  200  240  255  255  255.</para>
 </refsect1>
+
+<para>The
+<option>-D </option><replaceable>debug_level</replaceable>
+supplies the debug level; setting the argument to 9 provides all debugging.
+</para>
 
 <refsect1 xml:id='format'><title>FORMAT</title>
 <para>A
