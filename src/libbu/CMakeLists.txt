@@ -40,7 +40,6 @@ set(LIBBU_SOURCES
   file.c
   fnmatch.c
   getcwd.c
-  getfont.c
   gethostname.c
   getopt.c
   globals.c
