@@ -242,18 +242,6 @@ reserved attributes and case-sensitivity
 	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
-any-png.sh
-	use pix tools [deprecated 7.16]
-cadbug.sh
-	use sf.net tracker [deprecated 7.16]
-cray.sh
-	obsolete hardware [deprecated 7.16]
-pixwrite.sh
-	obsolete hardware [deprecated 7.16]
-pixread.sh
-	obsolete hardware [deprecated 7.16]
-sgisnap.sh
-	obsolete hardware [deprecated 7.16]
 include/bu.h
 	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/raytrace.h
@@ -290,6 +278,20 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+any-png.sh
+	use pix tools [deprecated 7.16]
+cadbug.sh
+	use sf.net tracker [deprecated 7.16]
+cray.sh
+	obsolete hardware [deprecated 7.16]
+pixwrite.sh
+	obsolete hardware [deprecated 7.16]
+pixread.sh
+	obsolete hardware [deprecated 7.16]
+sgisnap.sh
+	obsolete hardware [deprecated 7.16]
+
+
 include/fb.h
 	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 
