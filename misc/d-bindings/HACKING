@@ -31,17 +31,19 @@ foreach header X.h
   foreach line in the X.i file
     next if blank line
     extract the object into an Hobj instance
-    push the Hobj->line onto the @lines array
-    push the Hobj instance onto the @obj array
+    push the Hobj->line onto the @olines array
+    push the Hobj instance onto the @objs array
     last line if desired number of objects has neen extracted
   end foreach line
 
   use P::RD on the @lines array to yield the parse tree
   
-  dump the parse tree to a file X.h.dump.txt
+  use Data::Dumper to dump the parse tree to a file X.i.dump.txt
+  interpret (print) the parse to a file X.i.myprint.txt
+
   analyze the parse tree
 
-  # the objects array is for debugging more if needed
+  # the objects array is available for debugging more if needed
 
   convert the parse tree to the output X.d module
 

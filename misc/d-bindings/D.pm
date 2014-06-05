@@ -456,17 +456,25 @@ sub convert1final {
      });
 
   if (defined $ptree) {
+    my $fp;
     # dump it
     my $efil = "${ifil}.dump.txt";
-    open my $fp, '>', $efil
+    open $fp, '>', $efil
       or die "$efil: $!";
     push @{$tfils_aref}, $efil;
     push @{$ofils_aref}, $efil
       if $G::debug;
     ParsePPCHeader::dump_parse_tree($fp, $ptree);
+    close $fp;
 
-    # inspect it (print to stdout)
-    ParsePPCHeader::print_parse_tree($ptree);
+    # inspect it (print it)
+    my $pfil = "${ifil}.myprint.txt";
+    open $fp, '>', $pfil
+      or die "$pfil: $!";
+    push @{$tfils_aref}, $pfil;
+    push @{$ofils_aref}, $pfil
+      if $G::debug;
+    ParsePPCHeader::print_parse_tree($fp, $ptree);
   }
 
   # now process @olines and write them out

@@ -123,15 +123,17 @@ sub get_spaces {
 } # get_spaces
 
 sub print_parse_tree {
-  my $obj = shift @_;
+  my $fp    = shift @_;
+  my $ptree = shift @_;
 
-  print "DEBUG:  syntax tree:\n";
+  print $fp "syntax tree:\n";
 
-  print_object($obj, 1);
+  print_object($fp, $ptree, 1);
 
 } # print_parse_tree
 
 sub print_object {
+  my $fp    = shift @_;
   my $obj   = shift @_;
   my $level = shift @_; # use for number of leading spaces
 
@@ -142,27 +144,27 @@ sub print_object {
   my $r = ref $obj;
 
   if (!$r) {
-    print "${s}scalar value: '$obj'\n";
+    print $fp "${s}scalar value: '$obj'\n";
   }
   elsif ($r eq 'ARRAY') {
-    print "${s}array ref: '$obj'\n";
+    print $fp "${s}array ref: '$obj'\n";
     foreach my $val (@{$obj}) {
       if (!defined $val) {
-	print "${s}value: 'undef'\n";
+	print $fp "${s}value: 'undef'\n";
 	next;
       }
-      print_object($val, $level + 1);
+      print_object($fp, $val, $level + 1);
     }
   }
   elsif ($r eq 'HASH') {
-    print "${s}hash ref: '$obj'\n";
+    print $fp "${s}hash ref: '$obj'\n";
     while (my ($key, $val) = each %{$obj}) {
-      print "${s}hash key: '$key'\n";
+      print $fp "${s}hash key: '$key'\n";
       if (!defined $val) {
-	print "${s}value: 'undef'\n";
+	print $fp "${s}value: 'undef'\n";
 	next;
       }
-      print_object($val, $level + 1);
+      print_object($fp, $val, $level + 1);
     }
   }
   else {
