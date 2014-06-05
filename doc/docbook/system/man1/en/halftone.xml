@@ -99,12 +99,13 @@ a curve suggested by Robert Ulichney in
 Digital Halftoning
 is
 -T  0  0  15  0  128  100  200  200  240  255  255  255.</para>
-</refsect1>
 
 <para>The
 <option>-D </option><replaceable>debug_level</replaceable>
 supplies the debug level; setting the argument to 9 provides all debugging.
 </para>
+
+</refsect1>
 
 <refsect1 xml:id='format'><title>FORMAT</title>
 <para>A
