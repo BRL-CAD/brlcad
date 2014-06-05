@@ -37,8 +37,15 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-static const char explain[]   = "This program constructs a solid gas tank with all\n\
-edges and corners rounded.\n";
+void
+explain()
+{
+	fprintf(stderr,"This program constructs a solid gas tank with all\n");
+	fprintf(stderr,"edges and corners rounded.  If not used interactively:\n");
+	fprintf(stderr,"Usage: gastank [-f mged_file_name] [-n #_of_gastanks] [-H gas_tank_height]\n");
+	fprintf(stderr,"       [-w gas_tank_width] [-d gas_tank_depth] [-r radius_of_corners]\n");
+	fprintf(stderr,"       (units of mm)\n");
+}
 
 int
 main(int argc, char **argv)
@@ -105,7 +112,8 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	printf("\n%s\n",explain);
+	explain();
+	bu_log("\n       Program continues running:\n\n");
 
 	/* Find name of mged file to be created. */
 	printf("Enter the mged file to be created (25 char max).\n\t");
@@ -175,10 +183,8 @@ main(int argc, char **argv)
 	    temp = argv[i];
 
 	    if (temp[1] == 'h' || temp[1] == '?') {
-	    	fprintf(stderr,"%s",explain);
-		fprintf(stderr,"Usage: gastank -fname [-f mged_file_name] [-n #_of_gastanks] [-H gas_tank_height]\n");
-		fprintf(stderr,"       [-w gas_tank_width] [-d gas_tank_depth] [-r radius_of_corners]");
-		bu_exit(2,     "       (units of mm)\n");
+	    	explain();
+		bu_exit(2,NULL);
 	    }
 
 	    /* -f - mged file. */
