@@ -263,9 +263,7 @@ arbin(struct ged *gedp,
 	    VMOVE(arb->pt[7], pt[1]);
 	}
     } else if (cgtype == 7) {
-	struct model *m;
-	struct nmgregion *r;
-	struct shell *s = NULL;
+	struct shell *s;
 	struct faceuse *fu;
 	struct rt_tess_tol ttol;
 	struct bu_ptbl vert_tab;
@@ -277,7 +275,7 @@ arbin(struct ged *gedp,
 	ttol.norm = gedp->ged_wdbp->wdb_ttol.norm;
 
 	/* Make a model to hold the inside solid */
-	m = nmg_mm();
+	s = nmg_ms();
 
 	/* get an NMG version of this arb7 */
 	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
@@ -291,7 +289,6 @@ arbin(struct ged *gedp,
 	    int found=0;
 
 	    /* look for the face plane with the same geometry as the arb7 planes */
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		struct face_g_plane *fg;
 		plane_t pl;
@@ -327,7 +324,7 @@ arbin(struct ged *gedp,
 	 * This does all the vertices
 	 */
 	bu_ptbl_init(&vert_tab, 64, "vert_tab");
-	nmg_vertex_tabulate(&vert_tab, &m->magic);
+	nmg_vertex_tabulate(&vert_tab, &s->magic);
 	for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	    struct vertex *v;
 
@@ -344,7 +341,7 @@ arbin(struct ged *gedp,
 	bu_ptbl_free(&vert_tab);
 
 	/* rebound model */
-	nmg_rebound(m, &gedp->ged_wdbp->wdb_tol);
+	nmg_rebound(s, &gedp->ged_wdbp->wdb_tol);
 
 	nmg_extrude_cleanup(s, 0, &gedp->ged_wdbp->wdb_tol);
 
@@ -353,7 +350,7 @@ arbin(struct ged *gedp,
 
 	/* convert the NMG to a BOT */
 	bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
-	nmg_km(m);
+	nmg_ks(s);
 
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -847,14 +844,13 @@ etoin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[1])
 static int
 nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 {
-    struct model *m;
-    struct nmgregion *r;
+    struct shell *s;
 
     if (ip->idb_type != ID_NMG)
 	return GED_ERROR;
 
-    m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     while (BU_LIST_NOT_HEAD(r, &m->r_hd)) {

@@ -942,7 +942,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_s, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -964,7 +964,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+	nmg_triangulate_shell(*tsp->ts_s, tsp->ts_tol);
 	result = 0;
 
     } else {
@@ -985,16 +985,16 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+draw_nmg_shell_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-    struct nmgregion *r;
+    struct shell *s;
     struct bu_list vhead;
     int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
     RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
@@ -1027,10 +1027,10 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
-    r = curtree->tr_d.td_r;
-    NMG_CK_REGION(r);
+    s = curtree->tr_d.td_s;
+    NMG_CK_SHELL(s);
 
-    if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
+    if (dgcdp->do_not_draw_nmg_solids_during_debugging && s) {
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
@@ -1043,10 +1043,10 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	}
     }
 
-    if (r != 0) {
+    if (s != 0) {
 	int style;
 	/* Convert NMG to vlist */
-	NMG_CK_REGION(r);
+	NMG_CK_SHELL(s);
 
 	if (dgcdp->draw_wireframes) {
 	    /* Draw in vector form */
@@ -1064,12 +1064,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	if (dgcdp->draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
-	nmg_r_to_vlist(&vhead, r, style);
+	nmg_s_to_vlist(&vhead, s, style);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
-	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
+	    nmg_vlblock_s(dgcdp->draw_edge_uses_vbp, s, 1);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
 	db_free_tree(curtree, tsp->ts_resp);
@@ -1122,7 +1122,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ncpu = 1;
     int nmg_use_tnurbs = 0;
     int enable_fastpath = 0;
-    struct model *nmg_model;
+    struct shell *nmg_shell;
     struct _ged_client_data dgcdp;
     int i;
     int ac = 1;
@@ -1408,8 +1408,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	case 3:
 	    {
 		/* NMG */
-		nmg_model = nmg_mm();
-		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
+		nmg_shell = nmg_ms();
+		gedp->ged_wdbp->wdb_initial_tree_state.ts_s = &nmg_shell;
 		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp.draw_edge_uses_vbp = rt_vlblock_init();
@@ -1429,7 +1429,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       ncpu,
 				       &gedp->ged_wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
-				       draw_nmg_region_end,
+				       draw_nmg_shell_end,
 				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
 				       (genptr_t)&dgcdp);
 		}
@@ -1441,7 +1441,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Destroy NMG */
-		nmg_km(nmg_model);
+		nmg_ks(nmg_shell);
 		break;
 	    }
     }
@@ -1449,7 +1449,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     --drawtrees_depth;
 
     if (dgcdp.fastpath_count) {
-	bu_log("%d region%s rendered through polygon fastpath\n",
+	bu_log("%d shell%s rendered through polygon fastpath\n",
 	       dgcdp.fastpath_count, dgcdp.fastpath_count == 1 ? "" : "s");
     }
 

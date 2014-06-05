@@ -359,30 +359,12 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		struct edgeuse *eu;
 		struct loopuse *lu;
 		struct faceuse *fu;
-		struct shell *s;
-		struct nmgregion *r;
-		struct model *m =
-		    (struct model *) ip->idb_ptr;
-		NMG_CK_MODEL(m);
+		struct shell *s =
+		    (struct shell *) ip->idb_ptr;
+		NMG_CK_SHELL(s);
 
 		/* set default first */
 		VSETALL(mpt, 0.0);
-
-		if (BU_LIST_IS_EMPTY(&m->r_hd))
-		    break;
-
-		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		if (!r)
-		    break;
-		NMG_CK_REGION(r);
-
-		if (BU_LIST_IS_EMPTY(&r->s_hd))
-		    break;
-
-		s = BU_LIST_FIRST(shell, &r->s_hd);
-		if (!s)
-		    break;
-		NMG_CK_SHELL(s);
 
 		if (BU_LIST_IS_EMPTY(&s->fu_hd))
 		    fu = (struct faceuse *)NULL;

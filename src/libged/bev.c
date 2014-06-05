@@ -38,7 +38,7 @@
 
 
 static union tree *bev_facetize_tree;
-static struct model *bev_nmg_model;
+static struct shell *bev_nmg_shell;
 
 
 static union tree *
@@ -163,8 +163,8 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		  gedp->ged_wdbp->wdb_ttol.norm);
 
     bev_facetize_tree = (union tree *)0;
-    bev_nmg_model = nmg_mm();
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &bev_nmg_model;
+    bev_nmg_shell = nmg_ms();
+    gedp->ged_wdbp->wdb_initial_tree_state.ts_s = &bev_nmg_shell;
 
     op = ' ';
     tmp_tree = (union tree *)NULL;
@@ -181,7 +181,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	if (i < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
 	    /* Destroy NMG */
-	    nmg_km(bev_nmg_model);
+	    nmg_km(bev_nmg_shell);
 	    return GED_ERROR;
 	}
 	argc--;
@@ -212,7 +212,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized operator: (%c)\nAborting\n",
 				  argv[0], op);
 		    db_free_tree(bev_facetize_tree, &rt_uniresource);
-		    nmg_km(bev_nmg_model);
+		    nmg_ks(bev_nmg_shell);
 		    return GED_ERROR;
 		}
 	    }
@@ -245,12 +245,12 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
-	    nmg_km(bev_nmg_model);
-	    bev_nmg_model = (struct model *)NULL;
+	    nmg_ks(bev_nmg_shell);
+	    bev_nmg_shell = (struct shell *)NULL;
 	    return GED_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, bev_nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_shell, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -260,15 +260,15 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	if (tmp_tree)
 	    db_free_tree(tmp_tree, &rt_uniresource);
 	tmp_tree = (union tree *)NULL;
-	nmg_km(bev_nmg_model);
-	bev_nmg_model = (struct model *)NULL;
+	nmg_ks(bev_nmg_shell);
+	bev_nmg_shell = (struct shell *)NULL;
 	return GED_ERROR;
     }
     /* New region remains part of this nmg "model" */
-    NMG_CK_REGION(tmp_tree->tr_d.td_r);
+    NMG_CK_REGION(tmp_tree->tr_d.td_s);
     bu_vls_printf(gedp->ged_result_str, "%s: facetize %s\n", cmdname, tmp_tree->tr_d.td_name);
 
-    nmg_vmodel(bev_nmg_model);
+    nmg_vshell(bev_nmg_shell);
 
     /* Triangulate model, if requested */
     if (triangulate) {
@@ -279,11 +279,11 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
-	    nmg_km(bev_nmg_model);
-	    bev_nmg_model = (struct model *)NULL;
+	    nmg_ks(bev_nmg_shell);
+	    bev_nmg_shell = (struct shell *)NULL;
 	    return GED_ERROR;
 	}
-	nmg_triangulate_model(bev_nmg_model, &gedp->ged_wdbp->wdb_tol);
+	nmg_triangulate_shell(bev_nmg_shell, &gedp->ged_wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 
@@ -294,13 +294,13 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (genptr_t)bev_nmg_model;
-    bev_nmg_model = (struct model *)NULL;
+    intern.idb_ptr = (genptr_t)bev_nmg_shell;
+    bev_nmg_shell = (struct shell *)NULL;
 
     GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
-    tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
+    tmp_tree->tr_d.td_s = (struct shell *)NULL;
 
     /* Free boolean tree, and the regions in it. */
     db_free_tree(tmp_tree, &rt_uniresource);

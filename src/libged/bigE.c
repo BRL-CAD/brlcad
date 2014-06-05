@@ -90,11 +90,11 @@ union E_tree {
 	/* the leaf nodes */
 	uint32_t magic;
 	int op;
-	struct model *m;		 /* NMG version of this leaf solid */
+	struct shell *s;		 /* NMG version of this leaf solid */
 	struct bu_list seghead;		 /* head of list of segments for this leaf solid */
 	struct bu_ptbl edge_list;	 /* list of edges from above NMG */
 	struct soltab *stp;		 /* the usual soltab pointer */
-	unsigned char do_not_free_model; /* A flag indicating that the
+	unsigned char do_not_free_shell; /* A flag indicating that the
 					  * NMG model pointer is a
 					  * reference to the NMG model
 					  * in the soltab structure.
@@ -113,7 +113,7 @@ add_solid(const struct directory *dp,
 	  struct _ged_client_data *dgcdp)
 {
     union E_tree *eptr = NULL;
-    struct nmgregion *r = NULL;
+    struct shell *s = NULL;
     struct rt_db_internal intern;
     int id;
     int solid_is_plate_mode_bot=0;
@@ -124,7 +124,7 @@ add_solid(const struct directory *dp,
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
-	eptr->l.m = (struct model *)NULL;
+	eptr->l.s = (struct shell *)NULL;
 	return eptr;
     }
     if (id == ID_COMBINATION) {
@@ -142,23 +142,23 @@ add_solid(const struct directory *dp,
 	return eptr;
     }
     if (id == ID_HALF) {
-	eptr->l.m = NULL;
+	eptr->l.s = NULL;
 	dgcdp->num_halfs++;
     } else if (id == ID_NMG) {
 	/* steal the nmg model */
-	eptr->l.m = (struct model *)intern.idb_ptr;
-	eptr->l.do_not_free_model = 1;
+	eptr->l.s = (struct shell *)intern.idb_ptr;
+	eptr->l.do_not_free_shell = 1;
     } else {
 	/* create the NMG version of this solid */
-	eptr->l.m = nmg_mm();
+	eptr->l.s = nmg_ms();
 
 	if (!OBJ[id].ft_tessellate ||
-	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
+	    OBJ[id].ft_tessellate(&s, eptr->l.s, &intern,
 					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
 					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0)
 	{
-	    nmg_km(eptr->l.m);
-	    eptr->l.m = NULL;
+	    nmg_ks(eptr->l.s);
+	    eptr->l.s = NULL;
 	}
     }
 
@@ -177,13 +177,10 @@ add_solid(const struct directory *dp,
 	    struct shell *s=(struct shell *)NULL;
 
 	    /* create and prep a BoT version of this solid */
-	    if (eptr->l.m) {
-		r = BU_LIST_FIRST(nmgregion, &eptr->l.m->r_hd);
-		s = BU_LIST_FIRST(shell, &r->s_hd);
-	    }
+	    s = eptr->l.s;
 
 	    if (solid_is_plate_mode_bot
-		|| !eptr->l.m
+		|| !eptr->l.s
 		|| (bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
@@ -264,7 +261,7 @@ build_etree(union tree *tp,
 	    /* add a NULL solid */
 	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
-	    eptr->l.m = (struct model *)NULL;
+	    eptr->l.s = (struct shell *)NULL;
 	    break;
 	default:
 	    bu_bomb("build_etree() Unknown tr_op\n");
@@ -1258,7 +1255,7 @@ shoot_and_plot(point_t start_pt,
 	}
 
 	/* initialize the lists of things that have been hit/missed */
-	rd.rd_m = shoot->l.m;
+	rd.rd_s = shoot->l.s;
 	BU_LIST_INIT(&rd.rd_hit);
 	BU_LIST_INIT(&rd.rd_miss);
 
@@ -1376,8 +1373,8 @@ Eplot(union E_tree *eptr,
 	    return;
 	}
 
-	if (leaf_ptr->l.m)
-	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.m->magic);
+	if (leaf_ptr->l.s)
+	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.s->magic);
 	else
 	    bu_ptbl_init(&leaf_ptr->l.edge_list, 1, "edge_list");
     }
@@ -1390,7 +1387,7 @@ Eplot(union E_tree *eptr,
 
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 
-	if (!leaf_ptr->l.m)
+	if (!leaf_ptr->l.s)
 	    continue;
 
 	/* do each edge of the current leaf solid */
@@ -1432,12 +1429,11 @@ Eplot(union E_tree *eptr,
 	int leaf2;
 
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
-	if (!leaf_ptr->l.m)
+	if (!leaf_ptr->l.s)
 	    continue;
 
 	for (leaf2=leaf_no+1; leaf2 < BU_PTBL_END(&dgcdp->leaf_list); leaf2++) {
 	    union E_tree *leaf2_ptr;
-	    struct nmgregion *r1, *r2;
 	    struct shell *s1, *s2;
 	    struct faceuse *fu1, *fu2;
 	    struct face *f1, *f2;
@@ -1448,15 +1444,13 @@ Eplot(union E_tree *eptr,
 	    struct bu_list *A, *B;
 
 	    leaf2_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf2);
-	    if (!leaf2_ptr->l.m)
+	    if (!leaf2_ptr->l.s)
 		continue;
 
 	    /* find intersection lines between these two NMG's */
 
-	    r1 = BU_LIST_FIRST(nmgregion, &leaf_ptr->l.m->r_hd);
-	    s1 = BU_LIST_FIRST(shell, &r1->s_hd);
-	    r2 = BU_LIST_FIRST(nmgregion, &leaf2_ptr->l.m->r_hd);
-	    s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+	    s1 = leaf_ptr->l.s;
+	    s2 = leaf2_ptr->l.s;
 
 	    for (BU_LIST_FOR (fu1, faceuse, &s1->fu_hd)) {
 		if (fu1->orientation != OT_SAME)
@@ -1726,9 +1720,9 @@ free_etree(union E_tree *eptr,
 	    break;
 	case OP_DB_LEAF:
 	case OP_SOLID:
-	    if (eptr->l.m && !eptr->l.do_not_free_model) {
-		nmg_km(eptr->l.m);
-		eptr->l.m = (struct model *)NULL;
+	    if (eptr->l.s && !eptr->l.do_not_free_shell) {
+		nmg_ks(eptr->l.s);
+		eptr->l.s = (struct shell *)NULL;
 	    }
 	    if (BU_LIST_NON_EMPTY(&eptr->l.seghead)) {
 		MY_FREE_SEG_LIST(&eptr->l.seghead, dgcdp->ap->a_resource);
@@ -1783,7 +1777,6 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	union E_tree *tp;
 	struct vertex *v[8];
 	struct vertex **vp[4];
-	struct nmgregion *r;
 	struct shell *s;
 	struct rt_pg_internal *pg;
 	struct faceuse *fu;
@@ -1805,9 +1798,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    continue;
 
 	/* make an NMG the size of our model bounding box */
-	tp->l.m = nmg_mm();
-	r = nmg_mrsv(tp->l.m);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
+	tp->l.s = nmg_ms();
+	s = tp->l.s;
 
 	for (j = 0; j < 8; j++)
 	    v[j] = (struct vertex *)NULL;
@@ -1862,7 +1854,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	fu = nmg_cmface(s, vp, 4);
 	nmg_calc_face_g(fu);
 
-	nmg_region_a(r, tol);
+	nmg_shell_a(s, tol);
 
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    struct edgeuse *eu, *new_eu;
@@ -1989,14 +1981,14 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    fu = next_fu;
 	}
 
-	nmg_rebound(tp->l.m, tol);
-	nmg_model_fuse(tp->l.m, tol);
+	nmg_rebound(tp->l.s, tol);
+	nmg_shell_fuse(tp->l.s, tol);
 	nmg_close_shell(s, tol);
-	nmg_rebound(tp->l.m, tol);
+	nmg_rebound(tp->l.s, tol);
 
 	BU_ALLOC(pg, struct rt_pg_internal);
 
-	if (!nmg_to_poly(tp->l.m, pg, tol)) {
+	if (!nmg_to_poly(tp->l.s, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
 	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
 	} else {

@@ -37,16 +37,15 @@ static int frac_stat;
 
 
 static void
-fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
+fracture_add_nmg_part(struct ged *gedp, char *newname, struct shell *s)
 {
     struct rt_db_internal new_intern;
     struct directory *new_dp;
-    struct nmgregion *r;
 
     if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists\n", newname);
 	/* Free memory here */
-	nmg_km(m);
+	nmg_ks(s);
 	frac_stat = 1;
 	return;
     }
@@ -60,8 +59,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     }
 
     /* make sure the geometry/bounding boxes are up to date */
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
+	nmg_shell_s(s, &gedp->ged_wdbp->wdb_tol);
 
 
     /* Export NMG as a new solid */
@@ -69,11 +67,11 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_NMG;
     new_intern.idb_meth = &OBJ[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)m;
+    new_intern.idb_ptr = (genptr_t)s;
 
     if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
-	nmg_km(m);
+	nmg_ks(s);
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
 	frac_stat = 1;
 	return;
@@ -90,11 +88,9 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     int i;
     struct directory *old_dp;
     struct rt_db_internal old_intern;
-    struct model *m, *new_model;
     char newname[32];
     char prefix[32];
     int maxdigits;
-    struct nmgregion *r, *new_r;
     struct shell *s, *new_s;
     struct faceuse *fu;
     struct vertex *v_new, *v;
@@ -138,11 +134,11 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    m = (struct model *)old_intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)old_intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* how many characters of the solid names do we reserve for digits? */
-    nmg_count_shell_kids(m, &tf, &tw, &tp);
+    nmg_count_shell_kids(s, &tf, &tw, &tp);
 
     maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
@@ -160,49 +156,37 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     /* Bust it up here */
 
     i = 1;
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	NMG_CK_REGION(r);
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    NMG_CK_SHELL(s);
-	    if (s->vu_p) {
-		NMG_CK_VERTEXUSE(s->vu_p);
-		NMG_CK_VERTEX(s->vu_p->v_p);
-		v = s->vu_p->v_p;
+    NMG_CK_SHELL(s);
+    if (s->vu_p) {
+	NMG_CK_VERTEXUSE(s->vu_p);
+	NMG_CK_VERTEX(s->vu_p->v_p);
+	v = s->vu_p->v_p;
 
-		new_model = nmg_mm();
-		nmg_mrsv(new_model);
-		new_s = BU_LIST_FIRST(shell, &r->s_hd);
-		v_new = new_s->vu_p->v_p;
-		if (v->vg_p) {
-		    nmg_vertex_gv(v_new, v->vg_p->coord);
-		}
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-
-		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-		continue;
-	    }
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		if (fu->orientation != OT_SAME)
-		    continue;
-
-		NMG_CK_FACEUSE(fu);
-
-		new_model = nmg_mm();
-		NMG_CK_MODEL(new_model);
-		new_r = nmg_mrsv(new_model);
-		NMG_CK_REGION(new_r);
-		new_s = BU_LIST_FIRST(shell, &new_r->s_hd);
-
-		NMG_CK_SHELL(new_s);
-		nmg_dup_face(fu, new_s);
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-	    }
+	new_s = nmg_ms();
+	v_new = new_s->vu_p->v_p;
+	if (v->vg_p) {
+	    nmg_vertex_gv(v_new, v->vg_p->coord);
 	}
+
+	snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
+
+	fracture_add_nmg_part(gedp, newname, new_shell);
+	if (frac_stat) return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	if (fu->orientation != OT_SAME)
+	    continue;
+
+	NMG_CK_FACEUSE(fu);
+
+	new_s = nmg_ms();
+	NMG_CK_SHELL(new_s);
+	nmg_dup_face(fu, new_s);
+
+	snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
+	fracture_add_nmg_part(gedp, newname, new_s);
+	if (frac_stat) return GED_ERROR;
     }
 
     return GED_OK;
