@@ -15,8 +15,9 @@ use lib('.');
 my $p = basename($0);
 my $usage  = "Usage:  $p go [-d][-f][-h]";
 
-my $ifil = 'c-grammar.txt';
-my $pm   = 'GS';
+my $ifil = 'c-grammar.txt'; # in P::RD format
+my $pm   = 'RG';            # in R::G  format
+
 my $ofil = "${pm}.pm";
 
 if (!@ARGV) {
@@ -60,6 +61,7 @@ my %prod  = (); # hash of production names and their children
 my @prods = (); # retain order as read
 
 my $maxCAPSlen = extract_grammar(\%prod, \@prods);
+
 say  "# DEBUG: max caps len = $maxCAPSlen"
   if $debug;
 
@@ -98,6 +100,8 @@ if ($debug) {
   }
   #print Dumper(\%prod);
 }
+
+say "Normal end.";
 
 #### subroutines ####
 sub extract_grammar {
