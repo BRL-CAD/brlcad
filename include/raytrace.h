@@ -2508,7 +2508,7 @@ struct ray_data {
 	BU_LIST_INIT(&rd->rd_hit); \
 	BU_LIST_INIT(&rd->rd_miss); \
 	RTG.NMG_debug |= DEBUG_NMGRT; \
-	nmg_isect_ray_model(rd); \
+	nmg_isect_ray_shell(rd); \
 	(void) nmg_ray_segs(rd); \
 	bu_bomb("Should have bombed before this\n"); \
     }
@@ -6512,7 +6512,7 @@ RT_EXPORT extern int nmg_decompose_shell(struct shell *s,
 RT_EXPORT extern void nmg_stash_shell_to_file(const char *filename,
 					      const struct shell *s,
 					      const char *title);
-RT_EXPORT extern int nmg_unbreak_region_edge(uint32_t *magic_p);
+RT_EXPORT extern int nmg_unbreak_shell_edge(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
 RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
@@ -7235,7 +7235,7 @@ RT_EXPORT extern int nmg_class_ray_vs_shell(struct xray *rp,
 					    const int in_or_out_only,
 					    const struct bn_tol *tol);
 
-RT_EXPORT extern void nmg_isect_ray_model(struct ray_data *rd);
+RT_EXPORT extern void nmg_isect_ray_shell(struct ray_data *rd);
 
 /* From nmg_ck.c */
 RT_EXPORT extern void nmg_vvg(const struct vertex_g *vg);
@@ -7303,8 +7303,6 @@ RT_EXPORT extern int nmg_eu_2s_orient_bad(const struct edgeuse	*eu,
 					  const struct bn_tol	*tol);
 RT_EXPORT extern int nmg_ck_closed_surf(const struct shell *s,
 					const struct bn_tol *tol);
-RT_EXPORT extern int nmg_ck_closed_shell(const struct shell *s,
-					  const struct bn_tol *tol);
 RT_EXPORT extern void nmg_ck_v_in_2fus(const struct vertex *vp,
 				       const struct faceuse *fu1,
 				       const struct faceuse *fu2,
@@ -7462,8 +7460,6 @@ RT_EXPORT extern uint32_t **nmg_s_struct_count(struct nmg_struct_counts *ctr,
 						    const struct shell *s);
 RT_EXPORT extern void nmg_pr_s_struct_counts(const struct shell	*s,
 					     const char		*str);
-RT_EXPORT extern void nmg_merge_shells(struct shell *s1,
-				       struct shell *s2);
 RT_EXPORT extern long nmg_find_max_index(const struct shell *s);
 
 /* From nmg_rt.c */
