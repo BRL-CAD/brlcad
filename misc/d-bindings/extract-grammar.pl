@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+use v5.14; # say, switch
+
 # converts a grammar to a Perl module
 
 use strict;
@@ -7,10 +9,9 @@ use warnings;
 
 use Data::Dumper; $Data::Dumper::Indent = 1;
 
-
-
 use File::Basename;
 use lib('.');
+
 my $p = basename($0);
 my $usage  = "Usage:  $p go [-d][-f][-h]";
 
@@ -19,11 +20,10 @@ my $pm   = 'GS';
 my $ofil = "${pm}.pm";
 
 if (!@ARGV) {
-  print <<"HERE";
+  say <<"HERE";
 $usage
 
 Use '-h' for extended help.
-
 HERE
 
   exit;
@@ -60,20 +60,20 @@ my %prod  = (); # hash of production names and their children
 my @prods = (); # retain order as read
 
 my $maxCAPSlen = extract_grammar(\%prod, \@prods);
-print  "# DEBUG: max caps len = $maxCAPSlen\n"
+say  "# DEBUG: max caps len = $maxCAPSlen"
   if $debug;
 
 if ($debug) {
   # chars allowed for CAPS prod name plus a colon plus one space
   my $spaces = $maxCAPSlen + 2;
 
-  print "# C grammar:\n";
+  say "# C grammar:";
   foreach my $p (@prods) {
     my $caps = ($p =~ m{\A [A-Z_]+ \z}x) ? 1 : 0;
     my @c = @{$prod{$p}};
     my $nc = @c;
     if (!$caps) {
-      print "$p:\n";
+      say "$p:";
     }
     else {
       my $len = length $p;
@@ -132,7 +132,7 @@ sub extract_grammar {
 
     $line = strip_comment($line);
     if ($line !~ /\S+/) {
-      print "DEBUG:  skipping empty line '$line'.\n"
+      say "DEBUG:  skipping empty line '$line'."
 	if (0 && $debug);
       next;
     }
@@ -140,7 +140,7 @@ sub extract_grammar {
     chomp $line;
 
     if (0 && $debug) {
-      print "DEBUG: non-empty line '$line'\n";
+      say "DEBUG: non-empty line '$line'";
     }
 
     # trim
@@ -159,10 +159,10 @@ sub extract_grammar {
 
       my $t2 = $line;
       if (0 && $debug && $t1 ne $t2) {
-	print "DEBUG: original line with pipes:\n";
-	print "  '$t1'\n";
-	print "DEBUG: line with spaced pipes:\n";
-	print "  '$t2'\n";
+	say "DEBUG: original line with pipes:";
+	say "  '$t1'";
+	say "DEBUG: line with spaced pipes:";
+	say "  '$t2'";
       }
     }
 
@@ -177,15 +177,15 @@ sub extract_grammar {
     if ($have_colon) {
       if (0 && $debug) {
 	my $s = $line;
-	print "DEBUG: original line with colon:\n";
-	print "  '$s'\n";
+	say "DEBUG: original line with colon:";
+	say "  '$s'";
       }
       # affect only colons at end (or beginning?) of identifiers
       $line =~ s{\A ([a-zA-Z_]+)\:}{$1 \:}x;
       if (0 && $debug) {
 	my $s = $line;
-	print "       line with colon separated:\n";
-	print "  '$s'\n";
+	say "       line with colon separated:";
+	say "  '$s'";
       }
     }
 
@@ -224,7 +224,7 @@ sub extract_grammar {
 	}
 	else {
 	  $prod_href->{$curr_prod} = [];
-	  print "WARNING:  production rule '$curr_prod' has no children.\n";
+	  say "WARNING:  production rule '$curr_prod' has no children.";
 	}
 	# save the prod order
 	push @{$prods_aref}, $curr_prod;
@@ -271,8 +271,8 @@ sub extract_grammar {
 	}
       }
       else {
-	print STDERR "ERROR: No \$curr_prod for line $linenum:\n";
-	print STDERR "  line: '$line'\n";
+	say STDERR "ERROR: No \$curr_prod for line $linenum:";
+	say STDERR "  line: '$line'";
 	die "FATAL:  No \$curr_prod.";
       }
     }
@@ -288,7 +288,7 @@ sub extract_grammar {
   }
   else {
     $prod_href->{$curr_prod} = [];
-    print "WARNING:  production rule '$curr_prod' has no children.\n";
+    say "WARNING:  production rule '$curr_prod' has no children.";
   }
   push @{$prods_aref}, $curr_prod;
 
@@ -297,7 +297,7 @@ sub extract_grammar {
 } # extract_grammar
 
 sub longhelp {
-  print <<"HERE";
+  say <<"HERE";
 $usage
 
   -d  Debug
@@ -306,7 +306,6 @@ $usage
 
 Extracts grammar from file '$ifil' and creates a Perl
 data module named '${ofil}'.
-
 HERE
 
   exit;

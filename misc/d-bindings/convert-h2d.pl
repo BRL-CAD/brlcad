@@ -2,6 +2,8 @@
 
 # converts a C .h file to a rudimentary .d file for linking C to D
 
+use v5.10; # for 'say'
+
 use strict;
 use warnings;
 
@@ -30,7 +32,7 @@ my $usage  = "Usage: $p mode [options...]\n\n";
 $usage    .= "  modes:   -r | -cN | -h=X | -b | -e\n";
 $usage    .= "  options: -f -d -c -n=X -h";
 if (!@ARGV) {
-  print <<"HERE";
+  say <<"HERE";
 $usage
 
 Use option '-h' for details.
@@ -63,7 +65,7 @@ foreach my $arg (@ARGV) {
   my $val = undef;
   my $idx = index $arg, '=';
   if ($idx >= 0) {
-    print "DEBUG: input arg is '$arg'\n"
+    say "DEBUG: input arg is '$arg'"
       if $G::debug;
 
     $val = substr $arg, $idx+1;
@@ -72,7 +74,7 @@ foreach my $arg (@ARGV) {
     }
     $arg = substr $arg, 0, $idx;
     if (0&& $G::debug) {
-      print "arg is now '$arg', val is '$val'\n";
+      say "arg is now '$arg', val is '$val'";
       die "debug exit";
     }
   }
@@ -103,7 +105,7 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ m{\A -n}xms) {
     if ($val !~ m{\A (?: 0 | [1-9][0-9]*) \z}x) {
-      print "ERROR:  X in option '-n=X' must be a positive integer,\n";
+      say "ERROR:  X in option '-n=X' must be a positive integer,";
       die   "        but it's value is '$val'.\n";
     }
     $G::maxchunks = $val;
@@ -173,33 +175,33 @@ get_status(\%stats, \%f);
 
 my @ofils = ();
 if ($report) {
-  print "Mode is '-r' (report)...\n\n";
+  say "Mode is '-r' (report)...";
   my $n = $nh ? $nh : 'zero';
-  print "There are $n C header files in the '$D::IDIR' directory:\n";
-  print "  new:       $stats{h}{new}\n";
-  print "  unchanged: $stats{h}{sam}\n";
-  print "  changed:   $stats{h}{dif}\n";
+  say "There are $n C header files in the '$D::IDIR' directory:";
+  say "  new:       $stats{h}{new}";
+  say "  unchanged: $stats{h}{sam}";
+  say "  changed:   $stats{h}{dif}";
 
   if ($G::verbose) {
-    print "  Files:\n";
-    print "    $_\n" for (@h);
+    say "  Files:";
+    say "    $_" for (@h);
   }
 
   $n = $nd ? $nd : 'zero';
-  print "There are $n D interface files in the '$BP::DIDIR' directory:\n";
-  print "  new:       $stats{di}{new}\n";
-  print "  unchanged: $stats{di}{sam}\n";
-  print "  changed:   $stats{di}{dif}\n";
+  say "There are $n D interface files in the '$BP::DIDIR' directory:";
+  say "  new:       $stats{di}{new}";
+  say "  unchanged: $stats{di}{sam}";
+  say "  changed:   $stats{di}{dif}";
 
   if ($G::verbose) {
-    print "  Files:\n";
-    print "    $_\n" for (@d);
+    say "  Files:";
+    say "    $_" for (@d);
   }
 }
 elsif ($convert) {
   @ifils = @h
     if !@ifils;
-  print "Mode is '-c$convert' (convert method $convert)...\n\n";
+  say "Mode is '-c$convert' (convert method $convert)...\n";
   die "debug exit"
     if (0 && $G::debug);
   die "FATAL:  No input files selected.\n"
@@ -218,14 +220,15 @@ elsif ($Egen) {
   BP::get_brlcad_ext_inc_data(\@ofils, $G::debug);
 }
 
-print "Normal end.\n";
+say "Normal end.";
 if (@ofils) {
   my $s = (1 < @ofils) ? 's' : '';
-  print "See output file$s:\n";
-  print "  $_\n" for @ofils;
+  say "See output file$s:";
+  say "  $_" for @ofils;
 }
 else {
-  print "No output files were generated (no input file was changed from previous runs).\n";
+  say "No output files were generated (no input file was";
+  say "  changed from previous runs).";
 }
 
 #### subroutines ####
@@ -277,16 +280,16 @@ sub file_status {
   my $status = undef;
   if (!$prev_hash) {
     $status = $G::NEW;
-    #print "Note that '$f' is new or unprocessed.\n";
+    #say "Note that '$f' is new or unprocessed.";
   }
   elsif ($prev_hash eq $curr_hash) {
     $status = $G::SAME;
-    #print "Note that '$f' has not changed.\n";
+    #say "Note that '$f' has not changed.";
   }
   else {
     DS::store_md5hash($f, $curr_hash);
     $status = $G::DIFF;
-    #print "Note that '$f' has changed.\n";
+    #say "Note that '$f' has changed.";
   }
 
   die "ERROR:  Unknown status for '$f'!" if ! defined $status;
@@ -296,7 +299,7 @@ sub file_status {
 } # file_status
 
 sub help {
-  print <<"HERE";
+  say <<"HERE";
 $usage
 
 modes:
@@ -350,7 +353,6 @@ Notes:
       + <http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules>
 
       + <http://stackoverflow.com/questions/994732/how-can-i-parse-a-c-header-file-with-perl>
-
 HERE
 
   exit;
