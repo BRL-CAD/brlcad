@@ -950,7 +950,9 @@ struct BrepTrimPoint
 
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, double u, double v, double tol = 1e-6);
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol = 1e-6);
+extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,int dir,double u, double v,double tol = 0.0);
 extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,double u, double v,double tol = 0.0);
+extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,int dir,const ON_2dPoint &pt,double tol = 0.0);
 extern BREP_EXPORT int IsAtSeam(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
 extern BREP_EXPORT ON_2dPoint UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt,double tol = 0.0);
 extern BREP_EXPORT double DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt);

@@ -2058,6 +2058,20 @@ interpolateCurve(ON_2dPointArray &samples)
 }
 
 
+int
+IsAtSeam(const ON_Surface *surf, int dir, double u, double v, double tol)
+{
+    int rc = 0;
+    if (!surf->IsClosed(dir))
+	return rc;
+
+    double p = (dir) ? v : u;
+    if (NEAR_EQUAL(p, surf->Domain(dir)[0], tol) || NEAR_EQUAL(p, surf->Domain(dir)[1], tol))
+	rc += (dir + 1);
+
+    return rc;
+}
+
 /*
  *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
  *  the floating point equality used by openNURBS.
@@ -2069,16 +2083,21 @@ IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
     int rc = 0;
     int i;
     for (i = 0; i < 2; i++) {
-	if (!surf->IsClosed(i))
-	    continue;
-	double p = (i) ? v : u;
-	if (NEAR_EQUAL(p, surf->Domain(i)[0], tol) || NEAR_EQUAL(p, surf->Domain(i)[1], tol))
-	    rc += (i + 1);
+	rc += IsAtSeam(surf, i, u, v, tol);
     }
 
     return rc;
 }
 
+int
+IsAtSeam(const ON_Surface *surf, int dir, const ON_2dPoint &pt, double tol)
+{
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    rc = IsAtSeam(surf,dir,unwrapped_pt.x,unwrapped_pt.y,tol);
+
+    return rc;
+}
 
 /*
  *  Similar to IsAtSeam(surf,u,v,tol) function but takes a ON_2dPoint
