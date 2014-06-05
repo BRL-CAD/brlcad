@@ -30,7 +30,7 @@
     <command>handle</command> uses libwdb to create a BRL-CAD database file.
     The handles are composed of three cylinders, two tori, and two arb8s.  This
     program may be run interactively or the user may specify options on a command
-    line.  If the user chooses to run the program interactively he answers the
+    line.  If the user chooses to run the program interactively, he answers the
     questions as the program prompts him.  Below are the options that can be used
     on the command line.
  </para>
