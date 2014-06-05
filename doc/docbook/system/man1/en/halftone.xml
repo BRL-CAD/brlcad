@@ -37,8 +37,9 @@
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file from the named file, or from
-standard in if no file is specified, and reduces the number of intensity
-levels from 256 to a default of 2.  Halftone tries to preserve as much
+standard input if no file is specified, and reduces the number of intensity
+levels from 256 to a default of 2.  <emphasis remap='I'>Halftone</emphasis>
+tries to preserve as much
 information as possible by applying dither.</para>
 
 <para>By default, the
@@ -48,7 +49,7 @@ file is assumed to be 512x512 pixels.
 
 <para>If the
 <option>-R</option>
-flag is specified random noise is added to the dither, and this can sometimes
+flag is specified, random noise is added to the dither, and this can sometimes
 improve the results.</para>
 
 <para>The
@@ -81,7 +82,7 @@ sharpening.</para>
 defines the number of different intensity levels to use on output.  The
 default is 2 (1 bit) and the max is 256 (8 bits).</para>
 
-<para>The
+<para>
 <option>-M </option><replaceable>method</replaceable>
 allows a choice of dither methods.  The default is
 0 a Floyd-Steinberg diffused error dither,
@@ -94,13 +95,13 @@ allows a choice of dither methods.  The default is
 parameter is used to define a curve to be used as a tone scale.  The
 resulting curve is used to map input pixels to output pixels.  The default
 curve is
--T  0 0 128 128 255 255
+-T  0 0 128 128 255 255;
 a curve suggested by Robert Ulichney in
 Digital Halftoning
 is
 -T  0  0  15  0  128  100  200  200  240  255  255  255.</para>
 
-<para>The
+<para>
 <option>-D </option><replaceable>debug_level</replaceable>
 supplies the debug level; setting the argument to 9 provides all debugging.
 </para>
