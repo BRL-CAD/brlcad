@@ -54,65 +54,48 @@ foreach my $arg (@ARGV) {
 die "FATAL:  Unable to find grammar file '$ifil'.\n"
   if ! -f $ifil;
 
-open my $fp, '<', $ifil
-  or die "$ifil: $!";
-
 my %prod  = (); # hash of production names and their children
 my @prods = (); # retain order as read
 
-my $maxCAPSlen = extract_grammar(\%prod, \@prods);
+my $maxCAPSlen = extract_grammar(\@prods, \%prod, $ifil);
 
 say  "# DEBUG: max caps len = $maxCAPSlen"
   if $debug;
 
 if ($debug) {
-  # chars allowed for CAPS prod name plus a colon plus one space
-  my $spaces = $maxCAPSlen + 2;
-
-  say "# C grammar:";
-  foreach my $p (@prods) {
-    my $caps = ($p =~ m{\A [A-Z_]+ \z}x) ? 1 : 0;
-    my @c = @{$prod{$p}};
-    my $nc = @c;
-    if (!$caps) {
-      say "$p:";
-    }
-    else {
-      my $len = length $p;
-      my $sp  = $spaces;
-      $sp -= ($len + 1); # space for prod name plus colon
-      printf "$p:%-*.*s", $sp, $sp, ' ';
-    }
-    for (my $i = 0; $i < $nc; ++$i) {
-      my $c = $c[$i];
-      if ($caps && $i) {
-	my $sp = $spaces;
-	printf "%-*.*s", $sp, $sp, ' ';
-      }
-      if (!$caps) {
-	print "\t";
-      }
-      print "| " if $i;
-      print "$c";
-      print "\n";
-    }
-    print "\n" if !$caps;
-  }
-  #print Dumper(\%prod);
+  dump_prods(\@prods, \%prod, $maxCAPSlen);
 }
+
+
+convert_to_RG(\@prods, \%prod, $ofil);
 
 say "Normal end.";
 
 #### subroutines ####
 sub convert_to_RG {
-  my $p_aref = shift @_;
-  my $p_href = shift @_;
+  my $p_aref = shift @_; # \@prods
+  my $p_href = shift @_; # \%prods
+  my $ofil   = shift @_; # $ofil
+
+  open my $fp, '>', $ofil
+    or die "$ofil: $!";
+
+  # prelims
+
+  # guts
+
+
+  # ender
 
 } # convert_to_RG
 
 sub extract_grammar {
-  my $prod_href  = shift @_; # \%prod
   my $prods_aref = shift @_; # \@prods
+  my $prod_href  = shift @_; # \%prod
+  my $ifil       = shift @_; # $ifil
+
+  open my $fp, '<', $ifil
+    or die "$ifil: $!";
 
   # certain lines can't be processed
   my @pipes_ok
@@ -336,3 +319,46 @@ sub strip_comment {
   }
   return $line;
 } # strip_comment
+
+sub dump_prods {
+  my $p_aref     = shift @_; # \@prods
+  my $p_href     = shift @_; # \%prod
+  my $maxCAPSlen = shift @_;
+
+  # chars allowed for CAPS prod name plus a colon plus one space
+  my $spaces = $maxCAPSlen + 2;
+
+
+  say "# C grammar:";
+  foreach my $p (@{$p_aref}) {
+    my $caps = ($p =~ m{\A [A-Z_]+ \z}x) ? 1 : 0;
+    my @c = @{$p_href->{$p}};
+    my $nc = @c;
+    if (!$caps) {
+      say "$p:";
+    }
+    else {
+      my $len = length $p;
+      my $sp  = $spaces;
+      $sp -= ($len + 1); # space for prod name plus colon
+      printf "$p:%-*.*s", $sp, $sp, ' ';
+    }
+    for (my $i = 0; $i < $nc; ++$i) {
+      my $c = $c[$i];
+      if ($caps && $i) {
+	my $sp = $spaces;
+	printf "%-*.*s", $sp, $sp, ' ';
+      }
+      if (!$caps) {
+	print "\t";
+      }
+      print "| " if $i;
+      print "$c";
+      print "\n";
+    }
+    print "\n" if !$caps;
+  }
+
+  #print Dumper($p_href);
+
+} # dump_prods
