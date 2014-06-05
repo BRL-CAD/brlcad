@@ -278,7 +278,7 @@ arbin(struct ged *gedp,
 	s = nmg_ms();
 
 	/* get an NMG version of this arb7 */
-	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
+	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&s, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return GED_ERROR;
@@ -315,7 +315,7 @@ arbin(struct ged *gedp,
 	    }
 	    if (!found) {
 		bu_vls_printf(gedp->ged_result_str, "Could not move face plane for arb7, face #%d\n", i);
-		nmg_km(m);
+		nmg_ks(s);
 		return GED_ERROR;
 	    }
 	}
@@ -333,7 +333,7 @@ arbin(struct ged *gedp,
 
 	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
-		nmg_km(m);
+		nmg_ks(s);
 		bu_ptbl_free(&vert_tab);
 		return GED_ERROR;
 	    }
@@ -850,42 +850,15 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 	return GED_ERROR;
 
     s = (struct shell *)ip->idb_ptr;
+
     NMG_CK_SHELL(s);
 
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    while (BU_LIST_NOT_HEAD(r, &m->r_hd)) {
-	struct nmgregion *next_r;
-	struct shell *s;
+    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
 
-	NMG_CK_REGION(r);
+    if (!nmg_kill_cracks(s))
+	(void)nmg_extrude_shell(s, thick, 0, 0, &gedp->ged_wdbp->wdb_tol);
 
-	next_r = BU_LIST_PNEXT(nmgregion, &r->l);
-
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(s, &r->s_hd)) {
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-
-	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
-	    if (!nmg_kill_cracks(s))
-		(void)nmg_extrude_shell(s, thick, 0, 0, &gedp->ged_wdbp->wdb_tol);
-
-	    s = next_s;
-	}
-
-	if (BU_LIST_IS_EMPTY(&r->s_hd))
-	    nmg_kr(r);
-
-	r = next_r;
-    }
-
-    if (BU_LIST_IS_EMPTY(&m->r_hd)) {
-	bu_vls_printf(gedp->ged_result_str, "No inside created\n");
-	nmg_km(m);
-	return GED_ERROR;
-    } else
-	return GED_OK;
+    return GED_OK;
 }
 
 
