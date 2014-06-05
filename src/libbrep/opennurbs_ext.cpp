@@ -725,7 +725,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	    new_uv[1] = node->m_v[1];
 
 
-	surf->EvNormal(new_uv[0], new_uv[1], newpt, ray.m_dir);
+	surface_EvNormal(surf,new_uv[0], new_uv[1], newpt, ray.m_dir);
 	ray.m_dir.Reverse();
 	brep_get_plane_ray(ray, pr);
 
@@ -864,7 +864,7 @@ initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, c
     BBNode* node = new BBNode(ctree, bb, face, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
-    if (!surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
+    if (!surface_EvNormal(surf,surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
 	bu_bomb("Could not evaluate estimate point on surface");
     }
     node->m_estimate = estimate;

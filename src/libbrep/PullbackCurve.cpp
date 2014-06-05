@@ -110,6 +110,49 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 }
 
 
+/*
+ * Wrapped OpenNURBS 'EvNormal()' because it fails when at surface singularity
+ * but not on edge of domain. If fails and at singularity this wrapper will
+ * reevaluate at domain edge.
+ */
+ON_BOOL32
+surface_EvNormal( // returns false if unable to evaluate
+	 const ON_Surface *surf,
+         double s, double t, // evaluation parameters (s,t)
+         ON_3dPoint& point,  // returns value of surface
+         ON_3dVector& normal, // unit normal
+         int side,       // optional - determines which side to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* hint       // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         )
+{
+    ON_BOOL32 rc = false;
+
+    if (!(rc=surf->EvNormal(s, t, point, normal, side, hint))) {
+	side = IsAtSingularity(surf, s, t, PBC_SEAM_TOL);// 0 = south, 1 = east, 2 = north, 3 = west
+	if (side >= 0) {
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    if (side == 0) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    } else if (side == 1) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 2) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 3) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    }
+	}
+    }
+    return rc;
+}
+
+
 ON_BOOL32
 surface_GetBoundingBox(
 	const ON_Surface *surf,
@@ -2053,29 +2096,38 @@ IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 
 
 int
-IsAtSingularity(const ON_Surface *surf, double u, double v)
+IsAtSingularity(const ON_Surface *surf, double u, double v, double tol)
 {
     // 0 = south, 1 = east, 2 = north, 3 = west
     //std::cerr << "IsAtSingularity = u, v - " << u << ", " << v << std::endl;
     //std::cerr << "surf->Domain(0) - " << surf->Domain(0)[0] << ", " << surf->Domain(0)[1] << std::endl;
     //std::cerr << "surf->Domain(1) - " << surf->Domain(1)[0] << ", " << surf->Domain(1)[1] << std::endl;
-    if (NEAR_EQUAL(u, surf->Domain(0)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(u, surf->Domain(0)[0], tol)) {
 	if (surf->IsSingular(3))
 	    return 3;
-    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], tol)) {
 	if (surf->IsSingular(1))
 	    return 1;
     }
-    if (NEAR_EQUAL(v, surf->Domain(1)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(v, surf->Domain(1)[0], tol)) {
 	if (surf->IsSingular(0))
 	    return 0;
-    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], tol)) {
 	if (surf->IsSingular(2))
 	    return 2;
     }
     return -1;
 }
 
+int
+IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
+{
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    rc = IsAtSingularity(surf,unwrapped_pt.x,unwrapped_pt.y,tol);
+
+    return rc;
+}
 
 ON_2dPointArray *
 pullback_samples(PBCData* data,
