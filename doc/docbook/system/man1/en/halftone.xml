@@ -33,12 +33,12 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Halftone</emphasis>
+<para><command>halftone</command>
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file from the named file, or from
 standard input if no file is specified, and reduces the number of intensity
-levels from 256 to a default of 2.  <emphasis remap='I'>Halftone</emphasis>
+levels from 256 to a default of 2.  <command>halftone</command>
 tries to preserve as much
 information as possible by applying dither.</para>
 
