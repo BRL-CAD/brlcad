@@ -1,7 +1,7 @@
 /*                         S E T _ T R A N S P A R E N C Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,8 +82,8 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -108,7 +108,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "ged_set_transparency: directory pointers");
+	bu_free((void *)dpp, "ged_set_transparency: directory pointers");
 
     return GED_OK;
 }

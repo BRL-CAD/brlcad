@@ -84,6 +84,13 @@ The
 <option>-u</option>
 option can be used to set the units for the resulting VRML file (the default is mm).
 Any units name that MGED accepts will work here.</para>
+<para>
+The
+<option>-b</option>
+option provides BOT dump, and the
+<option>-e</option>
+option provides evaluation of all CSG and BOTs.  They are mutually exclusive.
+</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
@@ -103,7 +110,7 @@ $ <emphasis remap='I'>g-vrml -o shell.wrl sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1998-2012 by the United States
+<para>This software is Copyright (c) 1998-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

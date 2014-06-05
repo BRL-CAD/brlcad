@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -80,7 +84,7 @@ fastf_t		cell_width = (fastf_t)0.0;		/* model space grid cell width */
 fastf_t		cell_height = (fastf_t)0.0;	/* model space grid cell height */
 int		cell_newsize = 0;		/* new grid cell size */
 point_t		eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t         eye_backoff = (fastf_t)1.414;	/* dist from eye to center */
+fastf_t         eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
 mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
@@ -157,7 +161,12 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
-#if 0
+
+/* TODO: need a run-time mechanism for toggling spatial partitioning
+ * methods.  Use this compile-time switch to toggle between different
+ * spatial partitioning methods.
+ */
+#ifdef USE_NUGRID
 /* Non-uniform grid/mesh discretized spatial partitioning */
 RT_PART_NUGRID;
 #else
@@ -173,9 +182,6 @@ double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
 extern struct command_tab	rt_cmdtab[];
 
-/*
- *			G E T _ A R G S
- */
 int
 get_args(int argc, const char *argv[])
 {
@@ -243,14 +249,14 @@ get_args(int argc, const char *argv[])
 
 		do_kut_plane = 1;
 		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
-		if( i != 4 ) {
+		if ( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
 		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );
-		if( f <= SMALL ) {
+		if ( f <= SMALL ) {
 		    bu_exit( EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f );
 		}
 		f = 1.0 /f;
@@ -272,7 +278,6 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 	    {
-		char		buf[128];
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -302,10 +307,11 @@ get_args(int argc, const char *argv[])
 		else
 		    background[2] = b / 255.0;
 #else
-		sprintf(buf, "set background=%f/%f/%f",
-			r/255., g/255., b/255. );
-		(void)rt_do_cmd( (struct rt_i *)0, buf,
-				 rt_cmdtab );
+		{
+		    char buf[128] = {0};
+		    sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+		    (void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+		}
 #endif
 	    }
 	    break;
@@ -359,8 +365,8 @@ get_args(int argc, const char *argv[])
 		finalframe = atoi( bu_optarg );
 		break;
 	    case 'N':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_log("NMG_debug=0x%x\n", RTG.NMG_debug);
 		break;
 	    case 'M':
 		matflag = 1;
@@ -369,7 +375,7 @@ get_args(int argc, const char *argv[])
 		AmbientIntensity = atof( bu_optarg );
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
@@ -623,7 +629,7 @@ get_args(int argc, const char *argv[])
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
+    if (RT_G_DEBUG || R_DEBUG || RTG.NMG_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
@@ -640,14 +646,14 @@ get_args(int argc, const char *argv[])
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	random_mode = 1;
 	bu_log("random mode\n");
     }
     /* TODO: Read from command line */
     /* Read from ENV with we're going to use the experimental mode */
     env_str = getenv("LIBRT_EXP_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	full_incr_mode = 1;
 	full_incr_nsamples = 10;
 	bu_log("multi-sample mode\n");

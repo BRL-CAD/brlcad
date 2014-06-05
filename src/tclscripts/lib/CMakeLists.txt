@@ -10,6 +10,7 @@ set(lib_TCLSCRIPTS
 	Dm.tcl
 	Drawable.tcl
 	Ged.tcl
+	GeometryIO.tcl
 	Help.tcl
 	Legend.tcl
 	Mged.tcl
@@ -24,13 +25,14 @@ set(lib_TCLSCRIPTS
 	View.tcl
 	ViewAxesControl.tcl
 	cursor.tcl
+	apply_mat.tcl
+	gui_conversion.tcl
+	pattern.tcl
+	pattern_gui.tcl
 )
 BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
-pkgIndex_BUILD(lib tclscripts/lib)
-tclIndex_BUILD(lib tclscripts/lib)
-
-CMAKEFILES(pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
+pkgIndex_BUILD(tclscripts/lib)
+tclIndex_BUILD(tclscripts/lib)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -35,6 +36,7 @@
 #  include <signal.h>
 #endif
 
+#include "bu/parallel.h"
 #include "photonmap.h"
 
 
@@ -121,7 +123,7 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
     if (Max[1] > Max[0] && Max[1] > Max[2]) Axis = 1;
     if (Max[2] > Max[0] && Max[2] > Max[1]) Axis = 2;
 
-    /* Find Median Photon to splt by. */
+    /* Find Median Photon to split by. */
     MedianIndex = FindMedian(EList, ESize, Axis);
 
     /* Build Left and Right Lists and make sure the Median Photon is not included in either list. */
@@ -152,14 +154,14 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
     /* With Left and Right if either contain any photons then repeat this process */
     /* if (LInd) bu_log("Left Branch\n");*/
     if (LInd) {
-	Root->L = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root left");
+	BU_ALLOC(Root->L, struct PNode);
 	Root->L->L = 0;
 	Root->L->R = 0;
 	BuildTree(LList, LInd, Root->L);
     }
     /* if (RInd) bu_log("Right Branch\n");*/
     if (RInd) {
-	Root->R = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root right");
+	BU_ALLOC(Root->R, struct PNode);
 	Root->R->L = 0;
 	Root->R->R = 0;
 	BuildTree(RList, RInd, Root->R);
@@ -367,7 +369,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
     struct phong_specific *phong_sp;
     struct bu_vls matparm = BU_VLS_INIT_ZERO;
 
-    phong_sp = (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
+    BU_GET(phong_sp, struct phong_specific);
 
     /* Initialize spec and refi */
     spec[0] = spec[1] = spec[2] = *refi = *transmit = 0;
@@ -382,10 +384,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->reflect = 0.0;
 	phong_sp->refrac_index = 1.0;
 	phong_sp->extinction = 0.0;
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
+
 	MS += 7;
 	bu_vls_printf(&matparm, "%s", MS);
 	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
@@ -418,10 +417,6 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->refrac_index = 1.65;
 	phong_sp->extinction = 0.0;
 
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_printf(&matparm, "%s", MS);
 	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
@@ -442,7 +437,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	*/
     }
 
-    bu_free(phong_sp, "phong_specific");
+    BU_PUT(phong_sp, struct phong_specific);
 }
 
 
@@ -703,7 +698,7 @@ PMiss(struct application *UNUSED(ap))
  * have been emitted from the light source.  Scale = 1/(#emitted photons).
  * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
- * on the size of the scene, i.e power of light source */
+ * on the size of the scene, i.e. power of light source */
 void
 ScalePhotonPower(int map)
 {
@@ -1027,8 +1022,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
     int i, j, M, N;
     double theta, phi, Coef;
 
-
-    lap = (struct application*)bu_malloc(sizeof(struct application), "app");
+    BU_ALLOC(lap, struct application);
     RT_APPLICATION_INIT(lap);
     lap->a_rt_i = ap->a_rt_i;
     lap->a_hit = ap->a_hit;
@@ -1042,10 +1036,10 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	for (j = 1; j <= N; j++) {
 #ifndef HAVE_DRAND48
 	    theta = asin(sqrt((j-rand()/(double)RAND_MAX)/M));
-	    phi = (2.0*M_PI)*((i-rand()/(double)RAND_MAX)/N);
+	    phi = (M_2PI)*((i-rand()/(double)RAND_MAX)/N);
 #else
 	    theta = asin(sqrt((j-drand48())/M));
-	    phi = (2.0*M_PI)*((i-drand48())/N);
+	    phi = (M_2PI)*((i-drand48())/N);
 #endif
 
 	    /* Assign pt */
@@ -1057,7 +1051,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	    Polar2Euclidian(lap->a_ray.r_dir, P->Normal, theta, phi);
 
 	    /* Utilize the purpose pointer as a pointer to the Irradiance Color */
-	    lap->a_purpose = (void*)P->Irrad;
+	    lap->a_purpose = (const char *)P->Irrad;
 
 	    /* bu_log("Vec: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
 	    rt_shootray(lap);
@@ -1118,7 +1112,7 @@ alarmhandler(int sig)
     t = time(NULL) - starttime;
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
-    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
+    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %f%f",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (((s) == 0)?1.0:(float)(s))); \
 	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
@@ -1134,7 +1128,7 @@ alarmhandler(int sig)
 #endif
 
 void
-IrradianceThread(int pid, genptr_t arg)
+IrradianceThread(int pid, void *arg)
 {
 #ifdef HAVE_ALARM
     starttime = time(NULL);
@@ -1152,12 +1146,13 @@ IrradianceThread(int pid, genptr_t arg)
 void
 Initialize(int MAP, int MapSize)
 {
-    PMap[MAP] = (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
+    BU_ALLOC(PMap[MAP], struct PhotonMap);
     PMap[MAP]->MaxPhotons = MapSize;
-    PMap[MAP]->Root = (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
+
+    BU_ALLOC(PMap[MAP]->Root, struct PNode);
     PMap[MAP]->StoredPhotons = 0;
     if (MapSize > 0)
-	Emit[MAP] = (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
+	BU_ALLOC(Emit[MAP], struct Photon);
     else
 	Emit[MAP] = NULL;
 }
@@ -1370,7 +1365,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 
 
 	GPM_RAYS = Rays;
-	GPM_ATOL = cos(AngularTolerance*bn_degtorad);
+	GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
 	PInit = 1;
 
@@ -1484,7 +1479,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	    Map = (char*)bu_calloc(width*height, sizeof(char), "Map");
 	    IC = (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
 	    for (i = 0; i < width*height; i++) {
-		IC[i].List = (struct IrradNode*)bu_malloc(sizeof(struct IrradNode), "IrradNode");
+		BU_ALLOC(IC[i].List, struct IrradNode);
 		IC[i].Num = 0;
 	    }
 	}

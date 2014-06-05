@@ -4,6 +4,8 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
+  ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
   )
@@ -12,7 +14,9 @@ set(RT_INCLUDE_DIRS
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${TNT_INCLUDE_DIR}
+  ${VDS_INCLUDE_DIR}
+  ${GDIAM_INCLUDE_DIR}
+  ${BRLCAD_BOOST_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -20,24 +24,28 @@ BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 set(LIBRT_SOURCES
   attributes.c
   bbox.c
-  bezier_2d_isect.c
+  bezier.c
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
   bundle.c
   cmd.c
   comb/comb.c
+  comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
   constraint.c
   cut.c
   db5_alloc.c
+  db5_attr.c
+  db5_attr_registry.cpp
   db5_io.c
   db5_scan.c
   db5_types.c
   db_alloc.c
   db_anim.c
   db_corrupt.c
+  db_diff.c
   db_flags.c
   db_flip.c
   db_fullpath.c
@@ -55,6 +63,7 @@ set(LIBRT_SOURCES
   fortray.c
   globals.c
   htbl.c
+  ls.c
   many.c
   mater.c
   memalloc.c
@@ -75,6 +84,7 @@ set(LIBRT_SOURCES
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
   primitives/bot/bot_mirror.c
+  primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/brep/brep.cpp
@@ -143,8 +153,8 @@ set(LIBRT_SOURCES
   primitives/mirror.c
   primitives/nmg/nmg.c
   primitives/nmg/nmg_bool.c
-  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_ck.c
+  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_class.c
   primitives/nmg/nmg_copy.c
   primitives/nmg/nmg_eval.c
@@ -229,6 +239,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
+  primitives/hrt/hrt.c
   regionfix.c
   roots.c
   search.c
@@ -245,21 +256,22 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
-  test_dvec.cpp
   columnparse.c
   librt_private.h
   namegen.c
   test_nurbsfit.cpp
-  test_botpatches.cpp
-  test_subdivision.cpp
+  test_bot2nurbs.cpp
+  test_root3-subd.cpp
   subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
+  primitives/bot/bot_wireframe.cpp
   primitives/bot/tieprivate.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/brep/brep_debug.h
+  primitives/brep/brep_local.h
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
@@ -284,34 +296,28 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};libnurbs;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
-if(BUILD_STATIC_LIBS)
-  SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
-endif(BUILD_STATIC_LIBS)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-
-  if(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
-    SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
-  endif(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-CMAKEFILES(Makefile.am)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/Eigen
-  ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-#BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_subdivision test_subdivision.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
-BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
-ADD_TEST(test_dvec test_dvec)
+add_subdirectory(tests)
 
 # Local Variables:
 # tab-width: 8

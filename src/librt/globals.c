@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,15 +36,15 @@
 #include "db.h"
 
 
-struct rt_g rt_g;
+struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource;
 
-void (*nmg_plot_anim_upcall)();
+void (*nmg_plot_anim_upcall)(void);
 
-void (*nmg_vlblock_anim_upcall)();
+void (*nmg_vlblock_anim_upcall)(void);
 
-void (*nmg_mged_debug_display_hack)();
+void (*nmg_mged_debug_display_hack)(void);
 
 double nmg_eue_dist = 0.05;
 
@@ -81,8 +81,8 @@ const int db5_enc_len[4] = {
     8
 };
 
-/* see table.c for primitive function table definition */
-extern const struct rt_functab rt_functab[];
+/* see table.c for primitive object function table definition */
+extern const struct rt_functab OBJ[];
 
 /**
  * face definitions for each arb type

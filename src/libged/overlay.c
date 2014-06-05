@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     FILE *fp;
     double char_size;
     char *name;
-    static const char *usage = "file.pl char_size [name]";
+    static const char *usage = "file.plot3 char_size [name]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);

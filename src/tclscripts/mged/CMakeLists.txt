@@ -3,7 +3,6 @@ set(mged_TCLSCRIPTS
   adc.tcl
   anim.tcl
   apply.tcl
-  apply_mat.tcl
   asc2g.tcl
   attr_edit.tcl
   bindings.tcl
@@ -47,6 +46,7 @@ set(mged_TCLSCRIPTS
   lc.tcl
   lgt_mat.tcl
   list.tcl
+  lodconfig.tcl
   make_solid.tcl
   man.tcl
   menu.tcl
@@ -58,8 +58,6 @@ set(mged_TCLSCRIPTS
   mview.tcl
   openw.tcl
   overlap.tcl
-  pattern.tcl
-  pattern_gui.tcl
   plot.tcl
   points.tcl
   prj_add.tcl
@@ -86,8 +84,8 @@ set(mged_TCLSCRIPTS
   )
 BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
 # no packages in here (so far)
-# pkgIndex_BUILD(mged tclscripts/mged)
-tclIndex_BUILD(mged tclscripts/mged)
+# pkgIndex_BUILD(tclscripts/mged)
+tclIndex_BUILD(tclscripts/mged)
 
 set(mged_tcl_DATA
   l_i0_v0_s0.gif
@@ -136,8 +134,7 @@ set(mged_tcl_DATA
   )
 BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
 
-CMAKEFILES(rrmb.tcl pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
+CMAKEFILES(rrmb.tcl)
 
 # Local Variables:
 # tab-width: 8

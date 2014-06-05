@@ -1,7 +1,7 @@
 /*                       R L E _ A R G S . H
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,9 +24,13 @@
 
 #include "rle.h"
 
+#ifndef UTIL_RLE_ARGS_H
+#define UTIL_RLE_ARGS_H
 
 extern int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height);
+
+#endif /* UTIL_RLE_ARGS_H */
 
 /*
  * Local Variables:
@@ -37,4 +41,3 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

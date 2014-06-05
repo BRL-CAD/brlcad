@@ -1,7 +1,7 @@
 /*                       R L E _ A R G S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,18 +23,15 @@
 #include "bu.h"
 #include "bio.h"
 
+char hyphen[] = "hyphen";
 
 int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:C:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		*file_height = *file_width = 1024;
-		break;
 	    case 's':
 		/* square file size */
 		*file_height = *file_width = atoi(bu_optarg);
@@ -59,7 +56,6 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 		}
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }
@@ -70,7 +66,7 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 	}
 	bu_optind++;
     } else {
-	*infile = "-";
+	*infile = hyphen;
     }
     if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind], NULL)) {

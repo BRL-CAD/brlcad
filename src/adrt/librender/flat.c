@@ -1,7 +1,7 @@
 /*                          F L A T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@ render_flat_free(render_t *UNUSED(render))
 {
 }
 
+
 void
 render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
@@ -42,6 +43,7 @@ render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
     }
 }
+
 
 int
 render_flat_init(render_t *render, const char *UNUSED(usr))

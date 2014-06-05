@@ -1,7 +1,7 @@
 /*                         L O A D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

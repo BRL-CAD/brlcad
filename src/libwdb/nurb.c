@@ -1,7 +1,7 @@
 /*                          N U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,14 +47,14 @@ mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs)
 {
     struct rt_nurb_internal *ni;
 
-    BU_GET(ni, struct rt_nurb_internal);
+    BU_ALLOC(ni, struct rt_nurb_internal);
     ni->magic = RT_NURB_INTERNAL_MAGIC;
     ni->srfs = surfs;
 
     for (ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++)
 	; /* NIL */
 
-    return wdb_export(wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ni, ID_BSPLINE, mk_conv2mm);
 }
 
 

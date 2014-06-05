@@ -1,7 +1,7 @@
 /*                  W D B _ C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "ged.h"
@@ -80,7 +81,7 @@ wdb_append_union(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -94,7 +95,7 @@ wdb_append_inter(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -108,7 +109,7 @@ wdb_append_subtr(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -122,7 +123,7 @@ wdb_append_lparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -136,7 +137,7 @@ wdb_append_rparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -224,7 +225,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
@@ -251,7 +252,7 @@ wdb_do_inter(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible intersection operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
@@ -286,7 +287,7 @@ wdb_do_union_subtr(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	if (tok->type == WDB_TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
@@ -637,7 +638,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	int flags;
 
 	flags = RT_DIR_COMB;
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;
@@ -652,13 +653,13 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    comb->region_flag = 1;
-	    comb->region_id = wdbp->wdb_item_default++;;
+	    comb->region_id = wdbp->wdb_item_default++;
 	    comb->aircode = wdbp->wdb_air_default;
 	    comb->los = wdbp->wdb_los_default;
 	    comb->GIFTmater = wdbp->wdb_mat_default;
 
 	    bu_vls_printf(&tmp_vls,
-			  "Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
+			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
@@ -669,10 +670,10 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
 
-	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
+	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Failed to add ", comb_name,
 			     " to directory, aborting\n", (char *)NULL);

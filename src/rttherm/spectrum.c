@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
  * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -119,8 +120,6 @@ struct bn_tabdata *rt_NTSC_g_tabdata;
 struct bn_tabdata *rt_NTSC_b_tabdata;
 
 /*
- * R T _ S P E C T _ M A K E _ N T S C _ R G B
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -150,17 +149,9 @@ spect_make_NTSC_RGB(struct bn_tabdata **rp,
     bn_print_table_and_tabdata("/dev/tty", rt_NTSC_b_tabdata);
 
     /* Resample original NTSC curves to match given bn_table sampling */
-#if 0
-    /* just to test the routine */
-    *rp = bn_tabdata_resample_avg(tabp, rt_NTSC_r_tabdata);
-    *gp = bn_tabdata_resample_avg(tabp, rt_NTSC_g_tabdata);
-    *bp = bn_tabdata_resample_avg(tabp, rt_NTSC_b_tabdata);
-#else
-    /* use this one for real */
     *rp = bn_tabdata_resample_max(tabp, rt_NTSC_r_tabdata);
     *gp = bn_tabdata_resample_max(tabp, rt_NTSC_g_tabdata);
     *bp = bn_tabdata_resample_max(tabp, rt_NTSC_b_tabdata);
-#endif
 }
 
 
@@ -269,8 +260,6 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 
 
 /*
- * M A K E _ N T S C _ X Y Z 2 R G B
- *
  * Create the map from
  * CIE XYZ perceptual space into
  * an idealized RGB space assuming NTSC primaries with D6500 white.
@@ -286,8 +275,8 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 	bu_exit(EXIT_FAILURE, "make_ntsc_xyz2rgb() can't initialize color space\n");
     bn_mat_inv(xyz2rgb, rgb2xyz);
 
-#if 1
     /* Verify that it really works, I'm a skeptic */
+
     VSET(tst, 1, 1, 1);
     MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("white_rgb (i)", tst);
@@ -327,13 +316,10 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
     MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("blu_xyz (i)", tst);
     VPRINT("blu_rgb (o)", newpt);
-#endif
 }
 
 
 /*
- * R T _ S P E C T _ C U R V E _ T O _ X Y Z
- *
  * Convenience routine.
  * Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
  * The normalization xyz_scale = 1.0 / bn_tabdata_area2(cie_y);
@@ -350,19 +336,8 @@ spect_curve_to_xyz(point_t xyz,
 
     BN_CK_TABDATA(tabp);
 
-#if 0
-    tab_area = bn_tabdata_area2(tabp);
-    bu_log(" tab_area = %g\n", tab_area);
-    if (fabs(tab_area) < VDIVIDE_TOL) {
-	bu_log("spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
-	VSETALL(xyz, 0);
-	return;
-    }
-    tab_area = 1 / tab_area;
-#else
     /* This is what Roy says to do, but I'm not certain */
     tab_area = 1;
-#endif
 
     xyz[X] = bn_tabdata_mul_area2(tabp, cie_x) * tab_area;
     xyz[Y] = bn_tabdata_mul_area2(tabp, cie_y) * tab_area;
@@ -371,8 +346,6 @@ spect_curve_to_xyz(point_t xyz,
 
 
 /*
- * R T _ S P E C T _ R G B _ T O _ C U R V E
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -391,8 +364,6 @@ spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_
 
 
 /*
- * R T _ S P E C T _ X Y Z _ T O _ C U R V E
- *
  * Values of the curve will be normalized to 0..1 range;
  * caller must scale into meaningful units.
  *
@@ -411,8 +382,6 @@ spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_
 
 
 /*
- * R T _ T A B L E _ M A K E _ V I S I B L E _ A N D _ U N I F O R M
- *
  * A quick hack to make sure there are enough samples in the visible band.
  */
 struct bn_table *

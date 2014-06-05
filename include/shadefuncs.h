@@ -1,7 +1,7 @@
 /*			S H A D E F U N C S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef SHADEFUNCS
-#define SHADEFUNCS
+#ifndef SHADEFUNCS_H
+#define SHADEFUNCS_H
+
+#include "common.h"
 
 #include "shadework.h"
 
@@ -41,8 +43,6 @@
 #endif
 
 /**
- *			M F U N C S
- *
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
@@ -53,16 +53,16 @@ struct mfuncs {
     int mf_flags;		/**< @brief Flags describing shader */
     int (*mf_setup)(struct region *rp,
 		    struct bu_vls *matparm,
-		    genptr_t *dpp,
+		    void **dpp,
 		    const struct mfuncs *mfp,
 		    struct rt_i *rtip); /**< @brief Routine for preparing */
     int (*mf_render)(struct application *ap,
 		     const struct partition *pp,
 		     struct shadework *swp,
-		     genptr_t dp);	/**< @brief Routine for rendering */
+		     void *dp);	/**< @brief Routine for rendering */
     void (*mf_print)(struct region *rp,
-		     genptr_t dp);	/**< @brief Routine for printing */
-    void (*mf_free)(genptr_t cp);	/**< @brief Routine for releasing storage */
+		     void *dp);	/**< @brief Routine for printing */
+    void (*mf_free)(void *cp);	/**< @brief Routine for releasing storage */
 };
 #define MF_NULL		((struct mfuncs *)0)
 #define RT_CK_MF(_p)	BU_CKMAG(_p, MF_MAGIC, "mfuncs")
@@ -83,6 +83,8 @@ struct mfuncs {
 /* mf_flags lists important details about individual shaders */
 #define MFF_PROC	0x01		/**< @brief  shader is procedural, computes tr/re/hits */
 
+__BEGIN_DECLS
+
 /* defined in material.c */
 OPTICAL_EXPORT extern void mlib_add_shader(struct mfuncs **headp,
 					   struct mfuncs *mfp1);
@@ -94,14 +96,16 @@ OPTICAL_EXPORT extern int mlib_setup(struct mfuncs **headp,
 OPTICAL_EXPORT extern void mlib_free(struct region *rp);
 
 /**
- * L O A D _ D Y N A M I C _ S H A D E R
- *
  * Given a shader/material name, try to find a DSO to supply the
  * shader.
  */
 OPTICAL_EXPORT extern struct mfuncs *load_dynamic_shader(const char *material);
 
-#endif
+__END_DECLS
+
+#endif /* SHADEFUNCS_H */
+
+
 /** @} */
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -670,10 +670,10 @@ prntShieldComp(struct application *ap, struct partition *pt_headp, Pt_Queue *qp)
     prntShieldComp(ap, pt_headp, qp->q_next);
     prntRegionHdr(ap, pt_headp, qp->q_part, entrynorm, exitnorm);
 }
+
+
 void
-prntColors(colorp, str)
-    Colors *colorp;
-    char *str;
+prntColors(Colors *colorp, char *str)
 {
     brst_log("%s:\n", str);
     for (colorp = colorp->c_next;
@@ -886,21 +886,6 @@ prntTitle(char *title_str)
 {
     if (! tty || RT_G_DEBUG)
 	brst_log("%s\n", title_str == NULL ? "(null)" : title_str);
-}
-
-
-static char *usage[] =
-{
-    "Usage: burst [-b]",
-    "\tThe -b option suppresses the screen display (for batch jobs).",
-    NULL
-};
-void
-prntUsage()
-{
-    char **p = usage;
-    while (*p != NULL)
-	(void) fprintf(stderr, "%s\n", *p++);
 }
 
 

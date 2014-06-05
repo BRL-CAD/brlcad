@@ -35,7 +35,6 @@ is run on.</para>
 <para>The display device used by a program is taken first from a
 <option>-F </option><replaceable>framebuffer</replaceable>
 option if given, else from the environment variable
-<!-- B elided -->
 <emphasis remap="SM">FB_FILE,</emphasis>
 or finally from whatever the default display is for that system.
 <emphasis remap="I">Fbhelp</emphasis>
@@ -55,7 +54,7 @@ selected device may have.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1988-2012 by the United States
+<para>This software is Copyright (c) 1988-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

@@ -1,7 +1,7 @@
 /*                  A N I M _ K E Y R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "bn.h"
@@ -48,7 +48,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "yzqr"
+#define OPT_STR "yzqrh?"
 
 #define YPR 0
 #define XYZ 1
@@ -65,6 +65,11 @@
 int mode;
 int units;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_keyread [-y|z] key.file key.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -90,7 +95,6 @@ get_args(int argc, char **argv)
 		units = RADIANS;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -106,18 +110,25 @@ main(int argc, char *argv[])
     fastf_t viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
 
     /* intentionally double for scan */
-    double time, viewsize;
+    double timeval, viewsize;
     double eyept[3] = {0.0};
     double scan[4];
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_keyread: get_args error\n");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
 
     while (!feof(stdin)) {
 	/* read one keyframe */
 	count = 0;
 
-	count += scanf("%lf", &time);
+	count += scanf("%lf", &timeval);
 	count += scanf("%lf", &viewsize);
 	count += scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
 	/* read in transposed matrix */
@@ -149,24 +160,24 @@ main(int argc, char *argv[])
 	if (feof(stdin) || count != 21)
 	    break;
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize, eyept[0], eyept[1], eyept[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", timeval, viewsize, eyept[0], eyept[1], eyept[2]);
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
 	    c = anim_mat2ypr(viewrot, angle);
 	    if (c==ERROR1)
-		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", time);
+		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", timeval);
 	    else if (c==ERROR2)
-		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", timeval);
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	} else if (mode==XYZ) {
 	    c = anim_mat2zyx(viewrot, angle);
 	    if (c==ERROR1)
-		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
+		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", timeval);
 	    else if (c==ERROR2)
-		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", timeval);
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);

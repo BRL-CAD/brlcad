@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,20 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
 
 /* c99 doesn't declare these */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+#  if !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
+#  endif
 #endif
 
 
@@ -79,7 +85,7 @@ temp_close_files(void)
 	    bu_file_delete(bu_vls_addr(&popped->fn));
 	    bu_vls_free(&popped->fn);
 	}
-	bu_free(popped, "free bu_temp_file node");
+	BU_PUT(popped, struct temp_file_list);
     }
 
     /* free the head */
@@ -91,7 +97,7 @@ temp_close_files(void)
 	bu_file_delete(bu_vls_addr(&TF->fn));
 	bu_vls_free(&TF->fn);
     }
-    bu_free(TF, "free bu_temp_file head");
+    BU_PUT(TF, struct temp_file_list);
 }
 
 

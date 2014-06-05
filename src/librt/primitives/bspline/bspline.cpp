@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include <math.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"
@@ -116,17 +117,19 @@ rt_nurb_grans(struct face_g_snurb *srf)
 }
 
 /**
- * R T _ N U R B _ B B O X
- *
  * Calculate the bounding RPP of a bspline
  */
 int
 rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    int i;
     struct nurb_specific *nurbs = NULL;
     struct nurb_specific *next;
     struct rt_nurb_internal *sip;
+
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
-    int i;
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
@@ -181,7 +184,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurbs, "nurb_specific");
+	BU_PUT(nurbs, struct nurb_specific);
     }
 
     return 0;
@@ -189,8 +192,6 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
 
 /**
- * R T _ N U R B _ P R E P
- *
  * Given a pointer of a GED database record, and a transformation
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
@@ -223,7 +224,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
 #else
@@ -257,7 +258,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nurbs = n;
     }
 
-    stp->st_specific = (genptr_t)nurbs;
+    stp->st_specific = (void *)nurbs;
 
     /* zero thickness will get missed by the raytracer */
     if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
@@ -291,9 +292,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N U R B _ P R I N T
- */
 void
 rt_nurb_print(register const struct soltab *stp)
 {
@@ -317,8 +315,6 @@ rt_nurb_print(register const struct soltab *stp)
 
 
 /**
- * R T _ N U R B _ S H O T
- *
  * Intersect a ray with a nurb.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -475,8 +471,6 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ N U R B _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -507,8 +501,6 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ N U R B _ C U R V E
- *
  * Return the curvature of the nurb.
  */
 void
@@ -539,8 +531,6 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ N U R B _ U V
- *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -561,9 +551,6 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ N U R B _ F R E E
- */
 void
 rt_nurb_free(register struct soltab *stp)
 {
@@ -590,16 +577,13 @@ rt_nurb_free(register struct soltab *stp)
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurb, "nurb_specific");
+	BU_PUT(nurb, struct nurb_specific);
     }
     return;
 #endif /* CONVERT_TO_BREP */
 }
 
 
-/**
- * R T _ N U R B _ C L A S S
- */
 int
 rt_nurb_class(void)
 {
@@ -607,9 +591,6 @@ rt_nurb_class(void)
 }
 
 
-/**
- * R T _ N U R B _ P L O T
- */
 int
 rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
@@ -730,7 +711,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_plot(vhead, &di, ttol, tol, NULL);
 #else
@@ -739,9 +720,6 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 
-/**
- * R T _ N U R B _ T E S S
- */
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
@@ -749,9 +727,6 @@ rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T
- */
 int
 rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -772,8 +747,9 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
-    ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    ip->idb_meth = &OBJ[ID_BSPLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
@@ -910,9 +886,6 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T
- */
 int
 rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1018,9 +991,6 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T 5
- */
 int
 rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1097,11 +1067,11 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	}
 
 	/* serialize */
-	htond(cp, (unsigned char *)uknots, srf->u.k_size);
+	bu_cv_htond(cp, (unsigned char *)uknots, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	htond(cp, (unsigned char *)vknots, srf->v.k_size);
+	bu_cv_htond(cp, (unsigned char *)vknots, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
-	htond(cp, (unsigned char *)srf->ctl_points,
+	bu_cv_htond(cp, (unsigned char *)srf->ctl_points,
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
@@ -1117,9 +1087,6 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T 5
- */
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1136,8 +1103,9 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
-    ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    ip->idb_meth = &OBJ[ID_BSPLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
@@ -1190,9 +1158,9 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
 	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
 
-	ntohd((unsigned char *)uknots, cp, srf->u.k_size);
+	bu_cv_ntohd((unsigned char *)uknots, cp, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	ntohd((unsigned char *)vknots, cp, srf->v.k_size);
+	bu_cv_ntohd((unsigned char *)vknots, cp, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 
 	/* convert double to fastf_t */
@@ -1211,7 +1179,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
 
-	ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
+	bu_cv_ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
 
 	/* convert double to fastf_t */
 	for (i=0; i < coords * srf->s_size[0] * srf->s_size[1]; i++) {
@@ -1244,9 +1212,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ I F R E E
- */
 void
 rt_nurb_ifree(struct rt_db_internal *ip)
 {
@@ -1265,16 +1230,13 @@ rt_nurb_ifree(struct rt_db_internal *ip)
     sip->magic = 0;
     sip->nsrf = 0;
     bu_free(sip->srfs, "nurb surfs[]");
-    sip->srfs = (struct face_g_snurb**)GENPTR_NULL;
+    sip->srfs = (struct face_g_snurb**)((void *)0);
 
     bu_free(ip->idb_ptr, "sip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
-/**
- * R T _ N U R B _ D E S C R I B E
- */
 int
 rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
@@ -1507,10 +1469,6 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 
-/**
- * R T _ N U R B _ P A R A M S
- *
- */
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {

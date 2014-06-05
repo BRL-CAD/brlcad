@@ -1,7 +1,7 @@
 /*                       S H _ F I R E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,6 +62,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -117,7 +118,6 @@ struct fire_specific fire_defaults = {
 
 #define SHDR_NULL ((struct fire_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct fire_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct fire_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -132,10 +132,10 @@ struct bu_structparse fire_print_tab[] = {
     {"%g", 1, "H", 		SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 3, "scale",		SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "max",		SHDR_AO(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "min",		SHDR_AO(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "max",		SHDR_O(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "min",		SHDR_O(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
@@ -147,17 +147,17 @@ struct bu_structparse fire_parse_tab[] = {
     {"%g", 1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "s",	SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "v",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",	SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "v",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",	SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void fire_print(register struct region *rp, genptr_t dp);
-HIDDEN void fire_free(genptr_t cp);
+HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void fire_print(register struct region *rp, void *dp);
+HIDDEN void fire_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -198,18 +198,14 @@ const double flame_colors[18][3] = {
 };
 
 
-/* F I R E _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
+fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct fire_specific *fire_sp;
@@ -271,37 +267,27 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
-/*
- * F I R E _ P R I N T
- */
 HIDDEN void
-fire_print(register struct region *rp, genptr_t dp)
+fire_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, fire_print_tab, (char *)dp);
 }
 
 
-/*
- * F I R E _ F R E E
- */
 HIDDEN void
-fire_free(genptr_t cp)
+fire_free(void *cp)
 {
-    bu_free(cp, "fire_specific");
+    BU_PUT(cp, struct fire_specific);
 }
 
 
 /*
- * F I R E _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
+fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {
@@ -480,7 +466,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     VMOVE(swp->sw_color, color);
 /* VSETALL(swp->sw_basecolor, 1.0);*/
 
-    swp->sw_transmit = 1.0 - (lumens * 4.);
+    swp->sw_transmit = 1.0 - (lumens * 4.0);
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
 

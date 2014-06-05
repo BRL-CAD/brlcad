@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,15 +69,14 @@ static struct scloud_specific scloud_defaults = {
 
 #define SHDR_NULL ((struct scloud_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct scloud_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct scloud_specific, m)
 
 struct bu_structparse scloud_pr[] = {
     {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "octaves",	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -87,7 +86,7 @@ struct bu_structparse scloud_parse[] = {
     {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "octaves",	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "l",		SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -95,17 +94,17 @@ struct bu_structparse scloud_parse[] = {
     {"%g", 1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void scloud_print(register struct region *rp, genptr_t dp);
-HIDDEN void scloud_free(genptr_t cp);
+HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void scloud_print(register struct region *rp, void *dp);
+HIDDEN void scloud_free(void *cp);
 
 struct mfuncs scloud_mfuncs[] = {
     {MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,     scloud_setup,	scloud_render,	scloud_print,	scloud_free },
@@ -114,11 +113,8 @@ struct mfuncs scloud_mfuncs[] = {
 };
 
 
-/*
- * S C L O U D _ S E T U P
- */
 HIDDEN int
-scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -190,34 +186,26 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * S C L O U D _ P R I N T
- */
 HIDDEN void
-scloud_print(register struct region *rp, genptr_t dp)
+scloud_print(register struct region *rp, void *dp)
 {
     (void)bu_struct_print(rp->reg_name, scloud_pr, (char *)dp);
 }
 
 
-/*
- * S C L O U D _ F R E E
- */
 HIDDEN void
-scloud_free(genptr_t cp)
+scloud_free(void *cp)
 {
-    bu_free(cp, "scloud_specific");
+    BU_PUT(cp, struct scloud_specific);
 }
 
 
 /*
- * T S P L A T _ R E N D E R
- *
  * Sort of a surface spot transparency shader.  Picks transparency
  * based upon noise value of surface spot.
  */
 int
-tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;
@@ -244,11 +232,8 @@ tsplat_render(struct application *ap, const struct partition *pp, struct shadewo
 }
 
 
-/*
- * S C L O U D _ R E N D E R
- */
 int
-scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;

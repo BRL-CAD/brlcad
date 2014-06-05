@@ -10,11 +10,24 @@ BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
 set(LIBICV_SOURCES
   fileformat.c
   rot.c
+  color_space.c
+  crop.c
+  filter.c
+  encoding.c
+  operations.c
+  stat.c
+  size.c
+  pix.c
+  ppm.c
+  bw.c
+  dpix.c
   )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;${PNG_LIBRARY}")
-SET_TARGET_PROPERTIES(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
-CMAKEFILES(Makefile.am)
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
+set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+add_subdirectory(tests)
+
+CMAKEFILES(TODO)
 
 # Local Variables:
 # tab-width: 8

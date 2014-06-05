@@ -1,7 +1,7 @@
 /*                            P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,39 +34,33 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 
 
-/**
- *
- */
 void
 rt_pr_soltab(register const struct soltab *stp)
 {
     register int id = stp->st_id;
 
     if (id <= 0 || id > ID_MAX_SOLID) {
-	bu_log("stp=x%x, id=%d.\n", stp, id);
+	bu_log("stp=%p, id=%d.\n", (void *)stp, id);
 	bu_bomb("rt_pr_soltab:  bad id");
     }
-    bu_log("------------ %s (bit %d) %s ------------\n",
+    bu_log("------------ %s (bit %ld) %s ------------\n",
 	   stp->st_dp->d_namep, stp->st_bit,
-	   rt_functab[id].ft_name);
+	   OBJ[id].ft_name);
     VPRINT("Bound Sph CENTER", stp->st_center);
     bu_log("Approx Sph Radius = %g\n", INTCLAMP(stp->st_aradius));
     bu_log("Bounding Sph Radius = %g\n", INTCLAMP(stp->st_bradius));
     VPRINT("Bound RPP min", stp->st_min);
     VPRINT("Bound RPP max", stp->st_max);
     bu_pr_ptbl("st_regions", &stp->st_regions, 1);
-    if (rt_functab[id].ft_print)
-	rt_functab[id].ft_print(stp);
+    if (OBJ[id].ft_print)
+	OBJ[id].ft_print(stp);
 }
 
 
-/**
- *
- */
 void
 rt_pr_region(register const struct region *rp)
 {
@@ -75,7 +69,7 @@ rt_pr_region(register const struct region *rp)
     RT_CK_REGION(rp);
 
     bu_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit);
-    bu_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
+    bu_log("instnum=%ld, id=%d, air=%d, gift_material=%d, los=%d\n",
 	   rp->reg_instnum,
 	   rp->reg_regionid, rp->reg_aircode,
 	   rp->reg_gmater, rp->reg_los);
@@ -86,24 +80,21 @@ rt_pr_region(register const struct region *rp)
     }
     if (rp->reg_mater.ma_color_valid)
 	bu_log("Color %d %d %d\n",
-	       (int)rp->reg_mater.ma_color[0]*255.,
-	       (int)rp->reg_mater.ma_color[1]*255.,
-	       (int)rp->reg_mater.ma_color[2]*255.);
+	       (int)rp->reg_mater.ma_color[0]*255,
+	       (int)rp->reg_mater.ma_color[1]*255,
+	       (int)rp->reg_mater.ma_color[2]*255);
     if (rp->reg_mater.ma_temperature > 0)
 	bu_log("Temperature %g degrees K\n", INTCLAMP(rp->reg_mater.ma_temperature));
     if (rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0')
 	bu_log("Shader '%s'\n", rp->reg_mater.ma_shader);
 
     rt_pr_tree_vls(&v, rp->reg_treetop);
-    bu_log("%s %d %s\n", rp->reg_name,
+    bu_log("%s %ld %s\n", rp->reg_name,
 	   rp->reg_instnum, bu_vls_addr(&v));
     bu_vls_free(&v);
 }
 
 
-/**
- *
- */
 void
 rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead, const char *title)
 {
@@ -131,9 +122,6 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
 }
 
 
-/**
- *
- */
 void
 rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
 {
@@ -150,13 +138,13 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
     stp = pp->pt_inseg->seg_stp;
     bu_vls_printf(v, "%s (%s#%ld) ",
 		  stp->st_dp->d_namep,
-		  rt_functab[stp->st_id].ft_name+3,
+		  OBJ[stp->st_id].ft_name+3,
 		  stp->st_bit);
 
     stp = pp->pt_outseg->seg_stp;
     bu_vls_printf(v, "%s (%s#%ld) ",
 		  stp->st_dp->d_namep,
-		  rt_functab[stp->st_id].ft_name+3,
+		  OBJ[stp->st_id].ft_name+3,
 		  stp->st_bit);
 
     bu_vls_printf(v, "(%g, %g)",
@@ -194,9 +182,6 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 }
 
 
-/**
- *
- */
 void
 rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 {
@@ -210,9 +195,6 @@ rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 {
@@ -231,9 +213,6 @@ rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_seg(register const struct seg *segp)
 {
@@ -247,9 +226,6 @@ rt_pr_seg(register const struct seg *segp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_hit(const char *str, register const struct hit *hitp)
 {
@@ -263,9 +239,6 @@ rt_pr_hit(const char *str, register const struct hit *hitp)
 }
 
 
-/**
- *
- */
 void
 rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp)
 {
@@ -280,9 +253,6 @@ rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp
 }
 
 
-/**
- *
- */
 void
 rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit *hitp, int count)
 {
@@ -316,7 +286,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 
     RT_CK_TREE(tp);
 
-    bu_log("%.8x ", tp);
+    bu_log("%p ", (void *)tp);
     for (i=lvl; i>0; i--)
 	bu_log("  ");
 
@@ -332,13 +302,13 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	    return;
 
 	case OP_SOLID:
-	    bu_log("SOLID %s (bit %d)\n",
+	    bu_log("SOLID %s (bit %ld)\n",
 		   tp->tr_a.tu_stp->st_dp->d_namep,
 		   tp->tr_a.tu_stp->st_bit);
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp);
+	    bu_log("REGION ctsp=%p\n", (void *)tp->tr_c.tc_ctsp);
 	    db_pr_combined_tree_state(tp->tr_c.tc_ctsp);
 	    return;
 
@@ -529,9 +499,9 @@ rt_pr_tree_str(const union tree *tree)
 	    snprintf(return_str, return_length, "%s %c %s", left, op, right);
 
 	if (tree->tr_b.tb_left->tr_op != OP_DB_LEAF)
-	    bu_free((genptr_t)left, "rt_pr_tree_str: left string");
+	    bu_free((void *)left, "rt_pr_tree_str: left string");
 	if (tree->tr_b.tb_right->tr_op != OP_DB_LEAF)
-	    bu_free((genptr_t)right, "rt_pr_tree_str: right string");
+	    bu_free((void *)right, "rt_pr_tree_str: right string");
 	return return_str;
     } else if (tree->tr_op == OP_DB_LEAF)
 	return bu_strdup(tree->tr_l.tl_name);
@@ -606,7 +576,7 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 		    bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep);
 		    break;
 		case 2:
-		    bu_log("%d", tp->tr_a.tu_stp->st_bit);
+		    bu_log("%ld", tp->tr_a.tu_stp->st_bit);
 		    break;
 	    }
 	    break;
@@ -656,9 +626,6 @@ out:
 }
 
 
-/**
- *
- */
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
 {
@@ -687,7 +654,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[X] >= 1.0) {
 	angles[X] = 0.0;
     } else {
-	angles[X] = acos(vec[X]) * bn_radtodeg;
+	angles[X] = acos(vec[X]) * RAD2DEG;
     }
 
     if (vec[Y] <= -1.0) {
@@ -695,7 +662,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[Y] >= 1.0) {
 	angles[Y] = 0.0;
     } else {
-	angles[Y] = acos(vec[Y]) * bn_radtodeg;
+	angles[Y] = acos(vec[Y]) * RAD2DEG;
     }
 
     if (vec[Z] <= -1.0) {
@@ -703,20 +670,20 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[Z] >= 1.0) {
 	angles[Z] = 0.0;
     } else {
-	angles[Z] = acos(vec[Z]) * bn_radtodeg;
+	angles[Z] = acos(vec[Z]) * RAD2DEG;
     }
 
     /* fallback angle */
     if (vec[Z] <= -1.0) {
 	/* 270 degrees:  3/2 pi */
-	asinZ = bn_halfpi * 3;
+	asinZ = M_PI_2 * 3;
     } else if (vec[Z] >= 1.0) {
 	/* +90 degrees: 1/2 pi */
-	asinZ = bn_halfpi;
+	asinZ = M_PI_2;
     } else {
 	asinZ = asin(vec[Z]);
     }
-    angles[4] = asinZ * bn_radtodeg;
+    angles[4] = asinZ * RAD2DEG;
 
     /* rotation angle */
     /* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
@@ -730,7 +697,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
 	} else if (f >= 1.0) {
 	    angles[3] = 0;
 	} else {
-	    angles[3] = bn_radtodeg * acos(f);
+	    angles[3] = RAD2DEG * acos(f);
 	}
     } else {
 	angles[3] = 0.0;
@@ -749,15 +716,12 @@ rt_pr_tol(const struct bn_tol *tol)
 {
     BN_CK_TOL(tol);
 
-    bu_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
-	   tol, tol->dist, tol->dist_sq,
+    bu_log("%p TOL %e (sq=%e) perp=%e, para=%e\n",
+	   (void *)tol, tol->dist, tol->dist_sq,
 	   tol->perp, tol->para);
 }
 
 
-/**
- *
- */
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {

@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <pthread.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -91,16 +92,16 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	    _p = (struct application *)BU_PTBL_GET( &apps, BU_PTBL_LEN( &apps )-1 ); \
 	    bu_ptbl_trunc( &apps, BU_PTBL_LEN( &apps )-1 );		\
 	    pthread_mutex_unlock( &apps_mutex );			\
-	    bu_vlb_reset(_p->a_uptr);					\
+	    bu_vlb_reset((struct bu_vlb *)_p->a_uptr);					\
 	} else {							\
 	    int app_no = app_count++;					\
 	    pthread_mutex_unlock( &apps_mutex );			\
-	    _p = (struct application *)bu_malloc( sizeof(struct application), "struct application"); \
+	    BU_ALLOC(_p, struct application); \
 	    RT_APPLICATION_INIT(_p);					\
 	    _p->a_rt_i = myrtip;					\
-	    _p->a_uptr = (struct bu_vlb *)bu_calloc( sizeof(struct bu_vlb), 1, "bu_vlb GET_APPLICATION"); \
-	    bu_vlb_init(_p->a_uptr);					\
-	    _p->a_resource = (struct resource *)bu_calloc( sizeof(struct resource), 1, "resource"); \
+	    BU_ALLOC(_p->a_uptr, struct bu_vlb); \
+	    bu_vlb_init((struct bu_vlb *)_p->a_uptr);					\
+	    BU_ALLOC(_p->a_resource, struct resource); \
 	    rt_init_resource( _p->a_resource, app_no, _p->a_rt_i );	\
 	    _p->a_hit = rts_hit;					\
 	    _p->a_miss = rts_miss;					\
@@ -341,23 +342,23 @@ rts_clean( int sessionid)
     bu_free( (char *)rts_geometry, "rts_geometry" );
     rts_geometry = NULL;
 
-    if(title != NULL) {
+    if (title != NULL) {
 	bu_free(title, "title");
 	title = NULL;
     }
 
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
+    for ( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
 	struct bu_vlb *vlb;
 
 	ap = (struct application *)BU_PTBL_GET( &apps, i);
 
 	vlb = (struct bu_vlb *)ap->a_uptr;
-	if(vlb != NULL) {
+	if (vlb != NULL) {
 	    bu_vlb_free(vlb);
 	    bu_free(vlb, "vlb");
 	}
 
-	if( ap->a_resource != NULL ) {
+	if ( ap->a_resource != NULL ) {
 	    rt_clean_resource_complete(NULL, ap->a_resource);
 	    bu_free(ap->a_resource, "resource");
 	}
@@ -435,7 +436,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rts_geometry = NULL;
     }
 
-    if( !BU_PTBL_TEST(&apps) ) {
+    if ( !BU_PTBL_TEST(&apps) ) {
 	bu_ptbl_init( &apps, 8, "application structure list" );
     }
 
@@ -473,17 +474,13 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 
     /* load the specified objects */
     /* malloc some memory for the rtserver geometry structure (bu_calloc zeros the memory) */
-    rts_geometry[sessionid] = (struct rtserver_geometry *)bu_calloc( 1,
-								     sizeof( struct rtserver_geometry ),
-								     "rtserver geometry" );
+    BU_ALLOC(rts_geometry[sessionid], struct rtserver_geometry);
 
     /* just one RT instance */
     rts_geometry[sessionid]->rts_number_of_rtis = 1;
-    rts_geometry[sessionid]->rts_rtis = (struct rtserver_rti **)bu_malloc( sizeof( struct rtserver_rti *),
-									   "rtserver_rti *" );
-    rts_geometry[sessionid]->rts_rtis[0] = (struct rtserver_rti *)bu_calloc( 1,
-									     sizeof( struct rtserver_rti ),
-									     "rtserver_rti" );
+    BU_ALLOC(rts_geometry[sessionid]->rts_rtis, struct rtserver_rti *);
+    BU_ALLOC(rts_geometry[sessionid]->rts_rtis[0], struct rtserver_rti);
+
     rts_geometry[sessionid]->rts_rtis[0]->rtrti_rtip = rtip;
     rts_geometry[sessionid]->rts_rtis[0]->rtrti_num_trees = num_trees;
     if ( verbose ) {
@@ -491,8 +488,8 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     }
 
     /* initialize our overall bounding box */
-    VSETALL( rts_geometry[sessionid]->rts_mdl_min, MAX_FASTF );
-    VREVERSE( rts_geometry[sessionid]->rts_mdl_max, rts_geometry[sessionid]->rts_mdl_min );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_min, INFINITY );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_max, -INFINITY );
 
     /* for each RT instance, get its trees */
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
@@ -528,18 +525,18 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rt_prep_parallel( rtip, 1 );
 
 	/* create the hash table of region names */
-	rts_rtip->rtrti_region_names = (Tcl_HashTable *)bu_calloc(1, sizeof(Tcl_HashTable), "region names hash table");
+	BU_ALLOC(rts_rtip->rtrti_region_names, Tcl_HashTable);
 	Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
-	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
+	for ( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
 	    Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
-	    if( !newPtr ) {
-		if( verbose ) {
+	    if ( !newPtr ) {
+		if ( verbose ) {
 		    bu_log( "Already have an entry for region %s\n", rtip->Regions[regno]->reg_name);
 		}
 		continue;
 	    }
-	    if( verbose ) {
+	    if ( verbose ) {
 		bu_log( "Setting hash table for key %s to %d\n", rtip->Regions[regno]->reg_name, regno);
 	    }
 	    Tcl_SetHashValue(entry, (ClientData)regno );
@@ -569,7 +566,7 @@ rts_miss( struct application *ap )
 
     /* get the results pointer from the application structure */
     vlb = (struct bu_vlb *)ap->a_uptr;
-    if(vlb != NULL) {
+    if (vlb != NULL) {
 	unsigned char buffer[SIZEOF_NETWORK_LONG];
 	*(uint32_t *)buffer = htonl(numPartitions);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
@@ -635,23 +632,23 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* write partition info to the byte array */
 	/* start with entrance point */
-	htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
+	bu_cv_htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next exit point */
-	htond(buffer, (unsigned char *)pp->pt_outhit->hit_point, 3);
+	bu_cv_htond(buffer, (unsigned char *)pp->pt_outhit->hit_point, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next entrance surface normal vector */
-	htond(buffer, (unsigned char *)enterNormal, 3);
+	bu_cv_htond(buffer, (unsigned char *)enterNormal, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next entrance surface normal vector */
-	htond(buffer, (unsigned char *)exitNormal, 3);
+	bu_cv_htond(buffer, (unsigned char *)exitNormal, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	/* calculate the entrance and exit obliquities */
 	dot = VDOT( reverse_ray_dir, enterNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	inObl = acos(dot);
@@ -663,9 +660,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	dot = VDOT( ap->a_ray.r_dir, exitNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	outObl = acos(dot);
@@ -677,12 +674,12 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	/* write obliquities to the buffer */
-	htond( buffer, (unsigned char *)&inObl, 1 );
-	htond( &buffer[SIZEOF_NETWORK_DOUBLE], (unsigned char *)&outObl, 1);
+	bu_cv_htond( buffer, (unsigned char *)&inObl, 1 );
+	bu_cv_htond( &buffer[SIZEOF_NETWORK_DOUBLE], (unsigned char *)&outObl, 1);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*2);
 
 	/* get the region index from the hash table */
-	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (ClientData)rp->reg_name );
+	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (const char *)rp->reg_name );
 	regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
 
 	/* write region index to buffer */
@@ -715,7 +712,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	/* write the MUVEStoORCA matrix elements (if any) */
 	for ( i = 0; i < matrixSize*matrixSize; ++i ) {
 		double value = (double)inv_mat[i];
-		htond(buffer, (unsigned char *)&value, 1);
+		bu_cv_htond(buffer, (unsigned char *)&value, 1);
 		bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE);
 	}
 
@@ -743,7 +740,7 @@ printHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
@@ -752,7 +749,7 @@ printHits(struct bu_vlb *vlb)
 	c += SIZEOF_NETWORK_LONG;
 	bu_log("\tnumber of partitions: %d\n", numPartitions);
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -761,27 +758,27 @@ printHits(struct bu_vlb *vlb)
 	    double outObl;
 	    int regionIndex;
 
-	    ntohd((unsigned char *)enterPt, c, 3);
+	    bu_cv_ntohd((unsigned char *)enterPt, c, 3);
 	    bu_log("\t\tenter hit at (%g %g %g)\n", V3ARGS(enterPt));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitPt, c, 3);
+	    bu_cv_ntohd((unsigned char *)exitPt, c, 3);
 	    bu_log("\t\texit hit at (%g %g %g)\n", V3ARGS(exitPt));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)enterNorm, c, 3);
+	    bu_cv_ntohd((unsigned char *)enterNorm, c, 3);
 	    bu_log("\t\tenter normal: (%g %g %g)\n", V3ARGS(enterNorm));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitNorm, c, 3);
+	    bu_cv_ntohd((unsigned char *)exitNorm, c, 3);
 	    bu_log("\t\texit normal; (%g %g %g)\n", V3ARGS(exitNorm));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char*)&inObl, c, 1);
+	    bu_cv_ntohd((unsigned char*)&inObl, c, 1);
 	    bu_log("\t\tenter obliquity: %g\n", inObl);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
-	    ntohd((unsigned char*)&outObl, c, 1);
+	    bu_cv_ntohd((unsigned char*)&outObl, c, 1);
 	    bu_log("\t\tenter obliquity: %g\n", outObl);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
@@ -808,7 +805,7 @@ rts_shootray( struct application *ap )
 
     /* write the number of rays to the byte array */
     *(uint32_t *)buffer = htonl(i);
-    bu_vlb_write(ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
+    bu_vlb_write((struct bu_vlb *)ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
 
     /* actually shoot the ray */
     rt_shootray( ap );
@@ -828,8 +825,6 @@ void fillItemTree( jobject parent_node,
 		   jmethodID itemTree_setUseCount_id );
 
 /*
- *			F I L L I T E M M E M B E R S
- *
  * Routine to descend into a BRL-CAD tree structure and call fillItemTree() at each leaf
  */
 void
@@ -876,8 +871,7 @@ fillItemMembers( jobject node,
     }
 }
 
-/*				F I L L I T E M T R E E
- *
+/*
  * Routine to fill a MUVES3 ItemTree structure based on a leaf node of a BRL-CAD tree structure.
  */
 void
@@ -1306,16 +1300,16 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     /* make session id available for the hit routine */
     ap->a_user = sessionId;
 
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array (one in this case) */
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     /* write this ray info to the byte array */
-    htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+    bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-    htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+    bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
     /* shoot the ray */
@@ -1456,11 +1450,11 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     rayCount = (*env)->GetArrayLength(env, aRays);
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
-    for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
+    for (rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
 	jobject ray, start, direction;
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
@@ -1527,9 +1521,9 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	}
 
 	/* write this ray info to the byte array */
-	htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+	bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-	htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+	bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	/* shoot the ray */
@@ -1757,7 +1751,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
@@ -1767,9 +1761,9 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	    VJOIN2( ap->a_ray.r_pt, base_pt, (double)row, row_dir, (double)col, col_dir );
 
 	    /* write this ray info to the byte array */
-	    htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+	    bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
 	    bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-	    htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+	    bu_cv_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
 	    bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	    /* finally, shoot this ray */
@@ -1802,8 +1796,6 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
 
 /*
- *				G E T I T E M T R E E
- *
  * This is the implementation of the MUVES3 Platform.getItemTree() method for BRL-CAD geometry.
  * Basically a tree walker that gathers information about the BRL-CAD objects that are prepped
  * and ready for ray-tracing. The returned tree contains leaf nodes for each BRL-CAD region in the
@@ -1948,7 +1940,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     jNameArray = (*env)->NewObjectArray( env, region_count, (*env)->FindClass(env, "java/lang/String"), (jobject)NULL);
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
-    while( entry != NULL ) {
+    while ( entry != NULL ) {
 	region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
 	region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
 	(*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);

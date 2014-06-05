@@ -1,7 +1,7 @@
 /*                          G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -58,16 +59,13 @@ struct grip_specific {
 #define GRIP_NULL ((struct grip_specific *)0)
 
 const struct bu_structparse rt_grp_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "N", bu_offsetof(struct rt_grip_internal, normal[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-/**
- * R T _ G R P _ P R E P
- */
 int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
@@ -80,7 +78,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_GRIP_CK_MAGIC(gip);
 
     BU_GET(gripp, struct grip_specific);
-    stp->st_specific = (genptr_t)gripp;
+    stp->st_specific = (void *)gripp;
 
     VMOVE(gripp->grip_normal, gip->normal);
     VMOVE(gripp->grip_center, gip->center);
@@ -96,9 +94,6 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ G R P _ P R I N T
- */
 void
 rt_grp_print(const struct soltab *stp)
 {
@@ -115,8 +110,6 @@ rt_grp_print(const struct soltab *stp)
 
 
 /**
- * R T _ G R P _ S H O T
- *
  * Function -
  * Shoot a ray at a GRIP
  *
@@ -141,8 +134,6 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ G R P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
@@ -158,8 +149,6 @@ rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ G R P _ C U R V E
- *
  * Return the "curvature" of the grip.
  */
 void
@@ -174,8 +163,6 @@ rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ G R P _ U V
- *
  * For a hit on a face of an HALF, return the (u, v) coordinates of
  * the hit point.  0 <= u, v <= 1.  u extends along the Xbase
  * direction.  v extends along the "Ybase" direction.  Note that a
@@ -194,31 +181,16 @@ rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ G R P _ F R E E
- */
 void
 rt_grp_free(struct soltab *stp)
 {
     struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
 
-    bu_free((char *)gripp, "grip_specific");
+    BU_PUT(gripp, struct grip_specific);
 }
 
 
 /**
- * R T _ G R P _ C L A S S
- */
-int
-rt_grp_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ G R P _ P L O T
- *
  * We represent a GRIP as a pyramid.  The center describes where the
  * center of the base is.  The normal describes which direction the
  * tip of the pyramid is.  Mag describes the distance from the center
@@ -274,8 +246,6 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ G R P _ I M P O R T
- *
  * Returns -
  * -1 failure
  * 0 success
@@ -301,8 +271,9 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
-    ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    ip->idb_meth = &OBJ[ID_GRIP];
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
+
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
@@ -333,9 +304,6 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ G R P _ E X P O R T
- */
 int
 rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -351,7 +319,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "grip external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "grip external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -381,14 +349,14 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
-    ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    ip->idb_meth = &OBJ[ID_GRIP];
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 7);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 7);
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
@@ -415,9 +383,6 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ G R I P _ E X P O R T 5
- */
 int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -435,22 +400,20 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 7;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "grip external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "grip external");
 
     VSCALE(&vec[0], gip->center, local2mm);
     VMOVE(&vec[3], gip->normal);
     vec[6] = gip->mag * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 7);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 7);
 
     return 0;
 }
 
 
 /**
- * R T _ G R P _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -484,8 +447,6 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ G R P _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -495,13 +456,10 @@ rt_grp_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "grip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
-/**
- * R T _ G R P _ T E S S
- */
 int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
@@ -519,10 +477,6 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/**
- * R T _ G R P _ P A R A M S
- *
- */
 int
 rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

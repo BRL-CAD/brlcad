@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,8 +153,8 @@ get_args(int argc, char **argv)
 	    if ((input = fopen(in_name, "r")) == NULL) {
 		perror(in_name);
 		fprintf(stderr,
-			      "pixcut: cannot open \"%s\" for reading\n",
-			      in_name);
+			"pixcut: cannot open \"%s\" for reading\n",
+			in_name);
 		return 0;
 	    }
 	    isfile = 1;
@@ -175,6 +175,8 @@ main(int argc, char **argv)
     long int i;
     unsigned char *cp;
     int finish, row, result;
+
+    bu_log("DEPRECATED: pixcut is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     for (i=0;i<SIZEBACK;i++) background[i] = 0;
     background[2] = 1;
@@ -215,12 +217,12 @@ main(int argc, char **argv)
 	fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
 	fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
 	fprintf(stderr, "pixcut: original image %ldx%ld\n",
-		      org_width, org_height);
+		org_width, org_height);
 	fprintf(stderr, "pixcut: new image %ldx%ld\n",
-		      new_width, new_height);
+		new_width, new_height);
 	fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
 	fprintf(stderr, "pixcut: background color %d/%d/%d\n",
-		      background[0], background[1], background[2]);
+		background[0], background[1], background[2]);
 
 	if (base_x < 0 || base_y < 0 ||
 	    base_x+new_width >org_width ||
@@ -317,7 +319,11 @@ main(int argc, char **argv)
     }
 
     while (row < base_y) {
-	fread(inbuf, num_bytes, org_width, input);
+	result = fread(inbuf, num_bytes, org_width, input);
+	if (result != org_width) {
+	    perror("pixcut: fread");
+	    bu_exit (3, NULL);
+	}
 	row++;
     }
 /*

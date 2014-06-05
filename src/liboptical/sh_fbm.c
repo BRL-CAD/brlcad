@@ -1,7 +1,7 @@
 /*                        S H _ F B M . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,6 @@ static struct fbm_specific fbm_defaults = {
 
 #define FBM_NULL ((struct fbm_specific *)0)
 #define FBM_O(m) bu_offsetof(struct fbm_specific, m)
-#define FBM_AO(m) bu_offsetofarray(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {
     {"%g", 1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -70,15 +69,15 @@ struct bu_structparse fbm_parse[] = {
     {"%d", 1, "o", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "g",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "d",		FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "scale",		FBM_AO(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "scale",		FBM_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-HIDDEN int fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int fbm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void fbm_print(register struct region *rp, genptr_t dp);
-HIDDEN void fbm_free(genptr_t cp);
+HIDDEN int fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int fbm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void fbm_print(register struct region *rp, void *dp);
+HIDDEN void fbm_free(void *cp);
 
 struct mfuncs fbm_mfuncs[] = {
     {MF_MAGIC,	"bump_fbm",		0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
@@ -89,11 +88,8 @@ struct mfuncs fbm_mfuncs[] = {
 };
 
 
-/*
- * F B M _ S E T U P
- */
 HIDDEN int
-fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct fbm_specific *fbm;
 
@@ -115,31 +111,22 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * F B M _ P R I N T
- */
 HIDDEN void
-fbm_print(register struct region *rp, genptr_t dp)
+fbm_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, fbm_parse, (char *)dp);
 }
 
 
-/*
- * F B M _ F R E E
- */
 HIDDEN void
-fbm_free(genptr_t cp)
+fbm_free(void *cp)
 {
-    bu_free(cp, "fbm_specific");
+    BU_PUT(cp, struct fbm_specific);
 }
 
 
-/*
- * F B M _ R E N D E R
- */
 int
-fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct fbm_specific *fbm_sp =
 	(struct fbm_specific *)dp;

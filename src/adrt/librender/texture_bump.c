@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B U M P . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,32 +19,20 @@
  */
 /** @file librender/texture_bump.c
  *
- *  Comments -
- *      Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
+ * Comments -
+ * Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
-
-#include "bu.h"
-
-void
-texture_bump_init(struct texture_s *texture, vect_t coef) {
-    struct texture_bump_s *sd;
-
-    texture->data = bu_malloc(sizeof(struct texture_bump_s), "texture data");
-    texture->free = texture_bump_free;
-    texture->work = (texture_work_t *)texture_bump_work;
-
-    sd = (struct texture_bump_s *)texture->data;
-    VMOVE(sd->coef, coef);
-}
 
 void
 texture_bump_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_bump_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -59,11 +47,12 @@ texture_bump_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_
     n[2] = id->norm[2] + sd->coef[2]*(2* *pixel[2]-1.0);
     VUNITIZE(n);
 
-    d = VDOT( n,  id->norm);
+    d = VDOT(n,  id->norm);
     if (d < 0)
 	VSCALE(n,  n,  -1.0);
     VMOVE(id->norm, n);
 }
+
 
 /*
  * Local Variables:

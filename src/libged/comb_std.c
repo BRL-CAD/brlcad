@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,8 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "ged.h"
@@ -76,7 +77,7 @@ append_union(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -90,7 +91,7 @@ append_inter(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -104,7 +105,7 @@ append_subtr(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -118,7 +119,7 @@ append_lparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -132,7 +133,7 @@ append_rparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -218,7 +219,7 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
@@ -245,7 +246,7 @@ do_inter(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible intersection operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
@@ -280,7 +281,7 @@ do_union_subtr(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	if (tok->type == TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
@@ -391,7 +392,7 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
 		else if (db_lookup(gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
-		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
+		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not currently exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
 	if (paren_count < 0)
@@ -616,7 +617,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	int flags;
 
 	flags = RT_DIR_COMB;
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;
@@ -629,13 +630,17 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
 	if (comb->region_flag) {
 	    comb->region_flag = 1;
-	    comb->region_id = gedp->ged_wdbp->wdb_item_default++;;
+	    comb->region_id = gedp->ged_wdbp->wdb_item_default++;
 	    comb->aircode = gedp->ged_wdbp->wdb_air_default;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
-			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
+
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", comb->region_id);
+	    if (comb->aircode)
+		bu_vls_printf(gedp->ged_result_str, "air=%d, ", comb->aircode);
+	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
+			  comb->los,
+			  comb->GIFTmater);
 
 	    flags |= RT_DIR_REGION;
 	}
@@ -643,10 +648,10 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, GED_ERROR);
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 

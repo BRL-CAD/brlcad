@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,8 +53,8 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
+    intern.idb_meth = &OBJ[ID_COMBINATION];
+    intern.idb_ptr = (void *)comb;
     comb->tree = final_tree;
 
     if (!BU_STR_EQUAL(new_name, old_name)) {
@@ -73,7 +73,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	    }
 	}
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return 1;
@@ -86,7 +86,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	else
 	    flags = RT_DIR_COMB;
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
@@ -162,7 +162,7 @@ save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
@@ -317,7 +317,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    bu_free(str, "dealloc bu_strdup str");
 	    return GED_ERROR;
 	} else if (n > 0) {
-	    BU_GET(llp, struct line_list);
+	    BU_ALLOC(llp, struct line_list);
 	    BU_LIST_INSERT(&HeadLines.l, &llp->l);
 	    llp->line = line;
 
@@ -430,7 +430,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		    break;
 	    }
 
-	    BU_GET(tp, union tree);
+	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
@@ -539,7 +539,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	if (comb == NULL)
 	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);

@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="objg1">
 
 <refmeta>
@@ -180,7 +178,7 @@
       <listitem>
 	<para>
 	 Plot open edges when creating bots which are not a closed
-	 volume. A plot/overlay (.pl) file will be created with the
+	 volume. A plot/overlay (.plot3) file will be created with the
 	 same name as the bot primitive and be placed in the current
 	 directory. If a plot file already exists, it will be
 	 overwritten. Closed edges are closed but open edges are not
@@ -338,8 +336,8 @@
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2010-2012 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2010-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

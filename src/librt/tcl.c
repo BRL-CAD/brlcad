@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -31,7 +30,8 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -40,6 +40,7 @@
 /* private headers */
 #include "brlcad_version.h"
 
+#define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
 static int rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
@@ -58,21 +59,20 @@ static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
 
 struct dbcmdstruct {
     char *cmdname;
-    int (*cmdfunc)();
+    int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 
 
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-    {"shootray",	rt_tcl_rt_shootray},
-    {"onehit",		rt_tcl_rt_onehit},
-    {"no_bool",		rt_tcl_rt_no_bool},
-    {"check",		rt_tcl_rt_check},
-    {"prep",		rt_tcl_rt_prep},
-    {"cutter",		rt_tcl_rt_cutter},
-    {"set",		rt_tcl_rt_set},
-    {(char *)0,		(int (*)())0}
+    {"shootray",	RT_FUNC_TCL_CAST(rt_tcl_rt_shootray)},
+    {"onehit",		RT_FUNC_TCL_CAST(rt_tcl_rt_onehit)},
+    {"no_bool",		RT_FUNC_TCL_CAST(rt_tcl_rt_no_bool)},
+    {"check",		RT_FUNC_TCL_CAST(rt_tcl_rt_check)},
+    {"prep",		RT_FUNC_TCL_CAST(rt_tcl_rt_prep)},
+    {"cutter",		RT_FUNC_TCL_CAST(rt_tcl_rt_cutter)},
+    {"set",		RT_FUNC_TCL_CAST(rt_tcl_rt_set)},
+    {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
-
 
 
 int
@@ -106,7 +106,6 @@ rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
     VUNITIZE(rp->r_dir);
     return TCL_OK;
 }
-
 
 
 void
@@ -156,10 +155,10 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 			      cutp->nugn.nu_axis[i]->nu_spos,
 			      cutp->nugn.nu_axis[i]->nu_epos,
 			      cutp->nugn.nu_axis[i]->nu_width);
-		bu_vls_printf(&str, " cells_per_axis %ld",
-			      cutp->nugn.nu_cells_per_axis);
-		bu_vls_printf(&str, " stepsize %ld}",
-			      cutp->nugn.nu_stepsize);
+		bu_vls_printf(&str, " cells_per_axis %d",
+			      cutp->nugn.nu_cells_per_axis[i]);
+		bu_vls_printf(&str, " stepsize %d}",
+			      cutp->nugn.nu_stepsize[i]);
 	    }
 	    break;
 	default:
@@ -213,7 +212,6 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 }
 
 
-
 void
 rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
@@ -245,7 +243,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 	char *sofar = db_path_to_string(&stp->st_path);
 	bu_vls_printf(&str, " path ");
 	bu_vls_strcat(&str, sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
     bu_vls_printf(&str, " solid %s}", dp->d_namep);
 
@@ -254,9 +252,6 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 }
 
 
-/**
- *
- */
 int
 rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
@@ -284,9 +279,6 @@ rt_tcl_a_hit(struct application *ap,
 }
 
 
-/**
- *
- */
 int
 rt_tcl_a_miss(struct application *ap)
 {
@@ -348,7 +340,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	return TCL_ERROR;
     ap->a_hit = rt_tcl_a_hit;
     ap->a_miss = rt_tcl_a_miss;
-    ap->a_uptr = (genptr_t)interp;
+    ap->a_uptr = (void *)interp;
 
     (void)rt_shootray(ap);
 
@@ -602,7 +594,6 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 }
 
 
-
 int
 rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
@@ -618,8 +609,11 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
-	    return (*dbcmd->cmdfunc)(clientData, interp,
-				     argc, argv);
+	    /* need proper cmd func pointer for actual call */
+	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
+	    /* cast to the actual caller */
+	    _cmdfunc = (int (*)(void*, Tcl_Interp*, int, const char* const*))(*dbcmd->cmdfunc);
+	    return _cmdfunc(clientData, interp, argc, argv);
 	}
     }
 
@@ -662,7 +656,6 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
 
     return tp;
 }
-
 
 
 int
@@ -737,7 +730,6 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 }
 
 
-
 void
 rt_tcl_setup(Tcl_Interp *interp)
 {
@@ -750,20 +742,19 @@ rt_tcl_setup(Tcl_Interp *interp)
 }
 
 
-
 int
 Rt_Init(Tcl_Interp *interp)
 {
     /*XXX how much will this break? */
-    if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
+    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
 	if (bu_avail_cpus() > 1) {
-	    rt_g.rtg_parallel = 1;
+	    RTG.rtg_parallel = 1;
 	    bu_semaphore_init(RT_SEM_LAST);
 	}
 
 	/* initialize RT's global state */
-	BU_LIST_INIT(&rt_g.rtg_vlfree);
-	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+	BU_LIST_INIT(&RTG.rtg_vlfree);
+	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 	rt_init_resource(&rt_uniresource, 0, NULL);
     }
 
@@ -780,7 +771,6 @@ Rt_Init(Tcl_Interp *interp)
 /* TCL-oriented C support for LIBRT */
 
 
-
 void
 db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 {
@@ -792,7 +782,6 @@ db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 	Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL);
     }
 }
-
 
 
 int
@@ -821,7 +810,6 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
 }
 
 
-
 int
 tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *array_len)
 {
@@ -834,7 +822,6 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
 
     return ret;
 }
-
 
 
 int
@@ -862,7 +849,6 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
 
     return len < *array_len ? len : *array_len;
 }
-
 
 
 int

@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,18 +42,18 @@
  * The most notable implication of this is the location of the
  * "delta" (translation) values in the matrix, i.e.:
  *
- *       x'     (R0   R1   R2   Dx) x
- *       y' =  (R4   R5   R6   Dy)  *  y
- *       z'    (R8   R9   R10  Dz) z
- *       w'     (0    0    0   1/s) w
+ *       x'     (R0   R1   R2   Dx)     (x)
+ *       y' =   (R4   R5   R6   Dy)  X  (y)
+ *       z'     (R8   R9   R10  Dz)     (z)
+ *       w'     (0    0    0   1/s)     (w)
  *
  * This of course requires that the rotation portion be computed
  * using somewhat different formulas (see buildHrot for both kinds).
  *
  */
 
-#ifndef __MGED_H__
-#define __MGED_H__
+#ifndef MGED_MGED_H
+#define MGED_MGED_H
 
 #include "common.h"
 
@@ -63,6 +63,7 @@
 #include <time.h>
 
 #include "tcl.h"
+#include "bu/parallel.h"
 #include "wdb.h"
 #include "dg.h"
 
@@ -109,7 +110,7 @@ extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
 
 extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et.al. */
+extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
 
 
 /* default region codes defined in mover.c */
@@ -219,7 +220,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
+extern void mged_view_callback(struct ged_view *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(int bnum);
@@ -444,6 +445,9 @@ int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
+int gui_setup(const char *dstr);
+int gui_output(void *clientData, void *str);
+
 
 /* buttons.c */
 void btn_head_menu(int i, int menu, int item);
@@ -474,9 +478,9 @@ int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
 
 /* color_scheme.c */
-void cs_set_bg(void);
-void cs_update(void);
-void cs_set_dirty_flag(void);
+void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *);
+void cs_update(const struct bu_structparse *, const char *, void *, const char *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
@@ -508,6 +512,7 @@ void pathHmat(struct solid *sp, matp_t matp, int depth);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
+int redraw_visible_objects(void);
 
 /* dozoom.c */
 void createDList(struct solid *sp);
@@ -569,10 +574,10 @@ void zoom_rect_area(void);
 void paint_rect_area(void);
 void rt_rect_area(void);
 void draw_rect(void);
-void set_rect(void);
+void set_rect(const struct bu_structparse *, const char *, void *, const char *);
 void rect_view2image(void);
 void rect_image2view(void);
-void rb_set_dirty_flag(void);
+void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 
 /* track.c */
@@ -620,7 +625,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
-extern void set_scroll_private(void);
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
@@ -655,7 +660,7 @@ void color_soltab(void);
 int editit(const char *command, const char *tempfile);
 
 
-#endif  /* __GED_H__ */
+#endif  /* MGED_MGED_H */
 
 /*
  * Local Variables:

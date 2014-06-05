@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -172,7 +172,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 
     /* Add a new name */
-    ptr = (struct name_conv_list *)bu_calloc(1, sizeof(struct name_conv_list), "Add_new_name: prev->next");
+    BU_ALLOC(ptr, struct name_conv_list);
     ptr->next = (struct name_conv_list *)NULL;
     ptr->brlcad_name = bu_strdup(name);
     ptr->obj = obj;
@@ -383,17 +383,17 @@ Convert_assy(char *line)
 	    if (!ZERO(scale - 1.0)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
+		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
 
-			/* clamp rotation elements to fabs(1.0) */
-			for (j=0; j<3; j++) {
-			    for (i=0; i<3; i++) {
-				if (wmem->wm_mat[j*4 + i] > 1.0)
-				    wmem->wm_mat[j*4 + i] = 1.0;
-				else if (wmem->wm_mat[j*4 + i] < -1.0)
-				    wmem->wm_mat[j*4 + i] = -1.0;
-			    }
-			}
+		/* clamp rotation elements to fabs(1.0) */
+		for (j=0; j<3; j++) {
+		    for (i=0; i<3; i++) {
+			if (wmem->wm_mat[j*4 + i] > 1.0)
+			    wmem->wm_mat[j*4 + i] = 1.0;
+			else if (wmem->wm_mat[j*4 + i] < -1.0)
+			    wmem->wm_mat[j*4 + i] = -1.0;
+		    }
+		}
 
 		if (top_level)
 		    wmem->wm_mat[15] *= (inv_scale/conv_factor);
@@ -605,8 +605,8 @@ Convert_part(char *line)
 
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
-    VSETALL(part_min, MAX_FASTF);
-    VSETALL(part_max, -MAX_FASTF);
+    VSETALL(part_min, INFINITY);
+    VSETALL(part_max, -INFINITY);
 
     clean_vert_tree(vert_tree_root);
 
@@ -1023,9 +1023,6 @@ proe_usage(const char *argv0)
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -1104,7 +1101,7 @@ main(int argc, char **argv)
 		debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;

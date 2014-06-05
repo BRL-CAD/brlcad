@@ -1,7 +1,7 @@
 /*                          B O L T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,15 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static void
+printusage(void)
+{
+    fprintf(stderr,"Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
+    fprintf(stderr,"or\n");
+    fprintf(stderr,"Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
+    fprintf(stderr,"       (units mm)\n");
+}
+
 
 int
 main(int argc, char **argv)
@@ -64,6 +73,13 @@ main(int argc, char **argv)
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
     int ret;
+
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    printusage();
+	    return 0;
+	}
+    }
 
     /* Zero all dimensions of bolt. */
     iopt = 0;
@@ -102,6 +118,8 @@ main(int argc, char **argv)
 
     /* If there are no arguments ask questions. */
     if (argc == 1) {
+	printusage();
+	fprintf(stderr,"\n       Program continues running:\n\n");
 	/* START # 1 */
 
 	/* Find type of bolt to build. */
@@ -116,9 +134,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    iopt = 3;
 	}
-	if (iopt < 0)
+	else if (iopt < 0)
 	    iopt = 0;
-	if (iopt > 4)
+	else if (iopt > 4)
 	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
@@ -139,9 +157,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numblt = 1;
 	}
-	if (numblt < 1)
+	else if (numblt < 1)
 	    numblt = 1;
-	if (numblt > 26)
+	else if (numblt > 26)
 	    numblt = 26;
 
 	/* Find dimensions of the bolt. */
@@ -212,19 +230,27 @@ main(int argc, char **argv)
 	/*	-sd# - # = stem diameter */
 	/*	-sh# - # = stem height */
 
-	for (i=1; i<argc; i++) {
+	for (i = 1; i < argc; i++) {
 	    /* START # 3 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
 
+	    if (temp[0] != '-') {
+	    	printf("bolt: illegal option %s ; missing leading '-'\n", argv[i]);
+	    	return 0;
+	    }
+
 	    /* -o - set type of bolt to make. */
 	    if (temp[1] == 'o') {
 		/* START # 4 */
-		if (temp[2] == '1') iopt = 1;
-		if (temp[2] == '2') iopt = 2;
-		if (temp[2] == '3') iopt = 3;
-		if (temp[2] == '4') iopt = 4;
-
+		if (temp[2] == '1')
+		    iopt = 1;
+		else if (temp[2] == '2')
+		    iopt = 2;
+		else if (temp[2] == '3')
+		    iopt = 3;
+		else if (temp[2] == '4')
+		    iopt = 4;
 	    }						/* END # 4 */
 
 	    /* -f - mged file name. */
@@ -305,6 +331,11 @@ main(int argc, char **argv)
 			sscanf(temp1, "%lf", &sh);
 		    }
 		}					/* END # 9 */
+		else {
+		    printf("bolt: illegal option -- %c\n", temp[1]);
+		    printusage();
+		    return 0;
+		}
 	    }						/* END # 6.1 */
 
 	}						/* END # 3 */
@@ -329,94 +360,94 @@ main(int argc, char **argv)
     /* Write ident record. */
     mk_id(fpw, "bolts");
 
-    for (i=0; i<numblt; i++) {
+    for (i = 0; i < numblt; i++) {
 	/* Loop for each bolt created. */
 	/* START # 20 */
 
 	/* Create all solids needed. */
 	/* Create solids of bolt head. */
-	leg = tan(M_PI / 6.) * hd / 2.;
-	hyp = leg * leg + (hd / 2.) * (hd / 2.);
+	leg = tan(M_PI / 6.0) * hd / 2.0;
+	hyp = leg * leg + (hd / 2.0) * (hd / 2.0);
 	hyp = sqrt(hyp);
 	/* Bolt head is two solids, create first solid. */
-	pts[0][0] = (fastf_t) ((-hd) / 2.);
+	pts[0][0] = (fastf_t) ((-hd) / 2.0);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
-	pts[1][0] = (fastf_t)0.;
+	pts[1][0] = (fastf_t)0.0;
 	pts[1][1] = (fastf_t)hyp;
 	pts[1][2] = (fastf_t)hh;
-	pts[2][0] = (fastf_t)0.;
+	pts[2][0] = (fastf_t)0.0;
 	pts[2][1] = (fastf_t)(-hyp);
 	pts[2][2] = (fastf_t)hh;
-	pts[3][0] = (fastf_t) ((-hd) / 2.);
+	pts[3][0] = (fastf_t) ((-hd) / 2.0);
 	pts[3][1] = (fastf_t)(-leg);
 	pts[3][2] = (fastf_t)hh;
-	pts[4][0] = (fastf_t) ((-hd) / 2.);
+	pts[4][0] = (fastf_t) ((-hd) / 2.0);
 	pts[4][1] = (fastf_t)leg;
-	pts[4][2] = (fastf_t)0.;
-	pts[5][0] = (fastf_t)0.;
+	pts[4][2] = (fastf_t)0.0;
+	pts[5][0] = (fastf_t)0.0;
 	pts[5][1] = (fastf_t)hyp;
-	pts[5][2] = (fastf_t)0.;
-	pts[6][0] = (fastf_t)0.;
+	pts[5][2] = (fastf_t)0.0;
+	pts[6][0] = (fastf_t)0.0;
 	pts[6][1] = (fastf_t)(-hyp);
-	pts[6][2] = (fastf_t)0.;
-	pts[7][0] = (fastf_t) ((-hd) / 2.);
+	pts[6][2] = (fastf_t)0.0;
+	pts[7][0] = (fastf_t) ((-hd) / 2.0);
 	pts[7][1] = (fastf_t)(-leg);
-	pts[7][2] = (fastf_t)0.;
+	pts[7][2] = (fastf_t)0.0;
 	solnam[6] = 97 + i;
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create second solid. */
-	pts[0][0] = (fastf_t) (hd / 2.);
+	pts[0][0] = (fastf_t) (hd / 2.0);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
-	pts[1][0] = (fastf_t)0.;
+	pts[1][0] = (fastf_t)0.0;
 	pts[1][1] = (fastf_t)hyp;
 	pts[1][2] = (fastf_t)hh;
-	pts[2][0] = (fastf_t)0.;
+	pts[2][0] = (fastf_t)0.0;
 	pts[2][1] = (fastf_t)(-hyp);
 	pts[2][2] = (fastf_t)hh;
-	pts[3][0] = (fastf_t) (hd / 2.);
+	pts[3][0] = (fastf_t) (hd / 2.0);
 	pts[3][1] = (fastf_t)(-leg);
 	pts[3][2] = (fastf_t)hh;
-	pts[4][0] = (fastf_t) (hd / 2.);
+	pts[4][0] = (fastf_t) (hd / 2.0);
 	pts[4][1] = (fastf_t)leg;
-	pts[4][2] = (fastf_t)0.;
-	pts[5][0] = (fastf_t)0.;
+	pts[4][2] = (fastf_t)0.0;
+	pts[5][0] = (fastf_t)0.0;
 	pts[5][1] = (fastf_t)hyp;
-	pts[5][2] = (fastf_t)0.;
-	pts[6][0] = (fastf_t)0.;
+	pts[5][2] = (fastf_t)0.0;
+	pts[6][0] = (fastf_t)0.0;
 	pts[6][1] = (fastf_t)(-hyp);
-	pts[6][2] = (fastf_t)0.;
-	pts[7][0] = (fastf_t) (hd / 2.);
+	pts[6][2] = (fastf_t)0.0;
+	pts[7][0] = (fastf_t) (hd / 2.0);
 	pts[7][1] = (fastf_t)(-leg);
-	pts[7][2] = (fastf_t)0.;
+	pts[7][2] = (fastf_t)0.0;
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
-	    bs[0] = (fastf_t)0.;
-	    bs[1] = (fastf_t)0.;
-	    bs[2] = (fastf_t)0.;
-	    ht[0] = (fastf_t)0.;
-	    ht[1] = (fastf_t)0.;
+	    bs[0] = (fastf_t)0.0;
+	    bs[1] = (fastf_t)0.0;
+	    bs[2] = (fastf_t)0.0;
+	    ht[0] = (fastf_t)0.0;
+	    ht[1] = (fastf_t)0.0;
 	    ht[2] = (fastf_t)(-wh);
-	    rad = (fastf_t) (wd / 2.);
+	    rad = (fastf_t) (wd / 2.0);
 	    solnam[7] = '3';
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}
 
 	/* Create bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
-	    bs[0] = (fastf_t)0.;
-	    bs[1] = (fastf_t)0.;
-	    bs[2] = (fastf_t)0.;
-	    ht[0] = (fastf_t)0.;
-	    ht[1] = (fastf_t)0.;
+	    bs[0] = (fastf_t)0.0;
+	    bs[1] = (fastf_t)0.0;
+	    bs[2] = (fastf_t)0.0;
+	    ht[0] = (fastf_t)0.0;
+	    ht[1] = (fastf_t)0.0;
 	    ht[2] = (fastf_t)(-sh);
-	    rad = (fastf_t) (sd / 2.);
+	    rad = (fastf_t) (sd / 2.0);
 	    solnam[7] = '4';
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}

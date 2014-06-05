@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,16 +141,15 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 }
 
 
-/**
- * R T _ R E V O L V E _ B R E P
- */
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_DB_INTERNAL_INIT(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
+
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
@@ -290,7 +289,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	VMOVE(sketch.V, plane_origin);
 	VMOVE(sketch.u_vec, plane_x_dir);
 	VMOVE(sketch.v_vec, plane_y_dir);
-	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	tmp_internal->idb_ptr = (void *)(&sketch);
 	rt_sketch_brep(&b1, tmp_internal, tol);
 	(*b)->Append(*b1->Duplicate());
 
@@ -298,7 +297,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	VMOVE(sketch.V, end_plane_origin);
 	VMOVE(sketch.u_vec, end_plane_x_dir);
 	VMOVE(sketch.v_vec, end_plane_y_dir);
-	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	tmp_internal->idb_ptr = (void *)(&sketch);
 	rt_sketch_brep(&b2, tmp_internal, tol);
 	(*b)->Append(*b2->Duplicate());
 	(*b)->FlipFace((*b)->m_F[(*b)->m_F.Count()-1]);

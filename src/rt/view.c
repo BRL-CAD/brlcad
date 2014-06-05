@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
@@ -181,8 +181,6 @@ struct bu_structparse view_parse[] = {
 
 
 /**
- * V I E W _ P I X E L
- *
  * Arrange to have the pixel output.  a_uptr has region pointer, for
  * reference.
  */
@@ -195,7 +193,13 @@ view_pixel(struct application *ap)
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
-#if 0
+#ifdef DRAW_INDICATOR_LINE
+    /* this draws a nice indicator line to let you know where you are
+     * currently rendering into the frame, but testing demonstrated
+     * that this utterly kills performance for some framebuffer types.
+     * need to revisit and test making this be runtime requestable.
+     */
+
     RGBpixel white = {255, 255, 255};
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -205,7 +209,7 @@ view_pixel(struct application *ap)
 
 
     if (rpt_dist)
-	htond(dist, (unsigned char *)&(ap->a_dist), 1);
+	bu_cv_htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
     if (ap->a_user == 0) {
 	/* Shot missed the model, don't dither */
@@ -316,11 +320,11 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    icv_image_save_writepixel(bif, ap->a_x, ap->a_y, p);
+		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    if (fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
+		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -374,7 +378,7 @@ view_pixel(struct application *ap)
 	    slp = &scanline[ap->a_y];
 	    bu_semaphore_acquire(RT_SEM_RESULTS);
 	    if (slp->sl_buf == (unsigned char *)0) {
-		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 	    *pixelp++ = r;
@@ -402,7 +406,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_SCANLINE:
 	    slp = &scanline[ap->a_y];
 	    if (slp->sl_buf == (unsigned char *)0) {
-		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 	    *pixelp++ = r;
@@ -434,8 +438,8 @@ view_pixel(struct application *ap)
 		    if ((size_t)ap->a_y+dy >= height) break;
 		    slp = &scanline[ap->a_y+dy];
 		    if (slp->sl_buf == (unsigned char *)0)
-			slp->sl_buf = bu_calloc(width+32,
-						pwidth, "sl_buf scanline buffer");
+			slp->sl_buf = (unsigned char *)bu_calloc(width+32,
+								 pwidth, "sl_buf scanline buffer");
 
 		    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		    for (dx=0; dx<spread; dx++) {
@@ -473,7 +477,7 @@ view_pixel(struct application *ap)
 		/* Scanline buffered mode */
 		bu_semaphore_acquire(RT_SEM_RESULTS);
 
-		tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+		tmp_pixel = (fastf_t *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
 		if (rpt_dist) {
 		    for (i = 0; i < 8; i++)
@@ -483,7 +487,7 @@ view_pixel(struct application *ap)
 		psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
 		slp = &scanline[ap->a_y];
 		if (slp->sl_buf == (unsigned char *)0) {
-		    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		    slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 		}
 		pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		/* Update the partial sums and the scanline */
@@ -567,14 +571,15 @@ view_pixel(struct application *ap)
 		}
 	    }
 	    if (bif != NULL) {
+		/* TODO : Add double type data to maintain resolution */
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		icv_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		icv_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
+		if (bu_fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
 		    fprintf(stderr, "fseek error\n");
 		count = fwrite(scanline[ap->a_y].sl_buf,
 			       sizeof(char), width*pwidth, outfp);
@@ -589,8 +594,6 @@ view_pixel(struct application *ap)
 
 
 /**
- * V I E W _ E O L
- *
  * This routine is not used; view_pixel() determines when the last
  * pixel of a scanline is really done, for parallel considerations.
  */
@@ -602,8 +605,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /**
- * V I E W _ E N D
- *
  * Now when lightmodel is 8, heat-graph will be drawn.
  */
 void
@@ -650,8 +651,6 @@ view_end(struct application *ap)
 
 
 /**
- * V I E W _ S E T U P
- *
  * Called before rt_prep() in do.c
  */
 void
@@ -709,8 +708,6 @@ view_setup(struct rt_i *rtip)
 
 
 /**
- * V I E W _ R E _ S E T U P
- *
  * This routine is used to do a "mlib_setup" on reprepped regions.
  * only regions with a NULL reg_mfuncs pointer will be processed.
  */
@@ -745,8 +742,6 @@ view_re_setup(struct rt_i *rtip)
 
 
 /**
- * V I E W _ C L E A N U P
- *
  * Called before rt_clean() in do.c
  */
 void view_cleanup(struct rt_i *rtip)
@@ -768,8 +763,6 @@ void view_cleanup(struct rt_i *rtip)
 
 
 /**
- * H I T _ N O T H I N G
- *
  * a_miss() routine called when no part of the model is hit.
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
@@ -815,7 +808,7 @@ static int hit_nothing(struct application *ap)
 	VREVERSE(u.sw.sw_hit.hit_normal, ap->a_ray.r_dir);
 	/* U is azimuth, atan() range: -pi to +pi */
 	u.sw.sw_uv.uv_u = bn_atan2(ap->a_ray.r_dir[Y],
-				   ap->a_ray.r_dir[X]) * bn_inv2pi;
+				   ap->a_ray.r_dir[X]) * M_1_2PI;
 	if (u.sw.sw_uv.uv_u < 0)
 	    u.sw.sw_uv.uv_u += 1.0;
 	/*
@@ -825,7 +818,7 @@ static int hit_nothing(struct application *ap)
 	u.sw.sw_uv.uv_v = bn_atan2(ap->a_ray.r_dir[Z],
 				   sqrt(ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 					ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y])) *
-	    bn_invpi + 0.5;
+	    M_1_PI + 0.5;
 	u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
 	VSETALL(u.sw.sw_color, 1);
@@ -838,7 +831,7 @@ static int hit_nothing(struct application *ap)
 
 	VMOVE(ap->a_color, u.sw.sw_color);
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-	ap->a_uptr = (genptr_t)&env_region;
+	ap->a_uptr = (void *)&env_region;
 	return 1;
     }
 
@@ -848,8 +841,7 @@ static int hit_nothing(struct application *ap)
 }
 
 
-/* A O _ R A Y H I T
- *
+/*
  * hit routine for ambient occlusion
  */
 int
@@ -891,8 +883,7 @@ ao_rayhit(register struct application *ap,
 }
 
 
-/* A O _ R A Y H I T
- *
+/*
  * miss routine for ambient occlusion
  */
 int
@@ -904,8 +895,7 @@ ao_raymiss(register struct application *ap)
 }
 
 
-/* a m b i e n t O c c l u s i o n
- *
+/*
  * Compute the ambient term using occlusion rays.
  * Scale the color based upon the occlusion
  */
@@ -920,7 +910,7 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     vect_t uAxis;
     int ao_samp;
     vect_t origin = VINIT_ZERO;
-    float occlusionFactor;
+    double occlusionFactor;
     int hitCount = 0;
 
     stp = pp->pt_inseg->seg_stp;
@@ -1005,8 +995,6 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 
 
 /**
- * C O L O R V I E W
- *
  * Manage the coloring of whatever it was we just hit.  This can be a
  * recursive procedure.
  */
@@ -1027,7 +1015,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	 * sliver less than 0.05mm thick will be skipped (0.05 is a
 	 * SWAG).
 	 */
-	if ((genptr_t)pp->pt_regionp == ap->a_uptr &&
+	if ((void *)pp->pt_regionp == ap->a_uptr &&
 	    pp->pt_forw != PartHeadp &&
 	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05)
 	    pp = pp->pt_forw;
@@ -1089,7 +1077,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     hitp = pp->pt_inhit;
     RT_CK_HIT(hitp);
     RT_CK_RAY(hitp->hit_rayp);
-    ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
+    ap->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
     if (R_DEBUG&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",
@@ -1260,8 +1248,6 @@ out:
 
 
 /**
- * V I E W I T
- *
  * a_hit() routine for simple lighting model.
  */
 int viewit(struct application *ap,
@@ -1434,8 +1420,6 @@ kut_ft_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *UNUSED(ra
 
 
 /**
- * V I E W _ I N I T
- *
  * Called once, early on in RT setup, before view size is set.
  */
 int
@@ -1455,12 +1439,14 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	struct rt_functab *functab;
 	struct directory *dp;
 
-	kut_soltab = bu_calloc(1, sizeof(struct soltab), "kut_soltab");
+	BU_ALLOC(kut_soltab, struct soltab);
 	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
-	dp = bu_calloc(1, sizeof(struct directory), "kut dp");
+
+	BU_ALLOC(dp, struct directory);
 	dp->d_namep = bu_strdup("fake kut primitive");
 	kut_soltab->st_dp = dp;
-	functab = bu_calloc(1, sizeof(struct rt_functab), "kut_soltab->st_meth");
+
+	BU_ALLOC(functab, struct rt_functab);
 	functab->magic = RT_FUNCTAB_MAGIC;
 	functab->ft_norm = kut_ft_norm;
 	kut_soltab->st_meth = functab;
@@ -1476,8 +1462,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
 
 /**
- * R E P R O J E C T _ S P L A T
- *
  * Called when the reprojected value lies on the current screen.
  * Write the reprojected value into the screen, checking *screen* Z
  * values if the new location is already occupied.
@@ -1520,11 +1504,8 @@ extern int per_processor_chunk;	/* how many pixels to do at once */
 extern int cur_pixel;		/* current pixel number, 0..last_pixel */
 extern int last_pixel;		/* last pixel number */
 
-/**
- * R E P R O J E C T _ W O R K E R
- */
 void
-reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
+reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
@@ -1629,8 +1610,6 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
 
 
 /**
- * V I E W 2 _ I N I T
- *
  * Called each time a new image is about to be done.
  */
 void
@@ -1664,7 +1643,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
     if (full_incr_mode && !psum_buffer)
-	psum_buffer = bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
+	psum_buffer = (fastf_t *)bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
@@ -1869,9 +1848,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
-    if (R_DEBUG & RDEBUG_LIGHT) {
-	bu_log("deleting %d invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
-    }
+    if (R_DEBUG & RDEBUG_LIGHT)
+	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
+
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
 	struct region *rp;
 	struct soltab *stp;
@@ -1888,10 +1867,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	/* remove the invisible light region pointers from the soltab
 	 * structs.
 	 */
-	if (R_DEBUG & RDEBUG_LIGHT) {
-	    bu_log("Removing invisible light region pointers from %d soltabs\n",
+	if (R_DEBUG & RDEBUG_LIGHT)
+	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
 		   BU_PTBL_LEN(&stps));
-	}
+
 	for (j=0; j<BU_PTBL_LEN(&stps); j++) {
 	    int k;
 	    struct region *rp2;
@@ -1938,8 +1917,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
 
 /**
- * A P P L I C A T I O N _ I N I T
- *
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */

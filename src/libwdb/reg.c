@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,8 +41,6 @@
 #include "wdb.h"
 
 /**
- * M K _ T R E E _ P U R E
- *
  * Given a list of wmember structures, build a tree that performs the
  * boolean operations in the given sequence.  No GIFT semantics or
  * precedence is provided.  For that, use mk_tree_gift().
@@ -57,7 +55,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GET(leafp, union tree);
+	BU_ALLOC(leafp, union tree);
 	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -70,7 +68,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GET(nodep, union tree);
+	BU_ALLOC(nodep, union tree);
 	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
@@ -93,8 +91,6 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /**
- * M K _ T R E E _ G I F T
- *
  * Add some nodes to a new or existing combination's tree, with GIFT
  * precedence and semantics.
  *
@@ -161,7 +157,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
@@ -183,18 +179,6 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 }
 
 
-/**
- * M K _ A D D M E M B E R
- *
- * Obtain dynamic storage for a new wmember structure, fill in the
- * name, default the operation and matrix, and add to doubly linked
- * list.  In typical use, a one-line call is sufficient.  To change
- * the defaults, catch the pointer that is returned, and adjust the
- * structure to taste.
- *
- * The caller is responsible for initializing the header structures
- * forward and backward links.
- */
 struct wmember *
 mk_addmember(
     const char *name,
@@ -204,7 +188,7 @@ mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GET(wp, struct wmember);
+    BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -230,10 +214,6 @@ mk_addmember(
     return wp;
 }
 
-
-/**
- * M K _ F R E E M E M B E R S
- */
 void
 mk_freemembers(struct bu_list *headp)
 {
@@ -248,20 +228,6 @@ mk_freemembers(struct bu_list *headp)
 }
 
 
-/**
- * M K _ C O M B
- *
- * Make a combination, where the members are described by a linked
- * list of wmember structs.
- *
- * The linked list is freed when it has been output.
- *
- * Has many operating modes.
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 mk_comb(
     struct rt_wdb *wdbp,
@@ -296,13 +262,13 @@ mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;
     }
@@ -372,11 +338,6 @@ mk_comb(
 }
 
 
-/**
- * M K _ C O M B 1
- *
- * Convenience interface to make a combination with a single member.
- */
 int
 mk_comb1(struct rt_wdb *wdbp,
 	 const char *combname,
@@ -394,13 +355,6 @@ mk_comb1(struct rt_wdb *wdbp,
 		   0, 0, 0);
 }
 
-
-/**
- * M K _ R E G I O N 1
- *
- * Convenience routine to make a region with shader and rgb possibly
- * set.
- */
 int
 mk_region1(
     struct rt_wdb *wdbp,

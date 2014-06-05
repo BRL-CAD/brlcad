@@ -1,3 +1,23 @@
+#                   B O T E D I T O R . T C L
+# BRL-CAD
+#
+# Copyright (c) 2013-2014 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# version 2.1 as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this file; see the file named COPYING for more
+# information.
+#
+###
 # BotEditor class for editing a BoT primitive
 #
 # Usage: BotEditor <instance name> <bot name> [-prefix <Archer instance name>]
@@ -8,18 +28,6 @@
 package require Tk
 package require Itcl
 package require Itk
-
-# manually sourcing dependencies for now
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botPropertyBox.tcl]
-    source $script
-
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botTools.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-    exit
-}
 
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
@@ -490,3 +498,12 @@ if {[catch {
 	method update {bot} {$itk_component(props) update $bot}
     }
 }
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #endif
 
 #include "bio.h"
-#include "bu.h"
+
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -116,18 +116,23 @@
 static void
 tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
-    struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
-
-    if (TIE_HAS_CHILDREN(node_aligned->data)) {
+    if (node && TIE_HAS_CHILDREN(node->b)) {
 	/* Node Data is KDTREE Children, Recurse */
-	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
-	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
+	tie_kdtree_free_node(&((struct tie_kdtree_s *)(node->data))[0]);
+	tie_kdtree_free_node(&((struct tie_kdtree_s *)(node->data))[1]);
     } else {
 	/* This node points to a geometry node, free it */
-	free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
+	struct tie_geom_s *tmp;
+	tmp = (struct tie_geom_s *)node->data;
+	if (tmp) {
+	    if (tmp->tri_num > 0) {
+		bu_free(tmp->tri_list, "tri_list");
+	    }
+	    bu_free(tmp, "data");
+	}
     }
-    free((void*)((intptr_t)(node_aligned->data) & ~0x7L));
 }
+
 
 static void
 tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int tri_num)
@@ -140,14 +145,15 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
 	return;
 
     /* Insert all triangles into the Head Node */
-    tie->kdtree = (struct tie_kdtree_s *)bu_malloc(sizeof(struct tie_kdtree_s), __FUNCTION__);
-    tie->kdtree->data = (void *)bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
+    BU_ALLOC(tie->kdtree, struct tie_kdtree_s);
+    BU_ALLOC(tie->kdtree->data, struct tie_geom_s);
+
     g = ((struct tie_geom_s *)(tie->kdtree->data));
     g->tri_num = 0;
     VSETALL(tie->min, +INFINITY);
     VSETALL(tie->max, -INFINITY);
 
-    g->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * tri_num, __FUNCTION__);
+    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), __FUNCTION__);
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
@@ -498,7 +504,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	 * to prevent marching in order to determine a desirable splitting point.  If this section of code
 	 * is being executed it's typically because most 'empty space' has now been eliminated
 	 * and/or the resulting geometry is now losing structure as the smaller cells are being
-	 * created, i.e dividing a fraction of a wing-nut instead of an engine-block.
+	 * created, i.e. dividing a fraction of a wing-nut instead of an engine-block.
 	 */
 	for (d = 0; d < 3; d++)
 	    for (k = 0; k < slice_num; k++)
@@ -564,7 +570,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
 
-    if(node_gd == NULL) {
+    if (node_gd == NULL) {
 	bu_log("null geom, aborting\n");
 	return;
     }
@@ -589,26 +595,20 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	bu_bomb("Illegal tie kdtree method\n");
 
     /* Allocate 2 children nodes for the parent node */
-    node->data = (void *)bu_malloc(2 * sizeof(struct tie_kdtree_s), __FUNCTION__);
-    if(node->data == NULL || ((size_t)node->data & 7L))
-	bu_log("node->data 0x%X is not aligned! %x\n", node->data, (size_t)node->data & 7L);
+    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
+    node->b = 0;
 
-    ((struct tie_kdtree_s *)(node->data))[0].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
-    if(((struct tie_kdtree_s *)(node->data))[0].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
-	bu_log("node->data[0].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[0].data);
-
-    ((struct tie_kdtree_s *)(node->data))[1].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
-    if(((struct tie_kdtree_s *)(node->data))[1].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
-	bu_log("node->data[1].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[1].data);
+    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
+    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[1].data, struct tie_geom_s);
 
     /* Initialize Triangle List */
     child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
     child[1] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[1].data));
 
-    child[0]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
+    child[0]->tri_list = (struct tie_tri_s **)bu_calloc(node_gd->tri_num, sizeof(struct tie_tri_s *), "child[0]->tri_list");
     child[0]->tri_num = 0;
 
-    child[1]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
+    child[1]->tri_list = (struct tie_tri_s **)bu_calloc(node_gd->tri_num, sizeof(struct tie_tri_s *), "child[1]->tri_list");
     child[1]->tri_num = 0;
 
 
@@ -652,13 +652,14 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	/* Resize Tri List to actual amount of memory used */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
-	if( child[n]->tri_num == 0 ) {
-	    if( child[n]->tri_list ) {
-		free( child[n]->tri_list);
+	if ( child[n]->tri_num == 0 ) {
+	    if ( child[n]->tri_list ) {
+		bu_free( child[n]->tri_list, "tri_list");
 		child[n]->tri_list = NULL;
 	    }
-	} else
+	} else {
 	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, __FUNCTION__);
+	}
     }
 
     /*
@@ -666,8 +667,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
      * free the triangle list on this node.
      */
     node_gd->tri_num = 0;
-    free(node_gd->tri_list);
-    free(node_gd);
+    bu_free(node_gd->tri_list, "tri_list");
+    bu_free(node_gd, "node");
 
     /* Push each child through the same process. */
     {
@@ -682,7 +683,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 
     /* Assign the splitting dimension to the node */
     /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
-    node->data = (void *)(TIE_SET_HAS_CHILDREN(node->data) + split);
+    node->b = TIE_SET_HAS_CHILDREN(node->b) + split;
 }
 
 /*************************************************************
@@ -694,9 +695,10 @@ TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
 {
     /* Free KDTREE Nodes */
     /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
-    if (tie->kdtree)
+    if (tie->kdtree) {
 	tie_kdtree_free_node(tie->kdtree);
-    free(tie->kdtree);
+	bu_free(tie->kdtree, "kdtree");
+    }
 }
 
 void
@@ -724,8 +726,9 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
     if (!already_built) {
 	if (g->tri_num)
 	    g->tri_list = (struct tie_tri_s **)bu_realloc(g->tri_list, sizeof(struct tie_tri_s *) * g->tri_num, "prep tri_list");
-    } else
-	free (g->tri_list);
+    } else {
+	bu_free(g->tri_list, "tri_list");
+    }
 
     /*
      * Compute Floating Fuzz Precision Value

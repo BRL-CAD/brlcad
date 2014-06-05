@@ -287,7 +287,7 @@
 
 		The data passed to this method should always be binary data.
 		If the data is actually text data for a document or stylesheet,
-		it's encoding is determined based on either a HTTP header
+		its encoding is determined based on either a HTTP header
 		returned via the [SQ header] option, or a &lt;meta&gt;
 		element in the header section of an HTML or XHTML document.
 		If neither of these are present, the assumed encoding is

@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "solid.h"
 #include "dg.h"
@@ -63,8 +63,6 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp,
 
 
 /**
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int
@@ -91,9 +89,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
-    char name[1024] = {0};
-    char line1[2048] = {0};
-    size_t rem = 2048;
+    struct bu_vls line1 = BU_VLS_INIT_ZERO;
 #endif
     int use_input_orig = 0;
     vect_t center_model;
@@ -113,7 +109,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin = NULL;
     char nirt[256] = {0};
-    int args;
+    size_t args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v = BU_VLS_INIT_ZERO;
@@ -220,7 +216,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		struct bu_vls tmp = BU_VLS_INIT_ZERO;
 		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", &tmp);
+		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", (&tmp));
 		bu_vls_free(&tmp);
 
 		if (count)
@@ -403,28 +399,20 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    snprintf(line1, rem, "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    rem -= strlen(line1) - 1;
+    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[0]);
+    bu_vls_strcat(&line1, " ");
 
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
+	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
 	    ++i;
-	else {
+	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
-	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
-	    if (rem - strlen(name) < 1) {
-		bu_log("Ran out of buffer space!");
-		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-		gedp->ged_gdp->gd_rt_cmd = NULL;
-		return TCL_ERROR;
-	    }
-	    bu_strlcat(line1, name, sizeof(line1));
-	    rem -= strlen(name);
+	    bu_vls_printf(&line1, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
 	}
     }
 
-    CreateProcess(NULL, line1, NULL, NULL, TRUE,
+    CreateProcess(NULL, bu_vls_addr(&line1), NULL, NULL, TRUE,
 		  DETACHED_PROCESS, NULL, NULL,
 		  &si, &pi);
 
@@ -469,7 +457,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GET(ndlp, struct qray_dataList);
+	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
@@ -499,7 +487,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GET(ndlp, struct qray_dataList);
+	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
@@ -553,10 +541,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     /* Wait for program to finish */
     WaitForSingleObject(pi.hProcess, INFINITE);
 
+    bu_vls_free(&line1);
 #endif
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -648,7 +637,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "ged_vnirt: av");
+    bu_free((void *)av, "ged_vnirt: av");
     av = NULL;
 
     return status;

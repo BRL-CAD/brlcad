@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,12 +36,13 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -58,8 +59,6 @@
 
 
 /**
- * D B _ C O M B _ M A T _ C A T E G O R I Z E
- *
  * Describe with a bit vector the effects this matrix will have.
  */
 static int
@@ -209,9 +208,9 @@ rt_comb_import4(
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (j=0; j<node_count; j++) {
+    for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
-	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
+	    bu_free((void *)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
 	    return -1;
 	}
@@ -296,14 +295,14 @@ rt_comb_import4(
     RT_DB_INTERNAL_INIT(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
-    ip->idb_meth = &rt_functab[ID_COMBINATION];
+    ip->idb_meth = &OBJ[ID_COMBINATION];
 
-    BU_GET(comb, struct rt_comb_internal);
+    BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     comb->tree = tree;
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
@@ -388,9 +387,9 @@ rt_comb_import4(
     comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
     /* Automatic material table lookup here? */
     if (comb->region_flag)
-	bu_vls_printf(&comb->material, "gift%d", comb->GIFTmater);
+	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
     return 0;
 }
@@ -449,7 +448,7 @@ rt_comb_export4(
     /* Reformat the data into the necessary V4 granules */
     BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = sizeof(union record) * (1 + node_count);
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "v4 comb external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "v4 comb external");
     rp = (union record *)ep->ext_buf;
 
     /* Convert the member records */
@@ -672,7 +671,7 @@ db_tree_flatten_describe(
 	bu_vls_printf(vls, "\n");
     }
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, resp);
 }
 
@@ -793,7 +792,7 @@ db_comb_describe(
 
     if (comb->region_flag) {
 	bu_vls_printf(str,
-		      "REGION id=%d (air=%d, los=%d, GIFTmater=%d) ",
+		      "REGION id=%ld (air=%ld, los=%ld, GIFTmater=%ld) ",
 		      comb->region_id,
 		      comb->aircode,
 		      comb->los,
@@ -840,8 +839,6 @@ db_comb_describe(
 
 
 /**
- * R T _ C O M B _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this combination.
  */
 void
@@ -856,9 +853,9 @@ rt_comb_ifree(struct rt_db_internal *ip)
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
 	RT_FREE_COMB_INTERNAL(comb);
-	bu_free((genptr_t)comb, "comb ifree");
+	bu_free((void *)comb, "comb ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -973,7 +970,7 @@ db_mkbool_tree(
 	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
-    for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
+    for (i = howfar, inuse = 0, tlp = rt_tree_array; i > 0; i--, tlp++) {
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 	if (inuse++ == 0)
@@ -1107,6 +1104,62 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
     return 0;
 }
 
+int
+db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, const char *new_name, struct bu_ptbl *stack)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *comb_leaf;
+    int done=0;
+    int changed=0;
+
+    /* Make sure the stack bu_ptbl is ready */
+    bu_ptbl_reset(stack);
+
+    if (!(dp->d_flags & RT_DIR_COMB)) return 0;
+
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    comb_leaf = comb->tree;
+
+    if (comb_leaf) {
+	while (!done) {
+	    while (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_ins(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_left;
+	    }
+
+	    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old_name)) {
+		bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+		comb_leaf->tr_l.tl_name = bu_strdup(new_name);
+		changed = 1;
+	    }
+
+	    if (BU_PTBL_END(stack) < 1) {
+		done = 1;
+		break;
+	    }
+	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_END(stack)-1);
+	    if (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_rm(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_right;
+	    }
+	}
+    }
+
+    if (changed) {
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource)) {
+	    rt_db_free_internal(&intern);
+	    return 2;
+	}
+    }
+
+    rt_db_free_internal(&intern);
+
+    /* success */
+    return 1;
+}
 
 /** @} */
 /*

@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="handle1">
 
 <refmeta>
@@ -32,7 +30,7 @@
     <command>handle</command> uses libwdb to create a BRL-CAD database file.
     The handles are composed of three cylinders, two tori, and two arb8s.  This
     program may be run interactively or the user may specify options on a command
-    line.  If the user chooses to run the program interactively he answers the
+    line.  If the user chooses to run the program interactively, he answers the
     questions as the program prompts him.  Below are the options that can be used
     on the command line.
  </para>
@@ -67,7 +65,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-h#</option></term>
+      <term><option>-H#</option></term>
       <listitem>
 	<para>
 	 Height of handle in millimeters.
@@ -128,14 +126,14 @@ number of handles:  3
   <example><title>Single-Line <command>handle</command> Command</title>
 
     <para>
-      <userinput>handle -fhandle.g -n3 -l200 -h100 -r120 -r210</userinput>
+      <userinput>handle -fhandle.g -n3 -l200 -H100 -r120 -r210</userinput>
     </para>
   </example>
 
   <para>
    Both of these examples produce the same result - a database called
    handle.g containing three handles of length 200mm, height 100mm, radius
-   20mm fo rthe rounding, and radius 10mm for the cylinders.
+   20mm for the rounding, and radius 10mm for the cylinders.
   </para>
 
 </refsection>
@@ -147,8 +145,8 @@ number of handles:  3
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2005-2012 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2005-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

@@ -1,7 +1,7 @@
 /*                      I F _ D E B U G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 
 HIDDEN int
@@ -92,24 +94,24 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(%p, %4d, %4d, %p, %ld)\n",
+    fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
 	   (void *)ifp, x, y,
-	   (void *)pixelp, (long)count);
+	   (void *)pixelp, count);
     return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
 
     FB_CK_FBIO(ifp);
-    fb_log("fb_write(%p, %4d, %4d, 0x%lx, %ld)\n",
+    fb_log("fb_write(%p, %4d, %4d, %p, %ld)\n",
 	   (void *)ifp, x, y,
 	   (void *)pixelp, (long)count);
 
@@ -127,7 +129,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	    fb_log("\n");
     }
 
-    return (int)count;
+    return count;
 }
 
 
@@ -183,8 +185,8 @@ HIDDEN int
 deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_getview(%p, 0x%x, 0x%x, 0x%x, 0x%x)\n",
-	   (void *)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
+	   (void *)ifp, (void *)xcenter, (void *)ycenter, (void *)xzoom, (void *)yzoom);
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
     fb_log(" <= %d %d %d %d\n",
 	   *xcenter, *ycenter, *xzoom, *yzoom);
@@ -196,8 +198,8 @@ HIDDEN int
 deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_setcursor(%p, 0x%lx, %d, %d, %d, %d)\n",
-	   (void *)ifp, bits, xbits, ybits, xorig, yorig);
+    fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
+	   (void *)ifp, (void *)bits, xbits, ybits, xorig, yorig);
     return 0;
 }
 
@@ -216,8 +218,8 @@ HIDDEN int
 deb_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_getcursor(%p, 0x%x, 0x%x, 0x%x)\n",
-	   (void *)ifp, mode, x, y);
+    fb_log("fb_getcursor(%p, %p, %p, %p)\n",
+	   (void *)ifp, (void *)mode, (void *)x, (void *)y);
     fb_sim_getcursor(ifp, mode, x, y);
     fb_log(" <= %d %d %d\n", *mode, *x, *y);
     return 0;

@@ -1,6 +1,5 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/boost
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -17,7 +16,7 @@ set(OBJ_G_SRCS
 	tri_face.c
 )
 
-BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb" NOSTRICTCXX)
+BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb" NO_STRICT_CXX)
 
 set(wfobj_ignore_files
 	obj_grammar_decls.h

@@ -1,7 +1,7 @@
 #                T G C E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,7 +37,10 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -76,6 +79,28 @@
 	variable mDx ""
 	variable mDy ""
 	variable mDz ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmBx ""
+	variable cmBy ""
+	variable cmBz ""
+	variable cmCx ""
+	variable cmCy ""
+	variable cmCz ""
+	variable cmDx ""
+	variable cmDy ""
+	variable cmDz ""
+
 
 	# Methods used by the constructor.
 	# Override methods in GeometryEditFrame.
@@ -139,6 +164,8 @@
     set mDz [lindex $_D 2]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body TgcEditFrame::updateGeometry {} {
@@ -158,6 +185,51 @@
     GeometryEditFrame::updateGeometry
 }
 
+::itcl::body TgcEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmHx $mHx
+    set cmHy $mHy
+    set cmHz $mHz
+    set cmAx $mAx
+    set cmAy $mAy
+    set cmAz $mAz
+    set cmBx $mBx
+    set cmBy $mBy
+    set cmBz $mBz
+    set cmCx $mCx
+    set cmCy $mCy
+    set cmCz $mCz
+    set cmDx $mDx
+    set cmDy $mDy
+    set cmDz $mDz
+}
+
+::itcl::body TgcEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mHx $cmHx
+    set mHy $cmHy
+    set mHz $cmHz
+    set mAx $cmAx
+    set mAy $cmAy
+    set mAz $cmAz
+    set mBx $cmBx
+    set mBy $cmBy
+    set mBz $cmBz
+    set mCx $cmCx
+    set mCy $cmCy
+    set mCz $cmCz
+    set mDx $cmDx
+    set mDy $cmDy
+    set mDz $cmDz
+
+    updateGeometry
+}
+
 ::itcl::body TgcEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {
 	return
@@ -168,9 +240,31 @@
 	H [list 0 0 [expr {$mDelta * 3.0}]] \
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
-	C {0.0 0.0 0.0} \
-	D {0.0 0.0 0.0}
+	C [list $mDelta 0 0] \
+	D [list 0 $mDelta 0]
 }
+
+
+::itcl::body TgcEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    set param1 [string tolower $GeometryEditFrame::mEditParam1]
+    switch -- $param1 {
+	h -
+	hr {
+	    set h [$itk_option(-mged) get $itk_option(-geometryObject) H]
+	    set v [$itk_option(-mged) get $itk_option(-geometryObject) V]
+	    set model_h [::vadd2 $h $v]
+	    set view_h [$itk_option(-mged) pane_m2v_point $_dm $model_h]
+	    set vz [lindex $view_h 2]
+	    set new_view_h [list $_vx $_vy $vz]
+	    set new_model_h [$itk_option(-mged) pane_v2m_point $_dm $new_view_h]
+	    $itk_option(-mged) ptranslate $_obj $mEditParam1 $new_model_h
+	}
+	default {
+	    $::ArcherCore::application putString "TgcEditFrame:moveTgcElement: bad parameter - $mEditParam1"
+	}
+    }
+}
+
 
 ::itcl::body TgcEditFrame::p {obj args} {
     switch -- $GeometryEditFrame::mEditClass \
@@ -459,6 +553,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(tgcType) \
 	-row $row \
@@ -521,6 +627,22 @@
 	$itk_component(tgcDUnitsL) \
 	-row $row \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -673,97 +795,88 @@
 
 ::itcl::body TgcEditFrame::initEditState {} {
     set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setA {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 a
-	    configure -valueUnits "mm"
 	} \
 	$setB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 b
-	    configure -valueUnits "mm"
 	} \
 	$setC {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 c
-	    configure -valueUnits "mm"
 	} \
 	$setD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 d
-	    configure -valueUnits "mm"
 	} \
 	$setAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 ab
-	    configure -valueUnits "mm"
 	} \
 	$setCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 cd
-	    configure -valueUnits "mm"
 	} \
 	$setABCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 abcd
-	    configure -valueUnits "mm"
 	} \
 	$setH {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
 	$setHCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hcd
-	    configure -valueUnits "mm"
 	} \
 	$setHV {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hv
-	    configure -valueUnits "mm"
 	} \
 	$setHVAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hvab
-	    configure -valueUnits "mm"
 	} \
 	$rotH {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
 	$rotAB {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 hab
-	    configure -valueUnits "mm"
 	} \
 	$moveHR {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 hr
-	    configure -valueUnits "mm"
 	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

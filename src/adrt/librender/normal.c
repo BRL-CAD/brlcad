@@ -1,7 +1,7 @@
 /*                        N O R M A L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,35 +21,44 @@
  *
  */
 
+#include "common.h"
 #include <stdio.h>
 #include "adrt_struct.h"
 
 void
-render_normal_free(render_t *UNUSED(render)) {
+render_normal_free(render_t *UNUSED(render))
+{
     return;
 }
 
+
 static void *
-normal_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr)) {
+normal_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
+{
     return (adrt_mesh_t *)(tri->ptr);
 }
 
+
 void
-render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel) {
-    struct tie_id_s	id;
-    float	one[3] = { 1, 1, 1 };
+render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
+{
+    struct tie_id_s id;
+    float one[3] = { 1, 1, 1 };
 
     if (tie_work(tie, ray, &id, normal_hit, NULL))
 	VADD2SCALE(*pixel, id.norm, one, 0.5);
     return;
 }
 
+
 int
-render_normal_init(render_t *render, const char *UNUSED(usr)) {
+render_normal_init(render_t *render, const char *UNUSED(usr))
+{
     render->work = render_normal_work;
     render->free = render_normal_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

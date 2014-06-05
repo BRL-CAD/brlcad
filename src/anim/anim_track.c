@@ -1,7 +1,7 @@
 /*                    A N I M _ T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "./cattrack.h"
 
 
-#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
+#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:ah?"
 
 #define GIVEN 0
 #define CALCULATED 1
@@ -122,12 +122,37 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 /* intentionally double for scan */
 double first_tracklen;
 
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", argv0);
+    bu_log("\n\tOptions:\n");
+    bu_log("\t  [-w parent/basename] to specify wheels to animate\n");
+    bu_log("\t  [-a] to add random jitter\n");
+    bu_log("\t  [-p num_pads parent/basename] to animate track pads\n");
+    bu_log("\t  [-b # # #] to specify yaw, pitch, and roll\n");
+    bu_log("\t  [-d # # #] to specify centroid (default is origin)\n");
+    bu_log("\t  [{-u|-y|-s}] to specify track distance manually, via orientation, or via steering\n");
+    bu_log("\t  [-a] to enable anti-strobing (track appears to go backwards\n");
+    bu_log("\t  [-v] to specify new wheel positions every frame\n");
+    bu_log("\t  [-c] to calculate track circumference\n");
+    bu_log("\t  [-lm] to minimize track length\n");
+    bu_log("\t  [{-lf|-ls|-le} #] to specify fixed track, stretchable, or elastic track length\n");
+    bu_log("\t  [-i #] to specify initial track offset\n");
+    bu_log("\t  [-f #] to specify initial script frame number\n");
+    bu_log("\t  [-r #] to specify common radius for all wheels\n");
+    bu_log("\t  [-g #] to output an mged script instead of an animation script\n");
+    bu_log("\t  [-mp command] to specify a pad animation matrix\n");
+    bu_log("\t  [-mw command] to specify a wheel animation matrix\n");
+}
+
 
 int
 get_args(int argc, char **argv)
 {
     int c, i;
     fastf_t yaw, pch, rll;
+    const char *argv0 = argv[0];
 
     /* defaults*/
     wheel_nindex = link_nindex = 0;
@@ -225,7 +250,7 @@ get_args(int argc, char **argv)
 			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 			break;
 		    default:
-			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+			bu_log("%s: Unknown option: -m%c\n", argv0, *bu_optarg);
 			return 0;
 		}
 		bu_optind += 1;
@@ -254,7 +279,7 @@ get_args(int argc, char **argv)
 			bu_optind++;
 			break;
 		    default:
-			fprintf(stderr, "Unknown option: -l%c\n", *bu_optarg);
+			bu_log("%s: Unknown option: -l%c\n", argv0, *bu_optarg);
 			return 0;
 		}
 		break;
@@ -262,7 +287,6 @@ get_args(int argc, char **argv)
 		anti_strobe = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -295,14 +319,14 @@ track_prep(void)
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
 	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
-	    x[PREV(i)].w.ang1 += 2.0*M_PI;
+	    x[PREV(i)].w.ang1 += M_2PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
     }
     /* second loop - handle concavities */
     for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
-	    arc_angle += 2.0*M_PI;
+	    arc_angle += M_2PI;
 	if (arc_angle > M_PI) {
 	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
@@ -374,10 +398,10 @@ track_prep(void)
 
     x[0].w.arc = x[0].w.ang0 - x[0].w.ang1;
     if (x[0].w.arc<0.0)
-	x[0].w.arc += 2.0*M_PI;
+	x[0].w.arc += M_2PI;
     x[NW-1].w.arc = x[NW-1].w.ang0 - x[NW-1].w.ang1;
     if (x[NW-1].w.arc<0.0)
-	x[NW-1].w.arc += 2.0*M_PI;
+	x[NW-1].w.arc += M_2PI;
 
     return 0; /*good*/
 }
@@ -451,6 +475,7 @@ main(int argc, char *argv[])
     int last_steer, last_frame;
     int rndtabi=0;
     fastf_t halfpadlen, delta, prev_dist;
+    const char *argv0 = argv[0];
 
     /* intentionally double for scan */
     double temp[3];
@@ -469,8 +494,15 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_track: Argument error.\n");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage(argv0);
+	return 0;
+    }
+
+    if (!get_args(argc, argv)) {
+	usage(argv0);
+	return 0;
+    }
 
     if (axes || cent) {
 	/* vehicle has own reference frame */
@@ -481,7 +513,7 @@ main(int argc, char *argv[])
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
-	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
+	bu_log("Track: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
 
@@ -624,7 +656,7 @@ main(int argc, char *argv[])
 	/* call track_prep to calculate geometry of track */
 	if ((frame==first_frame)||read_wheels) {
 	    if ((track_prep())==-1) {
-		fprintf(stderr, "Track: error in frame %d: track too short.\n", frame);
+		bu_log("Track: error in frame %d: track too short.\n", frame);
 		break;
 	    }
 	    if (get_circumf) {

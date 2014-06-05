@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,27 +59,24 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "./patch-g.h"
+
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
-
-static struct bn_tol TOL;
-static int scratch_num;
-
-struct rt_wdb *outfp;
 
 static void
 usage(int status, const char *argv0)
 {
     bu_log("Usage: %s [options] model.g\n", argv0);
-    bu_log("	-f fastgen.rp	specify pre-processed fastgen file (default stdin)\n");
+    bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
     bu_log("	-a		process phantom armor?\n");
     bu_log("	-n		process volume mode as plate mode?\n");
-    bu_log("	-u #		number of union operations per region (default 5)\n");
+    bu_log("	-u #		number of union operations per region (default %d)\n", num_unions);
     bu_log("	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n");
-    bu_log("	-t title	optional title (default \"Untitled MGED database\")\n");
-    bu_log("	-o object_name	optional top-level name (no spaces)(default \"all\")\n");
+    bu_log("	-t title	optional title (default \"%s\")\n", title);
+    bu_log("	-o object_name	optional top-level name (no spaces)(default \"%s\")\n", top_level);
     bu_log("	-p		write volume and plate mode components as polysolids\n");
     bu_log("	-6		process plate mode triangles as ARB6 solids (overrides '-p' for triangles)\n");
     bu_log("	-i group.file	specify group labels source file\n");
@@ -90,7 +87,7 @@ usage(int status, const char *argv0)
     bu_log("	-X #		librt NMG debug flags\n");
     bu_log("	-T #		distance tolerance (inches) (two points within this distance are the same point)\n");
     bu_log("	-A #		parallel tolerance (if A dot B (unit vectors) is less than this value, they are perpendicular)\n");
-    bu_log("Note: fastgen.rp is the pre-processed (through rpatch) fastgen file\n\n");
+    bu_log("Note: fastgen.rp is the pre-processed (through rpatch) FASTGEN file\n\n");
     if (status == 0)
 	exit(0);
     bu_exit(status, "Exit status %d\n", status);
@@ -242,8 +239,6 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
 
 /*
- * N M G _ P A T C H _ C O P L A N A R _ F A C E _ M E R G E
- *
  * A geometric routine to find all pairs of faces in a shell that have
  * the same plane equation (to within the given tolerance), and
  * combine them into a single face.
@@ -288,10 +283,10 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
     for (BU_LIST_FOR (fu1, faceuse, &s->fu_hd)) {
 	plane_t n1;
 
-	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd))  break;
+	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd)) break;
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
-	if (NMG_INDEX_TEST(flags1, f1))  continue;
+	if (NMG_INDEX_TEST(flags1, f1)) continue;
 	NMG_INDEX_SET(flags1, f1);
 
 	fg1 = f1->g.plane_p;
@@ -321,7 +316,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
 	    f2 = fu2->f_p;
 	    NMG_CK_FACE(f2);
-	    if (NMG_INDEX_TEST(flags2, f2))  continue;
+	    if (NMG_INDEX_TEST(flags2, f2)) continue;
 	    NMG_INDEX_SET(flags2, f2);
 
 	    fg2 = f2->g.plane_p;
@@ -334,7 +329,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
 		/* Compare distances from origin */
 		dist = n1[W] - n2[W];
-		if (!NEAR_ZERO(dist, tol->dist))  continue;
+		if (!NEAR_ZERO(dist, tol->dist)) continue;
 
 		/*
 		 * Compare angle between normals.  Can't just use
@@ -342,7 +337,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		 * in the same direction.
 		 */
 		dist = VDOT(n1, n2);
-		if (!(dist >= tol->para))  continue;
+		if (!(dist >= tol->para)) continue;
 	    }
 
 	    /* Find the entry for fu2 in p_faces */
@@ -399,11 +394,12 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
     bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
 	       (void *)s, (void *)tol, simplify);
     }
 }
+
 
 int
 Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
@@ -470,10 +466,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		VMOVE(&pts[1*3], verts[k+1].coord);
 		VMOVE(&pts[4*3], verts[k+2].coord);
 		VMOVE(&pts[5*3], &pts[4*3]);
-		VJOIN1(&pts[3*3], &pts[0*3], thickness, norm)
-		    VJOIN1(&pts[2*3], &pts[1*3], thickness, norm)
-		    VJOIN1(&pts[6*3], &pts[4*3], thickness, norm)
-		    VMOVE(&pts[7*3], &pts[6*3]);
+		VJOIN1(&pts[3*3], &pts[0*3], thickness, norm);
+		VJOIN1(&pts[2*3], &pts[1*3], thickness, norm);
+		VJOIN1(&pts[6*3], &pts[4*3], thickness, norm);
+		VMOVE(&pts[7*3], &pts[6*3]);
 		snprintf(tmp_name, NAMESIZE+1, "%s_%d", name, k);
 		mk_arb8(outfp, tmp_name, pts);
 		mk_addmember(tmp_name, &tmp_head.l, NULL, WMOP_UNION);
@@ -1089,6 +1085,7 @@ proc_region(char *name1)
     last_cc = in[0].cc;
 }
 
+
 /*
  * Process Volume Mode triangular facetted solids
  */
@@ -1139,7 +1136,7 @@ proc_triangle(int cnt)
      */
     l = 1;
 
-    for (k=1; k<10000; k++) {
+    for (k=1; k<MAX_INPUTS; k++) {
 	if (list[k].flag == 1) {
 	    list[k].flag = 0;
 	    XVAL[l] = list[k].x;
@@ -1219,6 +1216,7 @@ proc_triangle(int cnt)
 
     last_cc = in[cnt-1].cc;
 }
+
 
 void
 Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
@@ -1339,6 +1337,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
     }
 }
 
+
 /*
  * Process Plate Mode triangular surfaces
  */
@@ -1392,7 +1391,7 @@ proc_plate(int cnt)
 
 	/* make list of thicknesses */
 	nthicks = 0;
-	for (k=1; k<10000; k++) {
+	for (k=1; k<MAX_INPUTS; k++) {
 	    int found_thick;
 
 	    if (list[k].flag == 1) {
@@ -1411,7 +1410,7 @@ proc_plate(int cnt)
 		    }
 		}
 		if (!found_thick) {
-		    if (nthicks >= MAX_THICKNESSES) {
+		    if (nthicks > MAX_INPUTS) {
 			bu_log("Component #%d has too many different thicknesses\n", in[0].cc);
 			bu_log("\t skipping component\n");
 			return;
@@ -1428,7 +1427,7 @@ proc_plate(int cnt)
 	 */
 	l = 1;
 
-	for (k=1; k<10000; k++) {
+	for (k=1; k<MAX_INPUTS; k++) {
 	    if (list[k].flag == 1) {
 		list[k].flag = 0;
 		XVAL[l] = list[k].x;
@@ -1519,8 +1518,9 @@ proc_plate(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen wedge shape - also process hollow wedges.
+ * Process FASTGEN wedge shape - also process hollow wedges.
  */
 void
 proc_wedge(int cnt)
@@ -1660,7 +1660,7 @@ proc_wedge(int cnt)
     if ((count % num_unions) != 0)
 	proc_region(name);
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
     ret = 0;
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
@@ -1771,8 +1771,9 @@ proc_wedge(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen spheres - can handle hollowness
+ * Process FASTGEN spheres - can handle hollowness
  */
 void
 proc_sphere(int cnt)
@@ -1894,8 +1895,9 @@ proc_sphere(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen box code
+ * Process FASTGEN box code
  */
 void
 proc_box(int cnt)
@@ -2015,7 +2017,7 @@ proc_box(int cnt)
 	proc_region(name);
 
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 	VSET(pt8[0], in[k].x, -in[k].y, in[k].z);
@@ -2098,6 +2100,7 @@ proc_box(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
  * Donuts
  *
@@ -2127,8 +2130,8 @@ proc_donut(int cnt)
     char scratch_name3[NAMESIZE+1];
     char scratch_name4[NAMESIZE+1];
 
-    for (k=0; k<cnt-1; k += 6)	/* for each donut */
-    {
+    for (k=0; k<cnt-1; k += 6) {
+	/* for each donut */
 	if (EQUAL(in[k].x, in[k+1].x)
 	    && EQUAL(in[k].y, in[k+1].y)
 	    && EQUAL(in[k].z, in[k+1].z))
@@ -2215,8 +2218,8 @@ proc_donut(int cnt)
 
 	/* in some cases we won't even need the two basic TRC's */
 	make_basic_solids = 1;
-	if (in[k].surf_mode == '-') /* plate mode */
-	{
+	if (in[k].surf_mode == '-') {
+	    /* plate mode */
 	    if (magh3 > 0.0 && end_code == 4)
 		make_basic_solids = 0;
 	    else if (magh4 > 0.0 && end_code == 5)
@@ -2255,8 +2258,8 @@ proc_donut(int cnt)
 	    }
 	}
 
-	if (in[k].surf_mode != '-')	/* volume mode */
-	{
+	if (in[k].surf_mode != '-') {
+	    /* volume mode */
 	    fastf_t dot3, dot4;
 
 	    dot3 = VDOT(h3, h1);
@@ -2675,8 +2678,6 @@ process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count,
 
 
 /**
- * M K _ C Y L A D D M E M B E R
- *
  * For the cylinder given by 'name1', determine whether it has any
  * volume mode subtractions from it by looking at the subtraction list
  * for this component number. If we find that this cylinder is one of
@@ -2825,7 +2826,7 @@ proc_cylin(int cnt)
     if ((count % num_unions) != 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	proc_region(name);
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=0; k < (cnt-1); k+=3) {
 
@@ -2894,8 +2895,9 @@ proc_cylin(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen rod mode
+ * Process FASTGEN rod mode
  */
 void
 proc_rod(int cnt)
@@ -2943,7 +2945,7 @@ proc_rod(int cnt)
      * array here. list[0] will not hold anything, so don't look */
 
     l = 0;
-    for (k=1; k<10000; k++) {
+    for (k=1; k<MAX_INPUTS; k++) {
 	if (list[k].flag == 1) {
 	    list[k].flag = 0;
 	    XVAL[l] = list[k].x;
@@ -3010,7 +3012,7 @@ proc_rod(int cnt)
 	proc_region(name);
     }
 
-    /* Mirror Processing - duplicates above code!    */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=1; k < (l-1); k++) {
 
@@ -3063,8 +3065,6 @@ proc_rod(int cnt)
 
 
 /**
- * S E T _ C O L O R
- *
  * Given a color_map entry (for the thousand series) for the
  * combination being made, set the rgb color array for the upcoming
  * call to make combinations.
@@ -3213,8 +3213,7 @@ proc_label(char *label_file)
 }
 
 
-/* P T _ I N S I D E
- *
+/*
  * Returns 1 if point a is inside the cylinder defined by base, top,
  * rad1, rad2.  Returns 0 if not.
  */
@@ -3261,8 +3260,7 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 }
 
 
-/* I N S I D E _ C Y L
- *
+/*
  * Returns 1 if the cylinder starting at in[j] is inside (for solid
  * subtraction) the cylinder described at in[i], 0 otherwise.
  *
@@ -3300,8 +3298,6 @@ inside_cyl(int i, int j)
 
 
 /**
- * G E T _ S U B T R A C T
- *
  * Make up the list of subtracted volume mode solids for this group of
  * cylinders. Go through the cylinder list and, for each solid, see
  * whether any of the other solid records following qualify as volume
@@ -3341,8 +3337,6 @@ get_subtract(int cnt)
 
 
 /**
- * A D D _ T O _ L I S T
- *
  * Add the inside, outside cylinder numbers to the subtraction list
  * slist.
  */
@@ -3351,7 +3345,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 {
 
     if (slist == NULL) {
-	slist = (struct subtract_list *)bu_malloc(sizeof(struct subtract_list), "add_to_list: slist");
+	BU_ALLOC(slist, struct subtract_list);
 	slist->outsolid = outsolid;
 	slist->insolid = insolid;
 	slist->inmirror = inmirror;
@@ -3363,9 +3357,6 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 }
 
 
-/**
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -3373,13 +3364,19 @@ main(int argc, char **argv)
     int fd, nread;
     FILE *gfp=NULL;
     FILE *mfp=NULL;
-    char buf[99], s[132+2];
+
     int c;
     int j = 1;
     int i;
     int done;
     int stop, num;
     char name[NAMESIZE+1];
+
+    /* These sizes are dictated by the specific format output by the
+     * 'rpatch' tool.  They are fixed-column files, so we read into
+     * fixed-size buffers.
+     */
+    char buf[99], s[132+2];
 
     /* intentionally double for scan */
     double scan[3];
@@ -3392,7 +3389,22 @@ main(int argc, char **argv)
     BU_LIST_INIT(&heade.l);
     BU_LIST_INIT(&headf.l);
 
-    memset((char *)list, 0, sizeof(list));
+    /* NOTE: there's definitely a better smarter way to create
+     * appropriately sized containers for processing, but this at
+     * least pulls memory from the heap instead of corruption-prone
+     * static globals or stack frame data.
+     */
+
+    in = (struct input *)bu_calloc(MAX_INPUTS, sizeof(struct input), "inputs");
+    nm = (struct names *)bu_calloc(MAX_INPUTS, sizeof(struct names), "names");
+    list = (struct patches *)bu_calloc(MAX_INPUTS, sizeof(struct patches), "patches");
+    XVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "XVAL");
+    YVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "YVAL");
+    ZVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "ZVAL");
+    thicks = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thicks");
+    RADIUS = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "RADIUS");
+    thk = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thk");
+    mirror = (int *)bu_calloc(MAX_INPUTS, sizeof(int), "mirror");
 
     /* initialize tolerance structure */
     TOL.magic = BN_TOL_MAGIC;
@@ -3438,12 +3450,12 @@ main(int argc, char **argv)
 
 	    case 'x':  /* librt debug flags */
 
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 
 	    case 'X':  /* librt NMG debug flags */
 
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
 		break;
 
 	    case 'p':  /* polysolid output */
@@ -3451,7 +3463,7 @@ main(int argc, char **argv)
 		polysolid = 1;
 		break;
 
-	    case 'f':  /* fastgen source file data */
+	    case 'f':  /* FASTGEN source file data */
 
 		patchfile = bu_optarg;
 		break;
@@ -3537,8 +3549,8 @@ main(int argc, char **argv)
 	bu_log("\n");
     }
 
-    if (rt_g.NMG_debug) {
-	bu_log("librt rt_g.NMG_debug = 0x%x\n", rt_g.NMG_debug);
+    if (RTG.NMG_debug) {
+	bu_log("librt RTG.NMG_debug = 0x%x\n", RTG.NMG_debug);
     }
 
     /* This section opens input files - the data file defaults to
@@ -3547,7 +3559,7 @@ main(int argc, char **argv)
      */
 
     if (patchfile != (char *)0) {
-	if ((fd = open(patchfile, 0664)) < 0) {
+	if ((fd = open(patchfile, O_RDONLY)) < 0) {
 	    perror(patchfile);
 	    bu_exit(1, "ERROR: unable to open patchfile (%s)\n", patchfile);
 	}
@@ -3570,12 +3582,12 @@ main(int argc, char **argv)
 	}
     }
 
-    /* This is the primary processing section to input fastgen data
+    /* This is the primary processing section to input FASTGEN data
      * and manufacture related mged elements.  Previous editions of
-     * PATCH failed to process the final element after hitting EOF so
-     * I moved the read statement into the for loop and made a check
-     * flag "done" to verify that all elements are processed prior to
-     * falling out of the "for".
+     * patch-g failed to process the final element after hitting EOF
+     * so the read statement was moved into the for loop and made a
+     * check flag "done" to verify that all elements are processed
+     * prior to falling out of the "for".
      */
 
     /* FASTGEN targets are always in inches */
@@ -3590,17 +3602,19 @@ main(int argc, char **argv)
     if (labelfile != NULL) {
 	while (done != 0) {
 
+	    /* FIXME: this assumes unix-style label files */
+
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
 		size_t ret;
-		if (num < 0 || num > 9999) {
-		   bu_log("num value out of range!\n");
+		if (num < 0 || num >= MAX_INPUTS) {
+		    bu_log("num value out of range!\n");
 		} else {
-		  ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
-		  if (ret < 2)
-		    bu_log("Unexpected error reading label file\n");
+		    ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		    if (ret < 2)
+			bu_log("Unexpected error reading label file\n");
 
-		  while ((fgetc(gfp)) != '\n')
-		    ;
+		    while ((fgetc(gfp)) != '\n')
+			;
 		}
 	    } else {
 		if (stop == EOF) {
@@ -3639,6 +3653,12 @@ main(int argc, char **argv)
     }
 
     for (i = done = 0; !done; i++) {
+
+	/* FIXME: this assumes unix-style input files but a carriage
+	 * return would represent one more byte.  should be using
+	 * bu_fgets() even if the lines are fixed length.
+	 */
+
 	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
 
 	if (nread > 0) {
@@ -3802,6 +3822,10 @@ main(int argc, char **argv)
 	mk_lcomb(outfp, name, &headf, 0, "", "", 0, 0);
     }
 
+    /* if we get this far, we're done processing.  anything else is
+     * just diagnostic. */
+    bu_log("Done.\n");
+
     /* check for non-empty lists */
     if (BU_LIST_NON_EMPTY(&head.l)) {
 	struct wmember *wp;
@@ -3872,8 +3896,20 @@ main(int argc, char **argv)
 	}
     }
 
+    /* release our memory buffers */
+    bu_free(in, "inputs");
+    bu_free(nm, "names");
+    bu_free(list, "patches");
+    bu_free(XVAL, "XVAL");
+    bu_free(YVAL, "YVAL");
+    bu_free(ZVAL, "ZVAL");
+    bu_free(thicks, "thicks");
+    bu_free(RADIUS, "RADIUS");
+    bu_free(thk, "thk");
+    bu_free(mirror, "mirror");
+
     return 0;
-}	/* END MAIN PROGRAM */
+}
 
 
 /*

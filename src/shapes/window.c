@@ -1,7 +1,7 @@
 /*                        W I N D O W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a window with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
@@ -95,7 +97,8 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
+	printf("\n%s\n",explain);
+	printf("The windows are composed of 2 arb8s and 4 cylinders.\n");
 	printf("The front of the window is centered at (0, 0, 0) and\n");
 	printf("extends in the negative x-direction the depth of the\n");
 	printf("window.\n\n");
@@ -104,9 +107,8 @@ main(int argc, char **argv)
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "window.g", sizeof(filemged));
 
@@ -118,9 +120,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numwin = 1;
 	}
-	if (numwin < 1)
+	else if (numwin < 1)
 	    numwin = 1;
-	if (numwin > 26)
+	else if (numwin > 26)
 	    numwin = 26;
 
 	/* Find the dimensions of the windows. */
@@ -156,9 +158,10 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of windows. */
-	/* -h# - # = height of window in mm. */
+	/* -H# - # = height of window in mm. */
 	/* -w# - # = width of window in mm. */
 	/* -d# - # = depth of window in mm. */
 	/* -r# - # = radius of window corner in mm. */
@@ -167,6 +170,13 @@ main(int argc, char **argv)
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: window -fname [-f mged_file_name] [-n #_of_windows] [-H window_height]\n");
+		fprintf(stderr,"       [-w window_width] [-d window_depth] [-r radius_of_corners]");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -198,7 +208,7 @@ main(int argc, char **argv)
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
+		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
 		    sscanf(temp1, "%lf", &wid);
@@ -229,61 +239,61 @@ main(int argc, char **argv)
     for (i=0; i<numwin; i++) {
 	/* START # 2 */
 	/* Create first arb8. */
-	pts[0][0] = (fastf_t)0.;
-	pts[0][1] = (fastf_t) (wid / 2. - rds);
-	pts[0][2] = (fastf_t) (hgt / 2.);
-	pts[1][0] = (fastf_t)0.;
-	pts[1][1] = (fastf_t) (wid / 2. - rds);
-	pts[1][2] = (fastf_t) ((-hgt) / 2.);
-	pts[2][0] = (fastf_t)0.;
-	pts[2][1] = (fastf_t) (rds - wid / 2.);
-	pts[2][2] = (fastf_t) ((-hgt) / 2.);
-	pts[3][0] = (fastf_t)0.;
-	pts[3][1] = (fastf_t) (rds - wid / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2.);
+	pts[0][0] = (fastf_t)0.0;
+	pts[0][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[0][2] = (fastf_t) (hgt / 2.0);
+	pts[1][0] = (fastf_t)0.0;
+	pts[1][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[1][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[2][0] = (fastf_t)0.0;
+	pts[2][1] = (fastf_t) (rds - wid / 2.0);
+	pts[2][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[3][0] = (fastf_t)0.0;
+	pts[3][1] = (fastf_t) (rds - wid / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0);
 	pts[4][0] = (fastf_t)(-dpt);
-	pts[4][1] = (fastf_t) (wid / 2. - rds);
-	pts[4][2] = (fastf_t) (hgt / 2.);
+	pts[4][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[4][2] = (fastf_t) (hgt / 2.0);
 	pts[5][0] = (fastf_t)(-dpt);
-	pts[5][1] = (fastf_t) (wid / 2. - rds);
-	pts[5][2] = (fastf_t) ((-hgt) / 2.);
+	pts[5][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[5][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[6][0] = (fastf_t)(-dpt);
-	pts[6][1] = (fastf_t) (rds - wid / 2.);
-	pts[6][2] = (fastf_t) ((-hgt) / 2.);
+	pts[6][1] = (fastf_t) (rds - wid / 2.0);
+	pts[6][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[7][0] = (fastf_t)(-dpt);
-	pts[7][1] = (fastf_t) (rds - wid / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2.);
+	pts[7][1] = (fastf_t) (rds - wid / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0);
 	solnam[5] = 97 + i;
 	solnam[6] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create second arb8. */
-	pts[0][1] = (fastf_t) (wid / 2.);
-	pts[0][2] = (fastf_t) (hgt / 2. - rds);
-	pts[1][1] = (fastf_t) (wid / 2.);
-	pts[1][2] = (fastf_t) (rds - hgt / 2.);
-	pts[2][1] = (fastf_t) ((-wid) / 2.);
-	pts[2][2] = (fastf_t) (rds - hgt / 2.);
-	pts[3][1] = (fastf_t) ((-wid) / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2. - rds);
-	pts[4][1] = (fastf_t) (wid / 2.);
-	pts[4][2] = (fastf_t) (hgt / 2. - rds);
-	pts[5][1] = (fastf_t) (wid / 2.);
-	pts[5][2] = (fastf_t) (rds - hgt / 2.);
-	pts[6][1] = (fastf_t) ((-wid) / 2.);
-	pts[6][2] = (fastf_t) (rds - hgt / 2.);
-	pts[7][1] = (fastf_t) ((-wid) / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2. - rds);
+	pts[0][1] = (fastf_t) (wid / 2.0);
+	pts[0][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[1][1] = (fastf_t) (wid / 2.0);
+	pts[1][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[2][1] = (fastf_t) ((-wid) / 2.0);
+	pts[2][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[3][1] = (fastf_t) ((-wid) / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[4][1] = (fastf_t) (wid / 2.0);
+	pts[4][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[5][1] = (fastf_t) (wid / 2.0);
+	pts[5][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[6][1] = (fastf_t) ((-wid) / 2.0);
+	pts[6][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[7][1] = (fastf_t) ((-wid) / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0 - rds);
 	solnam[6] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create cylinder 1. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (wid / 2. - rds);
-	bs[2] = (fastf_t) (hgt / 2. - rds);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (wid / 2.0 - rds);
+	bs[2] = (fastf_t) (hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt);
-	ht[1] = (fastf_t)0.;
-	ht[2] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.0;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t)rds;
 	solnam[6] = '3';
 	mk_rcc(fpw, solnam, bs, ht, rad);

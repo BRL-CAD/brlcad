@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2012 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,40 +66,6 @@
 #include "wdb.h"
 
 
-/**
- * M A K E _ H O L E
- *
- * This routine is intended to be used to make a hole in some
- * geometry.  The hole is described using the same parameters as an
- * RCC, and the hole is represented as an RCC. The objects to be
- * "holed" are passed in as a list of "struct directory" pointers. The
- * objects pointed at by this list must be combinations. The "struct
- * rt_wdb" pointer passed in indicates what model this hole should
- * appear in.
- *
- * The end state after this routine runs is a modified model with a
- * new RCC primitive having a name of the form "make_hole_X" (where X
- * is some integer). The combinations specified in the list will be
- * modified as follows:
- *
- *	      before					      after
- *		|						-
- *		|					       / \
- *		|					      /   \
- *	original combination tree			     /     \
- *				      original combination tree   make_hole_X
- *
- * The modified combination is written to the struct rt_wdb. Note that
- * to do dynamic geometry a "wdb_dbopen" would normally be called on
- * an already existing (and possibly prepped) model.  Using the
- * RT_WDB_TYPE_DB_INMEM parameter in this call will result in geometry
- * changes that only exist in memory and will not be permanently
- * stored in the original database.
- *
- * This routine should be preceded by a call to "rt_unprep" and
- * followed by a call to "rt_reprep".
- */
-
 int
 make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	  point_t hole_start,		/* center of start of hole */
@@ -162,14 +128,14 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Build a new "subtract" node (will be the root of the new tree) */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_b.tb_op = OP_SUBTRACT;
 	tree->tr_b.tb_left = comb->tree;	/* subtract from the original tree */
 	comb->tree = tree;
 
 	/* Build a node for the RCC to be subtracted */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_l.tl_op = OP_DB_LEAF;
 	tree->tr_l.tl_mat = NULL;
@@ -191,28 +157,6 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 }
 
 
-/**
- * M A K E _ H O L E _ I N _ P R E P P E D _ R E G I O N S
- *
- * This routine provides a quick approach to simply adding a hole to
- * existing prepped geometry.  The geometry must already be prepped
- * prior to calling this routine. After calling this routine, the
- * geometry is ready for raytracing (no other routine need to be
- * called).
- *
- * A new RCC primitive is created and written to the database
- * (wdbp). Note that this will be temporary if the wdbp pointer was
- * created by a call to wdb_dbopen with the RT_WDB_TYPE_DB_INMEM flag.
- *
- * The "regions" parameter is a list of "struct region" pointers
- * (prepped regions) to get holed.  The regions structures are
- * modified, but the on disk region records are never modified, so the
- * actual holes will never be permanent regardless of how "wdbp" was
- * opened.
- *
- * There is no need to call "rt_unprep" nor "rt_reprep" with this
- * routine.
- */
 int
 make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 			     struct rt_i *rtip,		/* rt_i pointer for the same database */
@@ -264,7 +208,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* Build a soltab structure for the new RCC */
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;
@@ -298,7 +242,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	RT_CK_REGION(rp);
 
 	/* create a tree node for the subtraction operation, this will be the new tree root */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_b.tb_op = OP_SUBTRACT;
 	treep->tr_b.tb_left = rp->reg_treetop;	/* subtract from the old treetop */
@@ -308,7 +252,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	rp->reg_treetop = treep;
 
 	/* create a tree node for the new RCC */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_a.tu_op = OP_SOLID;
 	treep->tr_a.tu_stp = stp;

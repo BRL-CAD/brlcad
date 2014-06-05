@@ -1,0 +1,14 @@
+SCHEMA test_array_bounds_expr;
+
+ENTITY mesh
+    ABSTRACT SUPERTYPE OF (structured_mesh);
+    description : STRING;
+    index_count : INTEGER;
+END_ENTITY;
+
+ENTITY structured_mesh
+    SUBTYPE OF (mesh);
+    vertex_counts : ARRAY [1:SELF\mesh.index_count] OF INTEGER;
+END_ENTITY;
+
+END_SCHEMA;

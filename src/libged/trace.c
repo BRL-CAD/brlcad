@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@ static void
 trace_do(struct db_i *dbip,
 	     struct rt_comb_internal *UNUSED(comb),
 	     union tree *comb_leaf,
-	     genptr_t user_ptr1,
-	     genptr_t user_ptr2,
-	     genptr_t user_ptr3,
-	     genptr_t user_ptr4)
+	     void *user_ptr1,
+	     void *user_ptr2,
+	     void *user_ptr3,
+	     void *user_ptr4)
 {
     int *verbose;
     int *pathpos;
@@ -78,10 +78,6 @@ trace_do(struct db_i *dbip,
 }
 
 
-/**
- *
- *
- */
 void
 _ged_trace(struct directory *dp,
 	   int pathpos,
@@ -114,7 +110,7 @@ _ged_trace(struct directory *dp,
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
 	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, trace_do,
-			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp, (genptr_t)&verbose);
+			     (void *)&pathpos, (void *)old_xlate, (void *)gtdp, (void *)&verbose);
 
 	rt_db_free_internal(&intern);
 
@@ -172,8 +168,8 @@ _ged_trace(struct directory *dp,
 	return;
     }
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s:\n", dp->d_namep);
-    if (!rt_functab[id].ft_describe ||
-	rt_functab[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
+    if (!OBJ[id].ft_describe ||
+	OBJ[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
 				   &intern,
 				   verbose,
 				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,

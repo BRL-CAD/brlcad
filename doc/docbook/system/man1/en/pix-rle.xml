@@ -17,7 +17,6 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix-rle</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
     <arg choice='opt'>-s <replaceable>square_file_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
@@ -76,7 +75,7 @@ one each for the red, green, and blue channels.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2012 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

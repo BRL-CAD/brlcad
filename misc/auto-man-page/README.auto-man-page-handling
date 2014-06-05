@@ -1,0 +1,202 @@
+Rules:
+=====
+
++ Provide a version-controlled list of all bin programs to be
+  processed for the "auto-man" documentation feature:
+
+    auto-man-progs.txt
+
++ In the auto-man list each bin program name will be listed followed
+  on the same line by the source file which provides it, e.g.,
+
+    burst    ./src/burst/burst.c
+
++ Each bin source file must have one instance each of the following
+  string variables:
+
+  const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS
+                                      section of the man page */
+  const char optstring[] = "";     /* mandatory for use with bu_getopt
+                                      (if it is used) */
+
+  Note the strings must either (1) be fully contained on one line or
+  (2) adhere to the following format:
+
+    const char usage[] =
+       "Usage: %s ... first line...\n"
+       " ... second line...\n"
+       "... more lines if needed\n";
+
+  The ending semicolon may follow on a line by itself.
+
+  There must be no embedded newlines nor may the end-of-line escape be
+  used.  An ending newline is required for each line.
+
+  There must be nothing preceding the variable on its
+  beginning line (except a 'static' qualifier is allowed).
+
+  The program name may be manually entered or one string format
+  specification ('%s') entered for print statement use in the program.
+
+  Valid examples:
+  --------------
+
+    static const char usage[] = "Usage: %s input.g\n";
+
+    const char usage[] =
+      "Usage: fbserv port_num\n"
+      "  (for a stand-alone daemon)\n"
+      ;
+
+  Invalid example:
+  ---------------
+
+    const char usage[] = "\
+Usage: %s port_num\n\
+	  (for a stand-alone daemon)\n\
+";
+
++ Other man page inputs come from one or more specially-formatted
+  ordinary C-style comment blocks (Doxygen-style comments beginning
+  with '/**' or '/*!' are completely ignored).
+
+  Each such block is divided into one or more parts beginning with a
+  unique keyword ending with a colon ('partname:'; but see 'opt:' later)
+  which identifies a section to appear in the man page.
+
+  The block must begin with the following format or it will be ignored:
+
+  - Immediately following the opening '/*' must be one or more white
+    space characters (newlines allowed) followed by one keyword
+    followed by on or more white-space characters followed by its
+    description (its 'value').  Note the description must exist (i.e.,
+    its value must be at least one printable character).
+
+  - A blank line inside a part description results in a new paragraph.
+
+  - The part name must be lower-case alpha characters, and it may have
+    underscores.  The part name will be translated into upper case and
+    underscores into spaces in the man page.
+
+  - Following the mandatory first part may be more unique parts.
+
+  - A description ends when the next part keyword is found or the the
+    comment block ends.
+
+  - Embedded asterisks surrounded by white space are ignored (to allow
+    for the decorated comment style).
+
+  - All the part descriptions may use valid DocBook code.
+
+  Some part names are mandatory and some parts have default values.
+  All part names must be unique except the 'opt:' part which may
+  appear as many times as there are options.  Note option names follow
+  the 'opt:' keyword and they must be unique.  Furthermore, the list
+  of options in the comment blocks must exactly match the option in
+  the optstring if it appears in the file.
+
+  Each option (keyword 'opt:') must be described in one of three
+  possible formats:
+
+     opt: -c [N] description of this option and its optional arg N
+     opt: -a <Z> description of this option and its mandatory arg Z
+     opt: -d  description of this option which has no args
+
+  'opt:' note: there must be no spaces inside the brackets ([] and
+  <>).  If spaces are needed, use underscores which will then be
+  translated to spaces in the man page.
+
+  Following is an example of such a comment block (partially
+  decorated):
+
+  /*
+   * section1:  description
+   *
+   *  more description but this follows a blank line so it begins a
+      new para
+
+   another_section: description ...
+
+   ...
+
+   opt: optiona description
+
+   another para for optiona
+
+   opt: optiond ...
+
+  */
+
++ Mandatory parts:
+
+    purpose: ...brief description for NAME section...
+
+    description: some words, should give user a good idea of how and why
+         to use the program
+
+      ...this will appear in the DESCRIPTION section
+
+    opt: option
+
+      ... one for each option (if any), all will be put in an OPTIONS
+          section
+
++ Default parts (user may override by explicitly providing them):
+
+    copyright: YYYY
+
+      where YYYY is the beginning copyright year (default is 1984).
+
+    diagnostics:
+
+      default: Error messages are intended to be self-explanatory.
+
+    authors:
+
+      default:  BRL-CAD Team
+
+    bug_reports:
+
+      default:  Reports of bugs or problems should be submitted via
+                electronic mail to <devs@brlcad.org>.
+
++ Optional but desirable parts:
+
+    see_also:
+
+      ...list of man pages only (with sections),
+      semicolon- or white-space-separated, no other embellishments...
+
+    other_refs:
+
+      ...list of other references, if any,
+      semicolon-separated, no other embellishments...
+
+    ...both lists will go in the SEE ALSO section...
+
+Processing:
+==========
+
+A C++ program (version controlled) will be used to parse the source
+files (defined in the file 'auto-man-progs.txt') and, after successful
+parsing, a complete docbook file in man format will be written to file
+"progname.xml" in directory:
+
+  ./doc/docbook/system/man1/en/
+
+Assumptions:
+===========
+
++ C++-style comments are ignored unless they are inside a C-style
+  comment in which case they are treated as ordinary text.
+
++ No more than one C-style comment or partial comment is on a line.
+
++ Mandatory string variables ('usage' and 'optstring') begin and
+  end on a line with no other C/C++ objects.
+
+Working example:
+===============
+
+See file "${BRLCAD_SOURCE_ROOT}/src/util/fix_polysolids.c" for an
+example of some of the features described above.

@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,12 +54,12 @@
  * To find the intersection of a line with the surface of the rhc,
  * consider the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * L : { P(n) | P + t(n) . D }
  *
  * Call W the actual point of intersection between L and the rhc.
  * Let W' be the point of intersection between L' and the unit rhc.
  *
- *  	L' : { P'(n) | P' + t(n) . D' }
+ * L' : { P'(n) | P' + t(n) . D' }
  *
  * W = invR(invS(W')) + V
  *
@@ -71,7 +71,7 @@
  *
  * Line L' hits the infinitely long canonical rhc at W' when
  *
- *	A * k**2 + B * k + C = 0
+ * A * k**2 + B * k + C = 0
  *
  * where
  *
@@ -150,7 +150,7 @@
  *
  * The solution W' is within an end plate IFF
  *
- *	(Wz' + c + 1)**2 - (Wy'**2 * (2*c + 1) >= c**2 and Wz' <= 1.0
+ * (Wz' + c + 1)**2 - (Wy'**2 * (2*c + 1) >= c**2 and Wz' <= 1.0
  *
  * The normal for a hit on the top plate is -Bunit.
  * The normal for a hit on the front plate is -Hunit, and
@@ -167,6 +167,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -193,17 +194,16 @@ struct rhc_specific {
 
 
 const struct bu_structparse rt_rhc_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_rhc_internal, rhc_V[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H", bu_offsetof(struct rt_rhc_internal, rhc_H[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H", bu_offsetofarray(struct rt_rhc_internal, rhc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_rhc_internal, rhc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r", bu_offsetof(struct rt_rhc_internal, rhc_r),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "c", bu_offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
 /**
- * R T _ R H C _ B B O X
- *
  * Calculate the bounding RPP for an RHC
  */
 int
@@ -217,8 +217,8 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(xip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VCROSS(rvect, xip->rhc_H, xip->rhc_B);
     VREVERSE(rinv, rvect);
@@ -258,8 +258,6 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ R H C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid RHC, and if so, precompute various
  * terms of the formula.
@@ -299,10 +297,10 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     magsq_r = mag_r * mag_r;
 
     stp->st_id = ID_RHC;		/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_RHC];
+    stp->st_meth = &OBJ[ID_RHC];
 
     BU_GET(rhc, struct rhc_specific);
-    stp->st_specific = (genptr_t)rhc;
+    stp->st_specific = (void *)rhc;
     rhc->rhc_b = mag_b;
     rhc->rhc_rsq = magsq_r;
     rhc->rhc_c = xip->rhc_c;
@@ -353,9 +351,6 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ R H C _ P R I N T
- */
 void
 rt_rhc_print(const struct soltab *stp)
 {
@@ -378,8 +373,6 @@ rt_rhc_print(const struct soltab *stp)
 #define RHC_NORM_BACK (4)
 
 /**
- * R T _ R H C _ S H O T
- *
  * Intersect a ray with a rhc.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -421,7 +414,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	a = dprime[Z] * dprime[Z] - dprime[Y] * dprime[Y] * (1 + 2 * x);
 	b = 2 * ((pprime[Z] + x + 1) * dprime[Z]
-	         - (2 * x + 1) * dprime[Y] * pprime[Y]);
+		 - (2 * x + 1) * dprime[Y] * pprime[Y]);
 	c = (pprime[Z] + x + 1) * (pprime[Z] + x + 1)
 	    - (2 * x + 1) * pprime[Y] * pprime[Y] - x * x;
 
@@ -429,7 +422,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    disc = b * b - 4 * a * c;
 
 	    if (disc <= 0) {
-	        goto check_plates;
+		goto check_plates;
 	    }
 
 	    disc = sqrt(disc);
@@ -444,38 +437,38 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k1;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 
 	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k2;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 	} else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
 	    k1 = -c / b;
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k1;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 	}
     }
@@ -567,8 +560,6 @@ check_plates:
 
 
 /**
- * R T _ R H C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -582,38 +573,36 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	c = rhc->rhc_cprime;
-	VSET(can_normal,
-	     0.0,
-	     hitp->hit_vpriv[Y] * (1.0 + 2.0 * c),
-	     -hitp->hit_vpriv[Z] - c - 1.0);
-	MAT4X3VEC(hitp->hit_normal, rhc->rhc_invRoS, can_normal);
-	VUNITIZE(hitp->hit_normal);
-	break;
+	case RHC_NORM_BODY:
+	    c = rhc->rhc_cprime;
+	    VSET(can_normal,
+		 0.0,
+		 hitp->hit_vpriv[Y] * (1.0 + 2.0 * c),
+		 -hitp->hit_vpriv[Z] - c - 1.0);
+	    MAT4X3VEC(hitp->hit_normal, rhc->rhc_invRoS, can_normal);
+	    VUNITIZE(hitp->hit_normal);
+	    break;
 
-    case RHC_NORM_TOP:
-	VREVERSE(hitp->hit_normal, rhc->rhc_Bunit);
-	break;
+	case RHC_NORM_TOP:
+	    VREVERSE(hitp->hit_normal, rhc->rhc_Bunit);
+	    break;
 
-    case RHC_NORM_FRT:
-	VREVERSE(hitp->hit_normal, rhc->rhc_Hunit);
-	break;
+	case RHC_NORM_FRT:
+	    VREVERSE(hitp->hit_normal, rhc->rhc_Hunit);
+	    break;
 
-    case RHC_NORM_BACK:
-	VMOVE(hitp->hit_normal, rhc->rhc_Hunit);
-	break;
+	case RHC_NORM_BACK:
+	    VMOVE(hitp->hit_normal, rhc->rhc_Hunit);
+	    break;
 
-    default:
-	bu_log("rt_rhc_norm: surfno=%d bad\n", hitp->hit_surfno);
-	break;
+	default:
+	    bu_log("rt_rhc_norm: surfno=%d bad\n", hitp->hit_surfno);
+	    break;
     }
 }
 
 
 /**
- * R T _ R H C _ C U R V E
- *
  * Return the curvature of the rhc.
  */
 void
@@ -625,37 +614,35 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	(struct rhc_specific *)stp->st_specific;
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	/* most nearly flat direction */
-	VMOVE(cvp->crv_pdir, rhc->rhc_Hunit);
-	cvp->crv_c1 = 0;
-	/* k = z'' / (1 + z'^2) ^ 3/2 */
-	b = rhc->rhc_b;
-	c = rhc->rhc_c;
-	y = hitp->hit_point[Y];
-	rsq = rhc->rhc_rsq;
-	zp1_sq = y * (b * b + 2 * b * c) / rsq;
-	zp1_sq *= zp1_sq / (c * c + y * y * (b * b + 2 * b * c) / rsq);
-	zp2 = c * c / (rsq * c * c + y * y * (b * b + 2 * b * c));
-	cvp->crv_c2 = zp2 / pow((1 + zp1_sq), 1.5);
-	break;
+	case RHC_NORM_BODY:
+	    /* most nearly flat direction */
+	    VMOVE(cvp->crv_pdir, rhc->rhc_Hunit);
+	    cvp->crv_c1 = 0;
+	    /* k = z'' / (1 + z'^2) ^ 3/2 */
+	    b = rhc->rhc_b;
+	    c = rhc->rhc_c;
+	    y = hitp->hit_point[Y];
+	    rsq = rhc->rhc_rsq;
+	    zp1_sq = y * (b * b + 2 * b * c) / rsq;
+	    zp1_sq *= zp1_sq / (c * c + y * y * (b * b + 2 * b * c) / rsq);
+	    zp2 = c * c / (rsq * c * c + y * y * (b * b + 2 * b * c));
+	    cvp->crv_c2 = zp2 / pow((1 + zp1_sq), 1.5);
+	    break;
 
-    case RHC_NORM_BACK:
-    case RHC_NORM_FRT:
-    case RHC_NORM_TOP:
-	/* any tangent direction */
-	bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
-	cvp->crv_c1 = cvp->crv_c2 = 0;
-	break;
+	case RHC_NORM_BACK:
+	case RHC_NORM_FRT:
+	case RHC_NORM_TOP:
+	    /* any tangent direction */
+	    bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
+	    cvp->crv_c1 = cvp->crv_c2 = 0;
+	    break;
     }
 }
 
 
 /**
- * R T _ R H C _ U V
- *
  * For a hit on the surface of an rhc, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * of the hit point, 0 <= u, v <= 1
  * u = azimuth
  * v = elevation
  */
@@ -680,25 +667,25 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     MAT4X3VEC(pprime, rhc->rhc_SoR, work);
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	/* Skin.  x, y coordinates define rotation.  radius = 1 */
-	len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
-	uvp->uv_v = -pprime[X];		/* height */
-	break;
+	case RHC_NORM_BODY:
+	    /* Skin.  x, y coordinates define rotation.  radius = 1 */
+	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
+	    uvp->uv_u = acos(pprime[Y] / len) * M_1_PI;
+	    uvp->uv_v = -pprime[X];		/* height */
+	    break;
 
-    case RHC_NORM_FRT:
-    case RHC_NORM_BACK:
-	/* end plates - circular mapping, not seamless w/body, top */
-	len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
-	uvp->uv_v = len;	/* rim v = 1 for both plates */
-	break;
+	case RHC_NORM_FRT:
+	case RHC_NORM_BACK:
+	    /* end plates - circular mapping, not seamless w/body, top */
+	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
+	    uvp->uv_u = acos(pprime[Y] / len) * M_1_PI;
+	    uvp->uv_v = len;	/* rim v = 1 for both plates */
+	    break;
 
-    case RHC_NORM_TOP:
-	uvp->uv_u = 1.0 - (pprime[Y] + 1.0) / 2.0;
-	uvp->uv_v = -pprime[X];		/* height */
-	break;
+	case RHC_NORM_TOP:
+	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0) / 2.0;
+	    uvp->uv_v = -pprime[X];		/* height */
+	    break;
     }
 
     /* uv_du should be relative to rotation, uv_dv relative to height */
@@ -706,27 +693,15 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R H C _ F R E E
- */
 void
 rt_rhc_free(struct soltab *stp)
 {
     struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
-    bu_free((char *)rhc, "rhc_specific");
+    BU_PUT(rhc, struct rhc_specific);
 }
 
-
-/**
- * R T _ R H C _ C L A S S
- */
-int
-rt_rhc_class(void)
-{
-    return 0;
-}
 
 /* Our canonical hyperbola in the Y-Z plane has equation
  * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
@@ -755,11 +730,13 @@ rhc_hyperbola_b(fastf_t mag_b, fastf_t c, fastf_t r)
     return (c * r) / sqrt(mag_b * (mag_b + 2.0 * c));
 }
 
+
 static fastf_t
 rhc_hyperbola_y(fastf_t b, fastf_t c, fastf_t z)
 {
     return sqrt(b * b * (((z * z) / (c * c)) - 1.0));
 }
+
 
 /* The contour of an rhc in the plane B-R is the positive half of a hyperbola
  * with asymptote origin at ((|B| + c)Bu), opening toward -B. We can transform
@@ -784,8 +761,8 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
 	return NULL;
     }
 
-    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_b);
@@ -804,16 +781,17 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
     return curve;
 }
 
+
 /* plot half of a hyperbolic contour curve using the given (r, b) points (pts),
  * translation along H (rhc_H), and multiplier for r (rscale)
  */
 static void
 rhc_plot_hyperbolic_curve(
-	struct bu_list *vhead,
-	struct rhc_specific *rhc,
-	struct rt_pt_node *pts,
-	vect_t rhc_H,
-	fastf_t rscale)
+    struct bu_list *vhead,
+    struct rhc_specific *rhc,
+    struct rt_pt_node *pts,
+    vect_t rhc_H,
+    fastf_t rscale)
 {
     vect_t t, Ru, Bu;
     point_t p;
@@ -835,11 +813,12 @@ rhc_plot_hyperbolic_curve(
     }
 }
 
+
 static void
 rhc_plot_hyperbolas(
-	struct bu_list *vhead,
-	struct rt_rhc_internal *rhc,
-	struct rt_pt_node *pts)
+    struct bu_list *vhead,
+    struct rt_rhc_internal *rhc,
+    struct rt_pt_node *pts)
 {
     vect_t rhc_H;
     struct rhc_specific rhc_s;
@@ -862,6 +841,7 @@ rhc_plot_hyperbolas(
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
 }
+
 
 static void
 rhc_plot_curve_connections(
@@ -911,10 +891,11 @@ rhc_plot_curve_connections(
     }
 }
 
+
 static int
 rhc_curve_points(
-	struct rt_rhc_internal *rhc,
-	const struct rt_view_info *info)
+    struct rt_rhc_internal *rhc,
+    const struct rt_view_info *info)
 {
     fastf_t height, halfwidth, est_curve_length;
     point_t p0, p1;
@@ -929,6 +910,7 @@ rhc_curve_points(
 
     return est_curve_length / info->point_spacing;
 }
+
 
 int
 rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -995,9 +977,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ R H C _ P L O T
- */
+
 int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1046,15 +1026,15 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    } else
+    } else {
 	/* tolerate everything */
-    {
-	ntol = bn_pi;
+	ntol = M_PI;
     }
 
     /* initial hyperbola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1086,7 +1066,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* Draw the front */
     RT_ADD_VLIST(vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
-	         BN_VLIST_LINE_MOVE);
+		 BN_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
 	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
@@ -1113,9 +1093,6 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ M K _ H Y P E R B O L A
- */
 /*
   r: rectangular halfwidth
   b: breadth
@@ -1139,17 +1116,18 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     intr = p0[Z] - m * p0[Y];
     /* find point on hyperbola with max dist between hyperbola and line */
     j = b + c;
-    k = 1 - m * m * r * r / (b * (b + 2 * c));
+    k = 1.0 - m * m * r * r / (b * (b + 2.0 * c));
     A = k;
-    B = 2 * j * k;
+    B = 2.0 * j * k;
     C = j * j * k - c * c;
-    discr = sqrt(B * B - 4 * A * C);
-    z0 = (-B + discr) / (2. * A);
+    discr = sqrt(B * B - 4.0 * A * C);
+    z0 = (-B + discr) / (2.0 * A);
 
-    if (z0 + RHC_TOL >= -b) {	/* use top sheet of hyperboloid */
+    if (z0 + RHC_TOL >= -b) {
+	/* use top sheet of hyperboloid */
 	mpt[Z] = z0;
     } else {
-	mpt[Z] = (-B - discr) / (2. * A);
+	mpt[Z] = (-B - discr) / (2.0 * A);
     }
 
     if (NEAR_ZERO(mpt[Z], RHC_TOL)) {
@@ -1157,34 +1135,34 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     }
 
     mpt[X] = 0;
-    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2 * c));
+    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2.0 * c));
 
     if (NEAR_ZERO(mpt[Y], RHC_TOL)) {
-	mpt[Y] = 0.;
+	mpt[Y] = 0.0;
     }
 
     mpt[Y] = r * sqrt(mpt[Y]);
 
-    if (p0[Y] < 0.) {
+    if (p0[Y] < 0.0) {
 	mpt[Y] = -mpt[Y];
     }
 
     /* max distance between that point and line */
     dist = fabs(m * mpt[Y] - mpt[Z] + intr) / sqrt(m * m + 1);
     /* angles between normal of line and of hyperbola at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p0[Z] + c + 1), -1.);
+    VSET(norm_line, m, -1.0, 0.0);
+    VSET(norm_hyperb, 0., (2.0 * c + 1.0) / (p0[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_line);
     VUNITIZE(norm_hyperb);
     theta0 = fabs(acos(VDOT(norm_line, norm_hyperb)));
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p1[Z] + c + 1), -1.);
+    VSET(norm_hyperb, 0.0, (2.0 * c + 1.0) / (p1[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_hyperb);
     theta1 = fabs(acos(VDOT(norm_line, norm_hyperb)));
 
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(newpt, struct rt_pt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -1203,8 +1181,6 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
 
 
 /**
- * R T _ R H C _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1266,15 +1242,15 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    } else
+    } else {
 	/* tolerate everything */
-    {
-	ntol = bn_pi;
+	ntol = M_PI;
     }
 
     /* initial hyperbola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1404,15 +1380,15 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->f_p == outfaceuses[0]->f_p ||
-	        fu->f_p == outfaceuses[1]->f_p ||
-	        fu->f_p == outfaceuses[n + 1]->f_p) {
-	        continue;    /* skip flat faces */
+		fu->f_p == outfaceuses[1]->f_p ||
+		fu->f_p == outfaceuses[n + 1]->f_p) {
+		continue;    /* skip flat faces */
 	    }
 
 	    if (fu->orientation == OT_SAME) {
-	        nmg_vertexuse_nv(vu, norms[i]);
+		nmg_vertexuse_nv(vu, norms[i]);
 	    } else if (fu->orientation == OT_OPPOSITE) {
-	        nmg_vertexuse_nv(vu, rev_norm);
+		nmg_vertexuse_nv(vu, rev_norm);
 	    }
 	}
 
@@ -1425,15 +1401,15 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->f_p == outfaceuses[0]->f_p ||
-	        fu->f_p == outfaceuses[1]->f_p ||
-	        fu->f_p == outfaceuses[n + 1]->f_p) {
-	        continue;    /* skip flat faces */
+		fu->f_p == outfaceuses[1]->f_p ||
+		fu->f_p == outfaceuses[n + 1]->f_p) {
+		continue;    /* skip flat faces */
 	    }
 
 	    if (fu->orientation == OT_SAME) {
-	        nmg_vertexuse_nv(vu, norms[i]);
+		nmg_vertexuse_nv(vu, norms[i]);
 	    } else if (fu->orientation == OT_OPPOSITE) {
-	        nmg_vertexuse_nv(vu, rev_norm);
+		nmg_vertexuse_nv(vu, rev_norm);
 	    }
 	}
     }
@@ -1459,8 +1435,6 @@ fail:
 
 
 /**
- * R T _ R H C _ I M P O R T
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1487,8 +1461,9 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RHC;
-    ip->idb_meth = &rt_functab[ID_RHC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+    ip->idb_meth = &OBJ[ID_RHC];
+    BU_ALLOC(ip->idb_ptr, struct rt_rhc_internal);
+
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
@@ -1533,8 +1508,6 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1560,7 +1533,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "rhc external");
     rhc = (union record *)ep->ext_buf;
 
     rhc->s.s_id = ID_SOLID;
@@ -1578,8 +1551,6 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ R H C _ I M P O R T 5
- *
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1601,14 +1572,14 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RHC;
-    ip->idb_meth = &rt_functab[ID_RHC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+    ip->idb_meth = &OBJ[ID_RHC];
+    BU_ALLOC(ip->idb_ptr, struct rt_rhc_internal);
 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) {
@@ -1632,8 +1603,6 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ R H C _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1661,7 +1630,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "rhc external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0 * 3], xip->rhc_V, local2mm);
@@ -1671,15 +1640,13 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3 * 3 + 1] = xip->rhc_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 11);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }
 
 
 /**
- * R T _ R H C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1729,8 +1696,6 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ R H C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1745,14 +1710,10 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     xip->rhc_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "rhc ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ R H C _ P A R A M S
- *
- */
 int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1762,6 +1723,7 @@ rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
     return 0;			/* OK */
 }
+
 
 static int
 rhc_is_valid(struct rt_rhc_internal *rhc)
@@ -1790,6 +1752,117 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 
     return 1;
 }
+
+
+void
+rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_rhc_internal *rip;
+    fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
+
+    fastf_t h;
+    fastf_t sumodds = 0, sumevens = 0, x = 0;
+    int i, j;
+
+    /**
+     * n is the number of divisions to use when using Simpson's
+     * composite rule below to approximate the integral.
+     *
+     * A value of n = 1000000 should be enough to ensure that the
+     * approximation is accurate to at least 10 decimal places.  The
+     * accuracy of the approximation increases by about 2 d.p with
+     * each added 0 onto the end of the number (i.e. multiply by 10),
+     * so there is a compromise between accuracy and performance,
+     * although performance might only be an issue on old slow
+     * hardware.
+     *
+     * I wouldn't recommend setting this less than about 10000,
+     * because this might cause accuracy to be unsuitable for
+     * professional or mission critical use.
+     */
+    int n = 1000000;
+
+    if (area == NULL || ip == NULL) {
+	return;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
+
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
+    height = MAGNITUDE(rip->rhc_H);
+    a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
+    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+
+    h = (2.0 * rip->rhc_r) / n;
+    for (i = 1; i <= (n / 2) - 1; i++) {
+	x = -rip->rhc_r + 2.0 * i * h;
+	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+    }
+    for (j = 1; j <= (n / 2); j++) {
+	x = -rip->rhc_r + (2.0 * j - 1.0) * h;
+	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+    }
+    arclen = (h / 3.0) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0) + 2.0 * sumodds + 4.0 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0));
+
+    *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
+}
+
+/**
+ * Computes centroid of a right hyperbolic cylinder
+ */
+void
+rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    if (cent != NULL && ip != NULL) {
+	struct rt_rhc_internal *rip;
+	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;
+	fastf_t guess = 0.0;
+	vect_t shift_h;
+
+	RT_CK_DB_INTERNAL(ip);
+	rip = (struct rt_rhc_internal *)ip->idb_ptr;
+	RT_RHC_CK_MAGIC(rip);
+
+	magB = MAGNITUDE(rip->rhc_B);
+	b = rip->rhc_c;
+	a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
+	xf = magB + a;
+
+	/* epsilon is an upperbound on the error */
+
+	epsilon = 0.0001;
+
+	sqrt_xa = sqrt((xf * xf) - (a * a));
+	totalArea = (b / a) * ((xf * sqrt_xa) - ((a * a) * log(sqrt_xa + xf)) - ((a * a) * log(xf)));
+
+	low = a;
+	high = xf;
+
+	while (abs(high - low) > epsilon) {
+	    guess = (high + low) / 2.0;
+	    sqrt_ga = sqrt((guess * guess) - (a * a));
+	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
+
+	    if (guessArea > totalArea / 2.0) {
+		high = guess;
+	    } else {
+		low = guess;
+	    }
+	}
+
+	scale_factor = 1.0 - ((guess - a) / magB);
+
+	VSCALE(shift_h, rip->rhc_H, 0.5);
+	VSCALE(*cent, rip->rhc_B, scale_factor);
+	VADD2(*cent, shift_h, *cent);
+    }
+}
+
 
 /*
  * Local Variables:

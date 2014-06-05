@@ -1,7 +1,7 @@
 #           G E O M E T R Y E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -50,6 +50,7 @@
 	common EDIT_CLASS_ROT 1
 	common EDIT_CLASS_SCALE 2
 	common EDIT_CLASS_TRANS 3
+	common EDIT_CLASS_SET 4
 
 	common mEditMode 0
 	common mPrevEditMode 0
@@ -59,16 +60,22 @@
 	common mEditParam2 0
 	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
 	common mEditPCommand ""
+	common mHighlightPoints 1
+	common mHighlightPointSize 1.0
 
 	proc validateColorComp {c}
 	proc validateColor {color}
 
+	method clearEditState {{_clearModeOnly 0} {_initFlag 0}}
 	method childsite {{site upper}}
 
 	method initGeometry {gdata}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method updateGeometry {}
 	method createGeometry {obj}
 
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -85,6 +92,7 @@
 	variable mYmax 0
 	variable mZmin 0
 	variable mZmax 0
+	variable mInitGeometry 0
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}
@@ -92,12 +100,15 @@
 	method updateUpperPanel {normal disabled}
 	method updateGeometryIfMod {}
 
+	method clearAllTables {}
 	method initEditState {}
 
 	method buildComboBox {parent name1 name2 varName text listOfChoices}
 	method buildArrow {parent prefix text buildViewFunc}
-	method toggleArrow {arrow view args}
 	method getView {}
+	method toggleArrow {arrow view args}
+	method updatePointSize {}
+	method validatePointSize {_size}
     }
 
     private {
@@ -128,7 +139,7 @@
 	::ttk::frame $parent.upper
     } {}
 
-    # Repack parent so it's anchor to the north
+    # Repack parent so its anchor is to the north
     pack $parent \
 	-expand yes \
 	-fill both \
@@ -139,7 +150,7 @@
 	::ttk::frame $parent.lower
     } {}
 
-    # Repack parent so it's anchor to the north
+    # Repack parent so its anchor is to the north
     pack $parent \
 	-expand yes \
 	-fill both \
@@ -189,6 +200,14 @@
     # Nothing for now
 }
 
+::itcl::configbody GeometryEditFrame::units {
+    # Nothing for now
+}
+
+::itcl::configbody GeometryEditFrame::valueUnits {
+    # Nothing for now
+}
+
 
 # ------------------------------------------------------------
 #                      PUBLIC CLASS METHODS
@@ -229,6 +248,23 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+::itcl::body GeometryEditFrame::clearEditState {{_clearModeOnly 0} {_initFlag 0}} {
+    set mEditMode 0
+
+    if {$_clearModeOnly} {
+	return
+    }
+
+    clearAllTables
+    set itk_option(-prevGeometryObject) ""
+
+    if {$_initFlag} {
+	initEditState
+    }
+}
+
+
 ::itcl::body GeometryEditFrame::childsite {{site upper}} {
     switch -- $site {
 	"lower" {
@@ -262,6 +298,12 @@
     }
 }
 
+::itcl::body GeometryEditFrame::checkpointGeometry {} {
+}
+
+::itcl::body GeometryEditFrame::revertGeometry {} {
+}
+
 ::itcl::body GeometryEditFrame::createGeometry {obj} {
     GeometryEditFrame::getView
 
@@ -272,6 +314,12 @@
 
     return 1
 }
+
+
+::itcl::body GeometryEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $_ocenter
+}
+
 
 ::itcl::body GeometryEditFrame::p {obj args} {
 }
@@ -292,7 +340,14 @@
 ::itcl::body GeometryEditFrame::updateGeometryIfMod {} {
 }
 
+
+::itcl::body GeometryEditFrame::clearAllTables {} {
+}
+
+
 ::itcl::body GeometryEditFrame::initEditState {} {
+    set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
+
     if {$mEditClass == $EDIT_CLASS_ROT} {
 	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
     } elseif {$mEditClass == $EDIT_CLASS_SCALE} {
@@ -346,17 +401,6 @@
 							  -column 1 -sticky nsew]
 }
 
-itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
-    set state [$arrow cget -togglestate]
-    switch -- $state {
-	closed {
-	    grid forget $view
-	}
-	open {
-	    eval grid $view $args
-	}
-    }
-}
 
 ::itcl::body GeometryEditFrame::getView {} {
     if {$itk_option(-mged) == ""} {
@@ -383,6 +427,53 @@ itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
     set mZmin [expr {$mCenterZ - $mDelta}]
     set mZmax [expr {$mCenterZ + $mDelta}]
 }
+
+
+itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
+    set state [$arrow cget -togglestate]
+    switch -- $state {
+	closed {
+	    grid forget $view
+	}
+	open {
+	    eval grid $view $args
+	}
+    }
+}
+
+
+::itcl::body GeometryEditFrame::updatePointSize {} {
+    if {$mHighlightPointSize != "" && $mHighlightPointSize != "."} {
+	$itk_option(-mged) data_axes size $mHighlightPointSize
+    } else {
+	$itk_option(-mged) data_axes size 0
+    }
+}
+
+
+::itcl::body GeometryEditFrame::validatePointSize {_size} {
+    if {$_size == "."} {
+	return 1
+    }
+
+    if {[string is double $_size]} {
+	# Need to check is first
+	if {$_size == ""} {
+	    return 1
+	}
+
+	if {$_size < 0} {
+	    return 0
+	}
+
+	# Everything else is OK
+	return 1
+    }
+
+    return 0
+}
+
+
 
 # Local Variables:
 # mode: Tcl

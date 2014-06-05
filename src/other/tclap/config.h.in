@@ -1,0 +1,53 @@
+/* config.h.in */
+
+/* define if the library defines strstream */
+#cmakedefine HAVE_CLASS_STRSTREAM 1
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H 1
+
+/* define if the C++ implementation have long long */
+#cmakedefine HAVE_LONG_LONG 1
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H 1
+
+/* define to 1 if the compiler implements namespaces */
+#cmakedefine HAVE_NAMESPACES 1
+
+/* define if the compiler has stringstream */
+#cmakedefine HAVE_SSTREAM 1
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H 1
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H 1
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H 1
+
+/* Define to 1 if you have the <strstream> header file. */
+#cmakedefine HAVE_STRSTREAM 1
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H 1
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H 1
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the ANSI C header files. */
+#define STDC_HEADERS 1
+
+/* There is no config.h for MSVC++ in standard TCLAP,
+ * remove defines which come from BRL-CAD's CMake
+ * and stand in the way now */
+#if defined(_MSC_VER) && defined(_M_X64)
+#   undef HAVE_LONG_LONG
+#endif

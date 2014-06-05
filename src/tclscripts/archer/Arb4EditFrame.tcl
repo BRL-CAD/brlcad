@@ -1,7 +1,7 @@
 #               A R B 4 E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -35,24 +35,26 @@
 
     public {
 	# Override what's in GeometryEditFrame
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
     protected {
-	variable movePoint1 1
-	variable movePoint2 2
-	variable movePoint3 3
-	variable movePoint4 4
-	variable moveFace123 5
-	variable moveFace124 6
-	variable moveFace234 7
-	variable moveFace134 8
-	variable rotateFace123 9
-	variable rotateFace124 10
-	variable rotateFace234 11
-	variable rotateFace134 12
+	common movePoint1 1
+	common movePoint2 2
+	common movePoint3 3
+	common movePoint4 5
+	common moveFace123 6
+	common moveFace124 7
+	common moveFace234 8
+	common moveFace134 9
+	common rotateFace123 10
+	common rotateFace124 11
+	common rotateFace234 12
+	common rotateFace134 13
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -60,6 +62,7 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
+	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
 
@@ -77,6 +80,36 @@
 ::itcl::body Arb4EditFrame::constructor {args} {
     eval itk_initialize $args
 }
+
+
+::itcl::body Arb4EditFrame::arbFaceMoveCallback {_face} {
+    switch -- $_face {
+	0 {
+	    set mEditMode $moveFace123
+	}
+	1 {
+	    set mEditMode $moveFace234
+	}
+	2 {
+	    set mEditMode $moveFace124
+	}
+	3 {
+	    set mEditMode $moveFace134
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_face_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
 
 ::itcl::body Arb4EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]
@@ -231,6 +264,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(arb4Type) \
 	-row $row \
@@ -349,6 +394,21 @@
 	-row $row \
 	-column $col \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -427,6 +487,24 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+::itcl::body Arb4EditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$movePoint1 - \
+	$movePoint2 - \
+	$movePoint2 - \
+	$movePoint4 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace123 - \
+	$moveFace124 - \
+	$moveFace234 - \
+	$moveFace134 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
+}
+
+
 ::itcl::body Arb4EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
@@ -484,6 +562,34 @@
 	V7 [list $mXmax $mYmax $mZmin] \
 	V8 [list $mXmax $mYmax $mZmin]
 }
+
+
+::itcl::body Arb4EditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    switch -- $mEditMode \
+	$movePoint1 {
+	    set pt [$itk_option(-mged) get $_obj V1]
+	} \
+	$movePoint2 {
+	    set pt [$itk_option(-mged) get $_obj V2]
+	} \
+	$movePoint2 {
+	    set pt [$itk_option(-mged) get $_obj V3]
+	} \
+	$movePoint4 {
+	    set pt [$itk_option(-mged) get $_obj V5]
+	} \
+	default {
+	    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $_ocenter
+	    return
+	}
+
+    set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
+    set vz [lindex $vpt 2]
+    set new_vpt [list $_vx $_vy $vz]
+    set new_ocenter [$itk_option(-mged) pane_v2m_point $_dm $new_vpt]
+    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $new_ocenter
+}
+
 
 ::itcl::body Arb4EditFrame::p {obj args} {
     if {[llength $args] != 3 ||
@@ -633,6 +739,11 @@
 	    set mEditParam2 1
 	    invokeRotationPointDialog {1 3 4}
 	    updateUpperPanel {1 3 4} {2}
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

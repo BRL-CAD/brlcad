@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 #include <png.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
@@ -58,7 +59,7 @@ struct stroke {
     struct coord pixel;	/* starting scan, nib */
     short xsign;	/* 0 or +1 */
     short ysign;	/* -1, 0, or +1 */
-    int ymajor; 	/* true iff Y is major dir. */
+    int ymajor; 	/* true if Y is major dir. */
     short major;	/* major dir delta (nonneg) */
     short minor;	/* minor dir delta (nonneg) */
     short e;		/* DDA error accumulator */
@@ -307,8 +308,8 @@ draw_png_body(struct ged *gedp, unsigned char **image)
 	mat = newmat;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -327,15 +328,11 @@ draw_png(struct ged *gedp, FILE *fp)
     png_structp png_p;
     png_infop info_p;
     double out_gamma = 1.0;
-#if 1
+
+    /* TODO: explain why this is size+1 */
     size_t num_bytes_per_row = (size+1) * 3;
     size_t num_bytes = num_bytes_per_row * (size+1);
     unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * (size+1), "draw_png, image");
-#else
-    size_t num_bytes_per_row = size * 3;
-    size_t num_bytes = num_bytes_per_row * size;
-    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * size, "draw_png, image");
-#endif
     unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "draw_png, bytes");
 
     /* Initialize bytes using the background color */

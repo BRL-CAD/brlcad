@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -51,7 +51,7 @@ struct ged_rtcheck {
 #ifdef TCL_OK
     Tcl_Channel chan;
 #else
-    genptr_t chan;
+    void *chan;
 #endif
 #else
     int fd;
@@ -120,8 +120,8 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -140,8 +140,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
 	}
 
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+	BU_PUT(rtcp, struct ged_rtcheck);
 
 	return;
     }
@@ -173,7 +172,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
-	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+	BU_PUT(rtcop, struct rtcheck_output);
 	return;
     }
 
@@ -202,8 +201,8 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -219,8 +218,7 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 	/* wait for the forked process */
 	WaitForSingleObject( rtcp->hProcess, INFINITE );
 
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+	BU_PUT(rtcp, struct ged_rtcheck);
 
 	return;
     }
@@ -253,13 +251,13 @@ rtcheck_output_handler(ClientData clientData, int mask)
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
-	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+	BU_PUT(rtcop, struct rtcheck_output);
 
 	return;
     }
 
     line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+    if (rtcop->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
 	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);

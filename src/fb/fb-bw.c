@@ -1,7 +1,7 @@
 /*                         F B - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,12 +58,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hiF:X:Y:s:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "iF:X:Y:s:w:n:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
-		break;
 	    case 'i':
 		inverse = 1;
 		break;
@@ -101,8 +97,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
 	    fprintf(stderr,
-			  "fb-bw: cannot open \"%s\" for writing\n",
-			  file_name);
+		    "fb-bw: cannot open \"%s\" for writing\n",
+		    file_name);
 	    return 0;
 	}
     }
@@ -122,8 +118,7 @@ main(int argc, char **argv)
     int x, y;
     int xin, yin;		/* number of sceen output lines */
 
-    char usage[] = "\
-Usage: fb-bw [-h -i] [-F framebuffer]\n\
+    char usage[] = "Usage: fb-bw [-i] [-F framebuffer]\n\
 	[-X scr_xoff] [-Y scr_yoff]\n\
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 

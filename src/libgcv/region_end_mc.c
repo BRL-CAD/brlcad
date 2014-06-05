@@ -1,7 +1,7 @@
 /*                 R E G I O N _ E N D _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "bu/parallel.h"
 #include "gcv.h"
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
@@ -39,7 +40,7 @@ struct gcv_data {
 union tree * _gcv_cleanup(int state, union tree *tp);
 
 union tree *
-gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
     struct model *m = NULL;
@@ -93,19 +94,19 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
      */
-    NMG_debug_state = rt_g.NMG_debug;
+    NMG_debug_state = RTG.NMG_debug;
 
     m = nmg_mmr();
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    if(tsp->ts_rtip == NULL)
+    if (tsp->ts_rtip == NULL)
 	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
     count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 
     /* empty region? */
-    if(count == 0) {
+    if (count == 0) {
 	bu_log("Region %s appears to be empty.\n", db_path_to_string(pathp));
 	return TREE_NULL;
     }

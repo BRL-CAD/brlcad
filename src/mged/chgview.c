@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,6 @@ int mged_etran(char coords, vect_t tvec);
 int mged_mtran(const fastf_t *tvec);
 int mged_otran(const fastf_t *tvec);
 int mged_vtran(const fastf_t *tvec);
-int mged_tran(fastf_t *tvec);
 
 
 extern vect_t curr_e_axes_pos;
@@ -218,8 +217,6 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * S I Z E _ R E S E T
- *
  * Reset view size and view center so that all solids in the solid table
  * are in view.
  * Caller is responsible for calling new_mats().
@@ -242,8 +239,6 @@ size_reset(void)
 
 
 /*
- * E D I T _ C O M
- *
  * B and e commands use this area as common
  */
 int
@@ -270,9 +265,9 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -343,7 +338,7 @@ edit_com(int argc,
 	char **new_argv = NULL;
 	struct bu_ptbl *tbl;
 
-	remaining_args = argc - last_opt - 1;;
+	remaining_args = argc - last_opt - 1;
 
 	if (remaining_args < 2 || remaining_args % 2) {
 	    bu_log("Error: must have even number of arguments (name/value pairs)\n");
@@ -464,9 +459,9 @@ edit_com(int argc,
 
 	gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -662,8 +657,6 @@ solid_list_callback(void)
 
 
 /*
- * F _ R E G D E B U G
- *
  * Display-manager specific "hardware register" debugging.
  */
 int
@@ -713,13 +706,13 @@ mged_freemem(void)
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
 	GET_SOLID(sp, &MGED_FreeSolid.l);
-	bu_free((genptr_t)sp, "mged_freemem: struct solid");
+	bu_free((void *)sp, "mged_freemem: struct solid");
     }
 
-    while (BU_LIST_NON_EMPTY(&rt_g.rtg_vlfree)) {
-	vp = BU_LIST_FIRST(bn_vlist, &rt_g.rtg_vlfree);
+    while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
+	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);
 	BU_LIST_DEQUEUE(&(vp->l));
-	bu_free((genptr_t)vp, "mged_freemem: struct bn_vlist");
+	bu_free((void *)vp, "mged_freemem: struct bn_vlist");
     }
 }
 
@@ -742,9 +735,9 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	button(BE_REJECT);
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
 		      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
@@ -926,7 +919,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     bu_vls_from_argv(&vlsargv, argc, argv);
-    nargv = bu_calloc(argc + 1, sizeof(char *), "calloc f_ill nargv");
+    nargv = (char **)bu_calloc(argc + 1, sizeof(char *), "calloc f_ill nargv");
     orig_nargv = nargv;
     c = bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
 
@@ -1022,9 +1015,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -1098,10 +1091,10 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     if (path_piece) {
 	for (i = 0; path_piece[i] != 0; ++i) {
-	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	    bu_free((void *)path_piece[i], "f_ill: char *");
 	}
 
-	bu_free((genptr_t) path_piece, "f_ill: char **");
+	bu_free((void *) path_piece, "f_ill: char **");
     }
 
     bu_free(orig_nargv, "free f_ill nargv");
@@ -1122,10 +1115,10 @@ bail_out:
 
     if (path_piece) {
 	for (i = 0; path_piece[i] != 0; ++i) {
-	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	    bu_free((void *)path_piece[i], "f_ill: char *");
 	}
 
-	bu_free((genptr_t) path_piece, "f_ill: char **");
+	bu_free((void *) path_piece, "f_ill: char **");
     }
 
     bu_free(orig_nargv, "free f_ill nargv");
@@ -1161,9 +1154,9 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -2628,7 +2621,10 @@ mged_zoom(double val)
 	return TCL_OK;
     }
 
-    snprintf(buf, 32, "%f", val);
+    if (val > 0.0)
+	snprintf(buf, 32, "%f", val);
+    else
+	snprintf(buf, 32, "%f", 1.0); /* do nothing */
 
     av[0] = "zoom";
     av[1] = buf;
@@ -2656,21 +2652,28 @@ mged_zoom(double val)
 	set_absolute_tran();
     }
 
+    ret = TCL_OK;
+    if (gedp->ged_gvp && gedp->ged_gvp->gv_adaptive_plot &&
+	gedp->ged_gvp->gv_redraw_on_zoom)
+    {
+	ret = redraw_visible_objects();
+    }
+
     view_state->vs_flag = 1;
 
-    return TCL_OK;
+    return ret;
 }
 
 
 /*
- * F _ Z O O M
- *
  * A scale factor of 2 will increase the view size by a factor of 2,
  * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 int
 cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    double zval;
+
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -2681,13 +2684,16 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    return mged_zoom(atof(argv[1]));
+    /* sanity check the zoom value */
+    zval = atof(argv[1]);
+    if (zval > 0.0)
+	return mged_zoom(zval);
+
+    return TCL_ERROR;
 }
 
 
 /*
- * P A T H _ P A R S E
- *
  * Break up a path string into its constituents.
  *
  * This function has one parameter:  a slash-separated path.
@@ -2876,38 +2882,6 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * F _ V R O T _ C E N T E R
- *
- * Set the center of rotation, either in model coordinates, or
- * in view (+/-1) coordinates.
- * The default is to rotate around the view center: v=(0, 0, 0).
- */
-int
-f_vrot_center(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    if (argc < 5 || 5 < argc) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argv && argc > 5) {
-	    bu_log("Unexpected parameter [%s]\n", argv[5]);
-	}
-
-	bu_vls_printf(&vls, "help vrot_center");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    /* XXXX Actually, this is now available in LIBRT's view_obj.c */
-    Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
-    return TCL_OK;
-}
-
-
-/*
- * U S E J O Y
- *
  * Apply the "joystick" delta rotation to the viewing direction,
  * where the delta is specified in terms of the *viewing* axes.
  * Rotation is performed about the view center, for now.
@@ -2936,8 +2910,6 @@ usejoy(double xangle, double yangle, double zangle)
 
 
 /*
- * S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -2981,8 +2953,6 @@ setview(double a1,
 
 
 /*
- * S L E W V I E W
- *
  * Given a position in view space,
  * make that point the new view center.
  */
@@ -3045,7 +3015,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 	struct view_ring *vrp1_last_view = NULL;
 
 	for (BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)) {
-	    BU_GET(vrp1, struct view_ring);
+	    BU_ALLOC(vrp1, struct view_ring);
 	    /* append to last list element */
 	    BU_LIST_APPEND(vsp1->vs_headView.l.back, &vrp1->l);
 
@@ -3066,7 +3036,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 	vsp1->vs_current_view = vrp1_current_view;
 	vsp1->vs_last_view = vrp1_last_view;
     } else {
-	BU_GET(vrp1, struct view_ring);
+	BU_ALLOC(vrp1, struct view_ring);
 	BU_LIST_APPEND(&vsp1->vs_headView.l, &vrp1->l);
 
 	vrp1->vr_id = 1;
@@ -3084,7 +3054,7 @@ view_ring_destroy(struct dm_list *dlp)
     while (BU_LIST_NON_EMPTY(&dlp->dml_view_state->vs_headView.l)) {
 	vrp = BU_LIST_FIRST(view_ring, &dlp->dml_view_state->vs_headView.l);
 	BU_LIST_DEQUEUE(&vrp->l);
-	bu_free((genptr_t)vrp, "view_ring_destroy: vrp");
+	bu_free((void *)vrp, "view_ring_destroy: vrp");
     }
 }
 
@@ -3134,7 +3104,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	view_state->vs_current_view->vr_scale = view_state->vs_gvp->gv_scale;
 
 	/* allocate memory and append to list */
-	BU_GET(vrp, struct view_ring);
+	BU_ALLOC(vrp, struct view_ring);
 	lv = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
 	BU_LIST_APPEND(&lv->l, &vrp->l);
 
@@ -3308,7 +3278,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	}
 
 	BU_LIST_DEQUEUE(&vrp->l);
-	bu_free((genptr_t)vrp, "view_ring delete");
+	bu_free((void *)vrp, "view_ring delete");
 
 	return TCL_OK;
     }
@@ -3544,9 +3514,6 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 }
 
 
-/*
- * M G E D _ V R O T
- */
 int
 mged_vrot(char origin, fastf_t *newrot)
 {
@@ -3866,27 +3833,6 @@ mged_vtran(const vect_t tvec)
 
 
 int
-mged_tran(vect_t tvec)
-{
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	return mged_etran(mged_variables->mv_coords, tvec);
-    }
-
-    /* apply to View */
-    if (mged_variables->mv_coords == 'm') {
-	return mged_mtran(tvec);
-    }
-
-    if (mged_variables->mv_coords == 'o') {
-	return mged_otran(tvec);
-    }
-
-    return mged_vtran(tvec);
-}
-
-
-int
 cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
@@ -4125,7 +4071,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		return ret;
 	    } else {
 		/* argc was 4 but state was ST_S_EDIT so do nothing */
-		bu_log("Error: Can only scale xyz independently on an object.\n");
+		bu_log("ERROR: Can only scale primitives uniformly (one scale factor).\n");
 		return TCL_OK;
 	    }
 	}
@@ -4158,8 +4104,6 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /**
- * C M D _ P O V
- *
  * Process the "pov" command to change the point of view.
  */
 int

@@ -1,7 +1,7 @@
 #                    F I N D G L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2001-2012 United States Government as represented by
+# Copyright (c) 2001-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -168,9 +168,9 @@ else (WIN32)
 
   get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
   if(SEARCH_64BIT)
-    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu")
   endif(SEARCH_64BIT)
 
   set(OPENGL_LIB_SEARCH_PATH
@@ -191,17 +191,17 @@ else (WIN32)
   endif(APPLE)
 
   if(OPENGL_USE_AQUA)
-    find_library(OPENGL_gl_LIBRARY OpenGL DOC "OpenGL lib for OSX")
+    find_library(OPENGL_gl_LIBRARY OpenGL DOC "OpenGL lib for OSX" )
     find_library(OPENGL_glu_LIBRARY AGL DOC "AGL lib for OSX")
     find_path(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
   else(OPENGL_USE_AQUA)
     # If we're on Apple and not using Aqua, we don't want frameworks
     set(CMAKE_FIND_FRAMEWORK "NEVER")
 
-    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH})
-    find_path(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH})
-    find_path(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH})
-    find_library(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH})
+    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+    find_path(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+    find_path(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+    find_library(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
 
     # On Unix OpenGL most certainly always requires X11.
     # Feel free to tighten up these conditions if you don't
@@ -217,7 +217,7 @@ else (WIN32)
       endif(X11_FOUND)
     endif(OPENGL_gl_LIBRARY)
 
-    find_library(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH})
+    find_library(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
   endif(OPENGL_USE_AQUA)
 
 endif(WIN32)

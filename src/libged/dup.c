@@ -1,7 +1,7 @@
 /*                         D U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -44,7 +44,7 @@ static void
 dup_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
 	       off_t addr,
-	       genptr_t ptr)
+	       void *ptr)
 {
     char *name;
     struct directory *dupdp;
@@ -102,12 +102,11 @@ dup_dir_check5(struct db_i *input_dbip,
 
 
 /**
- * G E D _ D I R _ C H E C K
  *@brief
  * Check a name against the global directory.
  */
 static int
-dup_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
+dup_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
 {
     struct directory *dupdp;
     struct bu_vls local = BU_VLS_INIT_ZERO;
@@ -187,9 +186,9 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the input file */
-    if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
+    if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "dup: Can't open %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "dup: Cannot open geometry database file %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -214,16 +213,16 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     dcs.wdbp = gedp->ged_wdbp;
     dcs.dup_dirp = dirp0;
     if (db_version(newdbp) < 5) {
-	if (db_scan(newdbp, dup_dir_check, 0, (genptr_t)&dcs) < 0) {
+	if (db_scan(newdbp, dup_dir_check, 0, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
-	    bu_free((genptr_t)dirp0, "_ged_getspace array");
+	    bu_free((void *)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
 	}
     } else {
-	if (db5_scan(newdbp, dup_dir_check5, (genptr_t)&dcs) < 0) {
+	if (db5_scan(newdbp, dup_dir_check5, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
-	    bu_free((genptr_t)dirp0, "_ged_getspace array");
+	    bu_free((void *)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
 	}
@@ -232,7 +231,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
     bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
-    bu_free((genptr_t)dirp0, "_ged_getspace array");
+    bu_free((void *)dirp0, "_ged_getspace array");
     db_close(newdbp);
 
     return GED_OK;

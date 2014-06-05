@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United  States Government as represented by
+ * Copyright (c) 1985-2014 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -47,10 +48,10 @@
 /* private */
 #include "./rtuif.h"
 #include "./ext.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
-extern void application_init();
+extern void application_init(void);
 
 extern const char title[];
 
@@ -58,7 +59,7 @@ extern const char title[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-struct icv_image_file *bif = NULL;	/* optional bu image for saving non-PIX formats */
+struct icv_image *bif = NULL;
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
@@ -77,7 +78,6 @@ extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
-char		*beginptr;		/* sbrk() at start of program */
 long		n_malloc;		/* Totals at last check */
 long		n_free;
 long		n_realloc;
@@ -102,9 +102,6 @@ extern struct resource	resource[];	/* from opt.c */
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
 
-/*
- *			S I G I N F O _ H A N D L E R
- */
 void
 siginfo_handler(int UNUSED(arg))
 {
@@ -118,34 +115,24 @@ siginfo_handler(int UNUSED(arg))
 }
 
 
-/*
- *			M E M O R Y _ S U M M A R Y
- */
 void
 memory_summary(void)
 {
-#ifdef HAVE_SBRK
     if (rt_verbosity & VERBOSE_STATS)  {
 	long	mdelta = bu_n_malloc - n_malloc;
 	long	fdelta = bu_n_free - n_free;
 	fprintf(stderr,
-		"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
-		(long)((char *)sbrk(0)-beginptr),
+		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 		mdelta,
 		fdelta,
 		bu_n_realloc - n_realloc,
 		mdelta - fdelta);
     }
-    beginptr = (char *) sbrk(0);
-#endif
     n_malloc = bu_n_malloc;
     n_free = bu_n_free;
     n_realloc = bu_n_realloc;
 }
 
-/*
- *			M A I N
- */
 int main(int argc, const char **argv)
 {
     struct rt_i *rtip = NULL;
@@ -154,18 +141,13 @@ int main(int argc, const char **argv)
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#else
+
     bu_setlinebuf( stdout );
     bu_setlinebuf( stderr );
-#endif
 
-#ifdef HAVE_SBRK
-    beginptr = (char *)sbrk(0);
-#endif
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;
 
@@ -198,21 +180,15 @@ int main(int argc, const char **argv)
 #if defined(DEBUG)
     fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
-#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CHECKING) || defined(NO_DEBUG_CHECKING)
+#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_DEBUG_CHECKING)
     fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
     /* Identify what host we're running on */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
-	char	hostname[512] = {0};
-#ifndef _WIN32
-	if (gethostname(hostname, sizeof(hostname)) >= 0 &&
-	    hostname[0] != '\0' )
+	char hostname[512] = {0};
+	if (bu_gethostname(hostname, sizeof(hostname)) >= 0)
 	    fprintf(stderr, "Running on %s\n", hostname);
-#else
-	sprintf(hostname, "Microsoft Windows");
-	fprintf(stderr, "Running on %s\n", hostname);
-#endif
     }
 
     if (bu_optind >= argc) {
@@ -284,11 +260,11 @@ int main(int argc, const char **argv)
     }
 
     if (npsw > 1) {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
     } else {
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
     }
 
     /* Initialize parallel processor support */
@@ -304,7 +280,7 @@ int main(int argc, const char **argv)
     }
 
     if (RT_G_DEBUG) {
-	bu_printb("librt rt_g.debug", rt_g.debug, DEBUG_FORMAT);
+	bu_printb("librt RTG.debug", RTG.debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (rdebug) {
@@ -496,6 +472,10 @@ int main(int argc, const char **argv)
     if (fbp != FBIO_NULL) {
 	fb_close(fbp);
     }
+
+    /* Release the ray-tracer instance */
+    rt_free_rti(rtip);
+    rtip = NULL;
 
     return 0;
 }

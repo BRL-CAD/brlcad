@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ remapid_fclose(REMAPID_FILE *bfp)
 	bfp->file_name = (char *) 0;
 	bfp->file_bp = (char *) 0;
 	bu_vls_free(&(bfp->file_buf));
-	bu_free((genptr_t) bfp, "remapid_file struct");
+	bu_free((void *) bfp, "remapid_file struct");
     }
     return close_status;
 }
@@ -347,16 +347,12 @@ static int debug = 0;
  *									*
  ************************************************************************/
 
-/*
- * M K _ C U R R _ I D
- *
- */
 struct curr_id *
 mk_curr_id(int region_id)
 {
     struct curr_id *cip;
 
-    cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
+    BU_ALLOC(cip, struct curr_id);
 
     cip->ci_magic = CURR_ID_MAGIC;
     cip->ci_id = region_id;
@@ -367,10 +363,6 @@ mk_curr_id(int region_id)
 }
 
 
-/*
- * P R I N T _ C U R R _ I D
- *
- */
 void
 print_curr_id(void *v, int UNUSED(depth))
 {
@@ -389,10 +381,6 @@ print_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * P R I N T _ N O N E M P T Y _ C U R R _ I D
- *
- */
 void
 print_nonempty_curr_id(void *v, int UNUSED(depth))
 {
@@ -413,21 +401,15 @@ print_nonempty_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * F R E E _ C U R R _ I D
- *
- */
 void
 free_curr_id(struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
-    bu_free((genptr_t) cip, "curr_id");
+    bu_free((void *) cip, "curr_id");
 }
 
 
 /*
- * L O O K U P _ C U R R _ I D
- *
  * Scrounge for a particular region in the red-black tree.
  * If it's not found there, add it to the tree.  In either
  * event, return a pointer to it.
@@ -466,16 +448,12 @@ lookup_curr_id(int region_id)
 }
 
 
-/*
- * M K _ R E M A P _ R E G
- *
- */
 struct remap_reg *
 mk_remap_reg(char *region_name)
 {
     struct remap_reg *rp;
 
-    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
+    BU_ALLOC(rp, struct remap_reg);
 
     rp->rr_magic = REMAP_REG_MAGIC;
 
@@ -489,17 +467,13 @@ mk_remap_reg(char *region_name)
 }
 
 
-/*
- * F R E E _ R E M A P _ R E G
- *
- */
 void
 free_remap_reg(struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp->rr_name, "region name");
-    bu_free((genptr_t) rp->rr_ip, "rt_db_internal");
-    bu_free((genptr_t) rp, "remap_reg");
+    bu_free((void *) rp->rr_name, "region name");
+    bu_free((void *) rp->rr_ip, "rt_db_internal");
+    bu_free((void *) rp, "remap_reg");
 }
 
 
@@ -509,9 +483,6 @@ free_remap_reg(struct remap_reg *rp)
  *									*
  ************************************************************************/
 
-/*
- * C O M P A R E _ C U R R _ I D S
- */
 int
 compare_curr_ids(void *v1, void *v2)
 {
@@ -532,8 +503,6 @@ compare_curr_ids(void *v1, void *v2)
  ************************************************************************/
 
 /*
- * R E A D _ I N T
- *
  * ch is the result
  */
 int
@@ -566,9 +535,6 @@ read_int(REMAPID_FILE *sfp, int *ch, int *n)
 }
 
 
-/*
- * R E A D _ B L O C K
- */
 int
 read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 {
@@ -602,9 +568,6 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 }
 
 
-/*
- * R E A D _ S P E C
- */
 int
 read_spec(REMAPID_FILE *sfp, char *sf_name)
 {
@@ -707,14 +670,14 @@ db_init(char *db_name)
     struct rt_comb_internal *comb;
     struct rt_db_internal *ip;
 
-    if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
-	bu_exit(1, "Cannot open database file '%s'\n", db_name);
+    if ((dbip = db_open(db_name, DB_OPEN_READWRITE)) == DBI_NULL)
+	bu_exit(1, "Cannot open geometry database file '%s'\n", db_name);
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
 	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
-	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
+	BU_ALLOC(ip, struct rt_db_internal);
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);
@@ -727,10 +690,6 @@ db_init(char *db_name)
 }
 
 
-/*
- * W R I T E _ A S S I G N M E N T
- *
- */
 void
 write_assignment(void *v, int UNUSED(depth))
 {
@@ -760,7 +719,7 @@ write_assignment(void *v, int UNUSED(depth))
 }
 
 
-HIDDEN void
+static void
 tankill_reassign(char *db_name)
 {
     FILE *fd_in;
@@ -819,9 +778,6 @@ tankill_reassign(char *db_name)
  *									*
  ************************************************************************/
 
-/*
- * P R I N T _ U S A G E
- */
 void
 print_usage(void)
 {
@@ -831,9 +787,6 @@ print_usage(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -845,7 +798,7 @@ main(int argc, char **argv)
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
-    while ((ch = bu_getopt(argc, argv, "gt?")) != -1)
+    while ((ch = bu_getopt(argc, argv, "gth?")) != -1)
 	switch (ch) {
 	    case 'g':
 		tankill = 0;
@@ -853,7 +806,6 @@ main(int argc, char **argv)
 	    case 't':
 		tankill = 1;
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
@@ -881,7 +833,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create1("Remapping assignment", compare_curr_ids);
+    assignment = bu_rb_create1("Remapping assignment", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_curr_ids));
     bu_rb_uniq_on1(assignment);
 
     /*
@@ -898,9 +850,9 @@ main(int argc, char **argv)
 	db_init(db_name);
 
 	if (debug)
-	    bu_rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))print_nonempty_curr_id, BU_RB_WALK_INORDER);
 	else
-	    bu_rb_walk1(assignment, write_assignment, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))write_assignment, BU_RB_WALK_INORDER);
     }
     return 0;
 }

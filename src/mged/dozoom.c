@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,8 +50,6 @@ unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 
 /*
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
  * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
@@ -61,7 +59,7 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
 {
     mat_t m2, tra;
 
-    fovy *= 3.1415926535/180.0;
+    fovy *= DEG2RAD;
 
     MAT_IDN(m2);
     m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
@@ -251,8 +249,6 @@ drawSolid(struct solid *sp,
 
 
 /*
- * D O Z O O M
- *
  * This routine reviews all of the solids in the solids table,
  * to see if they are visible within the current viewing
  * window.  If they are, the routine computes the scale and appropriate
@@ -375,8 +371,8 @@ dozoom(int which_eye)
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -422,8 +418,8 @@ dozoom(int which_eye)
 	DM_SET_DEPTH_MASK(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -469,8 +465,8 @@ dozoom(int which_eye)
 	DM_SET_DEPTH_MASK(dmp, 1);
     } else {
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -544,8 +540,8 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -608,16 +604,17 @@ createDList(struct solid *sp)
     if (sp->s_dlist == 0)
 	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
 
-    DM_BEGINDLIST(dmp, sp->s_dlist);
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_BEGINDLIST(dmp, sp->s_dlist);
     if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	(void)DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
     else
-	DM_SET_FGCOLOR(dmp,
+	(void)DM_SET_FGCOLOR(dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
-    DM_ENDDLIST(dmp);
+    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+    (void)DM_ENDDLIST(dmp);
 }
 
 
@@ -685,7 +682,8 @@ freeDListsAll(unsigned int dlist, int range)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    (void)DM_MAKE_CURRENT(dmp);
+	    (void)DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;

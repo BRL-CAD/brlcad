@@ -43,7 +43,6 @@ Some information pertaining to the color assignment of region identification
 numbers and the background color is prompted for on the standard input.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
@@ -64,7 +63,7 @@ The file format is not documented anywhere.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1986-2012 by the United States
+<para>This software is Copyright (c) 1986-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

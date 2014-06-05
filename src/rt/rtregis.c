@@ -1,7 +1,7 @@
 /*                       R T R E G I S . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
  * second log file.  Also for the moment it is expected that the first
  * log will correspond to a Unix-Plot file, whereas the second will
  * correspond to a pixel file.  If both images where Unix-Plot files,
- * they can be overlaid by simply concatenating them: "cat file.pl
- * file.pl >> out.pl"
+ * they can be overlaid by simply concatenating them: "cat file.plot3
+ * file.plot3 >> out.plot3"
  *
  * The program consists of three parts:
 
@@ -66,8 +66,6 @@ int verbose;		/* to be used for debugging */
 
 
 /**
- * P R I N T _ I N F O
- *
  * This routine takes as its input parameter a registration matrix.
  * Its sole task is to print this matrix out in a form usable by
  * plrot.  It also prints out the parameters for the new space command
@@ -89,8 +87,6 @@ print_info(fastf_t *mat)
 
 
 /**
- * M A T _ B U I L D
- *
  * This routine takes pointers to two matrices corresponding to the two
  * files to be registered and a registration matrix.  It builds the
  * registration matrix.  It returns success or failure.
@@ -145,8 +141,6 @@ mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 
 /*
  *
- * M A I N
- *
  * Main exists to coordinate the actions of the parts of this program.
  * It also processes its own arguments (argc and argv).
  */
@@ -160,7 +154,7 @@ main(int argc, char *argv[])
     mat_t view2model;		/* matrix for converting from view to model space */
     int ret;			/* function return code */
 
-    char usage[] = "Usage:  rtregis plot.log pix.log\n";
+    char usage[] = "Usage:  rtregis plot3.log pix.log\n";
 
     FILE *fp;
 
@@ -210,7 +204,7 @@ main(int argc, char *argv[])
 
     if (verbose) {
 	bn_mat_inv(view2model, mod2view1);
-	bn_mat_print("mod2view1-plot.log", mod2view1);
+	bn_mat_print("mod2view1-plot3.log", mod2view1);
 	bn_mat_print("mod2view2-pix.log", mod2view2);
 	fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
 		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);

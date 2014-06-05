@@ -1,7 +1,7 @@
 /*                         Z A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    while (BU_LIST_WHILE(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_WHILE(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
 	    (*gedp->ged_free_vlist_callback)(gedp,
 					     BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,

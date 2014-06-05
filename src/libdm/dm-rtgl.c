@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,8 +55,8 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-rtgl.h"
-#include "dm_xvars.h"
+#include "dm/dm-rtgl.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #include "./dm_util.h"
@@ -93,6 +93,7 @@ struct dm dm_rtgl = {
     rtgl_drawEnd,
     rtgl_normal,
     rtgl_loadMatrix,
+    null_loadPMatrix,
     rtgl_drawString2D,
     rtgl_drawLine2D,
     rtgl_drawLine3D,
@@ -120,6 +121,7 @@ struct dm dm_rtgl = {
     rtgl_genDLists,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
+    null_makeCurrent,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -146,6 +148,7 @@ struct dm dm_rtgl = {
     {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
     {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -218,8 +221,6 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
 
 
 /*
- * R T G L _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -248,27 +249,14 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_rtgl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "rtgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct rtgl_vars), "rtgl_open: rtgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "rtgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct rtgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 
@@ -404,9 +392,9 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&init_proc_vls);
@@ -582,8 +570,6 @@ Done:
 }
 
 
-/*
- */
 int
 rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
@@ -751,8 +737,6 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 
 /*
- * O G L _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -829,8 +813,6 @@ rtgl_stashTree(struct rtglJobs *job, char *tree)
 
 
 /*
- * O G L _ D R A W B E G I N
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
@@ -889,9 +871,6 @@ rtgl_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * O G L _ D R A W E N D
- */
 HIDDEN int
 rtgl_drawEnd(struct dm *dmp)
 {
@@ -933,11 +912,6 @@ rtgl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    /*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     rtgl_actively_drawing = 0;
     return TCL_OK;
 }
@@ -946,8 +920,6 @@ rtgl_drawEnd(struct dm *dmp)
 double startScale = 1;
 
 /*
- * R T G L _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by
  * many calls to rtgl_draw().
  */
@@ -1125,7 +1097,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 
     /* find the table bin for this color */
     colorKey = getColorKey(partColor);
-    entry = bu_find_hash_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &prev, &index);
+    entry = bu_hash_tbl_find(rtgljob.colorTable, colorKey, KEY_LENGTH, &prev, &index);
 
     /* look for the correct color bin in the found entries */
     newColor = 1;
@@ -1145,21 +1117,21 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
     if (newColor) {
 
 	/* create new color bin */
-	bin = bu_malloc(sizeof(struct colorBin), "dm-rtgl.c: addInfo");
+	BU_ALLOC(bin, struct colorBin);
 	VMOVE(bin->color, partColor);
 
 	/* create bin list head */
-	BU_GET(bin->list, struct ptInfoList);
+	BU_ALLOC(bin->list, struct ptInfoList);
 	head = &(bin->list->l);
 	BU_LIST_INIT(head);
 
 	/* add first list item */
-	BU_GET(rtgljob.currItem, struct ptInfoList);
+	BU_ALLOC(rtgljob.currItem, struct ptInfoList);
 	BU_LIST_PUSH(head, rtgljob.currItem);
 	rtgljob.currItem->used = 0;
 
 	/* add the new bin to the table */
-	entry = bu_hash_add_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &newColor);
+	entry = bu_hash_tbl_add(rtgljob.colorTable, colorKey, KEY_LENGTH, &newColor);
 	bu_set_hash_value(entry, (unsigned char *)bin);
     } else {
 	/* found existing color bin */
@@ -1171,7 +1143,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	/* if list item is full, create a new item */
 	if (rtgljob.currItem->used == PT_ARRAY_SIZE) {
 
-	    BU_GET(rtgljob.currItem, struct ptInfoList);
+	    BU_ALLOC(rtgljob.currItem, struct ptInfoList);
 	    BU_LIST_PUSH(head, rtgljob.currItem);
 	    rtgljob.currItem->used = 0;
 	}
@@ -1269,14 +1241,7 @@ randShots(fastf_t *center, fastf_t radius, int flag)
 	    /* jitter point */
 	    VMOVE(app.a_ray.r_dir, pt);
 
-
-	    if (RT_BADVEC(app.a_ray.r_dir)) {
-		VPRINT("bad dir:", app.a_ray.r_dir);
-	    }
-
-	    if (RT_BADVEC(app.a_ray.r_pt)) {
-		VPRINT("bad pt:", app.a_ray.r_pt);
-	    } else if (flag) {
+	    if (flag) {
 		/* shoot ray */
 		rt_shootray(&app);
 	    }
@@ -1455,7 +1420,7 @@ shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixe
 	    /* make new job if needed */
 	    if (rtgljob.currJob->used == JOB_ARRAY_SIZE) {
 
-		BU_GET(rtgljob.currJob, struct jobList);
+		BU_ALLOC(rtgljob.currJob, struct jobList);
 		BU_LIST_PUSH(&(jobs->l), rtgljob.currJob);
 		rtgljob.currJob->used = 0;
 	    }
@@ -1564,7 +1529,6 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
-#if 1
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1580,11 +1544,6 @@ drawPoints(float *view, int pointSize)
 		}
 	    }
 	    glEnd();
-#else
-	    glNormalPointer(GL_FLOAT, 0, &(rtgljob.currItem->norms));
-	    glVertexPointer(3, GL_FLOAT, 0, &(rtgljob.currItem->points));
-	    glDrawArrays(GL_POINTS, 0, (used / 3));
-#endif
 	}
     } while ((entry = bu_hash_tbl_next(&record)) != NULL);
 
@@ -1598,10 +1557,6 @@ fastf_t radius;
 double maxSpan;
 time_t start = 0;
 
-/*
- * R T G L _ D R A W V L I S T
- *
- */
 HIDDEN int
 rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 {
@@ -1649,7 +1604,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
     if (rtgljob.calls == 1 || rtgljob.colorTable == NULL) {
 
 	/* create color hash table */
-	rtgljob.colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
+	rtgljob.colorTable = bu_hash_tbl_create(START_TABLE_SIZE);
     }
 
     /* allocate our visible trees */
@@ -1835,7 +1790,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
-	BU_GET(rtgljob.currJob, struct jobList);
+	BU_ALLOC(rtgljob.currJob, struct jobList);
 	BU_LIST_PUSH(&(jobs.l), rtgljob.currJob);
 	rtgljob.currJob->used = 0;
 
@@ -1950,12 +1905,8 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 }
 
 
-/*
- * R T G L _ D R A W
- *
- */
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1975,8 +1926,6 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 
 
 /*
- * O G L _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -2006,8 +1955,6 @@ rtgl_normal(struct dm *dmp)
 
 
 /*
- * O G L _ D R A W S T R I N G 2 D
- *
  * Output a string.
  * The starting position of the beam is as specified.
  */
@@ -2032,10 +1979,6 @@ rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 }
 
 
-/*
- * O G L _ D R A W L I N E 2 D
- *
- */
 HIDDEN int
 rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
@@ -2044,10 +1987,6 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 }
 
 
-/*
- * O G L _ D R A W L I N E 3 D
- *
- */
 HIDDEN int
 rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
@@ -2057,10 +1996,6 @@ rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 }
 
 
-/*
- * O G L _ D R A W L I N E S 3 D
- *
- */
 HIDDEN int
 rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
@@ -2413,8 +2348,6 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
 
 /**
- * O G L _ C O N F I G U R E W I N
- *
  * Either initially, or on resize/reshape of the window, sense the
  * actual size of the window, and perform any other initializations of
  * the window configuration.

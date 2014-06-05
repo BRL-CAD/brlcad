@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,14 +30,12 @@
 
 #include <string.h>
 
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
 
 /**
- * R T _ G E N E R I C _ X F O R M
- *
  * Apply a 4x4 transformation matrix to the internal form of a solid.
  *
  * If "free" flag is non-zero, storage for the original solid is
@@ -72,23 +70,23 @@ rt_generic_xform(
     /* Scale change on export is 1.0 -- no change */
     switch (db_version(dbip)) {
 	case 4:
-	    if (rt_functab[id].ft_export4(&ext, ip, 1.0, dbip, resp) < 0) {
+	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
-		       rt_functab[id].ft_name);
+		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
 	    }
 	    if ((release || op == ip)) rt_db_free_internal(ip);
 
 	    RT_DB_INTERNAL_INIT(op);
-	    if (rt_functab[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
+	    if (OBJ[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;
 	case 5:
-	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
+	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
-		       rt_functab[id].ft_name);
+		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
 	    }
 
@@ -118,7 +116,7 @@ rt_generic_xform(
 		bu_avs_free(&avs);
 	    }
 
-	    if (rt_functab[id].ft_import5(op, &ext, mat, dbip, resp) < 0) {
+	    if (OBJ[id].ft_import5(op, &ext, mat, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
@@ -133,9 +131,7 @@ rt_generic_xform(
 
 
 /**
- * R T _ G E N E R I C _ G E T
- *
- * This is the generic routine to be listed in rt_functab[].ft_get
+ * This is the generic routine to be listed in OBJ[].ft_get
  * for those solid types which are fully described by their
  * ft_parsetab entry.
  *
@@ -173,10 +169,10 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 			       (char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(logstr, " %V", &str);
+		bu_vls_printf(logstr, " %s", bu_vls_addr(&str));
 	    else {
 		bu_vls_printf(logstr, " {");
-		bu_vls_printf(logstr, "%V", &str);
+		bu_vls_printf(logstr, "%s", bu_vls_addr(&str));
 		bu_vls_printf(logstr, "} ");
 	    }
 
@@ -198,28 +194,24 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 /**
- * R T _ G E N E R I C _ M A K E
- *
  * This one assumes that making all the parameters null is fine.
  */
 void
 rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
-    intern->idb_type = ftp - rt_functab;
+    intern->idb_type = ftp - OBJ;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
-    intern->idb_ptr = bu_calloc((unsigned int)ftp->ft_internal_size, 1, "rt_generic_make");
+    intern->idb_ptr = bu_calloc(1, (unsigned int)ftp->ft_internal_size, "rt_generic_make");
     *((uint32_t *)(intern->idb_ptr)) = ftp->ft_internal_magic;
 }
 
 
 /**
- * R T _ G E N E R I C _ A D J U S T
- *
  * For those solids entirely defined by their parsetab.  Invoked via
- * rt_functab[].ft_adjust()
+ * OBJ[].ft_adjust()
  */
 int
 rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
@@ -240,9 +232,17 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 
 /**
- * R T _ G E N E R I C _ F O R M
- *
- * Invoked via rt_functab[].ft_form() on solid types which are
+ * Invoked via OBJ[].ft_form() on solid types which are
+ * fully described by their bu_structparse table in ft_parsetab.
+ */
+int
+rt_generic_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
+{
+    return 0;
+}
+
+/**
+ * Invoked via OBJ[].ft_form() on solid types which are
  * fully described by their bu_structparse table in ft_parsetab.
  */
 int

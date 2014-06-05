@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,14 +19,13 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -146,9 +145,6 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 * termination conditions somewhat.
 	 *
 	 * diff is |p0|**2.  nxZ = Z - p0.
-	 *
-	 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
-	 * are embedded in the IF statement, as before.
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
@@ -265,7 +261,6 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      */
     bn_poly_synthetic_division(oldP, &rem, oldP, &divisor);
 }
-
 
 
 int

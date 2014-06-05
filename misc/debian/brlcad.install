@@ -89,3 +89,5 @@ debian/brlcad-doc-mged.desktop usr/share/applications
 debian/mged.desktop usr/share/applications
 debian/rtwizard.desktop usr/share/applications
 
+debian/version usr/brlcad
+

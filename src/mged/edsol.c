@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1578,8 +1578,6 @@ spline_ed(int arg)
     set_e_axes_pos(1);
 }
 /*
- * N M G _ E D
- *
  * Handler for events in the NMG menu.
  * Mostly just set appropriate state flags to prepare us for user's
  * next event.
@@ -1622,7 +1620,7 @@ nmg_ed(int arg)
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    rt_vlblock_free(vbp);
-		    bu_free((genptr_t)tab, "nmg_ed tab[]");
+		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;
 	    }
@@ -2480,8 +2478,6 @@ f_get_solid_keypoint(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), 
 
 
 /*
- * I N I T _ S E D I T
- *
  * First time in for this solid, set things up.
  * If all goes well, change state to ST_S_EDIT.
  * Solid editing is completed only via sedit_accept() / sedit_reject().
@@ -2618,8 +2614,6 @@ init_sedit_vars(void)
 
 
 /*
- * R E P L O T _ E D I T I N G _ S O L I D
- *
  * All solid edit routines call this subroutine after
  * making a change to es_int or es_mat.
  */
@@ -2638,8 +2632,8 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -2654,10 +2648,6 @@ replot_editing_solid(void)
 }
 
 
-/*
- * T R A N S F O R M _ E D I T I N G _ S O L I D
- *
- */
 void
 transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
@@ -2671,9 +2661,6 @@ transform_editing_solid(
 
 
 /*
- * S E D I T _ M E N U
- *
- *
  * Put up menu header
  */
 void
@@ -2782,9 +2769,9 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %V {Need vertex for solid rotate}\
- {%V} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  &dName, &str, arb_vertices[type][loc]);
+    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+ {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
+		  bu_vls_addr(&dName), bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -2825,7 +2812,7 @@ get_file_name(char *str)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
 	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
-	bu_free((genptr_t)dir, "get_file_name: directory string");
+	bu_free((void *)dir, "get_file_name: directory string");
     }
 
     bu_vls_printf(&cmd,
@@ -2881,8 +2868,6 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
 
 
 /*
- * P S C A L E
- *
  * Partial scaling of a solid.
  */
 void
@@ -3904,8 +3889,6 @@ pscale(void)
 
 
 /*
- * S E D I T
- *
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  * Called from mged main loop after any event handlers:
@@ -4091,8 +4074,8 @@ sedit(void)
 		    mged_print_result(TCL_ERROR);
 		    return;
 		} else if (es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, es_scale)
-			es_scale = 0.0;
+		    VSCALE(vol->cellsize, vol->cellsize, es_scale);
+		    es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4558,8 +4541,8 @@ sedit(void)
 		    RT_DB_INTERNAL_INIT(&tmp_ip);
 		    tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    tmp_ip.idb_type = ID_SKETCH;
-		    tmp_ip.idb_ptr = (genptr_t)extr->skt;
-		    tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
+		    tmp_ip.idb_ptr = (void *)extr->skt;
+		    tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 		    rt_db_free_internal(&tmp_ip);
 		}
 
@@ -4667,10 +4650,10 @@ sedit(void)
 		/* change D of planar equation */
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+                (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 	    break;
-
 	case ECMD_ARB_SETUP_ROTFACE:
 	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
@@ -4790,7 +4773,7 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
@@ -4972,8 +4955,8 @@ sedit(void)
 			MAT4X3PNT(work, es_invmat, es_para);
 			VSUB2(cli->h, work, cli->v);
 		    } else
-			VSUB2(cli->h, es_para, cli->v)
-			    }
+			VSUB2(cli->h, es_para, cli->v);
+		}
 		/* check for zero H vector */
 		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
 		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
@@ -6083,8 +6066,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves++;
@@ -6125,8 +6108,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve++;
@@ -6171,8 +6154,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves--;
@@ -6227,8 +6210,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve--;
@@ -6556,18 +6539,18 @@ sedit(void)
 		tmp_tol.para = 1.0 - tmp_tol.perp;
 
 		/* get a direction vector in model space corresponding to z-direction in view */
-		VSET(work, 0.0, 0.0, 1.0)
-		    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work)
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-		    for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
-			fastf_t dist;
+		for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
+		    fastf_t dist;
 
-			dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
-			if (dist < min_dist) {
-			    min_dist = dist;
-			    nearest = ps;
-			}
+		    dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
+		    if (dist < min_dist) {
+			min_dist = dist;
+			nearest = ps;
 		    }
+		}
 
 		es_metaballpt = nearest;
 
@@ -6688,8 +6671,6 @@ update_edit_absolute_tran(vect_t view_pos)
 
 
 /*
- * S E D I T _ M O U S E
- *
  * Mouse (pen) press in graphics area while doing Solid Edit.
  * mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
  * to viewspace.
@@ -6877,7 +6858,8 @@ sedit_mouse(const vect_t mousevec)
 		    (struct rt_arb_internal *)es_int.idb_ptr;
 
 		RT_ARB_CK_MAGIC(arb);
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 
 	    break;
@@ -7274,9 +7256,6 @@ oedit_abs_scale(void)
 }
 
 
-/*
- * V L S _ S O L I D
- */
 void
 vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 {
@@ -7295,11 +7274,11 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
     transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (rt_functab[id].ft_describe(vp, &intern, 1 /*verbose*/,
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/,
 				       base2local, &rt_uniresource, dbip) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (rt_functab[id].ft_describe(vp, &intern, 0 /* not verbose */,
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */,
 				       base2local, &rt_uniresource, dbip) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     }
@@ -7326,10 +7305,6 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 }
 
 
-/*
- * I N I T _ O B J E D I T _ G U T S
- *
- */
 static void
 init_oedit_guts(void)
 {
@@ -7421,10 +7396,6 @@ init_oedit_vars(void)
 }
 
 
-/*
- * I N I T _ O B J E D I T
- *
- */
 void
 init_oedit(void)
 {
@@ -7496,8 +7467,8 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -7528,8 +7499,8 @@ oedit_accept(void)
     if (dbip->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -7560,7 +7531,7 @@ oedit_reject(void)
 }
 
 
-/* F _ E Q N ()
+/*
  * Gets the A, B, C of a planar equation from the command line and puts the
  * result into the array es_peqn[] at the position pointed to by the variable
  * 'es_menu' which is the plane being redefined. This function is only callable
@@ -7610,7 +7581,8 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
-    if (rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol))
+
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */
@@ -7776,8 +7748,8 @@ sedit_reject(void)
 	struct ged_display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -7947,8 +7919,6 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /*
- * L A B E L _ E D I T E D _ S O L I D
- *
  * Put labels on the vertices of the currently edited solid.
  * XXX This really should use import/export interface! Or be part of it.
  */
@@ -8355,15 +8325,15 @@ label_edited_solid(
 
 		RT_ARS_CK_MAGIC(ars);
 
-		MAT4X3PNT(pos_view, xform, ars->curves[0])
+		MAT4X3PNT(pos_view, xform, ars->curves[0]);
 
-		    if (es_ars_crv >= 0 && es_ars_col >= 0) {
-			point_t ars_pt;
+		if (es_ars_crv >= 0 && es_ars_col >= 0) {
+		    point_t ars_pt;
 
-			VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
-			MAT4X3PNT(ars_pt, xform, work);
-			POINT_LABEL_STR(ars_pt, "pt");
-		    }
+		    VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
+		    MAT4X3PNT(ars_pt, xform, work);
+		    POINT_LABEL_STR(ars_pt, "pt");
+		}
 	    }
 	    POINT_LABEL(pos_view, 'V');
 	    break;
@@ -8551,8 +8521,6 @@ sedit_vpick(point_t v_pos)
 				((P1)[Z] - (P0)[Z])*((P1)[Z] - (P0)[Z]))
 
 /*
- * N U R B _ C L O S E S T 2 D
- *
  * Given a pointer (vhead) to vlist point coordinates, a reference
  * point (ref_pt), and a transformation matrix (mat), pass back in
  * "closest_pt" the original, untransformed 3 space coordinates of
@@ -9010,9 +8978,6 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 }
 
 
-/*
- * F _ S E D I T _ R E S E T
- */
 int
 f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {

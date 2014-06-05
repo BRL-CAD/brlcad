@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C L O U D S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,34 +19,15 @@
  */
 /** @file librender/texture_clouds.c
  *
- *  Comments -
- *      Texture Library - Perlin Clouds
+ * Comments -
+ * Texture Library - Perlin Clouds
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-void
-texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
-    struct texture_clouds_s *td;
-
-    texture->data = bu_malloc(sizeof(struct texture_clouds_s), "cloud data");
-    texture->free = texture_clouds_free;
-    texture->work = (texture_work_t *)texture_clouds_work;
-
-    td = (struct texture_clouds_s*)texture->data;
-    td->size = size;
-    td->octaves = octaves;
-    td->absolute = absolute;
-    VMOVE(td->scale, scale);
-    VMOVE(td->translate, translate);
-
-    texture_perlin_init(&td->perlin);
-}
 
 void
 texture_clouds_free(struct texture_s *texture) {
@@ -56,6 +37,7 @@ texture_clouds_free(struct texture_s *texture) {
     texture_perlin_free(&td->perlin);
     bu_free(texture->data, "cloud data");
 }
+
 
 void
 texture_clouds_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -81,6 +63,7 @@ texture_clouds_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNU
     *pixel[1] = fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
     *pixel[2] = fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,6 @@
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(const char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
 struct cmd_list head_cmd_list;
@@ -115,14 +114,12 @@ mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
 
 
 /**
- * G U I _ O U T P U T
- *
  * Used as a hook for bu_log output.  Sends output to the Tcl
  * procedure whose name is contained in the vls "tcl_output_hook".
  * Useful for user interface building.
  */
 int
-gui_output(genptr_t clientData, genptr_t str)
+gui_output(void *clientData, void *str)
 {
     int len;
     Tcl_DString tclcommand;
@@ -138,7 +135,7 @@ gui_output(genptr_t clientData, genptr_t str)
 
     Tcl_DStringInit(&tclcommand);
     (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
-    (void)Tcl_DStringAppendElement(&tclcommand, str);
+    (void)Tcl_DStringAppendElement(&tclcommand, (const char *)str);
 
     save_result = Tcl_GetObjResult(INTERP);
     Tcl_IncrRefCount(save_result);
@@ -150,7 +147,7 @@ gui_output(genptr_t clientData, genptr_t str)
 
     Tcl_DStringFree(&tclcommand);
 
-    len = (int)strlen(str);
+    len = (int)strlen((const char *)str);
     return len;
 }
 
@@ -238,7 +235,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av[argc] = (const char *)NULL;
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)av);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
-	    bu_free(av, "cmd_ged_info_wrapper: av");
+	    bu_free((void *)av, "cmd_ged_info_wrapper: av");
 	} else {
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
@@ -563,6 +560,23 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+
+/* This code is for debugging/testing the new ged return mechanism */
+#if 0
+    {
+    int r_loop = 0;
+    size_t result_cnt = 0;
+
+    result_cnt = ged_results_count(gedp->ged_results);
+    if (result_cnt > 0) {
+	bu_log("Results container holds results(%d):\n", result_cnt);
+	for (r_loop = 0; r_loop < (int)result_cnt; r_loop++) {
+	    bu_log("%s\n", ged_results_get(gedp->ged_results, r_loop));
+	}
+    }
+    }
+#endif
+
     if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
@@ -673,8 +687,6 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
 
 /**
- * C M D _ T K
- *
  * Command for initializing the Tk window and defaults.
  *
  * Usage:  loadtk [displayname[.screennum]]
@@ -703,8 +715,6 @@ cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * C M D _ O U T P U T _ H O O K
- *
  * Hooks the output to the given output hook.  Removes the existing
  * output hook!
  */
@@ -723,7 +733,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 	return TCL_ERROR;
     }
 
-    bu_log_delete_hook(gui_output, (genptr_t)interpreter);/* Delete the existing hook */
+    bu_log_delete_hook(gui_output, (void *)interpreter);/* Delete the existing hook */
 
     if (argc < 2)
 	return TCL_OK;
@@ -752,16 +762,13 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
     /* Set up the hook! */
     bu_vls_init(&tcl_output_hook);
     bu_vls_strcpy(&tcl_output_hook, argv[1]);
-    bu_log_add_hook(gui_output, (genptr_t)interpreter);
+    bu_log_add_hook(gui_output, (void *)interpreter);
 
     Tcl_ResetResult(interpreter);
     return TCL_OK;
 }
 
 
-/**
- * C M D _ N O P
- */
 int
 cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
@@ -848,7 +855,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	    clp->cl_tie->dml_tie = CMD_LIST_NULL;
 	bu_vls_free(&clp->cl_more_default);
 	bu_vls_free(&clp->cl_name);
-	bu_free((genptr_t)clp, "cmd_close: clp");
+	bu_free((void *)clp, "cmd_close: clp");
 
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -989,8 +996,6 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 
 
 /**
- * M G E D _ C O M P A T
- *
  * This routine is called to perform wildcard expansion and character
  * quoting on the given vls (typically input from the keyboard.)
  */
@@ -1095,8 +1100,6 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
 
 
 /**
- * C M D L I N E
- *
  * This routine is called to process a vls full of commands.  Each
  * command is newline terminated.  The input string will not be
  * altered in any way.
@@ -1256,8 +1259,6 @@ mged_print_result(int UNUSED(status))
 
 
 /**
- * M G E D _ C M D
- *
  * Check a table for the command, check for the correct minimum and
  * maximum number of arguments, and pass control to the proper
  * function.  If the number of arguments is incorrect, print out a
@@ -1383,8 +1384,6 @@ f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * H E L P C O M M
- *
  * Common code for help commands
  */
 HIDDEN int
@@ -1418,8 +1417,6 @@ helpcomm(int argc, const char *argv[], struct funtab *functions)
 
 
 /**
- * F _ H E L P
- *
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */
@@ -1498,22 +1495,22 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		bu_vls_printf(&vls, "%V %V", &clp->cl_name,
-			      &clp->cl_tie->dml_dmp->dm_pathName);
+		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			      bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    } else {
-		bu_vls_printf(&vls, "%V {}", &clp->cl_name);
+		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    }
 	}
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    bu_vls_printf(&vls, "%V %V", &clp->cl_name,
-			  &clp->cl_tie->dml_dmp->dm_pathName);
+	    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			  bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	} else {
-	    bu_vls_printf(&vls, "%V {}", &clp->cl_name);
+	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	}
 
@@ -1628,7 +1625,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 
     vsp = view_state;  /* save state info pointer */
 
-    bu_free((genptr_t)menu_state, "f_ps: menu_state");
+    bu_free((void *)menu_state, "f_ps: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;
@@ -1684,7 +1681,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     view_state = dml->dml_view_state;  /* use dml's state info */
     *mged_variables = *dml->dml_mged_variables; /* struct copy */
 
-    bu_free((genptr_t)menu_state, "f_pl: menu_state");
+    bu_free((void *)menu_state, "f_pl: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;
@@ -1832,8 +1829,6 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, const
 
 
 /**
- * C M D _ U N I T S
- *
  * Change the local units of the description.  Base unit is fixed in
  * mm, so this just changes the current local unit that the user works
  * in.
@@ -1869,8 +1864,6 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 
 
 /**
- * C M D _ S E A R C H
- *
  * Search command in the style of the Unix find command for db
  * objects.
  */
@@ -1894,8 +1887,6 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
 
 
 /**
- * C M D _ L M
- *
  * List regions based on values of their MUVES_Component attribute
  */
 int
@@ -1976,8 +1967,6 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
 
 /**
- * F _ T O L
- *
  * "tol" displays current settings
  * "tol abs #" sets absolute tolerance.  # > 0.0
  * "tol rel #" sets relative tolerance.  0.0 < # < 1.0
@@ -2011,7 +2000,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind);
 
 /**
  * ZAP the display -- then edit anew
@@ -2036,7 +2025,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     if (argc == 1) /* "B" alone is same as "Z" */
 	return TCL_OK;
 
-    return edit_com(argc, argv, 1, 1);
+    return edit_com(argc, argv, 1);
 }
 
 
@@ -2046,7 +2035,17 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    return edit_com(argc, argv, 1, 1);
+    struct ged_view *gvp = NULL;
+
+    if (gedp)
+	gvp = gedp->ged_gvp;
+
+    if (gvp && dmp) {
+	gvp->gv_x_samples = dmp->dm_width;
+	gvp->gv_y_samples = dmp->dm_height;
+    }
+
+    return edit_com(argc, argv, 1);
 }
 
 
@@ -2075,13 +2074,11 @@ cmd_ev(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
-    return edit_com(argc, argv, 3, 1);
+    return edit_com(argc, argv, 3);
 }
 
 
 /**
- * C M D _ E
- *
  * The "Big E" command.  Evaluated Edit something (add to visible
  * display).  Usage: E object(s)
  */
@@ -2091,7 +2088,7 @@ cmd_E(ClientData UNUSED(clientData),
       int argc,
       const char *argv[])
 {
-    return edit_com(argc, argv, 2, 1);
+    return edit_com(argc, argv, 2);
 }
 
 

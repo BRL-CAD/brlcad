@@ -1,7 +1,7 @@
 /*                 S O L V E R _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,6 +122,12 @@ int main()
     S1.cdisplay();
 
     pc_free_pcset(&pcs);
+
+    /* NOTE: THE BELOW TESTS ARE VOLATILE.
+     *
+     * This is why they are disabled, kept as an example of PC solving
+     * in use and for development continuation.
+     */
 #if 0
     /** Testing PCSolver Methods */
 

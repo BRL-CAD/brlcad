@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/debug.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -89,7 +91,7 @@ tclify_name(const char *name)
 
     if (max_len > tclified_name_buffer_len) {
 	tclified_name_buffer_len = max_len;
-	tclified_name = bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
+	tclified_name = (char *)bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
     }
 
     dest = tclified_name;
@@ -114,11 +116,9 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     iname = "-";
     ifp = stdin;
@@ -178,8 +178,8 @@ main(int argc, char **argv)
 	if (Tcl_Init(interp) == TCL_ERROR)
 	    bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
-	if ((dbip = db_open(iname, "rb")) == NULL) {
-	    bu_exit(4, "Unable to db_open() file '%s', aborting\n", iname);
+	if ((dbip = db_open(iname, DB_OPEN_READONLY)) == NULL) {
+	    bu_exit(4, "Unable to open geometry database file '%s', aborting\n", iname);
 	}
 	RT_CK_DBI(dbip);
 	if (db_dirbuild(dbip)) {
@@ -410,8 +410,6 @@ main(int argc, char **argv)
 
 
 /*
- *			N A M E
- *
  *  Take a database name and null-terminate it,
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
@@ -450,8 +448,6 @@ char *encode_name(char *str)
 
 
 /*
- *			G E T _ E X T
- *
  *  Take "ngran" granules, and put them in memory.
  *  The first granule comes from the global extern "record",
  *  the remainder are read from ifp.
@@ -464,7 +460,7 @@ get_ext(struct bu_external *ep, size_t ngran)
     BU_EXTERNAL_INIT(ep);
 
     ep->ext_nbytes = ngran * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
 
     /* Copy the freebie (first) record into the array of records.  */
     memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));
@@ -642,7 +638,7 @@ cline_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_CLINE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: cline import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -677,7 +673,7 @@ bot_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_BOT].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: bot import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -730,7 +726,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_PIPE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: pipe import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -780,7 +776,7 @@ particle_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_PARTICLE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: particle import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -816,8 +812,7 @@ particle_dump(void)
 }
 
 
-/*			A R B N _ D U M P
- *
+/*
  *  Print out arbn information.
  *
  */
@@ -838,7 +833,7 @@ arbn_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_ARBN].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: arbn import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -859,8 +854,6 @@ arbn_dump(void)
 
 
 /*
- *			C O M B D U M P
- *
  *  Note that for compatibility with programs such as FRED that
  *  (inappropriately) read .asc files, the member count has to be
  *  recalculated here.
@@ -923,12 +916,13 @@ combdump(void)	/* Print out Combination record information */
     fprintf(ofp, "%.16s ", encode_name(record.c.c_name));	/* unique name */
     fprintf(ofp, "%d ", record.c.c_regionid);	/* region ID code */
     fprintf(ofp, "%d ", record.c.c_aircode);	/* air space code */
-    fprintf(ofp, "%d ", mcount);       		/* DEPRECATED: # of members */
-#if 1
-    fprintf(ofp, "%d ", 0);			/* DEPRECATED: COMGEOM region # */
-#else
-    (void)fprintf(ofp, "%d ", record.c.c_num);           /* DEPRECATED: COMGEOM region # */
-#endif
+
+    /* DEPRECATED: # of members */
+    fprintf(ofp, "%d ", mcount);
+
+    /* DEPRECATED: COMGEOM region # */
+    fprintf(ofp, "%d ", 0 /* was record.c.c_num */);
+
     fprintf(ofp, "%d ", record.c.c_material);	/* material code */
     fprintf(ofp, "%d ", record.c.c_los);		/* equiv. LOS est. */
     fprintf(ofp, "%d %d %d %d ",
@@ -965,20 +959,18 @@ combdump(void)	/* Print out Combination record information */
     while (BU_LIST_WHILE(mp, mchain, &head)) {
 	membdump(&mp->r);
 	BU_LIST_DEQUEUE(&mp->l);
-	bu_free((char *)mp, "mchain");
+	BU_PUT(mp, struct mchain);
     }
 
     if (ret_mp) {
 	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
-	bu_free((char *)ret_mp, "mchain");
+	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
     return 0;
 }
 
 /*
- *			M E M B D U M P
- *
  *  Print out Member record information.
  *  Intended to be called by combdump only.
  */
@@ -1140,8 +1132,6 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 }
 
 /*
- *			S T R C H O P
- *
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
@@ -1197,7 +1187,7 @@ extrdump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_EXTRUDE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: extrusion import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1232,7 +1222,7 @@ sketchdump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((rt_functab[ID_SKETCH].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: sketch import failure\n");
 	bu_exit(-1, NULL);
     }

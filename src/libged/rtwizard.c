@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -116,6 +116,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -123,6 +124,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
@@ -187,6 +189,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -197,6 +200,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
@@ -220,13 +224,14 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     int args;
     quat_t quat;
     vect_t eye_model;
-    struct bu_vls perspective_vls;
-    struct bu_vls size_vls;
-    struct bu_vls orient_vls;
-    struct bu_vls eye_vls;
+    struct bu_vls perspective_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls size_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
     char rt[256] = {0};
+    char rtscript[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -237,30 +242,25 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2 + 2;
+	/* btclsh rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2;
+	/* btclsh rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-#ifdef _WIN32
-	snprintf(rt, 256, "%s/rtwizard.bat", bin);
-#else
-	snprintf(rt, 256, "%s/rtwizard", bin);
-#endif
+	snprintf(rt, 256, "%s/btclsh", bin);
+	snprintf(rtscript, 256, "%s/rtwizard", bin);
+    } else {
+	snprintf(rt, 256, "btclsh");
+	snprintf(rtscript, 256, "rtwizard");
     }
 
     _ged_rt_set_eye_model(gedp, eye_model);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-
-    bu_vls_init(&perspective_vls);
-    bu_vls_init(&size_vls);
-    bu_vls_init(&orient_vls);
-    bu_vls_init(&eye_vls);
 
     bu_vls_printf(&size_vls, "%.15e", gedp->ged_gvp->gv_size);
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
@@ -268,6 +268,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rt;
+    *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
     *vp++ = bu_vls_addr(&size_vls);
@@ -283,17 +284,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = "-i";
-    /* XXX why is this different for win32 only? */
-#ifdef _WIN32
-    {
-	char buf[512];
-
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
-    }
-#else
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-#endif
 
     /* Append all args */
     for (i = 1; i < argc; i++)

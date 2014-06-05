@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-         xmlns:xlink="http://www.w3.org/1999/xlink">
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
 
   <info>
     <title>Article Title</title>
@@ -81,7 +79,14 @@
         <title>Example embedded image text.</title>
       </info>
       <mediaobject>
-        <imageobject>
+        <imageobject role="html">
+          <!--
+               NOTE: fileref will normally be something like
+               "../../articles/en/images/nirt_fig02.png" NOT http: URL
+               -->
+          <imagedata align="center" fileref="http://brlcad.org/images/logo/BRL-CAD_256x256.png" format="PNG" width="64"/>
+        </imageobject>
+        <imageobject role="fo">
           <!--
                NOTE: fileref will normally be something like
                "../../articles/en/images/nirt_fig02.png" NOT http: URL
@@ -98,7 +103,7 @@
 
     <para>
       Another image, but rendered inline
-      <inlinemediaobject><imageobject><imagedata fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png" format="PNG" width="64"/></imageobject></inlinemediaobject>
+      <inlinemediaobject><imageobject role="html"><imagedata fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png" format="PNG" width="64"/></imageobject><imageobject role="fo"><imagedata fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png" format="PNG" width="64"/></imageobject></inlinemediaobject>
       with the paragraph text.
     </para>
 

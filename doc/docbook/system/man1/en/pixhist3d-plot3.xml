@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixhist3dplot31'>
+<refmeta>
+    <refentrytitle>PIXHIST3D-PLOT3
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixhist3d-plot3</refname>
+<refpurpose>output RGB color space utilization in 3D unix-plot form</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixhist3d-plot3</command>
+    <group choice='plain'><arg choice='opt'><replaceable>file.pix</replaceable></arg><arg choice='plain'><replaceable>plot</replaceable></arg></group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixhist3d-plot3</emphasis>
+takes a color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file
+and outputs points for each RGB color occurring in the image.
+The format of these points is the BRL extended three dimensional UNIX
+plot (see
+<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>).
+A red, green, and blue line is drawn along the edges of the
+color space indicating the coordinate axis.  The resolution of the
+color space is 128x128x128, i.e. the least significant bit of each
+color plane is ignored.</para>
+
+<para>These plots are best viewed on an interactive 3D UNIX plot display
+program, so that the color cube can be viewed from all angles.
+Anomalies in the colors of an image can often be seen, e.g.
+oversaturation resulting in intensity clipping.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixhist3d</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

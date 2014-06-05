@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GET(bot, struct rt_bot_internal);
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = mode;
     bot->orientation = orientation;
@@ -113,7 +113,7 @@ mk_bot_w_normals(
 	bot->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, mk_conv2mm);
+    return wdb_export(fp, name, (void *)bot, ID_BOT, mk_conv2mm);
 }
 
 
@@ -138,7 +138,7 @@ mk_bot(
 				 * about hit point
 				 */
 {
-    return(mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+    return (mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
 			    faces, thickness, face_mode, 0, NULL, NULL));
 }
 

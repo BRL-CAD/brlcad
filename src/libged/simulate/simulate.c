@@ -1,7 +1,7 @@
 /*                         S I M U L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 /* Public Headers */
 #include "vmath.h"
 #include "db.h"
-#include "bu.h"
+
 #include "raytrace.h"
 
 /* Private Headers */
@@ -123,7 +123,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 
 	    /* Add to simulation list */
-	    current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
+	    BU_ALLOC(current_node, struct rigid_body);
 	    current_node->index = sim_params->num_bodies;
 	    current_node->rb_namep = bu_strdup(bu_vls_addr(&dp_name_vls));
 	    current_node->dp = ndp;
@@ -159,7 +159,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
     bu_vls_free(&dp_name_vls);
 
-    if(sim_params->num_bodies == 0){
+    if (sim_params->num_bodies == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
 	    return GED_ERROR;
     }
@@ -189,13 +189,13 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get its BB */
 	    if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
-	        bu_log("get_bb: Got the BB for \"%s\" as \
+		bu_log("get_bb: Got the BB for \"%s\" as \
 					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
 		    V3ARGS(rpp_min),
 		    V3ARGS(rpp_max));
 	    } else {
-	        bu_log("get_bb: ERROR Could not get the BB\n");
-	        return GED_ERROR;
+		bu_log("get_bb: ERROR Could not get the BB\n");
+		return GED_ERROR;
 	    }
 
 	    VMOVE(current_node->bb_min, rpp_min);
@@ -208,7 +208,7 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get BB position in 3D space */
 	    VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
-	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
+	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min);
 
 	    MAT_IDN(current_node->m);
 	    current_node->m[12] = current_node->bb_center[0];
@@ -429,7 +429,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
     }
 
-    for (i=0 ; i < sim_params.duration ; i++) {
+    for (i = 0 ; i < sim_params.duration ; i++) {
 
 		bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 

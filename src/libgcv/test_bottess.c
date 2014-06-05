@@ -1,7 +1,7 @@
 /*                  T E S T _ B O T T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
     VCROSS(f[1].plane,tmp[0], tmp[1]);
     f[1].foo = 0;
 
-    if( gcv_tri_tri_intersect_with_isectline(NULL,NULL, f, f+1, &coplanar, i, &tol) == 0 && should == 0)
+    if ( gcv_tri_tri_intersect_with_isectline(NULL,NULL, f, f+1, &coplanar, i, &tol) == 0 && should == 0)
 	return 0;
     return !(VNEAR_EQUAL(i[0], p1, tol.dist) && VNEAR_EQUAL(i[1], p2, tol.dist));
 }
@@ -75,7 +75,7 @@ test_tri_intersections()
     point_t t0[3], t1[3], p0, p1; \
     VSET(t0[0],t00x,t00y,t00z); VSET(t0[1],t01x,t01y,t01z); VSET(t0[2],t02x,t02y,t02z); \
     VSET(t1[0],t10x,t10y,t10z); VSET(t1[1],t11x,t11y,t11z); VSET(t1[2],t12x,t12y,t12z); \
-    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z) \
+    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z); \
     count += test_intersection(suc, t0, t1, p0, p1); }
 
     TRY(1,0,0,0,0,1,0,0,0,1,-1,0,0.5,0,1,0.5,1,0,0.5,0,0,.5,0,.5,.5);	/* ep ef */
@@ -88,12 +88,12 @@ test_tri_intersections()
 static int
 find_tri(struct soup_s *s, struct face_s *f, struct bn_tol *t) {
     unsigned int i, j, k;
-    for(i=0;i<s->nfaces;i++) {
+    for (i=0;i<s->nfaces;i++) {
 	int found[3] = {0,0,0};
 	struct face_s *wf = s->faces+i;
 
-	for(j=0;j<3;j++) for(k=0;k<3;k++) if(VNEAR_EQUAL( wf->vert[j], f->vert[k], t->dist)) found[j] = 1;
-	if(found[0] == 1 && found[1] == 1 && found[2] == 1) return i;
+	for (j=0;j<3;j++) for (k=0;k<3;k++) if (VNEAR_EQUAL( wf->vert[j], f->vert[k], t->dist)) found[j] = 1;
+	if (found[0] == 1 && found[1] == 1 && found[2] == 1) return i;
     }
     return -1;
 }
@@ -212,14 +212,14 @@ test_face_splits()
     VSET(p[0], 0, 0, -1); VSET(p[1], 0, 1, 0); VSET(p[2], 0, 0, 1); soup_add_face(&r, p[0], p[1], p[2], &t);
 
     rval = split_face(&l, 0, &r, 0, &t);
-    if(rval != 3 || l.nfaces != 2 || r.nfaces != 2) {
+    if (rval != 3 || l.nfaces != 2 || r.nfaces != 2) {
 	printf("\033[1;31mFAILURE\033[m\n");
 	count++;
     }
     {
 	struct face_s f;
 	int tri;
-#define ZORF(XVAL,ZVAL,LR,FU) VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], XVAL,0,ZVAL); tri = find_tri(&LR, &f, &t); if(tri==-1 || l.faces[tri].foo != FU) { count++; printf("\033[1;31mFAILURE\033[m\n"); }
+#define ZORF(XVAL,ZVAL,LR,FU) VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], XVAL,0,ZVAL); tri = find_tri(&LR, &f, &t); if (tri==-1 || l.faces[tri].foo != FU) { count++; printf("\033[1;31mFAILURE\033[m\n"); }
 	ZORF(1,0,l,INSIDE);
 	ZORF(-1,0,l,OUTSIDE);
 	ZORF(0,-1,r,OUTSIDE);
@@ -253,30 +253,30 @@ int test_compose()
     t.dist_sq = t.dist * t.dist;
 
     /* assembly tree linkages */
-#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; r = bu_malloc(sizeof(union tree), "right tree"); rs = bu_malloc(sizeof(struct soup_s), "right soup"); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
+#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; BU_ALLOC(r, union tree); BU_ALLOC(rs, struct soup_s); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
 
     /* test empty tree */
     PREP;
     compose(&l, r, 0, 0, 0);	/* r is destroyed */
-    if(ls.nfaces != 0) { printf("Erm, 0+0=%lu?\n", ls.nfaces); rval++; }
+    if (ls.nfaces != 0) { printf("Erm, 0+0=%lu?\n", ls.nfaces); rval++; }
 
     /* test no moves, all deleted */
     PREP;
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
-    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
+    for (i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, INSIDE);
-    if(ls.nfaces != 0) { rval++; printf("Missing faces\n"); }
+    if (ls.nfaces != 0) { rval++; printf("Missing faces\n"); }
 
     /* test all moves, all kept */
     PREP;
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
-    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
+    for (i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
-    if(ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
+    if (ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
 
     /* test partial moves */
     PREP;
@@ -287,7 +287,7 @@ int test_compose()
     rs->faces[1].foo = INSIDE;
     rs->faces[2].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
-    if(ls.nfaces != 2) { rval++; printf("Missing faces\n"); }
+    if (ls.nfaces != 2) { rval++; printf("Missing faces\n"); }
 
     PREP;
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
@@ -297,7 +297,7 @@ int test_compose()
     rs->faces[1].foo = INSIDE;
     rs->faces[2].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, INSIDE);
-    if(ls.nfaces != 1) { rval++; printf("Missing faces\n"); }
+    if (ls.nfaces != 1) { rval++; printf("Missing faces\n"); }
 #undef PREP
     return rval;
 }
@@ -310,7 +310,7 @@ int test_evaluate()
 int
 main(void)
 {
-#define TRY(STR,FNC) { int rval = FNC(); printf("RESULT:%18s: \033[1;", STR); if(rval) printf("31m%d\033[m failures\n",  rval); else printf("32mOK\033[m\n"); }
+#define TRY(STR,FNC) { int rval = FNC(); printf("RESULT:%18s: \033[1;", STR); if (rval) printf("31m%d\033[m failures\n",  rval); else printf("32mOK\033[m\n"); }
     TRY("tri intersection", test_tri_intersections);
     TRY("single face split", test_face_split_single);
     TRY("face splitting", test_face_splits);

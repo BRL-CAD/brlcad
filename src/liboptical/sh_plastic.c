@@ -1,7 +1,7 @@
 /*                    S H _ P L A S T I C . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,12 +72,12 @@ struct bu_structparse phong_parse[] = {
 };
 
 
-HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void phong_print(register struct region *rp, genptr_t dp);
-HIDDEN void phong_free(genptr_t cp);
+HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void phong_print(register struct region *rp, void *dp);
+HIDDEN void phong_free(void *cp);
 
 /* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
@@ -96,11 +96,8 @@ extern double phg_ipow();
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-/*
- * P H O N G _ S E T U P
- */
 HIDDEN int
-phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -119,7 +116,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -129,11 +126,8 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * M I R R O R _ S E T U P
- */
 HIDDEN int
-mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -152,7 +146,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -162,11 +156,8 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * G L A S S _ S E T U P
- */
 HIDDEN int
-glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -186,7 +177,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -196,29 +187,21 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * P H O N G _ P R I N T
- */
 HIDDEN void
-phong_print(register struct region *rp, genptr_t dp)
+phong_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, phong_parse, (char *)dp);
 }
 
 
-/*
- * P H O N G _ F R E E
- */
 HIDDEN void
-phong_free(genptr_t cp)
+phong_free(void *cp)
 {
-    bu_free(cp, "phong_specific");
+    BU_PUT(cp, struct phong_specific);
 }
 
 
 /*
- * P H O N G _ R E N D E R
- *
  Color pixel based on the energy of a point light source (Eps)
  plus some diffuse illumination (Epd) reflected from the point
  <x, y> :
@@ -283,7 +266,7 @@ phong_free(genptr_t cp)
  `	n	'Shininess' of the material,  range 1 to 10.
 */
 HIDDEN int
-phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     struct light_specific *lp;
 #ifndef RT_MULTISPECTRAL
@@ -454,8 +437,8 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
 		if (PM_Activated) {
-		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
-			dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
+		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+		    dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 		    dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
 		    refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
 		    /* bu_log("pt: [%.3f][%.3f, %.3f, %.3f]\n", dist, pt[0], pt[1], pt[2]);*/
@@ -552,8 +535,6 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 
 #ifndef PHAST_PHONG
 /*
- * I P O W
- *
  * Raise a floating point number to an integer power
  */
 double

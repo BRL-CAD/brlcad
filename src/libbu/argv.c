@@ -1,7 +1,7 @@
 /*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/file.h"
 
 size_t
 bu_argv_from_string(char *argv[], size_t lim, char *lp)
@@ -282,7 +284,7 @@ bu_argv_from_path(const char *path, int *ac)
 	++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-	bu_free((genptr_t)newstr, "bu_argv_from_path");
+	bu_free((void *)newstr, "bu_argv_from_path");
 	return (char **)0;
     }
 

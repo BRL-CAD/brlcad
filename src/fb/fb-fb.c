@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vF:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vF:h?")) != -1) {
 	switch (c) {
 	    case 'F':
 		out_fb_name = bu_optarg;

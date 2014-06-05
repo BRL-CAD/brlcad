@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file conv/g-x3d.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a X3D facetted
+ * Program to convert a BRL-CAD model (in a .g file) to a X3D faceted
  * model by calling on the NMG booleans. This program is a modified
  * version of g-vrml (authored by John R. Anderson).
  *
@@ -86,32 +86,32 @@ struct vrml_mat {
 };
 
 #define PL_O(_m)	bu_offsetof(struct vrml_mat, _m)
-#define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_O(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "sh",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim",		PL_O(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s",  TXT_NAME_SIZE, "file", PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",  TXT_NAME_SIZE, "file", PL_O(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n\
+(units default to mm)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
@@ -119,7 +119,7 @@ static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
 
-static	char*	units=NULL;
+static	char*	units="mm";
 static fastf_t	scale_factor=1.0;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -160,10 +160,10 @@ clean_pmp( struct plate_mode *pmp )
 	if ( pmp->bots[i] ) {
 	    struct rt_db_internal intern;
 
-	    intern.idb_ptr = (genptr_t) pmp->bots[i];
+	    intern.idb_ptr = (void *) pmp->bots[i];
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_BOT;
-	    intern.idb_meth = &rt_functab[ID_BOT];
+	    intern.idb_meth = &OBJ[ID_BOT];
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_meth->ft_ifree( &intern );
 	    pmp->bots[i] = NULL;
@@ -180,7 +180,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 
     RT_BOT_CK_MAGIC( bot_in );
 
-    bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "dup bot" );
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     *bot = *bot_in;	/* struct copy */
 
@@ -206,7 +206,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -249,7 +249,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 }
 
 static int
-select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *client_data)
 {
     int ret;
 
@@ -261,7 +261,7 @@ select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, c
 }
 
 union tree *
-leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -349,9 +349,6 @@ writeX3dEnd(FILE *fp_out) {
     fprintf(fp_out, "</X3D>\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -389,11 +386,11 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     BARRIER_CHECK;
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -404,7 +401,7 @@ main(int argc, char **argv)
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*bn_pi/180.0;
+		ttol.norm = atof(bu_optarg)*DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */
@@ -417,52 +414,42 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		rt_g.debug = 1;
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
 		if ( ZERO(scale_factor) )
-		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
-		}
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
-
-    if ( !units )
-	units = "mm";
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild() failed!\n" );
-    }
 
     if (out_file == NULL) {
 	outfp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(outfp), O_BINARY);
-#endif
     } else {
 	if ((outfp = fopen( out_file, "wb")) == NULL)
 	{
@@ -498,12 +485,12 @@ main(int argc, char **argv)
 
 	/* walk trees selecting only light source regions */
 	(void)db_walk_tree(dbip, 1, (const char **)(&argv[i]),
-			   1,				/* ncpu */
+			   ncpu,
 			   &tree_state,
 			   select_lights,
 			   do_region_end,
 			   leaf_tess,
-			   (genptr_t)&pm);	/* in librt/nmg_bool.c */
+			   (void *)&pm);	/* in librt/nmg_bool.c */
 
 
     }
@@ -511,12 +498,12 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,				/* ncpu */
+		       ncpu,
 		       &tree_state,
 		       select_non_lights,
 		       do_region_end,
 		       leaf_tess,
-		       (genptr_t)&pm);	/* in librt/nmg_bool.c */
+		       (void *)&pm);	/* in librt/nmg_bool.c */
 
     BARRIER_CHECK;
     /* Release dynamic storage */
@@ -845,16 +832,16 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	VSCALE( pt_meters, vg->coord, scale_factor );
 
 	if ( is_light )
-	    VADD2( ave_pt, ave_pt, pt_meters )
-		if ( first )
-		{
-		    if ( !is_light )
-			fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
-		    first = 0;
-		}
-		else
-		    if ( !is_light )
-			fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
+	    VADD2( ave_pt, ave_pt, pt_meters );
+	if ( first )
+	{
+	    if ( !is_light )
+		fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
+	    first = 0;
+	}
+	else
+	    if ( !is_light )
+		fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
     }
 
     /* close point */
@@ -939,14 +926,12 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 }
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -1003,7 +988,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -1028,7 +1013,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -1118,7 +1103,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     BARRIER_CHECK;

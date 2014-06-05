@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bu.h"
 
 
-ON_Brep *
+static ON_Brep *
 generate_brep(int count, ON_3dPoint *points)
 {
     ON_Brep *brep = new ON_Brep();
@@ -146,7 +146,6 @@ generate_brep(int count, ON_3dPoint *points)
     brep->m_C3.Append(segment30prime);
 
     // SURFACES
-#if 1
     ON_NurbsSurface* surf0123 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0123->SetKnot(0, 0, 0.0); surf0123->SetKnot(0, 1, 1.0); surf0123->SetKnot(1, 0, 0.0); surf0123->SetKnot(1, 1, 1.0);
     surf0123->SetCV(0, 0, points[0]);
@@ -154,16 +153,6 @@ generate_brep(int count, ON_3dPoint *points)
     surf0123->SetCV(1, 1, points[2]);
     surf0123->SetCV(0, 1, points[3]);
     brep->m_S.Append(surf0123); /* 0 */
-#else
-    /* XXX */
-    ON_NurbsSurface* surf0123prime = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
-    surf0123prime->SetKnot(0, 0, 0.0); surf0123prime->SetKnot(0, 1, 1.0); surf0123prime->SetKnot(1, 0, 0.0); surf0123prime->SetKnot(1, 1, 1.0);
-    surf0123prime->SetCV(0, 0, p8);
-    surf0123prime->SetCV(1, 0, p9);
-    surf0123prime->SetCV(1, 1, p10);
-    surf0123prime->SetCV(0, 1, p11);
-    brep->m_S.Append(surf0123prime); /* 0 */
-#endif
 
     ON_NurbsSurface* surf4765 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf4765->SetKnot(0, 0, 0.0); surf4765->SetKnot(0, 1, 1.0); surf4765->SetKnot(1, 0, 0.0); surf4765->SetKnot(1, 1, 1.0);
@@ -253,7 +242,6 @@ generate_brep(int count, ON_3dPoint *points)
 
     // FACES
 
-#if 1
     ON_BrepFace& face0123 = brep->NewFace(0);
     ON_BrepLoop& loop0123 = brep->NewLoop(ON_BrepLoop::outer, face0123); /* 0 */
     ON_BrepTrim& trim01 = brep->NewTrim(brep->m_E[0], false, loop0123, 0 /* trim */); /* m_T[0] */
@@ -276,32 +264,7 @@ generate_brep(int count, ON_3dPoint *points)
     trim30.m_type = ON_BrepTrim::mated;
     trim30.m_tolerance[0] = SMALL_FASTF;
     trim30.m_tolerance[1] = SMALL_FASTF;
-#else
-    ON_BrepFace& face0123 = brep->NewFace(0 /* surfaceID */);
-    ON_BrepLoop& loop0123 = brep->NewLoop(ON_BrepLoop::outer, face0123); /* 0 */
-    ON_BrepTrim& trim01 = brep->NewTrim(brep->m_E[0], false, loop0123, 0 /* trim */); /* 0 */
-    trim01.m_iso = ON_Surface::S_iso;
-    trim01.m_type = ON_BrepTrim::boundary;
-    trim01.m_tolerance[0] = SMALL_FASTF;
-    trim01.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim12 = brep->NewTrim(brep->m_E[1], false, loop0123, 1 /* trim */); /* 1 */
-    trim12.m_iso = ON_Surface::E_iso;
-    trim12.m_type = ON_BrepTrim::boundary;
-    trim12.m_tolerance[0] = SMALL_FASTF;
-    trim12.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim23 = brep->NewTrim(brep->m_E[2], false, loop0123, 2 /* trim */); /* 2 */
-    trim23.m_iso = ON_Surface::N_iso;
-    trim23.m_type = ON_BrepTrim::boundary;
-    trim23.m_tolerance[0] = SMALL_FASTF;
-    trim23.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim30 = brep->NewTrim(brep->m_E[3], false, loop0123, 3 /* trim */); /* 3 */
-    trim30.m_iso = ON_Surface::W_iso;
-    trim30.m_type = ON_BrepTrim::boundary;
-    trim30.m_tolerance[0] = SMALL_FASTF;
-    trim30.m_tolerance[1] = SMALL_FASTF;
-#endif
 
-#if 1
     ON_BrepFace& face4765 = brep->NewFace(1 /* surfaceID */);
     ON_BrepLoop& loop4765 = brep->NewLoop(ON_BrepLoop::outer, face4765); /* 1 */
     ON_BrepTrim& trim47 = brep->NewTrim(brep->m_E[7], false, loop4765, 0 /* trim */); /* 4 */
@@ -416,11 +379,16 @@ generate_brep(int count, ON_3dPoint *points)
     trim40.m_type = ON_BrepTrim::mated;
     trim40.m_tolerance[0] = SMALL_FASTF;
     trim40.m_tolerance[1] = SMALL_FASTF;
-#endif
 
     return brep;
 }
 
+
+static void
+printusage(void)
+{
+	fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -430,8 +398,14 @@ main(int argc, char *argv[])
     ON_Brep *brep = NULL;
     int ret;
 
-    if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+    	printusage();
+    	return 0;
+    }
+    if (argc >= 1) {
+    	printusage();
+    	fprintf(stderr,"       Program continues running (will create file breplicator.g):\n");
+    }
 
     bu_log("Breplicating...please wait...\n");
 
@@ -449,9 +423,8 @@ main(int argc, char *argv[])
     };
 
     brep = generate_brep(8, points);
-    if (!brep) {
+    if (!brep)
 	bu_exit(1, "ERROR: We don't have a BREP\n");
-    }
 
     ON_TextLog log(stdout);
 
@@ -486,6 +459,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 // Local Variables:
 // tab-width: 8

@@ -1,0 +1,5 @@
+Uses the svn2git code from:  https://www.gitorious.org/svn2git
+
+rsync -av svn.code.sf.net::p/brlcad/code .
+
+./svn2git/svn-all-fast-export --identity-map account-map --rules rules code

@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ static FILE *infp;
 
 
 static char usage[] = "\
-Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
+Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
@@ -63,7 +63,7 @@ void
 prolog(FILE *fp, char *name, size_t w, size_t h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -119,7 +119,7 @@ postlog(FILE *fp)
 void
 hexout(FILE *fp, int byte)
 
-    /* 0 <= byte <= 255 */
+/* 0 <= byte <= 255 */
 {
     int high, low;
     static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',
@@ -132,21 +132,18 @@ hexout(FILE *fp, int byte)
     putc(symbol[low], fp);
 }
 
+char Stdin[] = "[stdin]";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehclLs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "eclLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -186,14 +183,14 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pix-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
@@ -205,6 +202,12 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+void
+printusage(void)
+{
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -214,12 +217,12 @@ main(int argc, char **argv)
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
 
-    outwidth = outheight = DEFAULT_SIZE;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	printusage();
+    if (!get_args(argc, argv))
+	printusage();
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
+    outwidth = outheight = DEFAULT_SIZE;
 
     if (encapsulated) {
 	xpoints = width;
@@ -243,10 +246,10 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
 		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
 		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
-		(unsigned long)-y);				/* patch y origin */
+		-(long)y);				/* patch y origin */
 
 	/* data */
 	num = 0;

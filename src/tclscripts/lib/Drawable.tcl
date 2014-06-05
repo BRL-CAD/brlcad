@@ -1,7 +1,7 @@
 #                    D R A W A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -252,7 +252,7 @@
     $help add illum		{{name} {illuminate object}}
     $help add label		{{[-n] obj} {label objects}}
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
-    $help add overlay		{{file.pl [name]} {overlay the specified 2D/3D UNIX plot file}}
+    $help add overlay		{{file.plot3 [name]} {overlay the specified 2D/3D UNIX plot file}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}

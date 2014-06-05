@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 #include <limits.h>
 #include <string.h>
 
+
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -58,15 +60,16 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "dm_xvars.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #include "./dm_util.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
+#define DM_X_DEFAULT_POINT_SIZE 1.0
 
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
@@ -90,7 +93,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     int r, g, b;
 
     if (!colors) {
-	BU_GET(colors, struct allocated_colors);
+	BU_ALLOC(colors, struct allocated_colors);
 	BU_LIST_INIT(&(colors->l));
 	colors->r = colors->g = colors->b = -1;
     }
@@ -127,7 +130,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     }
 
     /* got new valid color, add it to our list */
-    BU_GET(c, struct allocated_colors);
+    BU_ALLOC(c, struct allocated_colors);
     c->r = r;
     c->g = g;
     c->b = b;
@@ -361,8 +364,6 @@ X_choose_visual(struct dm *dmp)
 
 
 /*
- * X _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -397,17 +398,15 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((void *)dmp, "X_close: dmp");
 
     return TCL_OK;
 }
 
 
 /*
- * X _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -442,27 +441,15 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);
@@ -540,9 +527,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);
@@ -759,9 +746,6 @@ Skip_dials:
 }
 
 
-/*
- * X _ D R A W B E G I N
- */
 HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
@@ -793,9 +777,6 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * X _ E P I L O G
- */
 HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
@@ -820,8 +801,6 @@ X_drawEnd(struct dm *dmp)
 
 
 /*
- * X _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to X_draw().
  */
@@ -848,10 +827,6 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-/**
- * X _ D R A W V L I S T
- *
- */
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
@@ -868,7 +843,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
+    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_drawVList()\n");
@@ -1103,9 +1078,25 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
 
-		    XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
-			    GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    if (pointSize <= DM_X_DEFAULT_POINT_SIZE) {
+			XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
+				GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    } else {
+			int upperLeft[2];
 
+			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
+			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+
+			XFillRectangle(pubvars->dpy, privars->pix, privars->gc,
+				upperLeft[X], upperLeft[Y], pointSize, pointSize);
+
+		    }
+		    break;
+		case BN_VLIST_POINT_SIZE:
+		    pointSize = (*pt)[0];
+		    if (pointSize < DM_X_DEFAULT_POINT_SIZE) {
+			pointSize = DM_X_DEFAULT_POINT_SIZE;
+		    }
 		    break;
 	    }
 	}
@@ -1132,12 +1123,8 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * X _ D R A W
- *
- */
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1157,8 +1144,6 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *
 
 
 /**
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
@@ -1173,8 +1158,6 @@ X_normal(struct dm *dmp)
 
 
 /**
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */
@@ -1389,6 +1372,15 @@ HIDDEN int
 X_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+X_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
     return TCL_OK;
 }
@@ -1665,6 +1657,7 @@ struct dm dm_X = {
     X_drawEnd,
     X_normal,
     X_loadMatrix,
+    null_loadPMatrix,
     X_drawString2D,
     X_drawLine2D,
     X_drawLine3D,
@@ -1685,6 +1678,7 @@ struct dm dm_X = {
     null_setDepthMask,
     X_setZBuffer,
     X_debug,
+    X_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -1692,6 +1686,7 @@ struct dm dm_X = {
     null_genDLists,
     X_getDisplayImage, /* display to image function */
     X_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -1718,6 +1713,7 @@ struct dm dm_X = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -1729,6 +1725,11 @@ struct dm dm_X = {
     0				/* Tcl interpreter */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #endif /* DM_X */
 

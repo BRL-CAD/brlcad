@@ -1,5 +1,5 @@
-# makefile for libpng.a and libpng15.so on Linux ELF with gcc
-# Copyright (C) 1998, 1999, 2002, 2006, 2008, 2010-2011 Greg Roelofs
+# makefile for libpng.a and libpng16.so on Linux ELF with gcc
+# Copyright (C) 1998, 1999, 2002, 2006, 2008, 2010-2014 Greg Roelofs
 # and Glenn Randers-Pehrson
 # Copyright (C) 1996, 1997 Andreas Dilger
 #
@@ -10,19 +10,19 @@
 # Modified for Debian by Junichi Uekawa and Josselin Mouette
 # Major modifications are:
 #    * link libpng explicitly with libz and libm
-#    * $(OLDSO).15 is a symlink rather than a different library
+#    * $(OLDSO).16 is a symlink rather than a different library
 #    * versioned symbols
 
 # Library name:
-LIBNAME = libpng15
-PNGMAJ = 15
+LIBNAME = libpng16
+PNGMAJ = 16
 
 # Shared library names:
 LIBSO=$(LIBNAME).so
 LIBSOMAJ=$(LIBNAME).so.$(PNGMAJ)
 LIBSOREL=$(LIBSOMAJ).$(RELEASE)
 OLDSO=libpng.so
-OLDSOMAJ=libpng.so.15
+OLDSOMAJ=libpng.so.16
 
 # Utilities:
 AR_RC=ar rc
@@ -32,8 +32,8 @@ LN_SF=ln -sf
 RANLIB=ranlib
 RM_F=/bin/rm -f
 
-# where "make install" puts libpng15.a, libpng15.so*,
-# libpng15/png.h, libpng15/pngconf.h, and libpng15/pnglibconf.h
+# where "make install" puts libpng16.a, libpng16.so*,
+# libpng16/png.h, libpng16/pngconf.h, and libpng16/pnglibconf.h
 # Prefix must be a full pathname.
 prefix=/usr/local
 exec_prefix=$(prefix)
@@ -54,10 +54,10 @@ WARNMORE=-Wwrite-strings -Wpointer-arith -Wshadow \
 
 # for pgcc version 2.95.1, -O3 is buggy; don't use it.
 
-CFLAGS=-W -Wall -D_REENTRANT -O2 \
-	$(ALIGN) # $(WARNMORE) -g -DPNG_DEBUG=5
+CPPFLAGS=-D_REENTRANT # -DPNG_DEBUG=5
+CFLAGS=-W -Wall -O2 $(ALIGN) # $(WARNMORE) -g
 
-LDFLAGS=-L. -lpng15
+LDFLAGS=-L. -lpng16
 LDFLAGS_A=libpng.a -lz -lm
 LIBADDFLAGS=-lz -lm
 
@@ -90,6 +90,9 @@ OBJSDLL = $(OBJS:.o=.pic.o)
 
 .SUFFIXES:      .c .o .pic.o
 
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
 .c.pic.o:
 	$(CC) -c $(CFLAGS) -fPIC -o $@ $*.c
 
@@ -108,11 +111,11 @@ libpng.pc:
 	-e s!@exec_prefix@!$(exec_prefix)! \
 	-e s!@libdir@!$(LIBPATH)! \
 	-e s!@includedir@!$(INCPATH)! \
-	-e s!-lpng15!-lpng15\ -lz\ -lm! > libpng.pc
+	-e s!-lpng16!-lpng16\ -lz\ -lm! > libpng.pc
 
 libpng.syms: png.h pngconf.h pnglibconf.h
-	$(CC) $(CFLAGS) -E -DPNG_BUILDSYMS -DPNG_INTERNAL png.h |\
-	awk -F '[\t [\\]();]' -v PNGMAJ=$(PNGMAJ) 'BEGIN{printf("PNG15_%s {global:\n",PNGMAJ)}\
+	$(CC) $(CPPFLAGS) $(CFLAGS) -E -DPNG_BUILDSYMS -DPNG_INTERNAL png.h |\
+	awk -F '[\t [\\]();]' -v PNGMAJ=$(PNGMAJ) 'BEGIN{printf("PNG16_%s {global:\n",PNGMAJ)}\
 	{ for (i=1;i+2<=NF;++i)\
 		if ($$(i)=="PNG_FUNCTION_EXPORT" && $$(i+2)=="END")\
 			print $$(i+1) ";";\
@@ -129,8 +132,8 @@ libpng-config:
 	echo I_opts=\"-I$(INCPATH)/$(LIBNAME)\"; \
 	echo L_opts=\"\"; \
 	echo R_opts=\"\"; \
-	echo libs=\"-lpng15\"; \
-	echo all_libs=\"-lpng15 $(LIBADDFLAGS)\"; \
+	echo libs=\"-lpng16\"; \
+	echo all_libs=\"-lpng16 $(LIBADDFLAGS)\"; \
 	cat scripts/libpng-config-body.in ) > libpng-config
 	chmod +x libpng-config
 
@@ -220,14 +223,14 @@ install: install-static install-shared install-man install-config
 test-dd:
 	echo
 	echo Testing installed dynamic shared library in $(DL).
-	$(CC) -I$(DI) -I$(ZLIBINC) \
+	$(CC) -I$(DI) $(CPPFLAGS) \
 	   `$(BINPATH)/$(LIBNAME)-config --cflags` pngtest.c \
 	   -L$(DL) -L$(ZLIBLIB) -Wl, -rpath,$(DL) -Wl,-rpath,$(ZLIBLIB) \
 	   -o pngtestd `$(BINPATH)/$(LIBNAME)-config --ldflags`
 	./pngtestd pngtest.png
 
 test-installed:
-	$(CC) -I$(ZLIBINC) \
+	$(CC) $(CPPFLAGS) \
 	   `$(BINPATH)/$(LIBNAME)-config --cflags` pngtest.c \
 	   -L$(ZLIBLIB) -Wl,-rpath,$(ZLIBLIB) \
 	   -o pngtesti `$(BINPATH)/$(LIBNAME)-config --ldflags`

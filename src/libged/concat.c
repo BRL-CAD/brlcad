@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -69,7 +69,7 @@ get_new_name(const char *name,
     Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
     char *ret_name = NULL;
-    int new=0;
+    int int_new=0;
     long num=0;
 
     RT_CK_DBI(dbip);
@@ -82,9 +82,9 @@ get_new_name(const char *name,
 	name = "UNKNOWN";
     }
 
-    ptr = Tcl_CreateHashEntry(name_tbl, name, &new);
+    ptr = Tcl_CreateHashEntry(name_tbl, name, &int_new);
 
-    if (!new) {
+    if (!int_new) {
 	return (char *)Tcl_GetHashValue(ptr);
     }
 
@@ -164,7 +164,7 @@ get_new_name(const char *name,
     /* we should now have a unique name.  store it in the hash */
     ret_name = bu_vls_strgrab(&new_name);
     Tcl_SetHashValue(ptr, (ClientData)ret_name);
-    (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &new);
+    (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &int_new);
     bu_vls_free(&new_name);
 
     return ret_name;
@@ -275,7 +275,7 @@ copy_object(struct ged *gedp,
 	new_name = input_dp->d_namep;
     }
     if ((new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
-			    (genptr_t)&input_dp->d_minor_type)) == RT_DIR_NULL) {
+			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name);
@@ -421,10 +421,10 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the input file */
-    if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
+    if ((newdbp = db_open(oldfile, DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
-	bu_vls_printf(gedp->ged_result_str, "%s: Can't open %s", commandName, oldfile);
+	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, oldfile);
 	return GED_ERROR;
     }
 

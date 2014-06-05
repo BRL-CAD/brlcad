@@ -1,7 +1,7 @@
 /*                         3 P T A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     VCROSS(norm, vec1, vec2);
     length = MAGNITUDE(norm);
     if (ZERO(length)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: points are collinear\n", argv[0]);
 	return GED_ERROR;
     }
     VSCALE(norm, norm, 1.0/length);
@@ -187,8 +187,8 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
-    internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    internal.idb_meth = &OBJ[ID_ARB8];
+    BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -238,7 +238,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	default:
-	    bu_free((genptr_t)internal.idb_ptr, "rt_arb_internal");
+	    bu_free((void *)internal.idb_ptr, "rt_arb_internal");
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
 	    return GED_ERROR;
     }
@@ -248,7 +248,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 

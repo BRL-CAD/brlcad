@@ -1,7 +1,7 @@
 /*                     A N I M _ T U R N . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "r:l:a:f:p:"
+#define OPT_STR "r:l:a:f:p:h?"
 
 
 int print_int = 1;
@@ -50,6 +50,13 @@ int turn_wheels = 0;
 /* intentionally double for scan */
 double length, angle, radius;
 double factor = 1.0;
+
+
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table\n");
+}
 
 
 int
@@ -78,7 +85,6 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &print_int);
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -98,6 +104,16 @@ main(int argc, char *argv[])
     double scan[3];
     double t /* time */;
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
+
     /* initialize variables */
     VSETALL(zero, 0.0);
     VSETALL(v, 0.0);
@@ -109,9 +125,6 @@ main(int argc, char *argv[])
     for (count=0; count<ELEMENTS_PER_MAT; count++)
 	m_from_world[count]=m_to_world[count]=0.0;
     length = angle = radius = roll_ang = 0.0;
-
-    if (!get_args(argc, argv))
-	fprintf(stderr, "ascript: Get_args error");
 
     if (!angle_set) {
 	/* set angle if not yet done */

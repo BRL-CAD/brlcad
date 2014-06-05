@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,9 @@
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -53,8 +55,8 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -68,23 +70,12 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #define ANALYSIS_MOMENTS 512
 #define ANALYSIS_PLOT_OVERLAPS 1024
 
-#ifndef HUGE
-#  ifdef MAXFLT
-#    define HUGE MAXFLOAT
-#  else
-#    ifdef DBL_MAX
-#      define HUGE DBL_MAX
-#    else
-#      define HUGE ((float)3.40282346638528860e+38)
-#    endif
-#  endif
-#endif
-
 /* Note: struct parsing requires no space after the commas.  take care
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
 #define COMMA ','
+#define STRCOMMA ","
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -111,6 +102,7 @@ static int num_objects; /* number of objects specified on command line */
 static int max_cpus;
 static int num_views;
 static int verbose;
+static int quiet_missed_report;
 
 static int plot_files;	/* Boolean: Should we produce plot files? */
 static FILE *plot_weight;
@@ -458,8 +450,6 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 
 
 /**
- * P A R S E _ A R G S
- *
  * Parse through command line flags
  */
 static int
@@ -622,10 +612,6 @@ parse_args(int ac, char *av[])
 
 			gridSpacing = 0.0; /* flag it */
 		    }
-
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "set grid spacing:%g %s limit:%g %s\n",
-				  gridSpacing / units[LINE]->val, units[LINE]->name,
-				  gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		    break;
 		}
 	    case 'G':
@@ -650,6 +636,9 @@ parse_args(int ac, char *av[])
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
 		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
+		break;
+	    case 'q':
+		quiet_missed_report = 1;
 		break;
 	    case 'r':
 		print_per_region_stats = 1;
@@ -702,9 +691,14 @@ parse_args(int ac, char *av[])
 		    units_ap = units_name;
 
 		    /* acquire unit names */
-		    *units_ap = strtok(ptr, ", ");
 		    for (i = 0; i < 3 && ptr; i++) {
 			int found_unit;
+
+			if (i == 0) {
+			    *units_ap = strtok(ptr, STRCOMMA);
+			} else {
+			    *units_ap = strtok(NULL, STRCOMMA);
+			}
 
 			/* got something? */
 			if (*units_ap == NULL)
@@ -726,7 +720,6 @@ parse_args(int ac, char *av[])
 			}
 
 			++units_ap;
-			*units_ap = strtok(NULL, ", ");
 		    }
 
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units: ");
@@ -775,11 +768,11 @@ get_densities_from_file(char *name)
 	return GED_ERROR;
     }
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* a mapped file would make more sense here */
-    buf = bu_malloc(sb.st_size+1, "density buffer");
+    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
@@ -824,16 +817,16 @@ get_densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
-    buf = bu_malloc(bu->count+1, "density buffer");
+    buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
     ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free((genptr_t)buf, "density buffer");
+    bu_free((void *)buf, "density buffer");
 
     return ret;
 }
@@ -983,7 +976,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     double gap_dist;
     double last_out_dist = -1.0;
     double val;
-    struct cstate *state = ap->A_STATE;
+    struct cstate *state = (struct cstate *)ap->A_STATE;
 
     if (!segs) /* unexpected */
 	return 0;
@@ -1320,12 +1313,13 @@ get_next_row(struct cstate *state)
  * This routine must be prepared to run in parallel
  */
 void
-plane_worker (int cpu, genptr_t ptr)
+plane_worker (int cpu, void *ptr)
 {
     struct application ap;
     int u, v;
     double v_coord;
     struct cstate *state = (struct cstate *)ptr;
+    unsigned long shot_cnt;
 
     if (aborted)
 	return;
@@ -1350,6 +1344,7 @@ plane_worker (int cpu, genptr_t ptr)
 
     v = get_next_row(state);
 
+    shot_cnt = 0;
     while (v) {
 
 	v_coord = v * gridSpacing;
@@ -1381,16 +1376,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		/* FIXME: This shots increment and its twin in the else clause below
-		 * are presenting a significant drag on gqa performance via
-		 * heavy duty semaphore locking and unlocking.  Can a way
-		 * be found to do this job without needing to trigger the
-		 * semaphore locks?  Seems to be the major contributor to
-		 * semaphore overhead.
-		 */
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 	    }
 	} else {
 	    /* shoot only the rays we need to on this row.  Some of
@@ -1413,9 +1399,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 
 		if (debug)
 		    if (u+1 < state->steps[state->u_axis]) {
@@ -1442,15 +1426,13 @@ plane_worker (int cpu, genptr_t ptr)
      * we'll have returned to serial computation.
      */
     bu_semaphore_acquire(GED_SEM_STATS);
+    state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
     bu_semaphore_release(GED_SEM_STATS);
 }
 
 
-/**
- *
- */
 int
 find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 {
@@ -1512,11 +1494,11 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	return;
     }
 
-    state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
-    state->m_len = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_volume = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_weight = bu_calloc(num_views, sizeof(double), "volume");
-    state->shots = bu_calloc(num_views, sizeof(unsigned long), "volume");
+    state->m_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "densityLen");
+    state->m_len = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_volume = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_weight = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->shots = (unsigned long *)bu_calloc(num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
     state->m_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
@@ -1524,29 +1506,29 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
+    obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
-	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
-	obj_tbl[i].o_lenDensity = bu_calloc(num_views, sizeof(double), "o_lenDensity");
-	obj_tbl[i].o_volume = bu_calloc(num_views, sizeof(double), "o_volume");
-	obj_tbl[i].o_weight = bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
+	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
+	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
+	obj_tbl[i].o_weight = (double *)bu_calloc(num_views, sizeof(double), "o_weight");
 	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
 	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
 	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
-    reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	regp->reg_udata = &reg_tbl[i];
 
-	reg_tbl[i].r_lenDensity = bu_calloc(num_views, sizeof(double), "r_lenDensity");
-	reg_tbl[i].r_len = bu_calloc(num_views, sizeof(double), "r_len");
-	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
-	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "r_lenDensity");
+	reg_tbl[i].r_len = (double *)bu_calloc(num_views, sizeof(double), "r_len");
+	reg_tbl[i].r_volume = (double *)bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_weight = (double *)bu_calloc(num_views, sizeof(double), "len");
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
@@ -1629,10 +1611,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
 
     if (!ZERO(newGridSpacing - gridSpacing)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
+	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
 		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Adjusted to %g %s to get %g samples per model axis\n",
+	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
 		      newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
@@ -1640,20 +1622,22 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
-	char *name = "volume.pl";
-	if (ZERO(volume_tolerance - 1.0)) {
+	char *name = "volume.plot3";
+	if (volume_tolerance < 0.0) {
+	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
+	    bu_log("Using estimated volume tolerance %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "volume tolerance   %g\n", volume_tolerance);
+	    bu_log("Using volume tolerance %g %s\n",
+			  volume_tolerance / units[VOL]->val, units[VOL]->name);
 	if (plot_files)
 	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (ZERO(weight_tolerance - 1.0)) {
+	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i = 0; i < num_densities; i++) {
@@ -1669,7 +1653,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	}
     }
     if (analysis_flags & ANALYSIS_GAP) {
-	char *name = "gaps.pl";
+	char *name = "gaps.plot3";
 	if (plot_files)
 	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
@@ -1680,7 +1664,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (!ZERO(overlap_tolerance))
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
-	    char *name = "overlaps.pl";
+	    char *name = "overlaps.plot3";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1694,7 +1678,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
-	    char *name = "adj_air.pl";
+	    char *name = "adj_air.plot3";
 	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1703,7 +1687,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
-	    char *name = "exp_air.pl";
+	    char *name = "exp_air.plot3";
 	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1720,9 +1704,6 @@ options_prep(struct rt_i *rtip, vect_t span)
 }
 
 
-/**
- *
- */
 void
 view_reports(struct cstate *state)
 {
@@ -1797,34 +1778,33 @@ weight_volume_terminate(struct cstate *state)
 	int obj;
 
 	for (obj = 0; obj < num_objects; obj++) {
-	    int view = 0;
+	    int view;
+	    double tmp;
+
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "object %d\n", obj);
+
 	    /* compute weight of object for given view */
-	    val = obj_tbl[obj].o_weight[view] =
-		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-
-	    /* compute the per-view weight of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] *
-		    (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_weight[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+	    low = INFINITY;
+	    hi = -INFINITY;
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_weight[view] =
+		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s weight %g %s +%g -%g\n",
-			      obj_tbl[obj].o_name,
-			      val / units[WGT]->val,
-			      units[WGT]->name,
-			      fabs(hi / units[WGT]->val),
-			      fabs(low / units[WGT]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
+		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[WGT]->val,
+		    units[WGT]->name,
+		    hi / units[WGT]->val,
+		    low / units[WGT]->val);
 
 	    if (delta > weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1849,30 +1829,29 @@ weight_volume_terminate(struct cstate *state)
 
 	/* for each object, compute the volume for all views */
 	for (obj = 0; obj < num_objects; obj++) {
+	    int view;
+	    double tmp;
 
 	    /* compute volume of object for given view */
-	    int view = 0;
-	    val = obj_tbl[obj].o_volume[view] =
-		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-	    /* compute the per-view volume of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_volume[view] =
+	    low = INFINITY;
+	    hi = -INFINITY;
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_volume[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume %g %s +(%g) -(%g)\n",
-			      obj_tbl[obj].o_name,
-			      val / units[VOL]->val, units[VOL]->name,
-			      hi / units[VOL]->val,
-			      fabs(low / units[VOL]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
+		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
+		    hi / units[VOL]->val,
+		    low / units[VOL]->val);
 
 	    if (delta > volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1927,9 +1906,8 @@ terminate_check(struct cstate *state)
 
     /* if we've reached the grid limit, we're done, no matter what */
     if (gridSpacing < gridSpacingLimit) {
-	if (verbose)
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "grid spacing refined to %g (below lower limit %g)\n",
-			  gridSpacing, gridSpacingLimit);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "NOTE: Stopped, grid spacing refined to %g (below lower limit %g).\n",
+	    gridSpacing, gridSpacingLimit);
 	return 0;
     }
 
@@ -1942,7 +1920,7 @@ terminate_check(struct cstate *state)
 	    /* since we've found an overlap, we can quit */
 	    return 0;
 	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list is empty\n");
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing);
 	}
     }
     if ((analysis_flags & ANALYSIS_GAP)) {
@@ -1986,9 +1964,9 @@ terminate_check(struct cstate *state)
 		    if (hits < require_num_hits) {
 			all_hit = 0;
 			if (verbose) {
-			    if (hits == 0) {
+			    if (hits == 0 && !quiet_missed_report) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
-			    } else {
+			    } else if (hits) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 					      regp->reg_name, hits, require_num_hits);
 			    }
@@ -2037,9 +2015,9 @@ summary_reports(struct cstate *state)
     struct region *regp;
 
     if (multiple_analyses)
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gridSpacing*2);
     else
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing*2);
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
@@ -2128,8 +2106,8 @@ summary_reports(struct cstate *state)
 	    double *wv;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 
 		avg_mass = 0.0;
 
@@ -2256,8 +2234,8 @@ summary_reports(struct cstate *state)
 
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 		avg_mass = 0.0;
 
 		for (view=0; view < num_views; view++) {
@@ -2312,7 +2290,7 @@ summary_reports(struct cstate *state)
 	RT_CK_REGION(regp);
 	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
-	    if (hits == 0) {
+	    if (hits == 0 && !quiet_missed_report) {
 		is_overlap_only_hit = 0;
 		if (analysis_flags & ANALYSIS_OVERLAPS) {
 		    /* If the region is in the overlap list, it has
@@ -2335,7 +2313,7 @@ summary_reports(struct cstate *state)
 		if (!is_overlap_only_hit) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 		}
-	    } else {
+	    } else if (hits) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
@@ -2376,8 +2354,19 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
     densityFileName = (char *)0;
+
+    /* FIXME: this is completely arbitrary, should probably be based
+     * on the model size.
+     */
     gridSpacing = 50.0;
-    gridSpacingLimit = 0.25;
+
+    /* default grid spacing limit is based on the current distance
+     * tolerance, one order of magnitude greater.
+     *
+     * FIXME: should probably be based on the model size.
+     */
+    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+
     makeOverlapAssemblies = 0;
     require_num_hits = 1;
     max_cpus = ncpu = bu_avail_cpus();
@@ -2391,6 +2380,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     num_objects = 0;
     num_views = 3;
     verbose = 0;
+    quiet_missed_report = 0;
     plot_files = 0;
     plot_weight = (FILE *)0;
     plot_volume = (FILE *)0;
@@ -2473,10 +2463,19 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	do {
 	    gridSpacing *= 2.0;
 	} while (gridSpacing < min_span);
+
 	gridSpacing *= 0.25;
 	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
-	bu_vls_printf(gedp->ged_result_str, "initial spacing %g\n", gridSpacing);
+
+	bu_log("Trying estimated initial grid spacing: %g %s\n",
+	    gridSpacing / units[LINE]->val, units[LINE]->name);
+    } else {
+	bu_log("Trying initial grid spacing: %g %s\n",
+	    gridSpacing / units[LINE]->val, units[LINE]->name);
     }
+
+    bu_log("Using grid spacing lower limit: %g %s\n",
+	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;
 
@@ -2492,7 +2491,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
 	VSCALE(state.steps, state.span, inv_spacing);
 
-	bu_vls_printf(gedp->ged_result_str, "grid spacing %g %s %ld x %ld x %ld\n",
+	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
 		      gridSpacing / units[LINE]->val,
 		      units[LINE]->name,
 		      state.steps[0]-1,
@@ -2522,7 +2521,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    state.v_dir[state.i_axis] = 0;
 	    state.v = 1;
 
-	    bu_parallel(plane_worker, ncpu, (genptr_t)&state);
+	    bu_parallel(plane_worker, ncpu, (void *)&state);
 
 	    if (aborted)
 		goto aborted;

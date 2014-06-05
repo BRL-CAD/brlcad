@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "icv.h"
 
 #include "./ged_private.h"
@@ -52,10 +52,15 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "image_name.ext";
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
-    struct icv_image_file *bif = NULL;	/* bu image for saving image formats */
+    struct icv_image *bif = NULL;	/**< icv image container for saving images */
 
     if (gedp->ged_dmp_is_null) {
 	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
+	return GED_ERROR;
+    }
+
+    if (gedp->ged_dm_get_display_image == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display function pointer.");
 	return GED_ERROR;
     }
 
@@ -80,12 +85,19 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     width = gedp->ged_dm_width;
     height = gedp->ged_dm_height;
+
+    if (width <= 0 || height <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid screen dimensions.", argv[1]);
+	return GED_ERROR;
+    }
+
     bytes_per_pixel = 3;
     bytes_per_line = width * bytes_per_pixel;
 
     /* create image file */
-    if ((bif = icv_image_save_open(argv[1], ICV_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image_ write structure.", argv[1]);
+
+   if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image write structure.", argv[1]);
 	return GED_ERROR;
     }
 
@@ -95,19 +107,21 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	icv_image_save_writeline(bif, i, (unsigned char *)rows[i]);
+	/* TODO : Add double type data to maintain resolution */
+	icv_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
     }
 
-    if (bif != NULL)
-	icv_image_save_close(bif);
-    bif = NULL;
+    if (bif != NULL) {
+	icv_write(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_destroy(bif);
+	bif = NULL;
+    }
 
     bu_free(rows, "rows");
     bu_free(idata, "image data");
 
     return GED_OK;
 }
-
 
 /*
  * Local Variables:

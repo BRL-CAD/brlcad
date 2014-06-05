@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ rt_dirbuild(const char *filename, char *buf, int len)
     if (getenv("LIBRT_BOT_MINTIE"))
 	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
 
-    if ((dbip = db_open(filename, "r")) == DBI_NULL)
+    if ((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)
 	return RTI_NULL;		/* FAIL */
     RT_CK_DBI(dbip);
 
@@ -108,8 +108,8 @@ rt_db_get_internal(
 
     /* ip is already initialized and should not be re-initialized */
     ret = -1;
-    if (rt_functab[id].ft_import4) {
-	ret = rt_functab[id].ft_import4(ip, &ext, mat, dbip, resp);
+    if (OBJ[id].ft_import4) {
+	ret = OBJ[id].ft_import4(ip, &ext, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_get_internal(%s):  import failure\n",
@@ -120,7 +120,7 @@ rt_db_get_internal(
     }
     bu_free_external(&ext);
     RT_CK_DB_INTERNAL(ip);
-    ip->idb_meth = &rt_functab[id];
+    ip->idb_meth = &OBJ[id];
 
     /* prior to version 5, there are no attributes ... */
     bu_avs_init_empty(&ip->idb_avs);
@@ -216,9 +216,6 @@ rt_fwrite_internal(
 }
 
 
-/**
- *
- */
 void
 rt_db_free_internal(struct rt_db_internal *ip)
 {

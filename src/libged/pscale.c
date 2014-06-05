@@ -1,7 +1,7 @@
 /*                         P S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
@@ -114,6 +114,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	    ret = _ged_scale_ehy(gedp, (struct rt_ehy_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ELL:
+	case DB5_MINORTYPE_BRLCAD_SPH:
 	    ret = _ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EPA:
@@ -148,6 +149,9 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PIPE:
 	    ret = _ged_scale_pipe(gedp, (struct rt_pipe_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_METABALL:
+	    ret = _ged_scale_metaball(gedp, (struct rt_metaball_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);

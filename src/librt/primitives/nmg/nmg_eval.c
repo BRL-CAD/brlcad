@@ -1,7 +1,7 @@
 /*                      N M G _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,8 +81,6 @@ static const char *nmg_class_names[] = {
 
 
 /**
- * N M G _ C K _ L U _ O R I E N T A T I O N
- *
  * Make sure that the lu and fu orientation flags are consistent with
  * the geometric arrangement of the vertices and the faceuse normal.
  */
@@ -108,8 +106,8 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
 
     if (dot < 0.0) {
-	bu_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
-	       dot,
+	bu_log("nmg_ck_lu_orientation() lu=%p, dot=%g, fu_orient=%s, lu_orient=%s\n",
+	       (void *)lu, dot,
 	       nmg_orientation(fu->orientation),
 	       nmg_orientation(lu->orientation)
 	    );
@@ -119,16 +117,14 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
 
 /**
- * N M G _ C L A S S _ N A M E
- *
  * Convert an NMG_CLASS_xxx token into a string name.
  */
 const char *
-nmg_class_name(int class)
+nmg_class_name(int nmg_class)
 {
-    if (class == NMG_CLASS_Unknown) return "Unknown";
-    if (class < 0 || class > NMG_CLASS_BAD) class = NMG_CLASS_BAD;
-    return nmg_class_names[class];
+    if (nmg_class == NMG_CLASS_Unknown) return "Unknown";
+    if (nmg_class < 0 || nmg_class > NMG_CLASS_BAD) nmg_class = NMG_CLASS_BAD;
+    return nmg_class_names[nmg_class];
 }
 
 
@@ -182,8 +178,6 @@ static const int intersect_actions[8] = {
 
 
 /**
- * N M G _ E V A L U A T E _ B O O L E A N
- *
  * Evaluate a boolean operation on the two shells "A" and "B", of the
  * form "answer = A op B".  As input, each element (loop-in-face, wire
  * loop, wire edge, vertex) in both A and B has been classified as
@@ -202,9 +196,9 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     NMG_CK_SHELL(sB);
     BN_CK_TOL(tol);
 
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
-	       sA, sB, op);
+    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d) START\n",
+	       (void *)sA, (void *)sB, op);
     }
 
     switch (op) {
@@ -236,9 +230,9 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_isA = 0;
     nmg_eval_shell(sB, &bool_state);
 
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
-	       sA, sB, op);
+    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d), evaluations done\n",
+	       (void *)sA, (void *)sB, op);
     }
     /* Write sA and sB into separate files, if wanted? */
 
@@ -246,14 +240,14 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     nmg_js(sA, sB, tol);
 
     /* Plot the result */
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM) {
 	FILE *fp;
 
-	if ((fp=fopen("bool_ans.pl", "wb")) == (FILE *)NULL) {
-	    (void)perror("bool_ans.pl");
-	    bu_bomb("unable to open bool_ans.pl for writing");
+	if ((fp=fopen("bool_ans.plot3", "wb")) == (FILE *)NULL) {
+	    (void)perror("bool_ans.plot3");
+	    bu_bomb("unable to open bool_ans.plot3 for writing");
 	}
-	bu_log("plotting bool_ans.pl\n");
+	bu_log("plotting bool_ans.plot3\n");
 	nmg_pl_s(fp, sA);
 	(void)fclose(fp);
     }
@@ -267,8 +261,6 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
 
 
 /**
- * N M G _ E V A L _ A C T I O N
- *
  * Given a pointer to some NMG data structure, search the 4
  * classification lists to determine its classification.  (XXX In the
  * future, this should be done with one big array).  Then, return the
@@ -278,7 +270,7 @@ HIDDEN int
 nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 {
     register int ret;
-    register int class;
+    register int nmg_class;
     int index;
 
     BN_CK_TOL(bs->bs_tol);
@@ -286,64 +278,64 @@ nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
     index = nmg_index_of_struct(ptr);
     if (bs->bs_isA) {
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index)) {
-	    class = NMG_CLASS_AinB;
+	    nmg_class = NMG_CLASS_AinB;
 	    ret = bs->bs_actions[NMG_CLASS_AinB];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index)) {
-	    class = NMG_CLASS_AonBshared;
+	    nmg_class = NMG_CLASS_AonBshared;
 	    ret = bs->bs_actions[NMG_CLASS_AonBshared];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index)) {
-	    class = NMG_CLASS_AonBanti;
+	    nmg_class = NMG_CLASS_AonBanti;
 	    ret = bs->bs_actions[NMG_CLASS_AonBanti];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index)) {
-	    class = NMG_CLASS_AoutB;
+	    nmg_class = NMG_CLASS_AoutB;
 	    ret = bs->bs_actions[NMG_CLASS_AoutB];
 	    goto out;
 	}
-	bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
-	       ptr, bu_identify_magic(*((uint32_t *)ptr)));
-	class = NMG_CLASS_BAD;
+	bu_log("nmg_eval_action(ptr=%p) %s has no A classification, retaining\n",
+	       (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
+	nmg_class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 	goto out;
     }
 
     /* is B */
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index)) {
-	class = NMG_CLASS_BinA;
+	nmg_class = NMG_CLASS_BinA;
 	ret = bs->bs_actions[NMG_CLASS_BinA];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index)) {
-	class = NMG_CLASS_BonAshared;
+	nmg_class = NMG_CLASS_BonAshared;
 	ret = bs->bs_actions[NMG_CLASS_BonAshared];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index)) {
-	class = NMG_CLASS_BonAanti;
+	nmg_class = NMG_CLASS_BonAanti;
 	ret = bs->bs_actions[NMG_CLASS_BonAanti];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index)) {
-	class = NMG_CLASS_BoutA;
+	nmg_class = NMG_CLASS_BoutA;
 	ret = bs->bs_actions[NMG_CLASS_BoutA];
 	goto out;
     }
-    bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
-	   ptr, bu_identify_magic(*((uint32_t *)ptr)));
-    class = NMG_CLASS_BAD;
+    bu_log("nmg_eval_action(ptr=%p) %s has no B classification, retaining\n",
+	   (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
+    nmg_class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
 out:
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
-	       ptr, index,
+    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+	bu_log("nmg_eval_action(ptr=%p) index=%d %s %s %s %s\n",
+	       (void *)ptr, index,
 	       bs->bs_isA ? "A" : "B",
 	       bu_identify_magic(*((uint32_t *)ptr)),
-	       nmg_class_name(class),
+	       nmg_class_name(nmg_class),
 	       nmg_baction_names[ret]);
     }
     return ret;
@@ -351,8 +343,6 @@ out:
 
 
 /**
- * N M G _ E V A L _ S H E L L
- *
  * Make a life-and-death decision on every element of a shell.
  * Descend the "great chain of being" from the face to loop to edge to
  * vertex, saving or demoting along the way.
@@ -374,7 +364,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     NMG_CK_SHELL(s);
     BN_CK_TOL(bs->bs_tol);
 
-    if (rt_g.NMG_debug & DEBUG_VERIFY)
+    if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -428,10 +418,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    lu = nextlu;
 	}
 
-	if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-	    bu_log("faceuse x%x loops retained=%d\n",
-		   fu, loops_retained);
-	if (rt_g.NMG_debug & DEBUG_VERIFY)
+	if (RTG.NMG_debug & DEBUG_BOOLEVAL)
+	    bu_log("faceuse %p loops retained=%d\n",
+		   (void *)fu, loops_retained);
+	if (RTG.NMG_debug & DEBUG_VERIFY)
 	    nmg_vshell(&s->r_p->s_hd, s->r_p);
 
 	/*
@@ -442,10 +432,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
 	    if (loops_retained) bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 	    /* faceuse is empty, face & mate die */
-	    if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-		bu_log("faceuse x%x empty, kill\n", fu);
+	    if (RTG.NMG_debug & DEBUG_BOOLEVAL)
+		bu_log("faceuse %p empty, kill\n", (void *)fu);
 	    nmg_kfu(fu);	/* kill face & mate, dequeue from shell */
-	    if (rt_g.NMG_debug & DEBUG_VERIFY)
+	    if (RTG.NMG_debug & DEBUG_VERIFY)
 		nmg_vshell(&s->r_p->s_hd, s->r_p);
 	    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 	    fu = nextfu;
@@ -458,7 +448,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	fu = nextfu;
     }
-    if (rt_g.NMG_debug & DEBUG_VERIFY)
+    if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -495,7 +485,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	lu = nextlu;
     }
-    if (rt_g.NMG_debug & DEBUG_VERIFY)
+    if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -567,7 +557,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	lu = nextlu;
     }
-    if (rt_g.NMG_debug & DEBUG_VERIFY)
+    if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -589,15 +579,13 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		bu_bomb("nmg_eval_shell() bad BACTION\n");
 	}
     }
-    if (rt_g.NMG_debug & DEBUG_VERIFY)
+    if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
     nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 }
 
 
 /**
- * N M G _ E V A L _ P L O T
- *
  * Called from nmg_eval_shell
  *
  * Located here because definition of nmg_bool_state is local to this
@@ -611,16 +599,16 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     int do_plot = 0;
     int do_anim = 0;
 
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM)
+    if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM)
 	do_plot = 1;
-    if (rt_g.NMG_debug & DEBUG_PL_ANIM) do_anim = 1;
+    if (RTG.NMG_debug & DEBUG_PL_ANIM) do_anim = 1;
 
     if (!do_plot && !do_anim) return;
 
     BN_CK_TOL(bs->bs_tol);
 
     if (do_plot) {
-	sprintf(fname, "nmg_eval%d.pl", num);
+	sprintf(fname, "nmg_eval%d.plot3", num);
 	if ((fp = fopen(fname, "wb")) == NULL) {
 	    perror(fname);
 	    return;
@@ -644,9 +632,12 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
 	    /* if requested, delay 1/4 second */
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
-				       0);
+	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	    void (*cfp)(struct bn_vlblock *, int, int);
+	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
+		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}

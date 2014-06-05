@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
@@ -54,22 +55,6 @@
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 
-/**
- * D B _ O P E N
- *
- * Open the named database.
- * The 'mode' parameter specifies read-only or read-write mode.
- *
- * As a convenience, dbi_filepath is a C-style argv array of dirs to
- * search when attempting to open related files (such as data files
- * for EBM solids or texture-maps).  The default values are "." and
- * the directory containing the ".g" file.  They may be overridden by
- * setting the environment variable BRLCAD_FILE_PATH.
- *
- * Returns:
- * DBI_NULL error
- * db_i * success
- */
 struct db_i *
 db_open(const char *name, const char *mode)
 {
@@ -77,7 +62,7 @@ db_open(const char *name, const char *mode)
     register int i;
     char **argv;
 
-    if ( name == NULL ) return DBI_NULL;
+    if (name == NULL) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
@@ -109,17 +94,17 @@ db_open(const char *name, const char *mode)
 	    bu_close_mapped_file(mfp);
 
 	    if (RT_G_DEBUG & DEBUG_DB) {
-		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
+		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, (void *)dbip);
 	    }
 
 	    return dbip;
 	}
 
-	BU_GET(dbip, struct db_i);
+	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_mf = mfp;
 	dbip->dbi_eof = (off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
-	dbip->dbi_mf->apbuf = (genptr_t)dbip;
+	dbip->dbi_mf->apbuf = (void *)dbip;
 
 	/* Do this too, so we can seek around on the file */
 	if ((dbip->dbi_fp = fopen(name, "rb")) == NULL) {
@@ -134,7 +119,7 @@ db_open(const char *name, const char *mode)
     } else {
 	/* Read-write mode */
 
-	BU_GET(dbip, struct db_i);
+	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_eof = (off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
@@ -149,7 +134,7 @@ db_open(const char *name, const char *mode)
     }
 
     /* Initialize fields */
-    for (i=0; i<RT_DBNHASH; i++)
+    for (i = 0; i < RT_DBNHASH; i++)
 	dbip->dbi_Head[i] = RT_DIR_NULL;
 
     dbip->dbi_local2base = 1.0;		/* mm */
@@ -176,7 +161,7 @@ db_open(const char *name, const char *mode)
     if (argv[1][0] != '/') {
 	struct bu_vls fullpath = BU_VLS_INIT_ZERO;
 
-	bu_free((genptr_t)argv[1], "db_open: argv[1]");
+	bu_free((void *)argv[1], "db_open: argv[1]");
 	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
 	/* Something went wrong and we didn't get the CWD. So,
@@ -192,8 +177,8 @@ db_open(const char *name, const char *mode)
 		fclose(dbip->dbi_fp);
 	    }
 
-	    bu_free((genptr_t)argv[0], "db_open: argv[0]");
-	    bu_free((genptr_t)argv, "db_open: argv");
+	    bu_free((void *)argv[0], "db_open: argv[0]");
+	    bu_free((void *)argv, "db_open: argv");
 	    bu_free((char *)dbip, "struct db_i");
 
 	    return DBI_NULL;
@@ -229,7 +214,7 @@ db_open(const char *name, const char *mode)
     }
 
     if (RT_G_DEBUG & DEBUG_DB) {
-	bu_log("db_open(%s) dbip=x%x version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);
+	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
     return dbip;
@@ -243,7 +228,7 @@ db_create(const char *name, int version)
     struct db_i *dbip;
     int result;
 
-    if ( name == NULL ) return DBI_NULL;
+    if (name == NULL) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);
@@ -269,7 +254,7 @@ db_create(const char *name, int version)
     if (result < 0)
 	return DBI_NULL;
 
-    if ((dbip = db_open(name, "r+w")) == DBI_NULL)
+    if ((dbip = db_open(name, DB_OPEN_READWRITE)) == DBI_NULL)
 	return DBI_NULL;
 
     /* Do a quick scan to determine version, find _GLOBAL, etc. */
@@ -279,15 +264,22 @@ db_create(const char *name, int version)
     return dbip;
 }
 
+
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
+    if (!dbip)
+	return;
+
     RT_CK_DBI(dbip);
+
     if (client) {
 	(void)bu_ptbl_rm(&dbip->dbi_clients, client);
     }
+
     db_close(dbip);
 }
+
 
 void
 db_close(register struct db_i *dbip)
@@ -295,9 +287,12 @@ db_close(register struct db_i *dbip)
     register int i;
     register struct directory *dp, *nextdp;
 
+    if (!dbip)
+	return;
+
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-				    dbip->dbi_filename, dbip, dbip->dbi_uses);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
+				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
     bu_semaphore_acquire(BU_SEM_LISTS);
     if ((--dbip->dbi_uses) > 0) {
@@ -350,7 +345,7 @@ db_close(register struct db_i *dbip)
     bu_ptbl_free(&dbip->dbi_clients);
 
     /* Free all directory entries */
-    for (i=0; i < RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    RT_CK_DIR(dp);
 	    nextdp = dp->d_forw;
@@ -404,7 +399,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     }
 
     /* Output all directory entries */
-    for (i=0; i < RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    RT_CK_DIR(dp);
 	    /* XXX Need to go to internal form, if database versions don't match */

@@ -1,7 +1,7 @@
 /*                          P A T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,13 +25,15 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include "adrt_struct.h"
 
-#include "bu.h"
+
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
 
@@ -43,11 +45,11 @@ typedef struct render_path_s {
 
 /* _a is reflected ray, _b is incident ray, _c is normal */
 #define MATH_VEC_REFLECT(_a, _b, _c) { \
-    fastf_t _d; \
-    _d = VDOT( _b,  _c); \
-    VSCALE(_a,  _c,  2.0*_d); \
-    VSUB2(_a,  _b,  _a); \
-    VUNITIZE(_a); }
+	fastf_t _d; \
+	_d = VDOT(_b, _c); \
+	VSCALE(_a, _c, 2.0*_d); \
+	VSUB2(_a, _b, _a); \
+	VUNITIZE(_a); }
 
 
 void
@@ -89,7 +91,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		} else if (new_mesh->attributes->emission > 0.0) {
 		    /* Emitting Light Source */
 		    VMOVE(T, new_mesh->attributes->color.v);
-		    VSCALE(T,  T,  new_mesh->attributes->emission);
+		    VSCALE(T, T, new_mesh->attributes->emission);
 		    propogate = 0;
 		} else {
 		    /* Diffuse */
@@ -101,7 +103,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		}
 
 		if (new_ray.depth) {
-		    VELMUL(new_pix,  new_pix,  T);
+		    VELMUL(new_pix, new_pix, T);
 		} else {
 		    VMOVE(new_pix, T);
 		}
@@ -134,7 +136,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		sin_theta = sqrt(cos_theta);
 		cos_theta = 1-cos_theta;
 
-		cos_phi = bn_randmt() * 2 * M_PI;
+		cos_phi = bn_randmt() * M_2PI;
 		sin_phi = sin(cos_phi);
 		cos_phi = cos(cos_phi);
 
@@ -153,27 +155,25 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 	    }
 	}
 
-	VADD2(accum,  accum,  new_pix);
+	VADD2(accum, accum, new_pix);
     }
 
-    VSCALE(*pixel,  accum,  rd->inv_samples);
+    VSCALE(*pixel, accum, rd->inv_samples);
 }
+
 
 int
 render_path_init(render_t *render, const char *samples)
 {
     render_path_t *d;
 
-    if(samples == NULL)
+    if (samples == NULL)
 	return -1;
 
     render->work = render_path_work;
     render->free = render_path_free;
-    render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
+
+    BU_ALLOC(render->data, render_path_t);
     d = (render_path_t *)render->data;
     d->samples = atoi(samples);	/* TODO: make this more robust */
     d->inv_samples = 1.0 / d->samples;

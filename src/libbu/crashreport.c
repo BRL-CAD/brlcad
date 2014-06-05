@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,10 @@
 #include <string.h>
 #include <time.h>
 
-/* common headers */
-#include "bu.h"
-#include "brlcad_version.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+#include "brlcad_ident.h"
 
 
 #define CR_BUFSIZE 2048

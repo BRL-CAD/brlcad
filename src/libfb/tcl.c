@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #ifdef HAVE_STRINGS_H
@@ -38,7 +39,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"                  /* includes bu.h */
+#include "bu/cmd.h"
 #include "fb.h"
 #include "bu.h"
 
@@ -136,7 +137,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	found=1;
 	*ifp = X24_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
+	ifp->if_name = (char *)malloc((unsigned)strlen(X_device_name) + 1);
 	bu_strlcpy(ifp->if_name, X_device_name, strlen(X_device_name)+1);
 
 	/* Mark OK by filling in magic number */
@@ -202,7 +203,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	found=1;
 	*ifp = ogl_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
+	ifp->if_name = (char *)malloc((unsigned)strlen(ogl_device_name) + 1);
 	bu_strlcpy(ifp->if_name, ogl_device_name, strlen(ogl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
@@ -281,14 +282,10 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
 
 void
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_configureWindow(FBIO *ifp, int UNUSED(width), int UNUSED(height))
-#else
 fb_configureWindow(FBIO *ifp, int width, int height)
-#endif
 {
     /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_name) {
+    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
 	return;
     }
 
@@ -319,23 +316,24 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 
 
 int
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_refresh(FBIO *ifp, int UNUSED(x), int UNUSED(y), int w, int h)
-#else
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
-#endif
 {
     int status=0;
 
-#if 1
-    if (w == 0 || h == 0)
-	return TCL_OK;
-#else
-    if (w <= 0 || h <= 0) {
+    /* what does negative mean? */
+    if (x < 0)
+	x = 0;
+    if (y < 0)
+	y = 0;
+    if (w < 0)
+	w = 0;
+    if (h < 0)
+	h = 0;
+
+    if (w == 0 || h == 0) {
 	/* nothing to refresh */
 	return TCL_OK;
     }
-#endif
 
     if (!ifp || !ifp->if_name) {
 	/* unset/unknown framebuffer */
@@ -389,7 +387,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
-	bu_log("wrong #args: should be \" fileName [#bytes/pixel]\"", argv[0]);
+	bu_log("wrong #args: should be \" fileName [#bytes/pixel]\"");
 	return TCL_ERROR;
     }
 
@@ -415,7 +413,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
 
     return ctp->ct_func(interp, argc, argv);
 }
@@ -433,9 +431,7 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 /*
- * F B _ I N I T
- *
- * Allows LIBFB to be dynamically loade to a vanilla tclsh/wish with
+ * Allows LIBFB to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libfb.so"
  *
  * The name of this function is specified by TCL.
@@ -447,7 +443,7 @@ Fb_Init(Tcl_Interp *interp)
 	{"fb_open_existing",	 fb_cmd_open_existing},
 	{"fb_close_existing",	 fb_cmd_close_existing},
 	{"fb_common_file_size",	 fb_cmd_common_file_size},
-	{(char *)0, (int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     /* register commands */

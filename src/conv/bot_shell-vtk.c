@@ -1,7 +1,7 @@
 /*                 B O T _ S H E L L - V T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -77,8 +79,7 @@ static long max_faces = 0;
 static long num_faces = 0;
 #define FACES_BLOCK	512
 
-static char *usage = "Usage:\n\
-	%s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
+static char *usage = "Usage: %s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -121,7 +122,7 @@ Add_face(int face[3])
 
     if (num_faces >= max_faces) {
 	max_faces += FACES_BLOCK;
-	faces = (long *)bu_realloc((genptr_t)faces, max_faces*3*sizeof(long), "faces array");
+	faces = (long *)bu_realloc((void *)faces, max_faces*3*sizeof(long), "faces array");
     }
 
     VMOVE(&faces[num_faces*3], face);
@@ -159,10 +160,10 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     } else {
 	bot = (struct bot_specific *)stp->st_specific;
 	if (bot->bot_facearray) {
-	    tri = bot->bot_facearray[surfno];
+	    tri = (struct tri_specific *)bot->bot_facearray[surfno];
 	} else {
 	    i = bot->bot_ntri - 1;
-	    tri = bot->bot_facelist;
+	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (i != (size_t)surfno) {
 		i--;
 		tri = tri->tri_forw;
@@ -273,10 +274,10 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     bot = (struct bot_specific *)stp->st_specific;
     if (bot->bot_facearray) {
-	tri = bot->bot_facearray[surfno];
+	tri = (struct tri_specific *)bot->bot_facearray[surfno];
     } else {
 	i = bot->bot_ntri - 1;
-	tri = bot->bot_facelist;
+	tri = (struct tri_specific *)bot->bot_facelist;
 	while (i != (size_t)surfno) {
 	    i--;
 	    tri = tri->tri_forw;
@@ -396,7 +397,7 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     memset(&ap, 0, sizeof(struct application));
     ap.a_onehit = 1;
-    while ((c=bu_getopt(argc, argv, "nmd:g:o:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "nmd:g:o:h?")) != -1) {
 	switch (c) {
 	    case 'd':	/* debug level */
 		debug = atoi(bu_optarg);
@@ -416,6 +417,8 @@ main(int argc, char *argv[])
 	    case 'n':	/* include normals in the VTK data */
 		use_normals = 1;
 		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
 	}
     }
 
@@ -519,7 +522,7 @@ main(int argc, char *argv[])
 	    }
 
 	    bot = (struct bot_specific *)stp->st_specific;
-	    tri = bot->bot_facelist;
+	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (tri) {
 		point_t p2, p3, sum;
 

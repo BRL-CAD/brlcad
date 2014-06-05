@@ -1,7 +1,7 @@
 #               C O M B E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -277,6 +277,7 @@
 	return
     }
 
+    $::ArcherCore::application syncTree
     GeometryEditFrame::updateGeometry
 }
 
@@ -618,7 +619,6 @@
     unset mMemberDataRotArb
     unset mMemberDataTra
     unset mMemberDataSca
-#    unset mMemberData
 
     set col 0
     foreach heading $mMemberHeadingsRotAet {
@@ -645,11 +645,6 @@
 	set mMemberDataSca(0,$col) $heading
 	incr col
     }
-#    set col 0
-#    foreach heading $mMemberHeadings {
-#	set mMemberData(0,$col) $heading
-#	incr col
-#    }
 }
 
 ::itcl::body CombEditFrame::clearMemberDataTable {_tname} {
@@ -687,6 +682,8 @@
     incr dtype 2
     catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $mdata " "]}
     GeometryEditFrame::updateGeometry
+
+    $::ArcherCore::application syncTree
 
     # Restore table row selection state
     set row 1
@@ -799,12 +796,7 @@
 	set cellEmpty 0
     }
 
-    if {$cellEmpty} {
-	$itk_component(combMembersMenu) add command \
-	    -label "Append Row" \
-	    -command [::itcl::code $this appendRow $_type]
-    } else {
-
+    if {!$cellEmpty} {
 	if {$col == 0} {
 	    if {[subst $[subst mMemberData$tname\($_index\)]] == "*"} {
 		$itk_component(combMembersMenu) add command \
@@ -841,10 +833,6 @@
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Subtraction" \
 		-command "$itk_component(combMembers$tname) setTableVal $_index -"
-	} elseif {$col == 2} {
-#	    $itk_component(combMembersMenu) add command \
-		-label "Select Name" \
-		-command [::itcl::code $this selectName $_type]
 	} elseif {($_type == 0 && 6 <= $col && $col <= 8) ||
 		  ($_type == 1 && 6 <= $col && $col <= 8)} {
 	    $itk_component(combMembersMenu) add command \
@@ -859,8 +847,6 @@
 		-label "Set Keypoint (View Center)" \
 		-command [::itcl::code $this setKeypointVC $tname $row 7]
 	}
-
-	addMemberCreationMenuEntries $_type $row
     }
 
     tk_popup $itk_component(combMembersMenu) $_X $_Y
@@ -1059,10 +1045,6 @@
 	    set mMemberData$_tname\($row,$_col\) $_val
 	}
     }
-
-#    puts "CombEditFrame::syncColumn: set column $_col values to $_val"
-#    puts "CombEditFrame::syncColumn: anames - $anames"
-#    puts "CombEditFrame::syncColumn: colnames - $colnames"
 }
 
 ::itcl::body CombEditFrame::validateTableEntry {_row _col _newval _tname} {
@@ -1078,7 +1060,7 @@
 	return 1
     }
 
-    if {[string is double $_newval]} {
+    if {[string is double $_newval] || $_newval == "." || $_newval == "-"} {
 	syncColumn $_tname $_row $_col $_newval
 	return 1
     }

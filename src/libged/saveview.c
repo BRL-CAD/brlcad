@@ -1,7 +1,7 @@
 /*                         S A V E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -166,8 +167,8 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
 	gdlp = next_gdlp;

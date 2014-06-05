@@ -1,0 +1,161 @@
+# Programs added to this list are expected to adhere to the
+# formatting rules in the accompanying README; their DcBook man page
+# xml source will be overwritten.
+#
+# Programs commented out or without a designated source file are
+# ignored.
+#
+# bin program       source file
+# ===========       ===========
+
+# the proof-of-concept cases:
+fix_polysolids      src/util/fix_polysolids.c
+dsp_add             src/util/dsp_add.c
+
+# others:
+3dm-g
+a-d                 src/sig/a-d.c
+alias-pix           src/util/alias-pix.c
+all_sf              src/irprep/all_sf.c
+anim_cascade        src/anim/anim_cascade.c
+anim_fly            src/anim/anim_fly.c
+anim_hardtrack      src/anim/anim_hardtrack.c
+anim_keyread        src/anim/anim_keyread.c
+anim_lookat         src/anim/anim_lookat.c
+anim_offset         src/anim/anim_offset.c
+anim_orient         src/anim/anim_orient.c
+archer
+asc2pix             src/conv/asc/asc2pix.c
+bolt                src/shapes/bolt.c
+bombardier          src/util/bombardier.c
+bot-bldxf           src/conv/dxf/bot-bldxf.c
+brep_cube
+brep_simple
+brepintersect
+breplicator
+brickwall           src/proc-db/brickwall.c
+brlman
+burst               src/burst/burst.c
+bw-a                src/util/bw-a.c
+bw-d                src/sig/bw-d.c
+bwish
+c-d                 src/sig/c-d.c
+chan_add            src/anim/chan_add.c
+check-express
+clutter             src/proc-db/clutter.c
+contours            src/proc-db/contours.c
+csgbrep
+d-a                 src/sig/d-a.c
+d-bw                src/sig/d-bw.c
+d-f                 src/sig/d-f.c
+d-i                 src/sig/d-i.c
+d-u                 src/sig/d-u.c
+d2-c                src/sig/d2-c.c
+damdf               src/sig/damdf.c
+dauto               src/sig/dauto.c
+dauto2              src/sig/dauto2.c
+dconv               src/sig/dconv.c
+ddisp               src/sig/ddisp.c
+dem-g               src/conv/dem-g.c
+dfft                src/sig/dfft.c
+dmod                src/sig/dmod.c
+double-asc          src/util/double-asc.c
+dpeak               src/sig/dpeak.c
+dsel                src/sig/dsel.c
+dstats              src/sig/dstats.c
+dwin                src/sig/dwin.c
+euclid_format       src/conv/euclid/euclid_format.c
+euclid_unformat     src/conv/euclid/euclid_unformat.c
+f-d                 src/sig/f-d.c
+f-i                 src/sig/f-i.c
+fbgammamod          src/fb/fbgammamod.c
+fence               src/shapes/fence.c
+fhor                src/sig/fhor.c
+g-dot               src/conv/g-dot.c
+g-euclid1           src/conv/euclid/g-euclid1.c
+g-jack              src/conv/jack/g-jack.c
+g-off               src/conv/off/g-off.c
+g-step
+g-voxel             src/conv/g-voxel.c
+g_qa                src/gtools/g_qa.c
+gastank             src/shapes/gastank.c
+globe               src/proc-db/globe.c
+handle              src/shapes/handle.c
+human               src/libged/human.c
+i-a                 src/sig/i-a.c
+i-d                 src/sig/i-d.c
+i-f                 src/sig/i-f.c
+ihist               src/sig/ihist.c
+imod                src/sig/imod.c
+isst
+istats              src/sig/istats.c
+jack-g              src/conv/jack/jack-g.c
+kurt                src/proc-db/kurt.c
+lens                src/proc-db/lens.c
+lowp                src/util/lowp.c
+masonry             src/proc-db/masonry.c
+menger              src/proc-db/menger.c
+metaball            src/proc-db/metaball.c
+mkbuilding          src/proc-db/mkbuilding.c
+molecule            src/proc-db/molecule.c
+nmg-sgp             src/conv/nmg/nmg-sgp.c
+nmgmodel            src/proc-db/nmgmodel.c
+off-g               src/conv/off/off-g.c
+pdb-g               src/proc-db/pdb-g.c
+perplex
+picket_fence        src/shapes/picket_fence.c
+pipe                src/proc-db/pipe.c
+pix-spm             src/util/pix-spm.c
+pix-yuv             src/util/pix-yuv.c
+pix2g               src/proc-db/pix2g.c
+pix3filter          src/util/pix3filter.c
+pixcount            src/util/pixcount.c
+pixelswap           src/util/pixelswap.c
+pixembed            src/util/pixembed.c
+pixfields           src/util/pixfields.c
+pixfieldsep         src/util/pixfieldsep.c
+pixflip-fb          src/fb/pixflip-fb.c
+pixpaste            src/util/pixpaste.c
+plot3-dm            src/util/plot3-dm.c
+plot3stat           src/util/plot3stat.c
+pyramid             src/proc-db/pyramid.c
+raw-g
+rawbot              src/proc-db/rawbot.c
+re2c
+ringworld           src/proc-db/ringworld.c
+room                src/proc-db/room.c
+rtcell
+rtfrac
+rtrad
+rtsil
+rtsrv               src/remrt/rtsrv.c
+script-tab          src/tab/script-tab.c
+shp-g               src/conv/shp/shp-g.c
+sketch              src/proc-db/sketch.c
+smod                src/sig/smod.c
+sphflake            src/proc-db/sphflake.c
+spm-fb              src/fb/spm-fb.c
+ssampview           src/rttherm/ssampview.c
+step-g
+surfaceintersec
+tea                 src/proc-db/tea.c
+tea_nmg             src/proc-db/tea_nmg.c
+texturescale        src/util/texturescale.c
+tgf-g
+torii               src/proc-db/torii.c
+ttcp                src/util/ttcp.c
+tube                src/proc-db/tube.c
+u-a                 src/sig/u-a.c
+u-bw                src/sig/u-bw.c
+u-d                 src/sig/u-d.c
+u-f                 src/sig/u-f.c
+umod                src/sig/umod.c
+ustats              src/sig/ustats.c
+vegetation          src/proc-db/vegetation.c
+wavy                src/proc-db/wavy.c
+wdb_example         src/proc-db/wdb_example.c
+window              src/shapes/window.c
+window_frame        src/shapes/window_frame.c
+wire                src/shapes/wire.c
+#xyz-plot3           src/util/xyz-plot3.c
+yuv-pix             src/util/yuv-pix.c

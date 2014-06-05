@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -79,8 +79,8 @@ _ged_rt_write(struct ged *gedp,
 
     fprintf(fp, "start 0; clean;\n");
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -92,8 +92,8 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -112,8 +112,8 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -159,8 +159,8 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -287,9 +287,8 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
-
-	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
+	BU_PUT(run_rtp, struct ged_run_rt);
+	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
     }
@@ -298,7 +297,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     line[count] = '\0';
 
     /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else
 	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
@@ -470,15 +469,12 @@ _ged_run_rt(struct ged *gedp)
 }
 
 
-/**
- *
- */
 size_t
 ged_count_tops(struct ged *gedp)
 {
     struct ged_display_list *gdlp = NULL;
     size_t visibleCount = 0;
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	visibleCount++;
     }
     return visibleCount;
@@ -486,8 +482,6 @@ ged_count_tops(struct ged *gedp)
 
 
 /**
- * G E D _ B U I L D _ T O P S
- *
  * Build a command line vector of the tops of all objects in view.
  */
 int
@@ -496,7 +490,7 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
     struct ged_display_list *gdlp;
     char **vp = start;
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 

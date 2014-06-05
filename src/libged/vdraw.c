@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
@@ -590,7 +590,7 @@ vdraw_params(void *data, int argc, const char *argv[])
     }
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
-	for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
+	for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
 	    if (!bu_strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
 		return GED_ERROR;
@@ -638,7 +638,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     bu_strlcpy(temp_name, argv[2], RT_VDRW_MAXNAME);
 
     gedp->ged_gdp->gd_currVHead = (struct vd_curve *) NULL;
-    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
+    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
 	if (!bu_strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
 	    gedp->ged_gdp->gd_currVHead = rcp;
 	    break;
@@ -648,7 +648,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     if (!gedp->ged_gdp->gd_currVHead) {
 	/* create new entry */
 	BU_GET(rcp, struct vd_curve);
-	BU_LIST_APPEND(&gedp->ged_gdp->gd_headVDraw, &(rcp->l));
+	BU_LIST_APPEND(gedp->ged_gdp->gd_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);
 
@@ -694,7 +694,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 
     switch  (argv[2][0]) {
 	case 'l':
-	    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
+	    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
 		bu_vls_strcat(gedp->ged_result_str, rcp->vdc_name);
 		bu_vls_strcat(gedp->ged_result_str, " ");
 	    }
@@ -702,7 +702,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    return GED_OK;
 	case 'd':
 	    rcp2 = (struct vd_curve *)NULL;
-	    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
+	    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
 		if (!bu_strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
 		    rcp2 = rcp;
 		    break;
@@ -714,14 +714,14 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    }
 	    BU_LIST_DEQUEUE(&(rcp2->l));
 	    if (gedp->ged_gdp->gd_currVHead == rcp2) {
-		if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headVDraw)) {
+		if (BU_LIST_IS_EMPTY(gedp->ged_gdp->gd_headVDraw)) {
 		    gedp->ged_gdp->gd_currVHead = (struct vd_curve *)NULL;
 		} else {
-		    gedp->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, &gedp->ged_gdp->gd_headVDraw);
+		    gedp->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->ged_gdp->gd_headVDraw);
 		}
 	    }
 	    RT_FREE_VLIST(&(rcp2->vdc_vhd));
-	    bu_free((genptr_t) rcp2, "vd_curve");
+	    BU_PUT(rcp2, struct vd_curve);
 	    return GED_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s %s: unknown option to vdraw vlist", argv[0], argv[1]);
@@ -747,7 +747,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	{"params",		vdraw_params},
 	{"open",		vdraw_open},
 	{"vlist",		vdraw_vlist},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";

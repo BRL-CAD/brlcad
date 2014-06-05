@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,24 +45,26 @@
 #define BUFLEN 65536
 
 
-char *progname = "(noname)";
+static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
+static const char *progname = "smod";
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-short mapbuf[BUFLEN];		/* translation buffer/lookup table */
-unsigned char clip_h[BUFLEN];	/* map of values which clip high */
-unsigned char clip_l[BUFLEN];	/* map of values which clip low */
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+static unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 
-int
+static int
 get_args(int argc, char *argv[])
 {
     char *file_name;
+    char hyphen[] = "-";
     int c;
     double d;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -80,7 +82,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: divide by zero!\n");
+		    bu_exit(2, "%s: divide by zero!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -96,12 +98,12 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: zero root!\n");
+		    bu_exit(2, "%s: zero root!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
 
-	    default:		/* '?' */
+	    default:
 		return 0;
 	}
     }
@@ -109,30 +111,30 @@ get_args(int argc, char *argv[])
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
-			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
+		    progname, file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
 
     return 1;		/* OK */
 }
 
 
-void
-mk_trans_tbl()
+static void
+mk_trans_tbl(void)
 {
     int i, j, k;
     double d;
@@ -151,7 +153,7 @@ mk_trans_tbl()
 		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		default  : fprintf(stderr, "%s: error in op\n",
-					 progname); break;
+				   progname); break;
 	    }
 	}
 
@@ -173,14 +175,13 @@ main(int argc, char *argv[])
 {
     unsigned int j, n;
     unsigned long clip_high, clip_low;
-    char *strrchr();
     short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
+	bu_exit(1, "%s", usage);
     }
 
     mk_trans_tbl();
@@ -194,12 +195,12 @@ main(int argc, char *argv[])
 	    long mdx;
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > BUFLEN-1)
+	    else if (idx > BUFLEN-1)
 		idx = BUFLEN-1;
 	    mdx = iobuf[idx] + 32768;
 	    if (mdx < 0)
 		mdx = 0;
-	    if (mdx > BUFLEN-1)
+	    else if (mdx > BUFLEN-1)
 		mdx = BUFLEN-1;
 
 	    iobuf[idx] = mapbuf[mdx];
@@ -221,6 +222,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

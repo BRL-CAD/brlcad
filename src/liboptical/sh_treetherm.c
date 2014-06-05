@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,8 +130,6 @@ struct tthrm_specific {
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL ((struct tthrm_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct tthrm_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -145,10 +143,10 @@ struct bu_structparse tthrm_parse[] = {
 };
 
 
-HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void tthrm_print(register struct region *rp, genptr_t dp);
-HIDDEN void tthrm_free(genptr_t cp);
+HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void tthrm_print(register struct region *rp, void *dp);
+HIDDEN void tthrm_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -213,14 +211,13 @@ build_tree(struct bu_list *br, struct region *rp)
 }
 
 
-/* T R E E T H E R M _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -280,7 +277,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	bu_log("Error mapping \"%s\"\n",  tthrm_sp->tt_name);
 	bu_bomb("shader tthrm: can't get thermal data");
     }
-    tt_data = tt_file->buf;
+    tt_data = (char *)tt_file->buf;
 
 
     if (rdebug&RDEBUG_SHADE)
@@ -328,7 +325,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	    }
 	    break;
 	default:
-	    bu_log("a long int is %d bytes on this machine\n", sizeof(long));
+	    bu_log("a long int is %lu bytes on this machine\n", sizeof(long));
 	    bu_bomb("I can only handle 4 or 8 byte longs\n");
 	    break;
     }
@@ -366,7 +363,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	    /* make sure we don't have any "infinity" values */
 	    for (i=0; i < 4; i++) {
 		if (fv[i] > MAX_FASTF || fv[i] < -MAX_FASTF) {
-		    bu_log("%s:%d seg %d node %d coord %d out of bounds: %g\n",
+		    bu_log("%s:%d seg %ld node %d coord %d out of bounds: %g\n",
 			   __FILE__, __LINE__, tseg, node, i, fv[i]);
 		    bu_bomb("choke, gasp, *croak*\n");
 		}
@@ -459,11 +456,8 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * T R E E T H E R M _ P R I N T
- */
 HIDDEN void
-tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
+tthrm_print(register struct region *UNUSED(rp), void *dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 
@@ -472,11 +466,8 @@ tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
 }
 
 
-/*
- * T R E E T H E R M _ F R E E
- */
 HIDDEN void
-tthrm_free(genptr_t cp)
+tthrm_free(void *cp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
@@ -487,7 +478,7 @@ tthrm_free(genptr_t cp)
     tthrm_sp->tt_name[0] = '\0';
     tthrm_sp->magic = 0;
 
-    bu_free(cp, "tthrm_specific");
+    BU_PUT(cp, struct tthrm_specific);
 }
 
 
@@ -529,14 +520,12 @@ get_solid_number(const struct partition *pp)
 
 
 /*
- * T R E E T H E R M _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */
@@ -545,6 +534,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     register struct tthrm_specific *tthrm_sp =
 	(struct tthrm_specific *)dp;
     struct rt_part_internal *part_p;
+    char *solid_name;
 
     point_t pt;
     vect_t pt_v;
@@ -555,6 +545,8 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     double best_val;
     double Vdot;
     int node;
+
+    solid_name = pp->pt_inseg->seg_stp->st_dp->d_namep;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -576,7 +568,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 
     if (solid_number > tthrm_sp->tt_max_seg) {
 	bu_log("%s:%d solid name %s has solid number higher than %ld\n",
-	       __FILE__, __LINE__, tthrm_sp->tt_max_seg);
+	       __FILE__, __LINE__, solid_name, tthrm_sp->tt_max_seg);
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
     }
 
@@ -606,7 +598,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 	bu_log(
 	    "----------------------------- W A R N I N G -----------------------------\n\
 %s:%d distance %g between origin of particle and thermal node centroid is\n\
-too large.  Probable mis-match between geometry and thermal data\n"
+too large.  Probable mis-match between geometry and thermal data\n",
 	    __FILE__, __LINE__, dist);
 	bu_bomb("");
     }

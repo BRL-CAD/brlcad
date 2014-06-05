@@ -1,7 +1,7 @@
 /*                         B E S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ void usage() {
 
 
 /* fitness of a given object compared to source */
-static int cmp_ind(const void *p1, const void *p2)
+static int cmp_ind(const void *p1, const void *p2, void *UNUSED(arg))
 {
     if (((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
 	return -1;
@@ -82,7 +82,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 		opts->cross_rate = atoi(bu_optarg);
 		continue;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		continue;
 	    case 'p':
 		opts->pop_size = atoi(bu_optarg);
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
     pop_init(&pop, opts.pop_size);
     pop_spawn(&pop);
 
-    source_db = db_open(argv[ac+1], "r+w");
+    source_db = db_open(argv[ac+1], DB_OPEN_READWRITE);
     db_dirbuild(source_db);
     pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 	    total_fitness += FITNESS;
 	}
 	/* sort population - used for keeping top N and dropping bottom M */
-	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
+	bu_sort((void *)pop.parent, pop.size, sizeof(struct individual), cmp_ind, NULL);
 
 	/* remove lower M of individuals */
 	for (i = 0; i < opts.kill_lower; i++) {

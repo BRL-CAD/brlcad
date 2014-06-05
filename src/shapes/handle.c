@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,26 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+void
+printusage()
+{
+    printf("Usage: handle  <-- (if no arguments, go into interactive mode)\n");
+    printf("or\n");
+    printf("Usage: handle -f name.g -n number_of_handles -l handle_length -H handle_height\n");
+    printf("       -r1 torus_radius -r2 cylinder_radius\n");
+    printf("       (units mm)\n");
+    printf("\nThis program constructs a handle with the base centered\n");
+    printf("at (0, 0, 0) and the height extending in the positive z-\n");
+    printf("direction.  The handle is to be composed of 3 cylinders, \n");
+    printf("2 tori, and 2 arb8s.\n\n");
+	/* List of options. */
+	/* -fname - name = name of .g file. */
+	/* -n# - # = number of handles. */
+	/* -l# - # = length of handle in mm. */
+	/* -H# - # = height of handle in mm. */
+	/* -r1# - # = r1 radius of torus. */
+	/* -r2# - # = r2 radius of cylinder. */
+}
 
 int
 main(int argc, char **argv)
@@ -56,7 +76,7 @@ main(int argc, char **argv)
     fastf_t rad;		/* Radius of rcc. */
     point_t cent;		/* Center of torus. */
     vect_t norm;		/* Normal of torus. */
-    double rad1, rad2;		/* R1 and r2 of torus. */
+    double rad1, rad2;		/* r1 and r2 of torus. */
     char *temp;			/* Temporary character string. */
     char temp1[16];		/* Temporary character string. */
 
@@ -99,10 +119,8 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Explain makings of handle. */
-	printf("\nThis program constructs a handle with the base centered\n");
-	printf("at (0, 0, 0) and the height extending in the positive z-\n");
-	printf("direction.  The handle will be composed of 3 cylinders, \n");
-	printf("2 tori, and 2 arb8s.\n\n");
+    	printusage();
+	printf("       Program continues running:\n\n");
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */
@@ -110,9 +128,8 @@ main(int argc, char **argv)
 	printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 
@@ -124,10 +141,6 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numhan = 1;
 	}
-	if (numhan < 1)
-	    numhan = 1;
-	if (numhan > 26)
-	    numhan = 26;
 
 	/* Find dimensions of handle. */
 	printf("Enter the length and height of handle in mm.\n\t");
@@ -137,11 +150,12 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    len = 100.0;
 	    hgt = 10.0;
-	}
+	} else {
 	if (len < SMALL_FASTF)
 	    len = SMALL_FASTF;
 	if (hgt < SMALL_FASTF)
 	    hgt = SMALL_FASTF;
+	}
 
 	printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
@@ -149,9 +163,10 @@ main(int argc, char **argv)
 	if (ret == 0) {
 	    perror("scanf");
 	    r1 = 5.0;
-	}
+	} else {
 	if (r1 < SMALL_FASTF)
 	    r1 = SMALL_FASTF;
+	}
 
 	printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
@@ -159,26 +174,24 @@ main(int argc, char **argv)
 	if (ret == 0) {
 	    perror("scanf");
 	    r2 = 5.0;
-	}
+	} else {
 	if (r2 < SMALL_FASTF)
 	    r2 = SMALL_FASTF;
+	}
     }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */
     else {
 	/* START # 4 */
-	/* List of options. */
-	/* -fname - name = name of .g file. */
-	/* -n# - # = number of handles. */
-	/* -l# - # = length of handle in mm. */
-	/* -h# - # = height of handle in mm. */
-	/* -r1# - # = r1 radius of torus. */
-	/* -r2# - # = r2 radius of torus & cylinder. */
 
 	for (i=1; i<argc; i++) {
 	    /* START # 5 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	printusage();
+		bu_exit(1, NULL);
+	    }
 
 	    /* -f - mged file name. */
 	    if (temp[1] == 'f') {
@@ -208,11 +221,10 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		sscanf(temp1, "%d", &numhan);
-		if (numhan > 26) numhan = 26;
 	    }						/* END # 8 */
 
 	    /* -l or -h - length and height of handle in mm. */
-	    else if ((temp[1] == 'l') || (temp[1] == 'h')) {
+	    else if ((temp[1] == 'l') || (temp[1] == 'H')) {
 		/* START # 10 */
 		/* Set up temporary character string. */
 		j = 2;
@@ -225,7 +237,7 @@ main(int argc, char **argv)
 		}					/* END # 11 */
 		temp1[k] = '\0';
 		if (temp[1] == 'l') sscanf(temp1, "%lf", &len);
-		else if (temp[1] == 'h') sscanf(temp1, "%lf", &hgt);
+		else if (temp[1] == 'H') sscanf(temp1, "%lf", &hgt);
 	    }						/* END # 10 */
 
 	    /* -r1 or -r2 - radii for torus. */
@@ -247,6 +259,11 @@ main(int argc, char **argv)
 	}						/* END # 5 */
     }							/* END # 4 */
 
+    if (numhan < 1)
+	numhan = 1;
+    else if (numhan > 26)
+	numhan = 26;
+
     /* Print out dimensions of the handle. */
     printf("\nmged file name:  %s\n", filemged);
     printf("length:  %f mm\n", len);
@@ -258,6 +275,8 @@ main(int argc, char **argv)
 
     /* Open mged file for writing to. */
     fpw = wdb_fopen(filemged);
+    if (!fpw)
+	bu_exit(1, "file-open failed");
 
     /* Write ident record. */
     mk_id(fpw, "handles");
@@ -268,23 +287,23 @@ main(int argc, char **argv)
 	/* Create solids for handle. */
 
 	/* Create top cylinder. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (len / 2. - r1 - r2);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (len / 2.0 - r1 - r2);
 	bs[2] = (fastf_t) (hgt - r2);
-	ht[0] = (fastf_t)0.;
+	ht[0] = (fastf_t)0.0;
 	ht[1] = (fastf_t) (r1 + r1 + r2 + r2 - len);
-	ht[2] = (fastf_t)0.;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t)r2;
 	solnam[5] = 97 + i;
 	solnam[6] = '1';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/* Create right cylinder. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (len / 2. - r2);
-	bs[2] = (fastf_t)0.;
-	ht[0] = (fastf_t)0.;
-	ht[1] = (fastf_t)0.;
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (len / 2.0 - r2);
+	bs[2] = (fastf_t)0.0;
+	ht[0] = (fastf_t)0.0;
+	ht[1] = (fastf_t)0.0;
 	ht[2] = (fastf_t) (hgt - r1 - r2);
 	rad = (fastf_t)r2;
 	solnam[6] = '2';
@@ -296,12 +315,12 @@ main(int argc, char **argv)
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/* Create right torus. */
-	cent[0] = (fastf_t)0.;
-	cent[1] = (fastf_t) (len / 2. -r1 - r2);
+	cent[0] = (fastf_t)0.0;
+	cent[1] = (fastf_t) (len / 2.0 -r1 - r2);
 	cent[2] = (fastf_t) (hgt - r1 -r2);
-	norm[0] = (fastf_t)1.;
-	norm[1] = (fastf_t)0.;
-	norm[2] = (fastf_t)0.;
+	norm[0] = (fastf_t)1.0;
+	norm[1] = (fastf_t)0.0;
+	norm[2] = (fastf_t)0.0;
 	rad1 = r1;
 	rad2 = r2;
 	solnam[6] = '4';
@@ -314,28 +333,28 @@ main(int argc, char **argv)
 
 	/* Create right arb8. */
 	pts[0][0] = (fastf_t)r2;
-	pts[0][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[0][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[0][2] = (fastf_t)hgt;
 	pts[1][0] = (fastf_t)r2;
-	pts[1][1] = (fastf_t) (len / 2.);
+	pts[1][1] = (fastf_t) (len / 2.0);
 	pts[1][2] = (fastf_t)hgt;
 	pts[2][0] = (fastf_t)r2;
-	pts[2][1] = (fastf_t) (len / 2.);
+	pts[2][1] = (fastf_t) (len / 2.0);
 	pts[2][2] = (fastf_t) (hgt -r1 - r2);
 	pts[3][0] = (fastf_t)r2;
-	pts[3][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[3][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[3][2] = (fastf_t) (hgt -r1 - r2);
 	pts[4][0] = (fastf_t)(-r2);
-	pts[4][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[4][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[4][2] = (fastf_t)hgt;
 	pts[5][0] = (fastf_t)(-r2);
-	pts[5][1] = (fastf_t) (len / 2.);
+	pts[5][1] = (fastf_t) (len / 2.0);
 	pts[5][2] = (fastf_t)hgt;
 	pts[6][0] = (fastf_t)(-r2);
-	pts[6][1] = (fastf_t) (len / 2.);
+	pts[6][1] = (fastf_t) (len / 2.0);
 	pts[6][2] = (fastf_t) (hgt -r1 - r2);
 	pts[7][0] = (fastf_t)(-r2);
-	pts[7][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[7][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[7][2] = (fastf_t) (hgt -r1 - r2);
 	solnam[6] ='6';
 	mk_arb8(fpw, solnam, &pts[0][X]);

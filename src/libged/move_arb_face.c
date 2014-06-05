@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
@@ -72,6 +72,7 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
     fastf_t planes[7][4];		/* ARBs defining plane equations */
+    fastf_t save_tol_dist;
     int arb_type;
     int face;
     int rflag = 0;
@@ -213,7 +214,14 @@ if (face_idx > max_idx) { \
     planes[face][3] = VDOT(&planes[face][0], pt);
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
+    save_tol_dist = gedp->ged_wdbp->wdb_tol.dist;
+    gedp->ged_wdbp->wdb_tol.dist = gedp->ged_wdbp->wdb_tol.dist * 2;
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+	gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+    gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
 
     {
 	int i;

@@ -371,7 +371,7 @@ namespace boost {
         return is_not_in_dst;
       }
 
-      static bool is_dst_boundary_day(date_type d)
+      static bool is_dst_boundary_day(date_type /*d*/)
       {
         return false;
       }

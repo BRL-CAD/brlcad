@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I M A G E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 /**
  * @file librender/texture_image.c
  *
- *  Comments -
- *      Texture Library - Projects an Image onto a Surface
+ * Comments -
+ * Texture Library - Projects an Image onto a Surface
  *
  */
 
@@ -30,23 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-void
-texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
-    struct texture_image_s *td;
-
-    texture->data = bu_malloc(sizeof(struct texture_image_s), "texture data");
-    texture->free = texture_image_free;
-    texture->work = (texture_work_t *)texture_image_work;
-
-    td = (struct texture_image_s *)texture->data;
-    td->w = w;
-    td->h = h;
-    td->image = (unsigned char *)bu_malloc(3*w*h, "texture image");
-    memcpy(td->image, image, 3*w*h);
-}
+#include "bu/malloc.h"
 
 void
 texture_image_free(struct texture_s *texture) {
@@ -56,6 +40,7 @@ texture_image_free(struct texture_s *texture) {
     bu_free(td->image, "texture image");
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -79,6 +64,7 @@ texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUS
     *pixel[1] = td->image[ind+1] / 255.0;
     *pixel[2] = td->image[ind+0] / 255.0;
 }
+
 
 /*
  * Local Variables:

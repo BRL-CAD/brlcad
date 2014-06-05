@@ -31,7 +31,6 @@
 is used to change the color map of a frame buffer.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
@@ -142,7 +141,7 @@ and 18% neutral grey, respectively.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1986-2012 by the United States
+<para>This software is Copyright (c) 1986-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

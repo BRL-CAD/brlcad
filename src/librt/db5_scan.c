@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parse.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db5.h"
@@ -36,8 +37,8 @@ db5_scan(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
-		    off_t addr, genptr_t client_data),
-    genptr_t client_data)
+		    off_t addr, void *client_data),
+    void *client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
@@ -46,7 +47,8 @@ db5_scan(
     off_t addr;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(x%x, x%x)\n", dbip, handler);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
+				    (void *)dbip, (long unsigned int)handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;
@@ -84,7 +86,7 @@ db5_scan(
 	    goto fatal;
 	}
 	for (;;) {
-	    addr = ftell(dbip->dbi_fp);
+	    addr = bu_ftell(dbip->dbi_fp);
 	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
 		if (got == -1) break;		/* EOF */
 		goto fatal;
@@ -92,15 +94,11 @@ db5_scan(
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
 	    if (raw.buf) {
-#if 1
-		bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
-#else
 		bu_free(raw.buf, "raw v5 object");
-#endif
 		raw.buf = NULL;
 	    }
 	}
-	dbip->dbi_eof = ftell(dbip->dbi_fp);
+	dbip->dbi_eof = bu_ftell(dbip->dbi_fp);
 	rewind(dbip->dbi_fp);
     }
 
@@ -190,7 +188,7 @@ struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
 	   off_t laddr,
-	   genptr_t client_data)
+	   void *client_data)
 {
     struct directory **headp;
     register struct directory *dp;
@@ -275,7 +273,7 @@ db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
     off_t laddr,
-    genptr_t client_data)	/* unused client_data from db5_scan() */
+    void *client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
 
@@ -290,8 +288,8 @@ db5_diradd_handler(
     if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%zu)\n",
-	       dbip, rip->name.ext_buf, laddr, rip->object_length);
+	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%ld, len=%zu)\n",
+	       (void *)dbip, rip->name.ext_buf, laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);
@@ -398,14 +396,15 @@ db_dirbuild(struct db_i *dbip)
     } else if (version == 4) {
 	/* things used to be pretty simple with v4 */
 
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))db_diradd, 1, NULL) < 0) {
 	    return -1;
 	}
 
 	return 0;		/* ok */
     }
 
-    bu_log("ERROR: Cannot build object directory.\n\tFile does not seem to be in BRL-CAD geometry database format.\n", dbip->dbi_filename);
+    bu_log("ERROR: Cannot build object directory.\n\tFile '%s' does not seem to be in BRL-CAD geometry database format.\n",
+	   dbip->dbi_filename);
 
     return -1;
 }

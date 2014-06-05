@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,10 +62,9 @@ void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
 void itoa(int n, char *s, int w);
 
+
 /*
- *
- * F _ A M T R A C K () :	adds track given "wheel" info
- *
+ * adds track given "wheel" info
  */
 int
 f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -592,25 +591,25 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_arb_internal *arb;
 
-		BU_GET(arb, struct rt_arb_internal);
+		BU_ALLOC(arb, struct rt_arb_internal);
 
 		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 		VMOVE(arb->pt[0], &sol.s_values[0]);
 		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-			intern.idb_ptr = (genptr_t)arb;
+		intern.idb_ptr = (void *)arb;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_ARB8;
-		intern.idb_meth = &rt_functab[ID_ARB8];
+		intern.idb_meth = &OBJ[ID_ARB8];
 	    }
 	    break;
 	case ID_TGC:
 	    {
 		struct rt_tgc_internal *tgc;
 
-		BU_GET(tgc, struct rt_tgc_internal);
+		BU_ALLOC(tgc, struct rt_tgc_internal);
 
 		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -621,10 +620,10 @@ wrobj(char name[], int flags)
 		VMOVE(tgc->c, &sol.s_values[12]);
 		VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
+		intern.idb_ptr = (void *)tgc;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_TGC;
-		intern.idb_meth = &rt_functab[ID_TGC];
+		intern.idb_meth = &OBJ[ID_TGC];
 	    }
 	    break;
 	default:
@@ -632,7 +631,7 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
@@ -897,7 +896,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 }
 
 
-/*	==== I T O A ()
+/*
  * convert integer to ascii wd format
  */
 void

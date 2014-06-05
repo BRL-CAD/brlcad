@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,19 +57,21 @@ struct _rubber_band default_rubber_band = {
 
 
 #define RB_O(_m) bu_offsetof(struct _rubber_band, _m)
-#define RB_OA(_m) bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
     {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag, NULL, NULL },
     {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag, NULL, NULL },
     {"%c",	1, "linestyle",	RB_O(rb_linestyle),	rb_set_dirty_flag, NULL, NULL },
-    {"%d",	2, "pos",	RB_OA(rb_pos),		set_rect, NULL, NULL },
-    {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect, NULL, NULL },
+    {"%d",	2, "pos",	RB_O(rb_pos),		set_rect, NULL, NULL },
+    {"%d",	2, "dim",	RB_O(rb_dim),		set_rect, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 void
-rb_set_dirty_flag(void)
+rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -108,10 +110,13 @@ rect_image2view(void)
 
 
 void
-set_rect(void)
+set_rect(const struct bu_structparse *sdp,
+	 const char *name,
+	 void *base,
+	 const char *value)
 {
     rect_image2view();
-    rb_set_dirty_flag();
+    rb_set_dirty_flag(sdp, name, base, value);
 }
 
 
@@ -308,7 +313,15 @@ zoom_rect_area(void)
     rubber_band->rb_height = 2.0 / dmp->dm_aspect;
 
     rect_view2image();
-    rb_set_dirty_flag();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	rb_set_dirty_flag(sdp, name, base, value);
+    }
 }
 
 

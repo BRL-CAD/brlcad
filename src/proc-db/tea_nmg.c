@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
 #include "nurb.h"		/* BRL-CAD Spline data structures */
@@ -162,7 +163,7 @@ main(int argc, char **argv)
     struct nmgregion *r;
     char *id_name = "BRL-CAD t-NURBS NMG Example";
     char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.pl";
+    char *uplot_name = "teapot.plot3";
     struct bu_list vhead;
     FILE *fp;
     int i;
@@ -174,21 +175,28 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
+    RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    outfp = wdb_fopen("tea_nmg.g");
-
-    rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
-
-    while ((i=bu_getopt(argc, argv, "d")) != -1) {
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
 	switch (i) {
-	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-	    default	:
-		fprintf(stderr,
-			      "Usage: %s [-d] > database.g\n", *argv);
+	    case 'd':
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		 break;
+	    default:
+		fprintf(stderr,"Usage: %s [-d]\n", *argv);
 		return -1;
 	}
     }
+
+    if (argc == 1) {
+	fprintf(stderr,"Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
+
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    outfp = wdb_fopen("tea_nmg.g");
 
     mk_id(outfp, id_name);
 
@@ -220,7 +228,7 @@ main(int argc, char **argv)
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
-	bu_log("Cannot open plot file: %s\n", uplot_name);
+	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
 	rt_vlist_to_uplot(fp, &vhead);
@@ -228,6 +236,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

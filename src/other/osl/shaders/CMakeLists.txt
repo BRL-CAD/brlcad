@@ -1,5 +1,5 @@
 # FIXME -- Here, we should know in advance which is the OSL_HOME
-# because we're building it. For know, just call FindOSL...
+# because we're building it. For now, just call FindOSL...
 include(FindOSL)
 
 message(STATUS "compiling the shaders --------- " ${OSLHOME})

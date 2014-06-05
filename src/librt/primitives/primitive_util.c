@@ -1,7 +1,7 @@
 /*               P R I M I T I V E _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2012 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 	max_error = 0.0;
 
 	/* Find the least accurate line segment, and calculate a new parabola
-	 * point to insert between it's endpoints.
+	 * point to insert between its endpoints.
 	 */
 	while (node->next != NULL) {
 	    VMOVE(p0, node->p);
@@ -224,8 +224,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
-		    "rt_pt_node");
+	BU_ALLOC(new_node, struct rt_pt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
@@ -294,7 +293,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	max_error = 0.0;
 
 	/* Find the least accurate line segment, and calculate a new hyperbola
-	 * point to insert between it's endpoints.
+	 * point to insert between its endpoints.
 	 */
 	while (node->next != NULL) {
 	    VMOVE(p0, node->p);
@@ -327,8 +326,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
-		    "rt_pt_node");
+	BU_ALLOC(new_node, struct rt_pt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
@@ -340,9 +338,9 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 void
 ellipse_point_at_radian(
 	point_t result,
-	vect_t center,
-	vect_t axis_a,
-	vect_t axis_b,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
 	fastf_t radian)
 {
     fastf_t cos_rad, sin_rad;
@@ -356,16 +354,16 @@ ellipse_point_at_radian(
 void
 plot_ellipse(
 	struct bu_list *vhead,
-	vect_t center,
-	vect_t axis_a,
-	vect_t axis_b,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
 	int num_points)
 {
     int i;
     point_t p;
     fastf_t radian, radian_step;
 
-    radian_step = bn_twopi / num_points;
+    radian_step = M_2PI / num_points;
 
     ellipse_point_at_radian(p, center, axis_a, axis_b,
 	    radian_step * (num_points - 1));

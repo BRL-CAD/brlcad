@@ -1,7 +1,7 @@
 /*                      M K B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -69,7 +69,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	register int i;
 
 	theta = 0;
-	delta = bn_twopi / rays_per_ring;
+	delta = M_2PI / rays_per_ring;
 	fraction = ((double)(ring+1)) / nring;
 	theta = delta * fraction;	/* spiral skew */
 	radial_scale = radius * fraction;
@@ -143,9 +143,7 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     for (y=gridsize * (-bcpr); y <= b; y=y+gridsize) {
 	for (x= gridsize * (-acpr); x <= a; x=x+gridsize) {
 	    if (((x*x)/(a*a) + (y*y)/(b*b)) < 1) {
-		xrayp = (struct xrays *)bu_calloc(sizeof(struct xrays),
-						  1,
-						  "bundled ray");
+		BU_ALLOC(xrayp, struct xrays);
 		VJOIN2(xrayp->ray.r_pt, C, x, a_dir, y, b_dir);
 		VMOVE(xrayp->ray.r_dir, dir);
 		xrayp->ray.index = count++;
@@ -157,46 +155,6 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     return count;
 }
 
-
-/*
- * Test driver.
- */
-
-#if 0
-main()
-{
-    FILE *fp = fopen("bundle.pl", "wb");
-    int rays_per_ring=5;
-    int nring=3;
-    fastf_t bundle_radius=1000.0;
-    int i;
-    vect_t avec, bvec;
-    struct xray *rp;
-    vect_t dir;
-
-
-    VSET(dir, 0, 0, -1);
-    /* create orthogonal rays for basis of bundle */
-    bn_vec_ortho(avec, dir);
-    VCROSS(bvec, dir, avec);
-    VUNITIZE(bvec);
-
-    rp = (struct xray *)bu_calloc(sizeof(struct xray),
-				  (rays_per_ring * nring) + 1,
-				  "ray bundle");
-    VSET(rp[0].r_pt, 0, 0, 2000);
-    VMOVE(rp[0].r_dir, dir);
-    rt_raybundle_maker(rp, bundle_radius, avec, bvec, rays_per_ring, nring);
-
-
-    for (i=0; i <= rays_per_ring * nring; i++) {
-	point_t tip;
-	VJOIN1(tip, rp[i].r_pt, 3500, rp[i].r_dir);
-	pdv_3line(fp, rp[i].r_pt, tip);
-    }
-    fclose(fp);
-}
-#endif
 
 /*
  * Local Variables:

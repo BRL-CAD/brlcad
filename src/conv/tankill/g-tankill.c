@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,19 +35,25 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
+	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
+	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] = "\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
+		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
 		a - absolute tolerance for tessellation\n\
 		r - relative tolerance for tessellation\n\
 		n - surface normal tolerance for tessellation\n\
@@ -104,7 +110,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if ( tsp->ts_regionid == curr_id )
 	return 0;
@@ -114,7 +120,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     insert_id( tsp->ts_regionid );
     return -1;
@@ -122,7 +128,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), 
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -132,7 +138,7 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp,
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -382,12 +388,17 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 
-/*
- *			M A I N
- */
+
+static void
+printusage(const char *arg) {
+	fprintf(stderr,usage,arg);
+	bu_exit(1, usage2);
+}
+
 int
 main(int argc, char **argv)
 {
+
     int		j;
     int	c;
     double		percent;
@@ -422,10 +433,10 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -455,27 +466,25 @@ main(int argc, char **argv)
 		bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		printusage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	printusage(argv[0]);
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
     if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
@@ -483,9 +492,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{
@@ -514,7 +521,7 @@ main(int argc, char **argv)
 		       get_reg_id,			/* put id in table */
 		       region_stub,			/* do nothing */
 		       leaf_stub,
-		       (genptr_t)NULL );			/* do nothing */
+		       (void *)NULL );			/* do nothing */
 
     /* TANKILL only allows up to 2000 distinct component codes */
     if ( ident_count > 2000 )
@@ -548,7 +555,7 @@ main(int argc, char **argv)
 			   select_region,			/* selects regions with curr_id */
 			   do_region_end,			/* calls Write_tankill_region */
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
     }
 
     percent = 0;
@@ -587,7 +594,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -627,7 +634,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -652,13 +659,11 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -743,7 +748,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

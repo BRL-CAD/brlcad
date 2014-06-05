@@ -1,7 +1,7 @@
 /*                         C O M B M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 enum etypes {
@@ -45,8 +46,6 @@ enum etypes {
 
 
 /**
- * C O M B M E M _ M A T _ A E T
- *
  * Given the azimuth, elevation and twist angles, calculate the
  * rotation part of a 4x4 matrix.
  */
@@ -89,8 +88,6 @@ combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ R M A T
- *
  * Disassemble the given rotation matrix into az, el, tw.
  */
 HIDDEN void
@@ -143,8 +140,6 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 
 
 /**
- * C O M B M E M _ D I S A S S E M B L E _ M A T
- *
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
 HIDDEN int
@@ -208,8 +203,6 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 
 
 /**
- * C O M B M E M _ A S S E M B L E _ M A T
- *
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
 HIDDEN void
@@ -293,9 +286,9 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 
 		bu_vls_printf(gedp->ged_result_str, "%c {%s} %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
 			      op, itp->tr_l.tl_name,
-			      az * bn_radtodeg,
-			      el * bn_radtodeg,
-			      tw * bn_radtodeg,
+			      az * RAD2DEG,
+			      el * RAD2DEG,
+			      tw * RAD2DEG,
 			      tx, ty, tz,
 			      sa, sx, sy, sz);
 	    }
@@ -419,7 +412,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     }
 
     rt_db_free_internal(&intern);
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, &rt_uniresource);
     return GED_OK;
 }
@@ -468,7 +461,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     (_rt_tree_array)[(_tree_index)].tl_tree = (_tp); \
 		    (_tp)->tr_l.tl_op = OP_DB_LEAF; \
 		    (_tp)->tr_l.tl_name = bu_strdup(_name); \
-			 (_tp)->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_set: mat");
+			 (_tp)->tr_l.tl_mat = (matp_t)bu_calloc(1, sizeof(mat_t), "combmem_set: mat");
 
 
 #define COMBMEM_SET_PART_IV(_gedp, _comb, _tree_index, _intern, _final_tree, _node_count, _dp, _rt_tree_array, _old_intern, _old_rt_tree_array, _old_ntp) \
@@ -483,8 +476,8 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     RT_DB_INTERNAL_INIT(&(_intern)); \
     (_intern).idb_major_type = DB5_MAJORTYPE_BRLCAD; \
     (_intern).idb_type = ID_COMBINATION; \
-	     (_intern).idb_meth = &rt_functab[ID_COMBINATION]; \
-		      (_intern).idb_ptr = (genptr_t)(_comb); \
+	     (_intern).idb_meth = &OBJ[ID_COMBINATION]; \
+		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
 		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
@@ -492,7 +485,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
 			  if (_old_rt_tree_array) \
-			      bu_free((genptr_t)(_old_rt_tree_array), "rt_tree_array"); \
+			      bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
 			  db_free_tree((_old_ntp), &rt_uniresource); \
 			  \
 			  return GED_ERROR; \
@@ -500,7 +493,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      \
 		      rt_db_free_internal(&(_old_intern)); \
 		      if (_old_rt_tree_array) \
-			  bu_free((genptr_t)(_old_rt_tree_array), "rt_tree_array"); \
+			  bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
 		      db_free_tree((_old_ntp), &rt_uniresource);
 
 
@@ -584,7 +577,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    sscanf(argv[i+14], "%lf", &kz) == 1) {
 
 	    VSET(aetvec, az, el, tw);
-	    VSCALE(aetvec, aetvec, bn_degtorad);
+	    VSCALE(aetvec, aetvec, DEG2RAD);
 	    VSET(tvec, tx, ty, tz);
 	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
 	    VSET(key_pt, kx, ky, kz);
@@ -601,7 +594,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    }
 	}
 
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -680,9 +673,9 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (etype == ETYPES_ROT_AET) {
-		az *= bn_degtorad;
-		el *= bn_degtorad;
-		tw *= bn_degtorad;
+		az *= DEG2RAD;
+		el *= DEG2RAD;
+		tw *= DEG2RAD;
 		combmem_mat_aet(mat_rot, az, el, tw);
 	    } else
 		bn_mat_angles(mat_rot, az, el, tw);
@@ -690,7 +683,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    bn_mat_xform_about_pt(mat, mat_rot, key_pt);
 	}
 
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -767,11 +760,11 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
 	    VSET(dir, dx, dy, dz);
 	    VUNITIZE(dir);
-	    ang *= bn_degtorad;
+	    ang *= DEG2RAD;
 	    bn_mat_arb_rot(mat, pt, dir, ang);
 	}
 
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -841,7 +834,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    MAT_DELTAS_VEC(mat, tvec);
 	}
 
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -918,7 +911,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
 	}
 
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 

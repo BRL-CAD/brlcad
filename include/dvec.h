@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,15 +22,18 @@
  *
  */
 
-#ifndef __DVEC_H__
-#define __DVEC_H__
+#ifndef DVEC_H
+#define DVEC_H
 
 #include "common.h"
 
 #include <math.h>
 
-#include "raytrace.h"
+/* Needed for fastf_t definition */
+#include "bu/defines.h"
 
+/* Needed for VUNITIZE_TOL and NEAR_ZERO */
+#include "vmath.h"
 
 extern "C++" {
 #include <iostream>
@@ -122,7 +125,7 @@ extern "C++" {
 #define VEC_ALIGN
 
 /*#undef __SSE2__*/ // Test FPU version
-#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H)
+#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
 #  include "vector_x86.h"
 #else
@@ -194,7 +197,7 @@ extern "C++" {
     }
 }
 
-#endif /* __DVEC_H__ */
+#endif /* DVEC_H */
 
 /*
  * Local Variables:

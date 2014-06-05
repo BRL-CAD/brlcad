@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* Usage:  overlay file.pl [name] */
+/* Usage:  overlay file.plot3 [name] */
 int
 cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -52,7 +52,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringInit(&ds);
 
     if (argc == 1) {
-	Tcl_DStringAppend(&ds, "file.pl [name]", -1);
+	Tcl_DStringAppend(&ds, "file.plot3 [name]", -1);
 	Tcl_DStringResult(interp, &ds);
 	return TCL_OK;
     }
@@ -116,8 +116,8 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {

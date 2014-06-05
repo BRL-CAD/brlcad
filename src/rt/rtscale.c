@@ -1,7 +1,7 @@
 /*                       R T S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
  *			and
  *	3) concatenate the scales and a copy of the original image into a
  *	   a composite that it printed on standard out.  For the moment this
- *	   is achieved by saying " cat scale.pl file.pl >> out.file ".
+ *	   is achieved by saying " cat scale.plot3 file.plot3 >> out.file ".
  *	   The order of the files is very important: if not cat'ed in the
  *	   right order, the scales will be lost when plrot is applied though
  *	   they will still be seen with pl-fb and mged. Later
@@ -66,7 +66,7 @@
 
 
 char usage[] = "\
-Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
+Usage:  rtscale (width) (units) (interval) filename [string] >  file.plot3\n\
 	(width)		length of scale in model measurements\n\
 	(units)		string denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n\
@@ -87,8 +87,6 @@ int		verbose;		/* flag for debugging; to be used later */
 int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
 /*
- *
- *                     M A I N
  *
  *  Main exists to coordinate the actions of the three parts of this program.
  *  It also processes its own arguments (argc and argv).
@@ -190,8 +188,6 @@ main(int argc, char **argv)
 
 
 /*
- *		L A Y O U T _ N _ P L O T
- *
  *  This routine lays out the scale in view coordinates.  These are then
  *  converted to model space.
  *  It receives pointers to stdout, a label, and a view2model matrix, as
@@ -248,7 +244,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     v_tick_hgt = 0.05;
 
     if (verbose)  {
-	fprintf(stderr, "plot: nticks=%d,\n", nticks);
+	fprintf(stderr, "plot3: nticks=%d,\n", nticks);
     }
 
     /* Make the starting point (in view-coordinates) of the scale.
@@ -383,8 +379,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 }
 
 
-/*		D R A W S C A L E
- *
+/*
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
  * The parameters are a pointer to stdout, a start
@@ -418,8 +413,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
 }
 
 
-/*		D R A W T I C K S
- *
+/*
  * This routine draws the tick marks for the scale.  It takes a out file
  * pointer, a center point whereat to start the tick mark, a height vector
  * for the tick, and a scalar for the tick height.  It returns either
@@ -443,7 +437,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     if (verbose)  {
 	VPRINT("top", top);
 	VPRINT("bot", bot);
-	fprintf(stderr, "drawticks now using top, bot to plot\n");
+	fprintf(stderr, "drawticks now using top, bot to plot3\n");
     }
 
     pdv_3move(outfp, top);
@@ -452,8 +446,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     return 0;
 }
 
-/*		M A K E _ B O R D E R
- *
+/*
  * This routine exists to draw an optional border around the image.  It
  * exists for diagnostic purposes.  It takes a view to model matrix and
  * a file pointer.  It lays out and plots the four corners of the image border.
@@ -496,8 +489,6 @@ make_border(FILE *outfp, fastf_t *v2mod)
 }
 
 /*
- *		M A K E _ B O U N D I N G _ R P P
- *
  * This routine takes a view2model matrix and a file pointer.  It calculates the minimum and
  * the maximum points of the viewing cube in view space, and then translates
  * it to model space and rotates it so that it will not shrink when rotated and

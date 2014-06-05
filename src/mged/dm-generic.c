@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -88,13 +88,34 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
 
     if (BU_STR_EQUAL(argv[0], "idle")) {
+
+	/* redraw after scaling */
+	if (gedp && gedp->ged_gvp &&
+	    gedp->ged_gvp->gv_adaptive_plot &&
+	    gedp->ged_gvp->gv_redraw_on_zoom &&
+	    (am_mode == AMM_SCALE ||
+	     am_mode == AMM_CON_SCALE_X ||
+	     am_mode == AMM_CON_SCALE_Y ||
+	     am_mode == AMM_CON_SCALE_Z))
+	{
+	    if (redraw_visible_objects() == TCL_ERROR) {
+		return TCL_ERROR;
+	    }
+	}
+
 	am_mode = AMM_IDLE;
 	scroll_active = 0;
 	if (rubber_band->rb_active) {
 	    rubber_band->rb_active = 0;
 
-	    if (mged_variables->mv_mouse_behavior == 'p')
-		rb_set_dirty_flag();
+	    if (mged_variables->mv_mouse_behavior == 'p') {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
+	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
 		rt_rect_area();
 	    else if (mged_variables->mv_mouse_behavior == 'z')
@@ -152,11 +173,11 @@ common_dm(int argc, const char *argv[])
 		snap_to_grid(&fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
-		VSET(view_pt, fx, fy, 0.0)
-		    else
-			VSET(view_pt, fx, fy, 1.0)
+		VSET(view_pt, fx, fy, 0.0);
+	    else
+		VSET(view_pt, fx, fy, 1.0);
 
-			    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    if (dmp->dm_zclip)
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
@@ -177,42 +198,21 @@ common_dm(int argc, const char *argv[])
 	    rubber_band->rb_width = 0.0;
 	    rubber_band->rb_height = 0.0;
 	    rect_view2image();
-	    rb_set_dirty_flag();
-	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
+	    {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
 	    }
-#endif
+	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
 	    bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'm' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_matrix_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'c' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'o' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
 	} else if (adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
 	    point_t model_pt;
@@ -556,16 +556,6 @@ common_dm(int argc, const char *argv[])
 	    dmp->dm_width = width;
 	    dmp->dm_height = height;
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
-#  if 0
-	    Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
-#  else
-#if defined(HAVE_TK)
-	    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
-#endif
-#  endif
-#endif
-
 	    return TCL_OK;
 	}
 
@@ -627,6 +617,7 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
+	(void)DM_MAKE_CURRENT(dmp);
 	return DM_SET_BGCOLOR(dmp, r, g, b);
     }
 

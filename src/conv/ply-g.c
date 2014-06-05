@@ -1,7 +1,7 @@
 /*                         P L Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -297,12 +297,8 @@ get_double( int type )
 		    buf2[0] = buf1[0];
 		    break;
 		case 2:
-#if 1
 		    buf2[0] = buf1[1];
 		    buf2[1] = buf1[0];
-#else
-		    swab( buf1, buf2, 2 );
-#endif
 		    break;
 		case 4:
 		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
@@ -383,7 +379,7 @@ get_int( int type )
 		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
 		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		val = (int)floor(val_double);
+		val = lrint(floor(val_double));
 		break;
 	}
     } else {
@@ -398,12 +394,8 @@ get_int( int type )
 		    buf2[0] = buf1[0];
 		    break;
 		case 2:
-#if 1
 		    buf2[0] = buf1[1];
 		    buf2[1] = buf1[0];
-#else
-		    swab( buf1, buf2, 2 );
-#endif
 		    break;
 		case 4:
 		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
@@ -460,7 +452,7 @@ new_element(char *str)
 	bu_log( "Creating a new element structure\n" );
     }
 
-    ptr = (struct element *)bu_calloc( 1, sizeof( struct element ), "element" );
+    BU_ALLOC(ptr, struct element);
 
     if ( root ) {
 	struct element *ptr2;
@@ -516,14 +508,14 @@ get_property( struct element *ptr )
     int i;
 
     if ( !ptr->props ) {
-	ptr->props = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(ptr->props, struct prop);
 	p = ptr->props;
     } else {
 	p = ptr->props;
 	while ( p->next ) {
 	    p = p->next;
 	}
-	p->next = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(p->next, struct prop);
 	p = p->next;
     }
 
@@ -852,7 +844,7 @@ main( int argc, char *argv[] )
     }
 
     /* malloc BOT storage */
-    bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "BOT" );
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SURFACE;
     bot->orientation = RT_BOT_UNORIENTED;
@@ -882,7 +874,7 @@ main( int argc, char *argv[] )
 
     read_ply_data( bot );
 
-    wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
+    wdb_export( out_fp, "ply_bot", (void *)bot, ID_BOT, 1.0 );
 
     return 0;
 }

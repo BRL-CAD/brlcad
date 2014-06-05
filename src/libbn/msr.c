@@ -1,7 +1,7 @@
 /*                           M S R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -56,7 +58,7 @@ struct bn_unif *
 bn_unif_init(long int setseed, int method)
 {
     struct bn_unif *p;
-    p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif), "bn_unif");
+    BU_ALLOC(p, struct bn_unif);
     p->msr_longs = (long *) bu_malloc(BN_MSR_MAXTBL*sizeof(long), "msr long table");
     p->msr_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr double table");
     p->msr_seed = 1;
@@ -143,7 +145,7 @@ bn_unif_double_fill(struct bn_unif *p)
     test = A*(work_seed % Q) - R*(work_seed / Q);
     p->msr_seed = (test < 0) ? test+M : test;
 
-    return((p->msr_seed - M/2) * 1.0/DM);
+    return ((p->msr_seed - M/2) * 1.0/DM);
 }
 
 /*	bn_unif_free	free random number table
@@ -171,7 +173,7 @@ bn_gauss_init(long int setseed, int method)
     if (method != 0)
 	bu_bomb("Method not yet supported in bn_unif_init()");
 
-    p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_gauss");
+    BU_ALLOC(p, struct bn_gauss);
     p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss table");
     p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss doubles");
     p->msr_gauss_seed = 1;

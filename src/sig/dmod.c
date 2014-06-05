@@ -1,7 +1,7 @@
 /*                          D M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,48 +19,47 @@
  */
 /** @file dmod.c
  *
- *  Modify a stream of doubles.
+ * Modify a stream of doubles.
  *
- *  Allows any number of add, subtract, multiply, divide, or
- *  exponentiation operations to be performed on a stream of values.
+ * Allows any number of add, subtract, multiply, divide, or
+ * exponentiation operations to be performed on a stream of values.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 
 
-char	*file_name = NULL;
-FILE	*infp = NULL;
+#define ADD 1
+#define MULT 2
+#define ABS 3
+#define POW 4
+#define BUFLEN 4096
 
 
-#define	ADD	1
-#define MULT	2
-#define	ABS	3
-#define	POW	4
+static const char usage[] = "Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [doubles]\n";
+static const char progname[] = "dmod";
+static FILE *infp = NULL;
+static int numop = 0;		/* number of operations */
+static int op[256] = {0};		/* operations */
+static double val[256] = {0.0};		/* arguments to operations */
 
-#define	BUFLEN	4096
 
-int	numop = 0;		/* number of operations */
-int	op[256] = {0};		/* operations */
-double	val[256] = {0.0};		/* arguments to operations */
-double	buf[BUFLEN] = {0.0};		/* working buffer */
-
-int
-get_args(int argc, char **argv)
+static int
+get_args(int argc, char *argv[])
 {
     int c;
-    double	d;
+    double d;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
+	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
@@ -77,7 +76,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: divide by zero!\n" );
+		    bu_exit(2, "%s: divide by zero!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -93,79 +92,83 @@ get_args(int argc, char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: zero root!\n" );
+		    bu_exit(2, "%s: zero root!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
 
 	    default:		/* '?' */
-		return 0;
+		bu_exit(1, "%s", usage);
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
 	infp = stdin;
     } else {
+	static char *file_name = NULL;
 	file_name = argv[bu_optind];
-	if ( (infp = fopen(file_name, "r")) == NULL )  {
-	    fprintf( stderr,
-			   "dmod: cannot open \"%s\" for reading\n",
-			   file_name );
+	if ((infp = fopen(file_name, "r")) == NULL) {
+	    fprintf(stderr,
+		    "%s: cannot open \"%s\" for reading\n",
+		    progname, file_name);
 	    return 0;
 	}
     }
 
-    if ( argc > ++bu_optind )
-	fprintf( stderr, "dmod: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
 
     return 1;		/* OK */
 }
 
-int main(int argc, char **argv)
+
+int
+main(int argc, char *argv[])
 {
-    int	i, n;
-    double	*bp;
-    double	arg;
+    int i, n;
+    double *bp;
+    double arg;
     int j;
     size_t ret;
 
-    if ( !get_args( argc, argv ) || isatty(fileno(infp))
-	 || isatty(fileno(stdout)) ) {
-	bu_exit(1, "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n");
+    double buf[BUFLEN] = {0.0};		/* working buffer */
+
+    if (!get_args(argc, argv) || isatty(fileno(infp))
+	|| isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
-    while ( (n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0 ) {
-	for ( i = 0; i < numop; i++ ) {
+    while ((n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0) {
+	for (i = 0; i < numop; i++) {
 	    arg = val[ i ];
-	    switch ( op[i] ) {
+	    switch (op[i]) {
 		double d;
 
 		case ADD:
 		    bp = &buf[0];
-		    for ( j = n; j > 0; j-- ) {
+		    for (j = n; j > 0; j--) {
 			*bp++ += arg;
 		    }
 		    break;
 		case MULT:
 		    bp = &buf[0];
-		    for ( j = n; j > 0; j-- ) {
+		    for (j = n; j > 0; j--) {
 			*bp++ *= arg;
 		    }
 		    break;
 		case POW:
 		    bp = &buf[0];
-		    for ( j = n; j > 0; j-- ) {
-			d = pow( *bp, arg );
+		    for (j = n; j > 0; j--) {
+			d = pow(*bp, arg);
 			*bp++ = d;
 		    }
 		    break;
 		case ABS:
 		    bp = &buf[0];
-		    for ( j = n; j > 0; j-- ) {
-			if ( *bp < 0.0 )
+		    for (j = n; j > 0; j--) {
+			if (*bp < 0.0)
 			    *bp = - *bp;
 			bp++;
 		    }
@@ -174,13 +177,14 @@ int main(int argc, char **argv)
 		    break;
 	    }
 	}
-	ret = fwrite( buf, sizeof(*buf), n, stdout );
+	ret = fwrite(buf, sizeof(*buf), n, stdout);
 	if (ret != (size_t)n)
 	    perror("fwrite");
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

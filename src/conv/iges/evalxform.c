@@ -1,7 +1,7 @@
 /*                     E V A L X F O R M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,12 +57,10 @@ Evalxform()
 	    xform = i;
 	    while (xform >= 0) {
 		if (ptr == NULL)
-		    ptr = (struct list *)bu_malloc(sizeof(struct list),
-						   "Evalxform: ptr");
+		    BU_ALLOC(ptr, struct list);
 		else {
 		    ptr1 = ptr;
-		    ptr = (struct list *)bu_malloc(sizeof(struct list),
-						   "Evalxform: ptr");
+		    BU_ALLOC(ptr, struct list);
 		}
 		ptr->prev = ptr1;
 		ptr->index = xform;

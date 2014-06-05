@@ -141,7 +141,7 @@ nicknames gdurf
 1992 August
 ARL Student Hire / Carnegie Mellon University
 
-Anderson, John R.  <jra@arl.army.mil>  **
+Anderson, John R.  <jra@arl.army.mil>
 nicknames jra, johnranderson
 1993 May
 U.S. Army Ballistic Research Laboratory
@@ -206,15 +206,33 @@ nicknames starseeker
 2007 September
 Open Source
 Quantum Research International, Inc.
+U.S. Army Research Laboratory
 
-Bowman, W. Keith
+Bowman, W. Keith  **
 nicknames indianlarry
 SURVICE Engineering, Inc.
 U.S. Army Research Laboratory
 
-Weiss, Richard
+Weiss, Richard  **
 nicknames r_weiss
 2008 December
+U.S. Army Research Laboratory
+
+Browder, Thomas M. Jr.  **
+nicknames tbrowder2
+2008 June
+ManTech International Corporation
+Open Source
+
+Reed, Nicholas  **
+nicknames n_reed
+2008 July
+ARL Student Hire / University of Maryland, Baltimore County
+Quantum Research International, Inc.
+
+Moore, Jr., Carl G.  **
+nicknames cmoore, carlmoore
+2011 October
 U.S. Army Research Laboratory
 
 
@@ -228,7 +246,7 @@ U.S. Army Ballistic Research Laboratory
 Davisson, Edwin O. **
 U.S. Army Research Laboratory
 
-Rodgers, David
+Rogers, David
 U.S. Naval Academy
 
 Stiller, Peter
@@ -300,6 +318,11 @@ Open Source
 
 Elnazli, Cezar
 nicknames caen23
+2012 November
+Open Source (GCI)
+
+Burroughs, Jacob
+nicknames maths22
 2012 November
 Open Source (GCI)
 
@@ -492,17 +515,6 @@ nicknames homovulgaris, madant
 2008 June
 Open Source (GSoC)
 
-Browder, Thomas M. Jr.
-nicknames tbrowder2
-2008 June
-ManTech International Corporation
-Open Source
-
-Reed, Nicholas
-nicknames n_reed
-2008 July
-ARL Student Hire / University of Maryland, Baltimore County
-
 Saunders, Benjamin
 nicknames Ralith
 2008 July
@@ -524,6 +536,10 @@ ARL Student Hire / University of Maryland, Baltimore County
 
 Shinn, Rob
 2010 April
+Open Source
+
+nicknames Alexandrus
+2010 July
 Open Source
 
 Hinesley, Brandon
@@ -549,11 +565,6 @@ Nandy, Abhijit
 nicknames abhi2011
 2011 July
 Open Source (SOCIS)
-
-Moore, Jr., Carl G.
-nicknames cmoore
-2011 October
-U.S. Army Research Laboratory
 
 Silvko, Ksenija
 nicknames ksuzee
@@ -623,6 +634,11 @@ nicknames caen23
 2012 November
 Open Source (GCI)
 
+Huang, Michael
+nicknames fernozzle
+2012 November
+Open Source (GCI)
+
 nicknames Reikaze
 2012 December
 Open Source (GCI)
@@ -636,8 +652,88 @@ Calle, Adrián Arroyo
 Open Source (GCI)
 
 Keesing, Aaron
+nicknames agkphysics
 2012 December
 Open Source (GCI)
+
+Govindjee, Arjun
+2012 December
+Open Source (GCI)
+
+Nagy, Csaba
+nicknames ncsaba
+2013 April
+Open Source
+
+Check, Nyah
+nicknames Ch3ck
+2013 July
+Open Source (GSoC)
+
+Shah, Kesha
+nicknames keshashah
+2013 April
+Open Source (GSoC)
+
+Bogolin, Vlad
+nicknames vladbogo
+2013 May
+Open Source (GSoC)
+
+Kaur, Avneet
+nicknames avneetkhalsa
+2013 May
+Open Source (GSoC)
+
+Daga, Mohit
+nicknames zero_level
+2013 June
+Open Source (GSoC)
+
+Kamga, Isaac
+nicknames Izak
+2013 July
+Open Source (GSoC)
+
+Singh, Harmanpreet
+nicknames harmanpreet
+2013 May
+Open Source (GSoC)
+
+Huff, Emory
+nicknames hknoll
+2013 July
+U.S. Army Research Laboratory (SEAP)
+
+Engbert, Jonathan
+nicknames ejno
+2013 July
+Open Source
+
+Andrew
+2013 November
+Open Source (GCI)
+
+Schulte, Johannes
+2013 November
+Open Source (GCI)
+
+Amidon, Peter
+2013 November
+Open Source (GCI)
+
+Chiplunkar, Shardul
+nicknames microchip
+2013 November
+Open Source (GCI)
+
+Берегов, Станислав
+2013 December
+Open Source (GCI)
+
+nicknames huskmate13
+2014 January
+Open Source
 
 
 SPECIAL THANKS
@@ -901,6 +997,34 @@ Open Source (GCI)
 Singh, Gauravjeet
 2012 December
 Open Source (GCI)
+
+Saxena, Amit
+nicknames amit.daBeast
+2012 December
+Open Source (GCI)
+
+Saini, Talwinder
+nicknames talwindersaini
+2013 July
+Open Source
+
+YuGin, Tan
+2013 November
+Open Source (GCI)
+
+nicknames mandar
+2013 December
+Open Source (GCI)
+
+Lotsu, Alexander
+nicknames Alex
+2013 December
+Open Source (GCI)
+
+Hyams, Daniel
+nicknames dhyams
+2014 February
+Open Source
 
 
 CORPORATE AND ORGANIZATION SUPPORT

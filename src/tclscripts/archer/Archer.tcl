@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -152,11 +152,15 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
+	method initAddMetaballPoint {_obj _button _callback}
 	method initAppendPipePoint {_obj _button _callback}
+	method initFindArbEdge {_obj _button _callback}
+	method initFindArbFace {_obj _button _callback}
 	method initFindBotEdge {_obj _button _viewz _callback}
 	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _viewz _callback}
-	method initFindPipePoint {_obj _button _callback}
+	method initFindMetaballPoint {_obj _button _callback {_dflag 0}}
+	method initFindPipePoint {_obj _button _callback {_dflag 0}}
 	method initPrependPipePoint {_obj _button _callback}
 
 	# General
@@ -173,6 +177,7 @@ package provide Archer 1.0
 	method bot_sync_all_wrapper {}
 	method fbclear {}
 	method getZClipState {}
+	method launchPatternTool {}
 	method raytracePlus {{_batch_list {}}}
 
 	# ArcherCore Override Section
@@ -180,6 +185,7 @@ package provide Archer 1.0
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
+	method p_pset              {args}
 	method p_ptranslate        {args}
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
@@ -194,6 +200,8 @@ package provide Archer 1.0
 
 	# Object Edit Management
 	method revert {}
+
+	method endObjTranslate {_dm _obj _mx _my}
     }
 
     protected {
@@ -218,7 +226,6 @@ package provide Archer 1.0
 	method buildCommandView {}
 	method checkIfSelectedObjExists {}
 	method compSelectCallback {_mstring}
-	method dblClick {_tags}
 	method handleTreeSelect {}
 	method initCompPick {}
 	method initCompSelect {}
@@ -247,7 +254,8 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
-	method handleConfigure {}
+	method handleMap {}
+	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method fbActivePaneCallback {_pane}
@@ -286,6 +294,8 @@ package provide Archer 1.0
 	method initMode {{_updateFractions 0}}
 
 	# Object Edit Section
+	method clearEditState {{_clearModeOnly 0}}
+	method getEditView {}
 	method initEdit {{_initEditMode 1}}
 
 	# Object Edit VIA Mouse Section
@@ -296,9 +306,7 @@ package provide Archer 1.0
 	method endObjCenter {_obj}
 	method endObjRotate {_dm _obj}
 	method endObjScale {_dm _obj}
-	method endObjTranslate {_dm _obj _mx _my}
-	method handleObjCenter {_dm _obj _mx _my}
-
+	method handleObjCenter {_dm _obj _mx _my {_dosnap 1} {_viewz ""}}
 
 	# Object Views Section
 	method buildArb4EditView {}
@@ -307,6 +315,7 @@ package provide Archer 1.0
 	method buildArb7EditView {}
 	method buildArb8EditView {}
 	method buildBotEditView {}
+	method buildBrepEditView {}
 	method buildCombEditView {}
 	method buildDbAttrView {}
 	method buildEhyEditView {}
@@ -322,6 +331,7 @@ package provide Archer 1.0
 	method buildObjRtImageView {}
 	method buildObjToolView {}
 	method buildObjViewToolbar {}
+	method buildMetaballEditView {}
 	method buildPartEditView {}
 	method buildPipeEditView {}
 	method buildRhcEditView {}
@@ -421,6 +431,7 @@ package provide Archer 1.0
 	method createGrip {_name}
 	method createHalf {_name}
 	method createHyp {_name}
+	method createMetaball {_name}
 	method createPart {_name}
 	method createPipe {_name}
 	method createRhc {_name}
@@ -525,8 +536,14 @@ package provide Archer 1.0
 
     gedCmd dlist_on $mDisplayListMode
 
+    if {$mWireframeMode} {
+	gedCmd lod on
+    } else {
+	gedCmd lod off
+    }
 
-    bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
+    # resize and position window after it's drawn
+    bind [namespace tail $this] <Map> [::itcl::code $this handleMap]
 }
 
 
@@ -745,6 +762,22 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::initAddMetaballPoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_add_metaballpt $_obj $_button $_callback
+}
+
+
 ::itcl::body Archer::initAppendPipePoint {_obj _button _callback} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -758,6 +791,30 @@ package provide Archer 1.0
     # things through to PipeEditFrame.
 
     $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindArbEdge {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    #set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_arb_edge $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindArbFace {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    #set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_arb_face $_obj $_button [expr {$mZClipFrontMax * $mZClipFront}] $_callback
 }
 
 
@@ -797,13 +854,29 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::initFindPipePoint {_obj _button _callback} {
+::itcl::body Archer::initFindMetaballPoint {_obj _button _callback {_dflag 0}} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
     # This deselects the selected mouse mode in the primary toolbar
-    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    if {$_dflag} {
+	set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    }
+
+    $itk_component(ged) init_find_metaballpt $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindPipePoint {_obj _button _callback {_dflag 0}} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    if {$_dflag} {
+	set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    }
 
     # For the moment, the callback being used here is from PipeEditFrame. At some point,
     # Archer may want to provide the callback in order to do something before passing
@@ -994,6 +1067,11 @@ package provide Archer 1.0
     return [list [expr {$mZClipFrontMax * $mZClipFront}] [expr {$mZClipBackMax * $mZClipBack}]]
 }
 
+::itcl::body Archer::launchPatternTool {} {
+    set ::cadwidgets::mgedFlag 0
+    set ::cadwidgets::ged $this
+    pattern_control .\#auto
+}
 
 ::itcl::body Archer::raytracePlus {{_batch_list {}}} {
     global tcl_platform
@@ -1059,7 +1137,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 				 -G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		} else {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    set ret [eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			--non-line-color [list $necolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
@@ -1074,7 +1170,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}  {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
@@ -1510,7 +1624,7 @@ package provide Archer 1.0
 		    return "Usage: p rx ry rz"
 		}
 
-		set err [catch {eval gedCmd orotate $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback orotate $args} ret]
 	    } \
 	    $OBJECT_TRANSLATE_MODE {
 		if {[llength $args] != 3 ||
@@ -1520,14 +1634,14 @@ package provide Archer 1.0
 		    return "Usage: p tx ty tz"
 		}
 
-		set err [catch {eval gedCmd otranslate $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback otranslate $args} ret]
 	    } \
 	    $OBJECT_SCALE_MODE {
 		if {[llength $args] != 1 || ![string is double $args]} {
 		    return "Usage: p sf"
 		}
 
-		set err [catch {eval gedCmd oscale $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback oscale $args} ret]
 	    } \
 	    $OBJECT_CENTER_MODE {
 		if {[llength $args] != 3 ||
@@ -1537,7 +1651,11 @@ package provide Archer 1.0
 		    return "Usage: p cx cy cz"
 		}
 
-		set err [catch {eval gedCmd ocenter $mSelectedObj $args} ret]
+		set mpt [::vscale $args [$itk_component(ged) local2base]]
+		set vpt [$itk_component(ged) m2v_point $mpt]
+		set spt [$itk_component(ged) view2screen $vpt]
+		set pane [$itk_component(ged) cget -pane]
+		set err [catch {eval handleObjCenter $pane $mSelectedObjPath $spt 0 [lindex $vpt 2]} ret]
 	    } \
 	    default {
 		return "Nothing appropriate."
@@ -1563,6 +1681,12 @@ package provide Archer 1.0
 
 ::itcl::body Archer::p_pscale {args} {
     catch {eval gedCmd pscale $args} ret
+    return $ret
+}
+
+
+::itcl::body Archer::p_pset {args} {
+    catch {eval gedCmd pset $args} ret
     return $ret
 }
 
@@ -1608,6 +1732,8 @@ package provide Archer 1.0
 
     set mTarget $_target
     set mDbType "BRL-CAD"
+    set mCopyObj ""
+    set mCombWarningList ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
@@ -1638,6 +1764,13 @@ package provide Archer 1.0
 	} else {
 	    $itk_component(ged) open $mTargetCopy
 	}
+
+	if {$mAllowDataClear} {
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
+	}
+
+	gedCmd configure -primitiveLabels {}
     } else {
 	initGed
 
@@ -1654,14 +1787,24 @@ package provide Archer 1.0
 
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
-
-    # Reset the bot edit panel
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
+    set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
+    set mPrevSelectedObjPath ""
+    set mPrevSelectedObj ""
+    set mSelectedObjPath ""
+    set mSelectedObj ""
+    set mSelectedObjType ""
+    set mColorObjects ""
+    set mGhostObjects ""
+    set mEdgeObjects ""
 
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
+
+	set mTreeMode $TREE_MODE_TREE
+	set mPrevTreeMode $TREE_MODE_TREE
+	set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
+	toggleTreeView
+
 	applyPreferences
 	doLighting
 	updateWizardMenu
@@ -1730,6 +1873,10 @@ package provide Archer 1.0
 	set mGridAnchor "$X $Y $Z"
 	set mGridRh [expr {$sf * $mGridRh}]
 	set mGridRv [expr {$sf * $mGridRv}]
+
+	if {[info exists itk_component(sketchView)]} {
+	    $itk_component(sketchView) configure -units $mDbUnits
+	}
     }
 
     return $ret
@@ -1969,28 +2116,19 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::beginViewRotate {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewRotate
 }
 
 
 ::itcl::body Archer::beginViewScale {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewScale
 }
 
 
 ::itcl::body Archer::beginViewTranslate {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewTranslate
 }
 
@@ -2020,8 +2158,12 @@ package provide Archer 1.0
 	    set mHPaneFraction1 80
 	    set mHPaneFraction2 20
 	} else {
-	    set xy [winfo pointerxy [namespace tail $this]]
-	    wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    if {$mCmdWindowGeometry != ""} {
+		wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry
+	    } else {
+		set xy [winfo pointerxy [namespace tail $this]]
+		wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    }
 	}
 
 	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
@@ -2043,6 +2185,7 @@ package provide Archer 1.0
     if {![$itk_component(ged) exists $mSelectedObj]} {
 	$itk_component(ged) configure -primitiveLabels {}
 	initDbAttrView $mDbName
+	restoreCanvas
     }
 }
 
@@ -2071,47 +2214,10 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::dblClick {tags} {
-    return
-
-    set element [split $tags ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    if {$mPrevSelectedObj != $mSelectedObj} {
-	if {!$mViewOnly} {
-	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-		initObjAttrView
-	    } else {
-		initObjEditView
-	    }
-	}
-
-	set mPrevSelectedObjPath $mSelectedObjPath
-	set mPrevSelectedObj $mSelectedObj
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $tags
-
-    switch -- $type {
-	"leaf"   -
-	"branch" {renderComp $node}
-    }
-}
-
-
 ::itcl::body Archer::handleTreeSelect {} {
-    ::ArcherCore::handleTreeSelect
+    if {[::ArcherCore::handleTreeSelect]} {
+	return
+    }
 
     if {!$mViewOnly} {
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
@@ -2134,23 +2240,20 @@ package provide Archer 1.0
 		    }
 	    }
 	}
+
+	clearEditState
     }
 }
 
 
 ::itcl::body Archer::initCompPick {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::initCompPick
 }
 
 
 ::itcl::body Archer::initCompSelect {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState 1
-    }
+    clearEditState 1
 
     if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
 	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
@@ -2221,14 +2324,15 @@ package provide Archer 1.0
     ArcherCore::initGed
     activateMenusEtc
     setActivePane ur
+
+    foreach dm {ul ur ll lr} {
+	$itk_component(ged) pane_bind $dm <Escape> [::itcl::code $this handleDisplayEscape $dm]
+    }
 }
 
 
 ::itcl::body Archer::initViewCenterMode {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::initViewCenterMode
 }
 
@@ -2647,7 +2751,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipBackMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateZClipMax %P]
     } {}
     itk_component add zclipBackMaxB {
 	::ttk::button $itk_component(zclipBackMaxF).zclipBackMaxB \
@@ -2672,7 +2776,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipFrontMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateZClipMax %P]
     } {}
     itk_component add zclipFrontMaxB {
 	::ttk::button $itk_component(zclipFrontMaxF).zclipFrontMaxB \
@@ -2698,31 +2802,69 @@ proc title_node_handler {node} {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontRB \
 	    -text "Front" \
 	    -value $LIGHT_MODE_FRONT \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackRB \
 	    -text "Front and Back" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackDarkRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackDarkRB \
 	    -text "Front and Back (Dark Back)" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK_DARK \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackLightRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackLightRB \
 	    -text "Front and Back (Light Back)" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
+    } {}
+
+    itk_component add displayModeL {
+	::ttk::label $parent.displayModeL \
+	    -anchor e \
+	    -text "Default Display Mode:"
+    } {}
+    itk_component add displayModeF {
+	::ttk::frame $parent.displayModeF \
+	    -relief sunken \
+	    -borderwidth 1
+    } {}
+    itk_component add displayModeWireRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeWireRB \
+	    -text "Wireframe" \
+	    -value $DISPLAY_MODE_WIREFRAME \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
+    itk_component add displayModeShadedRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeShadedRB \
+	    -text "Shaded" \
+	    -value $DISPLAY_MODE_SHADED_ALL \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
+    itk_component add displayModeHiddenRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeHiddenRB \
+	    -text "Hidden" \
+	    -value $DISPLAY_MODE_HIDDEN \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
     } {}
 
     itk_component add dlistModeCB {
 	::ttk::checkbutton $parent.dlistModeCB \
 	    -text "Use Display Lists" \
 	    -variable [::itcl::scope mDisplayListModePref]
+    } {}
+    itk_component add wireframeModeCB {
+	::ttk::checkbutton $parent.wireframeModeCB \
+	    -text "Use LOD Wireframes" \
+	    -variable [::itcl::scope mWireframeModePref]
     } {}
 
     set i 0
@@ -2734,6 +2876,13 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(lightModeFrontBackLightRB) -row $i -sticky nsew
     grid columnconfigure $itk_component(lightModeF) 0 -weight 1
+
+    set i 0
+    grid $itk_component(displayModeWireRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeShadedRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeHiddenRB) -row $i -sticky nsew
 
     set i 0
     grid $itk_component(perspectiveL) -column 0 -row $i -sticky se
@@ -2754,10 +2903,14 @@ proc title_node_handler {node} {
     grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
     grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
     incr i
+    grid $itk_component(displayModeL) -column 0 -row $i -sticky ne
+    grid $itk_component(displayModeF) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
-
     grid columnconfigure $parent 1 -weight 1
+    incr i
+    grid $itk_component(wireframeModeCB) -columnspan 2 -column 0 -row $i -sticky sw
 
     set i 0
     grid $parent -column 0 -row $i -sticky nsew
@@ -2829,6 +2982,27 @@ proc title_node_handler {node} {
 	$mColorListNoTriple
 
     buildComboBox $itk_component(generalF) \
+	rayColorOdd \
+	raycolorodd \
+	mRayColorOddPref \
+	"Ray Color (Odd):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	rayColorEven \
+	raycoloreven \
+	mRayColorEvenPref \
+	"Ray Color (Even):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	rayColorVoid \
+	raycolorvoid \
+	mRayColorVoidPref \
+	"Ray Color (Void):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
 	units \
 	units \
 	mDbUnits \
@@ -2867,6 +3041,32 @@ proc title_node_handler {node} {
 	mCompSelectModePref \
 	"Comp Select Mode:" \
 	$COMP_SELECT_MODE_NAMES
+
+    itk_component add rtbotmintieL {
+	::ttk::label $itk_component(generalF).rtbotmintieL \
+	    -anchor e \
+	    -text "rt_bot_mintie"
+    } {}
+    itk_component add rtbotmintieE {
+	::ttk::entry $itk_component(generalF).rtbotmintieE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mRtBotMintiePref] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
+    } {}
+
+    itk_component add maxcombmembL {
+	::ttk::label $itk_component(generalF).maxcombmembL \
+	    -anchor e \
+	    -text "Max Comb Members Shown"
+    } {}
+    itk_component add maxcombmembE {
+	::ttk::entry $itk_component(generalF).maxcombmembE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mMaxCombMembersShownPref] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
+    } {}
 
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
@@ -2933,11 +3133,22 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorOddL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorOddF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorEvenL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorEvenF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorVoidL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorVoidF) -column 1 -row $i -sticky ew
 
     # Disable tree attributes indefinitely
-#    incr i
-#    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
-#    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    if {0} {
+    incr i
+    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
+    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    }
 
     incr i
     grid $itk_component(selGroupL) -column 0 -row $i -sticky e
@@ -2946,13 +3157,24 @@ proc title_node_handler {node} {
     grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
     grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
     incr i
-    set i [buildOtherGeneralPreferences $i]
+    grid $itk_component(rtbotmintieL) -column 0 -row $i -sticky e
+    grid $itk_component(rtbotmintieE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
+    grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
+    incr i
+    set ilist [buildOtherGeneralPreferences $i]
+    set i [lindex $ilist 0]
+    set ri [lindex $ilist 1]
+    if {$ri == ""} {
+	set ri $i
+    }
     grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
 	-row $i \
 	-sticky sw
-    grid rowconfigure $itk_component(generalF) $i -weight 1
+    grid rowconfigure $itk_component(generalF) $ri -weight 1
     incr i
     grid $itk_component(listViewAllAffectedCB) \
 	-columnspan 2 \
@@ -3700,6 +3922,9 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this askToSave] \
 	-state disabled
     $itk_component(${_prefix}filemenu) add command \
+	-label "Export..." \
+	-command [::itcl::code $this exportDb]
+    $itk_component(${_prefix}filemenu) add command \
 	-label "Revert" \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -3802,6 +4027,11 @@ proc title_node_handler {node} {
     $itk_component(${_prefix}displaymenu) add command \
 	-label "Refresh" \
 	-command [::itcl::code $this refreshDisplay] \
+	-state disabled
+    $itk_component(${_prefix}displaymenu) add separator
+    $itk_component(${_prefix}displaymenu) add command \
+	-label "Save as png ..." \
+	-command [::itcl::code $this doPng] \
 	-state disabled
 
     buildModesMenu $_prefix
@@ -4032,12 +4262,28 @@ proc title_node_handler {node} {
 
 }
 
-::itcl::body Archer::handleConfigure {} {
+::itcl::body Archer::handleMap {} {
     if {$mWindowGeometry != ""} {
-	wm geometry [namespace tail $this] $mWindowGeometry
+	after idle "wm geometry [namespace tail $this] $mWindowGeometry"
+    } else {
+	after idle "wm geometry [namespace tail $this] $itk_option(-geometry)"
     }
 
-    bind [namespace tail $this] <Configure> {}
+    if {$mSeparateCommandWindow && $mCmdWindowGeometry != ""} {
+	after idle [::itcl::code wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry]
+    }
+
+    bind [namespace tail $this] <Map> {}
+}
+
+::itcl::body Archer::handleDisplayEscape {_dm} {
+    set editView [getEditView]
+
+    if {$editView == ""} {
+	return
+    }
+
+    $editView clearEditState 0 1
 }
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
@@ -4153,6 +4399,8 @@ proc title_node_handler {node} {
 	set pobj $mSelectedObjPath
     }
 
+    set rflag 1
+
     switch -- [lindex $args 0] {
 	"orotate" {
 	    if {$argslen != 4} {
@@ -4181,6 +4429,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "orotate $pobj $rx $ry $rz"
+		set rflag 0
 	    }
 	}
 	"otranslate" {
@@ -4205,6 +4454,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "otranslate $pobj $dx $dy $dz"
+		set rflag 0
 	    }
 	}
 	"oscale" {
@@ -4232,6 +4482,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "oscale $pobj $sf"
+		set rflag 0
 	    }
 	}
 	default {
@@ -4240,7 +4491,10 @@ proc title_node_handler {node} {
     }
 
     eval $cmd
-    redrawObj $pobj 0
+
+    if {$rflag} {
+	redrawObj $mSelectedObjPath 0
+    }
 }
 
 
@@ -4799,12 +5053,12 @@ proc title_node_handler {node} {
     $itk_component(arbsMenu) add command \
 	-image $mImage_arb4Labeled \
 	-command [::itcl::code $this createObj arb4]
-    $itk_component(arbsMenu) add command \
+#    $itk_component(arbsMenu) add command \
 	-label rpp \
 	-command [::itcl::code $this createObj arb8]
     $itk_component(arbsMenu) add separator
     $itk_component(arbsMenu) add command \
-	-image $mImage_arb5Labeled \
+	-image $mImage_arbnLabeled \
 	-command [::itcl::code $this createObj arbn]
 
     itk_component add conesCylsMenu {
@@ -4937,7 +5191,7 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this createObj extrude]
     $itk_component(primitiveMenu) add command \
 	-image $mImage_halfLabeled \
-	-command [::itcl::code $this createObj hyp]
+	-command [::itcl::code $this createObj half]
     $itk_component(primitiveMenu) add command \
 	-image $mImage_hypLabeled \
 	-command [::itcl::code $this createObj hyp]
@@ -4945,6 +5199,7 @@ proc title_node_handler {node} {
 	-image $mImage_metaballLabeled \
 	-command [::itcl::code $this createObj metaball]
     $itk_component(primitiveMenu) add command \
+	-image $mImage_partLabeled \
 	-label part \
 	-command [::itcl::code $this createObj part]
     $itk_component(primitiveMenu) add command \
@@ -5196,6 +5451,8 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
+    $itk_component(menubar) menuconfigure .file.export \
+	-command [::itcl::code $this exportDb]
     $itk_component(menubar) menuconfigure .file.revert \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -5260,6 +5517,9 @@ proc title_node_handler {node} {
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \
 		-helpstr "Refresh the display"
+	    separator sep1
+	    command save_png -label "Save as png ..." \
+		-helpstr "Save the display as png"
 	}
 
     $itk_component(menubar) menuconfigure .display.standard \
@@ -5306,6 +5566,9 @@ proc title_node_handler {node} {
 	-state disabled
     $itk_component(menubar) menuconfigure .display.refresh \
 	-command [::itcl::code $this refreshDisplay] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.save_png \
+	-command [::itcl::code $this doPng] \
 	-state disabled
 }
 
@@ -5852,6 +6115,7 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}displaymenu) entryconfigure "Center..." -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Clear" -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Refresh" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Save as png ..." -state normal
 
 		$itk_component(${prefix}modesmenu) entryconfigure "Active Pane" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Quad View" -state normal
@@ -5880,6 +6144,7 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .display.center -state normal
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
+	    $itk_component(menubar) menuconfigure .display.save_png -state normal
 
 	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
 	    $itk_component(menubar) menuconfigure .modes.quad -state normal
@@ -5945,6 +6210,205 @@ proc title_node_handler {node} {
 ################################### Object Edit Section ###################################
 
 
+::itcl::body Archer::clearEditState {{_clearModeOnly 0}} {
+    set editView [getEditView]
+
+    if {$editView != ""} {
+	$editView clearEditState $_clearModeOnly
+    }
+}
+
+
+::itcl::body Archer::getEditView {} {
+    switch -- $mSelectedObjType {
+	"arb4" {
+	    if {![info exists itk_component(arb4View)]} {
+		buildArb4EditView
+	    }
+
+	    return $itk_component(arb4View)
+	}
+	"arb5" {
+	    if {![info exists itk_component(arb5View)]} {
+		buildArb5EditView
+	    }
+
+	    return $itk_component(arb5View)
+	}
+	"arb6" {
+	    if {![info exists itk_component(arb6View)]} {
+		buildArb6EditView
+	    }
+
+	    return $itk_component(arb6View)
+	}
+	"arb7" {
+	    if {![info exists itk_component(arb7View)]} {
+		buildArb7EditView
+	    }
+
+	    return $itk_component(arb7View)
+	}
+	"arb8" {
+	    if {![info exists itk_component(arb8View)]} {
+		buildArb8EditView
+	    }
+
+	    return $itk_component(arb8View)
+	}
+	"bot" {
+	    if {![info exists itk_component(botView)]} {
+		buildBotEditView
+	    }
+
+	    return $itk_component(botView)
+	}
+	"brep" {
+	    if {![info exists itk_component(brepView)]} {
+		buildBrepEditView
+	    }
+
+	    return $itk_component(brepView)
+	}
+	"comb" {
+	    if {![info exists itk_component(combView)]} {
+		buildCombEditView
+	    }
+
+	    return $itk_component(combView)
+	}
+	"ell" {
+	    if {![info exists itk_component(ellView)]} {
+		buildEllEditView
+	    }
+
+	    return $itk_component(ellView)
+	}
+	"ehy" {
+	    if {![info exists itk_component(ehyView)]} {
+		buildEhyEditView
+	    }
+
+	    return $itk_component(ehyView)
+	}
+	"epa" {
+	    if {![info exists itk_component(epaView)]} {
+		buildEpaEditView
+	    }
+
+	    return $itk_component(epaView)
+	}
+	"eto" {
+	    if {![info exists itk_component(etoView)]} {
+		buildEtoEditView
+	    }
+
+	    return $itk_component(etoView)
+	}
+	"extrude" {
+	    if {![info exists itk_component(extrudeView)]} {
+		buildExtrudeEditView
+	    }
+
+	    return $itk_component(extrudeView)
+	}
+	"grip" {
+	    if {![info exists itk_component(gripView)]} {
+		buildGripEditView
+	    }
+
+	    return $itk_component(gripView)
+	}
+	"half" {
+	    if {![info exists itk_component(halfView)]} {
+		buildHalfEditView
+	    }
+
+	    return $itk_component(halfView)
+	}
+	"hyp" {
+	    if {![info exists itk_component(hypView)]} {
+		buildHypEditView
+	    }
+
+	    return $itk_component(hypView)
+	}
+	"metaball" {
+	    if {![info exists itk_component(metaballView)]} {
+		buildMetaballEditView
+	    }
+
+	    return $itk_component(metaballView)
+	}
+	"part" {
+	    if {![info exists itk_component(partView)]} {
+		buildPartEditView
+	    }
+
+	    return $itk_component(partView)
+	}
+	"pipe" {
+	    if {![info exists itk_component(pipeView)]} {
+		buildPipeEditView
+	    }
+
+	    return $itk_component(pipeView)
+	}
+	"rpc" {
+	    if {![info exists itk_component(rpcView)]} {
+		buildRpcEditView
+	    }
+
+	    return $itk_component(rpcView)
+	}
+	"rhc" {
+	    if {![info exists itk_component(rhcView)]} {
+		buildRhcEditView
+	    }
+
+	    return $itk_component(rhcView)
+	}
+	"sketch" {
+	    if {![info exists itk_component(sketchView)]} {
+		buildSketchEditView
+	    }
+
+	    return $itk_component(sketchView)
+	}
+	"sph" {
+	    if {![info exists itk_component(sphView)]} {
+		buildSphereEditView
+	    }
+
+	    return $itk_component(sphView)
+	}
+	"superell" {
+	    if {![info exists itk_component(superellView)]} {
+		buildSuperellEditView
+	    }
+
+	    return $itk_component(superellView)
+	}
+	"tgc" {
+	    if {![info exists itk_component(tgcView)]} {
+		buildTgcEditView
+	    }
+
+	    return $itk_component(tgcView)
+	}
+	"tor" {
+	    if {![info exists itk_component(torView)]} {
+		buildTorusEditView
+	    }
+
+	    return $itk_component(torView)
+	}
+    }
+
+    return ""
+}
+
+
 ::itcl::body Archer::initEdit {{_initEditMode 1}} {
     if {[catch {gedCmd get_type $mSelectedObj} mSelectedObjType]} {
 	if {![info exists itk_component(invalidView)]} {
@@ -5955,7 +6419,13 @@ proc title_node_handler {node} {
 	return
     }
 
-    set odata [lrange [gedCmd get $mSelectedObj] 1 end]
+    # The brep primitive type does not yet support "get"
+    if {$mSelectedObjType == "brep"} {
+	set odata ""
+    } else {
+	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
+    }
+
     restoreCanvas
 
     if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
@@ -5967,152 +6437,27 @@ proc title_node_handler {node} {
 	set GeometryEditFrame::mEditPCommand ""
     }
 
-    switch -- $mSelectedObjType {
-	"arb4" {
-	    if {![info exists itk_component(arb4View)]} {
-		buildArb4EditView
-	    }
-	    initArb4EditView $odata
-	}
-	"arb5" {
-	    if {![info exists itk_component(arb5View)]} {
-		buildArb5EditView
-	    }
-	    initArb5EditView $odata
-	}
-	"arb6" {
-	    if {![info exists itk_component(arb6View)]} {
-		buildArb6EditView
-	    }
-	    initArb6EditView $odata
-	}
-	"arb7" {
-	    if {![info exists itk_component(arb7View)]} {
-		buildArb7EditView
-	    }
-	    initArb7EditView $odata
-	}
-	"arb8" {
-	    if {![info exists itk_component(arb8View)]} {
-		buildArb8EditView
-	    }
-	    initArb8EditView $odata
-	}
-	"bot" {
-	    if {![info exists itk_component(botView)]} {
-		buildBotEditView
-	    }
-	    initBotEditView $odata
-	}
-	"comb" {
-	    if {![info exists itk_component(combView)]} {
-		buildCombEditView
-	    }
-	    initCombEditView $odata
-	}
-	"ell" {
-	    if {![info exists itk_component(ellView)]} {
-		buildEllEditView
-	    }
-	    initEllEditView $odata
-	}
-	"ehy" {
-	    if {![info exists itk_component(ehyView)]} {
-		buildEhyEditView
-	    }
-	    initEhyEditView $odata
-	}
-	"epa" {
-	    if {![info exists itk_component(epaView)]} {
-		buildEpaEditView
-	    }
-	    initEpaEditView $odata
-	}
-	"eto" {
-	    if {![info exists itk_component(etoView)]} {
-		buildEtoEditView
-	    }
-	    initEtoEditView $odata
-	}
-	"extrude" {
-	    if {![info exists itk_component(extrudeView)]} {
-		buildExtrudeEditView
-	    }
-	    initExtrudeEditView $odata
-	}
-	"grip" {
-	    if {![info exists itk_component(gripView)]} {
-		buildGripEditView
-	    }
-	    initGripEditView $odata
-	}
-	"half" {
-	    if {![info exists itk_component(halfView)]} {
-		buildHalfEditView
-	    }
-	    initHalfEditView $odata
-	}
-	"hyp" {
-	    if {![info exists itk_component(hypView)]} {
-		buildHypEditView
-	    }
-	    initHypEditView $odata
-	}
-	"part" {
-	    if {![info exists itk_component(partView)]} {
-		buildPartEditView
-	    }
-	    initPartEditView $odata
-	}
-	"pipe" {
-	    if {![info exists itk_component(pipeView)]} {
-		buildPipeEditView
-	    }
-	    initPipeEditView $odata
-	}
-	"rpc" {
-	    if {![info exists itk_component(rpcView)]} {
-		buildRpcEditView
-	    }
-	    initRpcEditView $odata
-	}
-	"rhc" {
-	    if {![info exists itk_component(rhcView)]} {
-		buildRhcEditView
-	    }
-	    initRhcEditView $odata
-	}
-	"sketch" {
-	    if {![info exists itk_component(sketchView)]} {
-		buildSketchEditView
-	    }
-	    initSketchEditView $odata
-	}
-	"sph" {
-	    if {![info exists itk_component(sphView)]} {
-		buildSphereEditView
-	    }
-	    initSphereEditView $odata
-	}
-	"superell" {
-	    if {![info exists itk_component(superellView)]} {
-		buildSuperellEditView
-	    }
-	    initSuperellEditView $odata
-	}
-	"tgc" {
-	    if {![info exists itk_component(tgcView)]} {
-		buildTgcEditView
-	    }
-	    initTgcEditView $odata
-	}
-	"tor" {
-	    if {![info exists itk_component(torView)]} {
-		buildTorusEditView
-	    }
-	    initTorusEditView $odata
-	}
+    if {$mAllowDataClear} {
+	gedCmd data_axes points {}
+	gedCmd data_lines points {}
     }
+
+    set editView [getEditView]
+    if {$editView == ""} {
+	return
+    }
+
+    $editView configure \
+	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $editView initGeometry $odata
+
+    pack $editView -expand yes -fill both
 }
 
 
@@ -6125,10 +6470,6 @@ proc title_node_handler {node} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
-    }
-
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
     }
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
@@ -6166,10 +6507,6 @@ proc title_node_handler {node} {
 	return
     }
 
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
 	initEdit
     }
@@ -6191,7 +6528,6 @@ proc title_node_handler {node} {
     $itk_component(ged) rect lwidth 0
 }
 
-
 ::itcl::body Archer::beginObjTranslate {} {
     set obj $mSelectedObjPath
 
@@ -6203,6 +6539,13 @@ proc title_node_handler {node} {
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
 	initEdit
+    } elseif {$GeometryEditFrame::mEditMode > 0 &&
+	      ([regexp {arb[45678]} $mSelectedObjType] ||
+	       $mSelectedObjType == "metaball" ||
+	       $mSelectedObjType == "pipe")} {
+	$itk_component($mSelectedObjType\View) initTranslate
+	$itk_component(ged) rect lwidth 0
+	return
     }
 
     if {$mSelectedObjType == "bot"} {
@@ -6222,6 +6565,10 @@ proc title_node_handler {node} {
 		} else {
 		    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 		}
+	    } elseif {$mSelectedObjType == "brep"} {
+		$itk_component(ged) brep [file tail $obj] plot SCV
+		bind $win <1> "$itk_component(ged) mouse_brep_selection_append $obj %x %y; break"
+		continue
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
@@ -6249,7 +6596,7 @@ proc title_node_handler {node} {
 	set mNumSelectedBotPts [$itk_component(botView) setMoveMode]
 
 	if {$mNumSelectedBotPts != 1} {
-	    $itk_component(botView) clearEditState
+	    clearEditState
 	}
     }
 
@@ -6322,10 +6669,10 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::handleObjCenter {_dm _obj _mx _my} {
+::itcl::body Archer::handleObjCenter {_dm _obj _mx _my {_dosnap 1} {_viewz ""}} {
     set ocenter [gedCmd ocenter $_obj]
-    set ocenter [vscale $ocenter [gedCmd local2base]]
-    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter]
+    set ocenter_base [vscale $ocenter [gedCmd local2base]]
+    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter_base]
 
     # This is the updated view center (i.e. we keep the original view Z)
     set vcenter [gedCmd pane_screen2view $_dm $_mx $_my]
@@ -6333,10 +6680,17 @@ proc title_node_handler {node} {
     set vx [lindex $vcenter 0]
     set vy [lindex $vcenter 1]
 
-    set vl [gedCmd pane_snap_view $_dm $vx $vy]
-    set vx [lindex $vl 0]
-    set vy [lindex $vl 1]
-    set vcenter [list $vx $vy [lindex $ovcenter 2]]
+    if {$_dosnap} {
+	set vl [gedCmd pane_snap_view $_dm $vx $vy]
+	set vx [lindex $vl 0]
+	set vy [lindex $vl 1]
+    }
+
+    if {$_viewz != ""} {
+	set vcenter [list $vx $vy $_viewz]
+    } else {
+	set vcenter [list $vx $vy [lindex $ovcenter 2]]
+    }
 
     set new_ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
@@ -6346,16 +6700,8 @@ proc title_node_handler {node} {
 	    set diff [vsub2 $new_ocenter $ocenter]
 	    eval editMotionDeltaCallback otranslate $diff
 	} else {
-	    if {$GeometryEditFrame::mEditCommand != ""} {
-		if {$mSelectedObjType == "bot"} {
-		    if {$mNumSelectedBotPts == 1} {
-			$itk_component(botView) moveBotElement $_dm $_obj $vx $vy
-		    } else {
-			eval gedCmd ocenter $_obj $new_ocenter
-		    }
-		} else {
-		    $itk_component(ged) $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
-		}
+	    if {$GeometryEditFrame::mEditCommand != "" && $mSelectedObjType != "brep"} {
+		$itk_component($mSelectedObjType\View) moveElement $_dm $_obj $vx $vy $new_ocenter
 	    } else {
 		eval gedCmd ocenter $_obj $new_ocenter
 	    }
@@ -6428,6 +6774,13 @@ proc title_node_handler {node} {
     } {}
 }
 
+::itcl::body Archer::buildBrepEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add brepView {
+	BrepEditFrame $parent.brepview \
+	    -units "mm"
+    } {}
+}
 
 ::itcl::body Archer::buildCombEditView {} {
     set parent $itk_component(objEditView)
@@ -6611,6 +6964,10 @@ proc title_node_handler {node} {
 	    -borderwidth 1 \
 	    -relief sunken
     } {}
+
+    # Force initialization of GeometryEditFrame
+    GeometryEditFrame $parent.tmpgef
+    rename $parent.tmpgef ""
 }
 
 
@@ -6793,17 +7150,35 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this bot_fix_all_wrapper]
     } {}
 
+    set parent $itk_component(objToolView)
+    itk_component add otherToolsF {
+	::ttk::labelframe $parent.otherToolsF \
+	    -text "Other Tools" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(otherToolsF)
+    itk_component add patternToolB {
+	::ttk::button $parent.patternToolB \
+	    -text "Pattern Tool" \
+	    -command [::itcl::code $this launchPatternTool]
+    } {}
+
     grid $itk_component(botSplitAllB) -sticky ew
     grid $itk_component(botSyncAllB) -sticky ew
     grid $itk_component(botFlipCheckAllB) -sticky ew
     grid $itk_component(botFixAllB) -sticky ew
     grid columnconfigure $itk_component(botToolsF) 0 -weight 1
 
+    grid $itk_component(patternToolB) -sticky ew
+    grid columnconfigure $itk_component(otherToolsF) 0 -weight 1
 
     set i 0
     grid $itk_component(compPickF) -row $i -pady 4 -sticky ew
     incr i
     grid $itk_component(botToolsF) -row $i -pady 4 -sticky ew
+    incr i
+    grid $itk_component(otherToolsF) -row $i -pady 4 -sticky ew
     incr i
     grid rowconfigure $itk_component(objToolView) $i -weight 1
     grid columnconfigure $itk_component(objToolView) 0 -weight 1
@@ -6852,6 +7227,15 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_RT_IMAGE_VIEW_MODE \
 	-command [::itcl::code $this initObjRtImageView 1]
+}
+
+
+::itcl::body Archer::buildMetaballEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add metaballView {
+	MetaballEditFrame $parent.metaballview \
+	    -units "mm"
+    } {}
 }
 
 
@@ -7065,6 +7449,9 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initDbAttrView {name} {
+    set mObjViewMode $OBJ_EDIT_VIEW_MODE
+    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
+
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
@@ -7090,7 +7477,6 @@ proc title_node_handler {node} {
     set mSelectedObjPath ""
     set mSelectedObj ""
     set mSelectedObjType ""
-    set mPasteActive 0
 
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
@@ -7584,8 +7970,9 @@ proc title_node_handler {node} {
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
-	-entryFont $mFontText
-    $itk_component(sketchView) initGeometry $odata
+	-entryFont $mFontText \
+	-units $mDbUnits
+    #$itk_component(sketchView) initGeometry $odata
 
     pack $itk_component(sketchView) \
 	-expand yes \
@@ -8102,12 +8489,28 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
     set rflag 0
+    set wflag 0
     $itk_component(ged) refresh_off
 
-    if {$mZClipBackMaxPref != $mZClipBackMax ||
+    if {$mZClipBackMaxPref == "" ||
+	$mZClipBackMaxPref == "." ||
+	$mZClipFrontMaxPref == "" ||
+	$mZClipFrontMaxPref == "."} {
+
+	# Set things back the way they were before
+	# calling the preferences dialog.
+	set mZClipBackMaxPref $mZClipBackMax
+	set mZClipFrontMaxPref $mZClipFrontMax
+	set mZClipBackPref $mZClipBack
+	set mZClipFrontPref $mZClipFront
+
+	updateZClipPlanes 0
+	set rflag 1
+    } elseif {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
+
 	set mZClipBackMax $mZClipBackMaxPref
 	set mZClipFrontMax $mZClipFrontMaxPref
 	set mZClipBack $mZClipBackPref
@@ -8129,14 +8532,32 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mDefaultDisplayModePref != $mDefaultDisplayMode} {
+	set mDefaultDisplayMode $mDefaultDisplayModePref
+    }
+
     if {$mDisplayListModePref != $mDisplayListMode} {
 	set mDisplayListMode $mDisplayListModePref
 	gedCmd dlist_on $mDisplayListMode
 	set rflag 1
     }
 
+    if {$mWireframeModePref != $mWireframeMode} {
+	set mWireframeMode $mWireframeModePref
+
+	if {$mWireframeMode} {
+	    gedCmd lod on
+	} else {
+	    gedCmd lod off
+	}
+	set wflag 1
+    }
+
     $itk_component(ged) refresh_on
-    if {$rflag} {
+
+    if {$wflag} {
+	redrawWho
+    } elseif {$rflag} {
 	$itk_component(ged) refresh_all
     }
 }
@@ -8160,8 +8581,13 @@ proc title_node_handler {node} {
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
     gedCmd configure -scaleColor $mScaleColor
     gedCmd configure -viewingParamsColor $mViewingParamsColor
+    gedCmd configure -rayColorOdd $mRayColorOdd
+    gedCmd configure -rayColorEven $mRayColorEven
+    gedCmd configure -rayColorVoid $mRayColorVoid
 
     $itk_component(ged) fontsize $mDisplayFontSize
+
+    rebuildTree
 }
 
 
@@ -8209,6 +8635,18 @@ proc title_node_handler {node} {
 	set mViewingParamsColor $mViewingParamsColorPref
     }
 
+    if {$mRayColorOdd != $mRayColorOddPref} {
+	set mRayColorOdd $mRayColorOddPref
+    }
+
+    if {$mRayColorEven != $mRayColorEvenPref} {
+	set mRayColorEven $mRayColorEvenPref
+    }
+
+    if {$mRayColorVoid != $mRayColorVoidPref} {
+	set mRayColorVoid $mRayColorVoidPref
+    }
+
     if {$mScaleColor != $mScaleColorPref} {
 	set mScaleColor $mScaleColorPref
     }
@@ -8222,6 +8660,12 @@ proc title_node_handler {node} {
     set tflag 0
     if {$mTreeAttrColumns != $mTreeAttrColumnsPref} {
 	set mTreeAttrColumns $mTreeAttrColumnsPref
+	set cflag 1
+    }
+
+    if {$mMaxCombMembersShownPref != $mMaxCombMembersShown} {
+	set mMaxCombMembersShown $mMaxCombMembersShownPref
+	set mCombWarningList ""
 	set cflag 1
     }
 
@@ -8280,6 +8724,10 @@ proc title_node_handler {node} {
     set units [gedCmd units -s]
     if {$units != $mDbUnits} {
 	units $mDbUnits
+    }
+
+    if {$mRtBotMintiePref != $mRtBotMintie} {
+	set mRtBotMintie $mRtBotMintiePref
     }
 
     if {$mCompSelectGroupPref != $mCompSelectGroup} {
@@ -8703,6 +9151,12 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mLightingModePref != $mLightingMode} {
+	gedCmd light_all $mLightingMode
+	set rflag 1
+    }
+
+
     if {$mPerspectivePref != $mPerspective} {
 	set mPerspectivePref $mPerspective
 	updatePerspective 0
@@ -8727,12 +9181,17 @@ proc title_node_handler {node} {
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
+    set mRayColorOddPref $mRayColorOdd
+    set mRayColorEvenPref $mRayColorEven
+    set mRayColorVoidPref $mRayColorVoid
     set mTreeAttrColumnsPref $mTreeAttrColumns
     set mEnableListViewAllAffectedPref $mEnableListViewAllAffected
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
+    set mRtBotMintiePref $mRtBotMintie
     set mCompSelectGroupPref $mCompSelectGroup
+    set mMaxCombMembersShownPref $mMaxCombMembersShown
 
     # Convert mCompSelectMode to a string for the preferences panel
     set mCompSelectModePref [lindex $COMP_SELECT_MODE_NAMES $mCompSelectMode]
@@ -8780,12 +9239,15 @@ proc title_node_handler {node} {
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
+    set mDefaultDisplayModePref $mDefaultDisplayMode
     set mDisplayListModePref $mDisplayListMode
+    set mWireframeModePref $mWireframeMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
     if {[$itk_component(preferencesDialog) activate]} {
 	applyPreferencesIfDiff
+	$itk_component(ged) refresh_all
     }
 }
 
@@ -8814,6 +9276,11 @@ proc title_node_handler {node} {
 	foreach line $lines {
 	    catch {eval $line}
 	}
+    }
+
+    if {[info exists env(LIBRT_BOT_MINTIE)]} {
+	# triggers a set of librt's global tcl variable (i.e., rt_bot_mintie) via ArcherCore::watchVar{}
+	set mRtBotMintie $env(LIBRT_BOT_MINTIE)
     }
 
     # This feature has been disabled.
@@ -8892,12 +9359,17 @@ proc title_node_handler {node} {
     puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
+    puts $_pfile "set mRayColorOdd \"$mRayColorOdd\""
+    puts $_pfile "set mRayColorEven \"$mRayColorEven\""
+    puts $_pfile "set mRayColorVoid \"$mRayColorVoid\""
     puts $_pfile "set mTreeAttrColumns \"$mTreeAttrColumns\""
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
+    puts $_pfile "set mRtBotMintie $mRtBotMintie"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
+    puts $_pfile "set mMaxCombMembersShown $mMaxCombMembersShown"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
@@ -8938,7 +9410,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
+    puts $_pfile "set mDefaultDisplayMode $mDefaultDisplayMode"
     puts $_pfile "set mDisplayListMode $mDisplayListMode"
+    puts $_pfile "set mWireframeMode $mWireframeMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
@@ -8953,6 +9427,10 @@ proc title_node_handler {node} {
 
     puts $_pfile "set mWindowGeometry [winfo geometry [namespace tail $this]]"
 
+    if {$mSeparateCommandWindow} {
+	puts $_pfile "set mCmdWindowGeometry [winfo geometry $itk_component(sepcmdT)]"
+    }
+
     puts $_pfile "set mShowViewAxes $mShowViewAxes"
     puts $_pfile "set mShowModelAxes $mShowModelAxes"
     puts $_pfile "set mShowGroundPlane $mShowGroundPlane"
@@ -8963,6 +9441,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mShowGrid $mShowGrid"
     puts $_pfile "set mSnapGrid $mSnapGrid"
     puts $_pfile "set mShowADC $mShowADC"
+
+    puts $_pfile "set GeometryEditFrame::mHighlightPoints $GeometryEditFrame::mHighlightPoints"
+    puts $_pfile "set GeometryEditFrame::mHighlightPointSize $GeometryEditFrame::mHighlightPointSize"
 }
 
 
@@ -9081,6 +9562,10 @@ proc title_node_handler {node} {
 	"nmg" {
 	    set name [gedCmd make_name "nmg."]
 	    vmake $name nmg
+	}
+	"metaball" {
+	    set name [gedCmd make_name "metaball."]
+	    createMetaball $name
 	}
 	"part" {
 	    set name [gedCmd make_name "part."]
@@ -9310,6 +9795,16 @@ proc title_node_handler {node} {
 	    -mged $itk_component(ged)
     }
     $itk_component(hypView) createGeometry $name
+}
+
+
+::itcl::body Archer::createMetaball {name} {
+    if {![info exists itk_component(metaballView)]} {
+	buildMetaballEditView
+	$itk_component(metaballView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(metaballView) createGeometry $name
 }
 
 

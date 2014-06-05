@@ -1,7 +1,7 @@
 /*                         B O T _ S M O O T H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -111,14 +111,14 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(old_bot);
 
-    if (rt_bot_smooth(old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*M_PI/180.0)) {
+    if (rt_bot_smooth(old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*DEG2RAD)) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (dp_new == RT_DIR_NULL) {
-	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);

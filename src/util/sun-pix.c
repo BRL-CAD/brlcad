@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,13 +65,13 @@ char inbuf[sizeof(struct rasterfile)];
 #define RMT_EQUAL_RGB 1	/* red[ras_maplength/3], green[], blue[] */
 
 #define GETUC_CHECKED(uc, fp, err_msg) \
-{ \
-    int _c = getc(fp); \
-    if (_c == EOF) { \
-	bu_exit(1, err_msg); \
-    } \
-    uc = (unsigned char)_c; \
-}
+    { \
+	int _c = getc(fp); \
+	if (_c == EOF) { \
+	    bu_exit(1, err_msg); \
+	} \
+	uc = (unsigned char)_c; \
+    }
 
 /*
  * NOTES:
@@ -97,9 +97,11 @@ struct colors {
     unsigned char CL_blue;
 };
 
+
 struct colors Cmap[256];
 static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
 
+static char hyphen[] = "-";
 static char *file_name;
 static FILE *fp;
 
@@ -156,14 +158,14 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((fp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "sun-pix: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "sun-pix: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
@@ -200,9 +202,9 @@ get_args(int argc, char **argv)
 static size_t
 decoderead(unsigned char *buf, int size, int length, FILE *readfp)
 
-    /* should be one! */
-    /* number of items to read */
-    /* input file pointer */
+/* should be one! */
+/* number of items to read */
+/* input file pointer */
 {
     static int repeat = -1;
     static int lastchar = 0;

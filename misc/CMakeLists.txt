@@ -10,6 +10,8 @@ set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
 add_subdirectory(pkgconfig)
+add_subdirectory(perl)
+add_subdirectory(attributes)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
@@ -45,42 +47,52 @@ BRLCAD_ADDDATA(density_DATAFILES data)
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
-find_package(Doxygen)
 if(DOXYGEN_FOUND)
-  configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-      )
-    add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
-else(DOXYGEN_FOUND)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    message("Doxygen build requested but doxygen not found, disabling")
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
+  configure_file(doxygen/Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+  add_custom_target(dox     DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+  add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+
+  configure_file(doxygen/DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
+  configure_file(doxygen/DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+  add_custom_target(libdox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html)
+
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
   CMake
   Description.txt
-  Doxyfile
-  Doxyfile.in
+  doxygen/Doxyfile.in
+  doxygen/doxygen_intro.h
+  doxygen/doxygen_structure_libbu.h
+  doxygen/doxygen_structure_libbn.h
+  doxygen/doxygen_structure
+  doxygen/DoxyfileLibs.in
+  doxygen/DoxyfileLibs-defaults.in
+  doxygen/doxygen_structure_libs.txt
   Makefile.defs
   archlinux
   astyle.opt
+  auto-man-page
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
   debian
-  doxygen_structure
   flawfinder
-  libtool.m4
+  jove.emacs
   macosx
   nsis
+  svn2git
   win32-msvc
-  Makefile.am
   )
 CMAKEFILES(${misc_ignore_files})
 

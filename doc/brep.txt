@@ -169,7 +169,7 @@ other bit of code was causing a problem, I tried to mark it with XXX.
 -- Conceptual/Implementation Issues --
 
 model-space curve pullback to surface domain for trimming (introduces
-possible errors while trimming (i.e. at an edge its possible both
+possible errors while trimming (i.e. at an edge it's possible both
 surfaces can be trimmed because of inaccuracies of sampling)...
 
 multiple intersections found

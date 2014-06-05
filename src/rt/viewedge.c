@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -350,9 +350,6 @@ static int occludes(struct application *ap, struct cell *here)
 }
 
 
-/**
- * R A Y H I T
- */
 int rayhit(struct application *ap, register struct partition *pt,
 	   struct seg *segp)
 {
@@ -361,9 +358,6 @@ int rayhit(struct application *ap, register struct partition *pt,
 }
 
 
-/**
- * R A Y M I S S
- */
 int raymiss(struct application *ap)
 {
     handle_main_ray(ap, NULL, NULL);
@@ -451,8 +445,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	}
 
 
-	if ((dbip = db_open(file, "r")) == DBI_NULL)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
+	if ((dbip = db_open(file, DB_OPEN_READONLY)) == DBI_NULL)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not open geometry database file %s.\n", file);
 	RT_CK_DBI(dbip);
 
 #if 0
@@ -491,11 +485,10 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
-				   "occlusion application structure array");
+	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+							  "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
-	    occlusion_apps[i] = bu_malloc(sizeof(struct application), "occlusion_application structure");
-
+	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
@@ -553,7 +546,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * Output is to a file stream.  Do not allow parallel
 	 * processing since we can't seek to the rows.
 	 */
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that
@@ -616,7 +609,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      */
     for (i = 0; i < npsw; ++i) {
 	if (saved[i] == NULL)
-	    saved[i] = (struct cell *) bu_calloc(1, sizeof(struct cell), "saved cell info");
+	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)
 	    writeable[i] = (unsigned char *) bu_calloc(1, per_processor_chunk, "writeable pixel flag buffer");
 	if (scanline[i] == NULL)
@@ -818,7 +811,8 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	icv_image_save_writeline(bif, ap->a_y, scanline[cpu]);
+	/* TODO : Add double type data to maintain resolution */
+	icv_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
@@ -845,16 +839,11 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
 /**
  * end of each frame
  */
-void view_end(struct application *UNUSED(ap)) {
-    if (bif)
-	icv_image_save_close(bif);
-    bif = NULL;
+void view_end(struct application *UNUSED(ap))
+{
 }
 
 
-/**
- * R A Y H I T 2
- */
 int rayhit2(struct application *ap, register struct partition *pt, struct seg *UNUSED(segp))
 {
     struct partition *pp = pt->pt_forw;
@@ -874,9 +863,6 @@ int rayhit2(struct application *ap, register struct partition *pt, struct seg *U
 }
 
 
-/**
- * R A Y M I S S 2
- */
 static int
 raymiss2(register struct application *ap)
 {
@@ -958,7 +944,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     aaap.a_logoverlap = ap->a_logoverlap;
 
     /* Above Left */
-    aaap.a_uptr = (genptr_t)AL;
+    aaap.a_uptr = (void *)AL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -969,7 +955,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Above Right */
-    aaap.a_uptr = (genptr_t)AR;
+    aaap.a_uptr = (void *)AR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -980,7 +966,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Left */
-    aaap.a_uptr = (genptr_t)TL;
+    aaap.a_uptr = (void *)TL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -991,7 +977,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Left */
-    aaap.a_uptr = (genptr_t)UL;
+    aaap.a_uptr = (void *)UL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1002,7 +988,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Right */
-    aaap.a_uptr = (genptr_t)UR;
+    aaap.a_uptr = (void *)UR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1013,7 +999,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Right */
-    aaap.a_uptr = (genptr_t)TR;
+    aaap.a_uptr = (void *)TR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1024,7 +1010,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Left */
-    aaap.a_uptr = (genptr_t)BL;
+    aaap.a_uptr = (void *)BL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1035,7 +1021,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Left */
-    aaap.a_uptr = (genptr_t)LL;
+    aaap.a_uptr = (void *)LL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1046,7 +1032,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Right */
-    aaap.a_uptr = (genptr_t)LR;
+    aaap.a_uptr = (void *)LR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1057,7 +1043,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Right */
-    aaap.a_uptr = (genptr_t)BR;
+    aaap.a_uptr = (void *)BR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1068,7 +1054,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Left */
-    aaap.a_uptr = (genptr_t)DL;
+    aaap.a_uptr = (void *)DL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1079,7 +1065,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Right */
-    aaap.a_uptr = (genptr_t)DR;
+    aaap.a_uptr = (void *)DR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1204,10 +1190,6 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
 }
 
 
-/**
- * H A N D L E _ M A I N _ R A Y
- *
- */
 int
 handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 		struct seg *segp)
@@ -1277,7 +1259,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
     VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-    a2.a_uptr = (genptr_t)&below;
+    a2.a_uptr = (void *)&below;
     rt_shootray(&a2);
 
     if (ap->a_x == 0) {
@@ -1289,7 +1271,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	 */
 	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&left;
+	a2.a_uptr = (void *)&left;
 	rt_shootray(&a2);
     } else {
 	left.c_ishit = saved[cpu]->c_ishit;
@@ -1304,12 +1286,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     if (both_sides) {
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&above;
+	a2.a_uptr = (void *)&above;
 	rt_shootray(&a2);
 
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&right;
+	a2.a_uptr = (void *)&right;
 	rt_shootray(&a2);
     }
 

@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -304,13 +304,13 @@ lines_read(FILE *fp, long int numlines,
 	/* Now, the other useful information. */
 
 	lines->s[MIDDLE].x_1 = DBLEND(lines->s[FIRST].x_1,
-				     lines->s[LAST].x_1, warpfrac);
+				      lines->s[LAST].x_1, warpfrac);
 	lines->s[MIDDLE].y_1 = DBLEND(lines->s[FIRST].y_1,
-				     lines->s[LAST].y_1, warpfrac);
+				      lines->s[LAST].y_1, warpfrac);
 	lines->s[MIDDLE].x_2 = DBLEND(lines->s[FIRST].x_2,
-				     lines->s[LAST].x_2, warpfrac);
+				      lines->s[LAST].x_2, warpfrac);
 	lines->s[MIDDLE].y_2 = DBLEND(lines->s[FIRST].y_2,
-				     lines->s[LAST].y_2, warpfrac);
+				      lines->s[LAST].y_2, warpfrac);
 
 	for (j = 0; j < 3; j++) {
 	    lines->s[j].xdelta = lines->s[j].x_2 - lines->s[j].x_1;
@@ -415,7 +415,7 @@ main(int argc, char **argv)
 		 &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
 	|| isatty(fileno(stdout))) {
 	fprintf(stderr,
-		"usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
+		"Usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
 	return 1;
     }
 
@@ -482,11 +482,11 @@ main(int argc, char **argv)
     if (pa == NULL || pb == NULL || wa == NULL ||  wb == NULL ||
 	morph == NULL) {
 	fprintf(stderr, "pixmorph: memory allocation failure\n");
-        bu_free(pa, "pa alloc from malloc");
-        bu_free(pb, "pb alloc from malloc");
-        bu_free(wa, "wa alloc from malloc");
-        bu_free(wb, "wb alloc from malloc");
-        bu_free(morph, "morph alloc from malloc");
+	bu_free(pa, "pa alloc from malloc");
+	bu_free(pb, "pb alloc from malloc");
+	bu_free(wa, "wa alloc from malloc");
+	bu_free(wb, "wb alloc from malloc");
+	bu_free(morph, "morph alloc from malloc");
 	return 1;
     }
 

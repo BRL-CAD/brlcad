@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file mged/cmd.h
  *
  */
+
+#ifndef MGED_CMD_H
+#define MGED_CMD_H
 
 #include "common.h"
 
@@ -57,12 +60,10 @@ extern int cmd_cmd_win(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_draw(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_emuves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_ev(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_export_body(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_get(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_get_more_default(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_has_embedded_fb(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_hist(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_import_body(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_kill(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_lm(ClientData, Tcl_Interp *, int, const char *[]);
@@ -77,7 +78,6 @@ extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_parse_points(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_pov(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_redraw_vlist(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rrt(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rt(ClientData, Tcl_Interp *, int, const char *[]);
@@ -95,8 +95,6 @@ extern int cmd_tk(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tol(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tra(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_units(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_viewget(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_viewset(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_vrot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zap(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zoom(ClientData, Tcl_Interp *, int, const char *[]);
@@ -189,7 +187,6 @@ extern int f_view2model_lu(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view2model_vec(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view_ring(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vnirt(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_vrot_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_wait(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_winset(ClientData, Tcl_Interp *, int, const char *[]);
 
@@ -225,6 +222,7 @@ extern int f_bv_vsave(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomin(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomout(ClientData, Tcl_Interp *, int, const char *[]);
 
+#endif /* MGED_CMD_H */
 
 /*
  * Local Variables:

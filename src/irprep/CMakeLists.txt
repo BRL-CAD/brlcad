@@ -9,7 +9,7 @@ include_directories(${IRPREP_INCLUDE_DIRS})
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(ir-X ir-X.c "libbu;${X11_LIBRARIES}")
   BRLCAD_ADDEXEC(irdisp irdisp.c "libbu;${X11_LIBRARIES}")
-  BRLCAD_ADDEXEC(pictx pictx.c "${X11_LIBRARIES}")
+  BRLCAD_ADDEXEC(pictx pictx.c "libbu;${X11_LIBRARIES}")
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDEXEC(all_sf all_sf.c "librt;${M_LIBRARY}")
@@ -19,7 +19,6 @@ BRLCAD_ADDEXEC(secpass "secpass.c;subroutines.c" "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(shapefact shapefact.c "librt;${M_LIBRARY}")
 
 CMAKEFILES(pictx.c)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,9 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db5.h"
@@ -67,8 +69,6 @@ struct db_tree_counter_state {
 
 
 /**
- * D B _ T R E E _ C O U N T E R
- *
  * Count number of non-identity matrices, number of leaf nodes,
  * number of operator nodes, etc.
  *
@@ -153,8 +153,6 @@ struct rt_comb_v5_serialize_state {
 
 
 /**
- * R T _ C O M B _ V 5 _ S E R I A L I Z E
- *
  * In one single pass through the tree, serialize out all three output
  * sections at once.
  */
@@ -199,7 +197,7 @@ rt_comb_v5_serialize(
 		double scanmat[ELEMENTS_PER_MAT];
 
 		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
-		htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
+		bu_cv_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
 		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 	    }
 
@@ -251,9 +249,6 @@ rt_comb_v5_serialize(
 }
 
 
-/**
- * R T _ C O M B _ E X P O R T 5
- */
 int
 rt_comb_export5(
     struct bu_external *ep,
@@ -324,7 +319,7 @@ rt_comb_export5(
 
     BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = need;
-    ep->ext_buf = bu_calloc(1, need, "rt_comb_export5 ext_buf");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, need, "rt_comb_export5 ext_buf");
 
     /* Build combination's on-disk header section */
     cp = (unsigned char *)ep->ext_buf;
@@ -479,11 +474,12 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
-    ip->idb_meth = &rt_functab[ID_COMBINATION];
-    BU_GET(comb, struct rt_comb_internal);
+    ip->idb_meth = &OBJ[ID_COMBINATION];
+
+    BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     cp = ep->ext_buf;
     wid = *cp++;
@@ -503,8 +499,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;
 
-	tbl1 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl1");
-	tbl2 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl2");
+	BU_ALLOC(tbl1, struct bu_ptbl);
+	BU_ALLOC(tbl2, struct bu_ptbl);
 
 	/* insert all the leaf nodes into a bu_ptbl */
 	bu_ptbl_init(tbl1, nleaf, "rt_comb_import5: tbl");
@@ -537,7 +533,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		BU_ASSERT_SIZE_T(mi, <, nmat);
 
 		/* read matrix */
-		ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
 		if (!mat || bn_mat_is_identity(mat)) {
@@ -660,7 +656,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    BU_ASSERT_SIZE_T(mi, <, nmat);
 
 		    /* read matrix */
-		    ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		    bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
 		    if (!mat || bn_mat_is_identity(mat)) {
@@ -791,10 +787,8 @@ finish:
 
 
 /**
- * R T _ C O M B _ G E T
- *
  * Sets the result string to a description of the given combination.
- * Entered via rt_functab[].ft_get().
+ * Entered via OBJ[].ft_get().
  */
 int
 rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
@@ -905,12 +899,10 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 /**
- * R T _ C O M B _ A D J U S T
- *
  * Example -
  * rgb "1 2 3" ...
  *
- * Invoked via rt_functab[ID_COMBINATION].ft_adjust()
+ * Invoked via OBJ[ID_COMBINATION].ft_adjust()
  */
 int
 rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
@@ -1074,9 +1066,6 @@ not_region:
 }
 
 
-/**
- * R T _ C O M B _ F O R M
- */
 int
 rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
@@ -1089,10 +1078,8 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 /**
- * R T _ C O M B _ M A K E
- *
  * Create a blank combination with appropriate values.  Called via
- * rt_functab[ID_COMBINATION].ft_make().
+ * OBJ[ID_COMBINATION].ft_make().
  */
 void
 rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern)
@@ -1101,9 +1088,8 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_COMBINATION;
-    intern->idb_meth = &rt_functab[ID_COMBINATION];
-    intern->idb_ptr = bu_calloc(sizeof(struct rt_comb_internal), 1,
-				"rt_comb_internal");
+    intern->idb_meth = &OBJ[ID_COMBINATION];
+    BU_ALLOC(intern->idb_ptr, struct rt_comb_internal);
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_COMB_INTERNAL_INIT(comb);

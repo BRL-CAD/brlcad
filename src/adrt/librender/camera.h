@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,19 +21,19 @@
  *
  */
 
-#ifndef _RENDER_CAMERA_H
-#define _RENDER_CAMERA_H
+#ifndef ADRT_LIBRENDER_CAMERA_H
+#define ADRT_LIBRENDER_CAMERA_H
 
 #include "tie.h"
 #include "adrt.h"
 #include "render.h"
 
-#define	RENDER_CAMERA_DOF_SAMPLES	13
+#define RENDER_CAMERA_DOF_SAMPLES	13
 #define RENDER_CAMERA_PERSPECTIVE	0x0
 #define RENDER_CAMERA_ORTHOGRAPHIC	0x1
-#define	RENDER_CAMERA_BGR		0.00
-#define	RENDER_CAMERA_BGG		0.05
-#define	RENDER_CAMERA_BGB		0.15
+#define RENDER_CAMERA_BGR		0.00
+#define RENDER_CAMERA_BGG		0.05
+#define RENDER_CAMERA_BGB		0.15
 
 #define RENDER_CAMERA_BIT_DEPTH_24	0
 #define RENDER_CAMERA_BIT_DEPTH_128	1

@@ -1,7 +1,7 @@
 /*                        B W - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,15 +60,12 @@ static size_t file_width = 512;
 static size_t file_height = 512;
 
 static char usage[] = "\
-Usage: pix-rle [-h] [-s squarefilesize]  [-C bg]\n\
-	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
+Usage: bw-rle [-s squarefilesize]  [-C bg]\n\
+	[-w file_width] [-n file_height] [file.bw] [file.rle]\n\
 \n\
-If omitted, the .pix file is taken from stdin\n\
+If omitted, the .bw file is taken from stdin\n\
 and the .rle file is written to stdout\n";
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -111,11 +108,11 @@ main(int argc, char **argv)
 	    rle_putcom(strdup(comment), &outrle);
 	}
     }
-# if HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
     gethostname(host, sizeof(host));
     snprintf(comment, 128, "converted_host=%s", host);
     rle_putcom(strdup(comment), &outrle);
-# endif
+#endif
 
     rle_put_setup(&outrle);
     rle_row_alloc(&outrle, &rows);
@@ -124,7 +121,7 @@ main(int argc, char **argv)
     for (y = 0; y < file_height; y++) {
 	if (fread((char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp) != file_width) {
 	    (void) fprintf(stderr,
-			   "pix-rle: read of %lu pixels on line %lu failed!\n",
+			   "bw-rle: read of %lu pixels on line %lu failed!\n",
 			   (unsigned long)file_width, (unsigned long)y);
 	    bu_exit (1, NULL);
 	}

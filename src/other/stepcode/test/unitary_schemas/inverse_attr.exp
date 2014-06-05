@@ -1,0 +1,20 @@
+(*derived from IFC2x3*)
+
+SCHEMA test_inverse_attr;
+
+ENTITY Object;
+    ObjectType : OPTIONAL STRING;
+ INVERSE
+    IsDefinedBy : SET [0:?] OF RelDefinesByType FOR RelatedObjects;
+END_ENTITY;
+
+ENTITY RelDefinesByType;
+  RelatedObjects : SET [1:?] OF Object;
+END_ENTITY;
+
+ENTITY Window
+    SUBTYPE OF (Object);
+    Description : OPTIONAL string;
+END_ENTITY;
+
+END_SCHEMA;

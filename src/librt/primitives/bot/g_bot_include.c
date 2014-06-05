@@ -1,7 +1,7 @@
 /*                   G _ B O T _ I N C L U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,12 +33,10 @@
 
 
 /**
- * R T _ B O T F A C E
- *
  * This function is called with pointers to 3 points, and is used to
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
- * Returns 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * Returns 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * Returns # pts (3) if a valid plane resulted.
  */
 int
@@ -74,7 +72,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	|| m3 < tol->dist_sq
 	|| m4 < tol->dist_sq)
     {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, XGLUE(tri_specific_, TRI_TYPE));
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
@@ -109,7 +107,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
-    bot->bot_facelist = (genptr_t)trip;
+    bot->bot_facelist = (void *)trip;
     return 3;				/* OK */
 }
 
@@ -144,7 +142,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
     fap = (XGLUE(tri_specific_, TRI_TYPE) **)
 	bu_malloc(sizeof(XGLUE(tri_specific_, TRI_TYPE) *) * ntri,
 		  "bot_facearray");
-    bot->bot_facearray = (genptr_t *)fap;
+    bot->bot_facearray = (void **)fap;
 
     stp->st_piece_rpps = (struct bound_rpp *)
 	bu_malloc(sizeof(struct bound_rpp) * num_rpps,
@@ -152,7 +150,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
 
     tpp_m1 = tri_per_piece - 1;
-    trip = bot->bot_facelist;
+    trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     minmax = &stp->st_piece_rpps[num_rpps-1];
     minmax->min[X] = minmax->max[X] = trip->tri_A[X];
     minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
@@ -220,8 +218,6 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
 
 /**
- * R T _ B O T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid BOT, and if so, precompute
  * various terms of the formula.
@@ -251,13 +247,13 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
     RT_BOT_CK_MAGIC(bot_ip);
 
     BU_GET(bot, struct bot_specific);
-    stp->st_specific = (genptr_t)bot;
+    stp->st_specific = (void *)bot;
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
+	for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
     }
     if (bot_ip->face_mode)
@@ -478,8 +474,8 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     /*
      * RT_BOT_SOLID, RT_BOT_UNORIENTED.
      */
-    fastf_t rm_dist=0.0;
-    int removed=0;
+    fastf_t rm_dist = 0.0;
+    int removed = 0;
     static const int IN = 0;
     static const int OUT = 1;
 
@@ -569,8 +565,6 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 
 
 /**
- * R T _ B O T _ M A K E S E G S
- *
  * Given an array of hits, make segments out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
@@ -655,10 +649,10 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		i--;
 		continue;
 	    } else if ((k - i) > 2) {
-		ssize_t keep1=-1, keep2=-1;
-		ssize_t enters=0, exits=0;
-		int reorder=0;
-		int reorder_failed=0;
+		ssize_t keep1 = -1, keep2 = -1;
+		ssize_t enters = 0, exits = 0;
+		int reorder = 0;
+		int reorder_failed = 0;
 
 		/* more than two hits at the same distance, likely a vertex hit
 		 * try to keep just two, one entrance and one exit.
@@ -684,7 +678,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
 		if (reorder) {
 		    struct hit tmp_hit;
-		    int changed=0;
+		    int changed = 0;
 
 		    for (j = i; j < k; j++) {
 
@@ -1022,8 +1016,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
 
 /**
- * R T _ B O T _ S H O T
- *
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -1039,7 +1031,7 @@ int
 XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    register XGLUE(tri_specific_, TRI_TYPE) *trip = bot->bot_facelist;
+    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     struct hit hits[MAXHITS];
     register struct hit *hp;
     size_t nhits;
@@ -1101,7 +1093,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 	/* HIT is within planar face */
 	hp->hit_magic = RT_HIT_MAGIC;
 	hp->hit_dist = k;
-	hp->hit_private = (genptr_t)trip;
+	hp->hit_private = (void *)trip;
 	hp->hit_vpriv[X] = VDOT(trip->tri_N, rp->r_dir);
 	hp->hit_vpriv[Y] = alpha / abs_dn;
 	hp->hit_vpriv[Z] = beta / abs_dn;
@@ -1125,8 +1117,6 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 
 
 /**
- * R T _ B O T _ P I E C E _ S H O T
- *
  * Intersect a ray with a list of "pieces" of a BoT.
  *
  * This routine may be invoked many times for a single ray, as the ray
@@ -1191,7 +1181,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 
 	if (BU_BITTEST(psp->shot, piecenum)) {
 	    if (debug_shoot)
-		bu_log("%s piece %d already shot\n",
+		bu_log("%s piece %ld already shot\n",
 		       stp->st_name, piecenum);
 
 	    resp->re_piece_ndup++;
@@ -1201,7 +1191,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	/* Shoot a ray */
 	BU_BITSET(psp->shot, piecenum);
 	if (debug_shoot)
-	    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
+	    bu_log("%s piece %ld ...\n", stp->st_name, piecenum);
 
 	/* Now intersect with each piece, which means intersecting with
 	 * each triangle that makes up the piece.
@@ -1211,8 +1201,8 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	if (tris_in_piece > bot->bot_tri_per_piece) {
 	    tris_in_piece = bot->bot_tri_per_piece;
 	}
-	for (trinum=0; trinum<tris_in_piece; trinum++) {
-	    register XGLUE(tri_specific_, TRI_TYPE) *trip = bot->bot_facearray[face_array_index+trinum];
+	for (trinum = 0; trinum < tris_in_piece; trinum++) {
+	    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facearray[face_array_index+trinum];
 	    fastf_t dN, abs_dN;
 	    /*
 	     * Ray Direction dot N.  (N is outward-pointing normal) wn
@@ -1258,14 +1248,14 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    hp = rt_htbl_get(&psp->htab);
 	    hp->hit_magic = RT_HIT_MAGIC;
 	    hp->hit_dist = k + dist_corr;
-	    hp->hit_private = (genptr_t)trip;
+	    hp->hit_private = (void *)trip;
 	    hp->hit_vpriv[X] = VDOT(trip->tri_N, rp->r_dir);
 	    hp->hit_vpriv[Y] = alpha / abs_dn;
 	    hp->hit_vpriv[Z] = beta / abs_dn;
 	    hp->hit_surfno = trip->tri_surfno;
 	    hp->hit_rayp = &ap->a_ray;
 	    if (debug_shoot)
-		bu_log("%s piece %d surfno %d ... HIT %g\n",
+		bu_log("%s piece %ld surfno %d ... HIT %g\n",
 		       stp->st_name, piecenum, trip->tri_surfno, hp->hit_dist);
 	} /* for (trinum...) */
     } /* for (;sol_piece_subscr_p...) */
@@ -1287,8 +1277,6 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 
 
 /**
- * R T _ B O T _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1352,9 +1340,6 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct
 }
 
 
-/**
- * R T _ B O T _ F R E E
- */
 void
 XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 {
@@ -1364,7 +1349,6 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facearray, "bot_facearray");
 	bot->bot_facearray = NULL;
     }
-
     if (bot->bot_thickness) {
 	bu_free((char *)bot->bot_thickness, "bot_thickness");
 	bot->bot_thickness = NULL;
@@ -1373,19 +1357,20 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facemode, "bot_facemode");
 	bot->bot_facemode = NULL;
     }
-    ptr = bot->bot_facelist;
+
+    ptr = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     while (ptr) {
 	tri = ptr->tri_forw;
 	if (ptr) {
 	    if (ptr->tri_normals) {
 		bu_free((char *)ptr->tri_normals, "bot tri_specific normals");
 	    }
-	    bu_free((char *)ptr, "bot tri_specific");
+	    BU_PUT(ptr, XGLUE(tri_specific_, TRI_TYPE));
 	}
 	ptr = tri;
     }
     bot->bot_facelist = NULL;
-    bu_free((char *)bot, "bot_specific");
+    BU_PUT(bot, struct bot_specific);
 }
 
 

@@ -1,7 +1,7 @@
 /*                       T E S T L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,14 +39,12 @@
  * and call functions.
  *
  */
-#if 0
-Example use:
-/* FIXME: regex needs to be rewritten to find function names */
-grep '^BU_EXPORT' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
-#endif
+
+#include "common.h"
 
 #include <stdio.h>
 #include <dlfcn.h>
+
 
 int
 main(int ac, char *av[])

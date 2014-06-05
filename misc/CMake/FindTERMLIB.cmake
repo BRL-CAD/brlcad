@@ -1,7 +1,7 @@
 #               F I N D T E R M L I B . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,15 +41,13 @@
 #  TERMLIB_FOUND         - library found.
 #
 #=============================================================================
-include(ResolveCompilerPaths)
+include(CheckLibraryExists)
+
 macro(TERMLIB_CHECK_LIBRARY targetname lname func)
   if(NOT ${targetname}_LIBRARY)
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
     if(HAVE_${targetname}_${lname})
-      find_path(TERMLIB_INCLUDE_DIR ${lname}.h)
-      RESOLVE_LIBRARIES (${targetname}_LIBRARY "-l${lname}")
-      set(${targetname}_LINKOPT "-l${lname}" CACHE STRING "${targetname} link option")
-      mark_as_advanced(${targetname}_LINKOPT)
+      set(${targetname}_LIBRARY "${lname}")
     endif(HAVE_${targetname}_${lname})
   endif(NOT ${targetname}_LIBRARY)
 endmacro(TERMLIB_CHECK_LIBRARY lname func)

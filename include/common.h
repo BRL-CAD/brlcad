@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H
+#define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
  * windows when we cannot autogenerate it easily. do not include
@@ -55,7 +55,12 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
-#	 define srand48(seed) (srand(seed))
+#    define srand48(seed) (srand(seed))
+#  endif
+
+#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
+#    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
+#    define HAVE_LRINT 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
@@ -82,8 +87,12 @@
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword */
-#ifdef __STRICT_ANSI__
+/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+ * rules are in effect.
+ *
+ * TODO: test removal of __STRICT_ANSI__ on Windows.
+ */
+#if !defined __cplusplus && (defined(__STRICT_ANSI__) || defined(__GNUC_GNU_INLINE__))
 #  ifndef inline
 #    define inline /***/
 #  endif
@@ -140,14 +149,14 @@ typedef ptrdiff_t ssize_t;
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
-#ifndef GCC_PREREQ
-#  if defined __GNUC__
-#    define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
-#  else
-#    define GCC_PREREQ(major, minor) 0
-#  endif
+#ifdef GCC_PREREQ
+#  warning "GCC_PREREQ unexpectedly defined.  Ensure common.h is included first."
+#  undef GCC_PREREQ
+#endif
+#if defined __GNUC__
+#  define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
 #else
-#  warning "GCC_PREREQ is already defined.  See the common.h header."
+#  define GCC_PREREQ(major, minor) 0
 #endif
 
 /* Provide a means to conveniently test the version of the Intel
@@ -161,14 +170,14 @@ typedef ptrdiff_t ssize_t;
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
 /* provide a means to conveniently test the version of ICC */
-#ifndef ICC_PREREQ
-#  if defined __INTEL_COMPILER
-#    define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
-#  else
-#    define ICC_PREREQ(version) 0
-#  endif
+#ifdef ICC_PREREQ
+#  warning "ICC_PREREQ unexpectedly defined.  Ensure common.h is included first."
+#  undef ICC_PREREQ
+#endif
+#if defined __INTEL_COMPILER
+#  define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
 #else
-#  warning "ICC_PREREQ is already defined.  See the common.h header."
+#  define ICC_PREREQ(version) 0
 #endif
 
 /* This is so we can use gcc's "format string vs arguments"-check for
@@ -207,53 +216,28 @@ typedef ptrdiff_t ssize_t;
  * }
  *
  */
-#ifndef UNUSED
-#  if GCC_PREREQ(2, 5)
-     /* GCC-style */
-#    define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
-#  else
-     /* MSVC/C++ */
-#    ifdef __cplusplus
-#      if defined(NDEBUG)
-#        define UNUSED(parameter) /* parameter */
-#      else /* some of them are asserted */
-#         define UNUSED(parameter) (parameter)
-#      endif
-#    else
-#      if defined(_MSC_VER)
-	 /* disable reporting an "unreferenced formal parameter" */
-#        pragma warning( disable : 4100 )
-#      endif
-#      define UNUSED(parameter) (parameter)
-#    endif
-#  endif
-#else
+#ifdef UNUSED
+#  warning "UNUSED unexpectedly defined.  Ensure common.h is included first."
 #  undef UNUSED
-#  define UNUSED(parameter) (parameter)
-#  warning "UNUSED was previously defined.  Parameter declaration behavior is unknown, see common.h"
 #endif
-
-/**
- * IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- *
- * We can't use (void)(sizeof((parameter)) because MSVC2010 will
- * reportedly report a warning about the value being unused.
- * (Consequently calls into question (void)(parameter) but untested.)
- *
- * Possible alternative:
- * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
- */
-#ifndef IGNORE
-#  define IGNORE(parameter) (void)(parameter)
+#if GCC_PREREQ(2, 5)
+   /* GCC-style */
+#  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
 #else
-#  undef IGNORE
-#  define IGNORE(parameter) (void)(parameter)
-#  warning "IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h"
+   /* MSVC/C++ */
+#  ifdef __cplusplus
+#    if defined(NDEBUG)
+#      define UNUSED(parameter) /* parameter */
+#    else /* some of them are asserted */
+#       define UNUSED(parameter) (parameter)
+#    endif
+#  else
+#    if defined(_MSC_VER)
+     /* disable reporting an "unreferenced formal parameter" */
+#      pragma warning( disable : 4100 )
+#    endif
+#    define UNUSED(parameter) (parameter)
+#  endif
 #endif
 
 /**
@@ -267,17 +251,14 @@ typedef ptrdiff_t ssize_t;
  *  }
  *
  */
-#ifndef LIKELY
-#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
-
-#    define LIKELY(expression) __builtin_expect((expression), 1)
-#  else
-#    define LIKELY(expression) (expression)
-#  endif
-#else
+#ifdef LIKELY
 #  undef LIKELY
+#  warning "LIKELY unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  define LIKELY(expression) __builtin_expect((expression), 1)
+#else
 #  define LIKELY(expression) (expression)
-#  warning "LIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
 /**
@@ -291,16 +272,14 @@ typedef ptrdiff_t ssize_t;
  *  }
  *
  */
-#ifndef UNLIKELY
-#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
-#    define UNLIKELY(expression) __builtin_expect((expression), 0)
-#  else
-#    define UNLIKELY(expression) (expression)
-#  endif
-#else
+#ifdef UNLIKELY
 #  undef UNLIKELY
+#  warning "UNLIKELY unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  define UNLIKELY(expression) __builtin_expect((expression), 0)
+#else
 #  define UNLIKELY(expression) (expression)
-#  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
 /**
@@ -312,18 +291,16 @@ typedef ptrdiff_t ssize_t;
  *
  * typedef struct karma some_type DEPRECATED;
  */
-#ifndef DEPRECATED
-#  if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
-#    define DEPRECATED __attribute__((deprecated))
-#  elif defined(_WIN32)
-#    define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
-#  else
-#    define DEPRECATED /* deprecated */
-#  endif
-#else
+#ifdef DEPRECATED
 #  undef DEPRECATED
+#  warning "DEPRECATED unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
+#  define DEPRECATED __attribute__((deprecated))
+#elif defined(_WIN32)
+#  define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
+#else
 #  define DEPRECATED /* deprecated */
-#  warning "DEPRECATED was previously defined.  Disabling the declaration."
 #endif
 
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
@@ -342,7 +319,35 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
-#endif  /* __COMMON_H__ */
+/* Provide macros to indicate availability of diagnostic pragmas for
+ * GCC and Clang.
+ */
+#define HAVE_GCC_DIAG_PRAGMAS \
+    (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+
+#define HAVE_CLANG_DIAG_PRAGMAS \
+    (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+
+
+/**
+ * Provide a macro for different treatment of initialized extern const
+ * variables between C and C++.  In C the following initialization
+ * (definition) is acceptable for external linkage:
+ *
+ *   const int var = 10;
+ *
+ * but in C++ const is implicitly internal linkage so it must have
+ * extern qualifier:
+ *
+ *   extern const int var = 10;
+ */
+#if defined(__cplusplus)
+  #define EXTERNVARINIT extern
+#else
+  #define EXTERNVARINIT
+#endif
+
+#endif  /* COMMON_H */
 /** @} */
 /*
  * Local Variables:

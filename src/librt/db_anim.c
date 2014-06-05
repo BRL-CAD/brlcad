@@ -1,7 +1,7 @@
 /*                       D B _ A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 
 int
@@ -49,14 +49,18 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
     anp->an_forw = ANIM_NULL;
     if (root) {
 	if (RT_G_DEBUG&DEBUG_ANIM)
-	    bu_log("db_add_anim(x%x) root\n", anp);
+	    bu_log("db_add_anim(%p) root\n", (void *)anp);
+
+	if (!dbip)
+	    bu_bomb("Unexpected NULL dbip encountered in db_add_anim\n");
+
 	headp = &(dbip->dbi_anroot);
     } else {
 	dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
 	if (!dp)
 	    return 1;
 	if (RT_G_DEBUG&DEBUG_ANIM)
-	    bu_log("db_add_anim(x%x) arc %s\n", anp,
+	    bu_log("db_add_anim(%p) arc %s\n", (void *)anp,
 		   dp->d_namep);
 	headp = &(dp->d_animate);
     }
@@ -88,7 +92,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
     mat_t temp;
 
     if (RT_G_DEBUG&DEBUG_ANIM)
-	bu_log("db_do_anim(x%x) ", anp);
+	bu_log("db_do_anim(%p) ", (void *)anp);
     if (RT_G_DEBUG&DEBUG_ANIM && !materp) bu_log("(null materp) ");
     RT_CK_ANIMATE(anp);
     switch (anp->an_type) {
@@ -146,7 +150,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		break;
 	    }
 	    if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
-		if (materp->ma_shader) bu_free((genptr_t)materp->ma_shader, "ma_shader");
+		if (materp->ma_shader) bu_free((void *)materp->ma_shader, "ma_shader");
 		materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
 	    } else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 		struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -154,7 +158,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		bu_vls_strcpy(&str, materp->ma_shader);
 		bu_vls_putc(&str, ' ');
 		bu_vls_vlscat(&str, &anp->an_u.anu_p.anp_shader);
-		if (materp->ma_shader) bu_free((genptr_t)materp->ma_shader, "ma_shader");
+		if (materp->ma_shader) bu_free((void *)materp->ma_shader, "ma_shader");
 		materp->ma_shader = bu_vls_strgrab(&str);
 		/* bu_vls_free(&str) is done by bu_vls_strgrab() */
 	    } else
@@ -175,11 +179,11 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 	    }
 	    materp->ma_color_valid = 1;	/* XXX - really override? */
 	    materp->ma_color[0] =
-		(((float)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
+		(((float)anp->an_u.anu_c.anc_rgb[0])+0.5) / 255.0;
 	    materp->ma_color[1] =
-		(((float)anp->an_u.anu_c.anc_rgb[1])+0.5)*bn_inv255;
+		(((float)anp->an_u.anu_c.anc_rgb[1])+0.5) / 255.0;
 	    materp->ma_color[2] =
-		(((float)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
+		(((float)anp->an_u.anu_c.anc_rgb[2])+0.5) / 255.0;
 	    break;
 	case RT_AN_TEMPERATURE:
 	    if (RT_G_DEBUG&DEBUG_ANIM)
@@ -217,11 +221,14 @@ db_free_1anim(struct animate *anp)
 }
 
 void
-db_free_anim(register struct db_i *dbip)
+db_free_anim(struct db_i *dbip)
 {
     register struct animate *anp;
     register struct directory *dp;
     register int i;
+
+    if (!dbip)
+	return;
 
     /* Rooted animations */
     for (anp = dbip->dbi_anroot; anp != ANIM_NULL;) {
@@ -259,12 +266,15 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
     struct animate *anp;
     int i;
 
+    if (!dbip)
+	return NULL;
+
     if (argc < 4) {
 	bu_log("db_parse_1anim:  not enough arguments\n");
 	return (struct animate *)NULL;
     }
 
-    BU_GET(anp, struct animate);
+    BU_ALLOC(anp, struct animate);
     anp->magic = ANIMATE_MAGIC;
 
     db_init_db_tree_state(&ts, dbip, &rt_uniresource);
@@ -439,6 +449,9 @@ db_write_anim(FILE *fop, struct animate *anp)
 {
     char *thepath;
     int i;
+
+    if (!fop)
+	return;
 
     RT_CK_ANIMATE(anp);
 

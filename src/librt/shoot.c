@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "plot3.h"
 
@@ -53,8 +53,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     RT_CK_RESOURCE(resp);
     RT_CK_RTI(rtip);
 
-    psptab = bu_calloc(sizeof(struct rt_piecestate),
-		       rtip->rti_nsolids_with_pieces, "re_pieces[]");
+    psptab = (struct rt_piecestate *)bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
     resp->re_pieces = psptab;
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
@@ -160,16 +159,14 @@ again:
 	min = cur+1;
 	goto again;
     }
+
     if (val < nugnp->nu_axis[axis][cur].nu_epos)
 	return cur;
-    else
-	return cur+1;
+
+    return cur+1;
 }
 
 
-/**
- *
- */
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
@@ -211,14 +208,13 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * below.
 	 *
 	 * Therefore, "nudge" the point just slightly into the next
-	 * cell by adding OFFSET_DIST.
+	 * cell by adding our distance tolerance.
 	 *
 	 * XXX At present, a cell is never less than 1mm wide.
 	 *
-	 * XXX The value of OFFSET_DIST should be some percentage of
-	 * the cell's smallest dimension, rather than an absolute
-	 * distance in mm.  This will prevent doing microscopic
-	 * models.
+	 * XXX The "nudge" value was based on an absolute value defined
+	 * by OFFSET_DIST but has been changed to use distance tolerance
+	 * specified in mm and can now be overridden by a user.
 	 */
 
 	t0 = ssp->box_start;
@@ -294,8 +290,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     */
 
 		    if (cutp->cut_type == CUT_CUTNODE &&
-			t0 + OFFSET_DIST < ssp->tv[out_axis]) {
-			t0 += OFFSET_DIST;
+			t0 + ssp->ap->a_rt_i->rti_tol.dist < ssp->tv[out_axis]) {
+			t0 += ssp->ap->a_rt_i->rti_tol.dist;
 			break;
 		    }
 
@@ -378,7 +374,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		 * NOTE: This portion implements Muuss' non-uniform binary
 		 * space partitioning tree.
 		 *********************************************************/
-		t0 += OFFSET_DIST;
+		t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		cutp = curcut;
 		break;
 	    default:
@@ -484,7 +480,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     * Move newray point further into new box.
 		     * Try again.
 		     */
-		    t0 += OFFSET_DIST;
+		    t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		/* Don't get stuck within the same box for long */
@@ -553,7 +549,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    /* See if point marched outside model RPP */
 		    if (ssp->box_start > ssp->model_end)
 			goto pop_space_stack;
-		    t0 = ssp->box_start + OFFSET_DIST;
+		    t0 = ssp->box_start + ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		if (push_flag) {
@@ -570,8 +566,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 		if (RT_G_DEBUG & DEBUG_ADVANCE) {
 		    bu_log(
-			"rt_advance_to_next_cell()=x%x lastcut=x%x\n",
-			cutp, ssp->lastcut);
+			"rt_advance_to_next_cell()=%p lastcut=%p\n",
+			(void *)cutp, (void *)ssp->lastcut);
 		}
 
 		ssp->newray.r_pt[X] = px;
@@ -600,7 +596,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    case CUT_NUGRIDNODE: {
 		struct rt_shootray_status *old;
 
-		BU_GET(old, struct rt_shootray_status);
+		BU_ALLOC(old, struct rt_shootray_status);
 		*old = *ssp;	/* struct copy */
 
 		/* Descend into node */
@@ -705,7 +701,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 	    goto done;
 	} else {
 	    /* increment cur_dist into next cell for next execution of this loop */
-	    cur_dist = ray.r_max + OFFSET_DIST;
+	    cur_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
 	}
 
 	/* process this box node (look at all the pieces) */
@@ -755,9 +751,6 @@ rt_3move_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 {
@@ -768,9 +761,6 @@ rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 }
 
 
-/**
- *
- */
 void
 rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {
@@ -785,7 +775,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
     RT_CK_RTI(ssp->ap->a_rt_i);
     ap = ssp->ap;
 
-    sprintf(buf, "cell%d.pl", fnum++);
+    sprintf(buf, "cell%d.plot3", fnum++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
       perror(buf);
@@ -848,7 +838,6 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-
 int
 rt_shootray(register struct application *ap)
 {
@@ -862,8 +851,8 @@ rt_shootray(register struct application *ap)
 					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
     char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;
@@ -919,18 +908,6 @@ rt_shootray(register struct application *ap)
 		   V3ARGS(ap->a_ray.r_dir));
 	}
     }
-#ifndef NO_BADRAY_CHECKING
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********shootray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_shootray() bad ray\n");
-    }
-#endif
 
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
@@ -948,7 +925,7 @@ rt_shootray(register struct application *ap)
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_shootray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.  Init
@@ -965,7 +942,7 @@ rt_shootray(register struct application *ap)
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -985,15 +962,14 @@ rt_shootray(register struct application *ap)
 
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
-	register fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+	fastf_t f, diff;
+
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_shootray:  zero length dir vector\n");
-	    return 0;
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;
@@ -1567,7 +1543,6 @@ out:
 }
 
 
-
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
 
@@ -1617,25 +1592,13 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	       ap->a_onehit);
 	VPRINT("Dir", ap->a_ray.r_dir);
     }
-#ifndef NO_BADRAY_CHECKING
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********cell_n_on_ray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_cell_n_on_ray() bad ray\n");
-    }
-#endif
 
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_cell_n_on_ray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.
@@ -1651,13 +1614,13 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {
 	fastf_t f, diff;
-	/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, 0.0001)) {
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
 	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
 	}
 	diff = f - 1;
-	if (!NEAR_ZERO(diff, 0.0001)) {
+	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 	    bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
 		   ap->a_x, ap->a_y, ap->a_level);
 	    f = 1/f;
@@ -1805,7 +1768,6 @@ rt_zero_res_stats(struct resource *resp)
 }
 
 
-
 void
 rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
@@ -1838,24 +1800,27 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
     struct partition *p = NULL, *c = NULL, *pp;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	if(p) {
-	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
+	if (p) {
+	    BU_ALLOC(c->pt_forw, struct partition);
 	    c->pt_forw->pt_back = c;
 	    c = c->pt_forw;
 	} else {
-	    c = p = bu_malloc(sizeof(struct partition), "shootray simple");
+	    BU_ALLOC(p, struct partition);
+	    c = p;
 	    c->pt_forw = NULL;
 	    c->pt_back = NULL;
 	}
 	/* partial deep copy of  the partition */
 	c->pt_magic = pp->pt_magic;
 	c->pt_inseg = NULL;
-	c->pt_inhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_inhit, struct hit);
 	c->pt_inhit->hit_magic = pp->pt_inhit->hit_magic;
 	c->pt_inhit->hit_dist = pp->pt_inhit->hit_dist;
 	c->pt_inhit->hit_surfno = pp->pt_inhit->hit_surfno;
 	c->pt_outseg = NULL;
-	c->pt_outhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_outhit, struct hit);
 	c->pt_outhit->hit_magic = pp->pt_outhit->hit_magic;
 	c->pt_outhit->hit_dist = pp->pt_outhit->hit_dist;
 	c->pt_outhit->hit_surfno = pp->pt_outhit->hit_surfno;
@@ -1900,7 +1865,6 @@ rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 
     return (struct partition *)a->a_uptr;
 }
-
 
 
 /*

@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,13 +19,13 @@
  */
 /** @file librender/texture_internal.h
  *
- *  Comments -
- *      Texture Library - Internal texture include
+ * Comments -
+ * Texture Library - Internal texture include
  *
  */
 
-#ifndef _TEXTURE_INTERNAL_H
-#define _TEXTURE_INTERNAL_H
+#ifndef ADRT_LIBRENDER_TEXTURE_INTERNAL_H
+#define ADRT_LIBRENDER_TEXTURE_INTERNAL_H
 
 
 #include "tie.h"
@@ -47,7 +47,7 @@ typedef struct texture_s {
 
 /* _a is transformed vertex, _b is input vertex, _c is 4x4 transformation matrix */
 #define MATH_VEC_TRANSFORM(_a, _b, _c) { \
-	fastf_t  w; \
+	fastf_t w; \
 	_a[0] = (_b[0] * _c[0]) + (_b[1] * _c[4]) + (_b[2] * _c[8]) + _c[12]; \
 	_a[1] = (_b[0] * _c[1]) + (_b[1] * _c[5]) + (_b[2] * _c[9]) + _c[13]; \
 	_a[2] = (_b[0] * _c[2]) + (_b[1] * _c[6]) + (_b[2] * _c[10]) + _c[14]; \

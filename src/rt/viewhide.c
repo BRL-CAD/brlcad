@@ -1,7 +1,7 @@
 /*                      V I E W H I D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ usage(const char *argv0)
     bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
     bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
     bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o output.pl	Specify output file (default=stdout)\n");
+    bu_log(" -o output.plot3	Specify output file (default=stdout)\n");
     bu_log(" -U #		Set use_air boolean to # (default=0)\n");
     bu_log(" -x #		Set librt debug flags\n");
 }
@@ -106,8 +106,6 @@ int	raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It initializes the entire run, i.e.,
  *  it does things such as opening files, etc., which must be done before
  *  any other computations take place.  It is called only once per run.
@@ -129,8 +127,6 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  A null-function.
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  This routine is called once per frame.  Static
@@ -158,16 +154,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	npsw = 1;		/* Disable parallel processing */
     }
 
-    /* malloc() two buffers that have room for as many struct cell 's
-     * as the incoming file is wide (width), plus two for the border.
-     * Rather than using malloc(), though, bu_malloc() is used.  This
-     * has the advantage of inbuild error-checking and automatic aborting
-     * if there is no memory.  Also, bu_malloc() takes a string as its
-     * final parameter: this tells the usr exactly where memory ran out.
-     * The file_height is counted by using ap->a_y directly. The benefit
-     * of this is WHAT?
+    /* allocate two buffers that have room with as many struct cell as
+     * the incoming file is wide (width), plus two for the border.
+     * The file_height is counted by using ap->a_y directly.
      */
-
 
     bottomp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "bottom cell buffer" );
@@ -195,9 +185,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      */
 
     if ( AmbientIntensity <= 0.5 )  {
-	maxangle = cos( 5.0 * bn_degtorad);
+	maxangle = cos( 5.0 * DEG2RAD);
     } else {
-	maxangle = cos( AmbientIntensity * bn_degtorad);
+	maxangle = cos( AmbientIntensity * DEG2RAD);
     }
 
     /* Obtain the bounding boxes for the model from the rt_i(nstance)
@@ -223,8 +213,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
 
 /*
- *			R A Y M I S S
- *
  *  This function is called by rt_shootray(), which is called by
  *  do_frame(). Records coordinates where a miss is detected.
  */
@@ -262,8 +250,6 @@ raymiss(register struct application *ap)
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 
@@ -278,8 +264,6 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the region_id, the distance traveled by the
  *  ray, and the surface normal at the hit point.
@@ -351,8 +335,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().
  *  This routine is called by worker.c whenever there is a full scanline.
  *  worker.c figures out what is a full scanline.  Whenever there
@@ -383,8 +365,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().  It is necessary to
  *  iterate one more time through the horizontal and vertical comparisons
  *  to put down a top border.  This routine is responsible for doing this.
@@ -406,8 +386,6 @@ view_end(struct application *UNUSED(ap))
 
 
 /*
- *		H O R I Z O N T A L   C O M P A R I S O N
- *
  *  This routine takes three parameters: a pointer to a "bottom" buffer, the
  *  line width of the incoming file plus two border pixels (mem_width), and
  *  a y-coordinate (file_height).  It returns nothing.
@@ -494,9 +472,8 @@ horiz_cmp(struct cell *botp, int mem_width)
     }
 }
 
+
 /*
- *		V E R T I C A L  C O M P A R I S O N
- *
  *  This routine takes four parameters: a pointer to a "top" buffer, a pointer
  *  to a "bottom" buffer, the file_width + two border pixels (mem_width), and
  *  a y-coordinate (line-count, or file_height).  It returns nothing.
@@ -505,9 +482,7 @@ horiz_cmp(struct cell *botp, int mem_width)
  *  whether their region_id codes are the same.  If these are not
  *  identical, a horizontal line is plotted to mark the boundary where
  *  the region_id codes change.
- *
  */
-
 void
 vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 {
@@ -629,8 +604,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 
 
 /*
- *	           F I N D_ C E L L
- *
  *  This routine takes pointers to two cells.  This is more efficient (takes
  *  less space) than sending the hit_distances.  Furthermore, by selecting
  *  a cell, rather than just a distance, more information becomes available
@@ -642,7 +615,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
  *  Using this hit_distance will be more esthetically pleasing for the bas-
  *  relief.
  */
-
 struct	cell	*
 find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 {
@@ -661,8 +633,7 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 }
 
 
-/*		S W A P B U F F
- *
+/*
  *  This routine serves to swap buffer pointers: i.e., one buffer is read
  *  at a time.  The first buffer read becomes the "bottom buffer" the new
  *  buffer becomes the "top buffer".  Once the vertical comparison between
@@ -690,8 +661,7 @@ swapbuff(struct cell **onepp, struct cell **twopp)
 }
 
 
-/*		C L E A N L I N E
- *
+/*
  *  This routine takes as parameters the address of a buffer and an integer
  *  reflecting the width of the file.  It proceeds to ZERO fill the buffer.
  *  This routine returns nothing.

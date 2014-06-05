@@ -2,7 +2,7 @@
 #                         A R C H E R
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -57,6 +57,13 @@ for ish in bwish bwish_d ; do
 done
 #\
 exec "$WISH" "$0" "$@"
+
+# If we're not launching in the sh script mode (i.e. we're
+# launching via the mged command) argv0 doesn't seem to be
+# populated - try info nameofexecutable
+if {! [info exists argv0] } {
+   set argv0 [info nameofexecutable]
+}
 
 # If we're running from a build directory but an installed BRL-CAD
 # already exists in the configured install path, all tcl scripts
@@ -251,10 +258,11 @@ proc main {} {
     global env
     global tcl_platform
     global argv
+    global brlcad_version
 
     if {$::ArcherCore::inheritFromToplevel} {
 	set ::ArcherCore::application [Archer .\#auto]
-	wm title $::ArcherCore::application "Archer"
+	wm title $::ArcherCore::application "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
 		[file join [bu_brlcad_data "icons"] archer.ico]
@@ -270,10 +278,10 @@ proc main {} {
 	}
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
-	wm geometry $::ArcherCore::application "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
-	wm title . "Archer"
+	wm title . "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
 		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
@@ -291,13 +299,13 @@ proc main {} {
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
 	pack $::ArcherCore::application -expand yes -fill both
-	wm geometry . "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
     }
 
     if {[info exists argv] && $argv != ""} {
-	set target [lindex $argv 0]
-	set ext [file extension $target]
+	package require cadwidgets::GeometryIO
+	set target [cadwidgets::geom_load [lindex $argv 0] 1]
 	$::ArcherCore::application Load $target
     }
 
@@ -311,6 +319,13 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
+if { $::argc eq 1 } {
+   set argv1 [lindex $argv 0]
+   set argv1_ext [file extension $argv1]
+   if {[string compare -nocase $argv1_ext ".g"] != 0} {
+    $::ArcherCore::splash deactivate
+   }
+}
 
 # do main procedure
 if { [catch {main} _runnable] } {

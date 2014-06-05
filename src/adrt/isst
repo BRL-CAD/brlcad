@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,22 +19,14 @@
 ISST_HOME=`dirname $0`/..
 #\
 export ISST_HOME
-# restart using bwish \
-WISH="bwish"
+# restart using wish \
+WISH="wish"
 #\
-for ish in bwish bwish_d ; do
+for ish in wish wish-8.5 ; do
 # see if we're installed \
     if test -f ${ISST_HOME}/bin/$ish ; then
 #\
         WISH="${ISST_HOME}/bin/$ish"
-#\
-        break;
-#\
-    fi
-# see if we're not installed yet \
-    if test -f ${ISST_HOME}/bwish/$ish ; then
-#\
-        WISH="${ISST_HOME}/bwish/$ish"
 #\
         break;
 #\
@@ -44,12 +36,16 @@ done
 #\
 exec $WISH $0 $@
 
-package require Togl
+# open_dm uses this callback, but we don't load the tclscripts/libdm.tcl stuff any more
+proc _init_dm { func w } { }
+
 package require isst
 
 # create ::isst namespace
 namespace eval ::isst {
 }
+
+set oglwin .w0
 
 proc ::isst::overwin {x y W} {
     global selectedobjs
@@ -120,6 +116,15 @@ proc ::isst::loaddatabase {} {
     }
 }
 
+proc ::isst::cut {} {
+    global focus_x focus_y focus_z pos_x pos_y pos_z oglwin
+    set dir_x [expr $focus_x - $pos_x]
+    set dir_y [expr $focus_y - $pos_y]
+    set dir_z [expr $focus_z - $pos_z]
+    render_mode $oglwin cut "#($pos_x $pos_y $pos_z) #($dir_x $dir_y $dir_z)"
+    ::isst::MoveRight $oglwin
+}
+
 proc ::isst::setup {} {
     global resolution oglwin fullscreenmode
     set resolution 20
@@ -130,15 +135,21 @@ proc ::isst::setup {} {
     . configure -menu .mb
     .mb add cascade -label "File" -menu .mb.file -underline 0
     menu .mb.file -tearoff 0
-
     .mb.file add command -label "Open Database" -underline 0 -command ::isst::loaddatabase
-
     .mb.file add command -label "Exit" -underline 0 -command exit
+
+    .mb add cascade -label "Mode" -menu .mb.mode -underline 0
+    menu .mb.mode -tearoff 0
+    .mb.mode add command -label "Phong" -underline 0 -command {render_mode $oglwin phong}
+    .mb.mode add command -label "Normal" -underline 0 -command {render_mode $oglwin normal}
+    .mb.mode add command -label "Depth" -underline 0 -command {render_mode $oglwin depth}
+    .mb.mode add command -label "Cut" -underline 0 -command { ::isst::cut }
 
     bind . <Key-1> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin phong}}
     bind . <Key-2> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
     bind . <Key-3> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin depth}}
-    bind . <Key-4> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin component}}
+#    bind . <Key-4> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin component}}
+    bind . <Key-5> {if {[::isst::overwin %X %Y $oglwin]} {::isst::cut}}
     bind . <Key-0> {if {[::isst::overwin %X %Y $oglwin]} {reset $oglwin}}
 
     bind . <Key-w> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveForward $oglwin}}
@@ -157,20 +168,13 @@ proc ::isst::setup {} {
     bind . <ButtonPress-3> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
     bind . <B1-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove %x %y $oglwin}}
     bind . <B3-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove2 %x %y $oglwin}}
-    drawview .w0 10
 
-    frame .f
-    pack .f -side bottom
-    button .f.b1 -text " Quit " -command exit
-    pack .f.b1 -side left -anchor w -padx 5
+    bind . <Key-Escape> { exit }
 
-}
-
-proc ::isst::drawview {win {tick 100} } {
-    global az el resolution oglwin
-    togl $win -width 800 -height 600 -rgba true -double true -depth true -privatecmap false -time $tick -create isst_init -destroy isst_zap -display refresh_ogl -reshape reshape -timer idle
-    set oglwin $win
-    pack $win -expand true -fill both
+    isst_init
+    open_dm
+    bind $oglwin <Configure> { reshape %w %h }
+    pack $oglwin -expand true -fill both
 }
 
 proc ::isst::RotStart {x y W} {
@@ -198,11 +202,11 @@ proc ::isst::MoveRight {W} {
 proc ::isst::Resolution {W n} {
     global resolution
     if { $resolution < 20 && $n > 0 } {
-      set_resolution $W [expr $resolution + $n]
+      set_resolution [expr $resolution + $n]
       set resolution [expr $resolution + $n]
     }
     if { $resolution > 1 && $n < 0 } {
-      set_resolution $W [expr $resolution + $n]
+      set_resolution [expr $resolution + $n]
       set resolution [expr $resolution + $n]
     }
 }
@@ -240,4 +244,8 @@ if { [info script] == $argv0 } {
     walk $oglwin 1
     walk $oglwin -1
     update
+    while 1 {
+	update
+	refresh_ogl $oglwin
+    }
 }

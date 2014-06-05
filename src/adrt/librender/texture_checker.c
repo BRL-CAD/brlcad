@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C H E C K E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,39 +19,27 @@
  */
 /** @file librender/texture_checker.c
  *
- *  Comments -
- *      Texture Library - Checker pattern with tile parameter
+ * Comments -
+ * Texture Library - Checker pattern with tile parameter
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-void
-texture_checker_init(struct texture_s *texture, int tile) {
-    struct texture_checker_s   *td;
-
-    texture->data = bu_malloc(sizeof(struct texture_checker_s), "checker data");
-    texture->free = texture_checker_free;
-    texture->work = (texture_work_t *)texture_checker_work;
-
-    td = (struct texture_checker_s *)texture->data;
-    td->tile = tile;
-}
 
 void
 texture_checker_free(struct texture_s *texture) {
     bu_free(texture->data, "checker data");
 }
 
+
 void
 texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
-    struct texture_checker_s	*td;
-    vect_t			pt;
-    int			u, v;
+    struct texture_checker_s *td;
+    vect_t pt;
+    int u, v;
 
 
     td = (struct texture_checker_s *)texture->data;
@@ -66,6 +54,7 @@ texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UN
 
     *pixel[0] = *pixel[1] = *pixel[2] = u ^ v ? 1.0 : 0.0;
 }
+
 
 /*
  * Local Variables:

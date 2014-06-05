@@ -1,7 +1,7 @@
 /*                   A N I M _ S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "a:b:c:d:f:m:pqrstv:"
+#define OPT_STR "a:b:c:d:f:m:pqrstv:h?"
 
 
 /* info from command line args */
@@ -55,6 +55,11 @@ char mat_cmd[10];   /* default is lmul */
 double centroid[3];
 double viewsize;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_script [-v #] [-r|t|s] [-q][-p] [-a|b # # #] [-c|d # # #] [-f #] [-m cmd] [objectname] < in.table > out.script\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -143,7 +148,6 @@ get_args(int argc, char **argv)
 		view = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -163,6 +167,16 @@ main(int argc, char *argv[])
     /* intentionally double for scan */
     double scan[4];
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
+
     frame=last_steer=go=view=relative_a=relative_c=axes=0;
     VSETALL(centroid, 0);
     VSETALL(rcentroid, 0);
@@ -173,10 +187,6 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
     MAT_IDN(a);
-
-
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_script: Get_args error\n");
 
     frame = (steer) ? first_frame -1 : first_frame;
 

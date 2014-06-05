@@ -11,8 +11,10 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
 set(LIBBU_SOURCES
+  affinity.c
   argv.c
   avs.c
+  b64.c
   backtrace.c
   badmagic.c
   basename.c
@@ -28,25 +30,26 @@ set(LIBBU_SOURCES
   ctype.c
   dirent.c
   dirname.c
+  date-time.c
   dlfcn.c
+  encode.c
   endian.c
   escape.c
   fchmod.c
   fgets.c
   file.c
   fnmatch.c
-  fopen_uniq.c
   getcwd.c
   gethostname.c
   getopt.c
   globals.c
   hash.c
+  heap.c
   hist.c
   hook.c
   htond.c
   htonf.c
   interrupt.c
-  ispar.c
   kill.c
   lex.c
   linebuf.c
@@ -59,12 +62,10 @@ set(LIBBU_SOURCES
   observer.c
   parallel.c
   parse.c
-  pool.c
   printb.c
   process.c
   progname.c
   ptbl.c
-  quote.c
   rb_create.c
   rb_delete.c
   rb_diag.c
@@ -78,10 +79,12 @@ set(LIBBU_SOURCES
   realpath.c
   semaphore.c
   simd.c
+  sort.c
   sscanf.c
   str.c
   tcl.c
   temp.c
+  thread.cpp
   timer.c
   units.c
   vers.c
@@ -101,15 +104,20 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
+BRLCAD_ADDDATA(fix.6r vfont)
+BRLCAD_ADDDATA(nonie.r.12 vfont)
+
 add_subdirectory(tests)
 
 set(bu_ignore_files
+  bu_internals.h
+  parallel.h
   rb_internals.h
   uce-dirent.h
+  vfont.h
   vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,6 @@
 #include "wdb.h"
 
 /*
- * M K _ A R S
- *
  * The input is an array of pointers to an array of fastf_t values.
  * There is one pointer for each curve.  It is anticipated that there
  * will be pts_per_curve+1 elements per curve, the first point being
@@ -53,13 +51,13 @@ mk_ars(struct rt_wdb *filep, const char *name, size_t ncurves, size_t pts_per_cu
 {
     struct rt_ars_internal *ars;
 
-    BU_GET(ars, struct rt_ars_internal);
+    BU_ALLOC(ars, struct rt_ars_internal);
     ars->magic = RT_ARS_INTERNAL_MAGIC;
     ars->ncurves = ncurves;
     ars->pts_per_curve = pts_per_curve;
     ars->curves = curves;
 
-    return wdb_export(filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm);
+    return wdb_export(filep, name, (void *)ars, ID_ARS, mk_conv2mm);
 }
 
 

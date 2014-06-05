@@ -1,7 +1,7 @@
 /*                        P O L Y I F . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ struct bu_structparse polygon_desc[] = {
     {"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "normal", bu_offsetof(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c", 3, "color", bu_offsetof(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -63,8 +63,6 @@ struct bu_structparse vertex_desc[] = {
 
 
 /*
- * F _ P O L Y B I N O U T
- *
  * Experimental interface for writing binary polygons that represent
  * the current (evaluated) view.
  *
@@ -100,8 +98,8 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	return TCL_ERROR;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -166,7 +164,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 				bu_vls_free(&tmp_vls);
 				break;
 			    }
-			    if (bu_struct_export(&obuf, (genptr_t)&ph, polygon_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)&ph, polygon_desc) < 0) {
 				Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
 				break;
 			    }
@@ -177,7 +175,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    bu_free_external(&obuf);
 			    /* Now export the vertices */
 			    vertex_desc[0].sp_count = ph.npts * 3;
-			    if (bu_struct_export(&obuf, (genptr_t)verts, vertex_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)verts, vertex_desc) < 0) {
 				Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
 				break;
 			    }

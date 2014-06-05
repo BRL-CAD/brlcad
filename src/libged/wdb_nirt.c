@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "solid.h"
 #include "dg.h"
@@ -67,8 +67,6 @@ extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, struct bn_vlblock *vb
 
 
 /*
- * P R _ W A I T _ S T A T U S
- *
  * Interpret the status return of a wait() system call,
  * for the edification of the watching luser.
  * Warning:  This may be somewhat system specific, most especially
@@ -104,8 +102,6 @@ pr_wait_status(Tcl_Interp *interp,
 
 
 /*
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int
@@ -493,7 +489,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GET(ndlp, struct dg_qray_dataList);
+	    BU_ALLOC(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
@@ -518,7 +514,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GET(ndlp, struct dg_qray_dataList);
+	    BU_ALLOC(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
@@ -650,7 +646,7 @@ dgo_vnirt_cmd(struct dg_obj *dgop,
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+    bu_free((void *)av, "dgo_vnirt_cmd: av");
     av = NULL;
 
     return status;

@@ -1,7 +1,7 @@
 /*                       R E F L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -42,7 +43,6 @@
 #include "./screen.h"
 
 
-#define TWO_PI (2.0 * M_PI)
 #define RI_AIR 1.0  /* refractive index of air */
 
 /* These are used by the hidden-line drawing routines. */
@@ -366,7 +366,7 @@ render_Model(int frame)
 	SCROLL_DL_MOVE();
 	(void) fflush(stdout);
     }
-    if (! rt_g.rtg_parallel) {
+    if (! RTG.rtg_parallel) {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */
@@ -661,7 +661,7 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] != '=');
 		if (p[i] != '=') {
 		    /* cannot find '=' */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
@@ -669,17 +669,17 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] == '\0');
 		if (p[i] == '\0') {
 		    /* cannot find value */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
 		*id = atoi(&p[i]);
-		bu_free((genptr_t)copy, "getMaMID");
+		bu_free((void *)copy, "getMaMID");
 		return true;
 	    }
 	}
     }
-    bu_free((genptr_t)copy, "getMaMID");
+    bu_free((void *)copy, "getMaMID");
     return false;
 
 }
@@ -817,7 +817,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
     if (bu_strncmp(TEX_KEYWORD, entry->name, TEX_KEYLEN) == 0) {
 	struct uvcoord uv;
 	/* Solid has a frame buffer image map. */
-	rt_functab[stp->st_id].ft_uv(ap, stp, ihitp, &uv);
+	OBJ[stp->st_id].ft_uv(ap, stp, ihitp, &uv);
 	loc_entry = *entry;
 	if (tex_Entry(&uv, &loc_entry))
 	    entry = &loc_entry;
@@ -839,7 +839,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
 	/* Compute contribution from this surface. */
 	fastf_t f;
 	int i;
-	auto fastf_t view_dir[3];
+	fastf_t view_dir[3];
 
 	/* Calculate view direction. */
 	VREVERSE(view_dir, ap->a_ray.r_dir);
@@ -1241,7 +1241,7 @@ f_Backgr(struct application *ap)
 	    )
 	    mdb_entry = &mat_dfl_entry;
 	for (i = 1; i < lgt_db_size; i++) {
-	    auto fastf_t real_l_1[3];
+	    fastf_t real_l_1[3];
 	    fastf_t specular;
 	    fastf_t cos_s;
 	    if (lgts[i].energy <= 0.0)
@@ -1511,7 +1511,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
     fastf_t ff;		/* temporary */
     fastf_t lgt_energy;
     fastf_t cos_il; 	/* cosine incident angle */
-    auto fastf_t lgt_dir[3];
+    fastf_t lgt_dir[3];
 
     if (RT_G_DEBUG & DEBUG_RGB)
 	bu_log("\nmodel_Reflectance(): level %d grid <%d, %d>\n",
@@ -1563,7 +1563,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
 	   Reflected ray = (2 * cos(i) * Normal) - Incident ray.
 	   Cos(s) = dot product of Reflected ray with Incident ray.
 	*/ {
-	auto fastf_t lgt_reflect[3], tmp_dir[3];
+	fastf_t lgt_reflect[3], tmp_dir[3];
 	fastf_t specular;
 	fastf_t cos_s;
 	ff = 2.0 * cos_il;

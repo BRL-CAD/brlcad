@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,11 +34,11 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "dm-Null.h"
-
+#include "dm/dm-Null.h"
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
@@ -58,6 +58,12 @@ extern int ogl_share_dlist();
 #  endif
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+extern struct dm *osg_open();
+extern void osg_fogHint();
+extern int osg_share_dlist();
+#endif /* DM_OSG*/
+
 #ifdef DM_RTGL
 extern struct dm *rtgl_open();
 extern void rtgl_fogHint();
@@ -70,6 +76,9 @@ extern void wgl_fogHint();
 extern int wgl_share_dlist();
 #endif /* DM_WGL */
 
+#ifdef DM_QT
+extern struct dm *qt_open();
+#endif /* DM_QT */
 
 HIDDEN struct dm *
 null_open(Tcl_Interp *interp, int argc, const char *argv[])
@@ -79,9 +88,7 @@ null_open(Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 0 || !argv)
 	return DM_NULL;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_null;
     dmp->dm_interp = interp;
@@ -96,6 +103,8 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
     switch (type) {
 	case DM_TYPE_NULL:
 	    return null_open(interp, argc, argv);
+	case DM_TYPE_TXT:
+	    return txt_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
 	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
@@ -116,6 +125,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	    return ogl_open(interp, argc, argv);
 #  endif
 #endif
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+	    return osg_open(interp, argc, argv);
+#endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:
 	    return rtgl_open(interp, argc, argv);
@@ -123,6 +136,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
 	    return wgl_open(interp, argc, argv);
+#endif
+#ifdef DM_QT
+	case DM_TYPE_QT:
+	    return qt_open(interp, argc, argv);
 #endif
 	default:
 	    break;

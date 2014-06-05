@@ -1,7 +1,7 @@
 /*                       F B C M R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,16 +50,16 @@ int onestep = 0;
 FBIO *fbp;
 
 static char usage[] = "\
-Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
+Usage: fbcmrot [-H -i increment] steps_per_second\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hi:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "Hi:h?")) != -1) {
 	switch (c) {
-	    case 'h':
+	    case 'H':
 		/* high-res */
 		size = 1024;
 		break;
@@ -73,10 +73,8 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (bu_optind >= argc) {
-	/* no fps specified */
-	fps = 0;
-    } else {
+	/* if bu_optind >= argc , then no fps specified (and stays 0) */
+    if (bu_optind < argc) {
 	fps = atof(argv[bu_optind]);
 	if (NEAR_ZERO(fps, VDIVIDE_TOL))
 	    onestep++;
@@ -88,14 +86,25 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+void
+printusage(void)
+{
+	(void)fputs(usage, stderr);
+}
+
 int
 main(int argc, char **argv)
 {
     int i;
     struct timeval tv;
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	printusage();
+	fprintf(stderr, "       Program continues running:\n");
+    }
+
     if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
+    	printusage();
 	bu_exit(1, NULL);
     }
 
@@ -106,7 +115,7 @@ main(int argc, char **argv)
 
     if ((fbp = fb_open(NULL, size, size)) == FBIO_NULL) {
 	fprintf(stderr, "fbcmrot:  fb_open failed\n");
-	return	1;
+	return 1;
     }
 
     local_inp = &cm1;
@@ -144,8 +153,9 @@ main(int argc, char **argv)
 	    break;
     }
     fb_close(fbp);
-    return	0;
+    return 0;
 }
+
 
 /*
  * Local Variables:

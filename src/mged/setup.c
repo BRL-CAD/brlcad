@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,10 +83,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"bb", cmd_ged_plain_wrapper, ged_bb},
     {"bev", cmd_ged_plain_wrapper, ged_bev},
     {"bo", cmd_ged_plain_wrapper, ged_bo},
-#if 0
-    {"import_body", cmd_import_body, GED_FUNC_PTR_NULL},
-    {"export_body", cmd_export_body, GED_FUNC_PTR_NULL},
-#endif
     {"bomb", f_bomb, GED_FUNC_PTR_NULL},
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
@@ -109,9 +105,11 @@ static struct cmdtab mged_cmdtab[] = {
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
+    {"coil", cmd_ged_plain_wrapper, ged_coil},
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
+    {"constraint", cmd_ged_plain_wrapper, ged_constraint},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
     {"copymat", cmd_ged_plain_wrapper, ged_copymat},
     {"cp", cmd_ged_plain_wrapper, ged_copy},
@@ -162,6 +160,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"fracture", cmd_ged_plain_wrapper, ged_fracture},
     {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
+    {"gdiff", cmd_ged_plain_wrapper, ged_gdiff},
     {"get", cmd_ged_plain_wrapper, ged_get},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
@@ -198,17 +197,17 @@ static struct cmdtab mged_cmdtab[] = {
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
-    {"lm", cmd_lm, GED_FUNC_PTR_NULL},
-    {"lt", cmd_ged_plain_wrapper, ged_lt},
-    {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
+    {"lm", cmd_lm, GED_FUNC_PTR_NULL},
+    {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
     {"loadview", cmd_ged_view_wrapper, ged_loadview},
+    {"lod", cmd_ged_plain_wrapper, ged_lod},
     {"lookat", cmd_ged_view_wrapper, ged_lookat},
     {"ls", cmd_ged_plain_wrapper, ged_ls},
+    {"lt", cmd_ged_plain_wrapper, ged_lt},
     {"M", f_mouse, GED_FUNC_PTR_NULL},
     {"m2v_point", cmd_ged_plain_wrapper, ged_m2v_point},
     {"make", f_make, GED_FUNC_PTR_NULL},
-    {"make_bb", cmd_ged_plain_wrapper, ged_make_bb},
     {"make_name", cmd_ged_plain_wrapper, ged_make_name},
     {"make_pnts", cmd_ged_more_wrapper, ged_make_pnts},
     {"match", cmd_ged_plain_wrapper, ged_match},
@@ -264,6 +263,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"press", f_press, GED_FUNC_PTR_NULL},
     {"preview", cmd_ged_dm_wrapper, ged_preview},
     {"ps", f_ps, GED_FUNC_PTR_NULL},
+    {"pull", cmd_ged_plain_wrapper, ged_pull},
     {"push", cmd_ged_plain_wrapper, ged_push},
     {"put", cmd_ged_plain_wrapper, ged_put},
     {"put_comb", cmd_ged_plain_wrapper, ged_put_comb},
@@ -281,7 +281,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
     {"rear", f_bv_rear, GED_FUNC_PTR_NULL},
     {"red", f_red, GED_FUNC_PTR_NULL},
-    {"redraw_vlist", cmd_redraw_vlist, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
     {"regdebug", f_regdebug, GED_FUNC_PTR_NULL},
     {"regdef", cmd_ged_plain_wrapper, ged_regdef},
@@ -360,10 +359,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"vdraw", cmd_ged_plain_wrapper, ged_vdraw},
     {"view", cmd_ged_view_wrapper, ged_view_func},
     {"view_ring", f_view_ring, GED_FUNC_PTR_NULL},
-#if 0
-    {"viewget", cmd_viewget, GED_FUNC_PTR_NULL},
-    {"viewset", cmd_viewset, GED_FUNC_PTR_NULL},
-#endif
     {"view2grid_lu", cmd_ged_plain_wrapper, ged_view2grid_lu},
     {"view2model", cmd_ged_plain_wrapper, ged_view2model},
     {"view2model_lu", cmd_ged_plain_wrapper, ged_view2model_lu},
@@ -374,9 +369,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
     {"vrot", cmd_vrot, GED_FUNC_PTR_NULL},
-#if 0
-    {"vrot_center", f_vrot_center, GED_FUNC_PTR_NULL},
-#endif
     {"wcodes", cmd_ged_plain_wrapper, ged_wcodes},
     {"whatid", cmd_ged_plain_wrapper, ged_whatid},
     {"which_shader", cmd_ged_plain_wrapper, ged_which_shader},
@@ -396,8 +388,6 @@ static struct cmdtab mged_cmdtab[] = {
 
 
 /**
- * C M D _ S E T U P
- *
  * Register all MGED commands.
  */
 HIDDEN void
@@ -519,7 +509,7 @@ mged_setup(Tcl_Interp **interpreter)
 		 */
 		Tcl_DeleteCommand(*interpreter, "::itcl::class");
 		nsp = Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0);
-		if(nsp)
+		if (nsp)
 		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }
@@ -571,18 +561,18 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
     }
 
-    BU_GET(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct ged_view);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
-    view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
+    view_state->vs_gvp->gv_clientData = (void *)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
     if (gedp) {
 	/* release any allocated memory */
 	ged_free(gedp);
     } else {
-	BU_GET(gedp, struct ged);
+	BU_ALLOC(gedp, struct ged);
     }
     GED_INIT(gedp, NULL);
 

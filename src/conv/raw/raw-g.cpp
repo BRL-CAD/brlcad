@@ -1,7 +1,7 @@
 /*                         R A W - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
  *        IABG mbH (Germany)
  */
 
+#include "common.h"
 #include <cassert>
 
 #include "RegionList.h"

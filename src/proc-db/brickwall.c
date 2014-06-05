@@ -1,7 +1,7 @@
 /*                     B R I C K W A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +21,6 @@
  *
  * builds a brick wall.
  *
- * Options
- * h	help
  */
 
 #include "common.h"
@@ -36,7 +34,7 @@
 #include "vmath.h"
 
 /* declarations to support use of bu_getopt() */
-char *options = "w:h:d:W:H:sn:t:Du:mc:C:";
+char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";
 
 char *progname = "(noname)";
 double brick_width=8.0;
@@ -50,13 +48,13 @@ int make_mortar=0;	/* put mortar between bricks */
 double tol=0.125;	/* minimum mortar thickness in in */
 double tol2;		/* minimum brick dimension allowed */
 int debug=0;
-double units_conv=25.4;	/* default to inches */
+double units_conv=25.4;	/* by default, units are converted internally from in to mm */
 char color[32] = "160 40 40";
 char mortar_color[32] = "190 190 190";
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+
+static void
+usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -65,28 +63,24 @@ void usage(char *s)
 		   progname,
 		   "  [ -u units ] [ -s(tandalone) ] [-t tolerance ]",
 		   "  [-m(ortar) ] [ -c R/G/B (brick) ] [ -C R/G/B (mortar)]",
-		   "  -w brick_width -h brick_height -d brick_depth -n brick_name",
-		   "  -W wall_width -H wall_height\n  > mged_commands \n");
+		   "  -w brick_width -n brick_height -d brick_depth -B brick_name",
+		   "  -W wall_width -N wall_height\n  > mged_commands \n");
 
     bu_exit(1, NULL);
 }
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+
+int
+parse_args(int ac, char **av)
 {
     int c;
     double d;
     int red, grn, blu;
 
-    if ( ! (progname=strrchr(*av, '/')) )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
-
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
@@ -123,7 +117,7 @@ int parse_args(int ac, char **av)
 		if (!ZERO(d))
 		    brick_width = d;
 		break;
-	    case 'h':
+	    case 'n':
 		d=atof(bu_optarg);
 		if (!ZERO(d))
 		    brick_height = d;
@@ -138,20 +132,19 @@ int parse_args(int ac, char **av)
 		if (!ZERO(d))
 		    wall_width = d;
 		break;
-	    case 'H':
+	    case 'N':
 		d=atof(bu_optarg);
 		if (!ZERO(d))
 		    wall_height = d;
 		break;
-	    case 'n':
+	    case 'B':
 		brick_name = bu_optarg;
 		break;
 	    case 's':
 		standalone = !standalone;
 		break;
-	    case '?':
 	    default:
-		usage("bad command line option");
+		usage("\n");
 		break;
 	}
 
@@ -186,6 +179,7 @@ int parse_args(int ac, char **av)
     return bu_optind;
 }
 
+
 void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)
 {
     int row;
@@ -216,15 +210,15 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
 	    /* generate a slab of mortar underneath the brick row */
 	    fprintf(stdout,
-			  "in s.%s.rm.%d rpp %g %g  %g %g  %g %g\n",
-			  brick_name, row,
-			  xstart, xstart + (wall_width - brick_depth),
-			  0.0, brick_depth,
-			  zstart, zstart+vert_spacing);
+		    "in s.%s.rm.%d rpp %g %g  %g %g  %g %g\n",
+		    brick_name, row,
+		    xstart, xstart + (wall_width - brick_depth),
+		    0.0, brick_depth,
+		    zstart, zstart+vert_spacing);
 
 	    fprintf(stdout,
-			  "r r.m.%s u s.%s.rm.%d\n",
-			  brick_name, brick_name, row);
+		    "r r.m.%s u s.%s.rm.%d\n",
+		    brick_name, brick_name, row);
 	}
 	if (horiz_spacing > tol) {
 	    /* generate mortar between bricks */
@@ -238,31 +232,30 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 		zstart = (brick_height+vert_spacing) * row;
 
 		fprintf(stdout,
-			      "in s.%s.bm.%d.%d rpp %g %g  %g %g  %g %g\n",
-			      brick_name, row, i,
-			      xstart, xstart + horiz_spacing,
-			      0.0, brick_depth,
-			      zstart, zstart+brick_height);
+			"in s.%s.bm.%d.%d rpp %g %g  %g %g  %g %g\n",
+			brick_name, row, i,
+			xstart, xstart + horiz_spacing,
+			0.0, brick_depth,
+			zstart, zstart+brick_height);
 
 		fprintf(stdout,
-			      "r r.m.%s u s.%s.bm.%d.%d\n",
-			      brick_name, brick_name, row, i);
+			"r r.m.%s u s.%s.bm.%d.%d\n",
+			brick_name, brick_name, row, i);
 
 	    }
 	}
     }
 
     fprintf(stdout, "mater r.m.%s\nplastic\n%s\n%s\n\n",
-		  brick_name, "sh=40 di=0.9 sp=0.1", mortar_color);
+	    brick_name, "sh=40 di=0.9 sp=0.1", mortar_color);
 
     fprintf(stdout, "g g.%s g.%s.wall r.m.%s\n",
-		  brick_name, brick_name, brick_name);
+	    brick_name, brick_name, brick_name);
 
 }
 
+
 /*
- * G E N _ B R I C K S
- *
  * generate the brick solids, regions thereof, groups for rows
  * and a group for the wall as a whole.
  */
@@ -276,8 +269,6 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
     /* print the commands to make the wall */
 
-    fprintf(stdout, "\n\n");
-
     for (row=0; row < vert_bricks; ++row) {
 
 	if (row % 2) offset = brick_depth + horiz_spacing;
@@ -290,31 +281,29 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	    zstart = row * brick_height + row * vert_spacing;
 
 	    fprintf(stdout,
-			  "in s.%s.%d.%d rpp %g %g  %g %g  %g %g\n",
-			  brick_name, row, brick,
-			  xstart, xstart + brick_width,
-			  0.0, brick_depth,
-			  zstart, zstart + brick_height);
+		    "in s.%s.%d.%d rpp %g %g  %g %g  %g %g\n",
+		    brick_name, row, brick,
+		    xstart, xstart + brick_width,
+		    0.0, brick_depth,
+		    zstart, zstart + brick_height);
 
 	    fprintf(stdout,
-			  "r r.%s.%d.%d u s.%s.%d.%d\n",
-			  brick_name, row, brick,
-			  brick_name, row, brick);
+		    "r r.%s.%d.%d u s.%s.%d.%d\n",
+		    brick_name, row, brick,
+		    brick_name, row, brick);
 
 	    fprintf(stdout, "g g.%s.r.%d r.%s.%d.%d\n",
-			  brick_name, row, brick_name, row, brick);
+		    brick_name, row, brick_name, row, brick);
 	}
 
 	fprintf(stdout, "g g.%s.wall g.%s.r.%d\n",
-		      brick_name, brick_name, row);
+		brick_name, brick_name, row);
     }
 
     fprintf(stdout, "mater g.%s.wall\nplastic\n%s\n%s\n\n",
-		  brick_name, "sh=40 di=0.9 sp=0.1", color);
+	    brick_name, "sh=40 di=0.9 sp=0.1", color);
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -325,12 +314,14 @@ int main(int ac, char **av)
     double horiz_spacing;
     double vert_spacing;
 
+    if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	usage("\n");
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
-    if (parse_args(ac, av) < ac) usage("Excess command line arguments");
-
+    if (parse_args(ac, av) < ac)
+	usage("Excess command line arguments\n");
 
     /* build the wall
 
@@ -364,19 +355,23 @@ int main(int ac, char **av)
     }
 
 
-    vert_bricks = (int)(wall_height / (brick_height+(horiz_spacing*0.5)));
+    vert_bricks = (int)(wall_height / brick_height);
 
-    vert_spacing =
-	(wall_height - vert_bricks * brick_height) /
-	(vert_bricks - 1);
+    if (vert_bricks > 1) {
+	vert_spacing =
+	    (wall_height - vert_bricks * brick_height) /
+	    (vert_bricks - 1);
+    } else {
+	vert_spacing = 0;
+    }
 
 
     fprintf(stderr, "wall %d bricks wide,  %d bricks high\n",
-		  horiz_bricks, vert_bricks);
-    fprintf(stderr, "distance between adjacent bricks %g\n",
-		  horiz_spacing / units_conv);
+	    horiz_bricks, vert_bricks);
+    fprintf(stderr, "horizontal distance between adjacent bricks %g\n",
+	    horiz_spacing / units_conv);
     fprintf(stderr, "distance between layers of bricks %g\n",
-		  vert_spacing / units_conv);
+	    vert_spacing / units_conv);
 
 
     (void)putc((int)'\n', stdout);
@@ -387,6 +382,7 @@ int main(int ac, char **av)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

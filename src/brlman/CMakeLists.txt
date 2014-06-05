@@ -50,6 +50,12 @@ configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BIN_DIR})
 configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl DESTINATION ${BIN_DIR})
+file(COPY brlman.bat
+  DESTINATION ${CMAKE_BINARY_DIR}/CMakeTmp
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+  GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat DESTINATION ${BIN_DIR})
 
 CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat)
 

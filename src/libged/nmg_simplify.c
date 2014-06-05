@@ -1,7 +1,7 @@
 /*                         N M G _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -164,12 +164,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_arb_internal *arb_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(arb_int, struct rt_arb_internal);
+	BU_ALLOC(arb_int, struct rt_arb_internal);
 
-	new_intern.idb_ptr = (genptr_t)(arb_int);
+	new_intern.idb_ptr = (void *)(arb_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
-	new_intern.idb_meth = &rt_functab[ID_ARB8];
+	new_intern.idb_meth = &OBJ[ID_ARB8];
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -194,12 +194,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_tgc_internal *tgc_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(tgc_int, struct rt_tgc_internal);
+	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
-	new_intern.idb_ptr = (genptr_t)(tgc_int);
+	new_intern.idb_ptr = (void *)(tgc_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_TGC;
-	new_intern.idb_meth = &rt_functab[ID_TGC];
+	new_intern.idb_meth = &OBJ[ID_TGC];
 
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
@@ -219,12 +219,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_pg_internal *poly_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(poly_int, struct rt_pg_internal);
+	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	new_intern.idb_ptr = (genptr_t)(poly_int);
+	new_intern.idb_ptr = (void *)(poly_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_POLY;
-	new_intern.idb_meth = &rt_functab[ID_POLY];
+	new_intern.idb_meth = &OBJ[ID_POLY];
 
 	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
@@ -256,7 +256,7 @@ out1:
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
     dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
-	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);

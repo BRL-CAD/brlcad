@@ -1,7 +1,7 @@
 /*                           T E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
@@ -97,19 +98,25 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
 
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+	switch (i) {
+	    case 'd':
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		break;
+	    default:
+		bu_log("Usage: %s [-d]\n", *argv);
+		bu_exit(-1, NULL);
+	}
+    }
+
+    if (argc == 1) {
+	bu_log("Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     outfp = wdb_fopen("teapot.g");
-
-    while ((i=bu_getopt(argc, argv, "d")) != -1) {
-	switch (i) {
-	    case 'd':
-		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
-		break;
-	    default:
-		bu_exit(-1, "Usage: %s [-d]\n", *argv);
-	}
-    }
 
     /* Setup information
      * Database header record
@@ -134,6 +141,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

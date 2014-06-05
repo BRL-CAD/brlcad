@@ -1,7 +1,7 @@
 /*                   A N I M _ O F F S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "bn.h"
@@ -39,7 +39,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "ro:"
+#define OPT_STR "ro:h?"
 
 
 int full_print = 0;
@@ -47,6 +47,11 @@ int full_print = 0;
 /* intentionally double for scan */
 double offset[3];
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_offset -o # # # [-r] in.table out.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -81,19 +86,26 @@ main(int argc, char *argv[])
     mat_t mat;
 
     /* intentionally double for scan */
-    double time;
+    double timeval;
     double scan[3];
 
     VSETALL(temp, 0.0);
     VSETALL(point, 0.0);
     VSETALL(zero, 0.0);
 
-    (void) get_args(argc, argv);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
 
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
 
     while (1) {
 	/*read line from table */
-	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]", &timeval); /*read time, ignore garbage*/
 	if (val < 1) {
 	    break;
 	}
@@ -118,7 +130,7 @@ main(int argc, char *argv[])
 	anim_add_trans(mat, point, zero);
 	MAT4X3PNT(temp, mat, offset);
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g", time, temp[0], temp[1], temp[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g", timeval, temp[0], temp[1], temp[2]);
 	if (full_print)
 	    printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 	printf("\n");

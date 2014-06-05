@@ -2,6 +2,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	  CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -33,6 +36,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/libexslt/include
   ${CMAKE_CURRENT_BINARY_DIR}/include
   ${CMAKE_CURRENT_BINARY_DIR}/include/libxslt
+  /usr/local/include
   )
 
 add_executable(xsltproc xsltproc.c)

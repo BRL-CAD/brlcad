@@ -1,7 +1,7 @@
 /*                          H O O K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,19 +23,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 void
 bu_hook_list_init(struct bu_hook_list *hlp)
 {
     BU_LIST_INIT(&hlp->l);
     hlp->hookfunc = NULL;
-    hlp->clientdata = GENPTR_NULL;
+    hlp->clientdata = ((void *)0);
 }
 
+
 void
-bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
+bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
     struct bu_hook_list *new_hook;
 
@@ -46,8 +47,9 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
     BU_LIST_APPEND(&hlp->l, &new_hook->l);
 }
 
+
 void
-bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
+bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
     struct bu_hook_list *cur = hlp;
 
@@ -55,14 +57,15 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 	if (cur->hookfunc == func && cur->clientdata == clientdata) {
 	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
 	    BU_LIST_DEQUEUE(&(cur->l));
-	    bu_free((genptr_t)cur, "bu_hook_delete");
+	    BU_PUT(cur, struct bu_hook_list);
 	    cur = old;
 	}
     }
 }
 
+
 void
-bu_hook_call(struct bu_hook_list *hlp, genptr_t buf)
+bu_hook_call(struct bu_hook_list *hlp, void *buf)
 {
     struct bu_hook_list *call_hook;
 
@@ -80,7 +83,7 @@ bu_hook_save_all(struct bu_hook_list *hlp, struct bu_hook_list *save_hlp)
 {
     struct bu_hook_list *cur = hlp;
 
-    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
 
 	/* append what was on hlp to save_hlp */
@@ -94,9 +97,9 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 {
     struct bu_hook_list *cur = hlp;
 
-    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
-	bu_free((genptr_t)cur, "bu_hook_delete_all");
+	BU_PUT(cur, struct bu_hook_list);
     }
 }
 
@@ -110,13 +113,14 @@ bu_hook_restore_all(struct bu_hook_list *hlp, struct bu_hook_list *restore_hlp)
     bu_hook_delete_all(hlp);
 
     /* restore using restore_hlp */
-    while(BU_LIST_WHILE(cur, bu_hook_list, &restore_hlp->l)) {
+    while (BU_LIST_WHILE(cur, bu_hook_list, &restore_hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
 
 	/* append what was on the restore list to hlp */
 	BU_LIST_APPEND(&hlp->l, &cur->l);
     }
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                           A - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,13 +34,14 @@
 #include "bu.h"
 
 
-#define	COMMENT_CHAR	'#'
+#define COMMENT_CHAR '#'
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    double	d;
-    int	i;
+    double d;
+    int i;
     size_t ret;
 
     if (isatty(fileno(stdout))) {
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
     } else {
 	/* get them from stdin */
 	while (1) {
-	    int	ch;
+	    int ch;
 
 	    while (isspace(ch = getchar()))
 		;

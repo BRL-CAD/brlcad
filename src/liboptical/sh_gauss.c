@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
  *		edit the gauss_render function to do the actual rendering
  *	3) Edit view.c to add extern for gauss_mfuncs and call to mlib_add
  *		to function view_init()
- *	4) Edit Makefile.am to add shader file to the compilation
+ *	4) Edit CMakeLists.txt to add shader file to the compilation
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
  *
@@ -109,8 +109,6 @@ struct gauss_specific gauss_defaults = {
 
 #define SHDR_NULL ((struct gauss_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct gauss_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct gauss_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -128,10 +126,10 @@ struct bu_structparse gauss_parse_tab[] = {
 };
 
 
-HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void gauss_print(register struct region *rp, genptr_t dp);
-HIDDEN void gauss_free(genptr_t cp);
+HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void gauss_print(register struct region *rp, void *dp);
+HIDDEN void gauss_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -167,7 +165,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    vect_t v;
 	    int ret;
 
-	    BU_GET(dbint, struct reg_db_internals);
+	    BU_ALLOC(dbint, struct reg_db_internals);
 	    BU_LIST_INIT_MAGIC(&(dbint->l), DBINT_MAGIC);
 
 	    if (tp->tr_a.tu_stp->st_matp)
@@ -178,7 +176,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    /* Get the internal form of this solid & add it to the list */
 	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
 	    if (ret < 0) {
-		bu_log("Failure reading %s object from database.\n", rt_functab[sol_id].ft_name);
+		bu_log("Failure reading %s object from database.\n", OBJ[sol_id].ft_name);
 		return;
 	    }
 
@@ -200,8 +198,8 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 			   tb->name);
 
 		if (rdebug&RDEBUG_SHADE)
-		    bu_log(" got a primitive type %d \"%s\".  This primitive ain't no ellipse bucko!\n",
-			   sol_id, rt_functab[sol_id].ft_name);
+		    bu_log(" got a primitive type %ld \"%s\".  This primitive ain't no ellipse bucko!\n",
+			   sol_id, OBJ[sol_id].ft_name);
 
 		break;
 	    }
@@ -210,9 +208,9 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
 	    if (rdebug&RDEBUG_SHADE)
-		bu_log(" got a primitive type %d \"%s\"\n",
+		bu_log(" got a primitive type %ld \"%s\"\n",
 		       sol_id,
-		       rt_functab[sol_id].ft_name);
+		       OBJ[sol_id].ft_name);
 
 	    RT_ELL_CK_MAGIC(ell_p);
 
@@ -288,14 +286,13 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 }
 
 
-/* G A U S S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -360,21 +357,15 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
-   * G A U S S _ P R I N T
-   */
-HIDDEN void
-gauss_print(register struct region *rp, genptr_t dp)
+HIDDEN void
+gauss_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
 
-/*
- * G A U S S _ F R E E
- */
 HIDDEN void
-gauss_free(genptr_t cp)
+gauss_free(void *cp)
 {
     register struct gauss_specific *gauss_sp =
 	(struct gauss_specific *)cp;
@@ -383,10 +374,10 @@ gauss_free(genptr_t cp)
     while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil)) {
 	BU_LIST_DEQUEUE(&(p->l));
 	bu_free(p->ip.idb_ptr, "internal ptr");
-	bu_free((genptr_t)p, "gauss reg_db_internals");
+	bu_free((void *)p, "gauss reg_db_internals");
     }
 
-    bu_free(cp, "gauss_specific");
+    BU_PUT(cp, struct gauss_specific);
 }
 
 
@@ -463,29 +454,23 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 	       span, step_dist, steps);
 
     }
-#if 1
+
     for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist) {
 	VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
 	optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
     }
 
-
     return optical_density;
-#else
-    return gauss_eval(ell_p->v, ell_p->v, dbint->one_sigma);
-#endif
 }
 
 
 /*
- * G A U S S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

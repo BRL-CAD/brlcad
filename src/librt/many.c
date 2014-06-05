@@ -1,7 +1,7 @@
 /*                          M A N Y . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -62,7 +63,7 @@ struct rt_many_internal {
  * multiple pixel block may be removed from the work queue at once.
  */
 void
-rt_shoot_many_rays_worker(int cpu, genptr_t arg)
+rt_shoot_many_rays_worker(int cpu, void *arg)
 {
     struct application app;
     struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
@@ -168,11 +169,11 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
     rmi.callback = callback;
     rmi.sem_chunk = ncpus;
 
-    if (!rt_g.rtg_parallel || ncpus <= 1) {
+    if (!RTG.rtg_parallel || ncpus <= 1) {
 	/* The 1-cpu case is supported for testing & generality. */
-	rt_shoot_many_rays_worker(0, (genptr_t)&rmi);
+	rt_shoot_many_rays_worker(0, (void *)&rmi);
     } else {
-	bu_parallel(rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi);
+	bu_parallel(rt_shoot_many_rays_worker, ncpus, (void *)&rmi);
     }
 }
 

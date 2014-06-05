@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
@@ -102,8 +103,8 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
      * XXX this hack-around causes a need for more careful
      * semaphore acquisition since it may block
      */
-    if (rt_g.rtg_parallel) {
-	rt_g.rtg_parallel = 0;
+    if (RTG.rtg_parallel) {
+	RTG.rtg_parallel = 0;
 	bu_log("rtxray: Can't do parallel yet, using one CPU\n");
     }
 
@@ -172,31 +173,34 @@ view_eol(struct application *ap)
     if ( lightmodel == LGT_BW ) {
 
 	if (bif != NULL) {
-	    if (rt_g.rtg_parallel) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    icv_image_save_writeline(bif, ap->a_y, scanbuf);
-	    if (rt_g.rtg_parallel) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    /* TODO : Add double type data to maintain resolution */
+	    icv_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	} else if ( outfp != NULL ) {
-	    if (rt_g.rtg_parallel) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
 	    i = fwrite( scanbuf, pixsize, width, outfp );
 	    if (i < width) {
 		perror("fwrite");
 	    }
-	    if (rt_g.rtg_parallel) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}
 	if ( fbp != FBIO_NULL ) {
-	    if (rt_g.rtg_parallel) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
 	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
-	    if (rt_g.rtg_parallel) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}

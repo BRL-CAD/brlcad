@@ -1,7 +1,7 @@
 /*                         V O X E L I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
@@ -48,41 +48,45 @@ struct voxelizeData
 };
 
 HIDDEN void
-create_boxes(genptr_t callBackData, int x, int y, int z, const char *UNUSED(a), fastf_t fill)
+create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fill)
 {
-    fastf_t min[3], max[3];
+    if (a != NULL) {
+	fastf_t min[3], max[3];
 
-    struct bu_vls *vp;
-    char bufx[50], bufy[50], bufz[50];
-    char *nameDestination;
+	struct bu_vls *vp;
+	char bufx[50], bufy[50], bufz[50];
+	char *nameDestination;
 
-    struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
+	struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
 
-    sprintf(bufx, "%d", x);
-    sprintf(bufy, "%d", y);
-    sprintf(bufz, "%d", z);
-    if(dataValues->threshold <= fill) {
-	vp = bu_vls_vlsinit();
-	bu_vls_strcat(vp, dataValues->newname);
-	bu_vls_strcat(vp, ".x");
-	bu_vls_strcat(vp, bufx);
-	bu_vls_strcat(vp, "y");
-	bu_vls_strcat(vp, bufy);
-	bu_vls_strcat(vp, "z");
-	bu_vls_strcat(vp, bufz);
-	bu_vls_strcat(vp, ".s");
+	sprintf(bufx, "%d", x);
+	sprintf(bufy, "%d", y);
+	sprintf(bufz, "%d", z);
 
-	min[0] = (dataValues->bbMin)[0] + (x * (dataValues->sizeVoxel)[0]);
-	min[1] = (dataValues->bbMin)[1] + (y * (dataValues->sizeVoxel)[1]);
-	min[2] = (dataValues->bbMin)[2] + (z * (dataValues->sizeVoxel)[2]);
-	max[0] = (dataValues->bbMin)[0] + ( (x + 1.0) * (dataValues->sizeVoxel)[0]);
-	max[1] = (dataValues->bbMin)[1] + ( (y + 1.0) * (dataValues->sizeVoxel)[1]);
-	max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
+	if (dataValues->threshold <= fill) {
+	    vp = bu_vls_vlsinit();
+	    bu_vls_strcat(vp, dataValues->newname);
+	    bu_vls_strcat(vp, ".x");
+	    bu_vls_strcat(vp, bufx);
+	    bu_vls_strcat(vp, "y");
+	    bu_vls_strcat(vp, bufy);
+	    bu_vls_strcat(vp, "z");
+	    bu_vls_strcat(vp, bufz);
+	    bu_vls_strcat(vp, ".s");
 
-	nameDestination = bu_vls_strgrab(vp);
-	mk_rpp(dataValues->wdbp,nameDestination, min, max);
-	mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	    min[0] = (dataValues->bbMin)[0] + (x * (dataValues->sizeVoxel)[0]);
+	    min[1] = (dataValues->bbMin)[1] + (y * (dataValues->sizeVoxel)[1]);
+	    min[2] = (dataValues->bbMin)[2] + (z * (dataValues->sizeVoxel)[2]);
+	    max[0] = (dataValues->bbMin)[0] + ( (x + 1.0) * (dataValues->sizeVoxel)[0]);
+	    max[1] = (dataValues->bbMin)[1] + ( (y + 1.0) * (dataValues->sizeVoxel)[1]);
+	    max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
+
+	    nameDestination = bu_vls_strgrab(vp);
+	    mk_rpp(dataValues->wdbp,nameDestination, min, max);
+	    mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	}
     }
+    /* else this voxel is air */
 }
 
 int
@@ -92,7 +96,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]";
     fastf_t sizeVoxel[3];
     int levelOfDetail;
-    genptr_t callBackData;
+    void *callBackData;
     struct voxelizeData voxDat;
     int c;
 
@@ -147,7 +151,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &threshold) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
@@ -182,8 +186,8 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
-    while(argc > 0) {
-	if(rt_gettree(rtip,argv[0]) < 0) {
+    while (argc > 0) {
+	if (rt_gettree(rtip,argv[0]) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", argv[1]);
 	    return GED_ERROR;
 	}

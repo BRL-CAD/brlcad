@@ -1,0 +1,17 @@
+These are some notes about using text manipulation tools to try taking the csv
+text files from GCI's transcription work and formatting them as comgeom files.
+I don't think they're fully working as yet, but certainly they are a starting
+point.
+
+tr "\r" "\n" < in_raw.csv > in.csv
+
+Solid table:
+
+awk -F, 'BEGIN {widthlist = "3 3 10 10 10 10 10 10 10"; split (widthlist, widths, " ")}{for(i=1;i<=NF;i++){printf "%-*s", widths[i],$i};printf "\n"}' in.csv
+
+Region table:
+awk -F, 'BEGIN {widthlist = "5 2 5 7 7 7 7 7 7 7 2 5 10"; split (widthlist, widths, " ")}{for(i=1;i<=NF;i++){printf "%-*s", widths[i],$i};printf "\n"}' in.csv
+
+Ident table:
+awk -F, 'BEGIN {widthlist = "10 10 10 43 3 3"; split (widthlist, widths, " ")}{for(i=1;i<=NF;i++){printf "%-*s", widths[i],$i};printf "\n"}' in.csv
+

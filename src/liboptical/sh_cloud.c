@@ -1,7 +1,7 @@
 /*                      S H _ C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@ struct bu_structparse cloud_parse[] = {
 };
 
 
-HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void cloud_print(register struct region *rp, genptr_t dp);
-HIDDEN void cloud_free(genptr_t cp);
+HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void cloud_print(register struct region *rp, void *dp);
+HIDDEN void cloud_free(void *cp);
 
 struct mfuncs cloud_mfuncs[] = {
     {MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
@@ -61,11 +61,7 @@ struct mfuncs cloud_mfuncs[] = {
 };
 
 
-#define NUMSINES 4
-
 /*
- * C L O U D _ T E X T U R E
- *
  * Returns the texture value for a plane point
  */
 double
@@ -75,19 +71,39 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     fastf_t Px, Py, Fx, Fy, C;
     fastf_t t1, t2, k;
 
+    /* NOTE: we intentionally multiply by a truncated 0.707
+     * (truncating to three decimal places) so we get consistent
+     * results across single and double-precision computation.
+     *
+     * Not truncating is an option, but the benchmark results would
+     * need to be recomputed (they have background clouds) and the
+     * single-precision sensitivity would need to be tested.
+     *
+     * Factor compounding with and without truncation (M_SQRT1_2):
+     *                    .707     .7071067811...
+     *                    .499     .4999999998...
+     *                    .352     .3535533904...
+     */
+    static const fastf_t seven0seven = (int)(M_SQRT1_2*1000.0)/1000.0;
+
     t1 = t2 = 0;
 
     /*
      * Compute initial Phases and Frequencies
      * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
      */
-    Fx = bn_twopi * initFx;
-    Fy = bn_twopi * initFy;
-    Px = bn_halfpi * bn_tab_sin(0.5 * Fy * y);
-    Py = bn_halfpi * bn_tab_sin(0.5 * Fx * x);
-    C = 1.0;	/* ??? */
+    Fx = M_2PI * initFx;
+    Fy = M_2PI * initFy;
+    Px = M_PI_2 * bn_tab_sin(0.5 * Fy * y);
+    Py = M_PI_2 * bn_tab_sin(0.5 * Fx * x);
 
-    for (i = 0; i < NUMSINES; i++) {
+    /* unattenuated starting factor */
+    C = 1.0;
+
+/* we iterate in pi/2 steps to 2pi */
+#define TWO_PI_OVER_PI_OVER_TWO 4
+
+    for (i = 0; i < TWO_PI_OVER_PI_OVER_TWO; i++) {
 	/*
 	 * Compute one term of each summation.
 	 */
@@ -98,26 +114,27 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	 * Compute the new phases and frequencies.
 	 * N.B. The phases shouldn't vary the same way!
 	 */
-	Px = bn_halfpi * bn_tab_sin(Fy * y);
-	Py = bn_halfpi * bn_tab_sin(Fx * x);
-	Fx *= 2.0;
-	Fy *= 2.0;
-	C *= 0.707;
+	Px = M_PI_2 * bn_tab_sin(Fy * y);
+	Py = M_PI_2 * bn_tab_sin(Fx * x);
+	Fx *= 2;
+	Fy *= 2;
+
+	/* next iteration is multiplied by a diminishing sqrt(1/2)
+	 * factor, see above note regarding precision.
+	 */
+	C *= seven0seven;
     }
 
     /* Choose a magic k! */
     /* Compute max possible summation */
-    k =  NUMSINES * 2 * NUMSINES;
+    k =  TWO_PI_OVER_PI_OVER_TWO * 2 * TWO_PI_OVER_PI_OVER_TWO;
 
     return t1 * t2 / k;
 }
 
 
-/*
- * C L O U D _ S E T U P
- */
 HIDDEN int
-cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cloud_specific *cp;
 
@@ -134,29 +151,21 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t
 }
 
 
-/*
- * C L O U D _ P R I N T
- */
 HIDDEN void
-cloud_print(register struct region *rp, genptr_t dp)
+cloud_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, cloud_parse, (char *)dp);
 }
 
 
-/*
- * C L O U D _ F R E E
- */
 HIDDEN void
-cloud_free(genptr_t cp)
+cloud_free(void *cp)
 {
-    bu_free(cp, "cloud_specific");
+    BU_PUT(cp, struct cloud_specific);
 }
 
 
 /*
- * C L O U D _ R E N D E R
- *
  * Return a sky color with translucency control.
  * Threshold is the intensity below which it is completely translucent.
  * Range in the range on intensities over which translucence varies
@@ -164,7 +173,7 @@ cloud_free(genptr_t cp)
  * thresh=0.35, range=0.3 for decent clouds.
  */
 int
-cloud_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+cloud_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct cloud_specific *cp =
 	(struct cloud_specific *)dp;

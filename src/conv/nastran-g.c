@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -106,8 +106,8 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static long start_off;
+static char *Usage="Usage: %s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -153,7 +153,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    fseek(fpin, start_off, SEEK_SET);
+    bu_fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -578,8 +578,8 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     switch (cs->type) {
 	case CORD_CYL:
-	    c1 = pt[X] * cos(pt[Y] * bn_degtorad);
-	    c2 = pt[X] * sin(pt[Y] * bn_degtorad);
+	    c1 = pt[X] * cos(pt[Y] * DEG2RAD);
+	    c2 = pt[X] * sin(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, pt[Z], cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -590,10 +590,10 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    break;
 
 	case CORD_SPH:
-	    c4 = pt[X] * sin(pt[Y] * bn_degtorad);
-	    c1 = c4 * cos(pt[Z] * bn_degtorad);
-	    c2 = c4 * sin(pt[Z] * bn_degtorad);
-	    c3 = pt[X] * cos(pt[Y] * bn_degtorad);
+	    c4 = pt[X] * sin(pt[Y] * DEG2RAD);
+	    c1 = c4 * cos(pt[Z] * DEG2RAD);
+	    c2 = c4 * sin(pt[Z] * DEG2RAD);
+	    c3 = pt[X] * cos(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, c3, cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -732,7 +732,7 @@ get_coord_sys(void)
 	return;
     }
 
-    BU_GET(cs, struct coord_sys);
+    BU_ALLOC(cs, struct coord_sys);
 
     switch (form) {
 	case 1:
@@ -755,7 +755,7 @@ get_coord_sys(void)
 	    if (!strlen(curr_rec[5]))
 		break;
 
-	    BU_GET(cs, struct coord_sys);
+	    BU_ALLOC(cs, struct coord_sys);
 	    cs->type = type;
 	    cs->cid = atoi(curr_rec[5]);
 	    gid = atoi(curr_rec[6]);
@@ -1087,7 +1087,7 @@ get_cbar(void)
     VSCALE(pt1, pt1, conv[units]);
     VSCALE(pt2, pt2, conv[units]);
 
-    radius = sqrt(pb->area/bn_pi);
+    radius = sqrt(pb->area/M_PI);
     radius = radius * conv[units];
 
     VSUB2(height, pt2, pt1);
@@ -1123,16 +1123,16 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 't':		/* calculational tolerance */
@@ -1146,16 +1146,18 @@ main(int argc, char **argv)
 		units = MM;
 		break;
 	    case 'i':
-		nastran_file = bu_optarg;
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
 		    bu_exit(1, Usage, argv[0]);
 		}
+		nastran_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
+	    default:
+		bu_exit(1, Usage, argv[0]);
 	}
     }
 
@@ -1187,7 +1189,7 @@ main(int argc, char **argv)
 	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = ftell(fpin);
+	start_off = bu_ftell(fpin);
 	break;
     }
 
@@ -1213,7 +1215,7 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
 	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
@@ -1223,7 +1225,7 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
@@ -1231,7 +1233,7 @@ main(int argc, char **argv)
 	} else if (!bu_strncmp(curr_rec[0], "PBAR", 4)) {
 	    struct pbar *pb;
 
-	    BU_GET(pb, struct pbar);
+	    BU_ALLOC(pb, struct pbar);
 
 	    pb->pid = atoi(curr_rec[1]);
 	    pb->mid = atoi(curr_rec[2]);
@@ -1241,7 +1243,7 @@ main(int argc, char **argv)
 
 	    BU_LIST_INSERT(&pbar_head.l, &pb->l);
 	} else if (!bu_strncmp(curr_rec[0], "PSHELL", 6)) {
-	    BU_GET(psh, struct pshell);
+	    BU_ALLOC(psh, struct pshell);
 
 	    psh->s = (struct shell *)NULL;
 	    psh->pid = atoi(curr_rec[1]);
@@ -1256,7 +1258,7 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
@@ -1274,14 +1276,14 @@ main(int argc, char **argv)
 
 	g_pts[grid_used].gid = gid;
 	g_pts[grid_used].cid = cid;
-	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");;
+	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");
 	VMOVE(g_pts[grid_used].pt, tmp);
 	grid_used++;
     }
 
 
     /* find coordinate systems */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
@@ -1300,7 +1302,7 @@ main(int argc, char **argv)
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();

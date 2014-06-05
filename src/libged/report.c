@@ -1,7 +1,7 @@
 /*                         R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
  *
  */
 
+#include "common.h"
 #include <stdlib.h>
 
 #include "ged.h"
@@ -47,8 +48,8 @@ print_schain(struct ged *gedp, int lvl)
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -122,8 +123,6 @@ print_schain(struct ged *gedp, int lvl)
 
 
 /*
- * D G O _ P R _ S C H A I N _ V L C M D S
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the vlist cmds
  * for each structure.
@@ -139,8 +138,8 @@ print_schain_vlcmds(struct ged *gedp)
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {

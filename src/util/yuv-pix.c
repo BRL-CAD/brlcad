@@ -1,7 +1,7 @@
 /*                       Y U V - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,16 +57,19 @@ static long int file_height = 485L;	/* default input height */
 void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
-static char usage[] = "\
-Usage: yuv-pix [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
+static const char usage[] =
+  "Usage: yuv-pix [-h] [-a]\n"
+  "	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n"
+  ;
+
+static const char optstring[] = "ahs:w:n:";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -107,12 +110,12 @@ get_args(int argc, char **argv)
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
-			  "yuv-pix: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "yuv-pix: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 
 	fileinput++;
     }
@@ -124,9 +127,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */
@@ -151,8 +151,8 @@ main(int argc, char **argv)
     }
 
     /* Allocate full size buffers for input and output */
-    inbuf = bu_malloc(2*file_width*file_height+8, "inbuf");
-    outbuf = bu_malloc(3*file_width*file_height+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(2*file_width*file_height+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(3*file_width*file_height+8, "outbuf");
 
     if (bu_mread(infd, inbuf, 2*file_width*file_height) < 2*file_width*file_height) {
 	perror("READ ERROR");
@@ -170,7 +170,7 @@ main(int argc, char **argv)
     if (write(1, (void *)outbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("stdout");
 	fprintf(stderr, "yuv-pix: output write error, aborting\n");
-	bu_exit (2, NULL);
+	bu_exit(2, NULL);
     }
 
     bu_free(inbuf, "inbuf");
@@ -199,9 +199,9 @@ main(int argc, char **argv)
 #define V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define CLIP(out, in) { int t; \
-		if ((t = (in)) < 0)  (out) = 0; \
-		else if (t >= 255)  (out) = 255; \
-		else (out) = t; }
+	if ((t = (in)) < 0)  (out) = 0; \
+	else if (t >= 255)  (out) = 255; \
+	else (out) = t; }
 
 #define LINE_LENGTH 720
 #define FRAME_LENGTH 486
@@ -226,7 +226,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     unsigned char *cp;
     double *yp, *up, *vp;
     long int i;
-    static int first=1;
+    static int first = 1;
 
     if (first) {
 	/* SETUP */

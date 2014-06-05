@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * External variable declarations for the RT family of analysis programs.
  *
  */
+
+#ifndef RT_EXT_H
+#define RT_EXT_H
 
 #include "optical.h"
 
@@ -57,7 +60,7 @@ extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern mat_t model2view;
 extern mat_t view2model;
 extern struct application APP;
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 extern vect_t left_eye_delta;
 extern vect_t left_eye_delta;
 
@@ -134,6 +137,8 @@ extern int get_args(int argc, const char *argv[]);
 
 /* view.c */
 extern void usage(const char *argv0);
+
+#endif /* RT_EXT_H */
 /*
  * Local Variables:
  * mode: C

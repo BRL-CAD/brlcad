@@ -1,7 +1,7 @@
 #                   T A B L E V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -229,7 +229,7 @@
 	# keeps track of data row that gets highlighted
 	variable highlightRow 0
 
-	# keeps track of column colors (i.e background and foreground)
+	# keeps track of column colors (i.e. background and foreground)
 	variable colColors
 
 	# entry options

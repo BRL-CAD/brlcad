@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -31,7 +30,6 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-
 
 
 void
@@ -88,7 +86,7 @@ rt_regionfix(struct rt_i *rtip)
 	*tabp++ = '\0';
 	while (*tabp && isspace((int)*tabp)) tabp++;
 	if ((ret = regcomp(&re_space, line, 0)) != 0) {
-	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret);
+	    bu_log("%s: line %d, regcomp error '%d'\n", file, linenum, ret);
 	    continue;		/* just ignore it */
 	}
 
@@ -126,7 +124,7 @@ rt_regionfix(struct rt_i *rtip)
 		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
 	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
-		bu_log("%s instance %d:  region id changed from %d to %d\n",
+		bu_log("%s instance %ld:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
 		       oldid, newid);
 	    }

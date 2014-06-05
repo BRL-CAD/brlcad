@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,11 @@
 #include <string.h>
 #include <float.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/units.h"
+#include "bu/vls.h"
 
 
 /* done specifically to avoid a libbn dependency */
@@ -183,28 +187,28 @@ units_name_matches(const char *input, const char *name)
 	name = "";
 
     /* skip spaces */
-    while (isspace(*input))
+    while (isspace((unsigned char)*input))
 	input++;
-    while (isspace(*name))
+    while (isspace((unsigned char)*name))
 	name++;
 
     /* quick exit */
-    if (tolower(input[0]) != tolower(name[0]))
+    if (tolower((unsigned char)input[0]) != tolower((unsigned char)name[0]))
 	return 0;
 
     cp = input;
     /* skip spaces, convert to lowercase */
     while (*cp != '\0') {
-	if (!isspace(*cp))
-	    bu_vls_putc(&normalized_input, tolower(*cp));
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_input, tolower((unsigned char)*cp));
 	cp++;
     }
 
     cp = name;
     /* skip spaces, convert to lowercase */
     while (*cp != '\0') {
-	if (!isspace(*cp))
-	    bu_vls_putc(&normalized_name, tolower(*cp));
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_name, tolower((unsigned char)*cp));
 	cp++;
     }
 
@@ -290,7 +294,7 @@ bu_units_strings_vls()
     struct bu_vls *vlsp;
     double prev_val = 0.0;
 
-    BU_GET(vlsp, struct bu_vls);
+    BU_ALLOC(vlsp, struct bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (ZERO(prev_val - tp->val))
@@ -379,13 +383,16 @@ bu_mm_value(const char *s)
 
 
 void
-bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+bu_mm_cvt(const struct bu_structparse *sdp,
+	  const char *name,
+	  void *base,
+	  const char *value)
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
 
     if (UNLIKELY(!name)) {
 	bu_log("bu_mm_cvt: NULL name encountered\n");

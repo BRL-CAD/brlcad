@@ -1,7 +1,7 @@
 /*                       P I X - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,15 +60,12 @@ static size_t file_width = 512;
 static size_t file_height = 512;
 
 static char usage[] = "\
-Usage: pix-rle [-h] [-s squarefilesize]  [-C r/g/b]\n\
+Usage: pix-rle [-s squarefilesize]  [-C r/g/b]\n\
 	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
 \n\
 If omitted, the .pix file is taken from stdin\n\
 and the .rle file is written to stdout\n";
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,10 @@
 #include <stdarg.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 
 /**
  * list of callbacks to call during bu_bomb.
@@ -39,7 +41,7 @@ struct bu_hook_list bomb_hook_list = {
 	&bomb_hook_list.l
     },
     NULL,
-    GENPTR_NULL
+    ((void *)0)
 };
 
 
@@ -79,7 +81,7 @@ bu_bomb_failsafe_init(void)
 
 
 void
-bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata)
+bu_bomb_add_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_add(&bomb_hook_list, func, clientdata);
 }
@@ -105,7 +107,7 @@ bu_bomb(const char *str)
 
     /* MGED would like to be able to additional logging, do callbacks. */
     if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
-	bu_hook_call(&bomb_hook_list, (genptr_t)str);
+	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 
     if (bu_setjmp_valid) {
@@ -122,7 +124,7 @@ bu_bomb(const char *str)
 #ifdef HAVE_UNISTD_H
     /*
      * No application level error handling,
-     * go to extra pains to ensure that user gets to see this message.
+     * Go to extra pains to ensure that user gets to see this message.
      * For example, mged hijacks output sent to stderr.
      */
     {
@@ -149,8 +151,8 @@ bu_bomb(const char *str)
 #if defined(DEBUG)
     /* save a backtrace, should hopefully have debug symbols */
     {
-	/* if the file already exists, there's probably another thread
-	 * writing out a report for the current process. acquire a
+	/* If the file already exists, there's probably another thread
+	 * writing out a report for the current process. Acquire a
 	 * mapped file semaphore so we only have one thread writing to
 	 * the file at a time (can't just use BU_SEM_SYSCALL).
 	 */

@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/sort.h"
 #include "./ged_private.h"
 
 
@@ -39,7 +41,7 @@
 
 
 HIDDEN int
-edcodes_id_compare(const void *p1, const void *p2)
+edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     int id1, id2;
 
@@ -51,7 +53,7 @@ edcodes_id_compare(const void *p1, const void *p2)
 
 
 HIDDEN int
-edcodes_reg_compare(const void *p1, const void *p2)
+edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     char *reg1, *reg2;
 
@@ -65,7 +67,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
 HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
 HIDDEN void
-edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     int ret;
     int *pathpos;
@@ -124,7 +126,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status, (genptr_t)NULL);
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -225,7 +227,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
 	bu_file_delete(tmpfil);
-	bu_free((genptr_t)av, "ged_edcodes av");
+	bu_free((void *)av, "ged_edcodes av");
 	return GED_ERROR;
     }
 
@@ -260,9 +262,9 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* sort the array of lines */
 	if (sort_by_ident) {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_id_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_id_compare, NULL);
 	} else {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_reg_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_reg_compare, NULL);
 	}
 
 	/* rewrite the temp file using the sorted lines */
@@ -283,7 +285,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	status = GED_ERROR;
 
     bu_file_delete(tmpfil);
-    bu_free((genptr_t)av, "ged_edcodes av");
+    bu_free((void *)av, "ged_edcodes av");
     return status;
 }
 

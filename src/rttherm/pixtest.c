@@ -1,7 +1,7 @@
 /*                       P I X T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,16 +49,9 @@ spect_curve_to_xyz(point_t xyz,
 extern struct bn_table *spectrum;
 struct bn_tabdata *curve;
 
-#if 0
-/* Not many samples in visible part of spectrum */
-int nsamp = 100;
-double min_nm = 380;
-double max_nm = 12000;
-#else
 int nsamp = 20;
 double min_nm = 340;
 double max_nm = 760;
-#endif
 
 struct bn_tabdata *cie_x;
 struct bn_tabdata *cie_y;

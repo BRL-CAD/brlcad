@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "ged.h"
 #include "db.h"
 #include "mater.h"
@@ -182,7 +183,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    zot = rt_material_head();
 	    rt_new_material_head(zot->mt_forw);
 	    color_zaprec(gedp, zot);
-	    bu_free((genptr_t)zot, "mater rec");
+	    bu_free((void *)zot, "mater rec");
 	}
 
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {
@@ -196,7 +197,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
-	    BU_GET(mp, struct mater);
+	    BU_ALLOC(mp, struct mater);
 	    mp->mt_low = low;
 	    mp->mt_high = hi;
 	    mp->mt_r = r;
@@ -238,7 +239,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     /* if there are drawables, update their colors */
     if (gedp->ged_gdp)
-	ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
+	ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }
@@ -309,7 +310,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* construct the new color record */
-	BU_GET(newp, struct mater);
+	BU_ALLOC(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);
@@ -331,7 +332,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	struct bu_vls colors = BU_VLS_INIT_ZERO;
 
 	/* construct the new color record */
-	BU_GET(newp, struct mater);
+	BU_ALLOC(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);

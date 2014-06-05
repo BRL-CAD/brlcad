@@ -1,7 +1,7 @@
 /*                       V E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file vdeck/vextern.h
  *	Author:		Gary Moss
  */
+
+#ifndef CONV_VDECK_VEXTERN_H
+#define CONV_VDECK_VEXTERN_H
 
 /* Special characters.							*/
 #define	LF		"\n"
@@ -77,13 +80,15 @@ extern int	ndir, nns, nnr;
 
 extern int			delsol, delreg;
 extern char			buff[];
-extern long			savsol;
+extern off_t			savsol;
 
 extern jmp_buf		env;
 #define EPSILON		0.0001
 #define CONV_EPSILON	0.01
 
 extern struct db_i	*dbip;		/* Database instance ptr */
+
+#endif /* CONV_VDECK_VEXTERN_H */
 
 /*
  * Local Variables:

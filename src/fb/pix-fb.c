@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ static int pause_sec = 0; 	/* Pause that many seconds before
 				   closing the FB and exiting */
 
 static char usage[] = "\
-Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
+Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
@@ -82,7 +82,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;
@@ -92,12 +92,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -166,15 +160,13 @@ get_args(int argc, char **argv)
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
-			  "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    bu_exit(1, NULL);
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
-#ifdef _WIN32
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	setmode(infd, O_BINARY);
-#endif
 	fileinput++;
     }
 
@@ -191,16 +183,16 @@ get_args(int argc, char **argv)
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, (off_t)num, 1);
+	(void)lseek(fd, num, 1);
 	return 0;
     }
 
     while (num > 0) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read(fd, scanline, try);
+	tries = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, tries);
 	if (n <= 0) {
 	    return -1;
 	}

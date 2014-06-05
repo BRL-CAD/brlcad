@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,6 +44,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -65,7 +66,7 @@ int
 mk_sol(struct rt_wdb *fp, double radius)
 {
     struct wmember c;
-    point_t p = { 0,0,0};
+    point_t p = { 0, 0, 0};
     /* make a sphere! tada! */
     mk_sph(fp, "sun.s", p, radius * 1000.0);
 
@@ -75,10 +76,11 @@ mk_sol(struct rt_wdb *fp, double radius)
     return 0;
 }
 
+
 int
 mk_ring(struct rt_wdb *fp, double orbit, double width, double thick, double wallthick, double wallheight)
 {
-    point_t base = {0,0,0}, height = {0,0,0};
+    point_t base = {0, 0, 0}, height = {0, 0, 0};
     struct wmember c;
     /* make 3 rcc's and glue them together */
 
@@ -107,6 +109,7 @@ mk_ring(struct rt_wdb *fp, double orbit, double width, double thick, double wall
     return 0;
 }
 
+
 int
 mk_shadowring(struct rt_wdb *UNUSED(fp), double UNUSED(orbit), int UNUSED(num), double UNUSED(width), double UNUSED(length), double UNUSED(thickness))
 {
@@ -114,26 +117,31 @@ mk_shadowring(struct rt_wdb *UNUSED(fp), double UNUSED(orbit), int UNUSED(num), 
     return 0;
 }
 
+
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-h] [-o outfile] \n\n  -h      \tShow help\n  -o file \tFile to write out (default: ringworld.g)\n\n";
+    static const char usage[] = "Usage:\n%s [-o outfile] \n\n  -o file \tFile to write out (default: ringworld.g)\n\n";
 
     char outfile[MAXPATHLEN] = "ringworld.g";
-    int optc = 0;
+    int optc;
     struct rt_wdb *fp;
 
-    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
+    while ((optc = bu_getopt(argc, argv, "o:h?")) != -1) {
+    	if (bu_optopt == '?') optc='h';
 	switch (optc) {
 	    case 'o':
-		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);;
+		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);
 		break;
-	    case 'h' :
-	    case 'H' :
-	    case '?' :
-		printf(usage, *argv);
+	    default:
+		fprintf(stderr,usage, *argv);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
+    }
+
+    if (argc == 1) {
+	fprintf(stderr,usage, *argv);
+    	fprintf(stderr,"       Program continues running:\n");
     }
 
     if (bu_file_exists(outfile, NULL))
@@ -163,6 +171,7 @@ main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
+
 
 /*
  * Local Variables:

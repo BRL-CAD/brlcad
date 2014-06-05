@@ -1,7 +1,7 @@
 /*                     C A D _ P A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 
@@ -45,7 +46,7 @@ static void Output(double result), Usage(void);
 static void
 Usage(void) 				/* print usage message */
 {
-    printf("usage: cad_parea[ -i input][ -o output]\n");
+    fprintf(stderr,"Usage: cad_parea [-i input] [-o output]\n");
 }
 
 
@@ -59,11 +60,19 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
     point first = {0.0, 0.0}; /* saved first point */
     int saved; /* "`first' valid" flag */
     double sum; /* accumulator */
+    int ttyin,ttyout;
+
+    ttyin = isatty(fileno(stdin));
+    ttyout = isatty(fileno(stdout));
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */
-	Output(0.0);
 	return 1;
+    }
+
+    if (ttyin && ttyout && argc == 1) {
+    		Usage();	/* print usage message */
+    		fprintf(stderr,"       Program continues running:\n");
     }
 
     saved = 0;
@@ -100,7 +109,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
     int c;		/* option letter */
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:")) != -1)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:h?")) != -1)
 	switch (c) {
 	    case 'i':
 		if (iflag) {
@@ -112,7 +121,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
-		    printf("cad_parea: can't open \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't open \"%s\" for reading\n", bu_optarg);
 		    return 0;
 		}
 		break;
@@ -127,12 +136,12 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
-		    printf("cad_parea: can't create \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't open \"%s\" for writing\n", bu_optarg);
 		    return 0;
 		}
 		break;
 
-	    case '?':
+	    default:
 		Usage();	/* print usage message */
 		return 0;
 	}
@@ -160,7 +169,6 @@ Input(point *coop)				/* input a coordinate record */
 	    return 1;	/* successfully converted */
 
 	printf("cad_parea: bad input:\n%s\n", inbuf);
-	Output(0.0);
 	bu_exit(2, NULL);		/* return false insufficient */
     }
 

@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
 
 #include "gcv.h"
 
@@ -137,7 +137,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 }
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t UNUSED(client_data))
+nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
 {
     /*
      * if it's a simple single bot region, just eat the bots and return -1.
@@ -151,32 +151,34 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     RT_CHECK_COMB(rci);
 
     /* abort cases, no fast loading. */
-    if(rci->tree == NULL)
+    if (rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF )
+    if ( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
-    if((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
+    if ((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
 	printf("Lookup failed: %s\n", rci->tree->tr_l.tl_name);
 	return 0;
     }
-    if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
+    if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-    if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
 
-    if(dir->d_minor_type == ID_NMG)
+    if (dir->d_minor_type == ID_NMG)
 	return 0;
 
-    BU_GET(mesh, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
     rt_comb_get_color(rgb, rci);
@@ -184,16 +186,16 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
-    if(intern.idb_minor_type == ID_NMG) {
+    if (intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	size_t i;
-	struct rt_bot_internal *bot = intern.idb_ptr;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 
-	for(i=0;i<bot->num_faces;i++)
+	for (i=0;i<bot->num_faces;i++)
 	{
 	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
 	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
@@ -224,13 +226,15 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    BU_GET(mesh, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);
@@ -275,14 +279,14 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client
      */
-    if ((dbip = db_open(db, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(db);
-	bu_log("Unable to open geometry file (%s)\n", db);
+	bu_log("Unable to open geometry database file (%s)\n", db);
 	return -1;
     }
     if (db_dirbuild(dbip)) {
@@ -295,7 +299,8 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    BU_GET(*meshes, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
     gcvwriter.meshes = meshes;
@@ -313,7 +318,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
 			nmg_booltree_leaf_tess,	/* leaf func */
-			(genptr_t)&gcvwriter);	/* client data */
+			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */
     nmg_km(the_model);

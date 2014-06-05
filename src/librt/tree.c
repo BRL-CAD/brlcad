@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stddef.h>
@@ -28,7 +27,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -106,7 +106,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
-_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
+_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
   if (tsp) {
     RT_CK_RTI(tsp->ts_rtip);
@@ -136,7 +136,7 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *
-_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct region *rp;
     struct directory *dp = NULL;
@@ -160,7 +160,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
     }
 
-    BU_GET(rp, struct region);
+    BU_ALLOC(rp, struct region);
     rp->l.magic = RT_REGION_MAGIC;
     rp->reg_regionid = tsp->ts_regionid;
     rp->reg_is_fastgen = tsp->ts_is_fastgen;
@@ -243,7 +243,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     if (RT_G_DEBUG & DEBUG_REGIONS) {
-	bu_log("Add Region %s instnum %d\n",
+	bu_log("Add Region %s instnum %ld\n",
 	       rp->reg_name, rp->reg_instnum);
     }
 
@@ -368,8 +368,8 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 	     */
 	    if (RT_G_DEBUG & DEBUG_SOLIDS) {
 		bu_log(mat ?
-		       "%s re-referenced %d\n" :
-		       "%s re-referenced %d (identity mat)\n",
+		       "%s re-referenced %ld\n" :
+		       "%s re-referenced %ld (identity mat)\n",
 		       dp->d_namep, stp->st_uses);
 	    }
 
@@ -386,7 +386,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
      * now, while still inside the critical section, because they are
      * searched on, above.
      */
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_rtip = rtip;
@@ -438,7 +438,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct soltab *stp;
     struct directory *dp;
@@ -494,7 +494,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     }
 
     stp->st_id = ip->idb_type;
-    stp->st_meth = &rt_functab[ip->idb_type];
+    stp->st_meth = &OBJ[ip->idb_type];
     if (mat) {
 	mat = stp->st_matp;
     } else {
@@ -570,7 +570,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
     if (RT_G_DEBUG&DEBUG_SOLIDS) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
+	bu_log("\n---Primitive %ld: %s\n", stp->st_bit, dp->d_namep);
 
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;
@@ -600,7 +600,6 @@ found_it:
 
     return curtree;
 }
-
 
 
 void
@@ -664,8 +663,9 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 		stp = tp->tr_a.tu_stp;
 		RT_CK_SOLTAB(stp);
 		if (stp->st_aradius <= 0) {
-		    if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("encountered dead solid '%s' stp=x%x, tp=x%x\n",
-							 stp->st_dp->d_namep, stp, tp);
+		    if (RT_G_DEBUG&DEBUG_TREEWALK)
+			bu_log("encountered dead solid '%s' stp=%p, tp=%p\n",
+			       stp->st_dp->d_namep, (void *)stp, (void *)tp);
 		    rt_free_soltab(stp);
 		    tp->tr_a.tu_stp = SOLTAB_NULL;
 		    tp->tr_op = OP_NOP;	/* Convert to NOP */
@@ -674,8 +674,8 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 	    }
 
 	default:
-	    bu_log("_rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("_rt_tree_kill_dead_solid_refs(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return;
 
 	case OP_XOR:
@@ -700,7 +700,6 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 }
 
 
-
 int
 rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
@@ -722,9 +721,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    tbl = (Tcl_HashTable *)bu_malloc(sizeof(Tcl_HashTable), "rtip->Orca_hash_tbl");
+    BU_ALLOC(tbl, Tcl_HashTable);
     Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
-    rtip->Orca_hash_tbl = (genptr_t)tbl;
+    rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;
 
@@ -768,7 +767,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 &tree_state,
 			 _rt_gettree_region_start,
 			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (genptr_t)tbl);
+			 _rt_gettree_leaf, (void *)tbl);
 	bu_avs_free(&tree_state.ts_attrs);
     }
 
@@ -860,13 +859,11 @@ again:
 }
 
 
-
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
     return rt_gettrees_muves(rtip, attrs, argc, argv, ncpus);
 }
-
 
 
 int
@@ -902,7 +899,6 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 }
 
 
-
 int
 rt_tree_elim_nops(union tree *tp, struct resource *resp)
 {
@@ -918,8 +914,8 @@ top:
 	    return 0;		/* Retain */
 
 	default:
-	    bu_log("rt_tree_elim_nops(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("rt_tree_elim_nops(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return -1;
 
 	case OP_XOR:
@@ -990,7 +986,6 @@ top:
 }
 
 
-
 struct soltab *
 rt_find_solid(const struct rt_i *rtip, const char *name)
 {
@@ -1008,7 +1003,6 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
     } RT_VISIT_ALL_SOLTABS_END
 	  return RT_SOLTAB_NULL;
 }
-
 
 
 void

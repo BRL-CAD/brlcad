@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,8 +42,9 @@
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
+#define NANO_EDITOR "nano"
 #define VIM_EDITOR "vim"
-#define JOVE_EDITOR "jove"
+#define VI_EDITOR "vi"
 
 int
 _ged_editit(char *editstring, const char *filename)
@@ -59,7 +60,6 @@ _ged_editit(char *editstring, const char *filename)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
     const char *file = (const char *)filename;
-    char buffer[RT_MAXLINE] = {0};
 
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();
@@ -107,19 +107,23 @@ _ged_editit(char *editstring, const char *filename)
 	    editor = bu_which(EMACS_EDITOR);
 	}
 
+	/* still unset? try nano */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(NANO_EDITOR);
+	}
+
 	/* still unset? try vim */
 	if (!editor || editor[0] == '\0') {
 	    editor = bu_which(VIM_EDITOR);
 	}
 
-	/* still unset? default to jove */
+	/* still unset? As a last resort, go with vi -
+	 * vi is part of the POSIX standard, which is as
+	 * close as we can get currently to an editor
+	 * that should always be present:
+	 * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
 	if (!editor || editor[0] == '\0') {
-	    const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	    editor = JOVE_EDITOR;
-	    if (jovepath) {
-		snprintf(buffer, RT_MAXLINE, "%s", jovepath);
-		editor = buffer;
-	    }
+	    editor = bu_which(VI_EDITOR);
 	}
     }
 
@@ -146,12 +150,13 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	editor_basename = bu_basename(editor);
+	editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
+	bu_basename(editor_basename, editor);
 	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
 	}
-	bu_log("%V%V%V\n\n", &sep, &str, &sep);
+	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
 	bu_vls_free(&str);
 	bu_vls_free(&sep);
 	bu_free(editor_basename, "editor_basename free");
@@ -180,8 +185,6 @@ _ged_editit(char *editstring, const char *filename)
 
 	{
 
-	    char *editor_basename;
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
@@ -199,8 +202,9 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-
-	    editor_basename = bu_basename(editor);
+	    char *editor_basename;
+	    editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
+	    bu_basename(editor_basename, editor);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
@@ -241,7 +245,7 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
     if (editstring != NULL)
-	bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+	bu_free((void *)avtmp, "ged_editit: avtmp");
 
     return 1;
 }

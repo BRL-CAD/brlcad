@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="apropos">
 
   <refmeta>
@@ -44,7 +42,7 @@
       </para>
       <para>
 	<literallayout class="normal">
-build_region eac edcodes edcomb em idents item lm r rcodes read_muves red redraw_vlist
+build_region eac edcodes edcomb em idents item lm r rcodes read_muves red
 regdef regions reid remat summary wcodes whatid whichair whichid
 	</literallayout>
       </para>

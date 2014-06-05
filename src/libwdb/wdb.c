@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,12 +56,12 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 {
     struct rt_half_internal *half;
 
-    BU_GET(half, struct rt_half_internal);
+    BU_ALLOC(half, struct rt_half_internal);
     half->magic = RT_HALF_INTERNAL_MAGIC;
     VMOVE(half->eqn, norm);
     half->eqn[3] = d;
 
-    return wdb_export(wdbp, name, (genptr_t)half, ID_HALF, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)half, ID_HALF, mk_conv2mm);
 }
 
 
@@ -75,13 +75,13 @@ mk_grip(
 {
     struct rt_grip_internal *grip;
 
-    BU_GET(grip, struct rt_grip_internal);
+    BU_ALLOC(grip, struct rt_grip_internal);
     grip->magic = RT_GRIP_INTERNAL_MAGIC;
     VMOVE(grip->center, center);
     VMOVE(grip->normal, normal);
     grip->mag = magnitude;
 
-    return wdb_export(wdbp, name, (genptr_t)grip, ID_GRIP, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)grip, ID_GRIP, mk_conv2mm);
 }
 
 
@@ -240,13 +240,13 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     int i;
     struct rt_arb_internal *arb;
 
-    BU_GET(arb, struct rt_arb_internal);
+    BU_ALLOC(arb, struct rt_arb_internal);
     arb->magic = RT_ARB_INTERNAL_MAGIC;
     for (i=0; i < 8; i++) {
 	VMOVE(arb->pt[i], &pts[i*3]);
     }
 
-    return wdb_export(wdbp, name, (genptr_t)arb, ID_ARB8, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)arb, ID_ARB8, mk_conv2mm);
 }
 
 
@@ -255,14 +255,14 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
 {
     struct rt_ell_internal *ell;
 
-    BU_GET(ell, struct rt_ell_internal);
+    BU_ALLOC(ell, struct rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
     VMOVE(ell->v, center);
     VSET(ell->a, radius, 0, 0);
     VSET(ell->b, 0, radius, 0);
     VSET(ell->c, 0, 0, radius);
 
-    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ell, ID_ELL, mk_conv2mm);
 }
 
 
@@ -271,14 +271,14 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 {
     struct rt_ell_internal *ell;
 
-    BU_GET(ell, struct rt_ell_internal);
+    BU_ALLOC(ell, struct rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
     VMOVE(ell->v, center);
     VMOVE(ell->a, a);
     VMOVE(ell->b, b);
     VMOVE(ell->c, c);
 
-    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ell, ID_ELL, mk_conv2mm);
 }
 
 
@@ -287,7 +287,7 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 {
     struct rt_hyp_internal *hyp;
 
-    BU_GET(hyp, struct rt_hyp_internal);
+    BU_ALLOC(hyp, struct rt_hyp_internal);
     hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
 
@@ -328,7 +328,7 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 	hyp->hyp_b = minorLen;
     }
 
-    return wdb_export(wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)hyp, ID_HYP, mk_conv2mm);
 }
 
 
@@ -337,14 +337,14 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 {
     struct rt_tor_internal *tor;
 
-    BU_GET(tor, struct rt_tor_internal);
+    BU_ALLOC(tor, struct rt_tor_internal);
     tor->magic = RT_TOR_INTERNAL_MAGIC;
     VMOVE(tor->v, center);
     VMOVE(tor->h, inorm);
     tor->r_a = r1;
     tor->r_h = r2;
 
-    return wdb_export(wdbp, name, (genptr_t)tor, ID_TOR, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)tor, ID_TOR, mk_conv2mm);
 }
 
 
@@ -374,7 +374,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 {
     struct rt_tgc_internal *tgc;
 
-    BU_GET(tgc, struct rt_tgc_internal);
+    BU_ALLOC(tgc, struct rt_tgc_internal);
     tgc->magic = RT_TGC_INTERNAL_MAGIC;
     VMOVE(tgc->v, base);
     VMOVE(tgc->h, height);
@@ -383,7 +383,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
     VMOVE(tgc->c, c);
     VMOVE(tgc->d, d);
 
-    return wdb_export(wdbp, name, (genptr_t)tgc, ID_TGC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)tgc, ID_TGC, mk_conv2mm);
 }
 
 
@@ -463,7 +463,7 @@ mk_rpc(
 {
     struct rt_rpc_internal *rpc;
 
-    BU_GET(rpc, struct rt_rpc_internal);
+    BU_ALLOC(rpc, struct rt_rpc_internal);
     rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
     VMOVE(rpc->rpc_V, vert);
@@ -471,7 +471,7 @@ mk_rpc(
     VMOVE(rpc->rpc_B, breadth);
     rpc->rpc_r = half_w;
 
-    return wdb_export(wdbp, name, (genptr_t)rpc, ID_RPC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)rpc, ID_RPC, mk_conv2mm);
 }
 
 
@@ -487,7 +487,7 @@ mk_rhc(
 {
     struct rt_rhc_internal *rhc;
 
-    BU_GET(rhc, struct rt_rhc_internal);
+    BU_ALLOC(rhc, struct rt_rhc_internal);
     rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
     VMOVE(rhc->rhc_V, vert);
@@ -496,7 +496,7 @@ mk_rhc(
     rhc->rhc_r = half_w;
     rhc->rhc_c = asymp;
 
-    return wdb_export(wdbp, name, (genptr_t)rhc, ID_RHC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)rhc, ID_RHC, mk_conv2mm);
 }
 
 
@@ -512,7 +512,7 @@ mk_epa(
 {
     struct rt_epa_internal *epa;
 
-    BU_GET(epa, struct rt_epa_internal);
+    BU_ALLOC(epa, struct rt_epa_internal);
     epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     VMOVE(epa->epa_V, vert);
@@ -521,7 +521,7 @@ mk_epa(
     epa->epa_r1 = r1;
     epa->epa_r2 = r2;
 
-    return wdb_export(wdbp, name, (genptr_t)epa, ID_EPA, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)epa, ID_EPA, mk_conv2mm);
 }
 
 
@@ -538,7 +538,7 @@ mk_ehy(
 {
     struct rt_ehy_internal *ehy;
 
-    BU_GET(ehy, struct rt_ehy_internal);
+    BU_ALLOC(ehy, struct rt_ehy_internal);
     ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     VMOVE(ehy->ehy_V, vert);
@@ -548,7 +548,24 @@ mk_ehy(
     ehy->ehy_r2 = r2;
     ehy->ehy_c = c;
 
-    return wdb_export(wdbp, name, (genptr_t)ehy, ID_EHY, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ehy, ID_EHY, mk_conv2mm);
+}
+
+
+int mk_hrt(struct rt_wdb *wdbp, const char *name, const point_t center, const vect_t x, const vect_t y, const vect_t z, const fastf_t dist)
+{
+    struct rt_hrt_internal *hrt;
+
+    BU_ALLOC(hrt, struct rt_hrt_internal);
+    hrt->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+
+    VMOVE(hrt->v, center);
+    VMOVE(hrt->xdir, x);
+    VMOVE(hrt->ydir, y);
+    VMOVE(hrt->zdir, z);
+    hrt->d = dist;
+
+    return wdb_export(wdbp, name, (void *)hrt, ID_HRT, mk_conv2mm);
 }
 
 
@@ -564,7 +581,7 @@ mk_eto(
 {
     struct rt_eto_internal *eto;
 
-    BU_GET(eto, struct rt_eto_internal);
+    BU_ALLOC(eto, struct rt_eto_internal);
     eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
     VMOVE(eto->eto_V, vert);
@@ -573,7 +590,7 @@ mk_eto(
     eto->eto_r = rrot;
     eto->eto_rd = sminor;
 
-    return wdb_export(wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)eto, ID_ETO, mk_conv2mm);
 }
 
 
@@ -589,7 +606,7 @@ mk_metaball(
     struct rt_metaball_internal *mb;
     size_t i;
 
-    BU_GET(mb, struct rt_metaball_internal);
+    BU_ALLOC(mb, struct rt_metaball_internal);
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
@@ -602,7 +619,7 @@ mk_metaball(
 	}
     }
 
-    return wdb_export(wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)mb, ID_METABALL, mk_conv2mm);
 }
 
 
@@ -610,7 +627,7 @@ int
 mk_binunif (
     struct rt_wdb *wdbp,
     const char *name,
-    const genptr_t data,
+    const void *data,
     wdb_binunif data_type,
     long count)
 {
@@ -800,12 +817,12 @@ mk_binunif (
     }
 
     /* loading from data already in memory */
-    BU_GET(binunif, struct rt_binunif_internal);
+    BU_ALLOC(binunif, struct rt_binunif_internal);
     binunif->magic = RT_BINUNIF_INTERNAL_MAGIC;
     binunif->type = minor_type;
     binunif->count = count;
     memcpy(binunif->u.int8, data, count * bytes);
-    return wdb_export(wdbp, name, (genptr_t)binunif, ID_BINUNIF, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)binunif, ID_BINUNIF, mk_conv2mm);
 }
 
 

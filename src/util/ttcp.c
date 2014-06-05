@@ -1,7 +1,7 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -110,8 +110,6 @@ int b_flag = 0;			/* use mread() */
 double cput, realt;		/* user, real time (seconds) */
 
 /*
- * M R E A D
- *
  * This function performs the function of a read(II) but will
  * call read(II) multiple times in order to get the requested
  * number of characters.  This can be necessary because
@@ -141,7 +139,7 @@ mread(int fd, char *bufp, unsigned n)
 
 
 static void
-err(char *s)
+err(const char *s)
 {
     fprintf(stderr, "ttcp%s: ", trans?"-t":"-r");
     perror(s);
@@ -151,7 +149,7 @@ err(char *s)
 
 
 void
-mes(char *s)
+mes(const char *s)
 {
     fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", s);
 }
@@ -186,9 +184,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, char *cp);
 #endif
 
-/*
- * P R E P _ T I M E R
- */
 void
 prep_timer(void)
 {
@@ -202,10 +197,6 @@ prep_timer(void)
 }
 
 
-/*
- * R E A D _ T I M E R
- *
- */
 double
 read_timer(char *str, int len)
 {
@@ -263,7 +254,7 @@ prusage(struct rusage *r0,
 {
     struct timeval tdiff;
     time_t t;
-    char *cp;
+    const char *cp;
     int i;
     int ms;
 
@@ -271,7 +262,7 @@ prusage(struct rusage *r0,
 	(r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
 	(r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
 	(r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
-    ms =  (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
+    ms = (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
 
 #define END(x) {while (*x) x++;}
     cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
@@ -280,83 +271,83 @@ prusage(struct rusage *r0,
 	    *outp++ = *cp;
 	else if (cp[1]) switch (*++cp) {
 
-	    case 'U':
-		tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-		sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
-			(long int)tdiff.tv_usec/100000L);
-		END(outp);
-		break;
+		case 'U':
+		    tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
+		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
+			    (long int)tdiff.tv_usec/100000L);
+		    END(outp);
+		    break;
 
-	    case 'S':
-		tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-		sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
-		END(outp);
-		break;
+		case 'S':
+		    tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
+		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
+		    END(outp);
+		    break;
 
-	    case 'E':
-		psecs(ms / 100, outp);
-		END(outp);
-		break;
+		case 'E':
+		    psecs(ms / 100, outp);
+		    END(outp);
+		    break;
 
-	    case 'P':
-		sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
-		END(outp);
-		break;
+		case 'P':
+		    sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
+		    END(outp);
+		    break;
 
-	    case 'W':
-		i = r1->ru_nswap - r0->ru_nswap;
-		sprintf(outp, "%d", i);
-		END(outp);
-		break;
+		case 'W':
+		    i = r1->ru_nswap - r0->ru_nswap;
+		    sprintf(outp, "%d", i);
+		    END(outp);
+		    break;
 
-	    case 'X':
-		sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
-		END(outp);
-		break;
+		case 'X':
+		    sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+		    END(outp);
+		    break;
 
-	    case 'D':
-		sprintf(outp, "%ld", t == 0 ? 0 :
-			(r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'D':
+		    sprintf(outp, "%ld", t == 0 ? 0 :
+			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'K':
-		sprintf(outp, "%ld", t == 0 ? 0 :
-			((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			 (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'K':
+		    sprintf(outp, "%ld", t == 0 ? 0 :
+			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
+			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'M':
-		sprintf(outp, "%ld", r1->ru_maxrss/2);
-		END(outp);
-		break;
+		case 'M':
+		    sprintf(outp, "%ld", r1->ru_maxrss/2);
+		    END(outp);
+		    break;
 
-	    case 'F':
-		sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
-		END(outp);
-		break;
+		case 'F':
+		    sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
+		    END(outp);
+		    break;
 
-	    case 'R':
-		sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
-		END(outp);
-		break;
+		case 'R':
+		    sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
+		    END(outp);
+		    break;
 
-	    case 'I':
-		sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
-		END(outp);
-		break;
+		case 'I':
+		    sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
+		    END(outp);
+		    break;
 
-	    case 'O':
-		sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
-		END(outp);
-		break;
-	    case 'C':
-		sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
-			r1->ru_nivcsw-r0->ru_nivcsw);
-		END(outp);
-		break;
-	}
+		case 'O':
+		    sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
+		    END(outp);
+		    break;
+		case 'C':
+		    sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
+			    r1->ru_nivcsw-r0->ru_nivcsw);
+		    END(outp);
+		    break;
+	    }
     }
     *outp = '\0';
 }
@@ -407,9 +398,6 @@ psecs(long l, char *cp)
 }
 #endif
 
-/*
- * N R E A D
- */
 int
 Nread(int fd, char *buf, int count)
 {
@@ -441,9 +429,6 @@ delay(int us)
 }
 
 
-/*
- * N W R I T E
- */
 int
 Nwrite(int fd, char *buf, int count)
 {
@@ -496,24 +481,24 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 		nbuf = atoi(&argv[0][2]);
-		if(nbuf < 0) {
-		  printf("Negative buffer count.\n");
-		  return -1;
+		if (nbuf < 0) {
+		    printf("Negative buffer count.\n");
+		    return -1;
 		}
-		if(nbuf >= INT_MAX) {
-		  printf("Too many buffers specified.\n");
-		  return -1;
+		if (nbuf >= INT_MAX) {
+		    printf("Too many buffers specified.\n");
+		    return -1;
 		}
 		break;
 	    case 'l':
 		buflen = atoi(&argv[0][2]);
-		if(buflen <= 0) {
-		  printf("Invalid buffer length.\n");
-		  return -1;
+		if (buflen <= 0) {
+		    printf("Invalid buffer length.\n");
+		    return -1;
 		}
-		if(buflen >= INT_MAX) {
-		  printf("Buffer length too large.\n");
-		  return -1;
+		if (buflen >= INT_MAX) {
+		    printf("Buffer length too large.\n");
+		    return -1;
 		}
 		break;
 	    case 's':
@@ -521,11 +506,11 @@ main(int argc, char **argv)
 		break;
 	    case 'p':
 		port = atoi(&argv[0][2]);
-		if(port < 0) {
-		  port = 0;
+		if (port < 0) {
+		    port = 0;
 		}
-		if(port > 65535) {
-		  port = 65535;
+		if (port > 65535) {
+		    port = 65535;
 		}
 		break;
 	    case 'u':
@@ -544,22 +529,13 @@ main(int argc, char **argv)
 	if (atoi(host) > 0) {
 	    /* Numeric */
 	    sinhim.sin_family = AF_INET;
-#ifdef cray
-	    addr_tmp = inet_addr(host);
-	    sinhim.sin_addr = addr_tmp;
-#else
 	    sinhim.sin_addr.s_addr = inet_addr(host);
-#endif
 	} else {
 	    if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
 		err("bad hostname");
 	    sinhim.sin_family = addr->h_addrtype;
-	    memcpy((char*)&addr_tmp, addr->h_addr, addr->h_length);
-#ifdef cray
-	    sinhim.sin_addr = addr_tmp;
-#else
+	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
 	    sinhim.sin_addr.s_addr = addr_tmp;
-#endif /* cray */
 	}
 	sinhim.sin_port = htons(port);
 	sinme.sin_port = 0;		/* free choice */
@@ -621,10 +597,10 @@ main(int argc, char **argv)
 	int cnt;
 	if (trans) {
 	    pattern(buf, buflen);
-	    if (udp)  (void)Nwrite(fd, buf, 4); /* rcvr start */
+	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr start */
 	    while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
 		nbytes += buflen;
-	    if (udp)  (void)Nwrite(fd, buf, 4); /* rcvr end */
+	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr end */
 	} else {
 	    while ((cnt=Nread(fd, buf, buflen)) > 0) {
 		static int going = 0;
@@ -675,7 +651,7 @@ main(int argc, char **argv)
 	    ((double)nbytes)*8/realt/1024);
     return 0;
 
- usage:
+usage:
     fprintf(stderr, "%s%s", Usage, Usage2);
     return 1;
 }

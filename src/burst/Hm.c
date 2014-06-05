@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -344,7 +344,6 @@ static void
 HmPutBorder(HmWindow *win, int row, char mark)
 {
     int i;
-    int bit = 1;
     int col = win->menux;
     int bitmap = win->dirty[row - win->menuy];
     static char buf[HmMAXLINE];
@@ -361,6 +360,8 @@ HmPutBorder(HmWindow *win, int row, char mark)
 	(void) ScMvCursor(col, row);
 	(void) fputs(buf, stdout);
     } else {
+	int bit = 1;
+
 	for (i = 0; i < p - buf; i++)
 	    PutMenuChar(buf[i], col, row, bitmap, bit);
     }

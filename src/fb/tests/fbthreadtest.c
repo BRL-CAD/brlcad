@@ -1,7 +1,7 @@
 /*                        F B T H R E A D T E S T. C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ TclThreadIncrement(
     Tcl_ThreadId threadId = (Tcl_ThreadId) id;
     TestEvent *testevt;
 
-    testevt = (TestEvent *) bu_malloc(sizeof(TestEvent), "test event");
+    BU_ALLOC(testevt, TestEvent);
     testevt->header.proc = TestEventProc;
     testevt->testnum = increment;
     Tcl_ThreadQueueEvent(threadId, (Tcl_Event *)testevt, TCL_QUEUE_TAIL);

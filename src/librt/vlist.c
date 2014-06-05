@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2012 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdio.h>
@@ -28,8 +27,9 @@
 #include <string.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -45,7 +45,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
-    BU_GET(vbp, struct bn_vlblock);
+    BU_ALLOC(vbp, struct bn_vlblock);
     vbp->magic = BN_VLBLOCK_MAGIC;
     vbp->free_vlist_hd = free_vlist_hd;
     vbp->max = max_ent;
@@ -67,13 +67,11 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 }
 
 
-
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
-    return bn_vlblock_init(&rt_g.rtg_vlfree, 32);
+    return bn_vlblock_init(&RTG.rtg_vlfree, 32);
 }
-
 
 
 void
@@ -94,7 +92,6 @@ rt_vlblock_free(struct bn_vlblock *vbp)
     bu_free((char *)vbp, "bn_vlblock");
 
 }
-
 
 
 struct bu_list *
@@ -128,10 +125,10 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 	if (BU_LIST_IS_EMPTY(&vbp->head[n]))
 	    vbp->head[n].forw = BU_LIST_NULL;
 
-    vbp->head = (struct bu_list *)bu_realloc((genptr_t)vbp->head,
+    vbp->head = (struct bu_list *)bu_realloc((void *)vbp->head,
 					     vbp->max * sizeof(struct bu_list),
 					     "head[]");
-    vbp->rgb = (long *)bu_realloc((genptr_t)vbp->rgb,
+    vbp->rgb = (long *)bu_realloc((void *)vbp->rgb,
 				  vbp->max * sizeof(long),
 				  "rgb[]");
 
@@ -161,7 +158,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
     /* here we go again */
     return rt_vlblock_find(vbp, r, g, b);
 }
-
 
 
 int
@@ -209,7 +205,6 @@ rt_ck_vlist(const struct bu_list *vhead)
 }
 
 
-
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
@@ -221,11 +216,10 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    BN_ADD_VLIST(&rt_g.rtg_vlfree, dest, *pt, *cmd);
+	    BN_ADD_VLIST(&RTG.rtg_vlfree, dest, *pt, *cmd);
 	}
     }
 }
-
 
 
 void
@@ -246,13 +240,11 @@ bn_vlist_cleanup(struct bu_list *hd)
 }
 
 
-
 void
 rt_vlist_cleanup(void)
 {
-    bn_vlist_cleanup(&rt_g.rtg_vlfree);
+    bn_vlist_cleanup(&RTG.rtg_vlfree);
 }
-
 
 
 void
@@ -261,49 +253,49 @@ bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
     point_t p;
 
     VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 
 	/* first side */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* across */
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* second side */
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* front edge */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* bottom back */
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* top back */
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	}
 
 
@@ -362,12 +354,11 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
 	for (i = 0; i < nused; i++) {
 	    VMOVE(point, pt[i]); /* convert fastf_t to double */
-	    htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    bu_cv_htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
 	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
 }
-
 
 
 void
@@ -397,12 +388,11 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	bu_cv_ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
 	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
-	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
+	BN_ADD_VLIST(&RTG.rtg_vlfree, hp, point, cmd);
     }
 }
-
 
 
 void
@@ -422,7 +412,6 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 	rt_vlist_to_uplot(fp, &(vbp->head[i]));
     }
 }
-
 
 
 void
@@ -538,8 +527,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int
@@ -577,7 +564,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		bu_cv_ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
 		arg[i] = scan; /* convert double to fastf_t */
 		break;
 	    }
@@ -804,7 +791,6 @@ rt_process_uplot_value(register struct bu_list **vhead,
 }
 
 
-
 int
 rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, int mode)
 {
@@ -829,7 +815,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 
     return 0;
 }
-
 
 
 void

@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,9 +113,9 @@ parse_file(const char *file, char *host, int *portp, char *device, int length)
 {
     int port;
     char prefix[256];
-    char *rest;
-    char *dev;
-    char *colon;
+    const char *rest;
+    const char *dev;
+    const char *colon;
 
     if (numeric(file)) {
 	/* 0 */
@@ -194,7 +194,7 @@ done:
 
 
 HIDDEN void
-rem_log(char *msg)
+rem_log(const char *msg)
 {
     fb_log("%s", msg);
 }
@@ -349,10 +349,10 @@ rem_clear(FBIO *ifp, unsigned char *bgpp)
 /*
  * Send as longs:  x, y, num
  */
-HIDDEN int
+HIDDEN ssize_t
 rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
-    int ret;
+    ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
 
     if (num == 0)
@@ -367,8 +367,8 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
     /* Get response;  0 len means failure */
     ret = pkg_waitfor(MSG_RETURN, (char *)pixelp, num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_read: read %ld at <%d, %d> failed, ret=%d.\n",
-	       (long)num, x, y, ret);
+	fb_log("rem_read: read %lu at <%d, %d> failed, ret=%ld.\n",
+	       num, x, y, ret);
 	return -3;
     }
     return ret/sizeof(RGBpixel);
@@ -378,10 +378,10 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
 /*
  * As longs, x, y, num
  */
-HIDDEN int
+HIDDEN ssize_t
 rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
-    int ret;
+    ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
 
     if (num <= 0) return num;
@@ -402,9 +402,6 @@ rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t 
 }
 
 
-/*
- * R E M _ R E A D R E C T
- */
 HIDDEN int
 rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
@@ -435,9 +432,6 @@ rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 }
 
 
-/*
- * R E M _ W R I T E R E C T
- */
 HIDDEN int
 rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
@@ -467,8 +461,6 @@ rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * R E M _ B W R E A D R E C T
- *
  * Issue:  Determining if other end has support for this yet.
  */
 HIDDEN int
@@ -500,9 +492,6 @@ rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 }
 
 
-/*
- * R E M _ B W W R I T E R E C T
- */
 HIDDEN int
 rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
@@ -551,8 +540,6 @@ rem_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 
-/*
- */
 HIDDEN int
 rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
@@ -575,8 +562,6 @@ rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
 
 /*
- * R E M _ S E T C U R S O R
- *
  * Program the "shape" of the cursor.
  *
  * bits[] has xbits*ybits bits in it, rounded up to next largest byte.
@@ -612,8 +597,6 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 }
 
 
-/*
- */
 HIDDEN int
 rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
@@ -632,8 +615,6 @@ rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-/*
- */
 HIDDEN int
 rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
@@ -734,9 +715,6 @@ rem_flush(FBIO *ifp)
 }
 
 
-/*
- * R E M _ H E L P
- */
 HIDDEN int
 rem_help(FBIO *ifp)
 {
@@ -755,8 +733,6 @@ rem_help(FBIO *ifp)
 
 
 /*
- * P K G E R R O R
- *
  * This is where we come on asynchronous error or log messages.  We
  * are counting on the remote machine now to prefix his own name to
  * messages, so we don't touch them ourselves.

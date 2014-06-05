@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,8 +105,8 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Pnt", bu_offsetof(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Dir", bu_offsetof(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -134,9 +134,6 @@ static const struct bu_structparse reg_sp[] = {
 };
 
 
-/**
- *	U S A G E --- tell user how to invoke this program, then exit
- */
 void
 usage(char *s)
 {
@@ -219,10 +216,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
-	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%V",
+	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%s",
 		   V3ARGS(sh->pt),
 		   V3ARGS(sh->dir),
-		   &result);
+		   bu_vls_addr(&result));
 	}
 
 	rh = BU_LIST_NEXT(reg_hit, &rh->l);
@@ -283,7 +280,7 @@ do_shot(struct shot *sh, struct application *ap)
 
     VMOVE(ap->a_ray.r_pt, sh->pt);
     VMOVE(ap->a_ray.r_dir, sh->dir);
-    ap->a_uptr = (genptr_t)sh;
+    ap->a_uptr = (void *)sh;
 
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -386,7 +383,8 @@ main(int argc, char **argv)
 
 	    default:
 	    {
-		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
+		struct reg_hit *rh;
+		BU_ALLOC(rh, struct reg_hit);
 		BU_VLS_INIT(&rh->regname);
 		BU_VLS_INIT(&rh->in_primitive);
 		BU_VLS_INIT(&rh->out_primitive);

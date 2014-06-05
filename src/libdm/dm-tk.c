@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,10 +58,10 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-tk.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "dm_xvars.h"
+#include "dm/dm-tk.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -184,17 +184,11 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 	bu_log("which eye = %d\t", which_eye);
 	bu_log("transformation matrix = \n");
-#if 1
+
 	bu_log("%g %g %g %g\n", mat[0], mat[1], mat[2], mat[3]);
 	bu_log("%g %g %g %g\n", mat[4], mat[5], mat[6], mat[7]);
 	bu_log("%g %g %g %g\n", mat[8], mat[9], mat[10], mat[11]);
 	bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
-#else
-	bu_log("%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
-	bu_log("%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
-	bu_log("%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
-	bu_log("%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
-#endif
     }
 
     MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
@@ -210,7 +204,6 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-#if 1
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     XSegment segbuf[1024];		/* XDrawSegments list */
@@ -442,16 +435,12 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg);
     }
 
-#endif
     return TCL_OK;
 }
 
 
-/*
- * T K _ D R A W
- */
 int
-tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -471,8 +460,6 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 
 
 /*
- * X _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
@@ -487,8 +474,6 @@ tk_normal(struct dm *dmp)
 
 
 /*
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
@@ -505,7 +490,7 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 	bu_log("\ty - %g\n", y);
 	bu_log("\tsize - %d\n", size);
 
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 	/* bu_log("real_color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->gc->foreground); */
 
 	if (use_aspect) {
@@ -544,7 +529,7 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 	bu_log("x2 = %g, y2 = %g\n", xpos2, ypos2);
 	bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
 	bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
     }
 
     XDrawLine(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -700,6 +685,15 @@ tk_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+tk_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
 tk_setWinBounds(struct dm *dmp, fastf_t *w)
@@ -814,6 +808,7 @@ struct dm dm_tk = {
     tk_drawEnd,
     tk_normal,
     tk_loadMatrix,
+    null_loadPMatrix,
     tk_drawString2D,
     tk_drawLine2D,
     tk_drawLine3D,
@@ -834,6 +829,7 @@ struct dm dm_tk = {
     null_setDepthMask,
     tk_setZBuffer,
     tk_debug,
+    tk_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -841,6 +837,7 @@ struct dm dm_tk = {
     null_genDLists,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -867,6 +864,7 @@ struct dm dm_tk = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -885,8 +883,6 @@ struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 
 /*
- * T k _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -911,25 +907,13 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_tk; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct tk_vars);
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -1000,9 +984,9 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);

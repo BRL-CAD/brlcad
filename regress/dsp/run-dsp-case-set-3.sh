@@ -31,7 +31,7 @@ BASE=dsp-$WID
 
 CASES='1 2 3 4 5 6 7 8'
 
-FAILURES=0
+FAILED=0
 
 for i in $CASES ; do
   BASE2=$BASE-$i
@@ -47,7 +47,7 @@ for i in $CASES ; do
 
   # convert pix to bw format
   # take the blue pixel only
-  $P2B -B $BASE2.pix > $BASE2.bw
+  $P2B -B1.0 $BASE2.pix > $BASE2.bw
 
   # convert pix to dsp format
   $CV huc nu16 $BASE2.bw $BASE2.dsp

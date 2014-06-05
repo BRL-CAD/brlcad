@@ -78,7 +78,7 @@
       applications comprising more than a million lines of source
       code.  The package is intentionally designed to be extensively
       cross-platform and is actively developed on and maintained for
-      many common operating system environments including for BSD,
+      many common operating system environments including BSD,
       Linux, Solaris, Mac OS X, and Windows among others.  BRL-CAD is
       distributed in binary and source code form as free open source
       software (FOSS), provided under Open Source Initiative (OSI)

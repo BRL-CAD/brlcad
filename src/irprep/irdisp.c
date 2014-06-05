@@ -1,7 +1,7 @@
 /*                        I R D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +19,9 @@
  */
 /** @file irdisp.c
  *
- *  This is an X-windows program that will raytrace a BRL-CAD mged
- *  model and/or display it using the PRISM temperature output file.
+ * This is an X-windows program that will raytrace a BRL-CAD mged
+ * model and/or display it using the PRISM temperature output file.
  *
- *  File:  pictx.c
- *  S.Coates - 30 September 1994
- *  Compile:  cc pictx.c -L/usr/X11/lib -lX11 -o pictx
  */
 
 #include "common.h"
@@ -38,22 +35,23 @@
 
 #include "bu.h"
 
+
 int
 main(void)
 {
-    int ichoice;		/*  Choice.  */
-    char *irX = "ir-X";		/*  Calls ir-X program.  */
-    char showtherm[125];	/*  Calls showtherm program.  */
-    char gfile[16];		/*  .g file.  */
-    char group[26];		/*  Group names.  */
-    int ngrp;			/*  Number of groups.  */
-    int i, j, k;		/*  Loop counters.  */
+    int ichoice;		/* Choice.  */
+    char irX[] = "ir-X";		/* Calls ir-X program.  */
+    char showtherm[125];	/* Calls showtherm program.  */
+    char gfile[16];		/* .g file.  */
+    char group[26];		/* Group names.  */
+    int ngrp;			/* Number of groups.  */
+    int i, j, k;		/* Loop counters.  */
     int ret;
 
-    /*  Find option.  */
+    /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");
-    printf("temperature output file and raytrace and/or\n");
-    printf("display it.  Make your selection.\n");
+    printf("temperature output file, and raytraces and/or\n");
+    printf("displays it.  Make your selection.\n");
     printf("\t0 - raytrace & store file\n");
     printf("\t1 - raytrace, store, & showtherm file\n");
     printf("\t2 - showtherm file\n");
@@ -62,8 +60,7 @@ main(void)
     if (ret == 0)
 	perror("scanf");
 
-    while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
-    {
+    while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) ) {
 	printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
 	ret = scanf("%d", &ichoice);
@@ -74,9 +71,8 @@ main(void)
 	}
     }
 
-    if ( (ichoice == 0) || (ichoice == 1) )
-    {
-	/*  Start setting showtherm variable.  */
+    if ( (ichoice == 0) || (ichoice == 1) ) {
+	/* Start setting showtherm variable.  */
 	showtherm[0] = 's';
 	showtherm[1] = 'h';
 	showtherm[2] = 'o';
@@ -88,14 +84,14 @@ main(void)
 	showtherm[8] = 'm';
 	showtherm[9] = ' ';
 	i = 10;
-	/*  Find name of .g file to be used.  */
+	/* Find name of .g file to be used.  */
 	printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%15s", gfile);
 	if (ret == 0)
 	    perror("scanf");
 
-	/*  Find number of groups to be raytraced.  */
+	/* Find number of groups to be raytraced.  */
 	printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &ngrp);
@@ -105,19 +101,17 @@ main(void)
 	}
 	if (ngrp < 0)
 	    ngrp = 0;
-	if (ngrp > INT_MAX-1)
+	else if (ngrp > INT_MAX-1)
 	    ngrp = INT_MAX-1;
 
-	/*  Read each group & put it in the variable showtherm.  */
+	/* Read each group & put it in the variable showtherm.  */
 	j = 0;
-	while ( (gfile[j] != '\0') && (i < 123) )
-	{
+	while ( (gfile[j] != '\0') && (i < 123) ) {
 	    showtherm[i] = gfile[j];
 	    i++;
 	    j++;
 	}
-	for (j=0; j<ngrp; j++)
-	{
+	for (j=0; j<ngrp; j++) {
 	    printf("Enter group %d (25 char max).\n\t", j);
 	    (void)fflush(stdout);
 	    ret = scanf("%25s", group);
@@ -126,24 +120,23 @@ main(void)
 	    showtherm[i] = ' ';
 	    i++;
 	    k = 0;
-	    while ( (group[k] != '\0') && (i < 123) )
-	    {
+	    while ( (group[k] != '\0') && (i < 123) ) {
 		showtherm[i] = group[k];
 		i++;
 		k++;
 	    }
 	}
 	showtherm[i] = '\0';
-	if (i >= 123)
-	{
-	    printf("There are too many characters for showtherm,\n");
+	if (i >= 123) {
+	    printf("There are too many characters for showtherm;\n");
 	    printf("please revise pictx.\n");
 	    (void)fflush(stdout);
 	}
 
-	/*  Call the program showtherm with the appropriate options.  */
-	/*  This will raytrace a .g file & find the appropriate  */
-	/*  temperature for each region.  */
+	/* Call the program showtherm with the appropriate options.
+	 * This will raytrace a .g file & find the appropriate
+	 * temperature for each region.
+	 */
 	printf("\nThe program showtherm is now being run.\n\t%s\n\n", showtherm);
 	(void)fflush(stdout);
 	ret = system(showtherm);
@@ -151,15 +144,13 @@ main(void)
 	    perror("system");
     }
 
-    if ( (ichoice == 1) || (ichoice == 2) )
-    {
+    if ( (ichoice == 1) || (ichoice == 2) ) {
 	char choice[81];
 
-	/*  Call the program ir-X so that a file that has been raytraced  */
-	/*  may be displayed.  */
+	/* Call the program ir-X so that a file that has been raytraced
+	 * may be displayed.  */
 	choice[0] = '\0';
-	while ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
-	{
+	while ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) ) {
 	    printf("\nSelect display ('X') -> " );
 	    (void)fflush(stdout);
 	    ret = scanf( "%80s", choice );
@@ -169,13 +160,12 @@ main(void)
 		break;
 	    }
 	}
-	if ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
-	{
+	if ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) ) {
 	    bu_exit(1, "Bad choice for display (%s)\n", choice );
 	}
 	printf("\nThe program %s in now being run.  If option\n", irX);
 	printf("0 or 1 was used when the name of a file is asked\n");
-	printf("for enter the name of the file that was just\n");
+	printf("for, enter the name of the file that was just\n");
 	printf("stored.\n\n");
 	(void)fflush(stdout);
 	ret = system(irX);

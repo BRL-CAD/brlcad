@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -148,7 +148,7 @@ if [ $TEST -eq 1 ]; then
 fi
 
 # set variables
-BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+BVERSION=`sed 's/[^0-9]//g' include/conf/MAJOR`"."`sed 's/[^0-9]//g' include/conf/MINOR`"."`sed 's/[^0-9]//g' include/conf/PATCH`
 CDATE=`date -R`
 CFILE="debian/changelog"
 RELEASE="0"
@@ -165,8 +165,11 @@ if test "$1" = "-s" ;then
     tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
 fi
 
-# #
+# copy debian folder on project root
 cp -Rf misc/debian/ .
+
+# create "version" file
+echo $BVERSION >debian/version
 
 # update debian/changelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then

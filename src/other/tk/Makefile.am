@@ -38,6 +38,7 @@ INSTALLED_MANPAGES = \
 	tk.n \
 	tk_*.n \
 	ttk_*.n \
+	ttk::*.n \
 	tkerror.n \
 	tkvars.n \
 	tkwait.n \

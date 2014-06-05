@@ -6,7 +6,7 @@ set(docbook_man1_EN
   anim_turn.xml
   ap-pix.xml
   asc-nmg.xml
-  asc-pl.xml
+  asc-plot3.xml
   asc2dsp.xml
   asc2g.xml
   azel.xml
@@ -14,6 +14,7 @@ set(docbook_man1_EN
   benchmark.xml
   bot_dump.xml
   bot_shell-vtk.xml
+  brep_simple.xml
   brlcad-config.xml
   brlcad.xml
   buffer.xml
@@ -54,8 +55,6 @@ set(docbook_man1_EN
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
-  dunncolor.xml
-  dunnsnap.xml
   dxf-g.xml
   enf-g.xml
   euclid-g.xml
@@ -96,7 +95,9 @@ set(docbook_man1_EN
   g-nff.xml
   g-nmg.xml
   g-obj.xml
+  g-raw.xml
   g-shell-rect.xml
+  g-step.xml
   g-stl.xml
   g-tankill.xml
   g-var.xml
@@ -105,6 +106,7 @@ set(docbook_man1_EN
   g2asc.xml
   g_diff.xml
   g_lint.xml
+  gdiff2.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
@@ -156,7 +158,7 @@ set(docbook_man1_EN
   pixfilter.xml
   pixhalve.xml
   pixhist.xml
-  pixhist3d-pl.xml
+  pixhist3d-plot3.xml
   pixhist3d.xml
   pixinterp2x.xml
   pixmatte.xml
@@ -171,18 +173,18 @@ set(docbook_man1_EN
   pixsubst.xml
   pixtile.xml
   pixuntile.xml
-  pl-X.xml
-  pl-asc.xml
-  pl-fb.xml
-  pl-hpgl.xml
-  pl-pl.xml
-  pl-ps.xml
-  pl-tek.xml
-  plcolor.xml
-  pldebug.xml
-  plgetframe.xml
-  plline2.xml
-  plrot.xml
+  plot3-X.xml
+  plot3-asc.xml
+  plot3-fb.xml
+  plot3-hpgl.xml
+  plot3-plot3.xml
+  plot3-ps.xml
+  plot3-tek.xml
+  plot3color.xml
+  plot3debug.xml
+  plot3getframe.xml
+  plot3line2.xml
+  plot3rot.xml
   ply-g.xml
   png-bw.xml
   png-fb.xml
@@ -204,6 +206,7 @@ set(docbook_man1_EN
   rtarea.xml
   rtcheck.xml
   rtedge.xml
+  rtexample.xml
   rtg3.xml
   rthide.xml
   rtpp.xml
@@ -234,6 +237,7 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   wavelet.xml
+  wdb_example.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
@@ -241,6 +245,7 @@ set(docbook_man1_EN
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
 set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1")
+set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN_OUTPUTS "chan_add.1")
 
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en "")
 DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man1 "")

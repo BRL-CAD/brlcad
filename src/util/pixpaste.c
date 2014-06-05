@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -143,8 +143,8 @@ get_args(int argc, char **argv)
 	    if ((orig = fopen(orig_name, "r")) == NULL) {
 		perror(orig_name);
 		fprintf(stderr,
-			      "pixpaste: cannot open \"%s\" for reading\n",
-			      orig_name);
+			"pixpaste: cannot open \"%s\" for reading\n",
+			orig_name);
 		return 0;
 	    }
 	    orig_isfile = 1;
@@ -159,15 +159,15 @@ get_args(int argc, char **argv)
 	    paste = stdin;
 	    if (!orig_isfile) {
 		fprintf(stderr,
-			      "pixpaste: The original file and paste file cannot both be stdin!.\n");
+			"pixpaste: The original file and paste file cannot both be stdin!.\n");
 		return 0;
 	    }
 	} else {
 	    if ((paste = fopen(paste_name, "r")) == NULL) {
 		perror(paste_name);
 		fprintf(stderr,
-			      "pixpaste: cannot open \"%s\" for reading",
-			      paste_name);
+			"pixpaste: cannot open \"%s\" for reading",
+			paste_name);
 		return 0;
 	    }
 	    paste_isfile=1;
@@ -184,6 +184,8 @@ main(int argc, char **argv)
     unsigned char *buffer;
     long int i;
     long int row, result;
+
+    bu_log("DEPRECATED: pixpaste is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     if (!get_args(argc, argv)) {
 	fprintf(stderr, "%s", usage);

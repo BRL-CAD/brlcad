@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 #include "raytrace.h"
 #include "wdb.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -68,8 +68,9 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_CONSTRAINT;
-    internal.idb_meth=&rt_functab[ID_CONSTRAINT];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_constraint_internal), "rt_constraint_internal");
+    internal.idb_meth=&OBJ[ID_CONSTRAINT];
+
+    BU_ALLOC(internal.idb_ptr, struct rt_constraint_internal);
     con_ip = (struct rt_constraint_internal *)internal.idb_ptr;
     con_ip->magic = RT_CONSTRAINT_MAGIC;
     con_ip->id = 324;
@@ -77,7 +78,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&(con_ip->expression));
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_printf(gedp->ged_result_str, "Constraint saved");

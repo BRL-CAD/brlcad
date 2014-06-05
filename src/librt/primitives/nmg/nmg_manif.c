@@ -1,7 +1,7 @@
 /*                     N M G _ M A N I F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,20 +40,19 @@
 #define PAINT_EXTERIOR 0
 
 #define BU_LIST_LINK_CHECK(p) \
-	if (BU_LIST_PNEXT_PLAST(bu_list, p) != p || \
-	    BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
-		bu_log("%s[%d]: linked list integrity check failed\n", \
-				__FILE__, __LINE__); \
-		bu_log("0x%08x->forw(0x%08x)->back = 0x%08x\n", \
-			(p), (p)->forw, (p)->forw->back); \
-		bu_log("0x%08x->back(0x%08x)->forw = 0x%08x\n", \
-			(p), (p)->back, (p)->back->forw); \
-		bu_bomb("Goodbye\n"); \
-	}
+    if (BU_LIST_PNEXT_PLAST(bu_list, p) != p || \
+	BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
+	bu_log("%s[%d]: linked list integrity check failed\n", \
+	       __FILE__, __LINE__); \
+	bu_log("%p->forw(%p)->back = %p\n", \
+	       (void *)(p), (void *)(p)->forw, (void *)(p)->forw->back); \
+	bu_log("%p->back(%p)->forw = %p\n", \
+	       (void *)(p), (void *)(p)->back, (void *)(p)->back->forw); \
+	bu_bomb("Goodbye\n"); \
+    }
 
 
-/** N M G _ D A N G L I N G _ F A C E
- *
+/**
  * Determine if a face has any "dangling" edges.
  *
  * Return
@@ -70,8 +69,8 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 
     NMG_CK_FACEUSE(fu);
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_dangling_face(0x%08x 0x%08x)\n", fu, manifolds);
+    if (RTG.NMG_debug & DEBUG_MANIF)
+	bu_log("nmg_dangling_face(%p %s)\n", (void *)fu, manifolds);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
@@ -111,8 +110,8 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
     }
     eur = (const struct edgeuse *)NULL;
 
- out:
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+out:
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	struct bn_tol tol;	/* HACK */
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 1;
@@ -120,11 +119,11 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 	tol.perp = 1e-5;
 	tol.para = 1 - tol.perp;
 
-	bu_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
+	bu_log("nmg_dangling_face(fu=%p, manifolds=%s) dangling_eu=%p\n", (void *)fu, manifolds, (void *)eur);
 	if (eur) nmg_pr_fu_around_eu(eur, &tol);
     }
-    if ((rt_g.NMG_debug & DEBUG_MANIF) && (eur != (const struct edgeuse *)NULL))
-	bu_log("\tdangling eu x%x\n", eur);
+    if ((RTG.NMG_debug & DEBUG_MANIF) && (eur != (const struct edgeuse *)NULL))
+	bu_log("\tdangling eu %p\n", (void *)eur);
 
     return eur != (const struct edgeuse *)NULL;
 }
@@ -141,8 +140,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
     struct edgeuse *eu;
     const struct edgeuse *eur;
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_paint_face(%08x, %ld)\n", fu, paint_color);
+    if (RTG.NMG_debug & DEBUG_MANIF)
+	bu_log("nmg_paint_face(%p, %ld)\n", (void *)fu, paint_color);
 
     if (NMG_INDEX_VALUE(paint_table, fu->index) != 0)
 	return;
@@ -151,8 +150,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
-	if (rt_g.NMG_debug & DEBUG_MANIF)
-	    bu_log("\tlu=x%x\n", lu);
+	if (RTG.NMG_debug & DEBUG_MANIF)
+	    bu_log("\tlu=%p\n", (void *)lu);
 
 	NMG_CK_LOOPUSE(lu);
 	BU_LIST_LINK_CHECK(&lu->l);
@@ -161,8 +160,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 	    continue;
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    if (rt_g.NMG_debug & DEBUG_MANIF)
-		bu_log("\t\teu=x%x\n", eu);
+	    if (RTG.NMG_debug & DEBUG_MANIF)
+		bu_log("\t\teu=%p\n", (void *)eu);
 	    NMG_CK_EDGEUSE(eu);
 	    NMG_CK_EDGEUSE(eu->eumate_p);
 	    eur = nmg_radial_face_edge_in_shell(eu);
@@ -170,8 +169,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 	    NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 	    newfu = eur->up.lu_p->up.fu_p;
 
-	    if (rt_g.NMG_debug & DEBUG_MANIF)
-		bu_log("\t\t\teur=x%x, newfu=x%x\n", eur, newfu);
+	    if (RTG.NMG_debug & DEBUG_MANIF)
+		bu_log("\t\t\teur=%p, newfu=%p\n", (void *)eur, (void *)newfu);
 
 	    BU_LIST_LINK_CHECK(&eu->l);
 	    BU_LIST_LINK_CHECK(&eur->l);
@@ -182,8 +181,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 		    eur->eumate_p);
 		newfu = eur->up.lu_p->up.fu_p;
 
-		if (rt_g.NMG_debug & DEBUG_MANIF)
-		    bu_log("\t\t\teur=x%x, newfu=x%x\n", eur, newfu);
+		if (RTG.NMG_debug & DEBUG_MANIF)
+		    bu_log("\t\t\teur=%p, newfu=%p\n", (void *)eur, (void *)newfu);
 	    }
 
 	    if (newfu == fu->fumate_p)
@@ -195,8 +194,9 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 		/* mark this group as being interior */
 		paint_meaning[paint_color] = PAINT_INTERIOR;
 
-		if (rt_g.NMG_debug & DEBUG_MANIF)
-		    bu_log("\t---- Painting fu x%x as interior, new_fu = x%x, eu=x%x, eur=x%x\n", fu, newfu, eu, eur);
+		if (RTG.NMG_debug & DEBUG_MANIF)
+		    bu_log("\t---- Painting fu %p as interior, new_fu = %p, eu=%p, eur=%p\n",
+			   (void *)fu, (void *)newfu, (void *)eu, (void *)eur);
 	    }
 	}
     }
@@ -267,13 +267,13 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     long paint_color;
     int found;
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_shell_manifolds(%08x)\n", sp);
+    if (RTG.NMG_debug & DEBUG_MANIF)
+	bu_log("nmg_shell_manifolds(%p)\n", (void *)sp);
 
     NMG_CK_SHELL(sp);
 
     if (tbl == (char *)NULL)
-	tbl = bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
+	tbl = (char *)bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
 
     /*
      * points in shells form 0-manifold objects.
@@ -311,7 +311,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	NMG_SET_MANIFOLD(tbl, sp, NMG_1MANIFOLD);
     }
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
+    if (RTG.NMG_debug & DEBUG_MANIF)
 	bu_log("starting manifold classification on shell faces\n");
 
     /*
@@ -341,7 +341,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 
 		NMG_SET_MANIFOLD(tbl, fu_p, NMG_2MANIFOLD);
 
-		if (rt_g.NMG_debug & DEBUG_MANIF)
+		if (RTG.NMG_debug & DEBUG_MANIF)
 		    bu_log("found dangling face\n");
 	    }
 	}
@@ -351,7 +351,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
      * actual enclosing shell is
      */
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
+    if (RTG.NMG_debug & DEBUG_MANIF)
 	bu_log("starting to paint non-dangling faces\n");
 
     paint_meaning = (char *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(char), "paint meaning table");
@@ -369,7 +369,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	paint_color++;
     }
 
-    if (rt_g.NMG_debug & DEBUG_MANIF)
+    if (RTG.NMG_debug & DEBUG_MANIF)
 	bu_log("painting done, looking at colors\n");
 
     /* all the faces painted with "interior" paint are 2manifolds
@@ -419,10 +419,10 @@ nmg_manifolds(struct model *m)
 
 
     NMG_CK_MODEL(m);
-    if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_manifolds(%08x)\n", m);
+    if (RTG.NMG_debug & DEBUG_MANIF)
+	bu_log("nmg_manifolds(%p)\n", (void *)m);
 
-    tbl = bu_calloc(m->maxindex, 1, "manifold table");
+    tbl = (char *)bu_calloc(m->maxindex, 1, "manifold table");
 
 
     for (BU_LIST_FOR(rp, nmgregion, &m->r_hd)) {

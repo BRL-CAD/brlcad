@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 {
     struct rt_part_internal *part;
 
-    BU_GET(part, struct rt_part_internal);
+    BU_ALLOC(part, struct rt_part_internal);
     part->part_magic = RT_PART_INTERNAL_MAGIC;
     VMOVE(part->part_V, vertex);
     VMOVE(part->part_H, height);
@@ -60,7 +60,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
     part->part_hrad = hradius;
     part->part_type = 0;		/* sanity, unused */
 
-    return wdb_export(fp, name, (genptr_t)part, ID_PARTICLE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)part, ID_PARTICLE, mk_conv2mm);
 }
 
 
@@ -74,13 +74,13 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 	return 1;
     }
 
-    BU_GET(pipep, struct rt_pipe_internal);
+    BU_ALLOC(pipep, struct rt_pipe_internal);
     pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipep->pipe_segs_head);
     /* linked list from caller */
     BU_LIST_APPEND_LIST(&pipep->pipe_segs_head, headp);
 
-    return wdb_export(fp, name, (genptr_t)pipep, ID_PIPE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)pipep, ID_PIPE, mk_conv2mm);
 }
 
 
@@ -108,7 +108,7 @@ mk_add_pipe_pt(
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_GET(newpp, struct wdb_pipept);
+    BU_ALLOC(newpp, struct wdb_pipept);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = od;
     newpp->pp_id = id;

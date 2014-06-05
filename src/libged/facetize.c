@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
@@ -39,7 +39,7 @@ static union tree *
 facetize_region_end(struct db_tree_state *tsp,
 		    const struct db_full_path *pathp,
 		    union tree *curtree,
-		    genptr_t client_data)
+		    void *client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -54,7 +54,7 @@ facetize_region_end(struct db_tree_state *tsp,
 
     if (*facetize_tree) {
 	union tree *tr;
-	BU_GET(tr, union tree);
+	BU_ALLOC(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
@@ -182,7 +182,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		     nmg_use_tnurbs ?
 		     nmg_booltree_leaf_tnurb :
 		     nmg_booltree_leaf_tess,
-		     (genptr_t)&facetize_tree
+		     (void *)&facetize_tree
 	);
 
 
@@ -285,8 +285,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
-	intern.idb_meth = &rt_functab[ID_BOT];
-	intern.idb_ptr = (genptr_t) bot;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *) bot;
     } else {
 
 	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
@@ -295,12 +295,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
-	intern.idb_meth = &rt_functab[ID_NMG];
-	intern.idb_ptr = (genptr_t)nmg_model;
+	intern.idb_meth = &OBJ[ID_NMG];
+	intern.idb_ptr = (void *)nmg_model;
 	nmg_model = (struct model *)NULL;
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", newname);
 	return GED_ERROR;

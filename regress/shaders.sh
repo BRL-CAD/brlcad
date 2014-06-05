@@ -2,7 +2,7 @@
 #                      S H A D E R S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -224340,10 +224340,6 @@ FEFEFD
 FEFEFD
 FEFEFD
 EOF
-
-export ITCL_LIBRARY="$TOP_SRCDIR/src/other/incrTcl/itcl/library/"
-export TCL_LIBRARY="$TOP_SRCDIR/src/other/libtcl/library/"
-export BRLCAD_DATA="$TOP_SRCDIR/src"
 
 cat > shaders.mged <<EOF
 opendb shaders.g y

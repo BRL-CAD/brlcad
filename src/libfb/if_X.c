@@ -1,7 +1,7 @@
 /*                          I F _ X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,12 +46,16 @@
 #  undef X_NOT_POSIX
 #endif
 
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #define TMP_FILE "/tmp/x.cmap"
@@ -119,7 +123,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'l',	MODE_1MASK, MODE_1LINGERING,
       "Lingering window" },
@@ -267,8 +271,7 @@ x_print_display_info(Display *dpy)
 	    printf("StaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    printf("Unknown visual class %d\n",
-		   visual->class);
+	    printf("Unknown visual class %d\n", visual->class);
 	    break;
     }
     printf("Map Entries: %d\n", visual->map_entries);
@@ -768,7 +771,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -781,7 +784,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
     /* return 24bit store if available */
     if (XI(ifp)->mem) {
 	memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-	return (int)count;
+	return count;
     }
 
     /* 1st -> 4th quadrant */
@@ -794,7 +797,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	*pixelp++ = *cp;
 	*pixelp++ = *cp++;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -1097,12 +1100,12 @@ done:
  * Decompose a write of more than one scanline into multiple single
  * scanline writes.
  */
-HIDDEN int
+HIDDEN ssize_t
 X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t maxcount;
     size_t todo;
-    int num;
+    size_t num;
 
     /* check origin bounds */
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
@@ -1123,7 +1126,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	if (x + todo > (size_t)ifp->if_width)
 	    num = ifp->if_width - x;
 	else
-	    num = (int)todo;
+	    num = todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
 	    return 0;
 	x = 0;
@@ -1131,7 +1134,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	todo -= num;
 	pixelp += num;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -1532,11 +1535,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
     register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
     register unsigned char *mpbuffer;          /* monochrome byte buffer */
     register int row, col, bit;
-#if 1
     static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
-#else
-    static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
-#endif
     register unsigned char *bits = MSB;	/*XXX - for RT, Sun, etc.  */
 
     error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));
@@ -1622,8 +1621,6 @@ X_help(FBIO *ifp)
 
 
 /*
- * c o n v R G B
- *
  * convert a single RGBpixel to its corresponding entry in the Sun
  * colormap.
  */
@@ -1656,8 +1653,6 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 
 
 /*
- * G E N M A P
- *
  * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
@@ -1747,6 +1742,11 @@ FBIO X_interface = {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

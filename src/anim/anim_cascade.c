@@ -1,7 +1,7 @@
 /*                  A N I M _ C A S C A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "so:f:r:a:"
+#define OPT_STR "so:f:r:a:h?"
 
 #define CASCADE_A 0
 #define CASCADE_R 1
@@ -65,6 +65,11 @@ double fcenter[3], fypr[3], rcenter[3], rypr[3], acenter[3], aypr[3];
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.table\n");
+}
 
 int get_args(int argc, char **argv)
 {
@@ -78,16 +83,16 @@ int get_args(int argc, char **argv)
 	    case 'f':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", fcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", fcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", fcenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", fcenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", fcenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", fcenter+2);
 		    bu_optind += 3;
 		    cmd_fcen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", fypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", fypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", fypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", fypr+2);
 		    bu_optind += 3;
 		    cmd_fypr = 1;
 		    break;
@@ -98,16 +103,16 @@ int get_args(int argc, char **argv)
 	    case 'r':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", rcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", rcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", rcenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", rcenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", rcenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", rcenter+2);
 		    bu_optind += 3;
 		    cmd_rcen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", rypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", rypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", rypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", rypr+2);
 		    bu_optind += 3;
 		    cmd_rypr = 1;
 		    break;
@@ -118,16 +123,16 @@ int get_args(int argc, char **argv)
 	    case 'a':
 		d = *(bu_optarg);
 		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", acenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", acenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", acenter+2);
+		    bu_sscanf(argv[bu_optind], "%lf", acenter+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", acenter+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", acenter+2);
 		    bu_optind += 3;
 		    cmd_acen = 1;
 		    break;
 		} else if (d =='y') {
-		    sscanf(argv[bu_optind], "%lf", aypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", aypr+2);
+		    bu_sscanf(argv[bu_optind], "%lf", aypr+0);
+		    bu_sscanf(argv[bu_optind+1], "%lf", aypr+1);
+		    bu_sscanf(argv[bu_optind+2], "%lf", aypr+2);
 		    bu_optind += 3;
 		    cmd_aypr = 1;
 		    break;
@@ -152,7 +157,6 @@ int get_args(int argc, char **argv)
 		print_time = 0;
 		break;
 	    default:
-		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -172,10 +176,17 @@ main (int argc, char *argv[])
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
-    read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_cascade: Argument error.\n");
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
+
+    read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
 
     switch (output_mode) {
 	case CASCADE_A:

@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -117,7 +118,7 @@ add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GET(eptr, union E_tree);
+    BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -151,8 +152,8 @@ add_solid(const struct directory *dp,
 	/* create the NMG version of this solid */
 	eptr->l.m = nmg_mm();
 
-	if (!rt_functab[id].ft_tessellate ||
-	    rt_functab[id].ft_tessellate(&r, eptr->l.m, &intern,
+	if (!OBJ[id].ft_tessellate ||
+	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
 					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
 					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0)
 	{
@@ -162,7 +163,7 @@ add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GET(eptr->l.stp, struct soltab);
+    BU_ALLOC(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -186,7 +187,7 @@ add_solid(const struct directory *dp,
 		|| (bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
-		eptr->l.stp->st_meth = &rt_functab[id];
+		eptr->l.stp->st_meth = &OBJ[id];
 		if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0) {
 		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
@@ -194,10 +195,10 @@ add_solid(const struct directory *dp,
 		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
-		intern2.idb_meth = &rt_functab[ID_BOT];
-		intern2.idb_ptr = (genptr_t)bot;
+		intern2.idb_meth = &OBJ[ID_BOT];
+		intern2.idb_ptr = (void *)bot;
 		eptr->l.stp->st_id = ID_BOT;
-		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
+		eptr->l.stp->st_meth = &OBJ[ID_BOT];
 		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
 		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
@@ -208,7 +209,7 @@ add_solid(const struct directory *dp,
 	    /* prep this solid */
 
 	    eptr->l.stp->st_id = id;
-	    eptr->l.stp->st_meth = &rt_functab[id];
+	    eptr->l.stp->st_meth = &OBJ[id];
 	    if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
 		bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 	}
@@ -239,7 +240,7 @@ build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = build_etree(tp->tr_b.tb_left, dgcdp);
@@ -261,7 +262,7 @@ build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;
@@ -469,9 +470,9 @@ promote_ints(struct bu_list *head,
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
-		    BU_LIST_DEQUEUE(&tmp->l)
-			RT_FREE_SEG(tmp, dgcdp->ap->a_resource)
-			continue;;
+		    BU_LIST_DEQUEUE(&tmp->l);
+		    RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
+		    continue;
 		}
 
 		if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))
@@ -973,7 +974,7 @@ eval_etree(union E_tree *eptr,
     switch (eptr->l.op) {
 	case OP_DB_LEAF:
 	case OP_SOLID:
-	    A = (struct bu_list *)bu_malloc(sizeof(struct bu_list), "bu_list");
+	    BU_ALLOC(A, struct bu_list);
 	    BU_LIST_INIT(A);
 	    BU_LIST_INSERT_LIST(A, &eptr->l.seghead);
 
@@ -1034,7 +1035,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (segp->seg_in.hit_dist + segp->seg_out.hit_dist) / 2.0;
@@ -1055,7 +1056,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
     rd.hitmiss = (struct hitmiss **)NULL;
     rd.stp = shoot;
 
-    if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+    if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	struct seg *seg;
 
 	while (BU_LIST_WHILE (seg, seg, &rd.seghead->l)) {
@@ -1082,7 +1083,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 	VCROSS(new_dir, new_rp.r_dir, rp->r_dir);
 	VMOVE(new_rp.r_dir, new_dir);
 	inverse_dir(new_rp.r_dir, rd.rd_invdir);
-	if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+	if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	    struct seg *seg;
 
 	    while (BU_LIST_WHILE (seg, seg, &rd.seghead->l)) {
@@ -1137,7 +1138,7 @@ shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt);
@@ -1267,7 +1268,7 @@ shoot_and_plot(point_t start_pt,
 	 * mark them as IN_SOL.
 	 */
 	if (rt_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
-	    if (rt_functab[shoot->l.stp->st_id].ft_shot && rt_functab[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
+	    if (OBJ[shoot->l.stp->st_id].ft_shot && OBJ[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
 		struct seg *seg;
 
 		/* put the segments in the lead solid structure */
@@ -1644,8 +1645,8 @@ Eplot(union E_tree *eptr,
 		    }
 
 		    /* build a segment list for each solid */
-		    A = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "A");
-		    B = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "B");
+		    BU_ALLOC(A, struct bu_list);
+		    BU_ALLOC(B, struct bu_list);
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
@@ -1736,8 +1737,8 @@ free_etree(union E_tree *eptr,
 		bu_ptbl_free(&eptr->l.edge_list);
 	    }
 	    if (eptr->l.stp) {
-		if (eptr->l.stp->st_specific && rt_functab[eptr->l.stp->st_id].ft_free)
-		    rt_functab[eptr->l.stp->st_id].ft_free(eptr->l.stp);
+		if (eptr->l.stp->st_specific && OBJ[eptr->l.stp->st_id].ft_free)
+		    OBJ[eptr->l.stp->st_id].ft_free(eptr->l.stp);
 		bu_free((char *)eptr->l.stp, "struct soltab");
 	    }
 
@@ -1757,8 +1758,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
     tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
 
-    VSETALL(max, -MAX_FASTF);
-    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -INFINITY);
+    VSETALL(min, INFINITY);
 
     for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
@@ -1993,7 +1994,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GET(pg, struct rt_pg_internal);
+	BU_ALLOC(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2004,10 +2005,10 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
-	    intern2.idb_meth = &rt_functab[ID_POLY];
-	    intern2.idb_ptr = (genptr_t)pg;
-	    if (rt_functab[tp->l.stp->st_id].ft_free)
-		rt_functab[tp->l.stp->st_id].ft_free(tp->l.stp);
+	    intern2.idb_meth = &OBJ[ID_POLY];
+	    intern2.idb_ptr = (void *)pg;
+	    if (OBJ[tp->l.stp->st_id].ft_free)
+		OBJ[tp->l.stp->st_id].ft_free(tp->l.stp);
 	    tp->l.stp->st_specific = NULL;
 	    tp->l.stp->st_id = ID_POLY;
 	    VSETALL(tp->l.stp->st_max, -INFINITY);
@@ -2050,16 +2051,13 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GET(dgcdp, struct _ged_client_data);
+    /* XXX: where is this released? */
+    BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
-#if 1
     dgcdp->dmode = _GED_BOOL_EVAL;
-#else
-    dgcdp->dmode = _GED_WIREFRAME;
-#endif
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
@@ -2106,7 +2104,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	ged_erasePathFromDisplay(gedp, argv[i], 0);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
-	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
 	dgcdp->ap->a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;

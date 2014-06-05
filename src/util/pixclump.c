@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ static void add_to_table (unsigned char *rgb)
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
-	    bu_realloc((genptr_t) color_tbl,
+	    bu_realloc((void *) color_tbl,
 		       color_tbl_size * 3 * sizeof(unsigned char),
 		       "color table");
     }
@@ -140,8 +140,6 @@ static void print_table (void)
 
 
 /*
- * C O L O R _ D I F F ()
- *
  * Returns the square of the Euclidean distance in RGB space
  * between a specified pixel (R/G/B triple) and a specified
  * entry in the color table.
@@ -277,7 +275,7 @@ main (int argc, char **argv)
 		       color_tbl[best_color][GRN],
 		       color_tbl[best_color][BLU]);
 	}
-	if (fwrite((genptr_t) color_tbl[best_color],
+	if (fwrite((void *) color_tbl[best_color],
 		   3 * sizeof(unsigned char), 1, outfp) != 1)
 	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }

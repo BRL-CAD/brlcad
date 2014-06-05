@@ -32,8 +32,9 @@ set(level_1_dirs
   libbu
   libbn
   libsysv
-  libnurbs
+  libbrep
   librt
+  libwdb
   )
 
 # Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
@@ -58,12 +59,10 @@ endif(BRLCAD_ENABLE_RTSERVER)
 set(level_2_dirs
   libpkg
   libfb
-  libwdb
   libgcv
   libanalyze
   libged
   liboptical
-  liborle
   libcursor
   libdm
   libfft
@@ -85,12 +84,10 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 set(level_3_dirs
-  adrt
   anim
   brlman
   burst
   bwish
-  canon
   conv
   fb
   fbed
@@ -106,12 +103,14 @@ set(level_3_dirs
   sig
   tab
   util
-  vfont
   ${non_win32_dirs}
-  # tclscripts must come before mged and archer, so the
-  # target lists are defined when the archer and mged
-  # targets are defined
+  # tclscripts must come before applications like
+  # mged and archer that need the scripts in place to
+  # run. The script target lists are defined when the tclscripts
+  # directories are configured, and those lists are needed
+  # as dependencies for the targets in these directories
   tclscripts
+  adrt
   archer
   mged
   )
@@ -150,7 +149,7 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   math(EXPR current_level "${current_level} + 1")
   foreach(subdir ${level_${current_level}_dirs})
     if(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
-      add_subdirectory(${subdir})
+      verbose_add_subdirectory(src ${subdir})
     else(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
       CMAKEFILES(${subdir})
     endif(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
@@ -175,7 +174,6 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

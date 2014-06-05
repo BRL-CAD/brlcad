@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,16 +147,16 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	if (ret != 1)
 	    bu_log("Failed to read buffer\n");
 
-	if (bu_strncmp(buffer, "-p", 2)==0) {
+	if (bu_strncmp(buffer, "-p", 2) == 0) {
 	    /* we found perspective */
 
-	    buffer[0]=' ';
-	    buffer[1]=' ';
+	    buffer[0] = ' ';
+	    buffer[1] = ' ';
 	    sscanf(buffer, "%d", &perspective);
 	    /* bu_log("perspective=%d\n", perspective);*/
 	    gedp->ged_gvp->gv_perspective = perspective;
 
-	} else if (bu_strncmp(buffer, "$*", 2)==0) {
+	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
@@ -199,10 +199,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		bu_log("Failed to read object names\n");
 
 	    /* bu_log("OBJECTS=%s\n", objects);*/
-	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1)!=0)) {
+	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1) != 0)) {
 
 		/* clean off the single quotes... */
-		if (bu_strncmp(objects, "'", 1)==0) {
+		if (bu_strncmp(objects, "'", 1) == 0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
 		    sscanf(objects, "%10000s", objects);
@@ -222,7 +222,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* end iteration over reading in listed objects */
-	} else if (bu_strncmp(buffer, "<<EOF", 5)==0) {
+	} else if (bu_strncmp(buffer, "<<EOF", 5) == 0) {
 	    char *cmdBuffer = NULL;
 	    /* we are almost done .. read in the view commands */
 
@@ -233,7 +233,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		if (rt_do_cmd((struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
 		}
-		bu_free((genptr_t)cmdBuffer, "loadview cmdBuffer");
+		bu_free((void *)cmdBuffer, "loadview cmdBuffer");
 	    }
 	    /* end iteration over rt commands */
 
@@ -258,7 +258,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-_ged_cm_vsize(int argc, char **argv)
+_ged_cm_vsize(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -271,7 +271,7 @@ _ged_cm_vsize(int argc, char **argv)
 
 
 int
-_ged_cm_eyept(int argc, char **argv)
+_ged_cm_eyept(const int argc, const char **argv)
 {
     if (argc < 4)
 	return -1;
@@ -284,7 +284,7 @@ _ged_cm_eyept(int argc, char **argv)
 
 
 int
-_ged_cm_lookat_pt(int argc, char **argv)
+_ged_cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -298,20 +298,16 @@ _ged_cm_lookat_pt(int argc, char **argv)
     VSUB2(dir, pt, _ged_eye_model);
     VUNITIZE(dir);
 
-#if 1
     /*
-      At the moment bn_mat_lookat will return NAN's if the direction vector
-      is aligned with the Z axis. The following is a temporary workaround.
-    */
+     * At the moment bn_mat_lookat() will return NAN's if the
+     * direction vector is aligned with the Z axis. The following is a
+     * workaround.
+     */
     {
-	vect_t neg_Z_axis;
-
-	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
+	vect_t neg_Z_axis = VINIT_ZERO;
+	neg_Z_axis[Z] = -1.0;
 	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
     }
-#else
-    bn_mat_lookat(_ged_viewrot, dir, yflip);
-#endif
 
     /* Final processing is deferred until ged_cm_end(), but eye_pt
      * must have been specified before here (for now)
@@ -321,7 +317,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
 
 
 int
-_ged_cm_vrot(int argc, char **argv)
+_ged_cm_vrot(const int argc, const char **argv)
 {
     int i;
 
@@ -335,7 +331,7 @@ _ged_cm_vrot(int argc, char **argv)
 
 
 int
-_ged_cm_orientation(int argc, char **argv)
+_ged_cm_orientation(const int argc, const char **argv)
 {
     int i;
     quat_t quat;
@@ -352,7 +348,7 @@ _ged_cm_orientation(int argc, char **argv)
 
 
 int
-_ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
+_ged_cm_set(const int UNUSED(argc), const char **UNUSED(argv))
 {
     return -1;
 }
@@ -363,7 +359,7 @@ _ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
  * routine to avoid rt_do_cmd() "command not found" error reporting
  */
 int
-_ged_cm_null(int argc, char **argv)
+_ged_cm_null(const int argc, const char **argv)
 {
     if (argc < 0 || argv == NULL)
 	return 1;

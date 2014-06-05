@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "tcl.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -63,8 +64,6 @@ const struct bu_structparse rt_cline_parse[] = {
 };
 
 /**
- * R T _ C L I N E _ B B O X
- *
  * Calculate bounding RPP for cline
  */
 int
@@ -83,8 +82,8 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     else
 	max_tr = 0.0;
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSETALL(rad, cline_ip->radius + max_tr);
     VADD2(work, cline_ip->v, rad);
@@ -100,8 +99,6 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
 }
 
 /**
- * R T _ C L I N E _ P R E P
- *
  * Given a pointer to a GED database record, determine if this is a
  * valid cline solid, and if so, precompute various terms of the
  * formula.
@@ -134,7 +131,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(cline->height, cline_ip->h);
     VMOVE(cline->h, cline_ip->h);
     VUNITIZE(cline->h);
-    stp->st_specific = (genptr_t)cline;
+    stp->st_specific = (void *)cline;
 
     if (rt_cline_radius > 0.0)
 	max_tr = rt_cline_radius;
@@ -150,9 +147,6 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ C L I N E _ P R I N T
- */
 void
 rt_cline_print(register const struct soltab *stp)
 {
@@ -171,8 +165,6 @@ rt_cline_print(register const struct soltab *stp)
 
 
 /**
- * R T _ C L I N E _ S H O T
- *
  * Intersect a ray with a cline mode solid.  If an intersection
  * occurs, at least one struct seg will be acquired and filled in.
  *
@@ -354,8 +346,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 
 
 /**
- * R T _ C L I N E _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -392,8 +382,6 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ C L I N E _ C U R V E
- *
  * Return the curvature of the cline.
  */
 void
@@ -411,8 +399,6 @@ rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ C L I N E_ U V
- *
  * For a hit on the surface of an cline, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  */
@@ -430,9 +416,6 @@ rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
 }
 
 
-/**
- * R T _ C L I N E _ F R E E
- */
 void
 rt_cline_free(register struct soltab *stp)
 {
@@ -441,13 +424,10 @@ rt_cline_free(register struct soltab *stp)
 
     if (stp) RT_CK_SOLTAB(stp);
 
-    bu_free((char *)cline, "cline_specific");
+    BU_PUT(cline, struct cline_specific);
 }
 
 
-/**
- * R T _ C L I N E _ C L A S S
- */
 int
 rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
@@ -460,9 +440,6 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
 }
 
 
-/**
- * R T _ C L I N E _ P L O T
- */
 int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -492,18 +469,18 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     /* Draw the top */
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
     RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
-    for (i=0; i<16; i += 4) {
+    for (i = 0; i < 16; i += 4) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
@@ -521,18 +498,18 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 	/* Draw the top */
 	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
 
 	/* Draw the bottom */
 	RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
 
 	/* Draw connections */
-	for (i=0; i<16; i += 4) {
+	for (i = 0; i < 16; i += 4) {
 	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
@@ -550,8 +527,6 @@ struct cline_vert {
 
 
 /**
- * R T _ C L I N E _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -576,10 +551,10 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     *r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    ang_tol = bn_halfpi;
-    abs_tol = bn_halfpi;
-    rel_tol = bn_halfpi;
-    norm_tol = bn_halfpi;
+    ang_tol = M_PI_2;
+    abs_tol = M_PI_2;
+    rel_tol = M_PI_2;
+    norm_tol = M_PI_2;
 
     if (ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0) {
 	/* no tolerances specified, use 10% relative tolerance */
@@ -601,11 +576,11 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	ang_tol = norm_tol;
 
     /* get number of segments per quadrant */
-    nsegs = (int)(bn_halfpi / ang_tol + 0.9999);
+    nsegs = (int)(M_PI_2 / ang_tol + 0.9999);
     if (nsegs < 2)
 	nsegs = 2;
 
-    ang_tol = bn_halfpi / nsegs;
+    ang_tol = M_PI_2 / nsegs;
 
     /* and for complete circle */
     nsegs *= 4;
@@ -656,7 +631,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
     bu_ptbl_init(&faces, 64, "faces");
     /* build outer faces */
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -682,7 +657,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
     /* build inner faces */
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no=0; seg_no<nsegs; seg_no++) {
+	for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	    int next_seg;
 	    struct vertex **verts[3];
 	    struct faceuse *fu;
@@ -710,7 +685,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     /* build top faces */
     top_center.v = (struct vertex *)NULL;
     VMOVE(top_center.pt, top);
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -743,7 +718,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     /* build base faces */
     base_center.v = (struct vertex *)NULL;
     VMOVE(base_center.pt, cline_ip->v);
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -779,13 +754,13 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     if (base_center.v)
 	nmg_vertex_gv(base_center.v, base_center.pt);
 
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	nmg_vertex_gv(top_outer[seg_no].v, top_outer[seg_no].pt);
 	nmg_vertex_gv(base_outer[seg_no].v, base_outer[seg_no].pt);
     }
 
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no=0; seg_no<nsegs; seg_no++) {
+	for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	    nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
 	    nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
 	}
@@ -799,7 +774,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     }
 
     /* Associate face plane equations */
-    for (i=0; i<BU_PTBL_END(&faces); i++) {
+    for (i = 0; i < BU_PTBL_END(&faces); i++) {
 	struct faceuse *fu;
 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
@@ -820,8 +795,6 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
 
 /**
- * R T _ C L I N E _ I M P O R T
- *
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -849,19 +822,20 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
-    ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    ip->idb_meth = &OBJ[ID_CLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
+
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
     if (mat == NULL) mat = bn_mat_identity;
 
-    ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
+    bu_cv_ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
     cline_ip->thickness = scan / mat[15];
-    ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
+    bu_cv_ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
     cline_ip->radius = scan / mat[15];
-    ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
+    bu_cv_ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
     MAT4X3PNT(cline_ip->v, mat, work);
-    ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
+    bu_cv_ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
     MAT4X3VEC(cline_ip->h, mat, work);
 
     return 0;			/* OK */
@@ -869,8 +843,6 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 
 
 /**
- * R T _ C L I N E _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -890,7 +862,7 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "cline external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "cline external");
     rec = (union record *)ep->ext_buf;
 
     if (dbip) RT_CK_DBI(dbip);
@@ -899,21 +871,19 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     rec->cli.cli_id = DBID_CLINE;	/* GED primitive type from db.h */
 
     tmp = cline_ip->thickness * local2mm;
-    htond(rec->cli.cli_thick, (unsigned char *)(&tmp), 1);
+    bu_cv_htond(rec->cli.cli_thick, (unsigned char *)(&tmp), 1);
     tmp = cline_ip->radius * local2mm;
-    htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
+    bu_cv_htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
     VSCALE(work, cline_ip->v, local2mm);
-    htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
     VSCALE(work, cline_ip->h, local2mm);
-    htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
 
     return 0;
 }
 
 
 /**
- * R T _ C L I N E _ I M P O R T 5
- *
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -933,14 +903,14 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
-    ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    ip->idb_meth = &OBJ[ID_CLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
 
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 8);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
     if (mat == NULL) mat = bn_mat_identity;
     cline_ip->thickness = vec[0] / mat[15];
@@ -953,8 +923,6 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
 
 
 /**
- * R T _ C L I N E _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -974,7 +942,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "cline external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "cline external");
 
     vec[0] = cline_ip->thickness * local2mm;
     vec[1] = cline_ip->radius * local2mm;
@@ -982,15 +950,13 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     VSCALE(&vec[5], cline_ip->h, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 8);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 8);
 
     return 0;
 }
 
 
 /**
- * R T _ C L I N E _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1027,8 +993,6 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 
 
 /**
- * R T _ C L I N E _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1044,7 +1008,7 @@ rt_cline_ifree(struct rt_db_internal *ip)
     cline_ip->magic = 0;			/* sanity */
 
     bu_free((char *)cline_ip, "cline ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -1131,10 +1095,6 @@ rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-/**
- * R T _ C L I N E _ P A R A M S
- *
- */
 int
 rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1143,10 +1103,6 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-/**
- * R T _ C L I N E _ T O _ P I P E
- *
- */
 int
 rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
 {
@@ -1167,7 +1123,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     pipep->pipe_count = 1;
 
     BU_LIST_INIT(&pipep->pipe_segs_head);
-    BU_GET(point, struct wdb_pipept);
+    BU_ALLOC(point, struct wdb_pipept);
     point->pp_bendradius = 0.0;
     VMOVE(point->pp_coord, cip->v);
     point->l.magic = WDB_PIPESEG_MAGIC;
@@ -1175,7 +1131,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     point->pp_id = (cip->radius - cip->thickness) * 2;
     BU_LIST_APPEND(&pipep->pipe_segs_head, &point->l);
 
-    BU_GET(point2, struct wdb_pipept);
+    BU_ALLOC(point2, struct wdb_pipept);
     point2->pp_bendradius = 0.0;
     VADD2(point2->pp_coord, cip->v, cip->h);
     point2->l.magic = WDB_PIPESEG_MAGIC;

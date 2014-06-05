@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,21 +66,21 @@ static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
 static int doBursts();
-static int burstPoint();
+static int burstPoint(struct application *, fastf_t *, fastf_t *);
 static int burstRay();
 static int gridShot();
-static int f_BurstHit();
-static int f_BurstMiss();
-static int f_HushOverlap();
-static int f_Overlap();
-static int f_ShotHit();
-static int f_ShotMiss();
-static int getRayOrigin();
-static int readBurst();
-static int readShot();
-static void lgtModel();
+static int f_BurstHit(struct application *x, struct partition *, struct seg *);
+static int f_BurstMiss(struct application *ap);
+static int f_HushOverlap(struct application *ap, struct partition *, struct region *, struct region *, struct partition *);
+static int f_Overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+static int f_ShotHit(struct application *, struct partition *, struct seg *);
+static int f_ShotMiss(struct application *);
+static int getRayOrigin(struct application *);
+static int readBurst(fastf_t *);
+static int readShot(fastf_t *);
+static void lgtModel(struct application *, struct partition *, struct hit *, struct xray *, fastf_t surfnorm[3]);
 static void view_end();
-static void view_pix();
+static void view_pix(struct application *);
 
 /*
   void colorPartition(struct region *regp, int type)
@@ -423,7 +423,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
        and imagined (implicit).
     */
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw) {
-	fastf_t	los = 0.0;
 	int	voidflag = 0;
 	struct partition *np = pp->pt_forw;
 	struct partition *cp;
@@ -445,6 +444,8 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	/* Check for voids. */
 	if (np != pt_headp) {
+	    fastf_t los = 0.0;
+
 #if DEBUG_GRID
 	    brst_log("\tprocessing region '%s', \tid=%d\taircode=%d\n",
 		     pp->pt_regionp->reg_name,
@@ -568,7 +569,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    if (bp == PT_NULL && ! reqburstair
 			&&	findIdents(regp->reg_regionid,
 					   &armorids)) {
-			/* Bursting on armor/void (ouchh). */
+			/* Bursting on armor/void (ouch). */
 			bp = pp;
 			VMOVE(burstnorm, exitnorm);
 		    }
@@ -687,7 +688,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	    } else	  /* Interior burst point: no fuzing offset. */
 		VMOVE(burstpt, bp->pt_outhit->hit_point);
 
-	/* Only generate burst rays if nspallrays is greater then
+	/* Only generate burst rays if nspallrays is greater than
 	   zero. */
 	if (nspallrays < 1)
 	    return	1;
@@ -958,7 +959,7 @@ getRayOrigin(struct application *ap)
 }
 
 
-/*	c o n s _ V e c t o r ()
+/*
 	Construct a direction vector out of azimuth and elevation angles
 	in radians, allocating storage for it and returning its address.
 */
@@ -1477,7 +1478,7 @@ spallInit()
     }
 
     /* Compute sampling cone of rays which are equally spaced. */
-    theta = TWO_PI * (1.0 - cos(conehfangle)); /* solid angle */
+    theta = M_2PI * (1.0 - cos(conehfangle)); /* solid angle */
     delta = sqrt(theta/nspallrays); /* angular ray delta */
     n = conehfangle / delta;
     phiinc = conehfangle / n;
@@ -1490,9 +1491,9 @@ spallInit()
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
 	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI-gammainc+EPSILON;
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI-gammainc+EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
@@ -1532,16 +1533,16 @@ burstPoint(struct application *ap, fastf_t *normal, fastf_t *bpt)
        axis. */
     if (cantwarhead) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, cantdelta);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     /* If a deflected cone is specified (the default) the spall cone
        axis is half way between the main penetrator axis and exit
        normal of the spalling component.
     */
     if (deflectcone) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, normal);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     VMOVE(a_burst.a_ray.r_pt, bpt);
 
     comphi = 0.0; /* Initialize global for concurrent access. */
@@ -1604,14 +1605,19 @@ burstRay()
 	    break;
 	sinphi = sin(phi);
 	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI - gammainc + EPSILON;
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI - gammainc + EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 		     phi, gammaval);
-	    plotRay(&a_spall.a_ray);
+
+	    if (plotline)
+		plotRayPoint(&a_spall.a_ray);
+	    else
+		plotRayLine(&a_spall.a_ray);
+
 	    bu_semaphore_acquire(RT_SEM_WORKER);
 	    a_spall.a_user = a_burst.a_user++;
 	    bu_semaphore_release(RT_SEM_WORKER);
@@ -1651,7 +1657,6 @@ abort_RT(int UNUSED(sig))
 }
 
 
-/*	v i e w _ p i x () */
 static void
 view_pix(struct application *ap)
 {
@@ -1665,7 +1670,6 @@ view_pix(struct application *ap)
 }
 
 
-/*	v i e w _ e n d () */
 static void
 view_end()
 {

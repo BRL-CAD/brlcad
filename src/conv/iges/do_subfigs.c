@@ -1,7 +1,7 @@
 /*                    D O _ S U B F I G S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,8 +185,7 @@ Do_subfigs()
 
 		if (!found) {
 		    /* Need to add this one to the list */
-		    list_ptr = (struct file_list *)bu_malloc(sizeof(struct file_list),
-							     "Do_subfigs: list_ptr");
+		    BU_ALLOC(list_ptr, struct file_list);
 
 		    list_ptr->file_name = file_name;
 		    if (no_of_members == 1)

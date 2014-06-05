@@ -1,7 +1,7 @@
 /*                     N U R B _ P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,9 +108,7 @@ rt_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv
 {
     struct rt_nurb_poly *p;
 
-    p = (struct rt_nurb_poly *) bu_malloc(sizeof(struct rt_nurb_poly),
-					  "rt_nurb_mk_poly: rt_nurb_poly struct");
-
+    BU_ALLOC(p, struct rt_nurb_poly);
     p->next = (struct rt_nurb_poly *) 0;
 
     VMOVE(p->ply[0], v1);

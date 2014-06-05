@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -196,6 +198,7 @@ static int	mode=0;			/* Plate mode (1) or volume mode (2), of current component 
 static int	group_id=(-1);		/* Group identification number from SECTION card */
 static int	comp_id=(-1);		/* Component identification number from SECTION card */
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
+static int	region_id_max=0;
 static char	field[9];		/* Space for storing one field from an input line */
 static char	vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
 static int	name_count;		/* Count of number of times this name_name has been used */
@@ -210,7 +213,8 @@ static int	f4_do_skips=0;		/* flag indicating that not all components will be pr
 static int	*region_list;		/* array of region_ids to be processed */
 static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
 static int	f4_do_plot=0;		/* flag indicating plot file should be created */
-static struct wmember  group_head[11];	/* Lists of regions for groups */
+static struct wmember *group_head = (struct wmember *)NULL; /* Lists of regions for groups */
+static ssize_t group_head_cnt=0;
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
@@ -230,9 +234,9 @@ static point_t *grid_points = NULL;
 
 static void
 usage() {
-    bu_log("Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
+    bu_log("Usage: fast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
     bu_log("	d - print debugging info\n");
-    bu_log("	q - quiet mode (don't say anything except error messages\n");
+    bu_log("	q - quiet mode (don't say anything except error messages)\n");
     bu_log("	w - print warnings about creating default names\n");
     bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
     bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
@@ -247,14 +251,19 @@ usage() {
 static int
 get_line(void)
 {
-    int len;
+    int len, done;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    len = bu_vls_gets(&buffer, fpin);
-
-    /* eof? */
-    if (len < 0)
-	return 0;
+    done = 0;
+    while (!done) {
+	len = bu_vls_gets(&buffer, fpin);
+	if (len < 0) goto out; /* eof or error */
+	if (len == 0) continue;
+	bu_vls_trimspace(&buffer);
+	len = bu_vls_strlen(&buffer);
+	if (len == 0) continue;
+	done = 1;
+    }
 
     if (len > MAX_LINE_SIZE)
 	bu_log("WARNING: long line truncated\n");
@@ -262,6 +271,7 @@ get_line(void)
     memset((void *)line, 0, MAX_LINE_SIZE);
     snprintf(line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
 
+out:
     bu_vls_free(&buffer);
 
     return len >= 0;
@@ -483,7 +493,6 @@ Insert_region_name(char *name, int reg_id)
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
     int foundn, foundr;
-    int diff;
 
     if (debug)
 	bu_log("Insert_region_name(name=%s, reg_id=%d\n", name, reg_id);
@@ -502,7 +511,7 @@ Insert_region_name(char *name, int reg_id)
     }
 
     /* Add to tree for entire model */
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_region_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
     new_ptr->rleft = (struct name_tree *)NULL;
     new_ptr->rright = (struct name_tree *)NULL;
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -514,9 +523,15 @@ Insert_region_name(char *name, int reg_id)
     new_ptr->name = bu_strdup(name);
     new_ptr->magic = NAME_TREE_MAGIC;
 
+    if (reg_id > region_id_max) {
+	region_id_max = reg_id;
+    }
+
     if (!name_root) {
 	name_root = new_ptr;
     } else {
+	int diff;
+
 	diff = bu_strcmp(name, nptr_model->name);
 
 	if (diff > 0) {
@@ -655,7 +670,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	return;
     }
 
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
 
     new_ptr->name = bu_strdup(name);
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -818,13 +833,13 @@ f4_do_compsplt(void)
     z = atof(field) * 25.4;
 
     if (compsplt_root == NULL) {
-	compsplt_root = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(compsplt_root, struct compsplt);
 	splt = compsplt_root;
     } else {
 	splt = compsplt_root;
 	while (splt->next)
 	    splt = splt->next;
-	splt->next = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(splt->next, struct compsplt);
 	splt = splt->next;
     }
     splt->next = (struct compsplt *)NULL;
@@ -874,8 +889,39 @@ Add_stragglers_to_groups(void)
 	/* visit node */
 	CK_TREE_MAGIC(ptr);
 
+	/* FIXME: should not be manually recreating the wmember list
+	 * when extending it.  just use a null-terminated list and
+	 * realloc as needed...
+	 */
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
+
+	    if (!group_head || ptr->region_id > region_id_max) {
+		struct wmember *new_head;
+		ssize_t new_cnt, i;
+		struct bu_list *list_first;
+
+		new_cnt = lrint(ceil(region_id_max/1000.0));
+		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, region_id_max, new_cnt);
+
+		for (i = 0 ; i < new_cnt ; i++) {
+		    BU_LIST_INIT(&new_head[i].l);
+		    if (i < group_head_cnt) {
+			if (BU_LIST_NON_EMPTY(&group_head[i].l)) {
+			    list_first = BU_LIST_FIRST(bu_list, &group_head[i].l);
+			    BU_LIST_DEQUEUE(&group_head[i].l);
+			    BU_LIST_INSERT(list_first, &new_head[i].l);
+			}
+		    }
+		}
+		if (group_head) {
+		    bu_free(group_head, "old group_head");
+		}
+		group_head = new_head;
+		group_head_cnt = new_cnt;
+	    }
+
 	    (void)mk_addmember(ptr->name, &group_head[ptr->region_id/1000].l, NULL, WMOP_UNION);
 	    ptr->in_comp_group = 1;
 	}
@@ -898,7 +944,7 @@ f4_do_groups(void)
 
     Add_stragglers_to_groups();
 
-    for (group_no=0; group_no < 11; group_no++) {
+    for (group_no=0; group_no < group_head_cnt; group_no++) {
 	char name[MAX_LINE_SIZE] = {0};
 
 	if (BU_LIST_IS_EMPTY(&group_head[group_no].l))
@@ -1772,7 +1818,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
     }
 
     if (!hole_root) {
-	hole_root = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_root");
+	BU_ALLOC(hole_root, struct holes);
 	hole_root->group = gr;
 	hole_root->component = comp;
 	hole_root->type = type;
@@ -1804,7 +1850,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	    list->next = ptr;
 	}
     } else {
-	prev->next = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_ptr->next");
+	BU_ALLOC(prev->next, struct holes);
 	hole_ptr = prev->next;
 	hole_ptr->group = gr;
 	hole_ptr->component = comp;
@@ -1870,10 +1916,10 @@ f4_do_hole_wall(int type)
 		bu_log("Hole or wall card references itself (ignoring): (%s)\n", line);
 	    } else {
 		if (list_ptr) {
-		    list_ptr->next = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr->next, struct hole_list);
 		    list_ptr = list_ptr->next;
 		} else {
-		    list_ptr = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr, struct hole_list);
 		    list_start = list_ptr;
 		}
 
@@ -2105,12 +2151,12 @@ make_bot_object(void)
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i=0; i<num_vertices; i++)
-	VMOVE(&bot_ip.vertices[i*3], grid_points[min_pt+i])
+	VMOVE(&bot_ip.vertices[i*3], grid_points[min_pt+i]);
 
-	    for (i=0; i<face_count*3; i++)
-		faces[i] -= min_pt;
+    for (i=0; i<face_count*3; i++)
+	faces[i] -= min_pt;
     bot_ip.num_faces = face_count;
-    bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
+    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i=0; i<face_count*3; i++)
 	bot_ip.faces[i] = faces[i];
 
@@ -2158,11 +2204,11 @@ make_bot_object(void)
 static void
 skip_section(void)
 {
-    long section_start;
+    off_t section_start;
 
     /* skip to start of next section */
-    section_start = ftell(fpin);
-    if (section_start < 0L) {
+    section_start = bu_ftell(fpin);
+    if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
 
@@ -2172,8 +2218,8 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = ftell(fpin);
-	    if (section_start < 0L) {
+	    section_start = bu_ftell(fpin);
+	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
 	    if (!get_line())
@@ -2181,7 +2227,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(fpin, section_start, SEEK_SET);
 }
 
 
@@ -2813,7 +2859,7 @@ read_fast4_colors(char *color_file)
 	if (high < low)
 	    continue;
 
-	BU_GET(color, struct fast4_color);
+	BU_ALLOC(color, struct fast4_color);
 	color->low = low;
 	color->high = high;
 	color->rgb[0] = r;
@@ -2828,14 +2874,13 @@ read_fast4_colors(char *color_file)
 int
 main(int argc, char **argv)
 {
-    int i;
     int c;
     char *plot_file = NULL;
     char *color_file = NULL;
 
     bu_setprogname(argv[0]);
 
-    while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:h?")) != -1) {
 	switch (c) {
 	    case 'q':	/* quiet mode */
 		quiet = 1;
@@ -2870,7 +2915,6 @@ main(int argc, char **argv)
 		color_file = bu_optarg;
 		break;
 	    default:
-		bu_log("Unrecognized option (%c)\n", c);
 		usage();
 		break;
 	}
@@ -2906,8 +2950,8 @@ main(int argc, char **argv)
 	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (rt_g.NMG_debug) {
-	bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+    if (RTG.NMG_debug) {
+	bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 	bu_log("\n");
     }
 
@@ -2934,9 +2978,6 @@ main(int argc, char **argv)
 
     bu_ptbl_init(&stack, 64, " &stack ");
     bu_ptbl_init(&stack2, 64, " &stack2 ");
-
-    for (i=0; i<11; i++)
-	BU_LIST_INIT(&group_head[i].l);
 
     BU_LIST_INIT(&hole_head.l);
 
@@ -2979,6 +3020,8 @@ main(int argc, char **argv)
 
     if (!quiet)
 	bu_log("%d components converted\n", comp_count);
+
+    bu_free(group_head, "group_head");
 
     return 0;
 }

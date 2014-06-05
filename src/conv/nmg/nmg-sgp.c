@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -51,8 +52,7 @@ static int stats=0;
 
 /* returns 1 if faceuse was not written because it was empty */
 static int
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 
@@ -117,9 +117,6 @@ write_model_as_sgp(struct model *m)
     }
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -128,7 +125,7 @@ main(int argc, char *argv[])
 
     bu_setlinebuf( stderr );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
@@ -153,13 +150,13 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", &rt_g.debug );
+		sscanf( bu_optarg, "%x", &RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    default:
@@ -173,10 +170,10 @@ main(int argc, char *argv[])
     }
 
     /* Open BRL-CAD database */
-    if ( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
+    if ( (dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL )
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
 
     if ( db_dirbuild( dbip ) ) {
@@ -185,9 +182,7 @@ main(int argc, char *argv[])
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{

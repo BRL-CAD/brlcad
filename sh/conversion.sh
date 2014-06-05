@@ -2,7 +2,7 @@
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -454,12 +454,12 @@ EOF
 	# leaving orphaned 'sleep' processes that accumulate, this
 	# method had to be executed in the current shell environment.
 
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && `touch "./${obj}.nmg.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && touch "./${obj}.nmg.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert NMG
 	nmg=fail
-	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -488,17 +488,17 @@ EOF
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 	if [ -e "./${obj}.nmg.extl" ] ; then
-	    `rm "./${obj}.nmg.extl"`
+	    rm "./${obj}.nmg.extl"
 	    nmg=extl
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && `touch "./${obj}.bot.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && touch "./${obj}.bot.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert BoT
 	bot=fail
-	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -522,17 +522,17 @@ EOF
 	    bot_count=`expr $bot_count + 1`
 	fi
 	if [ -e "./${obj}.bot.extl" ] ; then
-	    `rm "./${obj}.bot.extl"`
+	    rm "./${obj}.bot.extl"
 	    bot=extl
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && `touch "./${obj}.brep.extl"` && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && touch "./${obj}.brep.extl" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert Brep
 	brep=fail
-	cmd="$GED -c "$work" brep \"${obj}\" \"${obj}.brep\""
+	cmd="$GED -c \"$work\" brep \"${obj}\" \"${obj}.brep\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -562,7 +562,7 @@ EOF
 	    fi
 	fi
 	if [ -e "./${obj}.brep.extl" ] ; then
-	    `rm "./${obj}.brep.extl"`
+	    rm "./${obj}.brep.extl"
 	    brep=extl
 	fi
 

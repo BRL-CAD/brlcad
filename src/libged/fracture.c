@@ -1,7 +1,7 @@
 /*                        F R A C T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
 
-    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
@@ -68,8 +68,8 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     RT_DB_INTERNAL_INIT(&new_intern);
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_NMG;
-    new_intern.idb_meth = &rt_functab[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)m;
+    new_intern.idb_meth = &OBJ[ID_NMG];
+    new_intern.idb_ptr = (void *)m;
 
     if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
@@ -79,7 +79,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
     /* Internal representation has been freed by rt_db_put_internal */
-    new_intern.idb_ptr = (genptr_t)NULL;
+    new_intern.idb_ptr = (void *)NULL;
     frac_stat = 0;
 }
 

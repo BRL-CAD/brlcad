@@ -1,0 +1,1152 @@
+<article
+  xmlns="http://docbook.org/ns/docbook"
+  version="5.0"
+>
+
+<title>Application Development with BRL-CAD</title>
+
+<para>Note: This is based on an old Power Point presentation by Lee
+A. Butler and John Anderson. It has been extensively reformatted and
+is being brought up-to-date, by the BRL-CAD Team, with the current
+state of the BRL-CAD source and the best practices recommended by the
+BRL-CAD developers</para>
+
+<para>WARNING: This a code-intensive presentation for Code Warriors only!
+Non-programmers will need atropine, caffeine, and electro-shock
+therapy (run, do not walk, to the nearest exit).</para>
+
+<section>
+<title>Overview</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Header files</para>
+      </listitem>
+      <listitem>
+        <para>Shooting Rays</para>
+      </listitem>
+      <listitem>
+        <para>Ray-Tracing User Interface Framework (RTUIF)</para>
+      </listitem>
+      <listitem>
+        <para>Geometry Forms</para>
+      </listitem>
+      <listitem>
+        <para>Creating Geometry</para>
+      </listitem>
+      <listitem>
+        <para>Reading Geometry</para>
+      </listitem>
+      <listitem>
+        <para>Modifying Geometry</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Header Files</title>
+
+        <para>The Big Six</para>
+
+<table>
+    <?dbfo centered-table-width="2in" ?>
+    <title>Important Headers</title>
+      <tgroup cols="2">
+        <colspec colname="c1" colwidth="1in" align='center'/>
+        <colspec colname="c2" colwidth="1in" align='center'/>
+        <thead>
+          <row>
+            <entry><emphasis role="bold">Header</emphasis></entry>
+            <entry><emphasis role="bold">Library</emphasis></entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>bu.h</entry>
+            <entry>libbu</entry>
+          </row>
+          <row>
+            <entry>bn.h</entry>
+            <entry>libbn</entry>
+          </row>
+          <row>
+            <entry>raytrace.h</entry>
+            <entry>librt</entry>
+          </row>
+          <row>
+            <entry>rtgeom.h</entry>
+            <entry>librt / libwdb</entry>
+          </row>
+          <row>
+            <entry>wdb.h</entry>
+            <entry>libwdb</entry>
+          </row>
+          <row>
+            <entry>vmath.h</entry>
+            <entry>(data types)</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+</section>
+
+<section>
+  <title>Prototype Application: rtexample.c</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Opens a database</para>
+      </listitem>
+      <listitem>
+        <para>Retrieves geometry</para>
+      </listitem>
+      <listitem>
+        <para>Prepares geometry for raytrace</para>
+      </listitem>
+      <listitem>
+        <para>Performs raytrace</para>
+      </listitem>
+      <listitem>
+        <para>See source tree: <filename>rt/rtexample.c</filename></para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+
+  <title>Necessary Headers</title>
+
+<programlisting>#include "conf.h"       /* compilation macros           */
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include "machine.h"    /* machine specific definitions */
+#include "vmath.h"      /* vector math macros           */
+#include "raytrace.h"   /* librt interface definitions  */
+</programlisting>
+
+<itemizedlist>
+      <listitem>
+        <para>The conf.h and machine.h are ubiquitous in almost all BRLCAD apps</para>
+      </listitem>
+      <listitem>
+        <para>The raytrace.h is present for geometry programs</para>
+      </listitem>
+    </itemizedlist>
+
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Includes some additional headers</para>
+            </listitem>
+            <listitem>
+              <para>Contains most ray-tracing data structure definitions</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Opening the Database</title>
+
+<programlisting>static struct rt_i *rtip; /* librt Instance structure */
+/* rt_dirbuild() performs many functions for us */
+rtip = rt_dirbuild(argv[1], buf, sizeof(buf));
+if (rtip == RTI_NULL) {
+    fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    exit(2);
+}</programlisting>
+
+<itemizedlist>
+      <listitem>
+        <para>Opens database file</para>
+      </listitem>
+      <listitem>
+        <para>Builds a directory of objects in the database</para>
+      </listitem>
+      <listitem>
+        <para>Allows us to retrieve individual objects</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Reading Geometry</title>
+
+<programlisting>if (rt_gettree(rtip, argv[2]) &lt; 0)
+    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[2]);</programlisting>
+
+<para>Retrieves tree top specified by argv[2] into a working set used
+by librt</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Preparing Geometry for Raytracing</title>
+
+<programlisting>rt_prep_parallel(rtip, 1);</programlisting>
+
+<para>Pre-computes useful terms for each primitive, e.g.,triangle
+normals, function roots, trig terms.</para>
+
+<para>Builds space partition tree to accelerate ray-trace</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Application Struct and Shot</title>
+
+<programlisting>struct application ap;
+ap.a_rt_i = rtip;
+VSET(ap.a_ray.r_pt, 0, 0, 10000);
+VSET(ap.a_ray.r_dir, 0, 0, -1);
+ap.a_hit = hit;	          /* where to go on a hit */
+ap.a_miss = miss;         /* where to go on a miss */
+
+(void)rt_shootray(&amp;); /* do it */</programlisting>
+
+  <para>The application struct contains information about the
+        ray that is to be computed and what should be done with the
+        results.</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Application Struct</title>
+
+<para>Excerpts of application struct from raytrace.h:</para>
+
+<programlisting>struct application {
+
+    struct xray  a_ray;	/* Actual ray to be shot */
+    int          (*a_hit)(struct application *,
+                          struct partition *,
+                          struct seg *);
+    int          (*a_miss) (struct application *);
+    int          a_onehit; /* flag to stop on first hit */
+
+    struct rt_i  *a_rt_i;  /* this librt instance *
+    /* ... */
+};/</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Miss Routine</title>
+
+<programlisting>int
+miss(register struct application *ap)
+{
+    bu_log("missed\n");
+    return (0); /* Value returned by rt_shootray() */
+}</programlisting>
+
+  <para>Called when ray does not hit any geometry.</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Hit Routine</title>
+
+<programlisting>int
+hit(register struct application *ap, /* see raytrace.h */
+    struct partition *PartHeadp)     /* see raytrace.h */
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t pt;
+    for (pp = PartHeadp-&gt;pt_forw;
+         pp != PartHeadp;
+         pp = pp-&gt;pt_forw ) {
+        hitp = pp-&gt;pt_inhit;
+        VJOIN1( pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
+        VPRINT(Hit Point, pt);
+    }
+    return 1; /* value returned by rt_shootray();
+}</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Hit Routine Breakdown</title>
+
+<programlisting>int
+hit(register struct application *ap,
+    struct partition *PartHeadp)
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t         pt;
+    /* ... */
+}</programlisting>
+
+  <para>Partition Structure contains information about intervals of
+  the ray which pass through geometry</para>
+
+  <para>Hit structure contains information about an individual
+  boundary/ray intersection</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Partition Structure</title>
+
+<programlisting>struct partition {
+    long              pt_magic;       /* sanity check               */
+    struct partition *pt_forw;        /* forwards link              */
+    struct partition *pt_back;        /* backwards link             */
+    struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
+    struct hit       *pt_inhit;       /* IN hit pointer             */
+    struct seg       *pt_outseg;      /* OUT seg pointer            */
+    struct hit       *pt_outhit;      /* OUT hit ptr                */
+    struct region    *pt_regionp;     /* ptr to containing region   */
+    char              pt_inflip;      /* flip inhit->hit_normal     */
+    char              pt_outflip;     /* flip outhit->hit_normal    */
+    struct region   **pt_overlap_reg; /* NULL-terminated array of
+                                       * overlapping regions.
+                                       * NULL if no overlap.
+                                       */
+    struct bu_ptbl  pt_seglist;       /* all segs in this partition */
+};</programlisting>
+
+ <para>From <filename>h/raytrace.h</filename>.</para>
+
+</section>
+
+<section>
+  <para>Hit Structure</para>
+
+<programlisting>struct hit {
+    long         hit_magic;
+    fastf_t      hit_dist;    /* dist from r_pt to hit_point      */
+    point_t      hit_point;   /* Intersection point               */
+    vect_t       hit_normal;  /* Surface Normal at hit_point      */
+    vect_t       hit_vpriv;   /* PRIVATE vector for xxx_*()       */
+    void        *hit_private; /* PRIVATE handle for xxx_shot()    */
+    int          hit_surfno;  /* solid-specific surface indicator */
+    struct xray *hit_rayp;    /* pointer to defining ray          */
+};</programlisting>
+
+ <para>From <filename>raytrace.h</filename>.  Holds information about
+ a single ray/surface intersection. (Note: Only
+ <filename>hit_dist</filename> is filled in by
+ <filename>librt</filename>.</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Hit Routine (Again)</title>
+
+<programlisting>int
+hit(register struct application *ap, /* see raytrace.h */
+    struct partition *PartHeadp)     /* see raytrace.h */
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t pt;
+    for (pp = PartHeadp-&gt;pt_forw;
+         pp != PartHeadp;
+         pp = pp-&gt;pt_forw ) {
+        hitp = pp-&gt;pt_inhit;
+        VJOIN1(pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
+        VPRINT(Hit Point, pt);
+    }
+    return 1; /* value returned by rt_shootray();
+}</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Using the RTUIF</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Makes shooting grids of rays easy.</para>
+      </listitem>
+      <listitem>
+        <para>Uses the same command line interface as rt.</para>
+      </listitem>
+      <listitem>
+        <para>Foundation for: rt, rtweight, rthide, and other raytracing based applications.</para>
+      </listitem>
+      <listitem>
+        <para>Simplest example shown in rt/viewdummy.c in source tree</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>The 5 RTUIF Functions</title>
+
+<itemizedlist>
+      <listitem>
+        <para>view_init</para>
+      </listitem>
+      <listitem>
+        <para>view_setup</para>
+      </listitem>
+      <listitem>
+        <para>view_2init</para>
+      </listitem>
+      <listitem>
+        <para>view_pixel</para>
+      </listitem>
+      <listitem>
+        <para>view_end</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>RTUIF Routines</title>
+
+<programlisting>int view_init(struct application *ap, char *file,
+              char *obj, int minus_o);
+</programlisting>
+
+<para>Called by main() at the start of a run. Returns 1 if framebuffer
+should be opened, else 0.</para>
+
+<programlisting>void view_setup(struct rt_i *rtip);</programlisting>
+
+  <para>Called by do_prep(), just before rt_prep() is
+  called, in do.c. This allows the lighting model to get
+  set up for this frame, e.g., generate lights, associate
+  materials routines, etc.</para>
+
+<programlisting>void view_2init(struct application *ap);</programlisting>
+
+  <para>Called at the beginning of a frame. Called by do_frame() just
+  before raytracing starts.</para>
+
+<programlisting>int rayhit(struct application *ap, struct partition *PartHeadp);</programlisting>
+
+  <para>Called via a_hit linkage from rt_shootray() when ray
+  hits.</para>
+
+<programlisting>int raymiss(struct application *ap);</programlisting>
+
+  <para>Called via a_miss linkage from rt_shootray() when ray
+  misses.</para>
+
+<programlisting>void view_pixel(struct application *ap);</programlisting>
+
+  <para>Called by worker() after the end of processing for each
+  pixel.</para>
+
+<programlisting>void view_end(struct application *ap);</programlisting>
+
+  <para>Called in do_frame() at the end of a frame, just after
+  raytracing completes.</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Thinking About Geometry</title>
+
+        <para>Now we look at actual geometry.</para>
+
+<itemizedlist>
+        <listitem><para>How to create it</para></listitem>
+        <listitem><para>How to read it</para></listitem>
+        <listitem><para>Doing something useful with it</para></listitem>
+</itemizedlist>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Geometric Representation</title>
+
+   <para>BRL-CAD geometry has 3 forms:</para>
+
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>External (Disk/DB)</para>
+              <itemizedlist>
+                <listitem>
+                  <para>Space efficient</para>
+                </listitem>
+                <listitem>
+                  <para>Network integers (Big-Endian)</para>
+                </listitem>
+                <listitem>
+                  <para>IEEE double-precision floating point (Big-Endian)</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+            <listitem>
+              <para>Internal (Editing)</para>
+              <itemizedlist>
+                <listitem>
+                  <para>Convenient parameter editing</para>
+                </listitem>
+                <listitem>
+                  <para>Host float/int representation</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+            <listitem>
+              <para>Prepped (Raytrace)</para>
+              <itemizedlist>
+                <listitem>
+                  <para>Fast ray/primitive intersections</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>On-Disk Representation</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Space Efficient</para>
+      </listitem>
+      <listitem>
+        <para>Machine independent</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Only in new database format</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>Database access is separate from object retrieval.</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Database layer returns named objects.</para>
+              <itemizedlist>
+                <listitem>
+                  <para>Does not understand content.</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+            <listitem>
+              <para>Primitive objects get Bag-o-Bytes to turn into in-memory representation.</para>
+              <itemizedlist>
+                <listitem>
+                  <para>Have no knowledge of data origins</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Internal Representation</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Convenient editing form</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Host format floating point and integers</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>Must be exported to be written to disk</para>
+      </listitem>
+      <listitem>
+        <para>Primitive shape data structures defined in h/rtgeom.h</para>
+      </listitem>
+      <listitem>
+        <para>Combination (and hence region) structure defined in raytrace.h</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Prep'ed Representation</title>
+
+<itemizedlist>
+      <listitem>
+        <para>The form that is actually raytraced</para>
+      </listitem>
+      <listitem>
+        <para>Created from internal form by rt_prep() call</para>
+      </listitem>
+      <listitem>
+        <para>May not include internal form</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Saves memory</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>May include additional fields</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Pre-computed values, additional data</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+</section>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Simple Database Application</title>
+
+        <para>Necessary headers</para>
+
+<programlisting>#include "conf.h"
+#include &lt;stdio.h&gt;
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Opening The Database</title>
+
+<programlisting>struct rt_wdb *wdbp;
+struct db_i *dbip = DBI_NULL;
+
+/* open first, to avoid clobbering existing databases */
+if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
+    /* build a wdbp structure for convenient read/write */
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+
+    if (db_dirbuild(dbip) &lt; 0 ) {
+        /* create directory database contents */
+        bu_log("Error building directory for %s\n",
+               argv[1]);
+        exit(-1);
+    }
+} else {
+    /* it doesn't exist, so we create one */
+    bu_log("doing wdb_fopen()\n");
+    wdbp = wdb_fopen(argv[1]); /* force create */
+}</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Creating Geometry</title>
+
+  <para>Note: All db units are in mm</para>
+
+  <para>Set mk_conv2mm global for other units</para>
+
+<programlisting>point_t lo, hi;
+/* ... */
+/* add an axis-aligned ARB8 */
+VSETALL(lo, 0.0);
+VSETALL(hi, 2.0);
+if (mk_rpp(wdbp, "mybox", lo, hi)) /* see libwdb for APIs */
+    return -1;
+
+/* add a sphere (really ellipse special case) */
+if (mk_sph(wdbp, "myball", hi, 0.5)) /* see libwdb for APIs */
+    return -1;</programlisting>
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Getting Geometry</title>
+
+    <para>To retrieve geometry, we have to get an internal
+    representation.</para>
+
+<programlisting>struct rt_db_internal ip;
+/* ... */
+RT_INIT_DB_INTERNAL(&amp;ip);
+cond = rt_db_lookup_internal(wdbp->dbip, "mybox", &amp;dp, &amp;ip,
+                             LOOKUP_QUIET, &amp;rt_uniresource);
+if (!cond) {
+    bu_log("couldn't find %s\n", "mybox");
+    exit(0);
+}
+if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
+    &amp;&amp; ip.idb_minor_type == ID_ARB8 /* see raytrace.h */) {
+
+    struct rt_arb_internal *arb; /* see rtgeom.h */
+    arb = (struct rt_arb_internal *)ip.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+    VPRINT("First Point", arb->pt[0]);
+    /* ... */
+}</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Primitive Methods</title>
+
+  <para>Retrieved geometry has a specific set of defined operations
+  and methods available. See <filename>h/raytrace.h</filename> for a
+  description of <filename>struct rt_functab</filename>.</para>
+
+  <para>Primitives should implement every method, but some do not. See
+  librt/table.c for specifics.</para>
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Putting Geometry Back</title>
+
+  <para>Database I/O layer converts from internal to external
+  format.</para>
+
+<programlisting>wdb_export(wdbp, "mybox", arb, ID_ARB8, mk_conv2mm);</programlisting>
+
+</section>
+
+<section>
+  <title>Building Boolean Trees</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Regions/combinations used to store boolean trees.</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Both are same type of database record</para>
+            </listitem>
+            <listitem>
+              <para>old GIFT form detailed here</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>Simple boolean tree that contains</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Names of objects</para>
+            </listitem>
+            <listitem>
+              <para>Boolean operations.</para>
+            </listitem>
+            <listitem>
+              <para>Matrix transformations</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>Database record contains no actual geometry.</para>
+      </listitem>
+      <listitem>
+        <para>Example code taken from</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>libwdb/wdb_example.c</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Constructing Boolean List</title>
+
+  <para>Build the list of elements first:</para>
+
+<programlisting>struct wmember wm_hd; /* defined in wdb.h */
+BU_LIST_INIT(&amp;wm_hd.l);
+
+/* see h/wdb.h or libwdb/reg.c for API conv or proc-db
+ * for examples
+ */
+(void)mk_addmember("mybox", &amp;wm_hd.l, NULL, WMOP_UNION);
+
+/* If we wanted a transformation matrix for this element, we could
+ * have passed the matrix in to mk_addmember as an argument or we
+ * could add the following code:
+ */
+
+memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
+/* Remember that values in the database are stored in millimeters,
+ * so the values in the matrix must take this into account.
+ */
+(void)mk_addmember("myball", &amp; wm_hd.l, NULL, WMOP_SUBTRACT);</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Regions/Combinations</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Constructing the actual combination record</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Note: use mk_lcomb/mk_comb for initial creation only!</para>
+              <itemizedlist>
+                <listitem>
+                  <para>caveat: can use to update boolean tree under special conditions</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>int is_region = 1;
+VSET(rgb, 64, 180, 96); /* a nice green */
+
+/* mk_lcomb is a macro using mk_comb.
+ * See libwdb/mk_comb() for full form
+ */
+mk_lcomb(wdbp,
+         "box_n_ball.r", /* Name of the db element created          */
+         &amp;wm_hd,         /* list of elements and boolean operations */
+         is_region,      /* Flag:  This is a region                 */
+         "plastic",      /* optical shader                          */
+         "di=.8 sp=.2",  /* shader parameters                       */
+         rgb,            /* item color                              */
+         0);             /* inherit (override) flag                 */</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Retrieving A Combination</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Simple retrieval only gets:</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>List of elements</para>
+            </listitem>
+            <listitem>
+              <para>Boolean operations</para>
+            </listitem>
+            <listitem>
+              <para>Matrix transformations.</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>struct rt_comb_internal *comb; /* see raytrace.h */
+/* ... */
+rt_db_lookup_internal(wdbp->dbip, "box_n_ball.r", &amp;dp, &amp;ip,
+                      LOOKUP_QUIET, &amp;rt_uniresource);
+
+if (ip.idb_major_type != DB5_MAJORTYPE_BRLCAD /* see db5.h */
+    || ip.idb_minor_type != ID_COMBINATION /* see raytrace.h */ ) {
+    bu_bomb("gack\n");
+}
+comb = (struct rt_comb_internal *)ip.idb_ptr;
+RT_CK_COMB(comb);</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Combination Write-Back</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Modify the boolean tree</para>
+      </listitem>
+      <listitem>
+        <para>Write back out to db</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>/* Modify the combination we retrieved */
+RT_GET_TREE(a, &amp;rt_uniresource);
+RT_GET_TREE(b, &amp;rt_uniresource);
+
+a->tr_l.tl_name = bu_strdup("newball");
+a->tr_l.tl_op = OP_DB_LEAF;
+a->tr_l.tl_mat = (matp_t)NULL;
+a->tr_l.magic = RT_TREE_MAGIC;
+
+b->tr_b.magic = RT_TREE_MAGIC;
+b->tr_b.tb_left = comb->tree;
+b->tr_b.tb_right = a;
+b->tr_b.tb_op = OP_UNION;
+
+comb->tree = b;
+wdb_export(wdbp, "box_n_ball.r", comb, ID_COMBINATION, 1.0);</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Combination Tree Info</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Need to prep the tree to obtain geometry</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>First, create rt instance struct rt_i object</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>struct rt_i *rtip; /* see raytrace.h */
+
+/* if we've been doing db I/O */
+rtip = rt_new_rti(wdbp->dbip);
+
+/* if not already doing db I/O */
+rtip=rt_dirbuild(filename, idbuf, sizeof(idbuf));</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Processing combination tree</title>
+
+  <para>Now to retrieve a treetop and prep:</para>
+
+<programlisting>rt_gettree(rtip, "box_n_ball.r");
+rt_prep(rtip);   /* now rtip has valid information */</programlisting>
+
+  <para>This could have been any level in the tree, not just a region.</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Accessing Prep'ed Regions</title>
+
+<itemizedlist>
+      <listitem>
+        <para>rtip has list of regions</para>
+      </listitem>
+      <listitem>
+        <para>Access as a linked list</para>
+      </listitem>
+      <listitem>
+        <para>Example: getting bounding box of regions</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>struct region *rp; /* see raytrace.h */
+
+for (BU_LIST_FOR(rp, region, &amp;rtip->HeadRegion)) {
+    point_t tree_min, tree_max;
+    VSETALL(tree_max, MAX_FASTF);
+    VREVERSE(tree_min, tree_max);
+    if (rt_bound_tree(rp->reg_treetop, tree_min, tree_max)) {
+    	bu_bomb("choke\n");
+    }
+    VPRINT("tree_min", tree_min); /* VPRINT is a macro from vmath.h */
+    VPRINT("tree_max", tree_max);
+}</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Making Temporary Changes</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Changes that only last for 1 application run</para>
+      </listitem>
+      <listitem>
+        <para>Changes do not reside in on-disk database</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Dynamic Geometry</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Involves special inmem database</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para><itemizedlist>
+            <listitem>
+              <para>Contains only modifications</para>
+            </listitem>
+            <listitem>
+              <para>Akin to union filesystem of Unix</para>
+            </listitem>
+          </itemizedlist>
+</para>
+      </listitem>
+    </itemizedlist>
+<itemizedlist>
+      <listitem>
+        <para>Directory structure tracks whether current version of object is on disk or in inmem database</para>
+      </listitem>
+      <listitem>
+        <para>Object retrieval gets most current version</para>
+      </listitem>
+      <listitem>
+        <para>Writes to inmem arranged though special wdb_dbopen() call</para>
+      </listitem>
+    </itemizedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Accessing inmem database</title>
+
+<itemizedlist>
+      <listitem>
+        <para>small difference in wdb_dbopen call</para>
+      </listitem>
+      <listitem>
+        <para>all writes to this rt_wdb will go to memory database only</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>struct rt_wdb *wdb_memp;
+struct db_i *dbip = DBI_NULL;
+
+if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
+    /*  The "INMEM" specifies that changes are to be made
+     * ONLY in memory.  Reads still come from disk for non-mem obj
+     */
+    wdb_memp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+
+    if( db_dirbuild( dbip ) &lt; 0 ) { /* create database content directory */
+        bu_log( "Error building directory for %s\n", argv[1] ); exit(-1);
+    }
+}</programlisting>
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Closing the Database</title>
+
+<itemizedlist>
+      <listitem>
+        <para>Important to flush data and purge data structures!</para>
+      </listitem>
+    </itemizedlist>
+
+<programlisting>wdb_close(wdbp);</programlisting>
+
+</section>
+
+</article>

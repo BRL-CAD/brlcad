@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -84,8 +84,8 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 	    goto good;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -101,10 +101,17 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 
 	    /* found a match */
-	    if (both)
-		bu_vls_printf(gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
-	    else
-		bu_vls_printf(gedp->ged_result_str, "%d", sp->s_dmode);
+	    if (sp->s_hiddenLine) {
+		if (both)
+		    bu_vls_printf(gedp->ged_result_str, "%d 1", _GED_HIDDEN_LINE);
+		else
+		    bu_vls_printf(gedp->ged_result_str, "%d", _GED_HIDDEN_LINE);
+	    } else {
+		if (both)
+		    bu_vls_printf(gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
+		else
+		    bu_vls_printf(gedp->ged_result_str, "%d", sp->s_dmode);
+	    }
 
 	    goto good;
 	}
@@ -117,7 +124,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 good:
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "ged_how: directory pointers");
+	bu_free((void *)dpp, "ged_how: directory pointers");
 
     return GED_OK;
 }
@@ -175,7 +182,7 @@ _ged_build_dpp(struct ged *gedp,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
+    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
@@ -183,7 +190,7 @@ _ged_build_dpp(struct ged *gedp,
 	    /* object is not currently being displayed */
 	    bu_vls_printf(gedp->ged_result_str, "-1");
 
-	    bu_free((genptr_t)dpp, "_ged_build_dpp: directory pointers");
+	    bu_free((void *)dpp, "_ged_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;

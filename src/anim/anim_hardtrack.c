@@ -1,7 +1,7 @@
 /*                A N I M _ H A R D T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
 
 #define NW num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -111,6 +111,11 @@ int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile in.table out.script\n");
+}
 
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
@@ -228,7 +233,7 @@ get_args(int argc, char **argv)
 		get_circumf = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
+		/* getopt already reported any unknown option */
 		return 0;
 	}
     }
@@ -255,7 +260,7 @@ track_prep(void)
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
 	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
-	    x[PREV(i)].w.ang1 += 2.0*M_PI;
+	    x[PREV(i)].w.ang1 += M_2PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
     }
 
@@ -263,7 +268,7 @@ track_prep(void)
     for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
-	    arc_angle += 2.0*M_PI;
+	    arc_angle += M_2PI;
 	if (arc_angle > M_PI) {
 	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
@@ -344,9 +349,14 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
+
     if (!get_args(argc, argv)) {
-	fprintf(stderr, "anim_hardtrack: argument error.");
-	return -1;
+	usage();
+	return 0;
     }
 
     if (axes || cent) {

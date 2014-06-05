@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/sort.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -81,16 +82,51 @@ ged_close(struct ged *gedp)
 	gedp->ged_wdbp = RT_WDB_NULL;
     }
 
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-	qray_free(gedp->ged_gdp);
-	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
-	gedp->ged_gdp = GED_DRAWABLE_NULL;
-    }
-
     ged_free(gedp);
-    bu_free((genptr_t)gedp, "struct ged");
 }
 
+static int
+free_selection_set_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
+{
+    int i;
+    struct rt_selection_set *selection_set;
+    struct bu_ptbl *selections;
+    void (*free_selection)(struct rt_selection *);
+
+    selection_set = (struct rt_selection_set *)bu_get_hash_value(entry);
+    selections = &selection_set->selections;
+    free_selection = selection_set->free_selection;
+
+    /* free all selection objects and containing items */
+    for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
+	long *s = BU_PTBL_GET(selections, i);
+	free_selection((struct rt_selection *)s);
+	bu_ptbl_rm(selections, s);
+    }
+    bu_ptbl_free(selections);
+    BU_FREE(selection_set, struct rt_selection_set);
+
+    return 0;
+}
+
+static int
+free_object_selections(struct bu_hash_entry *entry, void *UNUSED(arg))
+{
+    struct rt_object_selections *obj_selections;
+
+    obj_selections = (struct rt_object_selections *)bu_get_hash_value(entry);
+
+    /* free entries - one set for each kind of selection */
+    bu_hash_tbl_traverse(obj_selections->sets, free_selection_set_entry, NULL);
+
+    /* free table itself */
+    bu_hash_tbl_free(obj_selections->sets);
+
+    /* free object */
+    bu_free(obj_selections, "ged selections entry");
+
+    return 0;
+}
 
 void
 ged_free(struct ged *gedp)
@@ -99,24 +135,33 @@ ged_free(struct ged *gedp)
 	return;
 
     gedp->ged_wdbp = RT_WDB_NULL;
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
+    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+	if (gedp->ged_gdp->gd_headDisplay)
+	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->ged_gdp->gd_headVDraw)
+	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->ged_gdp);
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
+    }
 
     if (gedp->ged_log) {
 	bu_vls_free(gedp->ged_log);
-	bu_free(gedp->ged_log, "release ged_log");
-	gedp->ged_log = NULL; /* sanity */
+	BU_PUT(gedp->ged_log, struct bu_vls);
+    }
+
+    if (gedp->ged_results) {
+	ged_results_free(gedp->ged_results);
+	BU_PUT(gedp->ged_results, struct ged_results);
     }
 
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
-	bu_free(gedp->ged_result_str, "release ged_result_str");
-	gedp->ged_result_str = NULL; /* sanity */
+	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    if (gedp->ged_gdp) {
-	bu_free(gedp->ged_gdp, "release ged_gdp");
-	gedp->ged_gdp = NULL; /* sanity */
-    }
+    bu_hash_tbl_traverse(gedp->ged_selections, free_object_selections, NULL);
+    bu_hash_tbl_free(gedp->ged_selections);
 }
 
 
@@ -132,12 +177,18 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
 
+    BU_GET(gedp->ged_results, struct ged_results);
+    (void)_ged_results_init(gedp->ged_results);
+
+    /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
     BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
+    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
+    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     /* yuck */
@@ -148,6 +199,8 @@ ged_init(struct ged *gedp)
     gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
+
+    gedp->ged_selections = bu_hash_tbl_create(0);
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;
@@ -241,6 +294,8 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
+    gvp->gv_data_vZ = 1.0;
+
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
@@ -292,7 +347,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	if (dbip == DBI_NULL) {
 	    int i;
 
-	    BU_GET(dbip, struct db_i);
+	    BU_ALLOC(dbip, struct db_i);
 	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
@@ -352,8 +407,8 @@ _ged_open_dbip(const char *filename, int existing_only)
     struct db_i *dbip;
 
     /* open database */
-    if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r")) == DBI_NULL)) {
+    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database
@@ -379,6 +434,14 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 
     return dbip;
+}
+
+
+HIDDEN int
+_ged_cmp_attr(const void *p1, const void *p2, void *UNUSED(arg))
+{
+    return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
+		     ((struct bu_attribute_value_pair *)p2)->name);
 }
 
 
@@ -452,13 +515,15 @@ _ged_print_node(struct ged *gedp,
 	    return;
 	}
 
-	/* list all the attributes, if any */
+	/* FIXME: manually list all the attributes, if any.  should be
+	 * calling ged_attr() show so output formatting is consistent.
+	 */
 	if (avs.count) {
 	    struct bu_attribute_value_pair *avpp;
 	    int max_attr_name_len = 0;
 
 	    /* sort attribute-value set array by attribute name */
-	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmp_attr, NULL);
 
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		int len = (int)strlen(avpp->name);
@@ -534,7 +599,7 @@ _ged_print_node(struct ged *gedp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j = 0; j < pathpos+1; j++)

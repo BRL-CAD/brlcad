@@ -6,23 +6,17 @@ set(TCLCAD_INCLUDE_DIRS
   ${GED_INCLUDE_DIRS}
   )
 
-# We need to guarantee internal Tcl headers
+# Include directories only needed by the implementation
 set(TCLCAD_LOCAL_INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
   ${PNG_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
 
-add_definitions(
-  ${C99_FLAG}
-  ${XOPEN_DEFINE}
-  )
+if(BRLCAD_ENABLE_X11)
+  set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(BRLCAD_ENABLE_X11)
 
-set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
 set(LIBTCLCAD_SRCS
   tclcad.c
   tclcadAutoPath.c
@@ -30,11 +24,10 @@ set(LIBTCLCAD_SRCS
   tkImgFmtPIX.c
   cmdhist_obj.c
   )
-BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS};${X11_Xi_LIB}")
+BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)
 CMAKEFILES(${tclcad_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

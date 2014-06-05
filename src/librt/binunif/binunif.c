@@ -1,7 +1,7 @@
 /*                       B I N U N I F . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -86,7 +86,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* create the rt_binunif internal form */
-    BU_GET(bip, struct rt_binunif_internal);
+    BU_ALLOC(bip, struct rt_binunif_internal);
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = minor_type;
 
@@ -113,8 +113,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
-    intern.idb_ptr = (genptr_t)bip;
-    intern.idb_meth = &rt_functab[ID_BINUNIF];
+    intern.idb_ptr = (void *)bip;
+    intern.idb_meth = &OBJ[ID_BINUNIF];
 
     /* create body portion of external form */
     ret = -1;

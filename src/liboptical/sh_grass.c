@@ -1,7 +1,7 @@
 /*                      S H _ G R A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "raytrace.h"
@@ -180,14 +181,13 @@ static const struct grass_specific grass_defaults = {
 
 #define SHDR_NULL ((struct grass_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct grass_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-    {"%g", 2, "cell",		SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "cell",		SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "t",		SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -202,7 +202,7 @@ struct bu_structparse grass_print_tab[] = {
 };
 struct bu_structparse grass_parse_tab[] = {
     {"%p", 1, "grass_print_tab", bu_byteoffset(grass_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 2, "c",			SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "c",			SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "pd",			SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -216,10 +216,10 @@ struct bu_structparse grass_parse_tab[] = {
 };
 
 
-HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void grass_print(register struct region *rp, genptr_t dp);
-HIDDEN void grass_free(genptr_t cp);
+HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void grass_print(register struct region *rp, void *dp);
+HIDDEN void grass_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -392,7 +392,7 @@ make_proto(struct grass_specific *grass_sp)
      * for all the other blades.  Most significantly, the others are just
      * a rotation/scale of this first one.
      */
-    bn_mat_zrot(r, sin(bn_degtorad*137.0), cos(bn_degtorad*137.0));
+    bn_mat_zrot(r, sin(DEG2RAD*137.0), cos(DEG2RAD*137.0));
     MAT_COPY(m, r);
 
     seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
@@ -413,23 +413,16 @@ make_proto(struct grass_specific *grass_sp)
 	    grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
 
 	    angle = start_angle - (double)seg * seg_delta_angle;
-	    angle *= bn_degtorad;
+	    angle *= DEG2RAD;
 	    VSET(grass_sp->proto.b[blade].leaf[seg].blade,
 		 cos(angle), 0.0, sin(angle));
 
 	    /* pick a length for the blade */
 	    tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
-
-	    grass_sp->proto.b[blade].leaf[seg].len =
-#if 1
-		seg_len * .25 + tmp * (seg_len*1.75);
-#else
-	    (grass_sp->t*.8) + seg * (grass_sp->t*.5);
-#endif
-	    grass_sp->proto.b[blade].tot_len +=
-		grass_sp->proto.b[blade].leaf[seg].len;
-
+	    /* magic */
+	    grass_sp->proto.b[blade].leaf[seg].len = seg_len * .25 + tmp * (seg_len*1.75);
+	    grass_sp->proto.b[blade].tot_len += grass_sp->proto.b[blade].leaf[seg].len;
 
 	    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
 	    VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
@@ -485,14 +478,13 @@ make_proto(struct grass_specific *grass_sp)
 }
 
 
-/* G R A S S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -552,23 +544,17 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
- * G R A S S _ P R I N T
- */
 HIDDEN void
-grass_print(register struct region *rp, genptr_t dp)
+grass_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, grass_print_tab, (char *)dp);
 }
 
 
-/*
- * G R A S S _ F R E E
- */
 HIDDEN void
-grass_free(genptr_t cp)
+grass_free(void *cp)
 {
-    bu_free(cp, "grass_specific");
+    BU_PUT(cp, struct grass_specific);
 }
 
 
@@ -595,7 +581,6 @@ plot_bush(struct plant *pl, struct grass_ray *r)
 	}
     }
 
-#if 1
     /* plot bounding Box */
     pl_color(r->fd, 100, 200, 100);
     pdv_3move(r->fd, pl->pmin);
@@ -611,7 +596,6 @@ plot_bush(struct plant *pl, struct grass_ray *r)
     pd_3cont(r->fd, pl->pmin[X], pl->pmax[Y], pl->pmax[Z]);
     pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmax[Z]);
 
-#endif
     pl_color(r->fd, 255, 255, 255);
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
@@ -651,7 +635,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
     VSCALE(pt, pl->root, grass_sp->size);
 
     plant_scale(pl, w);	/* must come first */
-    plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0);/* computes bounding box */
+    plant_rot(pl, BN_RANDOM(idx) * M_2PI);/* computes bounding box */
 
     /* set bounding boxes */
     for (blade=0; blade < pl->blades; blade++) {
@@ -743,11 +727,11 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	    bu_log("\t    ");
 	    switch (cond) {
 		case -2: bu_log("lines parallel  "); break;
-		case -1: bu_log("lines colinear  "); break;
+		case -1: bu_log("lines collinear "); break;
 		case  0: bu_log("lines intersect "); break;
 		case  1: bu_log("lines miss      "); break;
 	    }
-	    bu_log("d1:%g d2:%g\n", cond, V2ARGS(ldist));
+	    bu_log("d1:%d d2:%g %g\n", cond, V2ARGS(ldist));
 	}
 	if (ldist[0] < 0.0 		/* behind ray */ ||
 	    ldist[0] >= r->d_max	/* beyond out point */ ||
@@ -921,7 +905,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
     CK_grass_SP(grass_sp);
 
     CELL_POS(cell_pos, grass_sp, cell);
-    bu_log("plotting cell %d, %d (%g, %g) %g %g\n",
+    bu_log("plotting cell %ld, %ld (%g, %g) %g %g\n",
 	   V2ARGS(cell), V2ARGS(cell_pos), V2ARGS(grass_sp->cell));
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -938,8 +922,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
 }
 
 
-/* I S E C T _ C E L L
- *
+/*
  * Intersects a region-space ray with a grid cell of grass.
  *
  */
@@ -970,7 +953,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "g_ray%d, %d_%d_cell%ld, %ld_.pl",
+	sprintf(buf, "g_ray%d, %d_%d_cell%ld, %ld_.plot3",
 		r->ap->a_x, r->ap->a_y, plot_num++, cell[0], cell[1]);
 	r->fd = fopen(buf, "wb");
 	if (r->fd) {
@@ -1102,7 +1085,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	    cell[Y] = cell_num[Y] + y;
 
 	    if (rdebug&RDEBUG_SHADE)
-		bu_log("checking relative cell %2d, %2d at(%d, %d)\n",
+		bu_log("checking relative cell %2d, %2d at(%ld, %ld)\n",
 		       x, y, V2ARGS(cell));
 
 	    isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist);
@@ -1113,14 +1096,12 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 
 
 /*
- * G R A S S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */
@@ -1308,7 +1289,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	    if (rdebug&RDEBUG_SHADE) {
 		bu_log("dist:%g (%g %g %g)\n", curr_dist,
 		       V3ARGS(curr_pt));
-		bu_log("cell num: %d %d\n", V2ARGS(cell_num));
+		bu_log("cell num: %ld %ld\n", V2ARGS(cell_num));
 	    }
 	    CELL_POS(cell_pos, grass_sp, cell_num);
 

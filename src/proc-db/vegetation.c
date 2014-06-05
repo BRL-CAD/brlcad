@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ findIntersectors(const growthSegment_t * const segment, const structure_t * cons
 	return NULL;
     }
     if (bigList == NULL) {
-	bigList = (segmentList_t *)bu_calloc(1, sizeof(segmentList_t), "bigList");
+	BU_ALLOC(bigList, segmentList_t);
 	INIT_GROWTHSEGMENTLIST_T(bigList);
 
 	/* allocate 10 initial segment slots */
@@ -199,7 +199,7 @@ findIntersectors(const growthSegment_t * const segment, const structure_t * cons
     for (i=0; i < structure->subStructureCount; i++) {
 	segList = findIntersectors(segment, structure->subStructure[i], exemptList);
 
-	if(segList == NULL) {
+	if (segList == NULL) {
 	    bu_log("segList is null?\n");
 	    return NULL;
 	}
@@ -356,7 +356,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 		    */
 
 		    /* create and fill in the growth point */
-		    newGrowthPoint = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "newGrowthPoint");
+		    BU_ALLOC(newGrowthPoint, growthPoint_t);
 		    INIT_GROWTHPOINT_T(newGrowthPoint);
 		    newGrowthPoint->growthEnergy = plant->characteristic->growthEnergy;
 
@@ -375,7 +375,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 		    newGrowthPoint->age = 0;
 
 		    /* associate the point with a new structure */
-		    newGrowthPoint->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "newGrowthPoint->structure");
+		    BU_ALLOC(newGrowthPoint->structure, structure_t);
 		    INIT_STRUCTURE_T(newGrowthPoint->structure);
 
 		    /* make sure the growth point is linked back to his parent branch */
@@ -494,7 +494,7 @@ growPlant(plant_t *plant)
 		continue;
 	    }
 
-	    segment = (growthSegment_t *)bu_calloc(1, sizeof(growthSegment_t), "segment");
+	    BU_ALLOC(segment, growthSegment_t);
 
 	    INIT_GROWTHSEGMENT_T(segment);
 	    VMOVE(segment->position, point->position);
@@ -640,7 +640,7 @@ growPlant(plant_t *plant)
 
 	    /* what if there is no structure yet? -- make one */
 	    if (point->structure == NULL) {
-		point->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "point->structure");
+		BU_ALLOC(point->structure, structure_t);
 		INIT_STRUCTURE_T(point->structure);
 	    }
 
@@ -683,27 +683,27 @@ createPlant(unsigned int age, vect_t position, double radius, vect_t direction, 
     }
 
     /* not our responsibility to release this sucker in here -- it is what we return */
-    plant = (plant_t *)bu_calloc(1, sizeof(plant_t), "plant");
+    BU_ALLOC(plant, plant_t);
     INIT_PLANT_T(plant);
     VMOVE(plant->position, position);
     plant->radius = radius;
     VMOVE(plant->direction, direction);
     plant->characteristic = characteristic;
 
-    plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
+    BU_ALLOC(plant->structure, structure_t);
     INIT_STRUCTURE_T(plant->structure);
-    plant->structure->segment = (growthSegment_t **)bu_calloc(1, sizeof(growthSegment_t *), "plant->structure->segment");
+    BU_ALLOC(plant->structure->segment, growthSegment_t *);
     plant->structure->segmentCapacity=1;
 
-    plant->structure->subStructure = (structure_t **)bu_calloc(1, sizeof(structure_t *), "plant->structure->subStructure");
+    BU_ALLOC(plant->structure->subStructure, structure_t *);
     plant->structure->subStructureCapacity=1;
 
-    gpoints = (growthPointList_t *)bu_calloc(1, sizeof(growthPointList_t), "gpoints");
+    BU_ALLOC(gpoints, growthPointList_t);
     INIT_GROWTHPOINTLIST_T(gpoints);
 
     gpoints->point = (growthPoint_t **)bu_calloc(10, sizeof(growthPoint_t *), "gpoints->point");
     gpoints->capacity=10;
-    gpoints->point[0] = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "gpoints->point[0]");
+    BU_ALLOC(gpoints->point[0], growthPoint_t);
     gpoints->count=1;
     INIT_GROWTHPOINT_T(gpoints->point[0]);
 
@@ -898,38 +898,37 @@ main(int argc, char *argv[])
     printf("Vegetation generator\n");
     printf("====================\n");
 
-    if (argc > 1) {
+    if (argc > 1)
 	age = atoi(argv[1]);
-    }
+
     if (age == 0)
 	age = 1;
-    if (age > UINT32_MAX)
+    else if (age > UINT32_MAX)
 	age = UINT32_MAX;
 
     printf("Growing for %d years\n", age);
-    if (argc > 2) {
+    if (argc > 2)
 	height = atof(argv[2]);
-    }
+
     if (height < (SMALL_FASTF * 1000.0))
 	height = (SMALL_FASTF * 1000.0);
 
     printf("Growing to about %f meters in height\n", height / 1000);
-    if (argc > 3) {
+    if (argc > 3)
 	trunkRadius = atof(argv[3]);
-    }
+
     if (trunkRadius < (SMALL_FASTF * 1000.0))
 	trunkRadius = (SMALL_FASTF * 1000.0);
 
     printf("Growing from a base width of %f meters\n", trunkRadius / 1000);
-    if (argc > 4) {
+    if (argc > 4)
 	branchingRate = atof(argv[4]);
-    }
+
     if (branchingRate < SMALL_FASTF)
 	branchingRate = SMALL_FASTF;
 
-    if (argc > 5) {
+    if (argc > 5)
 	seed = atol(argv[5]);
-    }
 
     /* save the seed just in case we want to know it */
     seed=time(0);

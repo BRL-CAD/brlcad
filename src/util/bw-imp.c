@@ -1,7 +1,7 @@
 /*                        B W - I M P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,8 @@ static int dither[8][8] =		/* dither pattern */
 static int (*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE *infp;			/* input file handle */
-static char *file_name = "-";	/* name of input file, for banner */
+static const char hyphen[] = "hyphen";
+static const char *file_name = hyphen;	/* name of input file, for banner */
 
 static size_t height;			/* input height */
 static size_t width;			/* input width */
@@ -92,7 +93,7 @@ int im_header(void);
 void im_write(int y);
 
 char usage[] = "\
-Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
+Usage: bw-imp [-D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
 int
@@ -100,12 +101,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hDs:n:w:t:X:Y:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "Ds:n:w:t:X:Y:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
-		break;
 	    case 'D':
 		/* halftone instead of dither */
 		pattern = halftone;
@@ -138,14 +135,14 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return false;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "bw-imp: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "bw-imp: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return false;
 	}
     }
@@ -208,7 +205,7 @@ im_header(void)
 {
 
     printf("@document(language impress, prerasterization on, Name \"%s\")",
-		 file_name
+	   file_name
 	);
 
     /* The margins need to be multiples of 16 (printer word align) */

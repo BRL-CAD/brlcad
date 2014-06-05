@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,8 +56,8 @@ char *p_rfin[] = {
 };
 
 
-/* F _ R F A R B () :	finds arb8 given.....
- *
+/*
+ * Finds arb8 given:
  * 1. one point
  * 2. 2 coordinates of 3 other points
  * 3. rot and fallback angles
@@ -222,8 +222,9 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
-    internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    internal.idb_meth = &OBJ[ID_ARB8];
+    BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
+
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -279,7 +280,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }

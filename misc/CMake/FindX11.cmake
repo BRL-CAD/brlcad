@@ -1,7 +1,7 @@
 #                   F I N D X 1 1 . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -519,9 +519,10 @@ if(UNIX)
       foreach(pathitem ${X11_HDR_PATHS})
 	message("Headers found in ${pathitem}:")
 	foreach(varitem ${X11_HDR_VARS})
-	  if("${${varitem}}" MATCHES "${pathitem}")
+	  get_filename_component(item_path "${${varitem}}" PATH)
+	  if("${item_path}" STREQUAL "${pathitem}")
 	    message("     ${varitem}:${${varitem}}")
-	  endif("${${varitem}}" MATCHES "${pathitem}")
+	  endif("${item_path}" STREQUAL "${pathitem}")
 	endforeach(varitem ${X11_HDR_PATHS})
 	message(" ")
       endforeach(pathitem ${X11_HDR_PATHS})
@@ -539,9 +540,10 @@ if(UNIX)
       foreach(pathitem ${X11_LIB_PATHS})
 	message("Libraries found in ${pathitem}:")
 	foreach(varitem ${X11_LIB_VARS})
-	  if("${${varitem}}" MATCHES "${pathitem}")
+	  get_filename_component(item_path "${${varitem}}" PATH)
+	  if("${item_path}" STREQUAL "${pathitem}")
 	    message("     ${varitem}:${${varitem}}")
-	  endif("${${varitem}}" MATCHES "${pathitem}")
+	  endif("${item_path}" STREQUAL "${pathitem}")
 	endforeach(varitem ${X11_LIB_PATHS})
 	message(" ")
       endforeach(pathitem ${X11_LIB_PATHS})

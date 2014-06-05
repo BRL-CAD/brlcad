@@ -1,7 +1,7 @@
 /*                         G E T _ T Y P E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -191,6 +191,9 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BREP:
 	    bu_vls_printf(gedp->ged_result_str, "brep");
+	    break;
+	case DB5_MINORTYPE_BRLCAD_METABALL:
+	    bu_vls_printf(gedp->ged_result_str, "metaball");
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "other");

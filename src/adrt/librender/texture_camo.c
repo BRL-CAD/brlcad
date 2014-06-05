@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C A M O . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,35 +19,15 @@
  */
 /** @file librender/texture.h
  *
- *  Comments -
- *      Texture Library - Applies a 3 color camouflage
+ * Comments -
+ * Texture Library - Applies a 3 color camouflage
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-void
-texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3) {
-    struct texture_camo_s   *sd;
-
-    texture->data = bu_malloc(sizeof(struct texture_camo_s), "camo data");
-    texture->free = texture_camo_free;
-    texture->work = (texture_work_t *)texture_camo_work;
-
-    sd = (struct texture_camo_s *)texture->data;
-    sd->size = size;
-    sd->octaves = octaves;
-    sd->absolute = absolute;
-    VMOVE(sd->color1, color1);
-    VMOVE(sd->color2, color2);
-    VMOVE(sd->color3, color3);
-
-    texture_perlin_init(&sd->perlin);
-}
 
 void
 texture_camo_free(struct texture_s *texture) {
@@ -57,6 +37,7 @@ texture_camo_free(struct texture_s *texture) {
     texture_perlin_free(&td->perlin);
     bu_free(texture->data, "camo data");
 }
+
 
 void
 texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -89,6 +70,7 @@ texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSE
     if (sum2 < 0.3)
 	VMOVE(*pixel, td->color3);
 }
+
 
 /*
  * Local Variables:

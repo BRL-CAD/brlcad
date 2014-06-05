@@ -1,7 +1,7 @@
 #                B O T U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -26,19 +26,6 @@
 package require Tk
 package require Itcl
 package require Itk
-
-if {$tcl_platform(platform) == "windows"} {
-    load [file join [bu_brlcad_root [bu_brlcad_dir bin]] libbu[info sharedlibextension]]
-} else {
-    load [file join [bu_brlcad_root [bu_brlcad_dir lib]] libbu[info sharedlibextension]]
-}
-
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-}
 
 ::itcl::class BotUtility {
     inherit Utility

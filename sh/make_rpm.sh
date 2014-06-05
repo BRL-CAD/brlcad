@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ if test ! -x "`which rpm 2>/dev/null`" ; then
     ferror "Missing \"rpm\" command" "Exiting..."
 fi
 fcheck(){
-    if ! `rpm -q $1 &>/dev/null` ; then
+    if ! rpm -q $1 >/dev/null 2>&1 ; then
 	echo "* Missing $1..."
 	LLIST=$LLIST" "$1
 	E=1
@@ -115,7 +115,7 @@ if [ $E -eq 1 ]; then
 fi
 
 # set variables
-BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+BVERSION="`sed 's/[^0-9]//g' include/conf/MAJOR`.`sed 's/[^0-9]//g' include/conf/MINOR`.`sed 's/[^0-9]//g' include/conf/PATCH`"
 TMPDIR="misc/$DNAME-tmp"
 RELEASE="0"
 
@@ -141,6 +141,9 @@ rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
+# create "version" file
+echo $BVERSION >$TMPDIR/version
+
 # compile and install in tmp dir
 cmake -DBRLCAD_BUNDLED_LIBS=ON \
       -DBRLCAD_FLAGS_OPTIMIZATION=ON \
@@ -153,7 +156,7 @@ cmake -DBRLCAD_BUNDLED_LIBS=ON \
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
-# copy menu files
+# copy menu files and others
 mkdir -p $TMPDIR/tmp/etc/profile.d
 cp -f $TMPDIR/brlcad.sh $TMPDIR/tmp/etc/profile.d
 
@@ -175,6 +178,9 @@ cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
 cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+
+mkdir -p $TMPDIR/tmp/usr/brlcad
+cp -f $TMPDIR/version $TMPDIR/tmp/usr/brlcad
 
 # copy icons
 for I in 16x16 24x24 36x36 48x48 64x64 96x96 128x128 256x256
@@ -249,8 +255,6 @@ then
     fi
 fi
 
-source /etc/profile.d/brlcad.sh || :
-
 update-mime-database /usr/share/mime || :
 update-desktop-database -q || :
 gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
@@ -286,14 +290,13 @@ fi
 echo -e '
 %files' >> $TMPDIR/brlcad.spec
 
-find $TMPDIR/tmp/ -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
-find $TMPDIR/tmp/ -type f | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
-find $TMPDIR/tmp/ -type l | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
+find $TMPDIR/tmp/usr/brlcad -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
+find $TMPDIR/tmp/ ! -type d | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 
 # create rpm file
 fakeroot rpmbuild -vv --buildroot=`pwd`/$TMPDIR/tmp -bb --target $ARCH $TMPDIR/brlcad.spec > $TMPDIR/rpmbuild.log
 
-RPMFILE=`cat $TMPDIR"/rpmbuild.log" | grep "brlcad-"$BVERSION"-"$RELEASE"."$ARCH".rpm" | awk '{print $(NF)}'`
+RPMFILE=`grep "brlcad-$BVERSION-$RELEASE.$ARCH.rpm" "$TMPDIR/rpmbuild.log" | awk '{print $(NF)}'`
 
 mv $RPMFILE ../brlcad-$BVERSION-$RELEASE.$DNAME.$ARCH.rpm
 

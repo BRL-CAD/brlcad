@@ -1,7 +1,7 @@
 /*                     T I M E R U N I X . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,22 +39,18 @@
 #  define DEFAULT_HZ yes
 #endif
 
-#include "bu.h"
+
 
 /* Standard System V stuff */
 static time_t time0;
 static struct tms tms0;
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {
     (void)time(&time0);
     (void)times(&tms0);
 }
-
 
 
 double
@@ -101,7 +97,6 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 }
 
 
-
 double
 rt_read_timer(char *str, int len)
 {
@@ -121,7 +116,6 @@ rt_read_timer(char *str, int len)
 
     return cpu;
 }
-
 
 
 /*

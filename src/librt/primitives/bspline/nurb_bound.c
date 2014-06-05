@@ -1,7 +1,7 @@
 /*                    N U R B _ B O U N D . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,8 +42,6 @@
 
 
 /**
- * r t _ n u r b _ s _ b o u n d
- *
  * Calculates the bounding Right Parallel Piped (RPP) of the NURB
  * surface, and returns the minimum and maximum points of the surface.
  */
@@ -55,9 +53,8 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
     int i;
     int rat;
 
-
-    bmin[0] = bmin[1] = bmin[2] = INFINITY;
-    bmax[0] = bmax[1] = bmax[2] = -INFINITY;
+    VSETALL(bmin, INFINITY);
+    VSETALL(bmax, -INFINITY);
 
     if (srf == (struct face_g_snurb *)0) {
 	bu_log("nurb_s_bound:  NULL surface\n");
@@ -96,9 +93,8 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
     int i;
     int rat;
 
-
-    bmin[0] = bmin[1] = bmin[2] = INFINITY;
-    bmax[0] = bmax[1] = bmax[2] = -INFINITY;
+    VSETALL(bmin, INFINITY);
+    VSETALL(bmax, -INFINITY);
 
     if (crv == (struct edge_g_cnurb *)0) {
 	bu_log("nurb_c_bound:  NULL surface\n");

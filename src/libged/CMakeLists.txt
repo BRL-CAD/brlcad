@@ -7,7 +7,7 @@ if(BULLET_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   # The Bullet headers introduce a lot of shadow warnings - don't stop the
   # build because of them
-  set(NOSTRICTCXX_SETTING "NOSTRICTCXX")
+  set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
 endif(BULLET_FOUND)
 
 if(ADAPTAGRAMS_FOUND)
@@ -53,6 +53,7 @@ set(LIBGED_SOURCES
   center.c
   clip.c
   clone.c
+  coil.c
   color.c
   columns.c
   comb.c
@@ -60,6 +61,7 @@ set(LIBGED_SOURCES
   comb_std.c
   combmem.c
   concat.c
+  constraint/constraint.c
   copy.c
   copyeval.c
   copymat.c
@@ -76,6 +78,7 @@ set(LIBGED_SOURCES
   dg_obj.c
   dir2ae.c
   draw.c
+  draw_calc.cpp
   dump.c
   dup.c
   eac.c
@@ -83,7 +86,9 @@ set(LIBGED_SOURCES
   edbot.c
   edcodes.c
   edcomb.c
+  edarb.c
   edit.c
+  edit_metaball.c
   editit.c
   edmater.c
   edpipe.c
@@ -92,11 +97,13 @@ set(LIBGED_SOURCES
   expand.c
   eye.c
   eye_pos.c
+  facedef.c
   facetize.c
   fb2pix.c
   find.c
   form.c
   fracture.c
+  gdiff.c
   ged.c
   ged_util.c
   get.c
@@ -132,13 +139,13 @@ set(LIBGED_SOURCES
   label.c
   list.c
   loadview.c
+  lod.c
   log.c
   lookat.c
   ls.c
   lt.c
   m2v_point.c
   make.c
-  make_bb.c
   make_name.c
   make_pnts.c
   match.c
@@ -169,6 +176,7 @@ set(LIBGED_SOURCES
   perspective.c
   pix2fb.c
   plot.c
+  polybinout.c
   pmat.c
   pmodel2view.c
   png.c
@@ -180,7 +188,9 @@ set(LIBGED_SOURCES
   protate.c
   ps.c
   pscale.c
+  pset.c
   ptranslate.c
+  pull.c
   push.c
   put.c
   put_comb.c
@@ -277,7 +287,6 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_bigE.c
   wdb_comb_std.c
   wdb_importFg4Section.c
   wdb_nirt.c
@@ -323,21 +332,22 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NOSTRICTCXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
+  TODO
   ged_private.h
   joint.h
   qray.h
-  wdb_qray.h
   simulate/simcollisionalgo.h
   simulate/simrt.h
   simulate/simulate.h
   simulate/simutils.h
+  wdb_qray.h
+  osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

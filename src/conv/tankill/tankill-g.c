@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -74,7 +75,7 @@ Add_solid(int comp_code_num)
     /* if list is empty, start one */
     if ( id_root == NULL )
     {
-	id_root = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list" );
+	BU_ALLOC(id_root, struct comp_idents);
 	id_root->next = (struct comp_idents *)NULL;
 	id_root->ident = comp_code_num;
 	id_root->no_of_solids = 1;
@@ -96,7 +97,7 @@ Add_solid(int comp_code_num)
 	else
 	{
 	    /* make a new entry for this component */
-	    ptr->next = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list " );
+	    BU_ALLOC(ptr->next, struct comp_idents);
 	    ptr = ptr->next;
 	    ptr->next = NULL;
 	    ptr->ident = comp_code_num;
@@ -106,11 +107,10 @@ Add_solid(int comp_code_num)
     }
 }
 
-/*	T A N K I L L - G
- *
- *	Converts "tankill" format geometry to BRL-CAD model
- */
 
+/*
+ * Converts "tankill" format geometry to BRL-CAD model
+ */
 static void
 usage()
 {
@@ -169,9 +169,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     in_fp = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(in_fp), O_BINARY);
-#endif
     polysolids = 1;
     id_root = (struct comp_idents *)NULL;
     bu_ptbl_init( &faces, 64, " &faces ");
@@ -185,13 +183,13 @@ main(int argc, char **argv)
 		verbose = 1;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'k': /* keep component codes of 1001 */

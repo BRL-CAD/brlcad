@@ -1,7 +1,7 @@
 #             G E O M E T R Y B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -520,7 +520,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 
 	# figure out what title to put in the label space.  XXX we could use
 	# the format command to generate a nicely formatted paragraph, but
-	# it's behavior is not consistent.  Plus... the titles could potentially
+	# its behavior is not consistent.  Plus... the titles could potentially
 	# be huge and we'd still need to trim, so just trim short anyways.
 	set titleLabel ""
 	if [ catch { title } tit ] {

@@ -1872,6 +1872,61 @@ public:
   bool IsValidForV2( const ON_BrepTrim& ) const;
   bool IsValidForV2( const ON_BrepEdge& ) const;
 
+  /*
+  Description:
+    Split any faces with creases into G1 pieces.
+  Parameters:
+    kink_tol_radians - [in] kink tolerance
+    bCompactIfNeeded - [in]
+      If true and splitting is performed, ON_Brep::Compact()
+      will be called to clean up the unsued parts.
+  Returns:
+    True if successful.
+  Remarks:
+    If you need to detect when splitting occured, comare the
+    before and after values of m_F.Count().
+  */
+  bool SplitKinkyFaces( 
+                       double kink_tol_radians = ON_DEFAULT_ANGLE_TOLERANCE,
+          bool bCompactIfNeeded = true
+                        );
+
+  /*
+  Description:
+    Split the face into G1 pieces.
+  Parameters:
+    face_index - [in] Index of the face to test and split.
+    kink_tol_radians - [in] kink tolerance
+  Returns:
+    True if successful.
+  Remarks:
+    This function leaves deleted stuff in the brep.  
+    Call ON_Brep::Compact() to remove deleted stuff.
+  */
+  virtual
+    bool SplitKinkyFace( 
+                        int face_index, 
+                        double kink_tol_radians = ON_DEFAULT_ANGLE_TOLERANCE // ON_PI/180.0
+                         );
+
+  /*
+  Description:
+    Split the edge into G1 pieces.
+  Parameters:
+    edge_index - [in] Index of the edge to test and split.
+    kink_tol_radians - [in] kink tolerance
+  Returns:
+    True if successful.
+  Remarks:
+    This function leaves deleted stuff in the brep.  
+    Call ON_Brep::Compact() to remove deleted stuff.
+  */
+  virtual
+    bool SplitKinkyEdge( 
+                        int edge_index, 
+                        double kink_tol_radians = ON_DEFAULT_ANGLE_TOLERANCE //ON_PI/180.0
+                         );
+
   // virtual ON_Objet::Dump() override
   void Dump( ON_TextLog& ) const; // for debugging
 
@@ -2970,6 +3025,58 @@ public:
 
   /*
   Description:
+    Join coincident edges.
+  Parameters:
+    edge - [in] this edge will survive the joining process
+      and the vertices at its ends will survive the joining process.
+    other_edge - [in] this edge and the vertices at its ends will
+      be removed.
+    join_tolerance - [in] The distances between the ends
+      of edge and other_edge must be at most join_tolerance
+      in order for the edges to be joined.  The caller is
+      responsible for insuring that the 3d location of 
+      other_edge is within join_tolerance of edge.
+    bCheckFaceOrientaion - [in]
+      If true and edge and other_edge are boundary edges,
+      then the orientation of the face using other_edge
+      is adjusted to match the orientation of the face using
+      edge.
+  Returns:
+    true if join is successful
+  Example:
+
+    // extrude an edge of a brep to make a new face
+    // NOTE WELL:
+    //   THIS IS A SIMPLE EXAMPLE THAT IS NOT VERY EFFICIENT
+    //   Use ON_BrepExtrudeEdge if you really want to extrude an edge.
+    ON_Brep brep = ...;
+    // edge = some valid edge in brep
+    const ON_BrepEdge& edge = brep.m_E[...];
+
+    // extrude edge to make a surface
+    ON_3dVector v = ...;
+    ON_SumSurface* new_surface = new ON_SumSurface();
+    new_surface->Create( edge, v );
+
+    // 
+    ON_Brep new_brep;
+    new_brep.AddFace( Create( new_surface );
+    brep.
+
+  See Also:
+    ON_Brep:CullUnusedEdges
+    ON_Brep:CullUnusedVertices
+    ON_Brep:CullUnused3dCurves
+  */
+  bool JoinEdges( 
+                 ON_BrepEdge& edge, 
+                 ON_BrepEdge& other_edge,
+                 double join_tolerance,
+    ON_BOOL32 bCheckFaceOrientaion = true
+                  );
+
+  /*
+  Description:
     Expert user function.
   See Also:
     ON_Brep::JoinEdges
@@ -3009,6 +3116,92 @@ public:
     int edge_iindex1, 
     double angle_tolerance_radians = ON_PI/180.0
     );
+
+  /*
+  Description:
+    Given a trim and parameter on the corresponding 3d edge,
+    get the corresponding parameter on the 2d trim curve.
+  Parameters:
+    trim_index - [in] index of trim in m_T array
+    edge_t - [in] parameter on 3d edge
+    trim_t - [out] parameter on 2d trim curve
+    bOkToBuildTrimPline - [in] 
+       if true and m_T[trim_index].m_pline[] does not
+       have its edge parameters set, then they are filled
+       in.  This is slow the first time, but greatly
+       increases the speed of GetTrimParameter
+       and GetEdgeParameter on subsequent calls.
+  Returns:
+    @untitled table
+    true        successful
+    false       failure - trim_t not set
+  See Also:
+    TL_Brep::GetEdgeParameter
+  */
+  virtual
+    bool GetTrimParameter(
+                          int trim_index,
+                          double edge_t,
+                          double* trim_t,
+          bool bOkToBuildTrimPline=true
+                          ) const;
+
+  /*
+  Description:
+    Given a trim and parameter on the 2d trim curve,
+    get the corresponding parameter on the 3d edge curve.
+  Parameters:
+    trim_index - [in] index of trim in m_T array
+    trim_t - [in] parameter on 2d trim curve
+    edge_t - [out] parameter on 3d edge
+  Returns:
+    @untitled table
+    true        successful
+    false       failure - edge_t not set
+  See Also:
+    TL_Brep::GetTrimParameter
+  */
+  virtual
+    bool GetEdgeParameter(
+                          int trim_index,
+                          double trim_t,
+          double* edge_t
+                          ) const;
+
+  /*
+  Description:
+    Expert user function.
+    Splits an edge into two edges.  The input edge
+    becomes the left portion and a new edge is created
+    for the right portion.
+  Parameters:
+    edge_index - [in] index of edge in brep.m_E[]
+    edge_t - [in] 3d edge splitting parameter
+    trim_t - [in] array of trim splitting parameters.
+             trim_t[eti] is the parameter for splitting the
+             trim brep.m_T[edge.m_ti[eti]].
+    vertex_index - [in] if not -1, then this vertex will be
+             used for the new vertex.  Otherwise a new
+             vertex is created.
+    bSetTrimBoxesAndFlags - [in] if true, trim boxes and flags
+             are set.  If false, the user is responsible for
+             doing this.  Set to true if you are unsure
+             what to use.  If you pass false, then need to
+             call SetTrimBoundingBoxes(..,bLazy=true)
+             so that the trim iso flags and bounding info
+             is correctly updated.  If you pass true, then
+             the trim flags and bounding boxes get set
+             inside of SplitEdge.
+  Returns:
+    True if successful.
+  */
+  bool SplitEdge(
+                 int edge_index,
+                 double edge_t,
+                 const ON_SimpleArray<double>& trim_t,
+                 int vertex_index = -1,
+        bool bSetTrimBoxesAndFlags = true
+                 );
 
   // These remove a topology piece from a b-rep but do not
   // rearrange the arrays that hold the brep objects.  The

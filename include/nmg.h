@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,20 +25,22 @@
  * Modelling."  Developed from "Non-Manifold Geometric Boundary
  * Modeling" by Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
+ * See also "Topological Structures for Geometric Modeling"
+ * by Kevin J. Weiler - RPI Phd thesis from 1986.
+ *
  */
 
-#ifndef __NMG_H__
-#define __NMG_H__
+#ifndef NMG_H
+#define NMG_H
 
 #include "common.h"
 
 /* interface headers */
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/magic.h"
+#include "bu/ptbl.h"
 #include "vmath.h"
-#include "bu.h"
-
-
-#define NMG_EXTERN(type_and_name, args) RT_EXTERN(type_and_name, args)
-
 
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */
@@ -77,13 +79,6 @@
 \027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020(FREE)\
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013BASIC\012BOOLEVAL\011CLASSIFY\
 \010BOOL\7VERIFY\6POLYSECT\5PLOTEM\4PL_LOOP\3GRAPHCL\2PL_SLOW\1PL_ANIM"
-
-/*
- * Macros for providing function prototypes, regardless of whether the
- * compiler understands them or not.  It is vital that the argument
- * list given for "args" be enclosed in parens.
- */
-#define NMG_ARGS(args) args
 
 /* Boolean operations */
 #define NMG_BOOL_SUB   1	/**< @brief subtraction */
@@ -159,7 +154,6 @@
 	}
 
 /**
- * K N O T _ V E C T O R
  * @brief
  * Definition of a knot vector.
  *
@@ -173,12 +167,10 @@ struct knot_vector {
 };
 
 /*
- * N O T I C E !
- *
- * We rely on the fact that the first 32 bits in a struct is the magic
- * number (which is used to identify the struct type).  This may be
- * either a magic value, or an rt_list structure, which starts with a
- * magic number.
+ * NOTE: We rely on the fact that the first 32 bits in a struct is the
+ * magic number (which is used to identify the struct type).  This may
+ * be either a magic value, or an rt_list structure, which starts with
+ * a magic number.
  *
  * To these ends, there is a standard ordering for fields in
  * "object-use" structures.  That ordering is:
@@ -192,9 +184,6 @@ struct knot_vector {
  */
 
 
-/**
- * M O D E L
- */
 struct model {
     uint32_t magic;
     struct bu_list r_hd;	/**< @brief list of regions */
@@ -203,9 +192,6 @@ struct model {
     long maxindex;		/**< @brief # of structs so far */
 };
 
-/**
- * R E G I O N
- */
 struct nmgregion {
     struct bu_list l;		/**< @brief regions, in model's r_hd list */
     struct model *m_p;		/**< @brief owning model */
@@ -222,8 +208,6 @@ struct nmgregion_a {
 };
 
 /**
- * S H E L L
- *
  * When a shell encloses volume, it's done entirely by the list of
  * faceuses.
  *
@@ -260,8 +244,6 @@ struct shell_a {
 };
 
 /**
- * F A C E
- *
  * Note: there will always be exactly two faceuse's using a face.  To
  * find them, go up fu_p for one, then across fumate_p to other.
  */
@@ -351,8 +333,6 @@ struct faceuse {
 	} }
 
 /**
- * L O O P
- *
  * To find all the uses of this loop, use lu_p for one loopuse, then
  * go down and find an edge, then wander around either eumate_p or
  * radial_p from there.
@@ -406,8 +386,6 @@ struct loopuse {
 };
 
 /**
- * E D G E
- *
  * To find all edgeuses of an edge, use eu_p to get an arbitrary
  * edgeuse, then wander around either eumate_p or radial_p from there.
  *
@@ -488,8 +466,6 @@ struct edgeuse {
 };
 
 /**
- * V E R T E X
- *
  * The vertex and vertexuse structures are connected in a way
  * different from the superior kinds of topology elements.  The vertex
  * structure heads a linked list that all vertexuse's that use the
@@ -547,11 +523,7 @@ struct vertexuse_a_cnurb {
  * storage de-allocation support
  * OBSOLETE
  */
-#define NMG_FREESTRUCT(ptr, str) { \
-    memset((char *)(ptr), 0, sizeof(struct str)); \
-    bu_free((char *)(ptr), "freestruct " #str); \
-    (ptr) = NULL; \
-}
+#define NMG_FREESTRUCT(ptr, str) BU_PUT(ptr, struct str)
 
 
 /*
@@ -564,29 +536,8 @@ struct vertexuse_a_cnurb {
 #define NMG_INCR_INDEX(_p, _m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#if 1
-#define GET_REGION(p, m)            {p = (struct nmgregion *)bu_pool_get(sizeof(struct nmgregion)); NMG_INCR_INDEX(p, m);}
-#define GET_REGION_A(p, m)          {p = (struct nmgregion_a *)bu_pool_get(sizeof(struct nmgregion_a)); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL(p, m)             {p = (struct shell *)bu_pool_get(sizeof(struct shell)); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL_A(p, m)           {p = (struct shell_a *)bu_pool_get(sizeof(struct shell_a)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE(p, m)              {p = (struct face *)bu_pool_get(sizeof(struct face)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_PLANE(p, m)      {p = (struct face_g_plane *)bu_pool_get(sizeof(struct face_g_plane)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_SNURB(p, m)      {p = (struct face_g_snurb *)bu_pool_get(sizeof(struct face_g_snurb)); NMG_INCR_INDEX(p, m);}
-#define GET_FACEUSE(p, m)           {p = (struct faceuse *)bu_pool_get(sizeof(struct faceuse)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP(p, m)              {p = (struct loop *)bu_pool_get(sizeof(struct loop)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {p = (struct loop_g *)bu_pool_get(sizeof(struct loop_g)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE(p, m)           {p = (struct loopuse *)bu_pool_get(sizeof(struct loopuse)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE(p, m)              {p = (struct edge *)bu_pool_get(sizeof(struct edge)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_LSEG(p, m)       {p = (struct edge_g_lseg *)bu_pool_get(sizeof(struct edge_g_lseg)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_CNURB(p, m)      {p = (struct edge_g_cnurb *)bu_pool_get(sizeof(struct edge_g_cnurb)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGEUSE(p, m)           {p = (struct edgeuse *)bu_pool_get(sizeof(struct edgeuse)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX(p, m)            {p = (struct vertex *)bu_pool_get(sizeof(struct vertex)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX_G(p, m)          {p = (struct vertex_g *)bu_pool_get(sizeof(struct vertex_g)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE(p, m)         {p = (struct vertexuse *)bu_pool_get(sizeof(struct vertexuse)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_PLANE(p, m) {p = (struct vertexuse_a_plane *)bu_pool_get(sizeof(struct vertexuse_a_plane)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_CNURB(p, m) {p = (struct vertexuse_a_cnurb *)bu_pool_get(sizeof(struct vertexuse_a_cnurb)); NMG_INCR_INDEX(p, m);}
-#else
-/* there was no get model */
+
+#define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
 #define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
 #define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
 #define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
@@ -598,7 +549,7 @@ struct vertexuse_a_cnurb {
 #define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
 #define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
 #define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
-/* there was no get loopuse_a */
+#define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE(p, m)              {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE_G_LSEG(p, m)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE_G_CNURB(p, m)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
@@ -608,32 +559,8 @@ struct vertexuse_a_cnurb {
 #define GET_VERTEXUSE(p, m)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
 #define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
 #define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
-#endif
 
-#if 1
-#define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
-#define FREE_REGION(p)            {bu_pool_put((void *)p, sizeof(struct nmgregion));}
-#define FREE_REGION_A(p)          {bu_pool_put((void *)p, sizeof(struct nmgregion_a));}
-#define FREE_SHELL(p)             {bu_pool_put((void *)p, sizeof(struct shell));}
-#define FREE_SHELL_A(p)           {bu_pool_put((void *)p, sizeof(struct shell_a));}
-#define FREE_FACE(p)              {bu_pool_put((void *)p, sizeof(struct face));}
-#define FREE_FACE_G_PLANE(p)      {bu_pool_put((void *)p, sizeof(struct face_g_plane));}
-#define FREE_FACE_G_SNURB(p)      {bu_pool_put((void *)p, sizeof(struct face_g_snurb));}
-#define FREE_FACEUSE(p)           {bu_pool_put((void *)p, sizeof(struct faceuse));}
-#define FREE_LOOP(p)              {bu_pool_put((void *)p, sizeof(struct loop));}
-#define FREE_LOOP_G(p)            {bu_pool_put((void *)p, sizeof(struct loop_g));}
-#define FREE_LOOPUSE(p)           {bu_pool_put((void *)p, sizeof(struct loopuse));}
-#define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
-#define FREE_EDGE(p)              {bu_pool_put((void *)p, sizeof(struct edge));}
-#define FREE_EDGE_G_LSEG(p)       {bu_pool_put((void *)p, sizeof(struct edge_g_lseg));}
-#define FREE_EDGE_G_CNURB(p)      {bu_pool_put((void *)p, sizeof(struct edge_g_cnurb));}
-#define FREE_EDGEUSE(p)           {bu_pool_put((void *)p, sizeof(struct edgeuse));}
-#define FREE_VERTEX(p)            {bu_pool_put((void *)p, sizeof(struct vertex));}
-#define FREE_VERTEX_G(p)          {bu_pool_put((void *)p, sizeof(struct vertex_g));}
-#define FREE_VERTEXUSE(p)         {bu_pool_put((void *)p, sizeof(struct vertexuse));}
-#define FREE_VERTEXUSE_A_PLANE(p) {bu_pool_put((void *)p, sizeof(struct vertexuse_a_plane));}
-#define FREE_VERTEXUSE_A_CNURB(p) {bu_pool_put((void *)p, sizeof(struct vertexuse_a_cnurb));}
-#else
+
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
 #define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
@@ -656,7 +583,7 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEXUSE(p)         NMG_FREESTRUCT(p, vertexuse)
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
-#endif
+
 
 /**
  * Do two edgeuses share the same two vertices? If yes, eu's should be
@@ -813,46 +740,46 @@ struct nmg_struct_counts {
  * be written, if desired.
  */
 struct nmg_visit_handlers {
-    void (*bef_model) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_model) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_model)(uint32_t *, void *, int);
+    void (*aft_model)(uint32_t *, void *, int);
 
-    void (*bef_region) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_region) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_region)(uint32_t *, void *, int);
+    void (*aft_region)(uint32_t *, void *, int);
 
-    void (*vis_region_a) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_region_a)(uint32_t *, void *, int);
 
-    void (*bef_shell) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_shell) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_shell)(uint32_t *, void *, int);
+    void (*aft_shell)(uint32_t *, void *, int);
 
-    void (*vis_shell_a) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_shell_a)(uint32_t *, void *, int);
 
-    void (*bef_faceuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_faceuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_faceuse)(uint32_t *, void *, int);
+    void (*aft_faceuse)(uint32_t *, void *, int);
 
-    void (*vis_face) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_face_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_face)(uint32_t *, void *, int);
+    void (*vis_face_g)(uint32_t *, void *, int);
 
-    void (*bef_loopuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_loopuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_loopuse)(uint32_t *, void *, int);
+    void (*aft_loopuse)(uint32_t *, void *, int);
 
-    void (*vis_loop) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_loop_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_loop)(uint32_t *, void *, int);
+    void (*vis_loop_g)(uint32_t *, void *, int);
 
-    void (*bef_edgeuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_edgeuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_edgeuse)(uint32_t *, void *, int);
+    void (*aft_edgeuse)(uint32_t *, void *, int);
 
-    void (*vis_edge) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_edge_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_edge)(uint32_t *, void *, int);
+    void (*vis_edge_g)(uint32_t *, void *, int);
 
-    void (*bef_vertexuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_vertexuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_vertexuse)(uint32_t *, void *, int);
+    void (*aft_vertexuse)(uint32_t *, void *, int);
 
-    void (*vis_vertexuse_a) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_vertex) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_vertex_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_vertexuse_a)(uint32_t *, void *, int);
+    void (*vis_vertex)(uint32_t *, void *, int);
+    void (*vis_vertex_g)(uint32_t *, void *, int);
 };
 
-#endif /* __NMG_H__ */
+#endif /* NMG_H */
 
 /** @} */
 /*

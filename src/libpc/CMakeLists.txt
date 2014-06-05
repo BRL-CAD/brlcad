@@ -4,13 +4,14 @@
 #	re2c/lemon to rewrite parsing code currently
 #       using boost
 
-# No point in warnings here, we can't do anything about
-# it until the boost issue is handled
+# libpc compilation produces excessive warnings about unquellable
+# inline failures due to internal boost header logic.  turn off inline
+# warnings outright.
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 if(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
+  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-inline -Wno-error")
 else(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inline -Wno-error")
 endif(BUILD_TYPE)
 
 # Include directories needed by libpc users
@@ -22,7 +23,7 @@ set(PC_INCLUDE_DIRS
   ${ZLIB_INCLUDE_DIR}
   )
 
-set(PC_LOCAL_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/other/boost)
+set(PC_LOCAL_INCLUDE_DIRS ${BRLCAD_BOOST_INCLUDE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(pc PC_INCLUDE_DIRS PC_LOCAL_INCLUDE_DIRS)
 
@@ -59,7 +60,7 @@ add_definitions(
   -DOBJ_BREP=1
   )
 
-BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 #BRLCAD_ADDEXEC(solver_test solver_test.cpp libpc NO_INSTALL)
@@ -85,7 +86,6 @@ set(pc_ignore_files
   vm_test.cpp
   )
 CMAKEFILES(${pc_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file lgt/extern.h
  *
  */
+
+#ifndef LGT_EXTERN_H
+#define LGT_EXTERN_H
 
 #include "common.h"
 
@@ -156,7 +159,7 @@ extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern unsigned char arrowcursor[];
 extern unsigned char menucursor[];
@@ -173,6 +176,8 @@ extern struct rt_i *rt_ip;
 #define C_QUERYREG	4
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
+
+#endif /* LGT_EXTERN_H */
 
 /*
  * Local Variables:

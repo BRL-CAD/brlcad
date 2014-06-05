@@ -1,7 +1,7 @@
 /*                     C O M P O N E N T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
  *
  */
 
+#include "common.h"
 #include <stdio.h>
 
 #include "adrt.h"
@@ -32,6 +33,7 @@ render_component_free(render_t *UNUSED(render))
     return;
 }
 
+
 static void *
 component_hit(struct tie_ray_s *ray, struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
@@ -40,6 +42,7 @@ component_hit(struct tie_ray_s *ray, struct tie_id_s *UNUSED(id), struct tie_tri
     ray->depth++;
     return (mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) ? mesh : NULL;
 }
+
 
 void
 render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
@@ -67,12 +70,14 @@ render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ra
     }
 }
 
+
 int
 render_component_init(render_t *render, const char *UNUSED(usr)) {
     render->work = render_component_work;
     render->free = render_component_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

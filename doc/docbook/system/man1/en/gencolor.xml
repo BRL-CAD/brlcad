@@ -34,7 +34,7 @@ pattern, the default being infinity.
 This program is useful for producing a given grey value or
 color. Note that
 <command>gencolor</command>
-will refuse to write its output to a window, you must redirect the output to a file.</para>
+will refuse to write its output to a window; you must redirect the output to a file.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
@@ -52,7 +52,7 @@ Will output 512 "green" pixels</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2012 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

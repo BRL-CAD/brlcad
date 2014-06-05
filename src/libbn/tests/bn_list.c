@@ -1,7 +1,7 @@
 /*                  T E S T _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,12 +42,12 @@ initialise_buffers(char *expected_buf)
     FILE *temp;
 
     if (expected_buf)
-        memset(expected_buf, 0, BUFFER_SIZE);
+	memset(expected_buf, 0, BUFFER_SIZE);
 
     temp = bu_temp_file(NULL, 0);
 
-    if(temp == NULL)
-        return 0;
+    if (temp == NULL)
+	return 0;
 
     rewind(temp);
 
@@ -58,11 +58,15 @@ initialise_buffers(char *expected_buf)
 int
 compare_result(char *expected_buf, FILE *result_fd)
 {
+    size_t ret;
     char result_buf[BUFFER_SIZE];
     memset(result_buf, 0, BUFFER_SIZE);
 
     rewind(result_fd);
-    fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    if (ret < BUFFER_SIZE)
+	perror("fread");
+
     fclose(result_fd);
 
     return bu_strncmp(expected_buf, result_buf, BUFFER_SIZE) == 0;
@@ -72,11 +76,14 @@ compare_result(char *expected_buf, FILE *result_fd)
 int
 check_result_len(FILE *result_fd)
 {
+    size_t ret;
     char result_buf[BUFFER_SIZE+1];
     memset(result_buf, 0, BUFFER_SIZE+1);
 
     rewind(result_fd);
-    fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    if (ret < BUFFER_SIZE)
+	perror("fread");
     fclose(result_fd);
 
     return strlen(result_buf);
@@ -87,7 +94,7 @@ void
 convert_points(double *d_values, int *i_values, int count)
 {
     while (--count > 0) {
-        *i_values++ = (int) *d_values++;
+	*i_values++ = (int) *d_values++;
     }
 }
 
@@ -103,16 +110,16 @@ make_tp_i2list_expected(char *buf, int buflen, int *x, int *y, int npoints)
     int chars_written;
 
     if (npoints <= 0)
-        return;
+	return;
 
     chars_written = snprintf(buf, buflen, "m %d %d\n", *x++, *y++);
     buf += chars_written;
     buflen -= chars_written;
 
     while (--npoints > 0) {
-        chars_written = snprintf(buf, buflen, "n %d %d\n", *x++, *y++);
-        buf += chars_written;
-        buflen -= chars_written;
+	chars_written = snprintf(buf, buflen, "n %d %d\n", *x++, *y++);
+	buf += chars_written;
+	buflen -= chars_written;
     }
 }
 
@@ -124,8 +131,8 @@ test_tp_i2list(int *x, int *y, int npoints)
     FILE *buf_out = initialise_buffers(expected_buf);
 
     if (!buf_out) {
-        printf("File Invalid\n");
-        return 0;
+	printf("File Invalid\n");
+	return 0;
     }
 
     make_tp_i2list_expected(expected_buf, BUFFER_SIZE, x, y, npoints);
@@ -147,16 +154,16 @@ make_tp_2list_expected(char *buf, int buflen, double *x, double *y, int npoints)
     int chars_written;
 
     if (npoints <= 0)
-        return;
+	return;
 
     chars_written = snprintf(buf, buflen, "o %g %g\n", *x++, *y++);
     buf += chars_written;
     buflen -= chars_written;
 
     while (--npoints > 0) {
-        chars_written = snprintf(buf, buflen, "q %g %g\n", *x++, *y++);
-        buf += chars_written;
-        buflen -= chars_written;
+	chars_written = snprintf(buf, buflen, "q %g %g\n", *x++, *y++);
+	buf += chars_written;
+	buflen -= chars_written;
     }
 }
 
@@ -168,8 +175,8 @@ test_tp_2list(double *x, double *y, int npoints)
     FILE *buf_out = initialise_buffers(expected_buf);
 
     if (!buf_out) {
-        printf("File Invalid\n");
-        return 0;
+	printf("File Invalid\n");
+	return 0;
     }
 
     make_tp_2list_expected(expected_buf, BUFFER_SIZE, x, y, npoints);
@@ -193,8 +200,8 @@ test_tp_2mlist(double *x, double *y, int npoints)
     int flag, mark, interval, size;
 
     if (!buf_out) {
-        printf("File Invalid\n");
-        return 0;
+	printf("File Invalid\n");
+	return 0;
     }
 
     pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
@@ -205,10 +212,10 @@ test_tp_2mlist(double *x, double *y, int npoints)
     interval = -5;
     size = -5;
     for (; flag < 5; flag++)
-        for (; mark < 5; mark++)
-            for (; interval < 5; interval++)
-                for (; size < 5; size++)
-                    tp_2mlist(buf_out, x, y, npoints, flag, mark, interval, size);
+	for (; mark < 5; mark++)
+	    for (; interval < 5; interval++)
+		for (; size < 5; size++)
+		    tp_2mlist(buf_out, x, y, npoints, flag, mark, interval, size);
     fclose(buf_out);
 
     /* Check it doesn't produce output when there are no points */
@@ -221,13 +228,13 @@ test_tp_2mlist(double *x, double *y, int npoints)
     tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
-        printf("Produced output when no points were given.\n");
-        return 0;
+	printf("Produced output when no points were given.\n");
+	return 0;
     }
 
     /* If we don't actually have any points then nothing else is correct */
     if (npoints <= 0)
-        return 1;
+	return 1;
 
 
     /* Check it doesn't produce output if all output is turned off */
@@ -240,8 +247,8 @@ test_tp_2mlist(double *x, double *y, int npoints)
     tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
-        printf("Produced output when output was turned off.\n");
-        return 0;
+	printf("Produced output when output was turned off.\n");
+	return 0;
     }
 
 
@@ -255,8 +262,8 @@ test_tp_2mlist(double *x, double *y, int npoints)
     tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
-        printf("Produced output when mark was null.\n");
-        return 0;
+	printf("Produced output when mark was null.\n");
+	return 0;
     }
 
 
@@ -270,13 +277,12 @@ test_tp_2mlist(double *x, double *y, int npoints)
     tp_2mlist(buf_out, x, y, npoints, flag, mark, interval, size);
 
     if (check_result_len(buf_out) <= 0) {
-        printf("Didn't produce output when expected.\n");
-        return 0;
+	printf("Didn't produce output when expected.\n");
+	return 0;
     }
 
     return 1;
 }
-
 
 
 /* Produces the expected output of tp_3list based on the input */
@@ -286,16 +292,16 @@ make_tp_3list_expected(char *buf, int buflen, double *x, double *y, double *z, i
     int chars_written;
 
     if (npoints <= 0)
-        return;
+	return;
 
     chars_written = snprintf(buf, buflen, "O %g %g %g\n", *x++, *y++, *z++);
     buf += chars_written;
     buflen -= chars_written;
 
     while (--npoints > 0) {
-        chars_written = snprintf(buf, buflen, "Q %g %g %g\n", *x++, *y++, *z++);
-        buf += chars_written;
-        buflen -= chars_written;
+	chars_written = snprintf(buf, buflen, "Q %g %g %g\n", *x++, *y++, *z++);
+	buf += chars_written;
+	buflen -= chars_written;
     }
 }
 
@@ -307,8 +313,8 @@ test_tp_3list(double *x, double *y, double *z, int npoints)
     FILE *buf_out = initialise_buffers(expected_buf);
 
     if (!buf_out) {
-        printf("File Invalid\n");
-        return 0;
+	printf("File Invalid\n");
+	return 0;
     }
 
     make_tp_3list_expected(expected_buf, BUFFER_SIZE, x, y, z, npoints);
@@ -334,17 +340,17 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
     convert_points(double_x, int_x, npoints);
     convert_points(double_y, int_y, npoints);
 
-    if (!test_tp_i2list(int_x, int_y, npoints)){
-        printf("tp_i2list test failed\n");
-        return 0;
+    if (!test_tp_i2list(int_x, int_y, npoints)) {
+	printf("tp_i2list test failed\n");
+	return 0;
     }
-    if (!test_tp_2list(double_x, double_y, npoints)){
-        printf("tp_2list test failed\n");
-        return 0;
+    if (!test_tp_2list(double_x, double_y, npoints)) {
+	printf("tp_2list test failed\n");
+	return 0;
     }
-    if (!test_tp_2mlist(double_x, double_y, npoints)){
-        printf("tp_2mlist test failed\n");
-        return 0;
+    if (!test_tp_2mlist(double_x, double_y, npoints)) {
+	printf("tp_2mlist test failed\n");
+	return 0;
     }
 
     return 1;
@@ -354,9 +360,9 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
 int
 automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoints)
 {
-    if (!test_tp_3list(double_x, double_y, double_z, npoints)){
-        printf("tp_3list test failed\n");
-        return 0;
+    if (!test_tp_3list(double_x, double_y, double_z, npoints)) {
+	printf("tp_3list test failed\n");
+	return 0;
     }
 
     return 1;
@@ -374,39 +380,39 @@ main(int argc, char *argv[])
     double x, y, z;
 
     if (argc < 1) {
-        printf("Must supply at least the dimension.\n");
-        return -1;
+	printf("Must supply at least the dimension.\n");
+	return -1;
     }
 
-    /* If its a 2D test */
+    /* If it's a 2D test */
     if (*argv[1] == '2') {
-        while (i < (argc-2) && i < MAX_POINTS) {
-            sscanf(argv[i+2], "%lg,%lg", &x, &y);
+	while (i < (argc-2) && i < MAX_POINTS) {
+	    sscanf(argv[i+2], "%lg,%lg", &x, &y);
 
-            x_data[i] = x;
-            y_data[i] = y;
+	    x_data[i] = x;
+	    y_data[i] = y;
 
-            i++;
-        }
+	    i++;
+	}
 
-        return !automatic_2d_test(x_data, y_data, i);
+	return !automatic_2d_test(x_data, y_data, i);
     } else if (*argv[1] == '3') {
-        /* or a 3D test */
+	/* or a 3D test */
 
-        while (i < (argc-2) && i < MAX_POINTS) {
-            sscanf(argv[i+2], "%lg,%lg,%lg", &x, &y, &z);
+	while (i < (argc-2) && i < MAX_POINTS) {
+	    sscanf(argv[i+2], "%lg,%lg,%lg", &x, &y, &z);
 
-            x_data[i] = x;
-            y_data[i] = y;
-            z_data[i] = z;
+	    x_data[i] = x;
+	    y_data[i] = y;
+	    z_data[i] = z;
 
-            i++;
-        }
+	    i++;
+	}
 
-        return !automatic_3d_test(x_data, y_data, z_data, i);
+	return !automatic_3d_test(x_data, y_data, z_data, i);
     } else {
-        printf("Wrong dimension specified.\n");
-        return -1;
+	printf("Wrong dimension specified.\n");
+	return -1;
     }
 }
 

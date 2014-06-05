@@ -1,7 +1,7 @@
 /*                     P I X F I E L D S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,15 +81,15 @@ get_args(int argc, char **argv)
 
 	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 

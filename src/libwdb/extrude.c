@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ mk_extrusion(
 {
     struct rt_extrude_internal *extr;
 
-    BU_GET(extr, struct rt_extrude_internal);
+    BU_ALLOC(extr, struct rt_extrude_internal);
     extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     extr->sketch_name = bu_strdup(sketch_name);
     VMOVE(extr->V, V);
@@ -62,7 +62,7 @@ mk_extrusion(
     extr->keypoint = keypoint;
     extr->skt = (struct rt_sketch_internal *)NULL;
 
-    return wdb_export(fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)extr, ID_EXTRUDE, mk_conv2mm);
 }
 
 

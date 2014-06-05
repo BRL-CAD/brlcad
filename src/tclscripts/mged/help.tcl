@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -203,13 +203,13 @@ set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of obje
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
+set mged_help_data(lod)		{{} {configure Level of Detail drawing}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
 set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list all regions that have a MUVES_Component attribute with any of the listed values}}
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
-set mged_help_data(make_bb)	$helplib_data(wdb_make_bb)
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
@@ -245,6 +245,7 @@ set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
 set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
+set mged_help_data(pull)       $helplib_data(wdb_pull)
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
 set mged_help_data(putmat)	{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
@@ -262,10 +263,6 @@ set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{DEPRECATED: read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
-set mged_help_data(redraw_vlist)	{{object(s)}	{given the name(s) of database objects, re-generate the vlist
-    associated with every solid in view which references the
-    named object(s), either solids or regions. Particularly
-    useful with outboard .inmem database modifications.}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
@@ -313,8 +310,8 @@ set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
-				   toViewcenter|Viewrot|model2view|view2model|
-				   model2objview|objview2model|help]}	{get view status}}
+	toViewcenter|Viewrot|model2view|view2model|
+	model2objview|objview2model|help]}	{get view status}}
 set mged_help_data(summary)	$helplib_data(wdb_summary)
 set mged_help_data(sv)		$helplib_data(vo_slew)
 set mged_help_data(sync)	{{}	{forces UNIX sync}}

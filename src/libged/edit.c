@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -619,7 +620,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
 
-    BU_GET(arg, struct edit_arg);
+    BU_ALLOC(arg, struct edit_arg);
     edit_arg_postfix(head, arg);
     edit_arg_init(arg);
     return arg;
@@ -644,13 +645,12 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     dest->coords_used = src->coords_used;
     dest->type = src->type;
     if (src->object) {
-	BU_GET(dest->object, struct db_full_path);
+	BU_ALLOC(dest->object, struct db_full_path);
 	db_full_path_init(dest->object);
 	db_dup_full_path(dest->object, src->object);
     }
     if (src->vector) {
-	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					   "vect_t block for edit_arg_duplicate_in_place()");
+	BU_ALLOC(dest->vector, vect_t);
 	(*dest->vector)[0] = (*src->vector)[0];
 	(*dest->vector)[1] = (*src->vector)[1];
 	(*dest->vector)[2] = (*src->vector)[2];
@@ -666,7 +666,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
-    BU_GET(*dest, struct edit_arg);
+    BU_ALLOC(*dest, struct edit_arg);
     edit_arg_duplicate_in_place(*dest, src);
 }
 
@@ -696,7 +696,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path*)NULL;
     }
     if (arg->vector) {
@@ -874,14 +874,13 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
     if (arg->vector) {
 	VADD2(**dest, *arg->vector, obj_coord);
     } else {
-	*dest = (vect_t *)bu_malloc(sizeof(vect_t),
-				    "vect_t block for edit_arg_to_coord()");
+	BU_ALLOC(*dest, vect_t);
 	VMOVE(**dest, obj_coord);
     }
 
     if (!coord) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_full_path");
+	bu_free((void *)arg->object, "db_full_path");
 	arg->object = (struct db_full_path *)NULL;
     }
 
@@ -1466,17 +1465,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
-#if 0
-	/* This assertion, as it is currently, is always true. */
-
-	/* A 'from' position is set; only flags that were possible
-	 * when this function was last updated should be handled.
-	 */
-	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
-				    EDIT_NATURAL_ORIGIN |
-				    EDIT_USE_TARGETS));
-#endif
-
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
 	    goto err_option_unknown;
@@ -1491,19 +1479,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	 * be called.
 	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
-
-#if 0
-	/* This assertion, as it is currently, is always true. */
-
-	/* A 'TO' position is set; only flags that were possible when
-	 * this function was last updated should be handled.
-	 */
-	BU_ASSERT(cur_arg->type ^ ~(EDIT_TO |
-				    EDIT_NATURAL_ORIGIN |
-				    EDIT_REL_DIST |
-				    EDIT_ABS_POS |
-				    EDIT_USE_TARGETS));
-#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1545,15 +1520,6 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			      cmd->cmd->name, cmd->cmd->usage);
 	    return GED_ERROR;
 	}
-#if 0
-	else {
-	    /* a target obj is set; only flags that were possible when
-	     * this function was last updated should be handled
-	     */
-	    BU_ASSERT(cur_arg->type ^ ~(EDIT_TARGET_OBJ |
-					EDIT_NATURAL_ORIGIN));
-	}
-#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1860,8 +1826,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	return GED_ERROR;
     }
     if (!arg->vector)
-	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					  "vect_t block for edit_str_to_arg");
+	BU_ALLOC(arg->vector, vect_t);
 
     /* Attempt to interpret/record the number as the next unset X, Y,
      * or Z coordinate/position.
@@ -1905,11 +1870,11 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 convert_obj:
     /* convert string to path/object */
-    BU_GET(arg->object, struct db_full_path);
+    BU_ALLOC(arg->object, struct db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
@@ -1918,7 +1883,7 @@ convert_obj:
     }
     if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
@@ -2161,7 +2126,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
     edit_cmd_init(&subcmd);
 
-    BU_GET(subcmd.cmd_line.args, struct edit_arg);
+    BU_ALLOC(subcmd.cmd_line.args, struct edit_arg);
     edit_arg_init(subcmd.cmd_line.args);
     cur_arg = subcmd.cmd_line.args;
 

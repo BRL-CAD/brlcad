@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2012 United States Government as represented by
+# Copyright (c) 1995-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -438,7 +438,11 @@ proc ia_invoke { w } {
 	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {
 	    catch { db_glob $cmd } globbed_cmd
-	    set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    if {$globbed_cmd == ""} {
+		set result [catch { uplevel \#0 $cmd } ia_msg]
+	    } else {
+		set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    }
 	}
 
 	if { ![winfo exists $w] } {

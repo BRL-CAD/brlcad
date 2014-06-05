@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <regex.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "db.h"
 #include "raytrace.h"
 
@@ -475,7 +476,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 			"build_comb: unrecognized relation (assume UNION)\n");
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
-	    BU_GET(tp, union tree);
+	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
@@ -570,7 +571,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	return GED_ERROR;
     }
 
-    if(db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);
@@ -837,14 +838,14 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    /* Close the temp file since 'write_comb' opens it. */
+    (void)fclose(fp);
+
     /* Write the combination components to the file */
     if (write_comb(gedp, comb, argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
-	(void)fclose(fp);
 	goto cleanup;
     }
-
-    (void)fclose(fp);
 
     /* Edit the file */
     if (_ged_editit(editstring, _ged_tmpfil)) {
@@ -872,7 +873,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 		goto cleanup;
 	    }
 
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
@@ -885,14 +886,14 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	    RT_DB_INTERNAL_INIT(&intern);
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_COMBINATION;
-	    intern.idb_meth = &rt_functab[ID_COMBINATION];
+	    intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
+	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (void *)&intern.idb_type, 0);
 
-	    BU_GET(comb, struct rt_comb_internal);
+	    BU_ALLOC(comb, struct rt_comb_internal);
 	    RT_COMB_INTERNAL_INIT(comb);
 
-	    intern.idb_ptr = (genptr_t)comb;
+	    intern.idb_ptr = (void *)comb;
 
 	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
 	}

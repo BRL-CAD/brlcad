@@ -1,7 +1,7 @@
 #                       O P E N W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1808,6 +1808,12 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-label "Tk" -underline 0\
 	-command "dmtype set tk"
     }
+    set have_dm [dm valid qt]
+    if {$have_dm == "qt"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+	-label "Qt" -underline 0\
+	-command "dmtype set qt"
+    }
     hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
 	{ { summary "Change the display manager being used to render wireframe and/or
 	shaded displays of BRL-CAD models." }
@@ -1938,6 +1944,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
 	{ { summary "Tool for browsing the geometry in a database." } }
 
+    .$id.menubar.tools add command -label "LOD Configuration" -underline 0\
+	-command "lodconfig"
+    hoc_register_menu_data "Tools" "LOD5 Configuration" "LOD Configuration"\
+	{ { summary "A tool for configuring Level of Detail drawing." } }
+
     .$id.menubar.tools add command -label "Overlap Tool" -underline 0\
 	-command "overlap_tool $id"
     hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
@@ -1957,8 +1968,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.menubar.tools add separator
 
-    .$id.menubar.tools add command -label "Command Window" -underline 6\
-	-command "set mged_gui($id,show_cmd) 1; wm deiconify .$id; raise .$id"
+    .$id.menubar.tools add command -label "Command Window (c)" -underline 16\
+	-command "open_cmd_win $id"
     hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 	{ { summary "Raise the command window." } }
     .$id.menubar.tools add command -label "Graphics Window" -underline 7\
@@ -2673,6 +2684,12 @@ proc set_cmd_win { id } {
 	    setmv $id
 	}
     }
+}
+
+proc open_cmd_win {id} {
+    set mged_gui($id,show_cmd) 1
+    wm deiconify .$id
+    raise .$id
 }
 
 proc set_dm_win { id } {

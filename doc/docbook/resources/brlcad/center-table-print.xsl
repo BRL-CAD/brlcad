@@ -7,6 +7,23 @@
   exclude-result-prefixes="d"
 >
 
+
+	<!-- center table titles, thanks to Dean Nelson <deannelson@aol.com>,
+		2010-11-09, from the docbook-apps mailing list>
+
+             Note there are other centering tricks in file 'tutorial-template.xsl.in'
+        -->
+	<xsl:attribute-set name="formal.title.properties">
+		<xsl:attribute name="text-align">
+			<xsl:choose>
+				<xsl:when test="self::table[@align] and descendant::title">
+					<xsl:value-of select="@align" />
+				</xsl:when>
+				<xsl:otherwise>center</xsl:otherwise>
+			</xsl:choose>
+		</xsl:attribute>
+	</xsl:attribute-set>
+
   <!-- ====================================================== -->
   <!--
        Center tables in print, based on the example on p. 474 in
@@ -32,7 +49,7 @@
 
        2.  This style sheet uses DocBook namespaces.
 
-       3.  This does not seem to work with proportional columns widths.
+       3.  This does not seem to work with proportional column widths.
 
        Known improvements needed:
 
@@ -145,18 +162,17 @@
       </xsl:otherwise>
 
     </xsl:choose>
-</xsl:template>
+  </xsl:template>
 
-<xsl:template name="col-width-sum">
-  <!-- input parameters -->
-  <xsl:param name="total-width" select="0"/>
-  <xsl:param name="col-path" select="//colspec"/>
+  <xsl:template name="col-width-sum">
+    <!-- input parameters -->
+    <xsl:param name="total-width" select="0"/>
+    <xsl:param name="col-path" select="//colspec"/>
 
-  <!-- other instructions -->
-  <xsl:comment>
-    comment in template "col-width-sum"
-  </xsl:comment>
-</xsl:template>
-
+    <!-- other instructions -->
+    <xsl:comment>
+      comment in template "col-width-sum"
+    </xsl:comment>
+  </xsl:template>
 
 </xsl:stylesheet>

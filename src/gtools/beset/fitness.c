@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,13 +19,13 @@
  */
 /** @file fitness.c
  *
- * Compare rays of source and population
- * usage: global variable struct fitness_state *fstate must exist
+ * Compare rays of source and population.
+ *
+ * Usage: global variable struct fitness_state *fstate must exist
  *	fit_prep(db, rows, cols);
  *	fit_store(source_object);
  *	int linear_difference = fit_diff(test_object);
  *	fit_clear();
- * Author - Ben Poole
  *
  */
 
@@ -51,15 +51,15 @@
 
 
 /**
- *	F I T _ S T O R E  --- store an object as the "source" to compare with
+ * store an object as the "source" to compare with
  */
 void
 fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 {
     struct db_i *db;
 
-    if ( (db=db_open(dbname, "r")) == DBI_NULL)
-	bu_exit(EXIT_FAILURE, "Failed to open model database");
+    if ( (db=db_open(dbname, DB_OPEN_READONLY)) == DBI_NULL)
+	bu_exit(EXIT_FAILURE, "Failed to open geometry database file");
     if (db_dirbuild(db) < 0)
 	bu_exit(EXIT_FAILURE, "Failed to build directory structure");
 
@@ -70,8 +70,9 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 
 }
 
+
 /**
- *	C A P T U R E _ H I T --- called by rt_shootray(), stores a ray that hit the shape
+ * called by rt_shootray(), stores a ray that hit the shape
  */
 int
 capture_hit(register struct application *ap, struct partition *partHeadp, struct seg *UNUSED(segs))
@@ -80,12 +81,12 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
 
     /* initialize list of partitions */
-    ((struct fitness_state *)ap->a_uptr)->ray[ap->a_user] = bu_malloc(sizeof(struct part), "part");
+    BU_ALLOC(((struct fitness_state *)ap->a_uptr)->ray[ap->a_user], struct part);
     BU_LIST_INIT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l);
 
     /* save ray */
     for (pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw) {
-	add = bu_malloc(sizeof(struct part), "part");
+	BU_ALLOC(add, struct part);
 	add->inhit_dist = pp->pt_inhit->hit_dist;
 	add->outhit_dist = pp->pt_outhit->hit_dist;
 	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l, &add->l);
@@ -93,8 +94,9 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     return 1;
 }
 
+
 /**
- *	C A P T U R E _ M I S S --- called by rt_shootray(), stores a ray that missed the shape
+ * called by rt_shootray(), stores a ray that missed the shape
  */
 int
 capture_miss(register struct application *ap)
@@ -103,8 +105,9 @@ capture_miss(register struct application *ap)
     return 0;
 }
 
+
 /**
- *	C O M P A R E _ H I T -- compare a ray that hit to source
+ * compare a ray that hit to source
  */
 int
 compare_hit(register struct application *ap, struct partition *partHeadp, struct seg *UNUSED(segs))
@@ -262,7 +265,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 
 
 /**
- *	C O M P A R E _ M I S S --- compares missed ray to real ray
+ * compares missed ray to real ray
  */
 int
 compare_miss(register struct application *ap)
@@ -271,8 +274,9 @@ compare_miss(register struct application *ap)
     return 0;
 }
 
+
 /**
- *	G E T _ N E X T _ R O W --- grab the next row of rays to be evaluated
+ * grab the next row of rays to be evaluated
  */
 int
 get_next_row(struct fitness_state *fstate)
@@ -288,12 +292,12 @@ get_next_row(struct fitness_state *fstate)
     return r;
 }
 
+
 /**
- *	R T _ W O R K E R --- raytraces an object in parallel and stores or compares it to source
- *
+ * raytraces an object in parallel and stores or compares it to source
  */
 void
-rt_worker(int UNUSED(cpu), genptr_t g)
+rt_worker(int UNUSED(cpu), void *g)
 {
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;
@@ -331,9 +335,9 @@ rt_worker(int UNUSED(cpu), genptr_t g)
     }
 }
 
+
 /**
- *	F I T _ R T --- raytrace an object optionally storing the rays
- *
+ * raytrace an object optionally storing the rays
  */
 void
 fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
@@ -412,7 +416,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of bounding box */
 
 	/* allocate storage for saved rays */
-	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
+	fstate->ray = (struct part **)bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
 	VMOVE(fstate->min, fstate->rtip->mdl_min);
 	VMOVE(fstate->max, fstate->rtip->mdl_max);
 
@@ -441,8 +445,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
 
 
-    rt_worker(0, (genptr_t)fstate);
-    /*bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);*/
+    rt_worker(0, (void *)fstate);
+    /*bu_parallel(rt_worker, fstate->ncpu, (void *)fstate);*/
 
     /* normalize fitness if we aren't just saving the source */
     if (!fstate->capture) {
@@ -461,8 +465,9 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 
 }
 
+
 /**
- *	F I T _ D I F F --- returns the difference between input geometry and individual  (compares rays)
+ * returns the difference between input geometry and individual  (compares rays)
  */
 void
 fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
@@ -470,8 +475,9 @@ fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
     fit_rt(obj, db, fstate);
 }
 
+
 /**
- *	F I T _ P R E P --- load database and prepare for raytracing
+ * load database and prepare for raytracing
  */
 void
 fit_prep(struct fitness_state *fstate, int rows, int cols)
@@ -487,8 +493,9 @@ fit_prep(struct fitness_state *fstate, int rows, int cols)
     bn_rand_init(rt_uniresource.re_randptr, 0);
 }
 
+
 /**
- *	F I T _ C L E A N --- cleanup
+ * cleanup
  */
 void
 fit_clean(struct fitness_state *fstate)
@@ -497,8 +504,9 @@ fit_clean(struct fitness_state *fstate)
     /* bu_semaphore_free(); */
 }
 
+
 /**
- *	F R E E _ R A Y S  ---  free saved rays
+ * free saved rays
  */
 void
 free_rays(struct fitness_state *fstate)
@@ -519,9 +527,10 @@ free_rays(struct fitness_state *fstate)
 
 
 /**
- *	F I T _ U P D A T E R E S --- change ray grid resolution
- *	Note: currently not in use, will be used to refine grid as
- *	fitness increases
+ * change ray grid resolution.
+ *
+ * Note: currently not in use, will be used to refine grid as fitness
+ * increases
  */
 /*
   void

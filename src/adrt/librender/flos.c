@@ -1,7 +1,7 @@
 /*                        F L O S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+
 
 struct render_flos_s {
     point_t frag_pos;
@@ -40,6 +42,7 @@ struct render_flos_s {
 void
 render_flos_free(render_t *UNUSED(render)) {
 }
+
 
 void
 render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel) {
@@ -55,23 +58,27 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     } else
 	return;
 
-    VSUB2(vec,  ray->pos,  id.pos);
+    VSUB2(vec, ray->pos, id.pos);
     VUNITIZE(vec);
-    angle = VDOT( vec,  id.norm);
+    angle = VDOT(vec, id.norm);
 
     /* Determine if direct line of sight to fragment */
     VMOVE(ray->pos, rd->frag_pos);
-    VSUB2(ray->dir,  id.pos,  rd->frag_pos);
+    VSUB2(ray->dir, id.pos, rd->frag_pos);
     VUNITIZE(ray->dir);
 
-    if (tie_work(tie, ray, &tid, render_hit, NULL))
-	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC &&
-		fabs (id.pos[1] - tid.pos[1]) < TIE_PREC &&
-		fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)
+    if (tie_work(tie, ray, &tid, render_hit, NULL)) {
+	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC
+	    && fabs (id.pos[1] - tid.pos[1]) < TIE_PREC
+	    && fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)
+	{
 	    VSET(*pixel, 1.0, 0.0, 0.0);
+	}
+    }
 
     VSCALE(*pixel, *pixel, (0.5+angle*0.5));
 }
+
 
 int
 render_flos_init(render_t *render, const char *frag_pos)
@@ -79,18 +86,20 @@ render_flos_init(render_t *render, const char *frag_pos)
     struct render_flos_s *d;
     double scan[3];
 
-    if(frag_pos == NULL)
+    if (frag_pos == NULL)
 	return -1;
 
     render->work = render_flos_work;
     render->free = render_flos_free;
-    render->data = (struct render_flos_s *)bu_malloc(sizeof(struct render_flos_s), "render_flos_init");
+
+    BU_ALLOC(render->data, struct render_flos_s);
     d = (struct render_flos_s *)render->data;
-    sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
+    bu_sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
     /* convert from double to fastf_t */
     VMOVE(d->frag_pos, scan);
     return 0;
 }
+
 
 /*
  * Local Variables:

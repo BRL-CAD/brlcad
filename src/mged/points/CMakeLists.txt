@@ -5,16 +5,25 @@
 # environments
 set(CMAKE_C_FLAGS "")
 
-include_directories(
+set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${TCL_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
 
 YACC_TARGET(MGEDPointsParser points_parse.y
   ${CMAKE_CURRENT_BINARY_DIR}/points_parse.c)
-LEX_TARGET(MGEDPointsScanner points_scan.l
-  ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l")
+
+if(ENABLE_POSIX_COMPLIANCE)
+  # need something special here for fileno:
+  LEX_TARGET(MGEDPointsScanner points_scan.l
+    ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l -D_POSIX_C_SOURCE=200112L")
+else()
+  LEX_TARGET(MGEDPointsScanner points_scan.l
+    ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l")
+endif()
+
 ADD_LEX_YACC_DEPENDENCY(MGEDPointsScanner MGEDPointsParser)
 
 set(MGED_POINTS_SRCS
@@ -26,7 +35,8 @@ set(MGED_POINTS_SRCS
   )
 
 BRLCAD_ADDLIB(libpoints "${MGED_POINTS_SRCS}" libbu)
-SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
+set_target_properties(libpoints PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
 set(mged_points_ignore_files
   count.h
   points_parse.y
@@ -34,7 +44,6 @@ set(mged_points_ignore_files
   process.h
   )
 CMAKEFILES(${mged_points_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

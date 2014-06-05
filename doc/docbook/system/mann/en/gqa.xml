@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gqa1">
   <refmeta>
     <refentrytitle>GQA</refentrytitle>
@@ -450,6 +448,14 @@
 	    the calculation. By default, all local CPUs are utilized. This option exists primarily to
 	    reduce the number of computation threads from the machine maximum.  Note that specifying more
 	    CPUs than are present on the machine does not increase the number of computation threads.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-q</option></term>
+	<listitem>
+	  <para>
+	    Quiets (suppresses) the "was not hit" reporting.
 	  </para>
 	</listitem>
       </varlistentry>

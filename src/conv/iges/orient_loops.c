@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,15 +48,13 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	if (nmg_classify_lu_lu(lu, lptr->lu, &tol) == NMG_CLASS_AinB) {
 
 	    if (lptr->inner_loops == (struct loop_list *)NULL) {
-		lptr->inner_loops = (struct loop_list *)bu_malloc(sizeof(struct loop_list),
-								  "Find_inner_loops: lptr->inner_loops");
+		BU_ALLOC(lptr->inner_loops, struct loop_list);
 		inner = lptr->inner_loops;
 	    } else {
 		inner = lptr->inner_loops;
 		while (inner->next != (struct loop_list *)NULL)
 		    inner = inner->next;
-		inner->next = (struct loop_list *)bu_malloc(sizeof(struct loop_list),
-							    "Find_inner_loops: inner->next");
+		BU_ALLOC(inner->next, struct loop_list);
 		inner = inner->next;
 	    }
 	    inner->next = (struct loop_list *)NULL;
@@ -111,8 +109,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 
 
 void
-Orient_face_loops(fu)
-    struct faceuse *fu;
+Orient_face_loops(struct faceuse *fu)
 {
     struct loopuse *lu;
     struct loopuse *lu_outer = NULL;
@@ -124,7 +121,8 @@ Orient_face_loops(fu)
 	fu = fu->fumate_p;
     if (fu->orientation != OT_SAME) {
 	bu_log("Orient_face_loops: fu %p has orient %s and mate (%p) has orient %s (no OT_SAME)\n",
-	       fu, nmg_orientation(fu->orientation), fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
+	       (void *)fu, nmg_orientation(fu->orientation),
+	       (void *)fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
 	bu_exit(1, "Face with no OT_SAME use\n");
     }
 
@@ -152,7 +150,7 @@ Orient_face_loops(fu)
 	}
     }
 
-    loop_root = (struct loop_list *)bu_malloc(sizeof(struct loop_list), "Orient_face_loops: loop_root");
+    BU_ALLOC(loop_root, struct loop_list);
     loop_root->lu = lu_outer;
     loop_root->next = (struct loop_list *)NULL;
     loop_root->inner_loops = (struct loop_list *)NULL;
@@ -197,8 +195,7 @@ Orient_face_loops(fu)
 
 
 void
-Orient_nurb_face_loops(fu)
-    struct faceuse *fu;
+Orient_nurb_face_loops(struct faceuse *fu)
 {
     struct face *f;
     struct face_g_snurb *fg;
@@ -248,8 +245,7 @@ Orient_nurb_face_loops(fu)
 
 
 void
-Orient_loops(r)
-    struct nmgregion *r;
+Orient_loops(struct nmgregion *r)
 {
     struct shell *s;
 

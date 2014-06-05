@@ -10,6 +10,9 @@
  * Copyright (c) 1982 Spencer W. Thomas
  */
 
+#ifndef ORLE_H
+#define ORLE_H
+
 #include "common.h"
 
 #ifndef ORLE_EXPORT
@@ -90,28 +93,21 @@ typedef struct	/* Old format RLE header minus magic number field.	*/
 
 typedef struct /* Old RLE format instruction.				*/
 {
-#if __STDC__ || defined(__convexc__)
-    /* !!! This won't match the file format, but will at least compile */
+    /* !!! This doesn't match the file format, but will at least compile */
     /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
-    unsigned int datum:12, opcode:4;
-#else
-    unsigned short datum:12, opcode:4;
-#endif
+    unsigned int datum:12, opcode:4; /* previously was unsigned short */
 } Old_Inst;
 
 typedef struct /* Old RLE format instruction.				*/
 {
-#if __STDC__ || defined(__convexc__)
-    /* !!! This won't match the file format, but will at least compile */
+    /* !!! This doesn't match the file format, but will at least compile */
     /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
-    int	opcode:8, datum:8;
-#else
-    short	opcode:8, datum:8;
-#endif
+    int	opcode:8, datum:8; /* previously was short */
 } Xtnd_Inst;
 
 typedef unsigned char RLEpixel[3];
 
+/* FIXME: RLEColorMap is same as ColorMap defined in 'fbio.h' */
 typedef struct  {
     unsigned short cm_red[256];
     unsigned short cm_green[256];
@@ -140,17 +136,23 @@ extern RLEpixel	_bg_pixel;
 ORLE_EXPORT extern int	rle_debug;
 ORLE_EXPORT extern int	rle_verbose;
 
+__BEGIN_DECLS
+
 /* Entry points.							*/
-ORLE_EXPORT extern void rle_rlen();
+ORLE_EXPORT extern void rle_rlen(int *, int *);
 ORLE_EXPORT extern void rle_wlen(int, int, int);
-ORLE_EXPORT extern void rle_rpos();
+ORLE_EXPORT extern void rle_rpos(int *, int *);
 ORLE_EXPORT extern void rle_wpos(int, int, int);
-ORLE_EXPORT extern int rle_rhdr();
+ORLE_EXPORT extern int rle_rhdr(FILE *, int *, register unsigned char *);
 ORLE_EXPORT extern int rle_whdr(FILE *, int, int, int, unsigned char *);
-ORLE_EXPORT extern int rle_rmap();
+ORLE_EXPORT extern int rle_rmap(FILE *, RLEColorMap *);
 ORLE_EXPORT extern int rle_wmap(FILE *, RLEColorMap *);
-ORLE_EXPORT extern int rle_decode_ln();
-ORLE_EXPORT extern int rle_encode_ln();
+ORLE_EXPORT extern int rle_decode_ln(register FILE *, RLEpixel *);
+ORLE_EXPORT extern int rle_encode_ln(register FILE *, RLEpixel *);
+
+__END_DECLS
+
+#endif /* ORLE_H */
 
 /** @} */
 /*

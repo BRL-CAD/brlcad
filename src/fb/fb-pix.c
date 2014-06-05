@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,14 +61,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -101,8 +97,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
 	    fprintf(stderr,
-			  "fb-pix: cannot open \"%s\" for writing\n",
-			  file_name);
+		    "fb-pix: cannot open \"%s\" for writing\n",
+		    file_name);
 	    return 0;
 	}
 	(void)bu_fchmod(fileno(outfp), 0444);
@@ -127,7 +123,7 @@ main(int argc, char **argv)
     ColorMap cmap;		/* libfb color map */
 
     char usage[] = "\
-Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
+Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
     screen_height = screen_width = 512;		/* Defaults */
@@ -137,9 +133,7 @@ Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
 	bu_exit(1, NULL);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     scanpix = screen_width;
     scanbytes = scanpix * sizeof(RGBpixel);

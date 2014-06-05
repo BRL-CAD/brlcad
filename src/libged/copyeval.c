@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -36,15 +36,16 @@
 int
 ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    struct rt_db_internal internal, new_int;
-    struct rt_db_internal *ip;
-    mat_t start_mat;
-    int i;
-    int endpos;
-    char *tok;
-    struct _ged_trace_data gtd;
     static const char *usage = "path_to_old_prim new_prim";
+    struct _ged_trace_data gtd;
+    struct directory *dp;
+    struct rt_db_internal *ip;
+    struct rt_db_internal internal, new_int;
+
+    char *tok;
+    int endpos = 0;
+    int i;
+    mat_t start_mat;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -76,8 +77,6 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 
     /* build directory pointer array for desired path */
     if (strchr(argv[1], '/')) {
-	endpos = 0;
-
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
@@ -85,9 +84,13 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	endpos = 0;
 	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 	endpos++;
+    }
+
+    if (endpos < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     gtd.gtd_objpos = endpos - 1;
@@ -135,7 +138,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&ip->idb_type);
+    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)

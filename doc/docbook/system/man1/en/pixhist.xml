@@ -30,7 +30,6 @@ displays a histogram of the pixel values of the given
 format file, or, if no file is specified, will read from standard in.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
@@ -65,7 +64,7 @@ flag will also output the histogram values on the terminal.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2012 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

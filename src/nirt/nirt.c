@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 /* private */
 #include "./nirt.h"
 #include "./usrfmt.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /* bleh */
@@ -104,19 +104,21 @@ void printusage(void)
 {
     bu_log("Usage: 'nirt [options] model.g objects...'\n");
     bu_log("Options:\n");
+    bu_log(" -A n       add attribute_name=n\n");
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
     bu_log(" -T n       set rt_bot_mintie=n\n");
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
     bu_log(" -L         list output formatting options\n");
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -O action  handle overlap claims via action\n");
-    bu_log(" -s         run in silent (non-verbose) mode\n ");
-    bu_log(" -h n       enable/disable informational header\n ");
-    bu_log("            (on by default, always off in silent mode\n ");
-    bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -s         run in silent (non-verbose) mode\n");
     bu_log(" -v         run in verbose mode\n");
+    bu_log(" -H n       flag (n) for enable/disable informational header\n");
+    bu_log("            (n=1 [on] by default, always off in silent mode)\n");
+    bu_log(" -u n       set use_air=n (default 0)\n");
     bu_log(" -x v       set librt(3) diagnostic flag=v\n");
     bu_log(" -X v       set nirt diagnostic flag=v\n");
 }
@@ -170,7 +172,7 @@ attrib_print(void)
 {
     int i;
 
-    for (i=0; i < a_tab.attrib_use; i++) {
+    for (i = 0; i < a_tab.attrib_use; i++) {
 	fprintf(stdout, "\"%s\"\n", a_tab.attrib[i]);
     }
 }
@@ -185,7 +187,7 @@ attrib_flush(void)
     int i;
 
     a_tab.attrib_use = 0;
-    for (i=0; i < a_tab.attrib_use; i++)
+    for (i = 0; i < a_tab.attrib_use; i++)
 	bu_free(a_tab.attrib[i], "strdup");
 }
 
@@ -206,9 +208,9 @@ attrib_add(char *a, int *prep)
 	/* make sure we have space */
 	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
 	    a_tab.attrib_cnt += 16;
-	    a_tab.attrib = bu_realloc(a_tab.attrib,
-				      a_tab.attrib_cnt * sizeof(char *),
-				      "attrib_tab");
+	    a_tab.attrib = (char **)bu_realloc(a_tab.attrib,
+					       a_tab.attrib_cnt * sizeof(char *),
+					       "attrib_tab");
 	}
 
 	/* add the attribute name(s) */
@@ -234,8 +236,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 
     BU_CK_LIST_HEAD(qp);
 
-    srp = (struct script_rec *)
-	bu_malloc(sizeof(struct script_rec), "script record");
+    BU_ALLOC(srp, struct script_rec);
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));
@@ -299,7 +300,7 @@ free_script(struct script_rec *srp)
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
     bu_vls_free(&(srp->sr_script));
-    bu_free((genptr_t) srp, "script record");
+    bu_free((void *) srp, "script record");
 }
 
 
@@ -387,6 +388,7 @@ main(int argc, char *argv[])
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
+    	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
@@ -436,7 +438,7 @@ main(int argc, char *argv[])
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nirt_debug);
@@ -448,17 +450,16 @@ main(int argc, char *argv[])
 		    return 1;
 		}
 		break;
-	    case 'h':
+	    case 'H':
 		if (sscanf(bu_optarg, "%d", &print_ident_flag) != 1) {
 		    (void) fprintf(stderr,
 				   "Illegal header output option specified: '%s'\n", bu_optarg);
 		    return 1;
 		}
 		break;
-	    case '?':
 	    default:
 		printusage();
-		bu_exit (Ch != '?', NULL);
+		bu_exit (Ch != 'h', NULL);
 	}
     } /* end while getopt */
 
@@ -557,7 +558,7 @@ main(int argc, char *argv[])
     ap.a_rt_i = rtip;         /* rt_i pointer */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
-    ap.a_uptr = (genptr_t)a_tab.attrib;
+    ap.a_uptr = (void *)a_tab.attrib;
 
     /* initialize variables */
     azimuth() = 0.0;

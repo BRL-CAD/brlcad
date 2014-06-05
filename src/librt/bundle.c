@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -80,9 +80,9 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
-    char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    const char *status;
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;
@@ -125,16 +125,6 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	       ap->a_onehit);
 	VPRINT("Dir", ap->a_ray.r_dir);
     }
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********shootray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_shootray_bundle() bad ray\n");
-    }
 
     if (rtip->needprep)
 	rt_prep(rtip);
@@ -169,7 +159,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray_bundle() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -335,7 +325,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		VJOIN1(ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir);
 
 		/* Check against bounding RPP, if desired by solid */
-		if (rt_functab[stp->st_id].ft_use_rpp) {
+		if (OBJ[stp->st_id].ft_use_rpp) {
 		    if (!rt_in_rpp(&ss2_newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
@@ -355,8 +345,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		BU_LIST_INIT(&(new_segs.l));
 
 		ret = -1;
-		if (rt_functab[stp->st_id].ft_shot) {
-		    ret = rt_functab[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
+		if (OBJ[stp->st_id].ft_shot) {
+		    ret = OBJ[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
 		}
 		if (ret <= 0) {
 		    resp->re_shot_miss++;
@@ -553,12 +543,12 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	/*
 	 * setup partition collection
 	 */
-	BU_GET(bundle->list, struct partition_list);
+	BU_ALLOC(bundle->list, struct partition_list);
 	BU_LIST_INIT(&(bundle->list->l));
     }
 
     /* add a new partition to list */
-    BU_GET(new_shotline, struct partition_list);
+    BU_ALLOC(new_shotline, struct partition_list);
 
     /* steal partition list */
     BU_LIST_INIT_MAGIC((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);
@@ -593,7 +583,7 @@ int
 rt_shootrays(struct application_bundle *bundle)
 {
     struct partition_bundle *pb = NULL;
-    genptr_t a_uptr_backup = NULL;
+    void *a_uptr_backup = NULL;
     struct xray a_ray;
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
@@ -618,7 +608,7 @@ rt_shootrays(struct application_bundle *bundle)
      * callback functions differ from their general user defined
      * counterparts by detaching the ray hit partition list and
      * segment list and attaching it to a partition bundle. Users can
-     * define there own functions but should remember to hi-jack the
+     * define their own functions but should remember to hi-jack the
      * partition and segment list or the single ray handling function
      * will return memory allocated to these list prior to the bundle
      * b_hit() routine.
@@ -631,19 +621,19 @@ rt_shootrays(struct application_bundle *bundle)
     if (!bundle->b_ap.a_miss)
 	bundle->b_ap.a_miss = bundle_miss;
 
-    pb = (struct partition_bundle *)bu_calloc(1, sizeof(struct partition_bundle), "partition bundle");
+    BU_ALLOC(pb, struct partition_bundle);
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
 
-    bundle->b_uptr = (genptr_t)pb;
+    bundle->b_uptr = (void *)pb;
 
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
-	ray_ap = (struct application *)bu_calloc(1, sizeof(struct application), "ray application structure");
+	BU_ALLOC(ray_ap, struct application);
 	*ray_ap = bundle->b_ap; /* structure copy */
 
 	ray_ap->a_ray = r->ray;
 	ray_ap->a_ray.magic = RT_RAY_MAGIC;
-	ray_ap->a_uptr = (genptr_t)pb;
+	ray_ap->a_uptr = (void *)pb;
 	ray_ap->a_rt_i = rt_i;
 	ray_ap->a_resource = resource;
 
@@ -653,7 +643,7 @@ rt_shootrays(struct application_bundle *bundle)
 	resource = ray_ap->a_resource;
 
 	if (hit == 0)
-	    bu_free((genptr_t)(ray_ap), "ray application structure");
+	    bu_free((void *)(ray_ap), "ray application structure");
     }
 
     if ((bundle->b_hit) && (pb->hits > 0)) {

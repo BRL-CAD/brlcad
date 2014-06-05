@@ -1,7 +1,7 @@
 /*                       P Y R A M I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,14 +48,15 @@ main(int argc, char **argv)
 {
     int depth;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage:  pyramid recursion\n");
+    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");
 	return 1;
     }
     depth = atoi(argv[1]);
-    sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("pyramid.g");
+    printf("Creating file pyramid.g\n");
 
     mk_id(outfp, "3-D Pyramids");
 
@@ -64,6 +65,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /* Make a leaf node out of an ARB4 */
 void
@@ -108,6 +110,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 	VMOVE(norms[i], n);
     }
 }
+
 
 void
 do_tree(char *name, char *lname, int level)
@@ -157,6 +160,7 @@ do_tree(char *name, char *lname, int level)
 	do_tree(nm, lname, level-1);
     }
 }
+
 
 /*
  * Local Variables:

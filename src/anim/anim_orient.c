@@ -1,7 +1,7 @@
 /*                   A N I M _ O R I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,6 +69,13 @@ int upright;
 int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_orient [q | y | a | z | m] [vri] [q | y | a | z | m] [vriu] in.table out.table\n");
+    bu_exit(0, NULL);
+}
+
 
 int
 parse_args(int argc, char **argv)
@@ -87,6 +94,9 @@ parse_args(int argc, char **argv)
     input_inv = 0;
     output_inv = 0;
     length = 4;
+
+    if (*argv[1] == 'h' || *argv[1] == '?')
+	usage();
 
     if (argc > 2) {
 	/*read output mode */
@@ -176,9 +186,12 @@ main(int argc, char *argv[])
     int num_read;
     fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+    }
+
     if (!parse_args(argc, argv)) {
-	fprintf(stderr, "Get_args error.\n");
-	bu_exit(0, NULL);
+	usage();
     }
 
     /* read data */

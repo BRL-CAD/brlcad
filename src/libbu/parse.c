@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/parse.h"
+#include "bu/str.h"
+#include "bu/units.h"
 
 
 /* Note: struct parsing requires no space after the commas.  take care
@@ -44,47 +50,47 @@
 		ext->ext_nbytes <<= 1;					\
 	    } while (offset < 0);					\
 	    offset = cp - (char *)ext->ext_buf;				\
-	    ext->ext_buf = (genptr_t)bu_realloc((char *) ext->ext_buf,	\
+	    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf,	\
 						ext->ext_nbytes, "bu_struct_export"); \
-	    ep = (char *) ext->ext_buf + ext->ext_nbytes;		\
-	    cp = (char *) ext->ext_buf + offset;			\
+	    ep = (char *)ext->ext_buf + ext->ext_nbytes;		\
+	    cp = (char *)ext->ext_buf + offset;			\
 	}								\
     }
 
 
-#define BU_GETPUT_MAGIC_1 0x15cb
-#define BU_GETPUT_MAGIC_2 0xbc51
-#define BU_INIT_GETPUT_1(_p) {						\
+#define PARSE_MAGIC_1 0x15cb
+#define PARSE_MAGIC_2 0xbc51
+#define PARSE_INIT_GETPUT_1(_p) {						\
 	BU_CK_EXTERNAL(_p);						\
-	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
-	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
+	((unsigned char *) _p->ext_buf)[1] = (PARSE_MAGIC_1 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[0] = (PARSE_MAGIC_1 >> 8) & 0xFF; \
     }
-#define BU_INIT_GETPUT_2(_p, _l) {					\
+#define PARSE_INIT_GETPUT_2(_p, _l) {					\
 	BU_CK_EXTERNAL(_p);						\
-	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
-	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
+	((unsigned char *) _p->ext_buf)[_l-1] = (PARSE_MAGIC_2 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[_l-2] = (PARSE_MAGIC_2 >> 8) & 0xFF; \
     }
 
 
-#define BU_CK_GETPUT(_p) {						\
+#define PARSE_CK_GETPUT(_p) {						\
 	register unsigned long _i;					\
 	register size_t _len;						\
 	BU_CK_EXTERNAL(_p);						\
 	if (UNLIKELY(!(_p->ext_buf))) {					\
-	    bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT null ext_buf, file %s, line %d\n", \
 		   __FILE__, __LINE__);					\
 	    bu_bomb("NULL pointer");					\
 	}								\
 	if (UNLIKELY(_p->ext_nbytes < 6)) {				\
-	    bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
 		   _p->ext_nbytes, __FILE__, __LINE__);			\
 	    bu_bomb("getput buffer too small");				\
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[1];			\
-	if (UNLIKELY(_i != BU_GETPUT_MAGIC_1)) {			\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_1,		\
+	if (UNLIKELY(_i != PARSE_MAGIC_1)) {			\
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, PARSE_MAGIC_1,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
@@ -94,16 +100,16 @@
 	    ((size_t)((unsigned char *)(_p->ext_buf))[4] << 8) |	\
 	    (size_t)((unsigned char *)(_p->ext_buf))[5];		\
 	if (UNLIKELY(_len > _p->ext_nbytes)) {				\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
 		   (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes,	\
 		   __FILE__, __LINE__);					\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[_len-1];			\
-	if (UNLIKELY(_i != BU_GETPUT_MAGIC_2)) {			\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_2,		\
+	if (UNLIKELY(_i != PARSE_MAGIC_2)) {			\
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, PARSE_MAGIC_2,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
@@ -111,7 +117,7 @@
 
 
 int
-bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
+bu_struct_export(struct bu_external *ext, const void *base, const struct bu_structparse *imp)
 {
     register char *cp;			/* current position in buffer */
     char *ep;				/* &ext->ext_buf[ext->ext_nbytes] */
@@ -122,14 +128,16 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
     BU_EXTERNAL_INIT(ext);
 
+    if (UNLIKELY(base == ((void *)0) || !ext))
+	return 0;
+
     ext->ext_nbytes = 480;
-    ext->ext_buf = (genptr_t)bu_malloc(ext->ext_nbytes,
-				       "bu_struct_export output ext->ext_buf");
-    BU_INIT_GETPUT_1(ext);
+    ext->ext_buf = (uint8_t *)bu_malloc(ext->ext_nbytes, "bu_struct_export output ext->ext_buf");
+    PARSE_INIT_GETPUT_1(ext);
     cp = (char *) ext->ext_buf + 6; /* skip magic and length */
     ep = cp + ext->ext_nbytes;
 
-    for (ip = imp; ip->sp_fmt[0] != '\0'; ip++) {
+    for (ip = imp; ip && ip->sp_fmt[0] != '\0'; ip++) {
 
 	loc = ((char *)base) + ip->sp_offset;
 
@@ -158,13 +166,13 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Variable-precision "fastf_t" floating point */
 		len = ip->sp_count * sizeof(fastf_t);
 		CKMEM(len);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
-			htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			bu_cv_htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
 		    case sizeof(double):
 		    default:
-			htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			bu_cv_htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
 		}
 		cp += len;
@@ -173,7 +181,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Double-precision floating point */
 		len = ip->sp_count * sizeof(double);
 		CKMEM(len);
-		htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+		bu_cv_htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 		cp += len;
 		continue;
 	    case 'd':
@@ -218,7 +226,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		    register size_t lenstr;
 
 		    /* include the terminating null */
-		    lenstr = (int)strlen(loc) + 1;
+		    lenstr = strlen(loc) + 1;
 
 		    len = lenstr;
 
@@ -277,14 +285,14 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     ((char *)ext->ext_buf)[4] = (char)(i >> 8);
     ((char *)ext->ext_buf)[3] = (char)(i >>16);
     ((char *)ext->ext_buf)[2] = (char)(i >>24);
-    BU_INIT_GETPUT_2(ext, i);
+    PARSE_INIT_GETPUT_2(ext, i);
     ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
     return 1;
 }
 
 
 int
-bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct bu_external *ext)
+bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_external *ext)
 {
     register const unsigned char *cp;	/* current position in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
@@ -293,11 +301,14 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     size_t bytes_used;
     register size_t i;
 
-    BU_CK_GETPUT(ext);
+    if (UNLIKELY(base == ((void *)0) || !ext))
+	return -1;
+
+    PARSE_CK_GETPUT(ext);
 
     cp = (unsigned char *)ext->ext_buf+6;
     bytes_used = 0;
-    for (ip = imp; ip->sp_fmt[0] != '\0'; ip++) {
+    for (ip = imp; ip && ip->sp_fmt[0] != '\0'; ip++) {
 
 	loc = ((char *)base) + ip->sp_offset;
 
@@ -324,13 +335,13 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'f':
 		/* Variable-precision fastf_t floating point */
 		len = ip->sp_count * sizeof(fastf_t);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
-			ntohf((unsigned char *)loc, cp, ip->sp_count);
+			bu_cv_ntohf((unsigned char *)loc, cp, ip->sp_count);
 			break;
 		    case sizeof(double):
 		    default:
-			ntohd((unsigned char *)loc, cp, ip->sp_count);
+			bu_cv_ntohd((unsigned char *)loc, cp, ip->sp_count);
 			break;
 		}
 		cp += len;
@@ -339,7 +350,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'g':
 		/* Double-precision floating point */
 		len = ip->sp_count * sizeof(double);
-		ntohd((unsigned char *)loc, cp, ip->sp_count);
+		bu_cv_ntohd((unsigned char *)loc, cp, ip->sp_count);
 		cp += len;
 		bytes_used += len;
 		break;
@@ -432,7 +443,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		return -1;
 	}
 	if (ip->sp_hook) {
-	    ip->sp_hook(ip, ip->sp_name, (const char *)base, NULL);
+	    ip->sp_hook(ip, ip->sp_name, base, NULL);
 	}
     }
 
@@ -445,7 +456,10 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 size_t
 bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
-    BU_CK_GETPUT(ext);
+    if (UNLIKELY(!fp || !ext))
+	return 0;
+
+    PARSE_CK_GETPUT(ext);
 
     return fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp);
 }
@@ -457,11 +471,14 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     size_t i;
     uint32_t len;
 
+    if (UNLIKELY(!ext || !fp))
+	return 0;
+
     BU_EXTERNAL_INIT(ext);
-    ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
+    ext->ext_buf = (uint8_t *)bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i = fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    i = fread((char *)ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
@@ -482,17 +499,17 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	| (((unsigned char *)(ext->ext_buf))[4] << 8)
 	| (((unsigned char *)(ext->ext_buf))[5]);
 
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
+    if (UNLIKELY(i != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
+	       (void *)ext->ext_buf, PARSE_MAGIC_1,
 	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
     ext->ext_nbytes = len;
-    ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
+    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i = fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    i = fread((char *)ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (UNLIKELY(i != len-6)) {
@@ -507,9 +524,9 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     i = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
 	| ((unsigned char *)(ext->ext_buf))[len-1];
 
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
+    if (UNLIKELY(i != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
+	       (void *)ext->ext_buf, PARSE_MAGIC_2,
 	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
@@ -522,12 +539,15 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 
 
 void
-bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
+bu_struct_wrap_buf(struct bu_external *ext, void *buf)
 {
     register long i, len;
 
+    if (UNLIKELY(!ext || buf == ((void *)0)))
+	return;
+
     BU_EXTERNAL_INIT(ext);
-    ext->ext_buf = buf;
+    ext->ext_buf = (uint8_t *)buf;
     i = ((long)((unsigned char *)(ext->ext_buf))[0] << 8) |
 	((long)((unsigned char *)(ext->ext_buf))[1]);
     len =
@@ -535,18 +555,18 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	((long)((unsigned char *)(ext->ext_buf))[3] << 16) |
 	((long)((unsigned char *)(ext->ext_buf))[4] << 8) |
 	((long)((unsigned char *)(ext->ext_buf))[5]);
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
+    if (UNLIKELY(i != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
+	       (void *)ext->ext_buf, PARSE_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
     ext->ext_nbytes = len;
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
+    if (UNLIKELY(i != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
+	       (void *)ext->ext_buf, PARSE_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("Bad getput buffer");
     }
@@ -569,11 +589,15 @@ parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
     struct bu_vls buf = BU_VLS_INIT_ZERO;
     int len;
 
-    for (i=0; i < count && *str; ++i) {
+    if (UNLIKELY(str == NULL))
+	return -1;
+
+    for (i = 0; i < count && *str; ++i) {
 	numstart = str;
 
 	/* skip sign */
-	if (*str == '-' || *str == '+') str++;
+	if (*str == '-' || *str == '+')
+	    str++;
 
 	/* skip matissa */
 	dot_seen = 0;
@@ -595,9 +619,11 @@ parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
 	    str++;
 
 	    /* skip exponent sign */
-	    if (*str == '+' || *str == '-') str++;
+	    if (*str == '+' || *str == '-')
+		str++;
 
-	    while (isdigit((int)(*str))) str++;
+	    while (isdigit((int)(*str)))
+		str++;
 	}
 
 	len = str - numstart;
@@ -649,7 +675,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
     int retval = 0;
 
     /* sanity */
-    if (!sdp || !name)
+    if (UNLIKELY(!sdp || !name))
 	return -1;
 
     /* iterate over all structure entries and look for a match */
@@ -657,7 +683,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 
 	loc = (char *)(base + sdp->sp_offset);
 
-	if (loc == NULL) {
+	if (UNLIKELY(loc == NULL)) {
 	    bu_log("Structure inconsistency detected parsing '%s'\n", sdp->sp_name ? sdp->sp_name : "NULL");
 	    bu_bomb("INTERNAL ERROR: encountered NULL address.\n");
 	}
@@ -672,7 +698,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 	 * the structure description
 	 */
 
-	if (sdp->sp_fmt[0] == 'i') {
+	if (UNLIKELY(sdp->sp_fmt[0] == 'i')) {
 	    static int warned = 0;
 	    if (!warned) {
 		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
@@ -699,7 +725,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		    /* copy the string, converting escaped double
 		     * quotes to just double quotes
 		     */
-		    for (i=j=0;
+		    for (i = j = 0;
 			 j < sdp->sp_count && value[i] != '\0';
 			 loc[j++] = value[i++])
 			if (value[i] == '\\' &&
@@ -729,7 +755,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		    register const char *cp;
 		    register const char *pv = value;
 
-		    for (i=0; i < sdp->sp_count && *pv; ++i) {
+		    for (i = 0; i < sdp->sp_count && *pv; ++i) {
 			tmpi = atoi(pv);
 
 			cp = pv;
@@ -780,7 +806,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			break;
 		    }
 		    /* Normal case: an integer */
-		    for (i=0; i < sdp->sp_count && *pv; ++i) {
+		    for (i = 0; i < sdp->sp_count && *pv; ++i) {
 			tmpi = atoi(pv);
 
 			cp = pv;
@@ -840,7 +866,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		return -1;
 	}
 	if (sdp->sp_hook) {
-	    sdp->sp_hook(sdp, name, base, value);
+	    sdp->sp_hook(sdp, name, (void *)base, value);
 	}
 	return retval;		/* OK or parse error */
     }
@@ -883,7 +909,8 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	    cp++;
 
 	if (*cp == '\0') {
-	    if (name == cp) break;
+	    if (name == cp)
+		break;
 
 	    /* end of string in middle of arg */
 	    bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
@@ -943,7 +970,12 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 HIDDEN void
 parse_matprint(const char *name, register const fastf_t *mat)
 {
-    int delta = (int)strlen(name)+2;
+    int delta;
+
+    if (UNLIKELY(!name || !mat))
+	return;
+
+    delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -967,7 +999,12 @@ parse_matprint(const char *name, register const fastf_t *mat)
 HIDDEN void
 parse_dmatprint(const char *name, register const double *mat)
 {
-    int delta = (int)strlen(name)+2;
+    int delta;
+
+    if (UNLIKELY(!name || !mat))
+	return;
+
+    delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -993,7 +1030,12 @@ parse_vls_matprint(struct bu_vls *vls,
 		 const char *name,
 		 register const fastf_t *mat)
 {
-    int delta = (int)strlen(name)+2;
+    int delta;
+
+    if (UNLIKELY(!vls || !name || !mat))
+	return;
+
+    delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -1022,7 +1064,12 @@ parse_vls_dmatprint(struct bu_vls *vls,
 		 const char *name,
 		 register const double *mat)
 {
-    int delta = (int)strlen(name)+2;
+    int delta;
+
+    if (UNLIKELY(!vls || !name || !mat))
+	return;
+
+    delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -1055,6 +1102,9 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 {
     register char *loc;
 
+    if (UNLIKELY(!vp || !base))
+	return;
+
     if (UNLIKELY(sdp == (struct bu_structparse *)NULL)) {
 	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
@@ -1062,12 +1112,12 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 
     loc = (char *)(base + sdp->sp_offset);
 
-    if (sdp->sp_fmt[0] == 'i') {
+    if (UNLIKELY(sdp->sp_fmt[0] == 'i')) {
 	bu_log("Cannot print type 'i' yet!\n");
 	return;
     }
 
-    if (sdp->sp_fmt[0] != '%') {
+    if (UNLIKELY(sdp->sp_fmt[0] != '%')) {
 	bu_log("bu_vls_struct_item:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt);
 	return;
@@ -1154,7 +1204,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 {
     register const struct bu_structparse *sdp;
 
-    if (!parsetab)
+    if (UNLIKELY(!vp || !parsetab))
 	return -1;
 
     for (sdp = parsetab; sdp->sp_name != NULL; sdp++)
@@ -1178,11 +1228,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
     register int lastoff = -1;
     register size_t i = 0;
 
-    bu_log("%s\n", title);
+    if (title)
+	bu_log("%s\n", title);
+
     if (UNLIKELY(parsetab == (struct bu_structparse *)NULL)) {
 	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
+
+    if (UNLIKELY(base == NULL))
+	return;
 
     for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
 
@@ -1225,7 +1280,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
 
-		    bu_log("\t%s=\"%V\"\n", sdp->sp_name, vls);
+		    bu_log("\t%s=\"%s\"\n", sdp->sp_name, bu_vls_addr(vls));
 		    bu_log("\t\t(vls_magic)0x%lx (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 			   (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}
@@ -1236,7 +1291,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%d", sdp->sp_name, *sp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%d", COMMA, *sp++);
 		    }
 
@@ -1249,7 +1304,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%d", sdp->sp_name, *dp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%d", COMMA, *dp++);
 		    }
 
@@ -1265,7 +1320,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    } else if (sdp->sp_count <= 3) {
 			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
 
-			for (i=1; i < sdp->sp_count; i++) {
+			for (i = 1; i < sdp->sp_count; i++) {
 			    bu_log("%c%.25G", COMMA, *dp++);
 			}
 
@@ -1280,7 +1335,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			/* print first and last value individually, so
 			 * don't iterate over them.
 			 */
-			for (i=1; i < sdp->sp_count-1; i++) {
+			for (i = 1; i < sdp->sp_count-1; i++) {
 			    bu_log("%.25G\n", *dp++);
 			}
 
@@ -1298,7 +1353,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    } else if (sdp->sp_count <= 3) {
 			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
 
-			for (i=1; i < sdp->sp_count; i++) {
+			for (i = 1; i < sdp->sp_count; i++) {
 			    bu_log("%c%.25G", COMMA, *dp++);
 			}
 
@@ -1313,7 +1368,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			/* print first and last value individually, so
 			 * don't iterate over them.
 			 */
-			for (i=1; i < sdp->sp_count-1; i++) {
+			for (i = 1; i < sdp->sp_count-1; i++) {
 			    bu_log("%.25G\n", *dp++);
 			}
 
@@ -1328,7 +1383,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%08x", sdp->sp_name, *dp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%08x", COMMA, *dp++);
 		    }
 
@@ -1355,10 +1410,15 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 HIDDEN void
 parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, const fastf_t *fp, const double *dp)
 {
-    register int tmpi;
+    register size_t tmpi;
     register char *cp;
 
-    size_t increase = strlen(name) + 3 + 32 * count;
+    size_t increase;
+
+    if (UNLIKELY(!vls || !name))
+	return;
+
+    increase = strlen(name) + 3 + 32 * count;
     bu_vls_extend(vls, (unsigned int)increase);
 
 
@@ -1370,7 +1430,7 @@ parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, con
     if (dp) {
 	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
     }
-    tmpi = (int)strlen(cp);
+    tmpi = strlen(cp);
     vls->vls_len += tmpi;
 
     while (--count > 0) {
@@ -1381,7 +1441,7 @@ parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, con
 	if (dp) {
 	    sprintf(cp, "%c%.27G", COMMA, *dp++);
 	}
-	tmpi = (int)strlen(cp);
+	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
     }
 }
@@ -1404,6 +1464,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
+    if (UNLIKELY(base == NULL))
+	return;
 
     for (; sdp->sp_name != (char*)NULL; sdp++) {
 	/* Skip alternate keywords for same value */
@@ -1473,7 +1535,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	    case 'V':
 		{
 		    struct bu_vls *vls_p = (struct bu_vls *)loc;
-		    bu_vls_printf(vls, "%s=\"%V\"", sdp->sp_name, vls_p);
+		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(vls_p));
 		}
 		break;
 	    case 'i':
@@ -1550,7 +1612,12 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
     register char *loc;
     register int lastoff = -1;
 
-    bu_vls_printf(vls_out, "%s\n", title);
+    if (UNLIKELY(!vls_out || !base))
+	return;
+
+    if (title)
+	bu_vls_printf(vls_out, "%s\n", title);
+
     if (UNLIKELY(parsetab == (struct bu_structparse *)NULL)) {
 	bu_vls_printf(vls_out, "NULL \"struct bu_structparse\" pointer\n");
 	return;
@@ -1597,7 +1664,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
 
-		    bu_vls_printf(vls_out, "\t%s=\"%V\"\n", sdp->sp_name, vls);
+		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name, bu_vls_addr(vls));
 		    bu_vls_printf(vls_out, "\t\t(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 				  (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}
@@ -1730,7 +1797,12 @@ bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, cons
 /* beginning of structure */
 /* string containing value */
 {
-    double *p = (double *)(base+sdp->sp_offset);
+    double *p;
+
+    if (UNLIKELY(!sdp || !base || !value))
+	return;
+
+    p = (double *)(base+sdp->sp_offset);
 
     /* reconvert with optional units, name if-statement just to quell unused warning */
     if (name)
@@ -1754,10 +1826,13 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
     BU_CK_VLS(vls);
 
+    if (UNLIKELY(!next || !vls))
+	return -1;
+
     *next = NULL;
 
-    while (*iptr) {
-	const char *prev='\0';
+    while (iptr && *iptr) {
+	const char *prev = NULL;
 
 	switch (state) {
 	    case STATE_IN_KEYWORD:
@@ -1858,11 +1933,17 @@ int
 bu_shader_to_list(const char *in, struct bu_vls *vls)
 {
     size_t len;
-    int shader_name_len = 0;
+    size_t shader_name_len = 0;
     char *iptr;
     const char *shader;
-    char *copy = bu_strdup(in);
-    char *next = copy;
+    char *copy;
+    char *next;
+
+    if (UNLIKELY(in == NULL))
+	in = "";
+
+    copy = bu_strdup(in);
+    next = copy;
 
     BU_CK_VLS(vls);
 
@@ -1884,7 +1965,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	if (shader_name_len == 5 && !bu_strncasecmp(shader, "stack", 5)) {
 
 	    /* stack shader, loop through all shaders in stack */
-	    int done=0;
+	    int done = 0;
 
 	    bu_vls_strcat(vls, "stack {");
 
@@ -1998,18 +2079,18 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 HIDDEN char *
 parse_list_elem(const char *in, int idx)
 {
-    int depth=0;
-    int count=0;
-    int len=0;
-    const char *ptr=in;
-    const char *prev=NULL;
-    const char *start=NULL;
-    const char *end=NULL;
+    int depth = 0;
+    int count = 0;
+    int len = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
+    const char *start = NULL;
+    const char *end = NULL;
 
     struct bu_vls out = BU_VLS_INIT_ZERO;
     char *ret = NULL;
 
-    while (*ptr) {
+    while (ptr && *ptr) {
 	/* skip leading white space */
 	while (*ptr && isspace((int)(*ptr))) {
 	    prev = ptr;
@@ -2093,12 +2174,15 @@ parse_list_elem(const char *in, int idx)
 HIDDEN int
 parse_list_length(const char *in)
 {
-    int count=0;
-    int depth=0;
-    const char *ptr=in;
-    const char *prev=NULL;
+    int count = 0;
+    int depth = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
 
-    while (*ptr) {
+    if (UNLIKELY(in == NULL))
+	return 0;
+
+    while (ptr && *ptr) {
 	/* skip leading white space */
 	while (*ptr && isspace((int)(*ptr))) {
 	    prev = ptr;
@@ -2143,25 +2227,34 @@ parse_key_val_to_vls(struct bu_vls *vls, char *params)
     int len;
     int j;
 
+    if (UNLIKELY(!params || strlen(params) == 0))
+	return 0;
+
     len = parse_list_length(params);
 
-    if (len == 1) {
+    if (len == 0) {
+	return 0;
+    } else if (len == 1) {
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, params);
 	return 0;
-    }
-
-    if (len%2) {
-	bu_log("parse_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params);
+    } else if (len%2) {
+	bu_log("ERROR: shader parameters must be even numbered! (key value pairings)\n\t%s\n", params);
 	return 1;
     }
 
-    for (j=0; j<len; j += 2) {
+    for (j = 0; j < len; j += 2) {
 	char *keyword;
 	char *value;
 
 	keyword = parse_list_elem(params, j);
+	if (!keyword)
+	    continue;
 	value = parse_list_elem(params, j+1);
+	if (!value) {
+	    bu_free(keyword, "parse_key_val_to_vls() keyword");
+	    continue;
+	}
 
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, keyword);
@@ -2186,33 +2279,45 @@ int
 bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 {
     int len;
-    int ret=0;
+    int ret = 0;
     char *shader;
     char *params;
 
     BU_CK_VLS(vls);
 
-    len = parse_list_length(in);
-
-    if (len == 0)
+    if (UNLIKELY(in == NULL))
 	return 0;
 
-    if (len == 1) {
+    len = parse_list_length(in);
+
+    if (len == 0) {
+	return 0;
+    } else if (len == 1) {
 	/* shader with no parameters */
 	if (bu_vls_strlen(vls))
 	    bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, in);
 	return 0;
-    }
-
-    if (len != 2) {
-	bu_log("bu_shader_to_key_eq: Error: shader must have two elements (not %d)!!\n\t%s\n", len, in);
+    } else if (len != 2) {
+	bu_log("ERROR: expecting exactly two shader parameters (not %d)!!\n\t%s\n", len, in);
 	return 1;
     }
 
     shader = parse_list_elem(in, 0);
+    if (!shader) {
+	bu_log("ERROR: failed to parse valid shader name\n");
+	return 1;
+    }
     params = parse_list_elem(in, 1);
+    if (!params) {
+	bu_free(shader, "shader");
+	bu_log("ERROR: failed to parse valid shader parameters\n");
+	return 1;
+    }
 
+    /* FIXME: should not be aware of specific shader names here.
+     * breaks encapsulation and just sucks.
+     */
     if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
 
@@ -2234,7 +2339,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	len = parse_list_length(params);
 
 	/* process each shader in the stack */
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 	    char *shader1;
 
 	    /* each parameter must be a shader specification in itself */
@@ -2264,12 +2369,17 @@ bu_fwrite_external(FILE *fp, const struct bu_external *ep)
 {
     size_t got;
 
+    if (UNLIKELY(fp == NULL)) {
+	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%d\n", __FILE__, __LINE__);
+	return -1;
+    }
+
     BU_CK_EXTERNAL(ep);
 
     got = fwrite(ep->ext_buf, 1, ep->ext_nbytes, fp);
     if (UNLIKELY(got != (size_t)ep->ext_nbytes)) {
 	perror("fwrite");
-	bu_log("bu_fwrite_external() attempted to write %ld, got %ld\n", (long)ep->ext_nbytes, (long)got);
+	bu_log("ERROR: attempted to write %ld, only wrote %ld\n", (long)ep->ext_nbytes, (long)got);
 	return -1;
     }
     return 0;
@@ -2283,7 +2393,15 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     const unsigned char *endp;
     size_t i, j, k;
 
+    if (UNLIKELY(fp == NULL)) {
+	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%d\n", __FILE__, __LINE__);
+	return;
+    }
+
     BU_CK_EXTERNAL(ep);
+
+    if (UNLIKELY(str == NULL))
+	return;
 
     fprintf(fp, "%s:\n", str);
 
@@ -2292,11 +2410,11 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 
     cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
-    for (i=0; i < ep->ext_nbytes; i += 16) {
+    for (i = 0; i < ep->ext_nbytes; i += 16) {
 	const unsigned char *sp = cp;
 
-	for (j=0; j < 4; j++) {
-	    for (k=0; k < 4; k++) {
+	for (j = 0; j < 4; j++) {
+	    for (k = 0; k < 4; k++) {
 		if (cp >= endp)
 		    fprintf(fp, "   ");
 		else
@@ -2306,7 +2424,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 	}
 	fprintf(fp, " |");
 
-	for (j=0; j < 16; j++, sp++) {
+	for (j = 0; j < 16; j++, sp++) {
 	    if (sp >= endp) break;
 	    if (isprint(*sp))
 		putc(*sp, fp);
@@ -2323,10 +2441,12 @@ void
 bu_free_external(register struct bu_external *ep)
 {
     BU_CK_EXTERNAL(ep);
-    if (LIKELY(ep->ext_buf != NULL)) {
-	bu_free(ep->ext_buf, "bu_external ext_buf");
-	ep->ext_buf = GENPTR_NULL;
-    }
+
+    if (UNLIKELY(ep->ext_buf == NULL))
+	return;
+
+    bu_free(ep->ext_buf, "bu_external ext_buf");
+    ep->ext_buf = NULL;
 }
 
 
@@ -2340,7 +2460,7 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	return;
 
     op->ext_nbytes = ip->ext_nbytes;
-    op->ext_buf = bu_malloc(ip->ext_nbytes, "bu_copy_external");
+    op->ext_buf = (uint8_t *)bu_malloc(ip->ext_nbytes, "bu_copy_external");
     memcpy(op->ext_buf, ip->ext_buf, ip->ext_nbytes);
 }
 
@@ -2348,12 +2468,11 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 char *
 bu_next_token(char *str)
 {
-    char *ret;
+    char *ret = str;
 
-    ret = str;
-    while (!isspace((int)(*ret)) && *ret !='\0')
+    while (ret && !isspace((int)(*ret)) && *ret !='\0')
 	ret++;
-    while (isspace((int)(*ret)))
+    while (ret && isspace((int)(*ret)))
 	ret++;
 
     return ret;
@@ -2365,6 +2484,9 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     size_t i;
+
+    if (UNLIKELY(!logstr || !sp))
+	return;
 
     while (sp->sp_name != NULL) {
 	bu_vls_printf(logstr, "%s ", sp->sp_name);
@@ -2409,6 +2531,9 @@ bu_structparse_argv(struct bu_vls *logstr,
     const char *cp = NULL;
     char *loc = NULL;
     struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!logstr || !argv))
+	return BRLCAD_OK;
 
     if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
 	bu_vls_printf(logstr, "bu_structparse_argv: NULL desc pointer\n");

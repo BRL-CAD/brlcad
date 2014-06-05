@@ -1,7 +1,7 @@
 /*                   C H E C K _ N A M E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,7 @@
 #include <ctype.h>
 
 char *
-Add_brl_name(name)
-    char *name;
+Add_brl_name(char *name)
 {
     struct name_list *ptr;
     size_t namelen;
@@ -51,7 +50,7 @@ Add_brl_name(name)
     }
 
     /* add this name to the list */
-    ptr = (struct name_list *)bu_calloc(1, sizeof(struct name_list), "Add_brl_name: ptr");
+    BU_ALLOC(ptr, struct name_list);
     bu_strlcpy(ptr->name, name, namelen+1);
     ptr->next = name_root;
     name_root = ptr;
@@ -61,7 +60,8 @@ Add_brl_name(name)
 
 
 char *
-Make_unique_brl_name(char *name) {
+Make_unique_brl_name(char *name)
+{
 
     int found_str_end, name_unique;
     size_t namelen, i, idx;
@@ -186,9 +186,7 @@ Skip_field()
 
 
 void
-Get_name(entityno, skip)
-    int entityno;
-    int skip;
+Get_name(int entityno, int skip)
 {
     int sol_num;
     int i, j, k;
@@ -251,8 +249,7 @@ Get_name(entityno, skip)
 
 
 void
-Get_drawing_name(entityno)
-    int entityno;
+Get_drawing_name(int entityno)
 {
     int entity_type;
     int no_of_views;
@@ -327,8 +324,7 @@ Get_drawing_name(entityno)
 
 
 void
-Get_csg_name(entityno)
-    int entityno;
+Get_csg_name(int entityno)
 {
     int sol_num;
     int i, j, k;
@@ -402,8 +398,7 @@ Get_csg_name(entityno)
 
 
 void
-Get_brep_name(entityno)
-    int entityno;
+Get_brep_name(int entityno)
 {
     int sol_num;
     int i, j, k;
@@ -476,8 +471,7 @@ Get_brep_name(entityno)
 
 
 void
-Get_subfig_name(entityno)
-    int entityno;
+Get_subfig_name(int entityno)
 {
     int i;
     int entity_type;

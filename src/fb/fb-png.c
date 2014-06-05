@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,14 +61,10 @@ get_args(int argc, char **argv)
     int c;
     char *file_name;
 
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:g:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -136,7 +132,7 @@ main(int argc, char **argv)
     png_infop info_p;
 
     char usage[] = "\
-Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
+Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
     screen_height = screen_width = 512;		/* Defaults */
@@ -189,7 +185,7 @@ Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 		 PNG_FILTER_TYPE_DEFAULT);
 
     /* default to no gamma correction */
-    if (!(out_gamma < 0.0))
+    if (out_gamma > 0.0)
 	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);

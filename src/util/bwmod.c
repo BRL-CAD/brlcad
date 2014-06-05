@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,9 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-char *progname = "(noname)";
+char hyphen[] = "-";
+char noname[] = "(noname)";
+char *progname = noname;
 
 char *file_name;
 
@@ -74,7 +75,7 @@ get_args(int argc, char **argv)
     int c = 0;
     double d = 0.0;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -143,19 +144,19 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "rb", stdin) == NULL) {
 	    fprintf(stderr,
-			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
@@ -183,7 +184,7 @@ void mk_trans_tbl(void)
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		/* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
+		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
@@ -231,11 +232,9 @@ int main(int argc, char **argv)
     int n;
     unsigned long clip_high, clip_low;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     progname = *argv;
 
@@ -274,7 +273,7 @@ int main(int argc, char **argv)
 	/* output */
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
 	    fprintf(stderr, "%s: Error writing stdout\n",
-			  progname);
+		    progname);
 	    bu_exit (-1, NULL);
 	}
     }

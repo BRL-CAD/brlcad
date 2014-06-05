@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,14 +49,14 @@ mk_cline(
 {
     struct rt_cline_internal *cli;
 
-    BU_GET(cli, struct rt_cline_internal);
+    BU_ALLOC(cli, struct rt_cline_internal);
     cli->magic = RT_CLINE_INTERNAL_MAGIC;
     VMOVE(cli->v, V);
     VMOVE(cli->h, height);
     cli->thickness = thickness;
     cli->radius = radius;
 
-    return wdb_export(fp, name, (genptr_t)cli, ID_CLINE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)cli, ID_CLINE, mk_conv2mm);
 }
 
 

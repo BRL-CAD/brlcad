@@ -1,0 +1,25 @@
+                            VDSlib 0.9
+                     Dr. David Patrick Luebke.
+
+VDSlib is a software package that implements view-dependent simplification, 
+a geometric level-of-detail algorithm for managing the complexity of polygonal 
+scenes for interactive 3-D graphics. Unlike traditional approaches, which 
+compute discreet levels of detail for each object in a preprocess, VDSlib 
+computes a data structure from which the desired level of detail can be 
+dynamically extracted at run-time.
+
+For details of the algorithm, see the SIGGRAPH paper:
+
+View-Dependent Simplification Of Arbitrary Polygonal Environments
+http://www.cs.virginia.edu/~luebke/publications/sig97.html
+
+
+Changes:
+--------------------
+
+-- Marcelo E. Magallon <mmagallo@debian.org>, Sun, 20 Feb 2000
+
+Modified the example polyview program to get it to compile with FLTk (free,
+available in main as libfltk1 and libfltk-dev) instead of XForms
+(non-free, available as libforms0.89 and libforms-dev).  I have also
+added extern "C" { ... } linkage specifications to vds' headers. 

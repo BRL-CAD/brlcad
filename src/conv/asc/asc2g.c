@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -134,8 +134,6 @@ incr_ars_pt(void)
 
 
 /**
- * Z A P _ N L
- *
  * This routine removes newline and carriage return characters from
  * the buffer and substitutes in NULL.
  */
@@ -156,8 +154,6 @@ zap_nl(void)
 
 
 /**
- * S T R S O L B L D
- *
  * Input format is:
  *	s type name args...\n
  *
@@ -168,35 +164,45 @@ void
 strsolbld(void)
 {
     const struct rt_functab *ftp;
-    char	*type = NULL;
-    char	*name = NULL;
-    char	*args = NULL;
-    struct bu_vls	str = BU_VLS_INIT_ZERO;
+    const char delim[]     = " ";
+    const char end_delim[] = "\n";
+    char *type    = NULL;
+    char *name    = NULL;
+    char *args    = NULL;
+#if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
+    char *saveptr = NULL;
+#endif
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char *buf2 = (char *)bu_malloc(sizeof(char) * BUFSIZE, "strsolbld temporary buffer");
     char *bufp = buf2;
 
     memcpy(buf2, buf, sizeof(char) * BUFSIZE);
 
-
-#if defined (HAVE_STRSEP)
-    (void)strsep(&buf2, " ");		/* skip stringsolid_id */
-    type = strsep(&buf2, " ");
-    name = strsep(&buf2, " ");
-    args = strsep(&buf2, "\n");
+#if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
+    /* this function is reentrant */
+    (void)strtok_r(buf2, delim, &saveptr);  /* skip stringsolid_id */
+    type = strtok_r(NULL, delim, &saveptr);
+    name = strtok_r(NULL, delim, &saveptr);
+    args = strtok_r(NULL, end_delim, &saveptr);
+#elif defined(HAVE_STRSEP)
+    (void)strsep(&buf2, delim);		/* skip stringsolid_id */
+    type = strsep(&buf2, delim);
+    name = strsep(&buf2, delim);
+    args = strsep(&buf2, end_delim);
 #else
-    (void)strtok(buf, " ");		/* skip stringsolid_id */
-    type = strtok(NULL, " ");
-    name = strtok(NULL, " ");
-    args = strtok(NULL, "\n");
+    (void)strtok(buf2, delim);		/* skip stringsolid_id */
+    type = strtok(NULL, delim);
+    name = strtok(NULL, delim);
+    args = strtok(NULL, end_delim);
 #endif
 
     if (BU_STR_EQUAL(type, "dsp")) {
 	struct rt_dsp_internal *dsp;
 
-	BU_GET(dsp, struct rt_dsp_internal);
+	BU_ALLOC(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("dsp");
@@ -205,7 +211,7 @@ strsolbld(void)
 	    goto out;
 	}
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)dsp, ID_DSP, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -214,12 +220,12 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "ebm")) {
 	struct rt_ebm_internal *ebm;
 
-	BU_GET(ebm, struct rt_ebm_internal);
+	BU_ALLOC(ebm, struct rt_ebm_internal);
 
 	MAT_IDN(ebm->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, rt_functab[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("ebm");
@@ -228,7 +234,7 @@ strsolbld(void)
 	    return;
 	}
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)ebm, ID_EBM, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -237,11 +243,11 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "vol")) {
 	struct rt_vol_internal *vol;
 
-	BU_GET(vol, struct rt_vol_internal);
+	BU_ALLOC(vol, struct rt_vol_internal);
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, rt_functab[ID_VOL].ft_parsetab, (char *)vol) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("vol");
@@ -250,7 +256,7 @@ strsolbld(void)
 	    return;
 	}
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)vol, ID_VOL, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)vol, ID_VOL, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -261,10 +267,11 @@ strsolbld(void)
 	       name, type);
     }
 
- out:
+out:
     bu_free(bufp, "strsolbld temporary buffer");
     bu_vls_free(&str);
 }
+
 
 #define LSEG 'L'
 #define CARC 'A'
@@ -293,11 +300,11 @@ sktbld(void)
     cp++;
 
     sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
-		 name,
-		 &fV[0], &fV[1], &fV[2],
-		 &fu[0], &fu[1], &fu[2],
-		 &fv[0], &fv[1], &fv[2],
-		 &vert_count, &seg_count);
+	   name,
+	   &fV[0], &fV[1], &fV[2],
+	   &fu[0], &fu[1], &fu[2],
+	   &fv[0], &fv[1], &fv[2],
+	   &vert_count, &seg_count);
 
     VMOVE(V, fV);
     VMOVE(u, fu);
@@ -322,7 +329,7 @@ sktbld(void)
 	    bu_exit(1, "ERROR: not enough vertices for sketch (%s)\n", name);
     }
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     VMOVE(skt->V, V);
     VMOVE(skt->u_vec, u);
@@ -332,7 +339,7 @@ sktbld(void)
     crv = &skt->curve;
     crv->count = seg_count;
 
-    crv->segment = (genptr_t *)bu_calloc(crv->count, sizeof(genptr_t), "segments");
+    crv->segment = (void **)bu_calloc(crv->count, sizeof(void *), "segments");
     crv->reverse = (int *)bu_calloc(crv->count, sizeof(int), "reverse");
     for (j=0; j<crv->count; j++) {
 	double radius;
@@ -344,13 +351,13 @@ sktbld(void)
 	cp = buf + 2;
 	switch (*cp) {
 	    case LSEG:
-		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "line segment");
+		BU_ALLOC(lsg, struct line_seg);
 		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		crv->segment[j] = lsg;
 		break;
 	    case CARC:
-		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "arc segment");
+		BU_ALLOC(csg, struct carc_seg);
 		sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
@@ -358,7 +365,7 @@ sktbld(void)
 		crv->segment[j] = csg;
 		break;
 	    case NURB:
-		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nurb segment");
+		BU_ALLOC(nsg, struct nurb_seg);
 		sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
 		       &nsg->k.k_size, &nsg->c_size);
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
@@ -399,6 +406,7 @@ sktbld(void)
     (void)mk_sketch(ofp, name,  skt);
 }
 
+
 void
 extrbld(void)
 {
@@ -418,8 +426,8 @@ extrbld(void)
 
     cp++;
     sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
-		 name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
-		 &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
+	   name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
+	   &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
     VMOVE(V, fV);
     VMOVE(h, fh);
@@ -428,9 +436,8 @@ extrbld(void)
     (void)mk_extrusion(ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint);
 }
 
+
 /**
- * N M G B L D
- *
  * For the time being, what we read in from the ascii form is a hex
  * dump of the on-disk form of NMG.  This is the same between v4 and
  * v5.  Reassemble it in v5 binary form here, then import it, then
@@ -442,13 +449,13 @@ void
 nmgbld(void)
 {
     char *cp;
-    int	version;
-    char	*name;
-    long	granules;
-    long	struct_count[26];
-    struct bu_external	ext;
-    struct rt_db_internal	intern;
-    int	j;
+    int version;
+    char *name;
+    long granules;
+    long struct_count[26];
+    struct bu_external ext;
+    struct rt_db_internal intern;
+    int j;
 
     /* First, process the header line */
     strtok(buf, " ");
@@ -463,7 +470,7 @@ nmgbld(void)
     /* Allocate storage for external v5 form of the body */
     BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
-    ext.ext_buf = bu_malloc(ext.ext_nbytes, "nmg ext_buf");
+    ext.ext_buf = (uint8_t *)bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
     BU_ASSERT_LONG(version, ==, 1);	/* DISK_MODEL_VERSION */
 
@@ -497,7 +504,7 @@ nmgbld(void)
 
     /* Next, import this disk record into memory */
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_functab[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
+    if (OBJ[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
 
@@ -514,8 +521,6 @@ nmgbld(void)
 
 
 /**
- * S O L B L D
- *
  * This routine parses a solid record and determines which libwdb
  * routine to call to replicate this solid.  Simple primitives are
  * expected.
@@ -527,15 +532,15 @@ solbld(void)
     char *np;
     int i;
 
-    char	s_type;		/* id for the type of primitive */
-    fastf_t	val[24];	/* array of values/parameters for solid */
-    point_t	center;		/* center; used by many solids */
+    char s_type;		/* id for the type of primitive */
+    fastf_t val[24];		/* array of values/parameters for solid */
+    point_t center;		/* center; used by many solids */
     point_t pnts[9];		/* array of points for the arbs */
-    point_t	norm;
-    vect_t	a, b, c, d, n;	/* various vectors required */
-    vect_t	height;		/* height vector for tgc */
-    vect_t	breadth;	/* breadth vector for rpc */
-    double	dd, rad1, rad2;
+    point_t norm;
+    vect_t a, b, c, d, n;	/* various vectors required */
+    vect_t height;		/* height vector for tgc */
+    vect_t breadth;		/* breadth vector for rpc */
+    double dd, rad1, rad2;
 
     cp = buf;
     cp++;			/* ident */
@@ -576,7 +581,7 @@ solbld(void)
 	    VUNITIZE(n);
 
 	    /* Prevent illegal torii from floating point fuzz */
-	    if (rad2 > rad1)  rad2 = rad1;
+	    if (rad2 > rad1) rad2 = rad1;
 
 	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
@@ -697,20 +702,18 @@ solbld(void)
 
 
 /**
- * M E M B B L D
- *
  * This routine invokes libwdb to build a member of a combination.
  * Called only from combbld()
  */
 void
 membbld(struct bu_list *headp)
 {
-    char 	*cp;
-    char 	*np;
-    int 	i;
-    char		relation;	/* boolean operation */
-    char		inst_name[NAME_LEN+2];
-    struct wmember	*memb;
+    char *cp;
+    char *np;
+    int i;
+    char relation;	/* boolean operation */
+    char inst_name[NAME_LEN+2];
+    struct wmember *memb;
 
     cp = buf;
     cp++;			/* ident */
@@ -737,8 +740,6 @@ membbld(struct bu_list *headp)
 
 
 /**
- * C O M B B L D
- *
  * This routine builds combinations.  It does so by processing the "C"
  * combination input line, (which may be followed by optional material
  * properties lines), and it then slurps up any following "M" member
@@ -746,28 +747,28 @@ membbld(struct bu_list *headp)
  * until a non-"M" record is encountered.
  *
  * Returns -
- *	0	OK
- *	1	OK, another record exists in global input line buffer.
+ * 0 OK
+ * 1 OK, another record exists in global input line buffer.
  */
 int
 combbld(void)
 {
-    struct bu_list	head;
-    char 	*cp;
-    char 	*np;
-    int 		temp_nflag, temp_pflag;
+    struct bu_list head;
+    char *cp;
+    char *np;
+    int temp_nflag, temp_pflag;
 
-    char		override;
-    char		reg_flags;	/* region flag */
-    int		is_reg;
-    short		regionid;
-    short		aircode;
-    short		material;	/* GIFT material code */
-    short		los;		/* LOS estimate */
-    unsigned char	rgb[3];		/* Red, green, blue values */
-    char		matname[32];	/* String of material name */
-    char		matparm[60];	/* String of material parameters */
-    char		inherit;	/* Inheritance property */
+    char override;
+    char reg_flags;	/* region flag */
+    int is_reg;
+    short regionid;
+    short aircode;
+    short material;	/* GIFT material code */
+    short los;		/* LOS estimate */
+    unsigned char rgb[3];		/* Red, green, blue values */
+    char matname[32];	/* String of material name */
+    char matparm[60];	/* String of material parameters */
+    char inherit;	/* Inheritance property */
 
     /* Set all flags initially. */
     BU_LIST_INIT(&head);
@@ -854,7 +855,7 @@ combbld(void)
 	if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
 	    break;
 
-	if (buf[0] != ID_MEMB)  break;
+	if (buf[0] != ID_MEMB) break;
 
 	/* Process (and accumulate) the members */
 	membbld(&head);
@@ -869,14 +870,12 @@ combbld(void)
 	bu_exit(1, "asc2g: mk_lrcomb fail\n");
     }
 
-    if (buf[0] == '\0')  return 0;
+    if (buf[0] == '\0') return 0;
     return 1;
 }
 
 
 /**
- * A R S B L D
- *
  * This routine builds ARS's.
  */
 void
@@ -912,8 +911,6 @@ arsabld(void)
 
 
 /**
- * A R S B L D
- *
  * This is the second half of the ARS-building.  It builds the ARS B
  * record.
  */
@@ -954,20 +951,18 @@ arsbbld(void)
 
 
 /**
- * I D E N T B L D
- *
  * This routine makes an ident record.  It calls libwdb to do this.
  */
 void
 identbld(void)
 {
-    char	*cp;
-    char	*np;
-    char		units;		/* units code number */
-    char		version[6] = {0};
-    char		title[255] = {0};
-    char		unit_str[8] = {0};
-    double		local2mm;
+    char *cp;
+    char *np;
+    char units;		/* units code number */
+    char version[6] = {0};
+    char title[255] = {0};
+    char unit_str[8] = {0};
+    double local2mm;
 
     bu_strlcpy(unit_str, "none", sizeof(unit_str));
 
@@ -1047,8 +1042,6 @@ identbld(void)
 
 
 /**
- * P O L Y H B L D
- *
  * Collect up all the information for a POLY-solid.  These are handled
  * as BoT solids in v5, but we still have to read the data in the old
  * format, and then convert it.
@@ -1059,28 +1052,28 @@ identbld(void)
 void
 polyhbld(void)
 {
-    char	*cp;
-    char	*name;
-    long	startpos;
-    size_t	nlines;
-    struct rt_pg_internal	*pg;
-    struct rt_db_internal	intern;
-    struct bn_tol	tol;
+    char *cp;
+    char *name;
+    off_t startpos;
+    size_t nlines;
+    struct rt_pg_internal *pg;
+    struct rt_db_internal intern;
+    struct bn_tol tol;
 
     (void)strtok(buf, " ");	/* skip the ident character */
     cp = strtok(NULL, " \n");
     name = bu_strdup(cp);
 
     /* Count up the number of poly data lines which follow */
-    startpos = ftell(ifp);
+    startpos = bu_ftell(ifp);
     for (nlines = 0;; nlines++) {
-	if (bu_fgets(buf, BUFSIZE, ifp) == NULL)  break;
-	if (buf[0] != ID_P_DATA)  break;	/* 'Q' */
+	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
+	if (buf[0] != ID_P_DATA) break;	/* 'Q' */
     }
     BU_ASSERT_LONG(nlines, >, 0);
 
     /* Allocate storage for the faces */
-    BU_GET(pg, struct rt_pg_internal);
+    BU_ALLOC(pg, struct rt_pg_internal);
     pg->magic = RT_PG_INTERNAL_MAGIC;
     pg->npoly = nlines;
     pg->poly = (struct rt_pg_face_internal *)bu_calloc(pg->npoly,
@@ -1088,14 +1081,14 @@ polyhbld(void)
     pg->max_npts = 0;
 
     /* Return to first 'Q' record */
-    fseek(ifp, startpos, 0);
+    bu_fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
-	struct rt_pg_face_internal	*fp = &pg->poly[nlines];
-	int	i;
+	struct rt_pg_face_internal *fp = &pg->poly[nlines];
+	int i;
 
-	if (bu_fgets(buf, BUFSIZE, ifp) == NULL)  break;
-	if (buf[0] != ID_P_DATA)  bu_exit(1, "mis-count of Q records?\n");
+	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
+	if (buf[0] != ID_P_DATA) bu_exit(1, "mis-count of Q records?\n");
 
 	/* Input always has 5 points, even if all aren't significant */
 	fp->verts = (fastf_t *)bu_malloc(5*3*sizeof(fastf_t), "verts[]");
@@ -1106,7 +1099,7 @@ polyhbld(void)
 	cp = nxt_spc(cp);		/* skip the space */
 
 	fp->npts = (char)atoi(cp);
-	if (fp->npts > pg->max_npts)  pg->max_npts = fp->npts;
+	if (fp->npts > pg->max_npts) pg->max_npts = fp->npts;
 
 	for (i = 0; i < 5*3; i++) {
 	    cp = nxt_spc(cp);
@@ -1123,7 +1116,7 @@ polyhbld(void)
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_POLY;
-    intern.idb_meth = &rt_functab[ID_POLY];
+    intern.idb_meth = &OBJ[ID_POLY];
     intern.idb_ptr = pg;
 
     /* this tolerance structure is only used for converting polysolids
@@ -1149,16 +1142,14 @@ polyhbld(void)
 
 
 /**
- * M A T E R B L D
- *
  * Add information to the region-id based coloring table.
  */
 void
 materbld(void)
 {
     char *cp;
-    int	low, hi;
-    int	r, g, b;
+    int low, hi;
+    int r, g, b;
 
     cp = buf;
     cp++;			/* skip ID_MATERIAL */
@@ -1181,20 +1172,16 @@ materbld(void)
 }
 
 
-/**
- * C L I N E B L D
- *
- */
 void
 clinebld(void)
 {
-    char			my_name[NAME_LEN];
-    fastf_t			thickness;
-    fastf_t			radius;
-    point_t			V;
-    vect_t			height;
-    char		*cp;
-    char		*np;
+    char my_name[NAME_LEN];
+    fastf_t thickness;
+    fastf_t radius;
+    point_t V;
+    vect_t height;
+    char *cp;
+    char *np;
 
     cp = buf;
     cp++;
@@ -1226,23 +1213,19 @@ clinebld(void)
 }
 
 
-/**
- * B O T B L D
- *
- */
 void
 botbld(void)
 {
-    char			my_name[NAME_LEN];
-    char			type;
-    int				mode, orientation, error_mode;
-    unsigned long int		num_vertices, num_faces;
-    unsigned long int		i, j;
-    double			a[3];
-    fastf_t			*vertices;
-    fastf_t			*thick=NULL;
-    int				*faces;
-    struct bu_bitv		*facemode=NULL;
+    char my_name[NAME_LEN];
+    char type;
+    int mode, orientation, error_mode;
+    unsigned long int num_vertices, num_faces;
+    unsigned long int i, j;
+    double a[3];
+    fastf_t *vertices;
+    fastf_t *thick=NULL;
+    int *faces;
+    struct bu_bitv *facemode=NULL;
 
     sscanf(buf, "%c %200s %d %d %d %lu %lu", &type, my_name, &mode, &orientation, /* NAME_LEN */
 	   &error_mode, &num_vertices, &num_faces);
@@ -1253,7 +1236,7 @@ botbld(void)
 	bu_fgets(buf, BUFSIZE, ifp);
 	sscanf(buf, "%lu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
-	    bu_log("Vertices out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Vertices out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_log("Skipping this solid!\n");
@@ -1276,7 +1259,7 @@ botbld(void)
 	    sscanf(buf, "%lu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
 
 	if (i != j) {
-	    bu_log("Faces out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Faces out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_free((char *)faces, "botbld: faces");
@@ -1311,8 +1294,6 @@ botbld(void)
 
 
 /**
- * P I P E B L D
- *
  * This routine reads pipe data from standard in, constructs a
  * doubly linked list of pipe points, and sends this list to
  * mk_pipe().
@@ -1321,11 +1302,11 @@ void
 pipebld(void)
 {
 
-    char			name[NAME_LEN];
-    char		*cp;
-    char		*np;
-    struct wdb_pipept	*sp;
-    struct bu_list		head;
+    char name[NAME_LEN];
+    char *cp;
+    char *np;
+    struct wdb_pipept *sp;
+    struct bu_list head;
 
     /* Process the first buffer */
 
@@ -1347,11 +1328,11 @@ pipebld(void)
     while (bu_strncmp (buf, "END_PIPE", 8)) {
 	double id, od, x, y, z, bendradius;
 
-	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
+	BU_ALLOC(sp, struct wdb_pipept);
 
 	sscanf(buf, "%le %le %le %le %le %le",
-		     &id, &od,
-		     &bendradius, &x, &y, &z);
+	       &id, &od,
+	       &bendradius, &x, &y, &z);
 
 	sp->l.magic = WDB_PIPESEG_MAGIC;
 
@@ -1370,8 +1351,6 @@ pipebld(void)
 
 
 /**
- * P A R T I C L E B L D
- *
  * This routine reads particle data from standard in, and constructs
  * the parameters required by mk_particle.
  */
@@ -1379,12 +1358,12 @@ void
 particlebld(void)
 {
 
-    char		name[NAME_LEN];
-    char		ident;
-    point_t		vertex;
-    vect_t		height;
-    double		vrad;
-    double		hrad;
+    char name[NAME_LEN];
+    char ident;
+    point_t vertex;
+    vect_t height;
+    double vrad;
+    double hrad;
     double scanvertex[3];
     double scanheight[3];
 
@@ -1394,14 +1373,14 @@ particlebld(void)
      */
 
     sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
-		 &ident, name,
-		 &scanvertex[0],
-		 &scanvertex[1],
-		 &scanvertex[2],
-		 &scanheight[0],
-		 &scanheight[1],
-		 &scanheight[2],
-		 &vrad, &hrad);
+	   &ident, name,
+	   &scanvertex[0],
+	   &scanvertex[1],
+	   &scanvertex[2],
+	   &scanheight[0],
+	   &scanheight[1],
+	   &scanheight[2],
+	   &vrad, &hrad);
     /* convert double to fastf_t */
     VMOVE(vertex, scanvertex);
     VMOVE(height, scanheight);
@@ -1411,8 +1390,6 @@ particlebld(void)
 
 
 /**
- * A R B N B L D
- *
  * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
@@ -1420,13 +1397,13 @@ void
 arbnbld(void)
 {
 
-    char		name[NAME_LEN] = {0};
-    char		type[TYPE_LEN] = {0};
-    int		i;
-    int		neqn;			/* number of eqn expected */
-    plane_t		*eqn;		/* pointer to plane equations for faces */
-    char	*cp;
-    char	*np;
+    char name[NAME_LEN] = {0};
+    char type[TYPE_LEN] = {0};
+    int i;
+    int neqn;     /* number of eqn expected */
+    plane_t *eqn; /* pointer to plane equations for faces */
+    char *cp;
+    char *np;
 
     /* Process the first buffer */
 
@@ -1443,39 +1420,34 @@ arbnbld(void)
     cp = nxt_spc(cp);
 
     neqn = atoi(cp);			/* find number of eqns */
-    /*bu_log("neqn = %d\n", neqn);
-     */
+
     /* Check to make sure plane equations actually came in. */
     if (neqn <= 0) {
 	bu_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
     }
 
-    /*bu_log("mallocing space for eqns\n");
-     */
     /* Malloc space for the in-coming plane equations */
-    eqn = (plane_t *)bu_malloc(sizeof(plane_t) * neqn, "eqn");
+    eqn = (plane_t *)bu_malloc(neqn * sizeof(plane_t), "eqn");
 
     /* Now, read the plane equations and put in appropriate place */
 
-    /*bu_log("starting to dump eqns\n");
-     */
     for (i = 0; i < neqn; i++) {
 	double scan[4];
 
 	bu_fgets(buf, BUFSIZE, ifp);
 	sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
-		     &scan[0], &scan[1], &scan[2], &scan[3]);
+	       &scan[0], &scan[1], &scan[2], &scan[3]);
 	/* convert double to fastf_t */
 	HMOVE(eqn[i], scan);
     }
 
-    /*bu_log("sending info to mk_arbn\n");
-     */
-    mk_arbn(ofp, name, neqn, eqn);
+    mk_arbn(ofp, name, neqn, (const plane_t *)eqn);
+
+    bu_free(eqn, "eqn");
 }
+
+
 /**
- * E N D S W I T H
- *
  * This routine checks the last character in the string to see if it matches the
  * specified character. Used by gettclblock() to check for an escaped return.
  *
@@ -1483,14 +1455,12 @@ arbnbld(void)
 int
 endswith(char *line, char ch)
 {
-    if ( *(line+strlen(line)-1) == ch ) {
+    if (*(line+strlen(line)-1) == ch) {
 	return 1;
     }
     return 0;
 }
 /**
- * B R A C E C N T
- *
  * This routine counts the number of open braces and is used to determine whether a Tcl
  * command is complete.
  *
@@ -1502,7 +1472,7 @@ bracecnt(char *line)
     int cnt = 0;
 
     start = line;
-    while(*start != '\0') {
+    while (*start != '\0') {
 	if (*start == '{') {
 	    cnt++;
 	} else if (*start == '}') {
@@ -1513,13 +1483,11 @@ bracecnt(char *line)
     return cnt;
 }
 /**
- * G E T T C L B L O C K
- *
  * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
  * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
  * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
  *
- *  SIZE is used as the approximate blocking size allowing to grow past this to close the
+ * SIZE is used as the approximate blocking size allowing to grow past this to close the
  * command line.
  */
 int
@@ -1527,24 +1495,25 @@ gettclblock(struct bu_vls *line, FILE *fp)
 {
     int ret = 0;
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    int bcnt = 0;
-    int escapedcr = 0;
 
     if ((ret=bu_vls_gets(line, fp)) >= 0) {
+	int bcnt = 0;
+	int escapedcr = 0;
+
 	linecnt++;
-	escapedcr = endswith(bu_vls_addr(line),'\\');
+	escapedcr = endswith(bu_vls_addr(line), '\\');
 	bcnt = bracecnt(bu_vls_addr(line));
-	while ( (ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || ( bcnt != 0 )) ) {
+	while ((ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || (bcnt != 0))) {
 	    linecnt++;
 	    if (escapedcr) {
 		bu_vls_trunc(line, bu_vls_strlen(line)-1);
 	    }
 	    if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
-		escapedcr = endswith(bu_vls_addr(&tmp),'\\');
+		escapedcr = endswith(bu_vls_addr(&tmp), '\\');
 		bcnt = bcnt + bracecnt(bu_vls_addr(&tmp));
 		bu_vls_putc(line, '\n');
-		bu_vls_strcat(line,bu_vls_addr(&tmp));
-		bu_vls_trunc(&tmp,0);
+		bu_vls_strcat(line, bu_vls_addr(&tmp));
+		bu_vls_trunc(&tmp, 0);
 	    } else {
 		escapedcr = 0;
 	    }
@@ -1556,44 +1525,45 @@ gettclblock(struct bu_vls *line, FILE *fp)
     return ret;
 }
 
-/**
- * M A I N
- */
+
 int
 main(int argc, char *argv[])
 {
-    struct bu_vls       str_title = BU_VLS_INIT_ZERO;
-    struct bu_vls       str_put = BU_VLS_INIT_ZERO;
-    struct bu_vls	line = BU_VLS_INIT_ZERO;
-    int                 isComment=1;
+    struct bu_vls str_title = BU_VLS_INIT_ZERO;
+    struct bu_vls str_put = BU_VLS_INIT_ZERO;
+    struct bu_vls line = BU_VLS_INIT_ZERO;
+    int isComment=1;
 
-    bu_debug = BU_DEBUG_COREDUMP;
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+	bu_exit(1, "%s", usage);
 
     if (argc != 3)
 	bu_exit(1, "%s", usage);
 
+    bu_debug = BU_DEBUG_COREDUMP;
+
     Tcl_FindExecutable(argv[0]);
 
     ifp = fopen(argv[1], "rb");
-    if (!ifp)  perror(argv[1]);
+    if (!ifp) perror(argv[1]);
 
     ofp = wdb_fopen(argv[2]);
-    if (!ofp)  perror(argv[2]);
+    if (!ofp) perror(argv[2]);
     if (ifp == NULL || ofp == NULL) {
 	bu_exit(1, "asc2g: can't open files.");
     }
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    bu_vls_extend( &line, SIZE);
-    bu_vls_strcpy( &str_title, "title");
-    bu_vls_strcpy( &str_put, "put ");
+    bu_vls_extend(&line, SIZE);
+    bu_vls_strcpy(&str_title, "title");
+    bu_vls_strcpy(&str_put, "put ");
 
     while (isComment) {
 	char *str;
 	int charIndex;
 	int len;
-	bu_vls_trunc2(&line, 0);
+	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;
 	    wdb_close(ofp); ofp = NULL;
@@ -1615,15 +1585,15 @@ main(int argc, char *argv[])
     }
 
     /* new style ascii database */
-    if (!bu_vls_strncmp( &line, &str_title, 5) || !bu_vls_strncmp( &line, &str_put, 4)) {
-	Tcl_Interp     *interp;
-	Tcl_Interp     *safe_interp;
+    if (!bu_vls_strncmp(&line, &str_title, 5) || !bu_vls_strncmp(&line, &str_put, 4)) {
+	Tcl_Interp *interp;
+	Tcl_Interp *safe_interp;
 
 	/* this is a Tcl script */
 
 	rewind(ifp);
-	bu_vls_trunc( &line, 0);
-	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+	bu_vls_trunc(&line, 0);
+	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
 	Go_Init(interp);
@@ -1655,9 +1625,9 @@ main(int argc, char *argv[])
 
 	/* Create aliases */
 	{
-	    int	i;
-	    int	ac = 1;
-	    const char	*av[2];
+	    int i;
+	    int ac = 1;
+	    const char *av[2];
 
 	    av[1] = (char *)0;
 	    for (i = 0; aliases[i] != (char *)0; ++i) {
@@ -1669,15 +1639,14 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
 	}
 
-	while ((gettclblock(&line,ifp)) >= 0)
-	{
+	while ((gettclblock(&line, ifp)) >= 0) {
 	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
 		fclose(ifp);
 		bu_log("Failed to process input file (%s)!\n", argv[1]);
 		bu_log("%s\n", Tcl_GetStringResult(safe_interp));
 		Tcl_Exit(1);
 	    }
-	    bu_vls_trunc(&line,0);
+	    bu_vls_trunc(&line, 0);
 	}
 
 	/* free up our resources */
@@ -1712,7 +1681,7 @@ main(int argc, char *argv[])
 		continue;
 
 	    case ID_COMB:
-		if (combbld() > 0)  goto after_read;
+		if (combbld() > 0) goto after_read;
 		continue;
 
 	    case ID_MEMB:
@@ -1808,7 +1777,6 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
-    bu_exit(0, "");
     return 0;
 }
 

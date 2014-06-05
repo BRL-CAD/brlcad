@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "rtgeom.h"
 #include "wdb.h"
 
@@ -92,10 +94,10 @@ static char *p_make_pnts[] = {
 
 
 /*
- * Character compare function used by qsort function.
+ * Character compare function used by bu_sort function.
  */
 int
-compare_char(const char *a, const char *b)
+compare_char(const char *a, const char *b, void *UNUSED(arg))
 {
     return (int)(*a - *b);
 }
@@ -132,7 +134,7 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 	bu_vls_trimspace(&str);
 
 	temp_string = bu_vls_addr(&str);
-	qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
+	bu_sort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b, void *arg))compare_char, NULL);
 
 	if (BU_STR_EQUAL(temp_string, "xyz")) {
 	    *pnt_type = RT_PNT_TYPE_PNT;
@@ -352,8 +354,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
-    internal.idb_meth = &rt_functab[ID_PNTS];
-    internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    internal.idb_meth = &OBJ[ID_PNTS];
+    BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
 
     /* init internal structure */
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;
@@ -366,42 +368,42 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GET(headPoint, struct pnt);
+	    BU_ALLOC(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    num_doubles_per_point = 3;
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GET(headPoint, struct pnt_color);
+	    BU_ALLOC(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GET(headPoint, struct pnt_scale);
+	    BU_ALLOC(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    num_doubles_per_point = 4;
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GET(headPoint, struct pnt_normal);
+	    BU_ALLOC(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GET(headPoint, struct pnt_color_scale);
+	    BU_ALLOC(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GET(headPoint, struct pnt_color_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    num_doubles_per_point = 9;
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_color_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 10;
 	    break;
@@ -422,28 +424,28 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	/* allocate memory for single point structure for current point-cloud type */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GET(point, struct pnt);
+		BU_ALLOC(point, struct pnt);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GET(point, struct pnt_color);
+		BU_ALLOC(point, struct pnt_color);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GET(point, struct pnt_scale);
+		BU_ALLOC(point, struct pnt_scale);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GET(point, struct pnt_normal);
+		BU_ALLOC(point, struct pnt_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GET(point, struct pnt_color_scale);
+		BU_ALLOC(point, struct pnt_color_scale);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GET(point, struct pnt_color_normal);
+		BU_ALLOC(point, struct pnt_color_normal);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GET(point, struct pnt_scale_normal);
+		BU_ALLOC(point, struct pnt_scale_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GET(point, struct pnt_color_scale_normal);
+		BU_ALLOC(point, struct pnt_color_scale_normal);
 		break;
 	}
 
@@ -668,7 +670,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     pnts->count = numPoints;
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_free(&format_string);

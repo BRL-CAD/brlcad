@@ -1,7 +1,7 @@
 /*                      T I M E R - N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,14 +33,12 @@ static clock_t start;
 time_t time0;
 
 
-
 void
 rt_prep_timer(void)
 {
     start = clock();
     time(&time0);
 }
-
 
 
 double
@@ -97,7 +95,6 @@ rt_read_timer(char *str, int len)
 
     return cpu;
 }
-
 
 
 /*

@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,8 @@ extern point_t es_keypoint;
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 
-static void ax_set_dirty_flag();
+/* local sp_hook function */
+static void ax_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 struct _axes_state default_axes_state = {
     /* ax_rc */			1,
@@ -62,16 +63,15 @@ struct _axes_state default_axes_state = {
 
 
 #define AX_O(_m) bu_offsetof(struct _axes_state, _m)
-#define AX_OA(_m) bu_offsetofarray(struct _axes_state, _m)
 struct bu_structparse axes_vparse[] = {
     {"%d", 1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "model_linewidth",AX_O(ax_model_linewidth),	ax_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "model_pos",	AX_OA(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "model_pos",	AX_O(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_draw",	AX_O(ax_view_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_size",	AX_O(ax_view_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_linewidth",	AX_O(ax_view_linewidth),	ax_set_dirty_flag, NULL, NULL },
-    {"%d", 2, "view_pos",	AX_OA(ax_view_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 2, "view_pos",	AX_O(ax_view_pos),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_draw",	AX_O(ax_edit_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_size1",	AX_O(ax_edit_size1),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_size2",	AX_O(ax_edit_size2),		ax_set_dirty_flag, NULL, NULL },
@@ -82,7 +82,10 @@ struct bu_structparse axes_vparse[] = {
 
 
 static void
-ax_set_dirty_flag()
+ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 

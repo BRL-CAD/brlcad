@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,11 +18,7 @@
  * information.
  */
 
-#include "common.h"
-
-#include "bu.h"
-#include "magic.h"
-
+#include "bu/magic.h"
 
 const char *
 bu_identify_magic(register uint32_t magic)
@@ -162,6 +158,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_tor_internal";
 	case RT_VOL_INTERNAL_MAGIC:
 	    return "rt_vol_internal";
+	case RT_HRT_INTERNAL_MAGIC:
+	    return "rt_hrt_internal";
 
 	    /*
 	     * N-manifold geometry

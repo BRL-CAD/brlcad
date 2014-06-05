@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/endian.h"
+#include "bu/getopt.h"
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -72,7 +74,7 @@ static uint32_t total_vertex_count = 0;
 static uint32_t total_face_count = 0;
 
 
-void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal internal;
 
@@ -89,13 +91,13 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     }
     /* track bot */
     if (NULL == curr) {
-	head = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(head, struct mesh);
 	head->name = dp->d_namep;
 	head->bot = (struct rt_bot_internal *)internal.idb_ptr;
 	head->next = NULL;
 	curr = head;
     } else {
-	curr->next = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(curr->next, struct mesh);
 	curr = curr->next;
 	curr->name = dp->d_namep;
 	curr->bot = (struct rt_bot_internal *)internal.idb_ptr;
@@ -182,7 +184,7 @@ void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
 
     if (yup) {
 	/* perform 90deg x-axis rotation */
-	float q = -(M_PI/2.0f);
+	float q = -(M_PI_2);
 	float y = dest[1];
 	float z = dest[2];
 	dest[1] = y * cos(q) - z * sin(q);
@@ -320,7 +322,7 @@ void write_mesh_data()
 		fprintf(stderr, ">> .. normals will be computed\n");
 	    }
 	    /* normals need to be computed */
-	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
+	    normals = (float *)bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
 	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
 	    if (ret != curr->bot->num_vertices * 3)
@@ -405,7 +407,7 @@ int main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* process command line arguments */
-    while ((c = bu_getopt(argc, argv, "vo:ys:f")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vo:ys:fh?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -429,35 +431,31 @@ int main(int argc, char *argv[])
 
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
     /* param check */
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
+
     /* get database filename and object */
     db_file = argv[bu_optind++];
     object = argv[bu_optind];
 
     /* open BRL-CAD database */
-    if ((dbip = db_open(db_file, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db_file, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", db_file);
+	bu_exit(1, "Cannot open geometry database file %s\n", db_file);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild() failed!\n");
-    }
-    if (verbose) {
+
+    if (verbose)
 	fprintf(stderr, ">> opened db '%s'\n", dbip->dbi_title);
-    }
 
     /* setup output stream */
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    bu_log("Cannot open %s\n", out_file);
@@ -470,20 +468,18 @@ int main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     dp = db_lookup(dbip, object, 0);
-    if (dp == RT_DIR_NULL) {
+    if (dp == RT_DIR_NULL)
 	bu_exit(1, "Object %s not found in database!\n", object);
-    }
 
     /* generate mesh list */
     db_functree(dbip, dp, NULL, mesh_tracker, &rt_uniresource, NULL);
-    if (verbose) {
+    if (verbose)
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
-    }
 
-    /* writeout header */
+    /* write out header */
     write_header(dbip);
 
-    /* writeout meshes */
+    /* write out meshes */
     write_mesh_data();
 
     /* finish */

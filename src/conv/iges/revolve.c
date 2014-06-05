@@ -1,7 +1,7 @@
 /*                       R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,13 +149,11 @@ revolve(int entityno)
 	fastf_t h1;
 
 	if (trcs == NULL) {
-	    trcs = (struct trclist *)bu_malloc(sizeof(struct trclist),
-					       "Revolve: trcs");
+	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
 	    prev = NULL;
 	} else if (trcptr->name[0] != '\0') {
-	    trcptr->next = (struct trclist *)bu_malloc(sizeof(struct trclist),
-						       "Revolve: trcptr->next");
+	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
 	} else prev = NULL;
@@ -315,10 +313,10 @@ revolve(int entityno)
 	VUNITIZE(pdir);
 
 	if (fract < 0.5) {
-	    theta = 2.0*M_PI*fract;
+	    theta = M_2PI*fract;
 	    cutop = Intersect;
 	} else if (fract > 0.5) {
-	    theta = (-2.0*M_PI*(1.0-fract));
+	    theta = (-M_2PI*(1.0-fract));
 	    cutop = Subtract;
 	} else {
 	    /* FIXME: fract == 0.5, a dangerous comparison (roundoff) */
@@ -374,17 +372,17 @@ revolve(int entityno)
     while (trcptr != NULL) {
 	/* Union together all the TRC's that are not subtracts */
 	if (trcptr->op != 1) {
-	    (void)mk_addmember(trcptr->name, &head.l, NULL, operator[Union]);
+	    (void)mk_addmember(trcptr->name, &head.l, NULL, operators[Union]);
 
 	    if (fract < 1.0) {
 		/* include cutting solid */
-		(void)mk_addmember(cutname, &head.l, NULL, operator[cutop]);
+		(void)mk_addmember(cutname, &head.l, NULL, operators[cutop]);
 	    }
 
 	    subp = trcptr->subtr;
 	    /* Subtract the inside TRC's */
 	    while (subp != NULL) {
-		(void)mk_addmember(subp->name, &head.l, NULL, operator[Subtract]);
+		(void)mk_addmember(subp->name, &head.l, NULL, operators[Subtract]);
 		subp = subp->next;
 	    }
 	}
@@ -413,21 +411,18 @@ revolve(int entityno)
 
 /* Routine to add a name to the list of subtractions */
 void
-Addsub(trc, ptr)
-    struct trclist *trc, *ptr;
+Addsub(struct trclist *trc, struct trclist *ptr)
 {
     struct subtracts *subp;
 
     if (trc->subtr == NULL) {
-	trc->subtr = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: trc->subtr");
+	BU_ALLOC(trc->subtr, struct subtracts);
 	subp = trc->subtr;
     } else {
 	subp = trc->subtr;
 	while (subp->next != NULL)
 	    subp = subp->next;
-	subp->next = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: subp->next");
+	BU_ALLOC(subp->next, struct subtracts);
 	subp = subp->next;
     }
 

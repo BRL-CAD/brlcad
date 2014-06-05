@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,24 +25,47 @@
 
 package provide cadwidgets::RtImage 1.0
 
+proc ::pid_wait { pid } {
+    if {$::tcl_platform(platform) == "windows"} {
+       set task_cmd [auto_execok tasklist]
+       set task_args [list $task_cmd "/FI" "\"PID eq $pid\"" "/FI" "\"STATUS eq running\"" "/FO" "\"LIST\""]
+       set task_list "$pid"
+       while {[string matches "*$pid*"]} {
+        catch {exec {*}$task_args} task_list
+         after 50
+       }
+    } else {
+       while {![catch {exec kill -0 $pid} pid_results]} {
+         after 50
+       }
+    }
+}
+
 namespace eval cadwidgets {
-proc rtimage {_dbfile
-	      _port
-	      _w _n
-	      _viewsize
-	      _orientation
-	      _eye_pt
-	      _perspective
-	      _bgcolor
-	      _ecolor
-	      _necolor
-	      _occmode
-	      _gamma
-	      _color_objects
-	      _ghost_objects
-	      _edge_objects} {
+
+proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
+    set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
+    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma]
+    set necessary_lists [list _color_objects _ghost_objects _edge_objects]
+
+    # It's the responsibility of the calling function
+    # to populate the dictionary with what is needed.
+    # Make the variables for local processing.
+    foreach param [dict keys $rtimage_dict] {
+        set $param [dict get $rtimage_dict $param]
+    }
+
+    # Anything we don't already have from the dictionary
+    # is assumed empty
+    foreach var ${necessary_vars} {
+      if {![info exists $var]} { set $var "" }
+    }
+    foreach var ${necessary_lists} {
+      if {![info exists $var]} { set $var {} }
+    }
+
 
     set ar [ expr $_w.0 / $_n.0 ]
 
@@ -91,7 +114,13 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file &} curr_pid
+	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
+	   set chan [open $_pid_filename w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+	::pid_wait $curr_pid
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -107,7 +136,7 @@ proc rtimage {_dbfile
 		set fgMode [list set fg=[lindex $_ecolor 0],[lindex $_ecolor 1],[lindex $_ecolor 2]]
 
 		set ce_objects {}
-		set cne_objects {}
+		set ne_objects {}
 		foreach cobj $_color_objects {
 		    set i [lsearch $_edge_objects $cobj]
 		    if {$i != -1} {
@@ -143,8 +172,13 @@ proc rtimage {_dbfile
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd}
-
+		catch {eval exec $cmd >& $_log_file &} curr_pid
+	        if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
+	   	   set chan [open $_pid_filename w]
+	   	   puts $chan $curr_pid
+	   	   close $chan
+	        }
+	        ::pid_wait $curr_pid
 	    }
 	}
 
@@ -182,7 +216,14 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file &} curr_pid
+	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
+	    set chan [open $_pid_filename w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+
+	::pid_wait $curr_pid
 
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
 		     -o $tgfci \
@@ -203,14 +244,20 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file &} curr_pid
+	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
+	   set chan [open $_pid_filename w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+	::pid_wait $curr_pid
 
 	#
 	# Convert to ghost image
 	#
-	catch {exec [file join $binpath pix-bw] $tgi > $tbw}
+	catch {exec [file join $binpath pix-bw] -e crt $tgi > $tbw}
 	catch {exec [file join $binpath bwmod] -a 4 -d259 -r$_gamma -m255 $tbw > $tmod}
-	catch {exec [file join $binpath bw-pix] $tmod $tbwpix}
+	catch {exec [file join $binpath bw-pix] $tmod > $tbwpix}
 
 	set bgl "=[lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2]"
 	catch {exec [file join $binpath pixmatte] -e $tfci $bgl $tbwpix $tfci > $tmi}
@@ -269,7 +316,14 @@ proc rtimage {_dbfile
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file &} curr_pid
+	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
+	   set chan [open $_pid_filename w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+
+	::pid_wait $curr_pid
     }
 
     catch {file delete -force $tgi}

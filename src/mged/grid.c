@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ extern point_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid(void);
 void snap_to_grid(fastf_t *mx, fastf_t *my);
-static void grid_set_dirty_flag(void);
-static void set_grid_draw(void);
-static void set_grid_res(void);
+static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
+static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *);
+static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *);
 
 
 struct _grid_state default_grid_state = {
@@ -60,11 +60,10 @@ struct _grid_state default_grid_state = {
 
 
 #define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
-#define GRID_OA(_m) bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
     {"%d", 1, "draw",	GRID_O(gr_draw),	set_grid_draw, NULL, NULL },
     {"%d", 1, "snap",	GRID_O(gr_snap),	grid_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "anchor",	GRID_OA(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "anchor",	GRID_O(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
     {"%f", 1, "rh",	GRID_O(gr_res_h),	set_grid_res, NULL, NULL },
     {"%f", 1, "rv",	GRID_O(gr_res_v),	set_grid_res, NULL, NULL },
     {"%d", 1, "mrh",	GRID_O(gr_res_major_h),	set_grid_res, NULL, NULL },
@@ -74,7 +73,10 @@ struct bu_structparse grid_vparse[] = {
 
 
 static void
-grid_set_dirty_flag(void)
+grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		    const char *UNUSED(name),
+		    void *UNUSED(base),
+		    const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -85,7 +87,10 @@ grid_set_dirty_flag(void)
 
 
 static void
-set_grid_draw(void)
+set_grid_draw(const struct bu_structparse *sdp,
+	      const char *name,
+	      void *base,
+	      const char *value)
 {
     struct dm_list *dlp;
 
@@ -94,7 +99,7 @@ set_grid_draw(void)
 	return;
     }
 
-    grid_set_dirty_flag();
+    grid_set_dirty_flag(sdp, name, base, value);
 
     /* This gets done at most one time. */
     if (grid_auto_size && grid_state->gr_draw) {
@@ -110,11 +115,14 @@ set_grid_draw(void)
 
 
 static void
-set_grid_res(void)
+set_grid_res(const struct bu_structparse *sdp,
+	     const char *name,
+	     void *base,
+	     const char *value)
 {
     struct dm_list *dlp;
 
-    grid_set_dirty_flag();
+    grid_set_dirty_flag(sdp, name, base, value);
 
     if (grid_auto_size)
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)

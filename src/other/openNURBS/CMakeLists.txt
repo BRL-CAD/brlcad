@@ -1,3 +1,9 @@
+IF(COMMAND CMAKE_POLICY)
+	if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+		CMAKE_POLICY(SET CMP0026 OLD)
+	endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+ENDIF(COMMAND CMAKE_POLICY)
+
 # build shared libs by default
 IF(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
@@ -8,7 +14,26 @@ IF(NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS ON)
 ENDIF(NOT DEFINED BUILD_STATIC_LIBS)
 
+# these are files no longer in opennurbs but retained for reference
+set(OPENNURBS_REF
+opennurbs_basic.cpp
+opennurbs_brep_changesrf.cpp
+opennurbs_brep_kinky.cpp
+opennurbs_x.cpp
+)
+
+# these are files we turn off because we don't use them and they incur
+# some cost to enable (e.g., they require OpenGL)
+set(OPENNURBS_OFF
+opennurbs_gl.cpp
+opennurbs_gl.h
+opennurbs_precompiledheader.cpp
+opennurbs_zlib_memory.cpp
+opennurbs_x.h
+)
+
 set(OPENNURBS_SOURCES
+${OPENNURBS_REF}
 opennurbs_3dm_attributes.cpp
 opennurbs_3dm_properties.cpp
 opennurbs_3dm_settings.cpp
@@ -20,7 +45,6 @@ opennurbs_archive.cpp
 opennurbs_array.cpp
 opennurbs_base32.cpp
 opennurbs_base64.cpp
-opennurbs_basic.cpp
 opennurbs_beam.cpp
 opennurbs_bezier.cpp
 opennurbs_beziervolume.cpp
@@ -114,7 +138,6 @@ opennurbs_uuid.cpp
 opennurbs_viewport.cpp
 opennurbs_workspace.cpp
 opennurbs_wstring.cpp
-opennurbs_x.cpp
 opennurbs_xform.cpp
 opennurbs_zlib.cpp
   )
@@ -162,7 +185,6 @@ opennurbs_fpoint.h
 opennurbs_fsp.h
 opennurbs_fsp_defs.h
 opennurbs_geometry.h
-opennurbs_gl.h
 opennurbs_group.h
 opennurbs_hatch.h
 opennurbs_hsort_template.h
@@ -227,9 +249,6 @@ opennurbs_xform.h
 opennurbs_zlib.h
   )
 
-SET(ON_DLL_HEADERS
-  opennurbs_dll_resource.h
-  )
 
 INCLUDE(CheckIncludeFiles)
 CHECK_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
@@ -266,7 +285,6 @@ if (MSVC)
     -DON_COMPILING_OPENNURBS
     -DON_DLL_EXPORTS
     )
-  SET(OPENNURBS_HEADERS "${OPENNURBS_HEADERS};${ON_DLL_HEADERS}")
 else (MSVC)
   add_definitions(
     -DON_COMPILING_OPENNURBS
@@ -288,25 +306,23 @@ endif(MSVC)
 IF(BUILD_SHARED_LIBS)
   add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
   target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
-  set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
-  SET_TARGET_PROPERTIES(openNURBS PROPERTIES VERSION "2010.04.95")
+  set_target_properties(openNURBS PROPERTIES VERSION "2012.10.245")
   install(TARGETS openNURBS
 	  RUNTIME DESTINATION ${BIN_DIR}
 	  LIBRARY DESTINATION ${LIB_DIR}
 	  ARCHIVE DESTINATION ${LIB_DIR})
 ENDIF(BUILD_SHARED_LIBS)
-IF(NOT MSVC)
-  IF(BUILD_STATIC_LIBS)
-    add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
-    target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
-    IF(NOT WIN32)
+
+IF(BUILD_STATIC_LIBS)
+  add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
+  target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
+  IF(NOT WIN32)
       SET_TARGET_PROPERTIES(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
-    ENDIF(NOT WIN32)
-    install(TARGETS openNURBS-static
-	    RUNTIME DESTINATION ${BIN_DIR}
-	    LIBRARY DESTINATION ${LIB_DIR}
-	    ARCHIVE DESTINATION ${LIB_DIR})
-  ENDIF(BUILD_STATIC_LIBS)
-ENDIF(NOT MSVC)
+  ENDIF(NOT WIN32)
+  install(TARGETS openNURBS-static
+	  RUNTIME DESTINATION ${BIN_DIR}
+	  LIBRARY DESTINATION ${LIB_DIR}
+	  ARCHIVE DESTINATION ${LIB_DIR})
+ENDIF(BUILD_STATIC_LIBS)
 
 install(FILES ${OPENNURBS_HEADERS} DESTINATION include/openNURBS)

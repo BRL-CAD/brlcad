@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,11 +90,9 @@ main(int argc, char **argv)
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "poly-bot: can't open files.");
 	}
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else {
 	setmode(fileno(ifp), O_BINARY);
 	setmode(fileno(ofp), O_BINARY);
-#endif
     }
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);
@@ -241,7 +239,7 @@ main(int argc, char **argv)
 		BU_EXTERNAL_INIT( &ext );
 		ext.ext_nbytes = curr_poly * sizeof( union record );
 		ext.ext_buf = (uint8_t *)poly;
-		if ( rt_functab[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
+		if ( OBJ[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 		{
 		    bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
 		}
@@ -252,7 +250,7 @@ main(int argc, char **argv)
 		}
 
 		BU_EXTERNAL_INIT( &ext2 );
-		if ( rt_functab[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
+		if ( OBJ[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
 		    bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
 		}
 		rt_db_free_internal(&intern);

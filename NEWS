@@ -9,18 +9,179 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
 ----------------------------------------------------------------------
---- 2012-07-XX  Release 7.22.2                                     ---
+--- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* support non-.g file import in Archer's file open dialog - Cliff Yapp
+* added brep support to g2asc and asc2g - Cliff Yapp
+* fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
+* fixed mged -c crash running view-modifying commands - Sean Morrison
+* improved kill, killall, killtree documentation - Sean Morrison
+* added killtree -f force flag to kill unconditionally - Sean Morrison
+* killtree now defaults to skipping referenced objects - Sean Morrison
+* nirt -h option is now help, old -h is -H - Carl Moore
+* implemented preliminary NURBS geometry Boolean evaluation
+	- Wu Jianbang, Nick Reed, Cliff Yapp
+* improved step-g assembly hierarchy import support - Keith Bowman
+* fixed rtweight when using the -G grid spacing option - Sean Morrison
+* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* improved NURBS ray tracing & tessellation robustness - Keith Bowman
+* improved step-g NURBS geometry import robustness - Keith Bowman
+* added -v verbose output option to MGED 'search' command - Cliff Yapp
+* fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
+* fixed crash of extrude with special case bezier curves - huskmate13
+* improved performance of 'terrain' & numerous shaders - Sean Morrison
+* new manual pages for rtexample and brep_simple - Shardul Chiplunkar
+* added key binding to reopen/focus mged command window - Emory Huff
+* added menu option to restore mged command window - Cezar Elnazli
+* search command now recognizes hyp and metaball types - Cliff Yapp
+* added -depth option to MGED 'search' command - Cliff Yapp
+* improved 'search' with 'flat' search path modifier - Cliff Yapp
+* improved 'search' with above/equal/below depth limits - Cliff Yapp
+* added comb -S option to stop when object already exists - Cliff Yapp
+* improved comb command documentation with many examples - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2014-02-05  Release 7.24.2                                     ---
+----------------------------------------------------------------------
+
+This patch release includes a plethora of significant bug fixes and
+improvements to BRL-CAD including fixing ADRT/TIE fast triangle ray
+tracing on 32-bit platforms, fixing an issue in our FASTGEN converter
+that affected the import of very complex geometry models, upgrading
+one of our third-party dependencies (libpng) in response to a
+vulnerability report, and improving the 'comb' and 'search' commands
+with new options for restructuring and searching geometry.
+Enhancements continue to be made to our boundary representation (BREP)
+NURBS infrastructure in support of hybrid representation modeling and
+improved geometry interchange with other CAD systems.
+
+* improved rcodes output to inform user what changed - Cliff Yapp
+* fixed inside command for ellipsoid primitives - Cliff Yapp
+* restored suppressed mged output after some commands - Cliff Yapp
+* added rtwizard -s square image size option - Cliff Yapp
+* documented image size options in rtwizard man page - Cliff Yapp
+* added view center specification dialog to rtwizard - Cliff Yapp
+* increased rtwizard window size for button visibility - Cliff Yapp
+* image conversion -R/-G/-B options now require weight - Mohit Daga
+* improved option consistency for image processing tools - Mohit Daga
+* improved pipe ray tracing grazing hit behavior - Keith Bowman
+* upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
+* improved solid NURBS geometry ray tracing behavior - Keith Bowman
+* fix z-clipping bug in MGED's X display manager - Cliff Yapp
+* added attribute sorting option to the 'attr' command - Tom Browder
+* changed 'bwfilter' tool offset option from -o to -O - Mohit Daga
+* gattributes section 5 man page renamed to attributes - Tom Browder
+* changed 'benchmark' defaults: 2% deviation, 5 frames - Sean Morrison
+* improved bwrect to handle redirected input and output - Mohit Daga
+* upgraded boost to version 1.55.0 - Tom Browder
+* fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
+* fixed pixscale and bwscale to not output ioctl error - Mohit Daga
+* improved fast4-g import of numerous region groups - Richard Weiss
+* fixed archer hidden line edit getting redrawn as shaded - Nick Reed
+* fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
+* fixed fast4-g importer parsing of blank input lines - Richard Weiss
+* added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
+* allow search to see hidden combs with the -a flag - Cliff Yapp
+* added comb -l lift option to change region designation - Cliff Yapp
+* improved NURBS ray tracing grazing hit behavior - Keith Bowman
+* print current grid information in gqa output - Cliff Yapp
+* added -f option for flattening combs to 'comb' command - Cliff Yapp
+* added support for -bool operation filtering in search - Cliff Yapp
+* added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
+* improved g-stl usage and documentation - Jon Engbert
+* added -c and -r region flag options to the comb command - Cliff Yapp
+* added -p/-P point/line plot options to 'burst' tool - Sean Morrison
+* added -w wrapping option to the 'comb' command - Cliff Yapp
+* archer respects LIBRT_BOT_MINTIE environment variable - Bob Parker
+* new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
+* improved 'comb' command error messages - Talwinder Saini
+* pl -> plot3 rename for utilities and docs - Tom Browder, Cliff Yapp
+* exposed 'coil' command within mged & archer - Alexandrus, Cliff Yapp
+* added centroid reporting to 'analyze' command output - Csaba Nagy
+* added arb8 centroid 'analyze' command reporting - Silviu Ungureanu
+* pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
+* added ebm centroid 'analyze' command reporting - Michael Huang
+* improved help option consistency across numerous tools - Carl Moore
+
+
+----------------------------------------------------------------------
+--- 2013-06-13  Release 7.24.0                                     ---
+----------------------------------------------------------------------
+
+This major update to BRL-CAD comes after nearly a full year of
+development.  This is the alpha release unveiling of Archer/MGED, a
+preliminary interface update to BRL-CAD's graphical geometry editor.
+As alpha software, this new MGED prototype aims to provide functional
+feature parity with the antecedent MGED interface while introducing
+various changes.  Included is an integrated graphical tree view, a
+single window framework, drag-and-drop geometry editing, information
+panels, shortcut buttons, improved polygonal mesh and 2D sketch
+editing, level-of-detail wireframes, NURBS shaded display support, and
+much more.  Prior to upcoming beta testing where the emphasis will
+predominantly be on stability and usability, this alpha status
+solicits feedback from the community on capability and features.
+
+This release also includes various improvements to BRL-CAD's ray
+tracing infrastructure including CPU thread affinity locking for
+faster performance, more consistent grazing hit behavior, expanded
+volume and surface area calculations, numerous bug fixes, and more
+robust NURBS evaluation.  Following BRL-CAD's interface deprecation
+policy (see CHANGES file), the Jove text editor is no longer being
+bundled.  Numerous converters receive robustness improvements
+including the STEP, Patch, and 3DM importers.
+
+* improved gqa performance on parallel SMP hardware - Richard Weiss
+* fixed bounding box size calculation for pipe geometry - Bob Parker
+* improved help option consistency across numerous tools - Carl Moore
+* 'idents' command no longer reports negative booleans - Keith Bowman
+* improved support for NURBS with big uv-domain changes - Keith Bowman
+* improved ray tracing behavior for grazing rays - Keith Bowman
+* improved robustness of the step-g geometry importer - Nick Reed
+* fixed search command bombing on v4 database file - Sean Morrison
+* fixed graphics window z-clipping bug in mged - Bob Parker
+* fixed mged lesson 15 toy truck 'inside' ordering bug - Sean Morrison
+* fixed uninstallable Linux RPM package on Fedora 18 - Jordi Sayol
+* improved Mac, BSD, & Windows ray tracing performance - Sean Morrison
+* improved Linux ray tracing via cpu thread affinity - Akshay Kashyap
+* fixed nirt high object count failure on Windows - Richard Weiss
+* added plate mode BoT support to 'bot_merge' command - Richard Weiss
+* jove removed, see jove.emacs for compatibility bindings - Cliff Yapp
+* added gqa -q quiet option to suppress 'was not hit' - Richard Weiss
+* level-of-detail mged configuration dialog, under Tools - Nick Reed
+* added level-of-detail wireframe support to mged/archer - Nick Reed
+* initial NURBS shaded display and tessellation support - Keith Bowman
+* fixed patch-g -f input file permissions failure - Sean Morrison
+* improved large file support for the patch-g importer - Sean Morrison
+* upgraded libpng to version 1.5.12 - Cliff Yapp
+* openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
+* improved BoT mesh editing interface in archer - Bob Parker
+* fixed crash when running screengrab in archer - Nick Reed
+* fixed memory leak when working with pipe primitives - Daniel Roßberg
+* fixed asc2g and mged empty revolve object crashes - Sean Morrison
+* improved Linux support for multiple hardware displays - Bob Parker
+* fixed crash when parsing invalid shader parameters - Cliff Yapp
+* fixed mged 'dbupgrade' -permissions error on windows - Sean Morrison
+* fixed infinite loop raytracing subtracted lights - Sean Morrison
 * added hyp centroid and volume output to 'analyze' - Aaron Keesing
+* added support for wireframe drawing of 'hyp' labels - Bob Parker
 * fixed random number SMP bug affecting rt and adrt - Sean Morrison
 * added support for editing 2D sketch objects in archer - Bob Parker
 * fixed File->New deprecation error in archer - Sean Morrison
 * improved Linux platform application and file icons - Jordi Sayol
+* modified gqa to report all missed regions - Richard Weiss
+* added epa surface area and volume to analyze command - Chris Dueck
+* added arbn surface area and volume to analyze command  - Chris Dueck
+* added eto surface area and volume to analyze command  - Chris Dueck
+* quell pix-png gAMA chunk warning defaulting to unset - Sean Morrison
 * fixed mged interactive object translation keypoint bug - Bob Parker
 * fixed corrupted tessellation pipe export bug - Richard Weiss
+* fixed memory leak in bot_condense - Chris Dueck
 * output from g-var no longer prints 'fwrite' messages - Sean Morrison
+* fixed gqa to not report overlap regions as zero hits - Richard Weiss
 * fixed crash in step-g tool importing AP214 entities - Sean Morrison
 * improved 3dm-g output and invalid geometry support - Sean Morrison
 * fixed crash revolving empty sketch objects - Sean Morrison
@@ -28,6 +189,14 @@ changes made.  See document footer for additional details.
 * g_diff gives non-zero return code if .g files differ - Sean Morrison
 * fixed typographical errors in numerous tools and docs - Carl Moore
 * fixed TIE perpendicular face mesh evaluation failure - Richard Weiss
+* added -b option to set tpkg network packet size - Andrei Popescu
+* added manual page for existing mged reid command - Richard Weiss
+* added manual page for bot_sync, bot_flip, bot_split - Richard Weiss
+* added manual page for running rtarea within mged - Richard Weiss
+* improved documentation consistency and authorship info - Tom Browder
+* new mouse-input unpushed matrix edit option in archer - Bob Parker
+* fixed bug during pipe editing with working units set - Bob Parker
+* added experimental 'bot_fuse' command to heal BoTs - Richard Weiss
 
 
 ----------------------------------------------------------------------

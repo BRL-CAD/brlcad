@@ -1,7 +1,7 @@
 /*                          C Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -110,12 +110,12 @@ main(int argc, char **argv)
     }
 
     if ((infp=fopen(argv[1], "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", argv[1]);
+	bu_log("%s: cannot open input file (%s)\n", argv[0] , argv[1]);
 	bu_exit(1, "%s", usage);
     }
 
     if ((outfp = wdb_fopen(argv[2])) == NULL) {
-	bu_log("Cannot open output file (%s)\n", argv[2]);
+	bu_log("%s: cannot open output file (%s)\n", argv[0] , argv[2]);
 	bu_exit(1, "%s", usage);
     }
 
@@ -395,7 +395,7 @@ main(int argc, char **argv)
     delta_z = (fastf_t)(ltincr)/scale;
 
     /* calculate angle between longitudinal measurements */
-    delta_angle = bn_twopi/(fastf_t)nlg;
+    delta_angle = M_2PI/(fastf_t)nlg;
 
     /* allocate memory to hold vertices */
     curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t *), "ars curve pointers");
@@ -403,7 +403,7 @@ main(int argc, char **argv)
 	curves[y] = (fastf_t *)bu_calloc((unsigned int)(nlg+1)*3, sizeof(fastf_t), "ars curve");
     }
 
-    /* allocate memory for a table os sines and cosines */
+    /* allocate memory for a table of sines and cosines */
     sins = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "sines");
     coss = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "cosines");
 
@@ -441,7 +441,6 @@ main(int argc, char **argv)
 
 	for (y=0; y<nlt; y++) {
 	    short r;
-	    long radius;
 	    fastf_t rad;
 
 	    ptr = &curves[y+1][x*3];
@@ -454,6 +453,8 @@ main(int argc, char **argv)
 /*		bu_log("FOUND NEGATIVE VALUE at %d,%d\n", x, y);*/
 		rad = 0.0;
 	    } else {
+		long radius;
+
 		if (y < first_non_zero)
 		    first_non_zero = y;
 		radius = (long)(r) << rshift;

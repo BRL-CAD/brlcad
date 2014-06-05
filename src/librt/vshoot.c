@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,8 +58,8 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* skip call if solid table pointer is NULL */
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
-	    if (rt_functab[stp[i]->st_id].ft_shot) {
-		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+	    if (OBJ[stp[i]->st_id].ft_shot) {
+		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;
@@ -117,12 +117,12 @@ rt_vshootray(struct application *ap)
 {
     struct seg *HeadSeg;
     int ret;
-    auto vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
+    vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* bits for all involved regions */
     char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     int nrays = 1;			/* for now */
     int vlen;
     int id;
@@ -174,7 +174,7 @@ rt_vshootray(struct application *ap)
     solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);
@@ -238,8 +238,8 @@ rt_vshootray(struct application *ap)
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
-	if (rt_functab[id].ft_vshot) {
-	    rt_functab[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
+	if (OBJ[id].ft_vshot) {
+	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
 	}

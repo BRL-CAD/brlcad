@@ -1,7 +1,7 @@
 /*                    P I X 3 F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@ unsigned char *topnew, *middlenew, *bottomnew;
 
 /* The filter kernels */
 struct kernels {
-    char *name;
-    char *uname;		/* What is needed to recognize it */
+    const char *name;
+    const char *uname;		/* What is needed to recognize it */
     int kern[27];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
@@ -80,7 +80,7 @@ int oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *oldfp, *curfp, *newfp;
 
-void select_filter(char *str), dousage(void);
+void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
@@ -130,22 +130,22 @@ get_args(int argc, char **argv)
 
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 	bu_optind += 3;
@@ -158,8 +158,8 @@ get_args(int argc, char **argv)
 
 	if ((curfp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
@@ -181,15 +181,15 @@ get_args(int argc, char **argv)
 	if ((oldfp = fopen(working_name, "r")) == NULL) {
 	    if (frameNumber-1 != 0) {
 		fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      working_name);
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			working_name);
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	    if ((oldfp = fopen(file_name, "r")) == NULL) {
 		fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      file_name);
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			file_name);
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
@@ -198,8 +198,8 @@ get_args(int argc, char **argv)
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
 	if ((newfp = fopen(working_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading.\n",
-			  working_name);
+		    "pix3filter: cannot open \"%s\" for reading.\n",
+		    working_name);
 	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
@@ -390,13 +390,11 @@ main(int argc, char **argv)
 
 
 /*
- * S E L E C T _ F I L T E R
- *
  * Looks at the command line string and selects a filter based
  * on it.
  */
 void
-select_filter(char *str)
+select_filter(const char *str)
 {
     int i;
 

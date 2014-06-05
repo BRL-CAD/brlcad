@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/debug.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -122,7 +123,7 @@ rt_mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GET(botip, struct rt_bot_internal);
+    BU_ALLOC(botip, struct rt_bot_internal);
     botip->magic = RT_BOT_INTERNAL_MAGIC;
     botip->mode = botmode;
     botip->orientation = orientation;
@@ -160,7 +161,7 @@ rt_mk_bot_w_normals(
 	botip->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)botip, ID_BOT, 1.0);
+    return wdb_export(fp, name, (void *)botip, ID_BOT, 1.0);
 }
 
 
@@ -182,7 +183,7 @@ rt_mk_bot(
 				 * otherwise thickness is centered about hit point
 				 */
 {
-    return(rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
+    return (rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
 			       faces, thickness, face_mode, 0, NULL, NULL));
 }
 
@@ -428,12 +429,12 @@ make_bot_object(const char *name,
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i = 0; i < num_vertices; i++)
-	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i])
+	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i]);
 
-	    for (i = 0; i < face_count*3; i++)
-		FACES[i] -= min_pt;
+    for (i = 0; i < face_count*3; i++)
+	FACES[i] -= min_pt;
     bot_ip.num_faces = face_count;
-    bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
+    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i = 0; i < face_count*3; i++)
 	bot_ip.faces[i] = FACES[i];
 

@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,12 +36,13 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/units.h"
 #include "./ged_private.h"
 
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {
-    int i_index;
+    size_t i_index;
     char i_name[NAMESIZE+1];
     mat_t i_mat;
 };
@@ -71,20 +72,20 @@ tables_check(char *a, char *b)
 }
 
 
-HIDDEN int
-tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
+HIDDEN size_t
+tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
-    int i;
+    off_t i;
     struct identt idbuf1, idbuf2;
     static struct identt identt = {0, {0}, MAT_INIT_ZERO};
-    int readval;
+    ssize_t readval;
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
     MAT_COPY(idbuf1.i_mat, matrix);
 
-    for (i = 0; i < *numsol; i++) {
-	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
+    for (i = 0; i < (ssize_t)*numsol; i++) {
+	(void)lseek(rd_idfd, i*sizeof(identt), 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
 	if (readval < 0) {
@@ -101,7 +102,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
     (*numsol)++;
     idbuf1.i_index = *numsol;
 
-    (void)lseek(idfd, (off_t)0L, 2);
+    (void)lseek(idfd, 0, 2);
     i = write(idfd, &idbuf1, sizeof identt);
     if (i < 0)
 	perror("write");
@@ -112,7 +113,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
 
 
 HIDDEN void
-tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, long *numreg, long *numsol)
+tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -160,10 +161,14 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	(*numreg)++;
-	fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
-		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
-		      comb->los);
+	bu_vls_printf(&str, " %-4zu %4ld %4ld %4ld %4ld  ",
+		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
+	bu_vls_fwrite(tabptr, &str);
+	bu_vls_free(&str);
+
 	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
@@ -182,7 +187,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    struct rt_db_internal sol_intern;
 	    struct directory *sol_dp;
 	    mat_t temp_mat;
-	    int old;
+	    size_t old;
 
 	    switch (tree_list[i].tl_op) {
 		case OP_UNION:
@@ -220,11 +225,12 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		    nsoltemp = tables_sol_number((const matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number((matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		const matp_t mat = (const matp_t)old_mat;
+		nsoltemp = tables_sol_number(mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
@@ -239,8 +245,8 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 		/* if we get here, we must be looking for a solid table */
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		if (!rt_functab[sol_intern.idb_type].ft_describe ||
-		    rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
+		if (!OBJ[sol_intern.idb_type].ft_describe ||
+		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
@@ -258,6 +264,26 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	for (i = 0; i < actual_count; i++) {
 	    struct directory *nextdp;
 	    mat_t new_mat;
+
+	    /* For the 'idents' command skip over non-union combinations above the region level,
+	     * these members of a combination don't add positively to the defined regions of space
+	     * and their region ID's will not show up along a shotline unless positively added
+	     * elsewhere in the hierarchy. This is causing headaches for users generating an
+	     * association table from our 'idents' listing.
+	     */
+	    if (flag == ID_TABLE) {
+		switch (tree_list[i].tl_op) {
+		    case OP_UNION:
+			break;
+		    case OP_SUBTRACT:
+		    case OP_INTERSECT:
+			continue;
+			break;
+		    default:
+			bu_log("unrecognized operation in combination %s\n", dp->d_namep);
+			break;
+		}
+	    }
 
 	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
 	    if (nextdp == RT_DIR_NULL) {
@@ -302,8 +328,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     int i;
     const char *usage = "file object(s)";
 
-    long int numreg = 0;
-    long int numsol = 0;
+    size_t numreg = 0;
+    size_t numsol = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -405,11 +431,17 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	bu_file_delete("/tmp/mged_discr\0");
-	fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
-		      numsol, numreg);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
+	/* FIXME: should not assume /tmp */
+	bu_file_delete("/tmp/mged_discr\0");
+
+	bu_vls_printf(&str, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
+		      numsol, numreg);
+	bu_vls_fwrite(tabptr, &str);
+	bu_vls_free(&str);
+
+	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
 		      numsol, numreg);
 
 	(void)fclose(tabptr);
@@ -419,7 +451,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %d Regions\n", numreg);
+	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
 	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
 	bu_vls_strcpy(&cmd, sortcmd_orig);
@@ -433,12 +465,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	    if (ret != 0)
 		bu_log("WARNING: sort failure detected\n");
 	}
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 	ret = system(bu_vls_addr(&cmd));
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");

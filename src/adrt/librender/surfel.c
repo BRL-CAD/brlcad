@@ -1,7 +1,7 @@
 /*                        S U R F E L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,11 +18,13 @@
  * information.
  */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
 
+
+#include "bu/malloc.h"
 #include "render.h"
 #include "adrt_struct.h"
 
@@ -75,23 +77,25 @@ render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, v
     }
 }
 
+
 int
 render_surfel_init(render_t *render, const char *buf)
 {
     render_surfel_t *d;
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
     render->work = render_surfel_work;
     render->free = render_surfel_free;
-    render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
+
+    BU_ALLOC(render->data, render_surfel_t);
     d = (render_surfel_t *)render->data;
     d->num = 0;
     d->list = NULL;
     /*
-       d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
-       */
+      d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
+    */
     /* do something to extract num and list from buf */
     return 0;
 }

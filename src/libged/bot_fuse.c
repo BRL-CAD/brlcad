@@ -1,7 +1,7 @@
 /*                         B O T _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "rtgeom.h"
 #include "plot3.h"
 
@@ -102,7 +104,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 				BN_ADD_VLIST(vbp->free_vlist_hd, vhead, pt2, BN_VLIST_LINE_DRAW);
 			    } else if (out_type == 2) {
 				if (!plotfp) {
-				    bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", name, magic_p);
+				    bu_vls_sprintf(&plot_file_name, "%s.%p.pl", name, (void *)magic_p);
 				    if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
 					bu_vls_free(&plot_file_name);
 					bu_log("Error, unable to create plot file (%s), open edge test failed.\n",
@@ -298,10 +300,10 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     RT_DB_INTERNAL_INIT(&intern2);
     intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern2.idb_type = ID_BOT;
-    intern2.idb_meth = &rt_functab[ID_BOT];
-    intern2.idb_ptr = (genptr_t)bot;
+    intern2.idb_meth = &OBJ[ID_BOT];
+    intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern2.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, GED_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);

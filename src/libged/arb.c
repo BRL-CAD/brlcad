@@ -1,7 +1,7 @@
 /*                         A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,23 +78,24 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    rota *= bn_degtorad;
-    fb *= bn_degtorad;
+    rota *= DEG2RAD;
+    fb *= DEG2RAD;
 
-    BU_GET(arb, struct rt_arb_internal);
+    BU_ALLOC(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
-    internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)arb;
+    internal.idb_meth = &OBJ[ID_ARB8];
+    internal.idb_ptr = (void *)arb;
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-#if 1
+    /* FIXME: we should be creating the arb at the center of the
+     * screen.  Extract bounding box code from both autoview.c and
+     * get_autoview.c into a general bounding rpp function, and use
+     * accordingly.  Should combin autoview.c with get_autoview.c
+     * (perhaps as a flag).
+     */
     VSET(arb->pt[0], 0.0, 0.0, 0.0);
-#else
-    /* put vertex of new solid at center of screen */
-    VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-#endif
 
     /* calculate normal vector defined by rot, fb */
     norm1[0] = cos(fb) * cos(rota);
@@ -122,7 +123,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 4; i++)
 	VJOIN1(arb->pt[i+4], arb->pt[i], -50.8, norm1);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

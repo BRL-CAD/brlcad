@@ -1,7 +1,7 @@
 /*                       A S C 2 D S P . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2012 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 	return;
 
     if (*nchars > BUFSZ - 1) {
-	bu_log("asc2dsp: nchars (%ud) > %ud (%d)\n", *nchars, BUFSZ - 1);
+	bu_log("asc2dsp: nchars (%ud) > BUFSZ - 1 (%d)\n", *nchars, BUFSZ - 1);
 	bu_exit(1, "asc2dsp: FATAL");
     }
 
@@ -77,7 +77,7 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* note strtoul should ignore leading zeroes: verified by testing with '011' input */
     val = strtoul(buf, 0, 10);
     if (val > UINT16_MAX) {
-	bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%lu)\n", val, UINT16_MAX);
+	bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%d)\n", val, UINT16_MAX);
 	bu_exit(1, "asc2dsp: FATAL");
     }
 
@@ -85,11 +85,6 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 
     /* convert  to network order for the dsp */
     netshort = htons(hostshort);
-
-#if 0 /* keep this debuggery until peer review is passed satisfactorily */
-    /* debug */
-    fprintf(stderr, "DEBUG: buf = '%s', hostshort = %hu\n", buf, hostshort);
-#endif
 
     /* now output it */
     ret = fwrite(&netshort, sizeof(uint16_t), 1, fpo);

@@ -39,11 +39,13 @@ set(docbook_mann_EN
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml
+  brep.xml
   build_region.xml
   c.xml
   cat.xml
   center.xml
   color.xml
+  comb.xml
   comb_color.xml
   copyeval.xml
   copymat.xml
@@ -54,6 +56,7 @@ set(docbook_mann_EN
   db.xml
   db_glob.xml
   dbconcat.xml
+  dbupgrade.xml
   debugbu.xml
   debugdir.xml
   debuglib.xml
@@ -127,7 +130,6 @@ set(docbook_mann_EN
   lookat.xml
   ls.xml
   make.xml
-  make_bb.xml
   make_pnts.xml
   mater.xml
   matpick.xml
@@ -157,6 +159,7 @@ set(docbook_mann_EN
   preview.xml
   prj_add.xml
   ps.xml
+  pull.xml
   push.xml
   put_comb.xml
   putmat.xml
@@ -174,7 +177,6 @@ set(docbook_mann_EN
   rcodes.xml
   read_muves.xml
   red.xml
-  redraw_vlist.xml
   refresh.xml
   regdebug.xml
   regdef.xml

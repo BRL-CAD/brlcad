@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,8 +86,10 @@ frame .f_bottom \n");
 
     bu_vls_printf(s, "\
 label .l_top -text {Crash details and system information:} \n\
-label .l_bottom -text {Please describe what you were doing when the crash occurred:} \n\
-label .l_info -justify left -text {Your crash report will help BRL-CAD improve.  No other information is sent with this report other that what is shown.  You will not be contacted in response to this report unless you file a formal bug report to the project bug tracker.  See http://brlcad.org for details.} \n\
+label .l_bottom -text {Please describe what you were doing when the problem occurred:} \n");
+
+    bu_vls_printf(s, "\
+label .l_info -justify left -text {Help improve BRL-CAD by sending us diagnostic and usage information.  You will not be contacted in response to this report.  See http://brlcad.org in order to manually submit a bug report, feature request, or code contribution.  By selecting \"Send to BRL-CAD developers...\" you're agree to let us use this information in order to improve our products and services.} \n\
 .l_info configure -wraplength 500 \n");
 
     bu_vls_printf(s, "\
@@ -169,7 +171,7 @@ load_file(const char *filename)
     }
 
     if (!report) {
-	BU_GET(report, struct bu_vls);
+	BU_ALLOC(report, struct bu_vls);
 	bu_vls_init(report);
 	atexit(_free_report_memory);
     }
@@ -196,7 +198,7 @@ sendlog(ClientData data, Tcl_Interp *UNUSED(interp), int UNUSED(argc), const cha
     struct bu_vls *daBomb = (struct bu_vls *)data;
 
     bu_log("Pretending that we're sending the log file to brlcad.org\n");
-    bu_log("REPORT:\n%V\n", daBomb);
+    bu_log("REPORT:\n%s\n", bu_vls_addr(daBomb));
 
     return TCL_OK;
 }
@@ -283,6 +285,13 @@ main(int argc, char *argv[])
 {
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
+
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+		bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
+	}
+    }
+
     tkargv[0] = argv[0];
 
     if (argc <= 1) {

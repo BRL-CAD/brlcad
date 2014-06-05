@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -121,9 +121,11 @@ extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB op
 static char usage[] = "\
 Usage: fbserv port_num\n\
 	  (for a stand-alone daemon)\n\
-   or  fbserv [-v] [-h] [-S squaresize]\n\
-	  [-W width] [-N height] port_num frame_buffer\n\
+   or  fbserv [-v] [-{sS} squaresize]\n\
+	  [-{wW} width] [-{nN} height] -p port_num -F frame_buffer\n\
 	  (for a single-frame-buffer server)\n\
+          (can omit -p and -F, in which case port_num and frame_buffer\n\
+           must appear in that order)\n\
 ";
 
 int
@@ -131,14 +133,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != -1 )  {
+    while ( (c = bu_getopt( argc, argv, "vF:s:w:n:S:W:N:p:h?" )) != -1 )  {
 	switch ( c )  {
 	    case 'v':
 		verbose = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
@@ -180,8 +178,6 @@ get_args(int argc, char **argv)
 }
 
 /*
- *			I S _ S O C K E T
- *
  * Determine if a file descriptor corresponds to an open socket.
  * Used to detect when we are started from INETD which gives us an
  * open socket connection on fd 0.
@@ -249,9 +245,6 @@ setup_socket(int fd)
 }
 
 
-/*
- *			N E W _ C L I E N T
- */
 void
 new_client(struct pkg_conn *pcp)
 {
@@ -273,15 +266,15 @@ new_client(struct pkg_conn *pcp)
     pkg_close(pcp);
 }
 
-/*
- *			D R O P _ C L I E N T
- */
 void
 drop_client(int sub)
 {
-    int fd = clients[sub]->pkc_fd;
+    int fd;
 
-    if ( clients[sub] == PKC_NULL )  return;
+    if ( clients[sub] == PKC_NULL )
+	return;
+
+    fd = clients[sub]->pkc_fd;
 
     FD_CLR( fd, &select_list );
     pkg_close( clients[sub] );
@@ -290,15 +283,13 @@ drop_client(int sub)
 
 
 /*
- *			C O M M _ E R R O R
- *
  *  Communication error.  An error occurred on the PKG link.
  *  It may be local, or it may be between us and the client we are serving.
  *  We send a copy to syslog or stderr.
  *  Don't send one down the wire, this can cause loops.
  */
 static void
-comm_error(char *str)
+comm_error(const char *str)
 {
 #if defined(HAVE_SYSLOG_H)
     if ( use_syslog ) {
@@ -315,8 +306,6 @@ comm_error(char *str)
 }
 
 /*
- *			M A I N _ L O O P
- *
  *  Loop forever handling clients as they come and go.
  *  Access to the framebuffer may be interleaved, if the user
  *  wants it that way.
@@ -341,7 +330,7 @@ main_loop(void)
 	tv.tv_sec = 60L;
 	tv.tv_usec = 0L;
 #endif
-	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (void *)&tv ) == 0)) {
+	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
 	    if (fb_server_fbp) {
@@ -405,9 +394,6 @@ init_syslog(void)
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -548,8 +534,6 @@ main(int argc, char **argv)
 
 #ifndef _WIN32
 /*
- *			F B _ L O G
- *
  *  Handles error or log messages from the frame buffer library.
  *  We route these back to all clients in an ERROR packet.  Note that
  *  this is a replacement for the default fb_log function in libfb

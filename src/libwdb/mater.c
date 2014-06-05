@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,31 +45,9 @@ mk_write_color_table(struct rt_wdb *ofp)
 {
     RT_CK_WDB(ofp);
     if (db_version(ofp->dbip) < 5) {
-	const struct mater *mp;
-
 	BU_ASSERT_LONG(mk_version, ==, 4);
 
-	for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-#if 0
-	    union record record;
-	    record.md.md_id = ID_MATERIAL;
-	    record.md.md_flags = 0;
-	    record.md.md_low = mp->mt_low;
-	    record.md.md_hi = mp->mt_high;
-	    record.md.md_r = mp->mt_r;
-	    record.md.md_g = mp->mt_g;
-	    record.md.md_b = mp->mt_b;
-
-	    /* This record has no name field! */
-
-/* XXX examine mged/mater.c: color_putrec() */
-
-	    /* Write out the record */
-	    (void)fwrite((char *)&record, sizeof record, 1, ofpxx);
-#else
-	    bu_log("mk_write_color_table(): not implemented for v4 database yet\n");
-#endif
-	}
+	bu_log("mk_write_color_table(): not implemented for v4 database\n");
     } else {
 	return db5_put_color_table(ofp->dbip);
     }
