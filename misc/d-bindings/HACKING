@@ -21,7 +21,7 @@ via local install:
 libclang
 
 
-general work flow
+general data flow
 =================
 
 foreach header X.h

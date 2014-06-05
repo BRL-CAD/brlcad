@@ -1,3 +1,19 @@
+Simple converter
+================
+
+
+Grammar converter
+=================
+
+Use successful program 'extract-grammar.pl' to convert P::RD grammar
+to R::G grammar.
+
+D grammar parser
+================
+
+Make a D grammar parser that creates a Perl class hierarchy to
+interpret and instantiate the C syntax tree (derived with R::G):
+
 C grammar parser
 ================
 
@@ -11,6 +27,12 @@ Try parsing individual chunks to fit individual classes by type.
 
 Also don't forget saving state of files (or freezing them) and hash
 checking to eliminate unnecessary rebuilds.
+
+status
+------
+
+Basically working--now convert to use better module Regex::Grammers
+(R::G).
 
 Decide how the D interface system fits into the build system
 ============================================================
