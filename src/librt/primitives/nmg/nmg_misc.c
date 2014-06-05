@@ -1845,6 +1845,70 @@ nmg_count_shell_kids(const struct shell *s, size_t *total_faces, size_t *total_w
 
 
 /**
+ * private support routine for nmg_close_shell creates an array of
+ * indices into a table of edgeuses, ordered end-to-end. This may or
+ * may not create an actual loop.
+ *
+ * Arguments:
+ *   tbl is the table (provided by caller)
+ *   index is the array of indices created by order_tbl
+ *   tbl_size is the size of the table (provided by caller)
+ *   loop_size is the number of edgeuses in the loop (calculated by order_tbl)
+ */
+HIDDEN void
+order_tbl(struct bu_ptbl *tbl, int start_idx, int **idx, int tbl_size, int *loop_size)
+{
+    int i, j, k;
+    int found;
+    struct edgeuse *eu, *eu1;
+    struct vertex *start_v;
+
+    /* create an index into the table, ordered to create a loop */
+    if (*idx == NULL)
+	(*idx) = (int *)bu_calloc(tbl_size, sizeof(int), "Table index");
+
+    for (i=0; i<tbl_size; i++)
+	(*idx)[i] = (-1);
+
+    /* start the loop at idx = start_idx */
+    (*idx)[0] = start_idx;
+    *loop_size = 1;
+    eu = (struct edgeuse *)BU_PTBL_GET(tbl, start_idx);
+    start_v = eu->vu_p->v_p;
+    i = 0;
+    found = 1;
+    while (eu->eumate_p->vu_p->v_p != start_v && found) {
+	found = 0;
+
+	/* Look for edgeuse that starts where "eu" ends */
+	for (j=0; j<tbl_size; j++) {
+	    int already_used = 0;
+
+	    eu1 = (struct edgeuse *)BU_PTBL_GET(tbl, j);
+
+	    /* don't use same edgeuse twice! */
+	    for (k=0; k<(*loop_size); k++) {
+		if (eu1 == (struct edgeuse *)BU_PTBL_GET(tbl, (*idx)[k])) {
+		    already_used = 1;
+		    break;
+		}
+	    }
+	    if (already_used)
+		continue;
+	    if (eu1->vu_p->v_p == eu->eumate_p->vu_p->v_p) {
+		/* Found it */
+		found = 1;
+		(*idx)[++i] = j;
+		(*loop_size)++;
+		eu = eu1;
+		break;
+	    }
+	}
+    }
+}
+
+
+/**
  * Examines the passed shell and, if there are holes, closes them
  * note that not much care is taken as to how the holes are closed
  * so the results are not entirely predictable.

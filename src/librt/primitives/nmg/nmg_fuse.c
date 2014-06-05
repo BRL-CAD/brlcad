@@ -1667,7 +1667,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
  * distance tolerance of the 1st face's plane equation.
  */
 int
-nmg_model_face_fuse(struct shell *s, const struct bn_tol *tol)
+nmg_shell_face_fuse(struct shell *s, const struct bn_tol *tol)
 {
     struct bu_ptbl ftab;
     int total = 0;

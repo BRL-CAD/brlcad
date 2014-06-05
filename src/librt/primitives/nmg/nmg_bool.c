@@ -1409,10 +1409,10 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     NMG_CK_SHELL(tr->tr_d.td_s);
     NMG_CK_SHELL(tl->tr_d.td_s);
 
-    if (nmg_ck_closed_shell(tr->tr_d.td_s, tol)) {
+    if (nmg_ck_closed_surf(tr->tr_d.td_s, tol)) {
 	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (r)\n");
     }
-    if (nmg_ck_closed_shell(tl->tr_d.td_s, tol)) {
+    if (nmg_ck_closed_surf(tl->tr_d.td_s, tol)) {
 	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (l)\n");
     }
 
@@ -1427,7 +1427,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* move operands into the same model */
-    nmg_merge_shells(tl->tr_d.td_s, tr->tr_d.td_s);
+    //nmg_merge_shells(tl->tr_d.td_s, tr->tr_d.td_s);
 
     /* input s1 and s2 are destroyed, output is new shell */
     reg = nmg_do_bool(tl->tr_d.td_s, tr->tr_d.td_s, op, tol);
@@ -1540,7 +1540,7 @@ nmg_boolean(union tree *tp, struct shell *s, const struct bn_tol *tol, struct re
     }
 
     /* move result into correct model */
-    nmg_merge_shells(s, tp->tr_d.td_s);
+    //nmg_merge_shells(s, tp->tr_d.td_s);
     ret = 0;
 
 out:

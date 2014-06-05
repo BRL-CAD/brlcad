@@ -505,7 +505,7 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
  * Caller is responsible for freeing it.
  */
 uint32_t **
-nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct shell *s)
+nmg_s_struct_count(register struct nmg_struct_counts *ctr, const struct shell *s)
 {
     struct faceuse *fu;
     struct face *f;

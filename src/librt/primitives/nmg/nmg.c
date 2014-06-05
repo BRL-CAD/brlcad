@@ -209,7 +209,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     /* intersect the ray with the geometry (sets surfno) */
-    nmg_isect_ray_model(&rd);
+    nmg_isect_ray_shell(&rd);
 
     /* build the segment lists */
     status = nmg_ray_segs(&rd);

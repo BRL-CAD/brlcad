@@ -1266,7 +1266,7 @@ rt_vol_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_to
 	    (void)nmg_kill_snakes(lu);
     }
 
-    (void)nmg_unbreak_region_edges((uint32_t *)(&(*s)->magic));
+    (void)nmg_unbreak_shell_edges((uint32_t *)(&(*s)->magic));
 
     (void)nmg_mark_edges_real((uint32_t *)&(*s)->magic);
 
