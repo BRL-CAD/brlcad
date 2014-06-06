@@ -18,20 +18,56 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* windows smp support
 
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
 
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them.
 
-* update search depth options (above + below) to make sure the logic
-  supports depth=0 / above=0 / below=0 meaning the current node.
+* fix the bu_semaphore unit test
+
+* fix the bn_poly_sub unit test
+
+* fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
+* re-do the sh/enumerate.sh script for CMake
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* libnmg: eliminate the nmgregion and model structures, rename shell
-  to model (consider naming consistency of all public structs).
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* bundle primary rays in rt front end into postage stamps, shoot via
+  rt_shootrays(), modify to pass all rays down through the spatial
+  partitioning simultaneously
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
+
+* Rework p2t so it doesn't take down the application when a NURBS
+  tessellation fails - should just abandon the problem input and
+  continue.
+
+* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* investigate INFINITY spatial partitioning issue.
 
 * implement a region anointment feature where the user can turn an
   assembly into a region and change all lower or higher regions into
@@ -41,50 +77,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   do the simple consolidate/distribute operation regardless of
   resulting state.
 
-* address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
-
-* re-do the sh/enumerate.sh script for CMake
-
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* bundle primary rays in rt front end into postage stamps, shoot via
-  rt_shootrays(), modify to pass all rays down through the spatial
-  partitioning simultaneously
-
-* fix the bu_semaphore unit test
-
-* fix the bn_poly_sub unit test
-
-* resolve bot bin sort optimization crash, disabled during release
-
-* investigate INFINITY spatial partitioning issue.
-
-* closing the graphics window brings down X11 on Mac due to a bad
-  context.  fix or revert recent close window behavior.
-
-* Rework p2t so it doesn't take down the application when a NURBS
-  tessellation fails - should just abandon the problem input and
-  continue.
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
-
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
-
-* rename all the g_* tools sans "_" [save until 7.??]
-
-* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
-
-* windows smp support
-
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* update search depth options (above + below) to make sure the logic
+  supports depth=0 / above=0 / below=0 meaning the current node.
 
 * kill material_head static global in src/librt/mater.c
 
