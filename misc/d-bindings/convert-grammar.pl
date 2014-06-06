@@ -2,7 +2,7 @@
 
 use v5.14; # say, switch
 
-# converts a C grammar to a Perl module for parsing
+# converts a C or D grammar to a Perl module for parsing
 
 use strict;
 use warnings;
