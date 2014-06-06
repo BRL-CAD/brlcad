@@ -94,7 +94,7 @@ reshape(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 void
 resize_isst(struct isst_s *isstp)
 {
-    switch(isstp->gs) {
+    switch (isstp->gs) {
 	case 0:
 	    isstp->camera.w = isstp->tile.size_x = isstp->w;
 	    isstp->camera.h = isstp->tile.size_y = isstp->h;
@@ -334,19 +334,19 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     }
 
     mode = Tcl_GetString(objv[2]);
-    if(objc == 4)
+    if (objc == 4)
 	buf = Tcl_GetString(objv[3]);
 
     /* pack the 'rest' into buf - probably should use a vls for this*/
-    if( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
+    if ( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
 	struct adrt_mesh_s *mesh;
 
 	/* clear all the hit list */
-	for(BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
+	for (BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
 	    mesh->flags &= ~ADRT_MESH_HIT;
     }
 
-    if(render_shader_init(&isst->camera.render, mode, buf) != 0)
+    if (render_shader_init(&isst->camera.render, mode, buf) != 0)
 	return TCL_ERROR;
 
     isst->dirty = 1;
@@ -501,10 +501,10 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     el = el * -DEG2RAD + y;
 
     /* clamp to sane values */
-    while(az > M_2PI) az -= M_2PI;
-    while(az < 0) az += M_2PI;
-    if(el>M_PI_2) el=M_PI_2 - 0.001;
-    if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+    while (az > M_2PI) az -= M_2PI;
+    while (az < 0) az += M_2PI;
+    if (el>M_PI_2) el=M_PI_2 - 0.001;
+    if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
     V3DIR_FROM_AZEL(vecdpos, az, el);
     VSCALE(vecdpos, vecdpos, mag_pos);
@@ -517,10 +517,10 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	el = el * -DEG2RAD + y;
 
 	/* clamp to sane values */
-	while(az > M_2PI) az -= M_2PI;
-	while(az < 0) az += M_2PI;
-	if(el>M_PI_2) el=M_PI_2 - 0.001;
-	if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+	while (az > M_2PI) az -= M_2PI;
+	while (az < 0) az += M_2PI;
+	if (el>M_PI_2) el=M_PI_2 - 0.001;
+	if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
 	V3DIR_FROM_AZEL(vecdfoc, az, el);
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
@@ -546,7 +546,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 
     dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
 
-    if(dmp == DM_NULL) {
+    if (dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }

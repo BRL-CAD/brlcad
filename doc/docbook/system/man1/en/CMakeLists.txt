@@ -55,8 +55,6 @@ set(docbook_man1_EN
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
-  dunncolor.xml
-  dunnsnap.xml
   dxf-g.xml
   enf-g.xml
   euclid-g.xml
@@ -108,6 +106,7 @@ set(docbook_man1_EN
   g2asc.xml
   g_diff.xml
   g_lint.xml
+  gdiff2.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml

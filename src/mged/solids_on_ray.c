@@ -121,8 +121,8 @@ free_solid(struct sol_name_dist *sol, int free_name)
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (free_name)
-	bu_free((genptr_t) sol->name, "solid name");
-    bu_free((genptr_t) sol, "solid");
+	bu_free((void *) sol->name, "solid name");
+    bu_free((void *) sol, "solid");
 }
 
 
@@ -180,7 +180,7 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *U
     list[i++] = NULL;
     if (i > len) bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
-    ap->a_uptr = (genptr_t)list;
+    ap->a_uptr = (void *)list;
     return len;
 }
 
@@ -233,7 +233,7 @@ char **skewer_solids (int argc, const char *argv[], fastf_t *ray_orig, fastf_t *
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	Tcl_AppendResult(INTERP, "rt_gettrees() failed\n", (char *)NULL);
 	rt_clean(rtip);
-	bu_free((genptr_t)rtip, "struct rt_i");
+	bu_free((void *)rtip, "struct rt_i");
 	return (char **) 0;
     }
 
@@ -265,7 +265,7 @@ char **skewer_solids (int argc, const char *argv[], fastf_t *ray_orig, fastf_t *
     (void) rt_shootray(&ap);
 
     rt_clean(rtip);
-    bu_free((genptr_t)rtip, "struct rt_i");
+    bu_free((void *)rtip, "struct rt_i");
 
     return (char **) ap.a_uptr;
 }

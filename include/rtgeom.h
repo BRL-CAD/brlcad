@@ -480,7 +480,7 @@ struct rt_curve {
     int *reverse;	/**< array of boolean flags indicating if
 			 * segment should be reversed
 			 */
-    genptr_t *segment;	/**< array of curve segment pointers */
+    void **segment;	/**< array of curve segment pointers */
 };
 
 

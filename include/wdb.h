@@ -466,7 +466,7 @@ typedef enum {
  * an empty binunif will be created.
  *
  */
-WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count);
+WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 
 
 /*----------------------------------------------------------------------*/
@@ -955,11 +955,9 @@ WDB_EXPORT void mk_freemembers( struct bu_list *headp );
  * modified as follows:
  *
  *        before                          after
- *      |                       -
- *      |                          / \
- *      |                         /   \
- *  original combination tree                /     \
- *                    original combination tree   make_hole_X
+ *          |                              /\
+ *          u                             u  -
+ *   orig_comb_tree          orig_comb_tree  make_hole_X
  *
  * The modified combination is written to the struct rt_wdb. Note that
  * to do dynamic geometry a "wdb_dbopen" would normally be called on
@@ -981,7 +979,6 @@ WDB_EXPORT extern int make_hole(struct rt_wdb *wdbp,
 
 
 /**
- *
  * This routine provides a quick approach to simply adding a hole to
  * existing prepped geometry.  The geometry must already be prepped
  * prior to calling this routine. After calling this routine, the

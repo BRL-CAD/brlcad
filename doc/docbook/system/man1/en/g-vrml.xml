@@ -84,6 +84,13 @@ The
 <option>-u</option>
 option can be used to set the units for the resulting VRML file (the default is mm).
 Any units name that MGED accepts will work here.</para>
+<para>
+The
+<option>-b</option>
+option provides BOT dump, and the
+<option>-e</option>
+option provides evaluation of all CSG and BOTs.  They are mutually exclusive.
+</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

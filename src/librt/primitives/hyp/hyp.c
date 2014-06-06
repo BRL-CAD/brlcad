@@ -197,7 +197,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_HYP];
 
     hyp =  hyp_internal_to_specific(hyp_ip);
-    stp->st_specific = (genptr_t)hyp;
+    stp->st_specific = (void *)hyp;
 
     /* calculate bounding sphere */
     VMOVE(stp->st_center, hyp->hyp_V);
@@ -543,7 +543,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
-    switch(hitp->hit_surfno) {
+    switch (hitp->hit_surfno) {
 	case HYP_NORM_BODY:
 	    /* v = (z + Hmag) / (2*Hmag) */
 	    uvp->uv_v = (hitp->hit_vpriv[Z] + hyp->hyp_Hmag) / (2.0 * hyp->hyp_Hmag);
@@ -1335,7 +1335,7 @@ rt_hyp_ifree(struct rt_db_internal *ip)
     hyp_ip->hyp_magic = 0;			/* sanity */
 
     bu_free((char *)hyp_ip, "hyp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

@@ -35,8 +35,6 @@
 #include <set>
 #include <map>
 
-#include "tnt.h"
-#include "jama_lu.h"
 #include "brep.h"
 
 /* interface header */
@@ -53,7 +51,7 @@ class BSpline
 public:
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (a/k/a number of control points)
+    int n; // num_samples-1 (aka number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;
@@ -109,6 +107,49 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
     } else {
 	return UNKNOWN_SEAM_DIRECTION;
     }
+}
+
+
+/*
+ * Wrapped OpenNURBS 'EvNormal()' because it fails when at surface singularity
+ * but not on edge of domain. If fails and at singularity this wrapper will
+ * reevaluate at domain edge.
+ */
+ON_BOOL32
+surface_EvNormal( // returns false if unable to evaluate
+	 const ON_Surface *surf,
+         double s, double t, // evaluation parameters (s,t)
+         ON_3dPoint& point,  // returns value of surface
+         ON_3dVector& normal, // unit normal
+         int side,       // optional - determines which side to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* hint       // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         )
+{
+    ON_BOOL32 rc = false;
+
+    if (!(rc=surf->EvNormal(s, t, point, normal, side, hint))) {
+	side = IsAtSingularity(surf, s, t, PBC_SEAM_TOL);// 0 = south, 1 = east, 2 = north, 3 = west
+	if (side >= 0) {
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    if (side == 0) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    } else if (side == 1) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 2) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 3) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    }
+	}
+    }
+    return rc;
 }
 
 
@@ -1446,7 +1487,6 @@ bool trim_GetClosestPoint3dFirstOrder(
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
     std::vector<ON_BoundingBox> bbox;
-    ON_2dPoint origp2d = p2d;
     std::cerr.precision(15);
 
     ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
@@ -1481,7 +1521,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 	}
     }
     if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,quadrant,tol)) {
-	ON_3dPoint test2dp = surf->PointAt(p2d.x,p2d.y);
 	ON_BezierCurve B;
 	bool bGrowBox = false;
 	ON_3dVector d1,d2;
@@ -1523,7 +1562,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	  span_interval[span_index].m_t[1] = ((N.m_knot[span_index + N.m_order-1]) > interval->m_t[1 -i]) ? interval->m_t[1 -i] : (N.m_knot[span_index + N.m_order-1]);
 	  ON_3dPoint d1sq(d1.x*d1.x,d1.y*d1.y,0.0),d2sq(d2.x*d2.x,d2.y*d2.y,0.0);
 	  double distancesq;
-	  if(d1sq.x < d2sq.x) {
+	  if (d1sq.x < d2sq.x) {
 	    if (d1sq.y < d2sq.y) {
 		if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
 		    distancesq = d1sq.x + d2sq.y;
@@ -1586,7 +1625,8 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    t0 = span_interval[span_index].Mid();
 	    bool closestfound = false;
 	    bool notdone = true;
-	    double distance, previous_distance = DBL_MAX;
+	    double distance = DBL_MAX;
+	    double previous_distance = DBL_MAX;
 	    ON_3dVector firstDervative, secondDervative;
 	    while (notdone
 		    && trim.Ev2Der(t0, point, firstDervative, secondDervative)
@@ -1791,97 +1831,6 @@ getKnotInterval(BSpline& bspline, double u)
     return k;
 }
 
-
-int
-getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
-{
-    // evaluate the b-spline basis function for the given parameter u
-    // place the results in N[]
-    N = 0.0;
-    if (NEAR_EQUAL(u, bspline.knots[0], PBC_TOL)) {
-	N[0] = 1.0;
-	return 0;
-    } else if (NEAR_EQUAL(u, bspline.knots[bspline.m], PBC_TOL)) {
-	N[bspline.n] = 1.0;
-	return bspline.n;
-    }
-    int k = getKnotInterval(bspline, u);
-    N[k] = 1.0;
-    for (int d = 1; d <= bspline.p; d++) {
-	double uk_1 = bspline.knots[k + 1];
-	double uk_d_1 = bspline.knots[k - d + 1];
-	N[k - d] = ((uk_1 - u) / (uk_1 - uk_d_1)) * N[k - d + 1];
-	for (int i = k - d + 1; i <= k - 1; i++) {
-	    double ui = bspline.knots[i];
-	    double ui_1 = bspline.knots[i + 1];
-	    double ui_d = bspline.knots[i + d];
-	    double ui_d_1 = bspline.knots[i + d + 1];
-	    N[i] = ((u - ui) / (ui_d - ui)) * N[i] + ((ui_d_1 - u) / (ui_d_1 - ui_1)) * N[i + 1];
-	}
-	double uk = bspline.knots[k];
-	double uk_d = bspline.knots[k + d];
-	N[k] = ((u - uk) / (uk_d - uk)) * N[k];
-    }
-    return k;
-}
-
-
-void
-printMatrix(TNT::Array1D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	printf("% 5.5f ", m[i]);
-    }
-    printf("\n");
-}
-
-
-// FIXME: this function sucks...
-void
-generateParameters(BSpline& bspline)
-{
-    double lastT = 0.0;
-    bspline.params.resize(bspline.n + 1);
-    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n + 1);
-    for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
-	double t = (double) i / (UNIVERSAL_SAMPLE_COUNT - 1);
-	TNT::Array1D<double> n = TNT::Array1D<double> (N.dim2(), N[i]);
-	getCoefficients(bspline, n, t);
-	//printMatrix(n);
-    }
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	double max = 0.0; //real.min();
-	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
-	    double f = N[j][i];
-	    double t = (double) j / (UNIVERSAL_SAMPLE_COUNT - 1);
-	    if (f > max) {
-		max = f;
-		if (j == UNIVERSAL_SAMPLE_COUNT - 1)
-		    bspline.params[i] = t;
-	    } else if (f < max) {
-		bspline.params[i] = lastT;
-		break;
-	    }
-	    lastT = t;
-	}
-    }
-}
-
-
-void
-printMatrix(TNT::Array2D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	for (int j = 0; j < m.dim2(); j++) {
-	    printf("% 5.5f ", m[i][j]);
-	}
-	printf("\n");
-    }
-}
-
 ON_NurbsCurve*
 interpolateLocalCubicCurve(ON_2dPointArray &Q)
 {
@@ -1944,7 +1893,6 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -2040,7 +1988,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -2074,39 +2021,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
 }
 
 
-void
-generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
-{
-    TNT::Array2D<double> bigN(bspline.n + 1, bspline.n + 1);
-    //printMatrix(bigN);
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
-	getCoefficients(bspline, n, bspline.params[i]);
-	//printMatrix(bigN);
-    }
-    TNT::Array2D<double> bigD(bspline.n + 1, 2);
-    for (int i = 0; i < bspline.n + 1; i++) {
-	bigD[i][0] = samples[i].x;
-	bigD[i][1] = samples[i].y;
-    }
-
-    //printMatrix(bigD);
-    //printMatrix(bigN);
-
-    JAMA::LU<double> lu(bigN);
-    assert(lu.isNonsingular() > 0);
-    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-
-    // extract the control points
-    for (int i = 0; i < bspline.n + 1; i++) {
-	ON_2dPoint& p = bspline.controls.AppendNew();
-	p.x = bigP[i][0];
-	p.y = bigP[i][1];
-    }
-}
-
-
 ON_NurbsCurve*
 newNURBSCurve(BSpline& spline, int dimension = 3)
 {
@@ -2137,30 +2051,26 @@ interpolateCurve(ON_2dPointArray &samples)
 	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
 
-#ifdef DEBUG_USE_BEZIER_CURVE_INTERPOLATION
-    ON_NurbsCurve nurbcurve;
-    ON_BezierCurve *bezier = new ON_BezierCurve(samples);
-    if (bezier->GetNurbForm(nurbcurve)) {
-	return ON_NurbsCurve::New(*bezier);
-    }
-    // build a NURBS curve, then see if it can be simplified!
-    BSpline spline;
-    spline.p = 3;
-    spline.n = samples.Count() - 1;
-    spline.m = spline.n + spline.p + 1;
-    generateKnots(spline);
-    generateParameters(spline);
-    generateControlPoints(spline, samples);
-
-    nurbs = newNURBSCurve(spline);
-#else
     // local vs. global interpolation for large point sampled curves
     nurbs = interpolateLocalCubicCurve(samples);
-#endif
 
     return nurbs;
 }
 
+
+int
+IsAtSeam(const ON_Surface *surf, int dir, double u, double v, double tol)
+{
+    int rc = 0;
+    if (!surf->IsClosed(dir))
+	return rc;
+
+    double p = (dir) ? v : u;
+    if (NEAR_EQUAL(p, surf->Domain(dir)[0], tol) || NEAR_EQUAL(p, surf->Domain(dir)[1], tol))
+	rc += (dir + 1);
+
+    return rc;
+}
 
 /*
  *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
@@ -2173,16 +2083,21 @@ IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
     int rc = 0;
     int i;
     for (i = 0; i < 2; i++) {
-	if (!surf->IsClosed(i))
-	    continue;
-	double p = (i) ? v : u;
-	if (NEAR_EQUAL(p, surf->Domain(i)[0], tol) || NEAR_EQUAL(p, surf->Domain(i)[1], tol))
-	    rc += (i + 1);
+	rc += IsAtSeam(surf, i, u, v, tol);
     }
 
     return rc;
 }
 
+int
+IsAtSeam(const ON_Surface *surf, int dir, const ON_2dPoint &pt, double tol)
+{
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    rc = IsAtSeam(surf,dir,unwrapped_pt.x,unwrapped_pt.y,tol);
+
+    return rc;
+}
 
 /*
  *  Similar to IsAtSeam(surf,u,v,tol) function but takes a ON_2dPoint
@@ -2200,156 +2115,38 @@ IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 
 
 int
-IsAtSingularity(const ON_Surface *surf, double u, double v)
+IsAtSingularity(const ON_Surface *surf, double u, double v, double tol)
 {
     // 0 = south, 1 = east, 2 = north, 3 = west
     //std::cerr << "IsAtSingularity = u, v - " << u << ", " << v << std::endl;
     //std::cerr << "surf->Domain(0) - " << surf->Domain(0)[0] << ", " << surf->Domain(0)[1] << std::endl;
     //std::cerr << "surf->Domain(1) - " << surf->Domain(1)[0] << ", " << surf->Domain(1)[1] << std::endl;
-    if (NEAR_EQUAL(u, surf->Domain(0)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(u, surf->Domain(0)[0], tol)) {
 	if (surf->IsSingular(3))
 	    return 3;
-    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], tol)) {
 	if (surf->IsSingular(1))
 	    return 1;
     }
-    if (NEAR_EQUAL(v, surf->Domain(1)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(v, surf->Domain(1)[0], tol)) {
 	if (surf->IsSingular(0))
 	    return 0;
-    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], tol)) {
 	if (surf->IsSingular(2))
 	    return 2;
     }
     return -1;
 }
 
-
-ON_Curve*
-test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double UNUSED(tolerance),
-		     double UNUSED(flatness))
+int
+IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
-    ON_NurbsCurve* orig = curve->NurbsCurve();
-    bool isRational = false;
-    // we now have everything to complete our spline
-    ON_NurbsCurve* c = ON_NurbsCurve::New(curve->Dimension(),
-					  isRational,
-					  orig->Degree() + 1,
-					  orig->m_cv_count + 1);
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    rc = IsAtSingularity(surf,unwrapped_pt.x,unwrapped_pt.y,tol);
 
-    int numKnots = orig->Degree() + orig->m_cv_count - 1;
-    c->ReserveKnotCapacity(numKnots);
-    double *span = new double[numKnots];
-    if (orig->GetSpanVector(span)) {
-	for (int i = 0; i < numKnots; i++) {
-	    c->SetKnot(i, span[i]);
-	}
-    }
-
-    ON_2dPoint uv;
-    for (int i = 0; i < orig->m_cv_count; i++) {
-	ON_3dPoint p;
-	if (orig->GetCV(i, p)) {
-	    if (surfacetree->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)p) > 0) {
-		c->SetCV(i, p);
-	    }
-	}
-    }
-
-    return c;
+    return rc;
 }
-
-
-ON_Curve*
-test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance,
-		     double flatness)
-{
-    PBCData data;
-    data.tolerance = tolerance;
-    data.flatness = flatness;
-    data.curve = curve;
-    data.surftree = (brlcad::SurfaceTree*)surfacetree;
-    ON_2dPointArray *samples = new ON_2dPointArray();
-
-    data.segments.push_back(samples);
-
-    // Step 1 - adaptively sample the curve
-    double tmin, tmax;
-    data.curve->GetDomain(&tmin, &tmax);
-    int numKnots = curve->SpanCount();
-    double *knots = new double[numKnots + 1];
-    curve->GetSpanVector(knots);
-
-    int samplesperknotinterval;
-    int degree = curve->Degree();
-
-    if (degree > 1) {
-	samplesperknotinterval = 3 * degree;
-    } else {
-	samplesperknotinterval = 18 * degree;
-    }
-    ON_2dPoint pt;
-    for (int i = 0; i <= numKnots; i++) {
-	if (i <= numKnots / 2) {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(data, pt, knots[i - 1] + j * delta, PBC_TOL)) {
-			samples->Append(pt);
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-		    }
-		}
-	    }
-	    if (toUV(data, pt, knots[i], PBC_TOL)) {
-		samples->Append(pt);
-	    } else {
-		//std::cout << "didn't find point on surface" << std::endl;
-	    }
-	} else {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(data, pt, knots[i - 1] + j * delta, -PBC_TOL)) {
-			samples->Append(pt);
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-		    }
-		}
-		if (toUV(data, pt, knots[i], -PBC_TOL)) {
-		    samples->Append(pt);
-		} else {
-		    //std::cout << "didn't find point on surface" << std::endl;
-		}
-	    }
-	}
-    }
-    delete [] knots;
-
-    std::cerr << std::endl << "samples:" << std::endl;
-    for (int i = 0; i < samples->Count(); i++) {
-	std::cerr << i << "- " << (*samples)[i].x << ", " << (*samples)[i].y << std::endl;
-    }
-
-    /*
-      if (!data.surftree)
-      return NULL;
-      ON_Surface *surf = (ON_Surface *)data.surftree->getSurface();
-      if (!surf)
-      return NULL;
-      ON_3dPoint p;
-      for (int i = 0; i < data.samples.Count(); i++) {
-      p=surf->PointAt(data.samples[i].x, data.samples[i].y);
-      std::cerr << data.samples[i].x << ", " << data.samples[i].y;
-      std::cerr << " --> "<< p.x << ", " << p.y << ", " << p.z << std::endl;
-      }
-    */
-    return interpolateCurve(*samples);
-}
-
 
 ON_2dPointArray *
 pullback_samples(PBCData* data,
@@ -2734,7 +2531,7 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double offset,double 
 		    SwapUVSeamPoint(surf, from);
 		} else { // crosses the seam somewhere in between the two points
 		    bool seem_not_found = true;
-		    while(seem_not_found) {
+		    while (seem_not_found) {
 			double d0 = DistToNearestClosedSeam(surf,p0);
 			double d1 = DistToNearestClosedSeam(surf,p1);
 			if ((d0 > 0.0) && (d1 > 0.0)) {
@@ -2853,7 +2650,7 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 		SwapUVSeamPoint(surf, from);
 	    } else { // crosses the seam somewhere in between the two points
 		bool seem_not_found = true;
-		while(seem_not_found) {
+		while (seem_not_found) {
 		    double d0 = DistToNearestClosedSeam(surf,p0);
 		    double d1 = DistToNearestClosedSeam(surf,p1);
 		    if ((d0 > tol) && (d1 > tol)) {
@@ -2938,7 +2735,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;
-	double prev_t;
+	double prev_t = knots[istart];
 	double offset = 0.0;
 	double delta;
 	for (size_t i=istart; i<istop; i++) {
@@ -3068,7 +2865,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;
-	double prev_t;
+	double prev_t = knots[istart];
 	double offset = 0.0;
 	double delta;
 	for (size_t i=istart; i<istop; i++) {
@@ -3172,112 +2969,61 @@ pullback_samples_from_closed_surface(PBCData* data,
 
 
 PBCData *
-pullback_samples(const brlcad::SurfaceTree* surfacetree,
-		 const ON_Surface* surf,
+pullback_samples(const ON_Surface* surf,
 		 const ON_Curve* curve,
 		 double tolerance,
 		 double flatness)
 {
-    if (surfacetree) {
-	if (!surf)
-	    return NULL;
+    if (!surf)
+	return NULL;
 
-	PBCData *data = new PBCData;
-	data->tolerance = tolerance;
-	data->flatness = flatness;
-	data->curve = curve;
-	data->surf = surf;
-	data->surftree = (brlcad::SurfaceTree*)surfacetree;
+    PBCData *data = new PBCData;
+    data->tolerance = tolerance;
+    data->flatness = flatness;
+    data->curve = curve;
+    data->surf = surf;
+    data->surftree = NULL;
 
-	double tmin, tmax;
-	data->curve->GetDomain(&tmin, &tmax);
+    double tmin, tmax;
+    data->curve->GetDomain(&tmin, &tmax);
 
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    if ((tmin < 0.0) && (tmax > 0.0)) {
-		ON_2dPoint uv;
-		if (toUV(*data, uv, 0.0, PBC_TOL)) {
-		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
-			if (samples1 != NULL) {
-			    data->segments.push_back(samples1);
-			}
-			if (samples2 != NULL) {
-			    data->segments.push_back(samples2);
-			}
-		    } else {
-			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-			if (samples != NULL) {
-			    data->segments.push_back(samples);
-			}
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	if ((tmin < 0.0) && (tmax > 0.0)) {
+	    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+	    ON_3dPoint p = curve->PointAt(0.0);
+	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,quadrant,BREP_EDGE_MISS_TOLERANCE)) {
+		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
+		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
+		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+		    if (samples1 != NULL) {
+			data->segments.push_back(samples1);
+		    }
+		    if (samples2 != NULL) {
+			data->segments.push_back(samples2);
 		    }
 		} else {
-		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		    delete data;
-		    return NULL;
+		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+		    if (samples != NULL) {
+			data->segments.push_back(samples);
+		    }
 		}
 	    } else {
-		pullback_samples_from_closed_surface(data, tmin, tmax);
+		std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
+		delete data;
+		return NULL;
 	    }
 	} else {
-	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-	    if (samples != NULL) {
-		data->segments.push_back(samples);
-	    }
+	    pullback_samples_from_closed_surface(data, tmin, tmax);
 	}
-	return data;
     } else {
-	if (!surf)
-	    return NULL;
-
-	PBCData *data = new PBCData;
-	data->tolerance = tolerance;
-	data->flatness = flatness;
-	data->curve = curve;
-	data->surf = surf;
-	data->surftree = NULL;
-
-	double tmin, tmax;
-	data->curve->GetDomain(&tmin, &tmax);
-
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    if ((tmin < 0.0) && (tmax > 0.0)) {
-		ON_2dPoint uv = ON_2dPoint::UnsetPoint;
-		ON_3dPoint p = curve->PointAt(0.0);
-		ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-		int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-		if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,quadrant,BREP_EDGE_MISS_TOLERANCE)) {
-		    if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-			ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-			ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
-			if (samples1 != NULL) {
-			    data->segments.push_back(samples1);
-			}
-			if (samples2 != NULL) {
-			    data->segments.push_back(samples2);
-			}
-		    } else {
-			ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-			if (samples != NULL) {
-			    data->segments.push_back(samples);
-			}
-		    }
-		} else {
-		    std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
-		    delete data;
-		    return NULL;
-		}
-	    } else {
-		pullback_samples_from_closed_surface(data, tmin, tmax);
-	    }
-	} else {
-	    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
-	    if (samples != NULL) {
-		data->segments.push_back(samples);
-	    }
+	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	if (samples != NULL) {
+	    data->segments.push_back(samples);
 	}
-	return data;
     }
+    return data;
 }
 
 
@@ -4055,13 +3801,13 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs = pbcs.begin();
     ON_2dPoint *prev_pt = NULL;
     int prev_seam = 0;
-    while( cs != pbcs.end()) {
+    while ( cs != pbcs.end()) {
 	PBCData *data = (*cs);
 	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 	while (seg != data->segments.end()) {
 	    ON_2dPointArray *points = (*seg);
-	    for(int i=0; i < points->Count(); i++) {
+	    for (int i=0; i < points->Count(); i++) {
 		ON_2dPoint *pt = points->At(i);
 		int seam = IsAtSeam(surf,*pt,PBC_TOL);
 		if (seam > 0) {
@@ -4102,12 +3848,12 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
     std::map<const ON_Curve *,int> map;
     std::list<PBCData*>::iterator cs = pbcs.begin();
 
-    while( cs != pbcs.end()) {
+    while ( cs != pbcs.end()) {
 	PBCData *data = (*cs++);
 	const ON_Curve *curve = data->curve;
 	const ON_Surface *surf = data->surf;
 
-	if(cs != pbcs.end()) {
+	if (cs != pbcs.end()) {
 	    PBCData *nextdata = (*cs);
 	    next_curve = nextdata->curve;
 	}
@@ -4120,7 +3866,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 		while (seg != data->segments.end()) {
 		    ON_2dPointArray *points = (*seg);
-		    for(int i=0; i < points->Count(); i++) {
+		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->x = points->At(i)->x + length;
 		    }
 		    seg++;
@@ -4130,7 +3876,7 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
 		while (seg != data->segments.end()) {
 		    ON_2dPointArray *points = (*seg);
-		    for(int i=0; i < points->Count(); i++) {
+		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->y = points->At(i)->y + length;
 		    }
 		    seg++;

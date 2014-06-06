@@ -116,9 +116,9 @@ main(int argc, char *argv[])
 	function_num = 0;
 
     switch (function_num) {
-        case 1:
+	case 1:
 	    return test_bn_isect_line_lseg(argc, argv);
-        case 2:
+	case 2:
 	    return test_bn_isect_lseg3_lseg3(argc, argv);
     }
     return 1;

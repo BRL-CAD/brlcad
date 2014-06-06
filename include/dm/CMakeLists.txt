@@ -12,7 +12,6 @@ set(dm_headers
   dm-rtgl.h
   dm-tk.h
   dm-wgl.h
-  dm_color.h
   dm_xvars.h
   )
 

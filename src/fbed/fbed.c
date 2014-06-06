@@ -34,7 +34,7 @@
 #include "fb.h"
 
 /* FIXME */
-#include "../vfont/vfont.h"
+#include "../libbu/vfont.h"
 
 #include "./std.h"
 #include "./ascii.h"
@@ -65,7 +65,7 @@ struct pointstack {
     PtStack *next;
 };
 
-struct vfont font;
+struct vfont_file font;
 
 int
 AproxEqColor(unsigned int a, unsigned int b, long t)
@@ -359,7 +359,7 @@ main(int argc, char **argv)
     {
 	static char default_macro_file[MAX_LN];
 	char *home;
-	if((home = getenv("HOME")) != NULL) {
+	if ((home = getenv("HOME")) != NULL) {
 	    snprintf(default_macro_file, MAX_LN, "%s/.fbed_macros", home);
 	} else {
 	    bu_strlcpy(default_macro_file, ".fbed_macros", sizeof(default_macro_file));

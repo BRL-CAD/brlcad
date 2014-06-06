@@ -140,7 +140,7 @@ main(int argc, char *argv[])
     make_face(si, a, b, c, d, 2);
 
     /* wdb_export */
-    mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
+    mk_export_fwrite(fp, "spltest", (void *)si, ID_BSPLINE);
     bu_log("Saving file %s\n",filename);
 
     return 0;

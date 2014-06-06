@@ -114,7 +114,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 {
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
-    genptr_t addp;
+    void *addp;
     int part_count = 0;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
@@ -138,7 +138,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	BU_ALLOC(dp, struct datapoint);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	addp = reg->reg_udata;
-	reg->reg_udata = (genptr_t)dp;
+	reg->reg_udata = (void *)dp;
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -220,7 +220,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    outfp = fopen(outputfile, "w");
     }
 
-    /* initialize all possibile material types to a negative value.
+    /* initialize all possible material types to a negative value.
      * (Do this even for density[0], which is used for material types
      * for which we have no density information.)
      */
@@ -305,7 +305,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     register struct rt_i *rtip = ap->a_rt_i;
 
     for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-	rp->reg_udata = (genptr_t)NULL;
+	rp->reg_udata = (void *)NULL;
     }
 }
 
@@ -456,7 +456,7 @@ view_end(struct application *ap)
 	    *ptr = weight;
 	    /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
 	    /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
-	    rp->reg_udata = (genptr_t)ptr;
+	    rp->reg_udata = (void *)ptr;
 	}
 
 	/* make room for a zero ID number and an "end ID " so we can

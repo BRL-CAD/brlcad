@@ -148,7 +148,7 @@ processChar(char ch)
     static int bracketed = 0;
     static int freshline = 1;
 
-    if(ch == '\0')
+    if (ch == '\0')
 	return;
 
     /* ANSI arrow keys */

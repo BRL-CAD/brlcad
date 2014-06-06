@@ -96,7 +96,7 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-	if (!EQUAL(a[i],b[i]))
+	if (!EQUAL(a[i], b[i]))
 	    return -1;
     }
 
@@ -116,7 +116,7 @@ test_bn_poly_add(void)
     bn_poly_add(&b, &input[1], &input[1]);
     bn_poly_add(&c, &input[2], &input[2]);
 
-    val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
+    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
     val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 

@@ -86,6 +86,7 @@ poly_init(void)
     return;
 }
 
+
 /* compares the values of the array and returns 0. */
 int
 check_results(fastf_t a[], fastf_t b[], int n)
@@ -93,7 +94,7 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-	if (!EQUAL(a[i],b[i]))
+	if (!EQUAL(a[i], b[i]))
 	    return -1;
     }
 
@@ -113,7 +114,7 @@ test_bn_poly_sub(void)
     bn_poly_sub(&b, &input[1], &input[0]);
     bn_poly_sub(&c, &input[2], &input[1]);
 
-    val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
+    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
     val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 

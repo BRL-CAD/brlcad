@@ -570,7 +570,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
 
-    if(node_gd == NULL) {
+    if (node_gd == NULL) {
 	bu_log("null geom, aborting\n");
 	return;
     }
@@ -652,8 +652,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	/* Resize Tri List to actual amount of memory used */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
-	if( child[n]->tri_num == 0 ) {
-	    if( child[n]->tri_list ) {
+	if ( child[n]->tri_num == 0 ) {
+	    if ( child[n]->tri_list ) {
 		bu_free( child[n]->tri_list, "tri_list");
 		child[n]->tri_list = NULL;
 	    }

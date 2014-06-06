@@ -1496,7 +1496,7 @@ else
     $ECHO
     blankit=no
 
-    # BSD
+    # BSD+
     look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/sysctl/g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
@@ -1558,6 +1558,19 @@ else
 	QUIET=1
 	$ECHO "==============================================================================="
 	$ECHO "`cat $CPUINFO_FILE 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Linux+
+    look_for executable "an lscpu command" LSCPU_CMD `echo $PATH | tr ":" "\n" | sed 's/$/\/lscpu/g'`
+    if test ! "x$LSCPU_CMD" = "x" ; then
+	$ECHO "Collecting system CPU information (via $LSCPU_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$LSCPU_CMD 2>&1`"
 	$ECHO
 	QUIET="$preQUIET"
 	blankit=yes

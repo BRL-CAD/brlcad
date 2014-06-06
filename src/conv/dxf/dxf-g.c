@@ -3049,7 +3049,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 	    eu1 = NULL;
 	    for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 		struct line_seg * lseg;
-		if(eu == eu1) {
+		if (eu == eu1) {
 		    continue;
 		} else {
 		    eu1 = eu->eumate_p;
@@ -3060,7 +3060,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 		lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
 		lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
-		if(verbose) {
+		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
 			   lseg->end, V3ARGS(&vr->the_array[lseg->end]));
@@ -3076,16 +3076,16 @@ nmg_wire_edges_to_sketch(struct model *m)
     }
     skt->vert_count = vr->curr_vert;
     skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof(point2d_t), "skt->verts");
-    for(idx = 0 ; idx < vr->curr_vert ; idx++) {
+    for (idx = 0 ; idx < vr->curr_vert ; idx++) {
 	skt->verts[idx][0] = vr->the_array[idx*3];
 	skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
     skt->curve.count = BU_PTBL_LEN(&segs);
     skt->curve.reverse = (int *)bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
     memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
-    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (genptr_t), "curve segments");
+    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (void *), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
-	genptr_t ptr = BU_PTBL_GET(&segs, idx);
+	void *ptr = BU_PTBL_GET(&segs, idx);
 	skt->curve.segment[idx] = ptr;
     }
 
@@ -3328,7 +3328,7 @@ main(int argc, char *argv[])
 
 	    sprintf(name, "sketch.%d", i);
 	    skt = nmg_wire_edges_to_sketch(layers[i]->m);
-	    if(skt != NULL) {
+	    if (skt != NULL) {
 		mk_sketch(out_fp, name, skt);
 		(void) mk_addmember(name, &head, NULL, WMOP_UNION);
 		rt_curve_free(&skt->curve);

@@ -462,14 +462,27 @@ extern int _ged_do_tra(struct ged *gedp,
 		       vect_t tvec,
 		       int (*func)());
 
+/* Internal implementation of ged_results - since the
+ * details of the struct are not for public access,
+ * the real definition of the struct goes here.  The public
+ * header has only the notion of a ged_results structure.*/
+struct ged_results {
+        struct bu_ptbl *results_tbl;
+};
+
 /* defined in ged_util.c */
-extern int _ged_results_append_str(struct ged *gedp,
-				   char *result_string);
 
-extern int _ged_results_append_vls(struct ged *gedp,
-				   struct bu_vls *result_vls);
+/* Called by ged_init */
+extern int _ged_results_init(struct ged_results *results);
 
-extern int _ged_results_clear(struct ged *gedp);
+/* This function adds a copy of result_string into the results container.
+ * To duplicate a VLS string, use bu_vls_addr to wrap the vls before
+ * passing it to _ged_results_add, e.g.:
+ *
+ * _ged_results_add(gedp->ged_results, bu_vls_addr(my_vls_ptr));
+ *
+ */
+extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
 /* defined in track.c */
 extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);

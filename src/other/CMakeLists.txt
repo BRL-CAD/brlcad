@@ -30,7 +30,7 @@
 CLEAR_BUILD_FLAGS()
 
 # Restore CMake's original flags
-RESTORE_CACHED_BUILD_FLAGS()
+RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
@@ -1026,16 +1026,18 @@ SetTargetFolder(libgdiam-static "Third Party Libraries")
 
 # Bullet physics library
 if(BRLCAD_LEVEL2)
-  find_package(Bullet)
-  if(BULLET_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-  endif(BULLET_FOUND)
-  # Let the rest of the package know the results
-  set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
-  set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
-  mark_as_advanced(BULLET_INCLUDE_DIR)
-  mark_as_advanced(BULLET_FOUND)
-  mark_as_advanced(BULLET_LIBRARIES)
+  if (BRLCAD_ENABLE_BULLET)
+    find_package(Bullet)
+    if(BULLET_FOUND)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
+    endif(BULLET_FOUND)
+    # Let the rest of the package know the results
+    set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
+    set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
+    mark_as_advanced(BULLET_INCLUDE_DIR)
+    mark_as_advanced(BULLET_FOUND)
+    mark_as_advanced(BULLET_LIBRARIES)
+  endif (BRLCAD_ENABLE_BULLET)
 endif(BRLCAD_LEVEL2)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
@@ -1070,18 +1072,8 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
-# The jama/tnt headers are installed by default - BRL-CAD requires the
-# altered headers to build (I think?)
-add_subdirectory(tnt)
-set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
-CMAKEFILES(tnt)
-mark_as_advanced(TNT_INCLUDE_DIR)
-
 # Eigen is used for advanced linear algebra functionality It consists
 # entirely of headers and does not need to be installed.
-#
-# TODO - replace jama/tnt with Eigen
-#
 CMAKEFILES(Eigen)
 
 # TCLAP is used for option parsing - consists entirely of headers

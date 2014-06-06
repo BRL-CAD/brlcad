@@ -43,6 +43,7 @@
 
 #include "vmath.h"
 
+#include "bu/cv.h"
 #include "brep.h"
 #include "dvec.h"
 
@@ -84,6 +85,8 @@ extern "C" {
     int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
+    int rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
@@ -407,7 +410,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	BU_ALLOC(bs, struct brep_specific);
 	bs->brep = bi->brep;
 	bi->brep = NULL;
-	stp->st_specific = (genptr_t)bs;
+	stp->st_specific = (void *)bs;
     }
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
@@ -2105,7 +2108,7 @@ getEdgePoints(const ON_BrepTrim &trim,
     fastf_t t = (t1 + t2) / 2.0;
 
     if (trim.EvTangent(t, mid_2d, mid_tang)
-	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
 	ON_Line line3d(start_3d, end_3d);
 	double dist3d;
 
@@ -2219,9 +2222,9 @@ getEdgePoints(ON_BrepTrim &trim,
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(mid_range, mid_2d, mid_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
-		    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		    && surface_EvNormal(s,start_2d.x, start_2d.y, start_3d, start_norm)
+		    && surface_EvNormal(s,end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(
 			s->PointAt(trim.PointAt(range.m_t[0]).x,
 				trim.PointAt(range.m_t[0]).y));
@@ -2252,8 +2255,8 @@ getEdgePoints(ON_BrepTrim &trim,
 
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
-		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		    && surface_EvNormal(s,start_2d.x, start_2d.y, start_3d, start_norm)
+		    && surface_EvNormal(s,end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(start_3d);
 		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
 			start_3d, start_norm, range.m_t[1], end_2d, end_tang,
@@ -2363,11 +2366,11 @@ getSurfacePoints(const ON_Surface *s,
 		on_surf_points.Append(p2d);
 	    }
 	}
-    } else if ((s->EvNormal(u1, v1, p[0], norm[0]))
-	    && (s->EvNormal(u2, v1, p[1], norm[1])) // for u
-	    && (s->EvNormal(u2, v2, p[2], norm[2]))
-	    && (s->EvNormal(u1, v2, p[3], norm[3]))
-	    && (s->EvNormal(u, v, mid, norm_mid))) {
+    } else if ((surface_EvNormal(s,u1, v1, p[0], norm[0]))
+	    && (surface_EvNormal(s,u2, v1, p[1], norm[1])) // for u
+	    && (surface_EvNormal(s,u2, v2, p[2], norm[2]))
+	    && (surface_EvNormal(s,u1, v2, p[3], norm[3]))
+	    && (surface_EvNormal(s,u, v, mid, norm_mid))) {
 	double udot;
 	double vdot;
 	ON_Line line1(p[0], p[2]);
@@ -2716,7 +2719,7 @@ getUVCurveSamples(const ON_Surface *s,
     fastf_t t = (t1 + t2) / 2.0;
 
     if (curve->EvTangent(t, mid_2d, mid_tang)
-	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
 	ON_Line line3d(start_3d, end_3d);
 	double dist3d;
 
@@ -2805,9 +2808,9 @@ getUVCurveSamples(const ON_Surface *surf,
 	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
 		&& curve->EvTangent(mid_range, mid_2d, mid_tang)
 		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
-		&& surf->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		&& surface_EvNormal(surf,mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		&& surface_EvNormal(surf,start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surface_EvNormal(surf,end_2d.x, end_2d.y, end_3d, end_norm)) {
 	    (*param_points)[0.0] = new ON_3dPoint(
 		    surf->PointAt(curve->PointAt(range.m_t[0]).x,
 			    curve->PointAt(range.m_t[0]).y));
@@ -2838,8 +2841,8 @@ getUVCurveSamples(const ON_Surface *surf,
 
 	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
 		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
-		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		&& surface_EvNormal(surf,start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surface_EvNormal(surf,end_2d.x, end_2d.y, end_3d, end_norm)) {
 	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
 	    getUVCurveSamples(surf,curve, range.m_t[0], start_2d, start_tang,
 		    start_3d, start_norm, range.m_t[1], end_2d, end_tang,
@@ -2898,7 +2901,7 @@ int
 is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     int numpoints = brep_loop_points.Count();
-    for(int i=1; i < numpoints-1; i++) {
+    for (int i=1; i < numpoints-1; i++) {
 	int seam = 0;
 	ON_2dPoint p = brep_loop_points[i].p2d;
 	if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
@@ -2937,10 +2940,10 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	int i;
 	BrepTrimPoint btp;
 	int numpoints = brep_loop_points.Count();
-	for(i=0; i < numpoints; i++) {
+	for (i=0; i < numpoints; i++) {
 	    p = brep_loop_points[i].p2d;
 	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
-		while(++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
+		while (++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
 		    ON_2dPoint n = brep_loop_points[i].p2d;
 		    if ((seam=IsAtSeam(surf, n, BREP_SAME_POINT_TOLERANCE)) <= 0) {
 			break;
@@ -2960,12 +2963,12 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	if (entering > 0) {
 	    if (entering == 1) { // crosses in U
 		shifted_points.Append(seam_btp);
-		for(int j=i; j < brep_loop_points.Count(); j++) {
+		for (int j=i; j < brep_loop_points.Count(); j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
 		}
-		for(int j=1; j < i-1; j++) {
+		for (int j=1; j < i-1; j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
@@ -2979,12 +2982,12 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		// heading left and hit left seam do this
 		btp.p2d = p;
 		shifted_points.Append(btp);
-		for(int j=i; j < brep_loop_points.Count(); j++) {
+		for (int j=i; j < brep_loop_points.Count(); j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
 		}
-		for(int j=1; j < i-1; j++) {
+		for (int j=1; j < i-1; j++) {
 		    p = brep_loop_points[j].p2d;
 		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
 		    shifted_points.Append(brep_loop_points[j]);
@@ -3089,7 +3092,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
 		double delta =  trim->Domain().Length() / 10.0;
-		for(int i=1; i<=10; i++) {
+		for (int i=1; i<=10; i++) {
 		    btp.p3d = p3d;
 		    btp.p2d = v1.Point();
 		    btp.t = trim->Domain().m_t[0] + (i-1)*delta;
@@ -3152,7 +3155,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	for (int li = 0; li < loop_cnt; li++) {
 	    int num_loop_points = brep_loop_points[li].Count();
 	    if (num_loop_points > 1) {
-		for(int i = 0; i < num_loop_points; i++) {
+		for (int i = 0; i < num_loop_points; i++) {
 		    ON_2dPoint &p = brep_loop_points[li][i].p2d;
 		    if (IsAtSeam(s,p,BREP_SAME_POINT_TOLERANCE)) {
 			ForceToClosestSeam(s,p,BREP_SAME_POINT_TOLERANCE);
@@ -3256,13 +3259,13 @@ poly2tri_CDT(struct bu_list *vhead,
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
 	if (num_loop_points > 2) {
-	    for(int i = 1; i < num_loop_points; i++) {
+	    for (int i = 1; i < num_loop_points; i++) {
 		// map point to last entry to 3d point
 		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		polyline.push_back(p);
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
 	    }
-	    for(int i = 1; i < brep_loop_points[li].Count(); i++) {
+	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
 		// map point to last entry to 3d point
 		ON_Line *line = new ON_Line((brep_loop_points[li])[i-1].p2d, (brep_loop_points[li])[i].p2d);
 		ON_BoundingBox bb = line->BoundingBox();
@@ -3353,7 +3356,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
-		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+		    if (surface_EvNormal(s,p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
 			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
 				    pointmap->find(p);
@@ -3388,7 +3391,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
-		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+		    if (surface_EvNormal(s,p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
 			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
 				    pointmap->find(p);
@@ -3883,7 +3886,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		if (edge.m_edge_user.p != NULL) {
 		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)edge.m_edge_user.p;
 		    std::map<double,ON_3dPoint *>::iterator i;
-		    for(i=points->begin(); i != points->end(); i++) {
+		    for (i=points->begin(); i != points->end(); i++) {
 			ON_3dPoint *p = (*i).second;
 			delete p;
 		    }
@@ -3898,7 +3901,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		if (trim.m_trim_user.p != NULL) {
 		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)trim.m_trim_user.p;
 		    std::map<double,ON_3dPoint *>::iterator i;
-		    for(i=points->begin(); i != points->end(); i++) {
+		    for (i=points->begin(); i != points->end(); i++) {
 			ON_3dPoint *p = (*i).second;
 			delete p;
 		    }
@@ -3940,7 +3943,7 @@ class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
     RT_MemoryArchive();
-    RT_MemoryArchive(genptr_t memory, size_t len);
+    RT_MemoryArchive(void *memory, size_t len);
     virtual ~RT_MemoryArchive();
 
     // ON_BinaryArchive overrides
@@ -3973,7 +3976,7 @@ RT_MemoryArchive::RT_MemoryArchive()
 }
 
 
-RT_MemoryArchive::RT_MemoryArchive(genptr_t memory, size_t len)
+RT_MemoryArchive::RT_MemoryArchive(void *memory, size_t len)
     : ON_BinaryArchive(ON::read3dm), pos(0)
 {
     m_buffer.reserve(len);
@@ -4073,6 +4076,67 @@ RT_MemoryArchive::Flush()
     return true;
 }
 
+int
+rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+{
+    struct rt_brep_internal *bi=(struct rt_brep_internal *)intern->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    if (attr == (char *)NULL) {
+	bu_vls_sprintf(logstr, "brep");
+	/* Create the serialized version for encoding */
+	RT_MemoryArchive archive;
+	ONX_Model model;
+	{
+	    ON_Layer default_layer;
+	    default_layer.SetLayerIndex(0);
+	    default_layer.SetLayerName("Default");
+	    model.m_layer_table.Reserve(1);
+	    model.m_layer_table.Append(default_layer);
+	}
+	ONX_Model_Object& mo = model.m_object_table.AppendNew();
+	mo.m_object = bi->brep;
+	mo.m_attributes.m_layer_index = 0;
+	mo.m_attributes.m_name = "brep";
+	mo.m_attributes.m_uuid = ON_opennurbs4_id;
+	model.m_properties.m_RevisionHistory.NewRevision();
+	model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
+	model.Polish();
+	ON_TextLog err(stderr);
+	bool ok = model.Write(archive, 4, "export5", &err);
+	if (ok) {
+	    void *archive_cp = archive.CreateCopy();
+	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
+	    bu_vls_printf(logstr, " \"%s\"", brep64);
+	    bu_free(archive_cp, "free archive copy");
+	    bu_free(brep64, "free encoded brep string");
+	    return 0;
+	}
+    }
+    return -1;
+}
+
+int
+rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv)
+{
+    struct rt_brep_internal *bi=(struct rt_brep_internal *)intern->idb_ptr;
+    char *decoded;
+    ONX_Model model;
+    if (argc == 1 && argv[0]) {
+	int decoded_size = bu_b64_decode(&decoded, argv[0]);
+	RT_MemoryArchive archive(decoded, decoded_size);
+	ON_wString wonstr;
+	ON_TextLog dump(wonstr);
+
+	RT_BREP_CK_MAGIC(bi);
+	model.Read(archive, &dump);
+	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
+	ONX_Model_Object mo = model.m_object_table[0];
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+	return 0;
+    }
+    return -1;
+}
 
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
@@ -4178,7 +4242,7 @@ rt_brep_ifree(struct rt_db_internal *ip)
     if (bi->brep != NULL)
 	delete bi->brep;
     bu_free(bi, "rt_brep_internal free");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -4276,7 +4340,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     bip_out->magic = RT_BREP_INTERNAL_MAGIC;
     bip_out->brep = brep_out;
     RT_DB_INTERNAL_INIT(out);
-    out->idb_ptr = (genptr_t)bip_out;
+    out->idb_ptr = (void *)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;

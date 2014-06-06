@@ -117,7 +117,7 @@
 
 
 int
-bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
+bu_struct_export(struct bu_external *ext, const void *base, const struct bu_structparse *imp)
 {
     register char *cp;			/* current position in buffer */
     char *ep;				/* &ext->ext_buf[ext->ext_nbytes] */
@@ -128,7 +128,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
     BU_EXTERNAL_INIT(ext);
 
-    if (UNLIKELY(base == GENPTR_NULL || !ext))
+    if (UNLIKELY(base == ((void *)0) || !ext))
 	return 0;
 
     ext->ext_nbytes = 480;
@@ -166,7 +166,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Variable-precision "fastf_t" floating point */
 		len = ip->sp_count * sizeof(fastf_t);
 		CKMEM(len);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
 			bu_cv_htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
@@ -292,7 +292,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 
 int
-bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct bu_external *ext)
+bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_external *ext)
 {
     register const unsigned char *cp;	/* current position in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
@@ -301,7 +301,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     size_t bytes_used;
     register size_t i;
 
-    if (UNLIKELY(base == GENPTR_NULL || !ext))
+    if (UNLIKELY(base == ((void *)0) || !ext))
 	return -1;
 
     PARSE_CK_GETPUT(ext);
@@ -335,7 +335,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'f':
 		/* Variable-precision fastf_t floating point */
 		len = ip->sp_count * sizeof(fastf_t);
-		switch(sizeof(fastf_t)) {
+		switch (sizeof(fastf_t)) {
 		    case sizeof(float):
 			bu_cv_ntohf((unsigned char *)loc, cp, ip->sp_count);
 			break;
@@ -539,11 +539,11 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 
 
 void
-bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
+bu_struct_wrap_buf(struct bu_external *ext, void *buf)
 {
     register long i, len;
 
-    if (UNLIKELY(!ext || buf == GENPTR_NULL))
+    if (UNLIKELY(!ext || buf == ((void *)0)))
 	return;
 
     BU_EXTERNAL_INIT(ext);

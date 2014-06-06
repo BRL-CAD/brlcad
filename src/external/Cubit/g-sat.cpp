@@ -94,9 +94,9 @@ int get_body_id( string body_name );
 
 void usage( char* s);
 int parse_args( int ac, char *av[]);
-int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, genptr_t client_data );
-tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, genptr_t client_data );
-tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, genptr_t client_data);
+int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, void *client_data );
+tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data );
+tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
 void describe_tree( tree *tree,  bu_vls *str);
 void output_triangles( nmgregion *r, model *m, shell *s);
 bool make_bot( nmgregion *r, model *m, shell *s);
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 	}
 
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
+		     &init_state ,region_start, region_end, primitive_func, (void *) &user_data);
     }
 
     // *************************************************************************************
@@ -409,7 +409,7 @@ int
 region_start ( db_tree_state *tsp,
 	       db_full_path *pathp,
 	       const  rt_comb_internal *combp,
-	       genptr_t client_data )
+	       void *client_data )
 {
     rt_comb_internal *comb;
     directory *dp;
@@ -464,7 +464,7 @@ tree *
 region_end ( db_tree_state *tsp,
 	     db_full_path *pathp,
 	     tree *curtree,
-	     genptr_t client_data )
+	     void *client_data )
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -493,7 +493,7 @@ describe_tree(  tree *tree,
 
     BU_CK_VLS(str);
 
-    if( !tree )
+    if ( !tree )
     {
 	/* this tree has no members */
 	bu_vls_strcat( str, "{empty}" );
@@ -507,7 +507,7 @@ describe_tree(  tree *tree,
      * the first four are the most common types, and are typically
      * the only ones found in a BRL-CAD database.
      */
-    switch( tree->tr_op )
+    switch ( tree->tr_op )
     {
 	case OP_DB_LEAF:	/* leaf node, this is a member */
 	    /* Note: tree->tr_l.tl_mat is a pointer to a
@@ -565,7 +565,7 @@ tree *
 primitive_func( db_tree_state *tsp,
 		db_full_path *pathp,
 		rt_db_internal *ip,
-		genptr_t client_data)
+		void *client_data)
 {
     const double NEARZERO = 0.0001;
 
@@ -588,8 +588,8 @@ primitive_func( db_tree_state *tsp,
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
-    if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-	switch( ip->idb_minor_type )
+    if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+	switch ( ip->idb_minor_type )
 	{
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
@@ -812,7 +812,7 @@ primitive_func( db_tree_state *tsp,
 
 		if (debug&DEBUG_NAMES) {
 		    printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-		    for( i=0 ; i<8 ; i++ ) {
+		    for ( i=0 ; i<8 ; i++ ) {
 			printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
 		    }
 		}
@@ -1064,7 +1064,7 @@ primitive_func( db_tree_state *tsp,
 	}
     }
     else {
-	switch( ip->idb_major_type ) {
+	switch ( ip->idb_major_type ) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
 	    {
 		/* not actually a primitive, just a block of storage for data
@@ -1093,34 +1093,34 @@ output_triangles( nmgregion *r,
 {
     vertex *v;
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
 		printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
@@ -1157,34 +1157,34 @@ make_bot( nmgregion *r,
     VSETALL( bot_min, INFINITY );
     VSETALL( bot_max, -INFINITY );
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
 		// printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
@@ -1287,7 +1287,7 @@ booltree_evaluate( tree *tp, resource *resp )
 
     RT_CK_TREE(tp);
 
-    switch(tp->tr_op) {
+    switch (tp->tr_op) {
 	case OP_NOP:
 	    return 0;
 	case OP_DB_LEAF:
@@ -1316,7 +1316,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tl == 0 || !tl->tr_d.td_r) {
 	if (tr == 0 || !tr->tr_d.td_r)
 	    return 0;
-	if( op == ADD )
+	if ( op == ADD )
 	    return tr;
 	/* For sub and intersect, if lhs is 0, result is null */
 	//db_free_tree(tr);
@@ -1327,7 +1327,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tr == 0 || !tr->tr_d.td_r) {
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
-	if( op == ISECT )  {
+	if ( op == ISECT )  {
 	    db_free_tree(tl, resp);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
@@ -1336,8 +1336,8 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if ( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if ( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;

@@ -14,6 +14,7 @@ set(LIBBU_SOURCES
   affinity.c
   argv.c
   avs.c
+  b64.c
   backtrace.c
   badmagic.c
   basename.c
@@ -31,6 +32,7 @@ set(LIBBU_SOURCES
   dirname.c
   date-time.c
   dlfcn.c
+  encode.c
   endian.c
   escape.c
   fchmod.c
@@ -64,7 +66,6 @@ set(LIBBU_SOURCES
   process.c
   progname.c
   ptbl.c
-  quote.c
   rb_create.c
   rb_delete.c
   rb_diag.c
@@ -103,6 +104,9 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
+BRLCAD_ADDDATA(fix.6r vfont)
+BRLCAD_ADDDATA(nonie.r.12 vfont)
+
 add_subdirectory(tests)
 
 set(bu_ignore_files
@@ -110,6 +114,7 @@ set(bu_ignore_files
   parallel.h
   rb_internals.h
   uce-dirent.h
+  vfont.h
   vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})

@@ -2569,7 +2569,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	if (region_count == 0)
 	    return 0;
 	else if (region_count == 1)
-	    return(nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
+	    return (nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
 				     dependent, fp_dir, fp_param));
 	else {
 	    /* make a boolean tree unioning all the regions */

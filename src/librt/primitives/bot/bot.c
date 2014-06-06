@@ -1570,7 +1570,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	    botop->face_normals = (int *)bu_calloc(botop->num_faces * 3, sizeof(int), "BOT face normals");
 	    memcpy(botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof(int));
 	}
-	op->idb_ptr = (genptr_t)botop;
+	op->idb_ptr = (void *)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_BOT;
 	op->idb_meth = &OBJ[ID_BOT];
@@ -4488,7 +4488,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	ap.a_rt_i = rtip;
 	ap.a_hit = bot_smooth_hit;
 	ap.a_miss = bot_smooth_miss;
-	ap.a_uptr = (genptr_t)normals;
+	ap.a_uptr = (void *)normals;
 	if (rt_gettree(rtip, bot_name)) {
 	    bu_log("rt_gettree failed for %s\n", bot_name);
 	    return -1;
@@ -4766,7 +4766,7 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 	    tep = stack[si--];
     }
 
-    bu_free((genptr_t)stack, "rt_bot_sync_func: stack");
+    bu_free((void *)stack, "rt_bot_sync_func: stack");
 }
 
 
@@ -4820,7 +4820,7 @@ rt_bot_sync(struct rt_bot_internal *bot)
 	BU_LIST_DEQUEUE(&tep->l);
     }
 
-    bu_free((genptr_t)alltep, "rt_bot_sync: alltep");
+    bu_free((void *)alltep, "rt_bot_sync: alltep");
 
     return 0;
 }
@@ -4875,7 +4875,7 @@ rt_bot_split_func(struct rt_bot_internal *bot,
 	    tpp = stack[si--];
     }
 
-    bu_free((genptr_t)stack, "rt_bot_split_func: stack");
+    bu_free((void *)stack, "rt_bot_split_func: stack");
 }
 
 
@@ -5020,7 +5020,7 @@ rt_bot_split(struct rt_bot_internal *bot)
 	}
     }
 
-    bu_free((genptr_t)alltpp, "rt_bot_split: alltpp");
+    bu_free((void *)alltpp, "rt_bot_split: alltpp");
 
     return headRblp;
 }
@@ -5092,7 +5092,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 	results[4] = VDOT(from_zplus, norm_dir);
 	results[5] = VDOT(from_zminus, norm_dir);
 
-	for(j = 0; j < 6; j++) {
+	for (j = 0; j < 6; j++) {
 	    if (results[j] > tmp) {
 		result_max = j;
 		tmp = results[j];
@@ -5183,7 +5183,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 	BU_LIST_DEQUEUE(&tpp->l);
     }
 
-    bu_free((genptr_t)alltpp, "rt_bot_patches: alltpp");
+    bu_free((void *)alltpp, "rt_bot_patches: alltpp");
 
     return headRblp;
 }
@@ -5227,7 +5227,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     RT_BOT_CK_MAGIC(bot);
 
     *volume = 0.0;
-    if(bot->mode == RT_BOT_SURFACE)
+    if (bot->mode == RT_BOT_SURFACE)
 	return;
 
     /* allocate pts array, 3 vertices per bot face */
@@ -5324,7 +5324,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		if (a == b)
 		    continue; /* can't check against own face */
 		/* if both vertices are equal, a and b have a common edge, so it can't be an exterior edge, so the variable is set to 0(false) */
-		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
 		    a_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
 		    a_is_exterior_edge = 0;
@@ -5336,7 +5336,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    a_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
 		    a_is_exterior_edge = 0;
-		if(EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
 		    b_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    b_is_exterior_edge = 0;
@@ -5348,7 +5348,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    b_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    b_is_exterior_edge = 0;
-		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
 		    c_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    c_is_exterior_edge = 0;

@@ -54,7 +54,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
     intern.idb_meth = &OBJ[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
+    intern.idb_ptr = (void *)comb;
     comb->tree = final_tree;
 
     if (!BU_STR_EQUAL(new_name, old_name)) {
@@ -73,7 +73,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	    }
 	}
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return 1;
@@ -86,7 +86,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	else
 	    flags = RT_DIR_COMB;
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
@@ -162,7 +162,7 @@ save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }

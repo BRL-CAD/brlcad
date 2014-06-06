@@ -421,16 +421,21 @@ main(int argc, char** argv)
     dump->Print("\n");
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
-	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
+	dump->Print("Object %d of %d...", i + 1, model.m_object_table.Count());
 
-	dump->PushIndent();
+	if (verbose_mode) {
+	    dump->Print("\n\n");
+	    dump->PushIndent();
+	}
 
 	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
 	std::string geom_base;
-	myAttributes.Dump(*dump); // On debug print
-	dump->Print("\n");
+	if (verbose_mode) {
+	    myAttributes.Dump(*dump); // On debug print
+	    dump->Print("\n");
+	}
 
 	if (use_uuidnames) {
 	    char uuidstring[UUID_LEN] = {0};
@@ -453,7 +458,9 @@ main(int argc, char** argv)
 		    if (genName.length() <= 0) {
 			genName = GENERIC_NAME;
 		    }
-		    dump->Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
+		    if (verbose_mode) {
+			dump->Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
+		    }
 		} else {
 		    genName = GENERIC_NAME;
 		}
@@ -472,7 +479,9 @@ main(int argc, char** argv)
 		    geom_base = genName.c_str();
 		}
 
-		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+		if (verbose_mode) {
+		    dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+		}
 		bu_vls_free(&name);
 	    } else {
 		const char* cstr = constr;
@@ -528,13 +537,16 @@ main(int argc, char** argv)
 		}
 	    }
 
-	    dump->Print("Color: %d, %d, %d\n", r, g, b);
+	    if (verbose_mode) {
+		dump->Print("Color: %d, %d, %d\n", r, g, b);
+	    }
 
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 
-		dump->Print("primitive is %s.\n", geom_name.c_str());
-		dump->Print("region created is %s.\n", region_name.c_str());
-
+		if (verbose_mode) {
+		    dump->Print("primitive is %s.\n", geom_name.c_str());
+		    dump->Print("region created is %s.\n", region_name.c_str());
+		}
 		mk_brep(outfp, geom_name.c_str(), brep);
 
 		unsigned char rgb[3];
@@ -547,12 +559,15 @@ main(int argc, char** argv)
 		if (verbose_mode > 0)
 		    brep->Dump(*dump);
 	    } else if (pGeometry->HasBrepForm()) {
-		dump->Print("Type: HasBrepForm\n");
+		if (verbose_mode > 0)
+		    dump->Print("Type: HasBrepForm\n");
 
 		ON_Brep *new_brep = pGeometry->BrepForm();
 
-		dump->Print("primitive is %s.\n", geom_name.c_str());
-		dump->Print("region created is %s.\n", region_name.c_str());
+		if (verbose_mode) {
+		    dump->Print("primitive is %s.\n", geom_name.c_str());
+		    dump->Print("region created is %s.\n", region_name.c_str());
+		}
 
 		mk_brep(outfp, geom_name.c_str(), new_brep);
 
@@ -569,10 +584,12 @@ main(int argc, char** argv)
 		delete new_brep;
 
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
-		dump->Print("Type: ON_Curve\n");
+		if (verbose_mode > 0)
+		    dump->Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(*dump);
 	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
-		dump->Print("Type: ON_Surface\n");
+		if (verbose_mode > 0)
+		    dump->Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(*dump);
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
 		dump->Print("Type: ON_Mesh\n");
@@ -587,7 +604,8 @@ main(int argc, char** argv)
 		dump->Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(*dump);
 	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
-		dump->Print("Type: ON_InstanceRef\n");
+		if (verbose_mode > 0)
+		    dump->Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(*dump);
 	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
 		dump->Print("Type: ON_Layer\n");
@@ -605,7 +623,8 @@ main(int argc, char** argv)
 		dump->Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(*dump);
 	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
-		dump->Print("Type: ON_Geometry\n");
+		if (verbose_mode > 0)
+		    dump->Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(*dump);
 	    } else {
 		dump->Print("WARNING: Encountered an unexpected kind of object.  Please report to devs@brlcad.org\n");
@@ -613,8 +632,12 @@ main(int argc, char** argv)
 	} else {
 	    dump->Print("WARNING: Skipping non-Geometry entity: %s\n", geom_base.c_str());
 	}
-	dump->PopIndent();
-	dump->Print("\n\n");
+	if (verbose_mode > 0) {
+	    dump->PopIndent();
+	    dump->Print("\n\n");
+	} else {
+	    dump->Print("\n");
+	}
     }
 
     /* use accumulated layer information to build mged hierarchy */

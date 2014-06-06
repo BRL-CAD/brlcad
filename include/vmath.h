@@ -1622,25 +1622,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 /**
- * @brief Some 2-D versions of the 3-D macros given above.
- *
- * A better naming convention is V2MOVE() rather than VMOVE_2D().
- *
- * DEPRECATED: These xxx_2D names are slated to go away, use the
- * others.
- *
- * THESE ARE ALL DEPRECATED.
- */
-#define VADD2_2D(a, b, c) V2ADD2(a, b, c)
-#define VSUB2_2D(a, b, c) V2SUB2(a, b, c)
-#define MAGSQ_2D(a) MAG2SQ(a)
-#define VDOT_2D(a, b) V2DOT(a, b)
-#define VMOVE_2D(a, b) V2MOVE(a, b)
-#define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
-#define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
-
-
-/**
  * @brief Quaternion math definitions.
  *
  * Note that the [W] component will be put in the last (i.e., third)
@@ -1803,7 +1784,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 /**
- * Macros for dealing with 3-D "extents", a/k/a bounding boxes, that are
+ * Macros for dealing with 3-D "extents", aka bounding boxes, that are
  * represented as axis-aligned right parallelepipeds (RPPs).  This is
  * stored as two points: a min point, and a max point.  RPP 1 is
  * defined by lo1, hi1, RPP 2 by lo2, hi2.

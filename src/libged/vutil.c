@@ -36,6 +36,9 @@ ged_view_update(struct ged_view *gvp)
     vect_t work, work1;
     vect_t temp, temp1;
 
+    if (!gvp)
+	return;
+
     bn_mat_mul(gvp->gv_model2view,
 	       gvp->gv_rotation,
 	       gvp->gv_center);
@@ -247,7 +250,7 @@ ged_persp_mat(mat_t m,
 
 /**
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
+ * with the actual eye position (not at Z=+1) specified in viewing
  * coords, into a related space where the eye has been sheared onto
  * the Z axis and repositioned at Z=(0, 0, 1), with the same
  * perspective field of view as before.

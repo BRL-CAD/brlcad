@@ -49,7 +49,7 @@ InstMgr::PrintSortedFileIds() {
 InstMgr::InstMgr( int ownsInstances )
     : maxFileId( -1 ), _ownsInstances( ownsInstances ) {
     master = new MgrNodeArray();
-    sortedMaster = new MgrNodeArraySorted();
+    sortedMaster = new std::map<int, MgrNode *>;
 }
 
 InstMgr::~InstMgr() {
@@ -58,7 +58,8 @@ InstMgr::~InstMgr() {
     } else {
         master->ClearEntries();
     }
-    sortedMaster->ClearEntries();
+    sortedMaster->clear();
+    std::map<int, MgrNode *>::iterator iter;
 
     delete master;
     delete sortedMaster;
@@ -68,13 +69,13 @@ InstMgr::~InstMgr() {
 
 void InstMgr::ClearInstances() {
     master->ClearEntries();
-    sortedMaster->ClearEntries();
+    sortedMaster->clear();
     maxFileId = -1;
 }
 
 void InstMgr::DeleteInstances() {
     master->DeleteEntries();
-    sortedMaster->ClearEntries();
+    sortedMaster->clear();
     maxFileId = -1;
 }
 
@@ -164,12 +165,10 @@ InstMgr::VerifyInstances( ErrorDescriptor & err ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 MgrNode * InstMgr::FindFileId( int fileId ) {
-    int index = sortedMaster->MgrNodeIndex( fileId );
-    if( index >= 0 ) {
-        return ( MgrNode * )( *sortedMaster )[index];
-    } else {
-        return ( MgrNode * )0;
-    }
+	std::map<int, MgrNode *>::iterator it;
+	it=sortedMaster->find(fileId);
+	if (it == sortedMaster->end()) return ( MgrNode * )0;
+	return it->second;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -178,13 +177,6 @@ MgrNode * InstMgr::FindFileId( int fileId ) {
 //  called by see initiated functions
 int InstMgr::GetIndex( MgrNode * mn ) {
     return mn->ArrayIndex();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-int InstMgr::GetIndex( SDAI_Application_instance * se ) {
-    int fileId = se->StepFileId();
-    return sortedMaster->MgrNodeIndex( fileId );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -210,7 +202,6 @@ MgrNode * InstMgr::Append( SDAI_Application_instance * se, stateEnum listState )
     if( debug_level > 3 ) {
         cout << "#" << se->StepFileId() << " append node to InstMgr" << endl;
     }
-
     MgrNode * mn = 0;
 
     if( se->StepFileId() == 0 ) { // no id assigned
@@ -240,8 +231,8 @@ MgrNode * InstMgr::Append( SDAI_Application_instance * se, stateEnum listState )
         cout << "append to InstMgr **ERROR ** node #" << se->StepFileId() <<
              " doesn't have state information" << endl;
     master->Append( mn );
-    sortedMaster->Insert( mn );
-//PrintSortedFileIds();
+    (*sortedMaster)[mn->GetFileId()] = mn;
+    //PrintSortedFileIds();
     return mn;
 }
 
@@ -251,15 +242,11 @@ void InstMgr::Delete( MgrNode * node ) {
     // delete the node from its current state list
     node->Remove();
 
-    int index;
-
-    // get the index of the node in the sorted master array
-    index = sortedMaster->MgrNodeIndex( node->GetFileId() );
     // remove the node from the sorted master array
-    sortedMaster->Remove( index );
+    sortedMaster->erase( node->GetFileId() );
 
     // get the index into the master array by ptr arithmetic
-    index = node->ArrayIndex();
+    int index = node->ArrayIndex();
     master->Remove( index );
 
     delete node;

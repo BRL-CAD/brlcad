@@ -330,14 +330,14 @@ solveSparseLinearSystemLQ (Eigen::SparseMatrix<double>* A, Eigen::MatrixXd* b, E
 
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
     solver.compute(AtA);
-    if(solver.info()!=Eigen::Success) {
+    if (solver.info()!=Eigen::Success) {
 	// decomposition failed
 	std::cout << "decomposition failed\n";
     }
 
     (*x) = solver.solve(Atb);
 
-    if(solver.info()!=Eigen::Success) {
+    if (solver.info()!=Eigen::Success) {
 	std::cout << "solver failed: " << solver.info() << "\n";
 	return false;
     } else {
@@ -355,25 +355,25 @@ NurbsSolve::solve ()
     Eigen::MatrixXd e_m_xeig = Eigen::MatrixXd::Zero ((*m_xeig).RowCount(), (*m_xeig).ColCount());
     Eigen::MatrixXd e_m_feig = Eigen::MatrixXd::Zero ((*m_feig).RowCount(), (*m_feig).ColCount());
 
-    for(int i = 0; i < (*m_xeig).RowCount(); i++) {
-	for(int j = 0; j < (*m_xeig).ColCount(); j++) {
+    for (int i = 0; i < (*m_xeig).RowCount(); i++) {
+	for (int j = 0; j < (*m_xeig).ColCount(); j++) {
 	    e_m_xeig (i,j) = (*m_xeig)[i][j];
 	}
     }
-    for(int i = 0; i < (*m_feig).RowCount(); i++) {
-	for(int j = 0; j < (*m_feig).ColCount(); j++) {
+    for (int i = 0; i < (*m_feig).RowCount(); i++) {
+	for (int j = 0; j < (*m_feig).ColCount(); j++) {
 	    e_m_feig (i,j) = (*m_feig)[i][j];
 	}
     }
 
     bool success = solveSparseLinearSystemLQ (&m_Ksparse, &e_m_feig, &e_m_xeig);
-    if(!success) {
+    if (!success) {
 	std::cout << "solver failed!\n";
 	return false;
     }
 
-    for(int i = 0; i < (*m_xeig).RowCount(); i++) {
-	for(int j = 0; j < (*m_xeig).ColCount(); j++) {
+    for (int i = 0; i < (*m_xeig).RowCount(); i++) {
+	for (int j = 0; j < (*m_xeig).ColCount(); j++) {
 	    (*m_xeig)[i][j] = e_m_xeig (i,j);
 	}
     }
@@ -590,7 +590,7 @@ FittingSurface::getElementVector (const ON_NurbsSurface &nurbs, int dim) // !
 
     result.push_back (knots[idx_min]);
 
-    //for(int E=(m_nurbs.Order(0)-2); E<(m_nurbs.KnotCount(0)-m_nurbs.Order(0)+2); E++) {
+    //for (int E=(m_nurbs.Order(0)-2); E<(m_nurbs.KnotCount(0)-m_nurbs.Order(0)+2); E++) {
     for (int E = idx_min + 1; E <= idx_max; E++)
     {
 

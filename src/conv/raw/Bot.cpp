@@ -49,7 +49,7 @@ size_t Bot::addPoint(point_t& point)
     size_t ret = m_vertices.size() / 3;
 
     // search for duplicate vertex
-    for(size_t i = 0; i < (m_vertices.size() / 3); ++i) {
+    for (size_t i = 0; i < (m_vertices.size() / 3); ++i) {
 	if (NEAR_ZERO(m_vertices[i * 3] - point[X], SMALL_FASTF) &&
 	    NEAR_ZERO(m_vertices[i * 3 + 1] - point[Y], SMALL_FASTF) &&
 	    NEAR_ZERO(m_vertices[i * 3 + 2] - point[Z], SMALL_FASTF)) {

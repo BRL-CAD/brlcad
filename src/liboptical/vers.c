@@ -22,7 +22,7 @@
 
 #include "raytrace.h"
 #include "optical.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /**

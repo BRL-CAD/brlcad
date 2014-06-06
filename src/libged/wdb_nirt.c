@@ -646,7 +646,7 @@ dgo_vnirt_cmd(struct dg_obj *dgop,
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+    bu_free((void *)av, "dgo_vnirt_cmd: av");
     av = NULL;
 
     return status;

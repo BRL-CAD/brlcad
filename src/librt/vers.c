@@ -24,7 +24,7 @@
 #include "bio.h"
 
 #include "raytrace.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 const char *

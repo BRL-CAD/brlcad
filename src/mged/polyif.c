@@ -164,7 +164,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 				bu_vls_free(&tmp_vls);
 				break;
 			    }
-			    if (bu_struct_export(&obuf, (genptr_t)&ph, polygon_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)&ph, polygon_desc) < 0) {
 				Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
 				break;
 			    }
@@ -175,7 +175,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    bu_free_external(&obuf);
 			    /* Now export the vertices */
 			    vertex_desc[0].sp_count = ph.npts * 3;
-			    if (bu_struct_export(&obuf, (genptr_t)verts, vertex_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)verts, vertex_desc) < 0) {
 				Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
 				break;
 			    }

@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include "bu.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 const char *
 bu_version(void)

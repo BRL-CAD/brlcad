@@ -300,7 +300,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_RHC];
 
     BU_GET(rhc, struct rhc_specific);
-    stp->st_specific = (genptr_t)rhc;
+    stp->st_specific = (void *)rhc;
     rhc->rhc_b = mag_b;
     rhc->rhc_rsq = magsq_r;
     rhc->rhc_c = xip->rhc_c;
@@ -1710,7 +1710,7 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     xip->rhc_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "rhc ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

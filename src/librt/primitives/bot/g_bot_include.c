@@ -107,7 +107,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
-    bot->bot_facelist = (genptr_t)trip;
+    bot->bot_facelist = (void *)trip;
     return 3;				/* OK */
 }
 
@@ -142,7 +142,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
     fap = (XGLUE(tri_specific_, TRI_TYPE) **)
 	bu_malloc(sizeof(XGLUE(tri_specific_, TRI_TYPE) *) * ntri,
 		  "bot_facearray");
-    bot->bot_facearray = (genptr_t *)fap;
+    bot->bot_facearray = (void **)fap;
 
     stp->st_piece_rpps = (struct bound_rpp *)
 	bu_malloc(sizeof(struct bound_rpp) * num_rpps,
@@ -247,7 +247,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
     RT_BOT_CK_MAGIC(bot_ip);
 
     BU_GET(bot, struct bot_specific);
-    stp->st_specific = (genptr_t)bot;
+    stp->st_specific = (void *)bot;
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
@@ -1093,7 +1093,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 	/* HIT is within planar face */
 	hp->hit_magic = RT_HIT_MAGIC;
 	hp->hit_dist = k;
-	hp->hit_private = (genptr_t)trip;
+	hp->hit_private = (void *)trip;
 	hp->hit_vpriv[X] = VDOT(trip->tri_N, rp->r_dir);
 	hp->hit_vpriv[Y] = alpha / abs_dn;
 	hp->hit_vpriv[Z] = beta / abs_dn;
@@ -1248,7 +1248,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    hp = rt_htbl_get(&psp->htab);
 	    hp->hit_magic = RT_HIT_MAGIC;
 	    hp->hit_dist = k + dist_corr;
-	    hp->hit_private = (genptr_t)trip;
+	    hp->hit_private = (void *)trip;
 	    hp->hit_vpriv[X] = VDOT(trip->tri_N, rp->r_dir);
 	    hp->hit_vpriv[Y] = alpha / abs_dn;
 	    hp->hit_vpriv[Z] = beta / abs_dn;

@@ -283,7 +283,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		if (token[1] == '\0')
 		    bu_exit(EXIT_FAILURE, "descr_to_nmg: vertices must be numbered.\n");
 		vert_num = atoi(token+1);
-		if(vert_num < 0 || vert_num >= MAXV) {
+		if (vert_num < 0 || vert_num >= MAXV) {
 		    bu_log("Vertex number out of bounds: %d\nAborting\n", vert_num);
 		    return;
 		}

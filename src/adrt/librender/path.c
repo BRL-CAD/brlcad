@@ -167,7 +167,7 @@ render_path_init(render_t *render, const char *samples)
 {
     render_path_t *d;
 
-    if(samples == NULL)
+    if (samples == NULL)
 	return -1;
 
     render->work = render_path_work;

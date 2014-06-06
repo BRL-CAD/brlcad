@@ -163,8 +163,8 @@ print_path_with_bools(struct db_full_path *full_path)
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
 			     void (*traverse_func) (struct db_full_path *path,
-						    genptr_t),
-			     genptr_t client_data)
+						    void *),
+			     void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
@@ -235,7 +235,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  */
 HIDDEN void
 db_fullpath_list(struct db_full_path *path,
-		     genptr_t client_data)
+		     void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
@@ -937,6 +937,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) return 0;
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) return 0;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
 	rt_db_free_internal(&intern);
@@ -2004,7 +2005,7 @@ db_search_free(struct bu_ptbl *search_results)
     if (!search_results || search_results->l.magic != BU_PTBL_MAGIC)
 	return;
 
-    for(i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
+    for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
 	struct db_full_path *path = (struct db_full_path *)BU_PTBL_GET(search_results, i);
 	if (path->magic && path->magic == DB_FULL_PATH_MAGIC) {
 	    db_free_full_path(path);
@@ -2072,7 +2073,7 @@ _db_search_full_paths(void *searchplan,
 	bu_ptbl_ins(full_paths, (long *)start_path);
 	lcd.dbip = dbip;
 	lcd.full_paths = full_paths;
-	db_fullpath_list(start_path, (genptr_t *)&lcd);
+	db_fullpath_list(start_path, (void **)&lcd);
 
 	for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 	    curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
@@ -2084,7 +2085,7 @@ _db_search_full_paths(void *searchplan,
 	bu_free(full_paths, "free search container");
 
     }
-    for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
+    for (i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
 	BU_ALLOC(new_entry, struct db_full_path_list);
 	BU_ALLOC(new_entry->path, struct db_full_path);
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
@@ -2092,7 +2093,7 @@ _db_search_full_paths(void *searchplan,
 	db_dup_full_path(new_entry->path, dfptr);
 	BU_LIST_PUSH(&(searchresults_list->l), &(new_entry->l));
     }
-    for(i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
+    for (i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
 	db_free_full_path(dfptr);
     }
@@ -2144,14 +2145,16 @@ int
 db_search(struct bu_ptbl *search_results,
 	  int search_flags,
 	  const char *plan_str,
-	  int path_cnt,
-	  struct directory **paths,
+	  int input_path_cnt,
+	  struct directory **input_paths,
 	  struct db_i *dbip)
 {
     int i = 0;
     int result_cnt = 0;
     struct db_plan_t *dbplan = NULL;
     struct directory **top_level_objects = NULL;
+    struct directory **paths = input_paths;
+    int path_cnt = input_path_cnt;
 
     /* Note that dbplan references strings using memory
      * in the following two objects, so they mustn't be
@@ -2185,7 +2188,11 @@ db_search(struct bu_ptbl *search_results,
     }
 
     if (!paths) {
-	path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	if (search_flags & DB_SEARCH_HIDDEN) {
+	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, &top_level_objects);
+	} else {
+	    path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	}
 	paths = top_level_objects;
     }
 
@@ -2245,7 +2252,7 @@ db_search(struct bu_ptbl *search_results,
 		    bu_ptbl_ins(full_paths, (long *)start_path);
 		    /* Use the initial path to tree-walk and build a set of all paths below
 		     * start_path */
-		    db_fullpath_list(start_path, (genptr_t *)&lcd);
+		    db_fullpath_list(start_path, (void **)&lcd);
 		}
 	    }
 	}
@@ -2271,11 +2278,8 @@ db_search(struct bu_ptbl *search_results,
     bu_free(mutable_plan_str, "free strdup");
     bu_free((char *)plan_argv, "free plan argv");
 
-    if (paths == top_level_objects) {
-	for (i = 0; i < path_cnt; i++) {
-	    db_dirdelete(dbip, top_level_objects[i]);
-	}
-	bu_free(top_level_objects, "free tops");
+    if (top_level_objects) {
+	bu_free((void *)top_level_objects, "free tops");
     }
 
     return result_cnt;

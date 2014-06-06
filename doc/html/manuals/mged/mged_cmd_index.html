@@ -260,9 +260,7 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#make"><FONT SIZE=2>make</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#make_bb"><FONT SIZE=2>make_bb</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
+<TR><TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#mater"><FONT SIZE=2>mater</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#matpick"><FONT SIZE=2>matpick</FONT></A></TD>
@@ -2163,16 +2161,6 @@ foo.r_xpand/R
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>make -t</B> <BR>
 -- Return a list of shape types handled by <I>make.</I> </P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="make_bb"></A>make_bb</B> [-u] <I>new_shape_name</I> &lt;<I>objects|paths</I>&gt;</DT>
-<DD>The &quot;make_bb&quot; (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will contain the <I>objects</I> and <I>paths</I> specified.  The <I>paths</I> will include any transformation matrices that accumulate from <A HREF="#COMBINATION">combinations</A> along the path.  The <A HREF="#listeval">listeval</A> command may be used to see the effect of transformation matrices along a path.  The optional -u argument indicates that regions which have the <i>air</i> flag set should be retained, not discarded as is the default.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>make_bb new_bb shapea group1/region3</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Create an RPP named <I>new_bb</I> that is large enough to contain <I>shapea</I> and <I>group1/region3.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

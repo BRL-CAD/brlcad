@@ -231,7 +231,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * any further than the max possible option count */
     bu_optind = 1;
     while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
-	switch(c) {
+	switch (c) {
 	    case 'a':
 		aflag = 1;
 		flags |= DB_SEARCH_HIDDEN;
@@ -431,7 +431,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			struct bu_vls fullpath_string = BU_VLS_INIT_ZERO;
 			BU_ALLOC(search_results, struct bu_ptbl);
 			bu_ptbl_init(search_results, 8, "initialize search result table");
-			switch(search->search_type) {
+			switch (search->search_type) {
 			    case 0:
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip);
 				if (BU_PTBL_LEN(search_results) > 0) {

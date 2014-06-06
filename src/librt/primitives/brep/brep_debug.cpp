@@ -1295,7 +1295,7 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     c3->GetNurbForm(*nc3, 0.0);
     ON_3dPoint edge_start, edge_end;
     dump.Print("edge[%2d]: for ", ei);
-    for(int i = 0; i < trim_cnt; ++i) {
+    for (int i = 0; i < trim_cnt; ++i) {
 	dump.Print("trim[%2d] ", edge.m_ti[i]);
     }
     dump.Print("\n");
@@ -2411,7 +2411,7 @@ brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const str
     bip_out->magic = RT_BREP_INTERNAL_MAGIC;
     bip_out->brep = brep;
     RT_DB_INTERNAL_INIT(out);
-    out->idb_ptr = (genptr_t)bip_out;
+    out->idb_ptr = (void *)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;
@@ -2516,7 +2516,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 			BU_ALLOC(bi, struct rt_brep_internal);
 			bi->magic = RT_BREP_INTERNAL_MAGIC;
 			bi->brep = *brep;
-			ret = wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
+			ret = wdb_export(wdbp, tmpname, (void *)bi, ID_BREP, local2mm);
 			if (ret) {
 			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
 			} else {
@@ -2578,7 +2578,7 @@ brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, cons
 
     ret = brep_conversion_tree(wdbp->dbip, oldtree, newtree, suffix, wdbp, local2mm);
     if (!ret) {
-	ret = wdb_export(wdbp, name, (genptr_t)new_internal, ID_COMBINATION, local2mm);
+	ret = wdb_export(wdbp, name, (void *)new_internal, ID_COMBINATION, local2mm);
     } else {
 	bu_free(new_internal->tree, "tree");
 	bu_free(new_internal, "rt_comb_internal");
@@ -2731,7 +2731,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    if (BU_STR_EQUAL(strindex, "all")) {
 		ON_Brep *brep = bs->brep;
 		if (BU_STR_EQUAL(part, "S")) {
-		    for(int i = 0; i < brep->m_S.Count(); ++i) {
+		    for (int i = 0; i < brep->m_S.Count(); ++i) {
 			ret = brep_surface_info(bs, vls, i);
 		    }
 		} else if (BU_STR_EQUAL(part, "F")) {

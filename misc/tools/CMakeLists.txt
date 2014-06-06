@@ -3,6 +3,9 @@
 # Clear all pre-defined CMake flags
 CLEAR_BUILD_FLAGS()
 
+# Restore CMake defaults, in case they are needed
+RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
+
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
   add_definitions(-w)

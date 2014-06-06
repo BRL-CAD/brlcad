@@ -2796,7 +2796,7 @@ output_to_nmg(struct ga_t *ga,
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
 
     m = nmg_mm();
-    if(m == NULL)
+    if (m == NULL)
 	return -1;
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -3393,7 +3393,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'r':
-		switch(bu_optarg[0]) {
+		switch (bu_optarg[0]) {
 		    case '1':
 			bot_orientation = RT_BOT_UNORIENTED;
 			break;

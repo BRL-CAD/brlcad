@@ -553,18 +553,18 @@ _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
     mat_default = mat;
     los_default = los;
 
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 
 end:
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 }
@@ -637,7 +637,7 @@ wrobj(struct bu_vls *log_str,
 	    for (i = 1; i < 8; i++)
 		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-	    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_ptr = (void *)arb;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_ARB8;
 	    intern.idb_meth = &OBJ[ID_ARB8];
@@ -657,7 +657,7 @@ wrobj(struct bu_vls *log_str,
 	    VMOVE(tgc->c, &sol.s_values[12]);
 	    VMOVE(tgc->d, &sol.s_values[15]);
 
-	    intern.idb_ptr = (genptr_t)tgc;
+	    intern.idb_ptr = (void *)tgc;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_TGC;
 	    intern.idb_meth = &OBJ[ID_TGC];
@@ -668,7 +668,7 @@ wrobj(struct bu_vls *log_str,
 	    return GED_ERROR;
     }
 
-    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(log_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;
@@ -1163,7 +1163,7 @@ track_mk_comb(
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;

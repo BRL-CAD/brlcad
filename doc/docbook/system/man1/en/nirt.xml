@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="nirt1">
   <refmeta>
       <refentrytitle>NIRT
@@ -93,6 +91,16 @@
 	  be broken down into a separate piece for each triangle. This can result
 	  in significant improvement in raytrace speed at the cost of more memory
 	  use.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-T</option><replaceable> rt_bot_mintie</replaceable></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to adjust the setting of
+	  <emphasis remap="I">rt_bot_mintie</emphasis>
+	  to the indicated value.
 	</para>
       </listitem>
     </varlistentry>
@@ -199,7 +207,7 @@
 
   <para>
     <command>Nirt</command> will check in two places for a <filename>.nirtrc</filename>
-    file - first in the current directory, and if it not found there in the user's home directory.
+    file - first in the current directory, and if it is not found there, in the user's home directory.
     If found, <command>nirt</command> begins by reading from it.  This start-up file may contain any
     <command>nirt</command> commands and is useful for loading predefined states
     or initializing actions for output statements.

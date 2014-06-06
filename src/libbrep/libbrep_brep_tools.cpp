@@ -118,8 +118,8 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
 {
     double Ndot=1.0;
 
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
+    for (int i=0; i<8; i++) {
+	for ( int j=i+1; j<9; j++) {
 	    if ((Ndot = Ndot * frames[i].zaxis * frames[j].zaxis) < f_tol) {
 		return false;
 	    }
@@ -191,8 +191,8 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
 {
     double Xdot=1.0;
 
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
+    for (int i=0; i<8; i++) {
+	for ( int j=i+1; j<9; j++) {
 	    if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
 		return false;
 	    }

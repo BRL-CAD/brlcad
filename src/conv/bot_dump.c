@@ -85,9 +85,9 @@ main(int argc, char *argv[])
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
-    if(gedp)
+    if (gedp)
 	BU_PUT(gedp, struct ged);
-    bu_free((genptr_t)av, "free argv copy");
+    bu_free((void *)av, "free argv copy");
 
     return 0;
 }

@@ -46,7 +46,7 @@ size_t addBotPoint
     size_t ret = form.data.bot.num_vertices;
 
     // search for duplicate vertex
-    for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+    for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	if ((form.data.bot.vertices[i * 3]     == x) &&
 	    (form.data.bot.vertices[i * 3 + 1] == y) &&
 	    (form.data.bot.vertices[i * 3 + 2] == z)) {
@@ -100,7 +100,7 @@ void readCadTypeBot
     form.data.bot.num_faces    = 0; // unknown yet how many different faces are used, there may be some degenerated ones
     form.data.bot.num_vertices = 0; // unknown yet how many different points are used
 
-    for(size_t i = 0; i < form.npts; ++i) {
+    for (size_t i = 0; i < form.npts; ++i) {
 	int x;
 	int y;
 	int z;

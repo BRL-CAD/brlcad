@@ -207,7 +207,7 @@ ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info)
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
     std::vector<std::vector<STEPentity *> >::iterator outer_it;
     std::vector<STEPentity *>::iterator inner_it;
-    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
+    for (scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
 	GenericAggregate *control_pnts_lists = info->surf_genagg.find(scv_it->first)->second;
 	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
 	    std::ostringstream ss;

@@ -689,7 +689,7 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
-    internal->idb_ptr = GENPTR_NULL; /* sanity */
+    internal->idb_ptr = ((void *)0); /* sanity */
 }
 
 

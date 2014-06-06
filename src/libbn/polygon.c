@@ -136,7 +136,7 @@ bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t
 {
     size_t i, j, k, l;
     if (!npts || !pts || neqs < 4 || !eqs)
-    	return 1;
+	return 1;
     /* find all vertices */
     for (i = 0; i < neqs - 2; i++) {
 	for (j = i + 1; j < neqs - 1; j++) {

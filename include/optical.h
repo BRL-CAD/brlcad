@@ -59,9 +59,9 @@ OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
 /* defined in sh_text.c */
-OPTICAL_EXPORT extern int mlib_zero(struct application *, const struct partition *, struct shadework *, genptr_t);
-OPTICAL_EXPORT extern int mlib_one(struct region *, struct bu_vls *, genptr_t *, const struct mfuncs *, struct rt_i *);
-OPTICAL_EXPORT extern void mlib_void(struct region *, genptr_t);
+OPTICAL_EXPORT extern int mlib_zero(struct application *, const struct partition *, struct shadework *, void *);
+OPTICAL_EXPORT extern int mlib_one(struct region *, struct bu_vls *, void **, const struct mfuncs *, struct rt_i *);
+OPTICAL_EXPORT extern void mlib_void(struct region *, void *);
 
 
 /* defined in refract.c */

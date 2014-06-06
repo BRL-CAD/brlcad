@@ -196,7 +196,7 @@ add_solid(const struct directory *dp,
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &OBJ[ID_BOT];
-		intern2.idb_ptr = (genptr_t)bot;
+		intern2.idb_ptr = (void *)bot;
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &OBJ[ID_BOT];
 		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
@@ -2006,7 +2006,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &OBJ[ID_POLY];
-	    intern2.idb_ptr = (genptr_t)pg;
+	    intern2.idb_ptr = (void *)pg;
 	    if (OBJ[tp->l.stp->st_id].ft_free)
 		OBJ[tp->l.stp->st_id].ft_free(tp->l.stp);
 	    tp->l.stp->st_specific = NULL;

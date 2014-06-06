@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdiff21'>
+	<refmeta>
+		<refentrytitle>GDIFF2
+		</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+		<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+	</refmeta>
+
+	<refnamediv>
+		<refname>gdiff2</refname>
+		<refpurpose>a BRL-CAD differential geometry comparator</refpurpose>
+	</refnamediv>
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id='synopsis'>
+		<cmdsynopsis>
+			<command>gdiff2</command>
+			<arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+			<arg choice='plain'><replaceable>left_model.g</replaceable></arg>
+			<arg choice='opt'><replaceable>ancestor_model.g</replaceable></arg>
+			<arg choice='plain'><replaceable>right_model.g</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
+
+
+	<refsect1 xml:id='description'><title>DESCRIPTION</title>
+		<para>
+			<emphasis remap='I'>gdiff2</emphasis> compares BRL-CAD models
+			specified on the command line, reporting differences according to the
+			specified options.  It supports a plain "diff" comparison between two
+			files, as well as a "3-way" comparison that accepts a third file with
+			"ancestral" information that provides a context for the left and right
+			files.
+		</para>
+		<para>The following options are recognized:</para>
+		<variablelist remap="TP">
+			<varlistentry>
+				<term><option>-a</option></term>
+				<listitem><para>Report objects added in model2.g</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-r</option></term>
+				<listitem><para>Report objects removed in model2.g</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-c</option></term>
+				<listitem><para>Report objects changed in model2.g</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-u</option></term>
+				<listitem><para>Report objects that are the same in both model1.g and model2.g</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-C</option></term>
+				<listitem><para>Report objects with conflicts</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-v #</option></term>
+				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-t #</option></term>
+				<listitem><para>Set the length tolerance used to compare numerical properties.  Units are millimeters.  Default value is RT_LEN_TOL.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-F "filter_string"</option></term>
+				<listitem><para>Apply filters to the diff output, using the same set of filters available in the <command>search</command> command's search.  See the <command>search</command> manual page for more details.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-M merged_file.g</option></term>
+				<listitem><para>Merge the files being diffed into one output file.</para></listitem>
+			</varlistentry>
+		</variablelist>
+
+		<para>
+			The program returns 0 if the files being compared have no differences that satisfy
+			the user-supplied options, otherwise it returns the total number of differing objects that do
+			satisfy the supplied options.  Default is to report all differences that rise above RT_LEN_TOL.
+		</para>
+	</refsect1>
+
+	<refsect1 xml:id='example'><title>EXAMPLES</title>
+
+  <example><title>Default Diffing Results</title>
+        <para>
+          Running the default options on two pre-prepared examples of Moss World gives us full details:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 moss.g moss2.g</userinput>
+tor2 was added.
+
+cone.s was changed:
+   Parameters changed:
+      D: "1.453863143920999911884451 1.453863143920999911884451 0" -> "2.921497127500571444613797 2.921497127500571444613797 0"
+
+box.s was changed:
+   Parameters changed:
+      V2: "30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494" -> "30.0283355712900004164112 19.1837000000000017507773 -16.37908935547000055521494"
+      V3: "30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772" -> "30.0283355712900004164112 19.1837000000000017507773 10.41366577147999805674772"
+      V6: "3.235580444340001804448548 21.58122539520000060520033 -16.37908935547000055521494" -> "3.235580444340001804448548 19.1837000000000017507773 -16.37908935547000055521494"
+      V7: "3.235580444340001804448548 21.58122539520000060520033 10.41366577147999805674772" -> "3.235580444340001804448548 19.1837000000000017507773 10.41366577147999805674772"
+
+tor.r was changed:
+   Parameters changed:
+      tree: "l tor" -> "l tor2"
+
+tor was changed:
+   Parameters changed:
+      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
+
+                </computeroutput>
+          </literallayout>
+          The reporting order is added, removed, and then changed.  So we see that one object was added, none were removed, and four were changed.
+        </para>
+  </example>
+  <example><title>Quieter Diffing Results</title>
+        <para>
+          Running the same comparison as the previous example with a less verbose output gives us a summary, which is useful when first studying two files to identify differences:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 1 moss.g moss2.g</userinput>
+
+Objects added:
+tor2
+
+Objects changed:
+cone.s, box.s, tor.r, tor
+
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+  <example><title>Filtering Results With Search Filters</title>
+        <para>
+          Let's say, for example, we want a detailed diff output but only for object of type torus.  We can filter for such results with the <option>F</option> option:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -F "-type tor" moss.g moss2.g</userinput>
+tor2 was added.
+
+tor was changed:
+   Parameters changed:
+      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
+
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+
+  <example><title>Filtering Results With Tolerance</title>
+        <para>
+          To eliminate differences that are too small to be of interest, the <option>t</option> is used.  What is "too small" is up to the user - in this example, we will use three millimeters:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -t 3.0 moss.g moss2.g</userinput>
+tor2 was added.
+
+tor.r was changed:
+   Parameters changed:
+      tree: "l tor" -> "l tor2"
+
+tor was changed:
+   Parameters changed:
+      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
+
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+
+  <example><title>Combining Multiple Filters</title>
+        <para>
+          To return *only* results that are large changes, we can apply multiple filters to the output:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -c -F "! -type comb" -t 3.0 moss.g moss2.g</userinput>
+tor was changed:
+   Parameters changed:
+      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
+
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+
+	</refsect1>
+
+	<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+		<para><citerefentry><refentrytitle>search</refentrytitle><manvolnum>n</manvolnum></citerefentry></para>
+
+	</refsect1>
+
+	<refsect1 xml:id='author'><title>AUTHOR</title>
+		<para>BRL-CAD Team</para>
+
+	</refsect1>
+
+	<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+		<para>This software is Copyright (c) 2014 by the United States
+			Government as represented by U.S. Army Research Laboratory.</para>
+
+	</refsect1>
+
+	<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+		<para>Reports of bugs or problems should be submitted via electronic
+			mail to &lt;devs@brlcad.org&gt;.</para>
+	</refsect1>
+</refentry>
+

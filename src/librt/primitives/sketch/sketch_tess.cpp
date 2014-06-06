@@ -222,7 +222,7 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
 	    t *= 0.5;
 	    current.Split(t, test_bezier, next);
 	    test_biarc = make_biarc(test_bezier);
-	} while(test_biarc.AngleRadians() > M_PI_2);
+	} while (test_biarc.AngleRadians() > M_PI_2);
 
 	approx_bezier(test_bezier, test_biarc, tol, carcs);
 	current = next;

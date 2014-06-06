@@ -634,9 +634,13 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    comb->aircode = gedp->ged_wdbp->wdb_air_default;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
-			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
+
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", comb->region_id);
+	    if (comb->aircode)
+		bu_vls_printf(gedp->ged_result_str, "air=%d, ", comb->aircode);
+	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
+			  comb->los,
+			  comb->GIFTmater);
 
 	    flags |= RT_DIR_REGION;
 	}
@@ -645,9 +649,9 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, GED_ERROR);
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 

@@ -91,7 +91,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     size_t cwidth;	/* column width */
     size_t numcol;	/* number of columns */
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -182,7 +182,7 @@ vls_long_dpp(struct ged *gedp,
     size_t max_type_len = 0;
     struct directory *dp;
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -302,7 +302,7 @@ vls_line_dpp(struct ged *gedp,
     int isComb, isRegion;
     int isSolid;
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -330,6 +330,7 @@ vls_line_dpp(struct ged *gedp,
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
+	    _ged_results_add(gedp->ged_results, list_of_names[i]->d_namep);
 	}
     }
 }
@@ -363,6 +364,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+    ged_results_clear(gedp->ged_results);
 
     bu_optind = 1;	/* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqA")) != -1) {
@@ -394,6 +396,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
+		_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
 		return GED_ERROR;
 	}
     }
@@ -412,6 +415,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	    /* should be even number of name/value pairs */
 	    bu_log("ls -A option expects even number of 'name value' pairs\n");
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
 	    return TCL_ERROR;
 	}
 
@@ -485,10 +489,12 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
 	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
-    else
+    else {
 	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+        _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
+    }
 
-    bu_free((genptr_t)dirp0, "_ged_getspace dp[]");
+    bu_free((void *)dirp0, "_ged_getspace dp[]");
 
     return GED_OK;
 }

@@ -43,7 +43,6 @@
 #include "nurb.h"
 
 
-
 extern int debug_file_count;
 
 struct pt_list
@@ -1109,7 +1108,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 
     nelem = BU_PTBL_END(eu_list) * 2;
     if (nelem == 0)
-       return 0;
+	return 0;
 
     edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
@@ -1732,7 +1731,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
     magic_type = bu_identify_magic(*magic_p);
     if (UNLIKELY(BU_STR_EQUAL(magic_type, "NULL") ||
-	BU_STR_EQUAL(magic_type, "Unknown_Magic"))) {
+		 BU_STR_EQUAL(magic_type, "Unknown_Magic"))) {
 	bu_log("Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type);
 	bu_bomb("Bad magic pointer passed to nmg_break_all_es_on_v()\n");
     }

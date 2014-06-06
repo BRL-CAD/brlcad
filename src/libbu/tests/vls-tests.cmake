@@ -18,7 +18,7 @@ add_test(bu_vls_vlsinit tester_bu_vls 2)
 
 add_test(bu_vls_access_1 tester_bu_vls 3 "Test 1 2 3")
 
-# For function #4 (bu_vls_strncpy) the <args> format is as follwos:
+# For function #4 (bu_vls_strncpy) the <args> format is as follows:
 #
 # string_orig string_new n expected_result
 #
@@ -28,7 +28,7 @@ add_test(bu_vls_access_1 tester_bu_vls 3 "Test 1 2 3")
 add_test(bu_vls_strncpy_1 tester_bu_vls 4 "Test 1" "Test 1 2" 4 "Test")
 add_test(bu_vls_strncpy_2 tester_bu_vls 4 "Test 1" "Test 1 2" 8 "Test 1 2")
 
-# For function #5 (bu_vls_strdup) the <args> format is as follwos:
+# For function #5 (bu_vls_strdup) the <args> format is as follows:
 #
 # string_to_test
 #

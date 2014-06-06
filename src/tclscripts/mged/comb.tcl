@@ -878,7 +878,7 @@ proc comb_apply { id } {
 
     set top .$id.comb
 
-    # get the Boolean expression fron the text widget
+    # get the Boolean expression from the text widget
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
     # if someone has edited the combination name, take care about

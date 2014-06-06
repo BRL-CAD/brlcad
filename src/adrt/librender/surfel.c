@@ -83,7 +83,7 @@ render_surfel_init(render_t *render, const char *buf)
 {
     render_surfel_t *d;
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
     render->work = render_surfel_work;

@@ -314,7 +314,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* Solid is OK, compute constant terms now */
 
     BU_GET(superell, struct superell_specific);
-    stp->st_specific = (genptr_t)superell;
+    stp->st_specific = (void *)superell;
 
     superell->superell_n = eip->n;
     superell->superell_e = eip->e;
@@ -1020,7 +1020,7 @@ rt_superell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "superell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

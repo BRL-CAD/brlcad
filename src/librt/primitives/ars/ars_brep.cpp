@@ -53,9 +53,9 @@ rt_ars_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct model *arsm = nmg_mm();
     struct nmgregion *arsr;
 
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_ars_tess(&arsr, arsm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arsm;
+    tmp_internal->idb_ptr = (void *)arsm;
     rt_nmg_brep(b, tmp_internal, tol);
 
     FREE_MODEL(arsm);

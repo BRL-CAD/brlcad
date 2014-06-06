@@ -5,7 +5,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
   )
 
-set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../g-ap242/AP242_managed_model_based_3d_engineering_20131030.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../g-ap242/ap242.exp)
 add_definitions(-DAP242)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap242g)

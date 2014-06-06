@@ -31,7 +31,7 @@ XLIB = -L/usr/X11R6/lib -lX11
 LIBS = $(XLIB) -lm                      #platforms that need libm
 
 CPPFLAGS=-I. $(XINC) -DPNG_USER_CONFIG -DNO_GZCOMPRESS -DZ_SOLO -DNO_GZIP
-CFLAGS=-O1
+CFLAGS=-O1 -Wall
 
 C=.c
 O=.o
@@ -97,7 +97,7 @@ OBJS    = $(PROGOBJS) $(PNGOBJS) $(ZOBJS)
 # implicit make rules -------------------------------------------------------
 
 .c$(O):
-	$(CC) $(CPPFLAGS) -c $(CFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
 # dependencies
 
@@ -115,12 +115,12 @@ $(PNGCONF): $(PNGSRC)/scripts/pnglibconf.mak $(ZH)\
 	$(PNGSRC)/scripts/pnglibconf.dfa \
 	$(PNGSRC)/scripts/options.awk pngusr.h pngusr.dfa
 	$(RM) pnglibconf.h pnglibconf.dfn
-	$(MAKE) $(MAKEFLAGS) -f $(PNGSRC)/scripts/pnglibconf.mak\
+	$(MAKE) -f $(PNGSRC)/scripts/pnglibconf.mak $(MAKEFLAGS)\
 	    srcdir=$(PNGSRC) CPPFLAGS="-DPNG_USER_CONFIG -I."\
 	    DFA_XTRA="pngusr.dfa" $@
 
 clean:
-	$(MAKE) $(MAKEFLAGS) -f $(PNGSRC)/scripts/pnglibconf.mak\
+	$(MAKE) -f $(PNGSRC)/scripts/pnglibconf.mak $(MAKEFLAGS)\
 	    srcdir=$(PNGSRC) clean
 	$(RM) rpng2-x$(O)
 	$(RM) rpng2-x$(E)

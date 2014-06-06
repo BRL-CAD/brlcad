@@ -280,7 +280,7 @@ do_shot(struct shot *sh, struct application *ap)
 
     VMOVE(ap->a_ray.r_pt, sh->pt);
     VMOVE(ap->a_ray.r_dir, sh->dir);
-    ap->a_uptr = (genptr_t)sh;
+    ap->a_uptr = (void *)sh;
 
     ap->a_hit = hit;
     ap->a_miss = miss;

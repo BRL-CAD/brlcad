@@ -123,7 +123,7 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 ANALYZE_EXPORT extern void
-voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
+voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
 
 
 /* diff.c */

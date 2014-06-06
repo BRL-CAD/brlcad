@@ -40,16 +40,16 @@
 #define PAINT_EXTERIOR 0
 
 #define BU_LIST_LINK_CHECK(p) \
-	if (BU_LIST_PNEXT_PLAST(bu_list, p) != p || \
-	    BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
-		bu_log("%s[%d]: linked list integrity check failed\n", \
-				__FILE__, __LINE__); \
-		bu_log("%p->forw(%p)->back = %p\n", \
-		       (void *)(p), (void *)(p)->forw, (void *)(p)->forw->back); \
-		bu_log("%p->back(%p)->forw = %p\n", \
-		       (void *)(p), (void *)(p)->back, (void *)(p)->back->forw); \
-		bu_bomb("Goodbye\n"); \
-	}
+    if (BU_LIST_PNEXT_PLAST(bu_list, p) != p || \
+	BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
+	bu_log("%s[%d]: linked list integrity check failed\n", \
+	       __FILE__, __LINE__); \
+	bu_log("%p->forw(%p)->back = %p\n", \
+	       (void *)(p), (void *)(p)->forw, (void *)(p)->forw->back); \
+	bu_log("%p->back(%p)->forw = %p\n", \
+	       (void *)(p), (void *)(p)->back, (void *)(p)->back->forw); \
+	bu_bomb("Goodbye\n"); \
+    }
 
 
 /**
@@ -110,7 +110,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
     }
     eur = (const struct edgeuse *)NULL;
 
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	struct bn_tol tol;	/* HACK */
 	tol.magic = BN_TOL_MAGIC;

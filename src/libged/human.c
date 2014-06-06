@@ -1067,7 +1067,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
     VSET(rightVect, 90, 0, 0); /*Right, down Y axis */
     VSET(leftVect, -90, 0, 0); /*Left, up Y axis */
 
-    switch((int)stance) {
+    switch ((int)stance) {
 	case 0:
 	    bu_log("Making it stand\n");
 	    VMOVE(dude->arms.lArmDirection, downVect);

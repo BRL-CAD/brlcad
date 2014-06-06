@@ -342,23 +342,23 @@ rts_clean( int sessionid)
     bu_free( (char *)rts_geometry, "rts_geometry" );
     rts_geometry = NULL;
 
-    if(title != NULL) {
+    if (title != NULL) {
 	bu_free(title, "title");
 	title = NULL;
     }
 
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
+    for ( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
 	struct bu_vlb *vlb;
 
 	ap = (struct application *)BU_PTBL_GET( &apps, i);
 
 	vlb = (struct bu_vlb *)ap->a_uptr;
-	if(vlb != NULL) {
+	if (vlb != NULL) {
 	    bu_vlb_free(vlb);
 	    bu_free(vlb, "vlb");
 	}
 
-	if( ap->a_resource != NULL ) {
+	if ( ap->a_resource != NULL ) {
 	    rt_clean_resource_complete(NULL, ap->a_resource);
 	    bu_free(ap->a_resource, "resource");
 	}
@@ -436,7 +436,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rts_geometry = NULL;
     }
 
-    if( !BU_PTBL_TEST(&apps) ) {
+    if ( !BU_PTBL_TEST(&apps) ) {
 	bu_ptbl_init( &apps, 8, "application structure list" );
     }
 
@@ -527,16 +527,16 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	/* create the hash table of region names */
 	BU_ALLOC(rts_rtip->rtrti_region_names, Tcl_HashTable);
 	Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
-	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
+	for ( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
 	    Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
-	    if( !newPtr ) {
-		if( verbose ) {
+	    if ( !newPtr ) {
+		if ( verbose ) {
 		    bu_log( "Already have an entry for region %s\n", rtip->Regions[regno]->reg_name);
 		}
 		continue;
 	    }
-	    if( verbose ) {
+	    if ( verbose ) {
 		bu_log( "Setting hash table for key %s to %d\n", rtip->Regions[regno]->reg_name, regno);
 	    }
 	    Tcl_SetHashValue(entry, (ClientData)regno );
@@ -566,7 +566,7 @@ rts_miss( struct application *ap )
 
     /* get the results pointer from the application structure */
     vlb = (struct bu_vlb *)ap->a_uptr;
-    if(vlb != NULL) {
+    if (vlb != NULL) {
 	unsigned char buffer[SIZEOF_NETWORK_LONG];
 	*(uint32_t *)buffer = htonl(numPartitions);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
@@ -646,9 +646,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* calculate the entrance and exit obliquities */
 	dot = VDOT( reverse_ray_dir, enterNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	inObl = acos(dot);
@@ -660,9 +660,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	dot = VDOT( ap->a_ray.r_dir, exitNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	outObl = acos(dot);
@@ -740,7 +740,7 @@ printHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
@@ -749,7 +749,7 @@ printHits(struct bu_vlb *vlb)
 	c += SIZEOF_NETWORK_LONG;
 	bu_log("\tnumber of partitions: %d\n", numPartitions);
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -1454,7 +1454,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
-    for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
+    for (rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
 	jobject ray, start, direction;
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
@@ -1940,7 +1940,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     jNameArray = (*env)->NewObjectArray( env, region_count, (*env)->FindClass(env, "java/lang/String"), (jobject)NULL);
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
-    while( entry != NULL ) {
+    while ( entry != NULL ) {
 	region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
 	region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
 	(*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);

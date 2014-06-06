@@ -52,7 +52,6 @@ void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)
 }
 
 
-
 int
 main(int argc, const char **argv)
 {
@@ -329,7 +328,6 @@ main(int argc, const char **argv)
 	}
 
     }
-
 
 
     return 0;

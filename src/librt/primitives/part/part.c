@@ -294,11 +294,11 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_PART_CK_MAGIC(pip);
 
     BU_GET(part, struct part_specific);
-    stp->st_specific = (genptr_t)part;
+    stp->st_specific = (void *)part;
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
-    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+    if (rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
 	/* Compute bounding sphere*/
@@ -878,7 +878,7 @@ rt_part_free(register struct soltab *stp)
 	(struct part_specific *)stp->st_specific;
 
     BU_PUT(part, struct part_specific);
-    stp->st_specific = GENPTR_NULL;
+    stp->st_specific = ((void *)0);
 }
 
 
@@ -1737,7 +1737,7 @@ rt_part_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "particle ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

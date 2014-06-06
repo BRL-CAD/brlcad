@@ -114,7 +114,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	    t2 = eg->k.knots[eg->k.k_size-1];
 	    coords = RT_NURB_EXTRACT_COORDS(eg->pt_type);
 
-	    for (i = 0; i < 5; i++) {
+	    for (i = 0; coords > 0 && i < 5; i++) {
 		fastf_t t;
 
 		t = t1 + (t2 - t1) * 0.2 * (fastf_t)i;
@@ -122,11 +122,6 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		VSETALLN(crv_pt, 0.0, coords);
 		rt_nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
-		    /* FIXME: gcc 4.8.1 reports error here (rel build):
-/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_misc.c:128:42: error: array subscript is below array bounds [-Werror=array-bounds]
-       VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
-					  ^
-		    */
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
 		    VMOVE(pts[edge_no], crv_pt);
@@ -1968,7 +1963,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    NMG_CK_LOOPUSE(fu2lu);
 	    NMG_CK_LOOP(fu2lu->l_p);
 
-	    switch(fu2lu->orientation) {
+	    switch (fu2lu->orientation) {
 		case OT_BOOLPLACE:
 		    /*  If this loop is destined for removal
 		     *  by sanitize(), skip it.
@@ -3859,7 +3854,7 @@ struct nmg_split_loops_state
 
 
 void
-nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
+nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -3977,15 +3972,19 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 	    NMG_GET_FU_PLANE(plane, fu);
 
 	    new_fu = nmg_mk_new_face_from_loop(lu);
-	    nmg_face_g(new_fu, plane);
+	    if (new_fu) {
 
-	    for (idx=0; idx<BU_PTBL_END(&inside_loops); idx++) {
-		lu1 = (struct loopuse *)BU_PTBL_GET(&inside_loops, idx);
-		nmg_move_lu_between_fus(new_fu, fu, lu1);
-		otopp_loops--;
+		nmg_face_g(new_fu, plane);
+
+		for (idx=0; idx<BU_PTBL_END(&inside_loops); idx++) {
+		    lu1 = (struct loopuse *)BU_PTBL_GET(&inside_loops, idx);
+		    nmg_move_lu_between_fus(new_fu, fu, lu1);
+		    otopp_loops--;
+		}
+		nmg_face_bb(new_fu->f_p, tol);
+		bu_ptbl_reset(&inside_loops);
 	    }
-	    nmg_face_bb(new_fu->f_p, tol);
-	    bu_ptbl_reset(&inside_loops);
+
 	    otsame_loops--;
 	    lu = lu_next;
 	}
@@ -4012,8 +4011,10 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 		    NMG_GET_FU_PLANE(plane, fu->fumate_p);
 		}
 		new_fu = nmg_mk_new_face_from_loop(lu);
-		nmg_face_g(new_fu, plane);
-		nmg_face_bb(new_fu->f_p, tol);
+		if (new_fu) {
+		    nmg_face_g(new_fu, plane);
+		    nmg_face_bb(new_fu->f_p, tol);
+		}
 	    }
 
 	    lu = next_lu;
@@ -4058,7 +4059,7 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
     sl_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_split_loops_into_faces: flags");
     sl_state.tol = tol;
 
-    nmg_visit(magic_p, &htab, (genptr_t)&sl_state);
+    nmg_visit(magic_p, &htab, (void *)&sl_state);
 
     count = sl_state.split;
 
@@ -4520,7 +4521,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (genptr_t)m;
+    intern.idb_ptr = (void *)m;
 
     if (db_version(fp->dbip) < 5) {
 	BU_EXTERNAL_INIT(&ext);
@@ -4571,7 +4572,7 @@ struct nmg_unbreak_state
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
+nmg_unbreak_handler(uint32_t *eup, void *state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
     struct edge *e;
@@ -4668,7 +4669,7 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
     ub_state.unbroken = 0;
     ub_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_unbreak_region_edges: flags");
 
-    nmg_visit(magic_p, &htab, (genptr_t)&ub_state);
+    nmg_visit(magic_p, &htab, (void *)&ub_state);
 
     count = ub_state.unbroken;
 
@@ -4836,7 +4837,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
     vg = new_v->vg_p;
     NMG_CK_VERTEX_G(vg);
 
-    switch(BU_PTBL_END(faces)) {
+    switch (BU_PTBL_END(faces)) {
 	struct face *fp1, *fp2, *fp3;
 	plane_t pl1;
 	fastf_t vert_move_len;
@@ -6111,6 +6112,10 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 
 	/* make the new face from the new loop */
 	new_fu = nmg_mk_new_face_from_loop(lu);
+	if (!new_fu) {
+	    edge_no++;
+	    continue;
+	}
 
 	/* update the intersect_fus structs (probably not necessary at this point) */
 	j_fus->fu[0] = new_fu;
@@ -7323,7 +7328,7 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 	vect_t edge_vec;
 
 	for (i  = 0; i < nused; i++) {
-	    switch(vp->cmd[i]) {
+	    switch (vp->cmd[i]) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_TRI_MOVE:
@@ -8824,7 +8829,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     VMOVE(start, i_start);
     VMOVE(center, i_center);
     VMOVE(end, i_end);
-    switch(point_type) {
+    switch (point_type) {
 	case RT_NURB_PT_XY:
 	case RT_NURB_PT_UV:
 	    ncoords = 3;
@@ -9231,7 +9236,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
 	goto not_arb;
 
     /* which type of arb is this?? */
-    switch(BU_PTBL_END(tab)) {
+    switch (BU_PTBL_END(tab)) {
 	case 4:		/* each face must have 3 vertices */
 	    if (three_verts != 4 || four_verts != 0)
 		goto not_arb;
@@ -9306,7 +9311,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     if (BU_LIST_NEXT_NOT_HEAD(&s->l, &r->s_hd))
 	return 0;
 
-    switch(Shell_is_arb(s, &tab)) {
+    switch (Shell_is_arb(s, &tab)) {
 	case 0:
 	    ret_val = 0;
 	    break;
@@ -10977,7 +10982,7 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch(*cmd) {
+	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
 		    VMOVE(pt2, *pt);

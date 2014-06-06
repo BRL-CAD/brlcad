@@ -71,7 +71,7 @@
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 #ifndef HAVE_VFORK
@@ -725,7 +725,7 @@ read_rc_file(void)
 static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
-    return((t1->tv_sec - t0->tv_sec) +
+    return ((t1->tv_sec - t0->tv_sec) +
 	   (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
@@ -3163,9 +3163,9 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     /* Consider the next assignment to have been sent "now" */
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
-    bu_struct_wrap_buf(&ext, (genptr_t) buf);
+    bu_struct_wrap_buf(&ext, (void *) buf);
 
-    cnt = bu_struct_import((genptr_t)&info, desc_line_info, &ext);
+    cnt = bu_struct_import((void *)&info, desc_line_info, &ext);
     if (cnt < 0) {
 	bu_log("bu_struct_import error, %zu\n", cnt);
 	drop_server(sp, "bu_struct_import error");

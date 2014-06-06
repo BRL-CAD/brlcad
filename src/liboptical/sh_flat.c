@@ -51,10 +51,10 @@
 #include "optical.h"
 
 
-HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void flat_print(register struct region *rp, genptr_t dp);
-HIDDEN void flat_free(genptr_t cp);
+HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void flat_print(register struct region *rp, void *dp);
+HIDDEN void flat_free(void *cp);
 
 /* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
@@ -195,7 +195,7 @@ singleNormalizedInput_hook(const struct bu_structparse *sdp,
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
 
     register struct flat_specific *flat_sp;
@@ -251,7 +251,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
  * one we are shading and blend accordingly with the flat color.
  */
 int
-flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
 
     register struct flat_specific *flat_sp = (struct flat_specific *)dp;
@@ -293,14 +293,14 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
 
 
 HIDDEN void
-flat_print(register struct region *rp, genptr_t dp)
+flat_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
 
 HIDDEN void
-flat_free(genptr_t cp)
+flat_free(void *cp)
 {
     BU_PUT(cp, struct flat_specific);
 }

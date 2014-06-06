@@ -188,15 +188,15 @@ main(int argc, char *argv[])
 	function_num = 0;
 
     switch (function_num) {
-        case 1:
+	case 1:
 	    return test_bn_3pts_collinear(argc, argv);
-        case 2:
+	case 2:
 	    return test_bn_3pts_distinct(argc, argv);
-        case 3:
+	case 3:
 	    return test_bn_distsq_line3_pt3(argc, argv);
-        case 4:
+	case 4:
 	    return test_bn_distsq_pt3_lseg3_v2(argc, argv);
-        case 5:
+	case 5:
 	    return test_bn_mk_plane_3pts(argc, argv);
     }
     return 1;

@@ -134,64 +134,64 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
     info->instance_list->Append((STEPentity *)(info->closed_shell), completeSE);
 
     // Faces
-    for(v_it = info->faces.begin(); v_it != info->faces.end(); ++v_it) {
+    for (v_it = info->faces.begin(); v_it != info->faces.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // inner_bounds
-    for(v_it = info->inner_bounds.begin(); v_it != info->inner_bounds.end(); ++v_it) {
+    for (v_it = info->inner_bounds.begin(); v_it != info->inner_bounds.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // outer_bounds
-    for(v_it = info->outer_bounds.begin(); v_it != info->outer_bounds.end(); ++v_it) {
+    for (v_it = info->outer_bounds.begin(); v_it != info->outer_bounds.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // edge_loops
-    for(v_it = info->edge_loops.begin(); v_it != info->edge_loops.end(); ++v_it) {
+    for (v_it = info->edge_loops.begin(); v_it != info->edge_loops.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // oriented_edges
-    for(v_it = info->oriented_edges.begin(); v_it != info->oriented_edges.end(); ++v_it) {
+    for (v_it = info->oriented_edges.begin(); v_it != info->oriented_edges.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // edge_curves
-    for(v_it = info->edge_curves.begin(); v_it != info->edge_curves.end(); ++v_it) {
+    for (v_it = info->edge_curves.begin(); v_it != info->edge_curves.end(); ++v_it) {
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // vertex_pnts
-    for(v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
+    for (v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     /* Geometry */
 
     // surfaces
-    for(v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
+    for (v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // three_dimensional_curves
-    for(v_it = info->three_dimensional_curves.begin(); v_it != info->three_dimensional_curves.end(); ++v_it) {
+    for (v_it = info->three_dimensional_curves.begin(); v_it != info->three_dimensional_curves.end(); ++v_it) {
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // directions
-    for(v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
+    for (v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // vectors
-    for(v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
+    for (v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // cartesian_pnts
-    for(v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {
+    for (v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
@@ -432,15 +432,15 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
 	     * surface composites do not offer a hook that is compatible with the C++
 	     * surface_form_ method.*/
 	    /*
-	    if(rev_surface->IsPlanar()) {
+	    if (rev_surface->IsPlanar()) {
 	    }
-	    if(rev_surface->IsSphere()) {
+	    if (rev_surface->IsSphere()) {
 	    }
-	    if(rev_surface->IsCylinder()) {
+	    if (rev_surface->IsCylinder()) {
 	    }
-	    if(rev_surface->IsCone()) {
+	    if (rev_surface->IsCone()) {
 	    }
-	    if(rev_surface->IsTorus()) {
+	    if (rev_surface->IsTorus()) {
 	    }*/
 	    /* If none of the other conditions are satisfied, by definition we still have
 	     * a surface of revolution...*/

@@ -146,7 +146,7 @@ int
 region_start(struct db_tree_state *tsp,
 	     const struct db_full_path *pathp,
 	     const struct rt_comb_internal *combp,
-	     genptr_t client_data)
+	     void *client_data)
 {
     char *name;
     struct directory *dp;
@@ -198,7 +198,7 @@ union tree *
 region_end (struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    union tree *curtree,
-	    genptr_t UNUSED(client_data))
+	    void *UNUSED(client_data))
 {
     char *name;
 
@@ -218,7 +218,7 @@ union tree *
 primitive_func(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       struct rt_db_internal *ip,
-	       genptr_t UNUSED(client_data))
+	       void *UNUSED(client_data))
 {
     struct directory *dp;
     char *name;
@@ -429,7 +429,7 @@ main(int argc, char *argv[])
      */
     for (i=bu_optind; i<argc; i++) {
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
-		     &init_state, region_start, region_end, primitive_func, (genptr_t) &your_data);
+		     &init_state, region_start, region_end, primitive_func, (void *) &your_data);
     }
 
     return 0;

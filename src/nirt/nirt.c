@@ -38,7 +38,7 @@
 /* private */
 #include "./nirt.h"
 #include "./usrfmt.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /* bleh */
@@ -108,16 +108,16 @@ void printusage(void)
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
     bu_log(" -T n       set rt_bot_mintie=n\n");
-/*  bu_log(" -E         WHAT IS -E USED FOR?\n"); */
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
     bu_log(" -L         list output formatting options\n");
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -O action  handle overlap claims via action\n");
     bu_log(" -s         run in silent (non-verbose) mode\n");
     bu_log(" -v         run in verbose mode\n");
-    bu_log(" -H n       enable/disable informational header\n");
-    bu_log("            (on by default, always off in silent mode)\n");
+    bu_log(" -H n       flag (n) for enable/disable informational header\n");
+    bu_log("            (n=1 [on] by default, always off in silent mode)\n");
     bu_log(" -u n       set use_air=n (default 0)\n");
     bu_log(" -x v       set librt(3) diagnostic flag=v\n");
     bu_log(" -X v       set nirt diagnostic flag=v\n");
@@ -300,7 +300,7 @@ free_script(struct script_rec *srp)
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
     bu_vls_free(&(srp->sr_script));
-    bu_free((genptr_t) srp, "script record");
+    bu_free((void *) srp, "script record");
 }
 
 
@@ -558,7 +558,7 @@ main(int argc, char *argv[])
     ap.a_rt_i = rtip;         /* rt_i pointer */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
-    ap.a_uptr = (genptr_t)a_tab.attrib;
+    ap.a_uptr = (void *)a_tab.attrib;
 
     /* initialize variables */
     azimuth() = 0.0;

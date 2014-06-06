@@ -75,7 +75,7 @@ db5_attr_registry_free(struct db5_registry *registry)
     if (!registry) return;
     attr_regmap_t *regmap = static_cast<attr_regmap_t *>(registry->internal);
     attr_regmap_it it;
-    for(it = regmap->begin(); it != regmap->end(); it++) {
+    for (it = regmap->begin(); it != regmap->end(); it++) {
 	struct db5_attr_ctype *attr = (struct db5_attr_ctype *)(*it).second;
 	db5_attr_ctype_free(attr);
     }
@@ -163,7 +163,7 @@ db5_attr_dump(struct db5_registry *registry)
     if (!regmap->size()) return NULL;
     attr_regmap_it it;
     struct db5_attr_ctype **attr_array = (struct db5_attr_ctype **)bu_calloc(regmap->size() + 1, sizeof(struct db5_attr_ctype *), "attribute pointer list");
-    for(it = regmap->begin(); it != regmap->end(); it++) {
+    for (it = regmap->begin(); it != regmap->end(); it++) {
 	struct db5_attr_ctype *attr = (struct db5_attr_ctype *)(*it).second;
 	attr_array[i] = attr;
 	i++;

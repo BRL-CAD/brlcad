@@ -82,7 +82,7 @@ AdvancedBrepShapeRepresentation::GetAxis2Placement3d()
 {
     std::list<RepresentationItem *>::iterator iter;
     Axis2Placement3D *axis = NULL;
-    for(iter = items.begin(); iter != items.end(); iter++) {
+    for (iter = items.begin(); iter != items.end(); iter++) {
 	axis = dynamic_cast<Axis2Placement3D *>(*iter);
 	if (axis != NULL)
 	    break;

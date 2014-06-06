@@ -709,15 +709,43 @@
 	  use Tcl scripting to operate on the resulting object set.
 	  <literallayout>
 		<computeroutput>
-		  <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
-		  <prompt>mged&gt;</prompt><userinput> set search_results [search all.g -type region ! -below -bool - -and ! -below -bool +]</userinput>
-		  <prompt>mged&gt;</prompt><userinput> foreach i $search_results {draw $i}</userinput>
+   <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
+   <prompt>mged&gt;</prompt><userinput> set search_results [search all.g -type region ! -below -bool - -and ! -below -bool +]</userinput>
+   <prompt>mged&gt;</prompt><userinput> foreach i $search_results {draw $i}</userinput>
 		</computeroutput>
 	  </literallayout>
 	  The above set of commands finds all regions below the <emphasis>all.g</emphasis>
 	  object that contain only unioned objects and draws those regions in the MGED
 	  display manager window.
 	</para>
+	<para>
+	  Another common operation to apply to a set of results is to set
+	  their colors to random RGB values (here we use random numbers and avoid any value less than 30 to keep objects more visible):
+	  <literallayout>
+		<computeroutput>
+   <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
+   <prompt>mged&gt;</prompt><userinput> set search_results [search -type region]</userinput>
+   <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
+		</computeroutput>
+	  </literallayout>
+	  This approach uses Tcl's random number generator to generate different RGB strings to use for each object in the results list.
+	  If we also want to add transparency to the resulting model, an additional foreach line on the same results set can do the job:
+	  <literallayout>
+		<computeroutput>
+   <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
+		</computeroutput>
+	  </literallayout>
+	</para>
+	<note>
+	   <para>
+		Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table before the colors on the individual regions will "take":
+		<literallayout>
+			<computeroutput>
+    <prompt>mged&gt;</prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
+			</computeroutput>
+		</literallayout>
+	   </para>
+	</note>
   </example>
 
 

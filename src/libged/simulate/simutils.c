@@ -122,7 +122,7 @@ HIDDEN int
 find_solid(struct db_i *dbip,
 	 struct rt_comb_internal *comb,
 	 union tree *comb_leaf,
-	 genptr_t object)
+	 void *object)
 {
     char *obj_name;
 
@@ -144,7 +144,7 @@ check_tree_funcleaf(
     struct rt_comb_internal *comb,
     union tree *comb_tree,
     int (*leaf_func)(),
-    genptr_t user_ptr1)
+    void *user_ptr1)
 {
 	int rv = NOT_FOUND;
 
@@ -763,7 +763,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	    cmd_args[2] = (char *)0;
 	    argc = 2;
 
-	    switch(rb->bt_manifold[i].num_contacts) {
+	    switch (rb->bt_manifold[i].num_contacts) {
 		case 1:
 		    bu_log("1 contact got, no manifold drawn");
 		    break;

@@ -107,7 +107,7 @@ single_thread_test(void)
 
 struct increment_thread_args { int *parallel, *running; unsigned long reps, *counter; };
 static void
-increment_thread(int ncpu, genptr_t pargs)
+increment_thread(int ncpu, void *pargs)
 {
     struct increment_thread_args *args = (struct increment_thread_args *)pargs;
     unsigned long i;

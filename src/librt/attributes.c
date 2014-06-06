@@ -404,7 +404,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 			   DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (genptr_t)&minor_type);
+	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (void *)&minor_type);
 	dp->d_major_type = DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	if (db_put_external(&global, dp, dbip) < 0) {
 	    bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME);

@@ -81,8 +81,8 @@ plot_close(struct dm *dmp)
 	fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
     bu_vls_free(&dmp->dm_pathName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
-    bu_free((genptr_t)dmp, "plot_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+    bu_free((void *)dmp, "plot_close: dmp");
 
     return TCL_OK;
 }
@@ -307,7 +307,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

@@ -87,8 +87,15 @@
       bu_log("%s\n", path_str);
       bu_free(path_str, "free db_fullpath_to_string allocation");
   }
-  db_free_search_tbl(&results);
+  db_search_free(&results);
  @endcode
+ *
+ * Note:
+ * Be aware that if you are using db_search to filter pre-built lists of paths,
+ * you need to check that your generated path list is NOT empty before calling
+ * db_search.  If you accidentally send an empty path list into db_search,
+ * it will assume you wanted a tops list, which has a good chance of returning
+ * unwanted results.
  *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,

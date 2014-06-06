@@ -75,7 +75,7 @@ find_q_pts(struct Mesh_Info *mesh)
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
 
-    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+    for (f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	ON_3dPoint p1, p2, p3;
 
 	l_it = (*f_it).second.begin();
@@ -108,7 +108,7 @@ point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a)
     range = mesh->point_neighbors.equal_range(p);
 
     ON_3dPoint psum = ON_3dPoint(0, 0, 0);
-    for(p_it = range.first; p_it != range.second; p_it++) {
+    for (p_it = range.first; p_it != range.second; p_it++) {
 	psum = psum + *mesh->points_p0.At((int)(*p_it).second);
     }
 
@@ -356,7 +356,7 @@ get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > *edge
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
 
-    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+    for (f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	l_it = (*f_it).second.begin();
 	edges->insert(mk_edge((*l_it), (*(l_it+1))));
 	edges->insert(mk_edge((*(l_it+1)), (*(l_it+2))));
@@ -416,12 +416,12 @@ iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh)
     std::cout << "outer face count: " << outer_faces.size() << "\n";
 
     // Relax old points here
-    for(size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
+    for (size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
 	mesh->points_p0.Append(*starting_mesh->points_p0.At((int)pcnt));
 	mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
     }
 
-    for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
+    for (f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	mesh->points_p0.Append(starting_mesh->points_q[(int)(*f_it).first]);
 	mesh->iteration_of_insert[mesh->points_p0.Count()-1] = mesh->iteration_cnt;
 	starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
@@ -429,7 +429,7 @@ iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh)
 
     // Use the old faces to guide the insertion of the new.
     size_t face_cnt = 0;
-    for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
+    for (f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	std::set<std::pair<size_t, size_t> > face_old_edges;
 
 	size_t q0 = starting_mesh->index_in_next[(*f_it).first];
@@ -439,7 +439,7 @@ iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh)
 	face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
 	face_old_edges.insert(std::make_pair((*(l_it+2)), (*l_it)));
 
-	for(e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
+	for (e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
 	    std::pair<size_t, size_t> edge = mk_edge((*e_it).first, (*e_it).second);
 
 	    if (old_edges.find(edge) != old_edges.end()) {
@@ -535,7 +535,7 @@ main(int argc, char *argv[])
 	int r = int(256*drand48() + 1.0);
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
-	for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+	for (f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	    l_it = (*f_it).second.begin();
 	    plot_face(&mesh->points_p0[(int)(*l_it)], &mesh->points_p0[(int)(*(l_it+1))], &mesh->points_p0[(int)(*(l_it+2))], r, g , b, plot_file);
 	}
@@ -545,7 +545,7 @@ main(int argc, char *argv[])
     // When constructing the final BoT, use the limit points for all
     // vertices
     ON_3dPointArray points_inf;
-    for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
+    for (size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
         points_inf.Append(*mesh->points_p0.At((int)v));
 	//point_inf(v, mesh, &points_inf);
     }
@@ -554,13 +554,13 @@ main(int argc, char *argv[])
     // average the change in position of the original vertices to get a
     // scaling factor and apply it to all points in the final mesh.
     fastf_t scale = 0.0;
-    for(size_t pcnt = 0; pcnt < bot_ip->num_vertices; pcnt++) {
+    for (size_t pcnt = 0; pcnt < bot_ip->num_vertices; pcnt++) {
 	ON_3dVector v1(ON_3dPoint(&bot_ip->vertices[pcnt*3]));
 	ON_3dVector v2(*points_inf.At((int)pcnt));
 	scale += 1 + (v1.Length() - v2.Length())/v1.Length();
     }
     scale = scale / bot_ip->num_vertices;
-    for(size_t pcnt = 0; pcnt < (size_t)points_inf.Count(); pcnt++) {
+    for (size_t pcnt = 0; pcnt < (size_t)points_inf.Count(); pcnt++) {
 	ON_3dPoint p0(*points_inf.At((int)pcnt));
 	ON_3dPoint p1 = p0 * scale;
 	*points_inf.At((int)pcnt) = p1;
@@ -570,14 +570,14 @@ main(int argc, char *argv[])
 
     fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * points_inf.Count() * 3, "new verts");
     int *faces = (int *)bu_malloc(sizeof(int) * mesh->face_pts.size() * 3, "new faces");
-    for(size_t v = 0; v < (size_t)points_inf.Count(); v++) {
+    for (size_t v = 0; v < (size_t)points_inf.Count(); v++) {
 	vertices[v*3] = points_inf[(int)v].x;
 	vertices[v*3+1] = points_inf[(int)v].y;
 	vertices[v*3+2] = points_inf[(int)v].z;
     }
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
-    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+    for (f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	l_it = (*f_it).second.begin();
 	faces[(*f_it).first*3] = (*l_it);
 	faces[(*f_it).first*3+1] = (*(l_it + 1));

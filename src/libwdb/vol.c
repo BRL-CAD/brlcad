@@ -59,7 +59,7 @@ mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
     VMOVE(vol->cellsize, cellsize);
     MAT_COPY(vol->mat, mat);
 
-    return wdb_export(fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm);
+    return wdb_export(fp, name, (void *)vol, ID_VOL, mk_conv2mm);
 }
 
 

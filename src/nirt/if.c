@@ -200,7 +200,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 	if (need_to_free) {
 	    bu_vls_free(&claimant_list);
-	    bu_free((genptr_t)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
+	    bu_free((void *)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
 	    need_to_free = 0;
 	}
 
@@ -235,8 +235,8 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 	    report(FMT_OVLP);
 
 #ifndef NIRT_OVLP_PATH
-	    bu_free((genptr_t)copy_ovlp_reg1, "copy_ovlp_reg1");
-	    bu_free((genptr_t)copy_ovlp_reg2, "copy_ovlp_reg2");
+	    bu_free((void *)copy_ovlp_reg1, "copy_ovlp_reg1");
+	    bu_free((void *)copy_ovlp_reg2, "copy_ovlp_reg2");
 #endif
 
 	    del_ovlp(ovp);

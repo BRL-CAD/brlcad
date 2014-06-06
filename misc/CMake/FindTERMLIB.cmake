@@ -41,6 +41,8 @@
 #  TERMLIB_FOUND         - library found.
 #
 #=============================================================================
+include(CheckLibraryExists)
+
 macro(TERMLIB_CHECK_LIBRARY targetname lname func)
   if(NOT ${targetname}_LIBRARY)
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})

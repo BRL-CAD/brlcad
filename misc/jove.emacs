@@ -185,7 +185,7 @@ go to the current line."
 ;;    ;; Microsoft C/C++, symantec
 ;;    ("\n\\(\\([a-zA-Z]:\\)?[^:( \t\n-]+\\)[:(][ \t]*\\([0-9]+\\)[:) \t]" 1 3)))
 
-;;replace occurences of a with b in path
+;;replace occurrences of a with b in path
 (defun replace-char (path a b)
   (progn
     (while (string-match a path)

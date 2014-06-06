@@ -48,7 +48,7 @@ static union tree *
 draw_check_region_end(struct db_tree_state *tsp,
 			 const struct db_full_path *pathp,
 			 union tree *curtree,
-			 genptr_t UNUSED(client_data))
+			 void *UNUSED(client_data))
 {
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
@@ -62,7 +62,7 @@ static union tree *
 draw_check_leaf(struct db_tree_state *tsp,
 		   const struct db_full_path *pathp,
 		   struct rt_db_internal *ip,
-		   genptr_t client_data)
+		   void *client_data)
 {
     union tree *curtree;
     int ac = 1;
@@ -174,7 +174,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 	    break;
     }
 
-    bu_free((genptr_t)av[0], "bot_check_leaf: av[0]");
+    bu_free((void *)av[0], "bot_check_leaf: av[0]");
 
     return curtree;
 }
@@ -425,7 +425,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 
 
 static union tree *
-wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
@@ -439,7 +439,7 @@ append_solid_to_display_list(
 	struct db_tree_state *tsp,
 	const struct db_full_path *pathp,
 	struct rt_db_internal *ip,
-	genptr_t client_data)
+	void *client_data)
 {
     point_t min, max;
     struct solid *sp;
@@ -465,7 +465,7 @@ append_solid_to_display_list(
 		"append_solid_to_display_list(%s) path='%s'\n",
 		ip->idb_meth->ft_name, sofar);
 
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     /* create solid */
@@ -815,7 +815,7 @@ redraw_solid(struct ged *gedp, struct solid *sp)
  * (converted from FASTGEN) more rapidly.
  */
 static int
-draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *client_data)
 {
     union tree *tp;
     struct directory *dp;
@@ -828,7 +828,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
 	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
     }
@@ -949,7 +949,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     } BU_UNSETJUMP;
 
     return result;
@@ -973,7 +973,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
 
     } BU_UNSETJUMP;
 
@@ -985,7 +985,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct nmgregion *r;
     struct bu_list vhead;
@@ -1003,12 +1003,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     } else {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s:\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     if (curtree->tr_op == OP_NOP) return curtree;
@@ -1331,7 +1331,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       draw_check_region_end,
 				       draw_check_leaf,
-				       (genptr_t)&dgcdp);
+				       (void *)&dgcdp);
 		}
 	    } else {
 		struct ged_display_list **paths_to_draw;
@@ -1362,7 +1362,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
-				       (genptr_t)&dgcdp);
+				       (void *)&dgcdp);
 		}
 
 		/* We need to know the view size in order to choose
@@ -1431,7 +1431,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
 				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-				       (genptr_t)&dgcdp);
+				       (void *)&dgcdp);
 		}
 
 		if (dgcdp.draw_edge_uses) {
@@ -1498,7 +1498,7 @@ _ged_invent_solid(struct ged *gedp,
 	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
-    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &_FreeSolid.l);

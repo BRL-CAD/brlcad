@@ -220,7 +220,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
  done:
     BU_GET(submodel, struct submodel_specific);
     submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
-    stp->st_specific = (genptr_t)submodel;
+    stp->st_specific = (void *)submodel;
 
     MAT_COPY(submodel->subm2m, sip->root2leaf);
     bn_mat_inv(submodel->m2subm, sip->root2leaf);
@@ -464,7 +464,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     sub_ap.a_rt_i = submodel->rtip;
     sub_ap.a_hit = rt_submodel_a_hit;
     sub_ap.a_miss = rt_submodel_a_miss;
-    sub_ap.a_uptr = (genptr_t)&gb;
+    sub_ap.a_uptr = (void *)&gb;
     sub_ap.a_purpose = "rt_submodel_shot";
 
     /* Ensure even # of accurate hits, for building good partitions */
@@ -633,7 +633,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     union tree *curtree;
     struct goodies *gp;
@@ -655,7 +655,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 
 	bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",
 	       ip->idb_meth->ft_name, sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     ret = -1;
@@ -739,7 +739,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 		       0,			/* take all regions */
 		       NULL,			/* rt_submodel_wireframe_region_end */
 		       rt_submodel_wireframe_leaf,
-		       (genptr_t)NULL);
+		       (void *)NULL);
 
     if (ret < 0) bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", bu_vls_addr(&sip->treetop));
     if (bu_vls_strlen(&sip->file) != 0)
@@ -810,7 +810,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -893,7 +893,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -975,8 +975,8 @@ rt_submodel_ifree(struct rt_db_internal *ip)
     RT_SUBMODEL_CK_MAGIC(sip);
     sip->magic = 0;			/* sanity */
 
-    bu_free((genptr_t)sip, "submodel ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    bu_free((void *)sip, "submodel ifree");
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

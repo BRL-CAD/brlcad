@@ -110,25 +110,25 @@ int main(int argc, char* argv[])
     bif1 = icv_read(in_file1, format, inx, iny);
     bif2 = icv_read(in_file2, format, inx, iny);
 
-    if( bif1 == NULL || bif2 == NULL ) {
+    if ( bif1 == NULL || bif2 == NULL ) {
 	bu_log("Error loading the image.\n");
 	return 1;
     }
 
-    if(BU_STR_EQUAL(operation, "+"))
+    if (BU_STR_EQUAL(operation, "+"))
 	out_bif = icv_add(bif1, bif1);
-    else if(BU_STR_EQUAL(operation, "-"))
+    else if (BU_STR_EQUAL(operation, "-"))
 	out_bif = icv_sub(bif1, bif2);
-    else if(BU_STR_EQUAL(operation, "/"))
+    else if (BU_STR_EQUAL(operation, "/"))
 	out_bif = icv_multiply(bif1, bif2);
-    else if(BU_STR_EQUAL(operation, "*"))
+    else if (BU_STR_EQUAL(operation, "*"))
 	out_bif = icv_divide(bif1, bif2);
     else {
 	bu_log("Using Default operation (+)");
 	out_bif = icv_add(bif1, bif2);
     }
 
-    if(!out_bif) {
+    if (!out_bif) {
 	bu_log("Error in Operations\n");
     }
 

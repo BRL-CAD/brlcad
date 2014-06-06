@@ -136,7 +136,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	else
 	    MAT_COPY(tp->tr_l.tl_mat, ts.ts_mat);
     } else if (tp->tr_l.tl_mat != NULL) {
-	bu_free((genptr_t) tp->tr_l.tl_mat, "tl_mat");
+	bu_free((void *) tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t) 0;
     }
 

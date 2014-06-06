@@ -26,6 +26,7 @@
     <arg choice='opt'>-x <replaceable>librt_debug_flag</replaceable></arg>
     <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
     <arg choice='opt'>-u <replaceable>units_name</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>#_of_CPUs</replaceable></arg>
     <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
     <arg choice='plain'><replaceable>infile.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -79,11 +80,16 @@ and the
 routines respectively. The definitions of these flags may be found in
 <emphasis remap='I'>raytrace.h</emphasis>
 and
-<emphasis remap='I'>nmg.h.</emphasis>
+<emphasis remap='I'>nmg.h</emphasis> .
 The
 <option>-u</option>
 option can be used to set the units for the resulting X3D file (the default is mm).
 Any units name that MGED accepts will work here.</para>
+<para>
+The
+<option>-P</option>
+option sets the number of processors (default is 1).
+</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

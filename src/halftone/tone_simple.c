@@ -71,7 +71,7 @@ tone_simple(int pix, int UNUSED(x), int UNUSED(y), int UNUSED(nx), int UNUSED(ny
     } else {
 	threshold = THRESHOLD;
     }
-    return((pix*Levels + threshold) / 256 );
+    return ((pix*Levels + threshold) / 256 );
 }
 
 /*

@@ -162,7 +162,7 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	/* Modify the region's shader string */
 	bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
 	if ( regp->reg_mater.ma_shader )
-	    bu_free( (genptr_t)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
+	    bu_free( (void *)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
 	regp->reg_mater.ma_shader = bu_vls_strdup(&shader);
 
 	/* Update the shader */

@@ -161,16 +161,25 @@ BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL)
 add_test(bu_progname_tests tester_bu_progname)
 
 #
-#  ************ quote.c tests *************
+#  ************ encode.c tests *************
 #
 # The testing of encoding and de-coding is tested at once in a "round trip"
 # approach - the tests below all test both bu_vls_encode and bu_vls_decode.
 # Like many string functions using escaped characters the input strings are
 # left in C to minimize pass-through errors.
-BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bu_encode bu_encode.c libbu NO_INSTALL)
 foreach(test_num RANGE 1 23)
-  add_test("bu_quote_test_${test_num}" tester_bu_quote "${test_num}")
+  add_test("bu_encode_test_${test_num}" tester_bu_encode "${test_num}")
 endforeach()
+
+#
+#  ************ b64.c tests *************
+#
+# The testing of encoding and de-coding is tested at once in a "round trip"
+# approach - the tests below all test both bu_b64_encode and bu_b64_decode.
+BRLCAD_ADDEXEC(tester_bu_b64 bu_b64.c libbu NO_INSTALL)
+add_test("bu_b64_test" tester_bu_b64)
+
 
 #
 #  ************ rb_*.c tests *************

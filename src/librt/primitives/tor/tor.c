@@ -266,7 +266,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(tor, struct tor_specific);
-    stp->st_specific = (genptr_t)tor;
+    stp->st_specific = (void *)tor;
 
     tor->tor_r1 = tip->r_a;
     tor->tor_r2 = tip->r_h;
@@ -1694,7 +1694,7 @@ rt_tor_ifree(struct rt_db_internal *ip)
     RT_TOR_CK_MAGIC(tip);
 
     bu_free((char *)tip, "rt_tor_internal");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

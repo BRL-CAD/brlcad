@@ -377,6 +377,7 @@ typedef struct {
     mat_t		gdps_view2model;
     mat_t		gdps_model2view;
     ged_polygons	gdps_polygons;
+    fastf_t		gdps_data_vZ;
 } ged_data_polygon_state;
 
 struct ged_grid_state {
@@ -424,7 +425,7 @@ struct ged_run_rt {
 #  ifdef TCL_OK
     Tcl_Channel chan;
 #  else
-    genptr_t chan;
+    void *chan;
 #  endif
 #else
     int fd;
@@ -501,7 +502,7 @@ struct ged_view {
     mat_t			gv_view2model;
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
     void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
-    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
+    void *			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;
@@ -541,6 +542,9 @@ struct ged_view {
 
 struct ged_cmd;
 
+/* struct details are private - use accessor functions to manipulate */
+struct ged_results;
+
 struct ged {
     struct bu_list		l;
     struct rt_wdb		*ged_wdbp;
@@ -548,8 +552,18 @@ struct ged {
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    /** for setting results */
+    /* TODO: add support for returning an array of objects, not just a
+     * simple string.
+     *
+     * the calling application needs to be able to distinguish the
+     * individual object names from the "ls" command without resorting
+     * to quirky string encoding or format-specific quote wrapping.
+     *
+     * want to consider whether we need a json-style dictionary, but
+     * probably a literal null-terminated array will suffice here.
+     */
     struct bu_vls		*ged_result_str;
+    struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
@@ -578,6 +592,7 @@ struct ged {
     int ged_dm_height;
     int ged_dmp_is_null;
     void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
+
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -600,6 +615,16 @@ struct ged_cmd {
     void (*unload)(struct ged *);
     int (*exec)(struct ged *, int, const char *[]);
 };
+
+/* accessor functions for ged_results - calling
+ * applications should not work directly with the
+ * internals of ged_results, which are not guaranteed
+ * to stay the same.
+ * defined in ged_util.c */
+GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
+GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
+GED_EXPORT extern void ged_results_clear(struct ged_results *results);
+GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
 
 /* defined in adc.c */
@@ -1381,11 +1406,6 @@ GED_EXPORT extern int ged_make(struct ged *gedp, int argc, const char *argv[]);
  *   5)   default diameter of each point
  */
 GED_EXPORT extern int ged_make_pnts(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Make a bounding box (rpp) around the specified objects
- */
-GED_EXPORT extern int ged_make_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Make a unique object name.

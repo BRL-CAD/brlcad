@@ -37,7 +37,7 @@
 
 
 /* Interpolate the data using b-splines */
-struct face_g_snurb **
+static struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
@@ -57,11 +57,13 @@ interpolate_data(fastf_t *grid)
     return surfs;
 }
 
-void
+
+static void
 printusage()
 {
-	bu_log("Usage: wavy [-d] [-H hscale]\n");
+    bu_log("Usage: wavy [-d] [-H hscale]\n");
 }
+
 
 int
 main(int argc, char **argv)
@@ -86,7 +88,7 @@ main(int argc, char **argv)
 		break;
 	    default:
 		printusage();
-		bu_exit(1,NULL);
+		bu_exit(1, NULL);
 	}
     }
 

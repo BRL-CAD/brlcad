@@ -545,4 +545,3 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

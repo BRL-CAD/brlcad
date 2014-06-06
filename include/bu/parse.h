@@ -269,7 +269,7 @@ BU_EXPORT extern void bu_struct_print(const char *title,
  * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
-				      const genptr_t base,
+				      const void *base,
 				      const struct bu_structparse *imp);
 
 /**
@@ -277,7 +277,7 @@ BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
  *
  * copies ext data to base
  */
-BU_EXPORT extern int bu_struct_import(genptr_t base,
+BU_EXPORT extern int bu_struct_import(void *base,
 				      const struct bu_structparse *imp,
 				      const struct bu_external *ext);
 
@@ -308,7 +308,7 @@ BU_EXPORT extern size_t bu_struct_get(struct bu_external *ext,
  * bu_external structure, suitable for passing to bu_struct_import().
  */
 BU_EXPORT extern void bu_struct_wrap_buf(struct bu_external *ext,
-					 genptr_t buf);
+					 void *buf);
 
 /**
  * This differs from bu_struct_print in that this output is less

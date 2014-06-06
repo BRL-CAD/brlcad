@@ -143,10 +143,10 @@ struct bu_structparse tthrm_parse[] = {
 };
 
 
-HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void tthrm_print(register struct region *rp, genptr_t dp);
-HIDDEN void tthrm_free(genptr_t cp);
+HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void tthrm_print(register struct region *rp, void *dp);
+HIDDEN void tthrm_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -217,7 +217,7 @@ build_tree(struct bu_list *br, struct region *rp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -457,7 +457,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
 
 HIDDEN void
-tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
+tthrm_print(register struct region *UNUSED(rp), void *dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 
@@ -467,7 +467,7 @@ tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
 
 
 HIDDEN void
-tthrm_free(genptr_t cp)
+tthrm_free(void *cp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
@@ -525,7 +525,7 @@ get_solid_number(const struct partition *pp)
  * structure.
  */
 int
-tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

@@ -61,7 +61,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != -1) {
-	switch(c) {
+	switch (c) {
 	    case 'f':
 		force = 1;
 		break;

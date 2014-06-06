@@ -393,7 +393,7 @@ bu_free_mapped_files(int verbose)
 	/* If application pointed mp->apbuf at mp->buf, break that
 	 * association so we don't double-free the buffer.
 	 */
-	if (mp->apbuf == mp->buf)  mp->apbuf = (genptr_t)NULL;
+	if (mp->apbuf == mp->buf)  mp->apbuf = (void *)NULL;
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
@@ -411,13 +411,13 @@ bu_free_mapped_files(int verbose)
 	{
 	    bu_free(mp->buf, "bu_mapped_file.buf[]");
 	}
-	mp->buf = (genptr_t)NULL;		/* sanity */
-	bu_free((genptr_t)mp->name, "bu_mapped_file.name");
+	mp->buf = (void *)NULL;		/* sanity */
+	bu_free((void *)mp->name, "bu_mapped_file.name");
 
 	if (mp->appl)
-	    bu_free((genptr_t)mp->appl, "bu_mapped_file.appl");
+	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
-	bu_free((genptr_t)mp, "struct bu_mapped_file");
+	bu_free((void *)mp, "struct bu_mapped_file");
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }

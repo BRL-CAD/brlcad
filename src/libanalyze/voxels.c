@@ -145,7 +145,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 void
-voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData)
+voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData)
 {
     struct rayInfo voxelHits;
     int            numVoxel[3];
@@ -221,7 +221,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 	    /* output results via a call-back supplied by user*/
 	    for (k = 0; k < numVoxel[0]; ++k) {
-		if(voxelHits.regionList[k].regionName == NULL)
+		if (voxelHits.regionList[k].regionName == NULL)
 		    /* an air voxel */
 		    create_boxes(callBackData, k, j, i, NULL, 0.);
 		else {

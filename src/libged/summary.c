@@ -85,7 +85,7 @@ summary_dir(struct ged *gedp,
 		*dirp++ = dp;
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
-    bu_free((genptr_t)dirp0, "dir_getspace");
+    bu_free((void *)dirp0, "dir_getspace");
 }
 
 

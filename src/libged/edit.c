@@ -477,7 +477,7 @@ struct edit_arg {
  */
 
 /* argument types */
-#define EDIT_FROM			0x01 /* a/k/a keypoint */
+#define EDIT_FROM			0x01 /* aka keypoint */
 #define EDIT_TO				0x02
 #define EDIT_TARGET_OBJ			0x04 /* obj to operate on */
 
@@ -696,7 +696,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path*)NULL;
     }
     if (arg->vector) {
@@ -880,7 +880,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 
     if (!coord) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_full_path");
+	bu_free((void *)arg->object, "db_full_path");
 	arg->object = (struct db_full_path *)NULL;
     }
 
@@ -1029,7 +1029,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
     vect_t src_v = VINIT_ZERO; /* where omitted points draw from */
-    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, a/k/a keypoint */
+    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
     vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
 
@@ -1874,7 +1874,7 @@ convert_obj:
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
@@ -1883,7 +1883,7 @@ convert_obj:
     }
     if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"

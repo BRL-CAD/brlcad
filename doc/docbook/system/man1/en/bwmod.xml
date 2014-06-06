@@ -19,9 +19,9 @@
   <command>bwmod</command>
     <arg choice='opt'>-c </arg>
     <arg choice='opt' rep='repeat'><arg choice='plain'>-a <replaceable>add</replaceable></arg><arg choice='plain'>-s <replaceable>sub</replaceable></arg><arg choice='plain'>-m <replaceable>mult</replaceable></arg><arg choice='plain'>-d <replaceable>div</replaceable></arg><arg choice='plain'>-A </arg><arg choice='plain'>-e <replaceable>exp</replaceable></arg><arg choice='plain'>-r <replaceable>root</replaceable></arg></arg>
-    <arg choice='plain'><replaceable>.</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file2.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

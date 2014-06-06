@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
     icv_resize(bif, method, 0, 0, (unsigned int) factor);
     bu_log("File information width %d height%d\n", bif->width, bif->height);
 
-    for(index = 0; index < 65536; index++)
+    for (index = 0; index < 65536; index++)
 	bu_log("index = %ld, data = %f\n", index, bif->data[index]);
 
 

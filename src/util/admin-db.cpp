@@ -399,7 +399,7 @@ string
 get_dli_type_name(const int typ)
 {
     // list from db5.h:
-    switch(typ) {
+    switch (typ) {
         case 0:  return "APPLICATION_DATA_OBJECT";
             break;
         case 1:  return "HEADER_OBJECT";
@@ -415,7 +415,7 @@ string
 get_major_type_name(const int typ)
 {
     // list from db5.h:
-    switch(typ) {
+    switch (typ) {
         case 0:  return "RESERVED";
             break;
         case 1:  return "BRLCAD";
@@ -435,7 +435,7 @@ string
 get_minor_type_name(const int typ)
 {
     // list from db5.h:
-    switch(typ) {
+    switch (typ) {
         case 0:  return "RESERVED";
             break;
         case 1:  return "TOR";

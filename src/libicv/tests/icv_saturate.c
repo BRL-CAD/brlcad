@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     }
 
     bif = icv_read(in_file, format, inx, iny);
-    if(icv_saturate(bif, fraction) < 0)
+    if (icv_saturate(bif, fraction) < 0)
 	return 1;
     icv_write(bif,out_file, format);
     icv_destroy(bif);

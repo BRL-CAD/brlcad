@@ -1,5 +1,6 @@
 if(HAVE_TERMLIB)
   set(FBED_INCLUDE_DIRS
+    ${BU_INCLUDE_DIRS}
     ${FB_INCLUDE_DIRS}
     ${VFONT_INCLUDE_DIRS}
     ${TERMIO_INCLUDE_DIRS}
@@ -23,7 +24,7 @@ if(HAVE_TERMLIB)
     try.c
     )
 
-  BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb;libvfont;libtermio;libcursor;${TERMLIB_LIBRARY}")
+  BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb;libbu;libtermio;libcursor;${TERMLIB_LIBRARY}")
 
   CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)
 endif(HAVE_TERMLIB)

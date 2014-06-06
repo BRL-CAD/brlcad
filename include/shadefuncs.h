@@ -53,16 +53,16 @@ struct mfuncs {
     int mf_flags;		/**< @brief Flags describing shader */
     int (*mf_setup)(struct region *rp,
 		    struct bu_vls *matparm,
-		    genptr_t *dpp,
+		    void **dpp,
 		    const struct mfuncs *mfp,
 		    struct rt_i *rtip); /**< @brief Routine for preparing */
     int (*mf_render)(struct application *ap,
 		     const struct partition *pp,
 		     struct shadework *swp,
-		     genptr_t dp);	/**< @brief Routine for rendering */
+		     void *dp);	/**< @brief Routine for rendering */
     void (*mf_print)(struct region *rp,
-		     genptr_t dp);	/**< @brief Routine for printing */
-    void (*mf_free)(genptr_t cp);	/**< @brief Routine for releasing storage */
+		     void *dp);	/**< @brief Routine for printing */
+    void (*mf_free)(void *cp);	/**< @brief Routine for releasing storage */
 };
 #define MF_NULL		((struct mfuncs *)0)
 #define RT_CK_MF(_p)	BU_CKMAG(_p, MF_MAGIC, "mfuncs")

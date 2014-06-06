@@ -430,7 +430,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-        pd( plotfp, x, y, 'x'); /* calling common function pd */
+	pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void

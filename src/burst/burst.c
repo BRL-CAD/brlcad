@@ -116,14 +116,14 @@ setupSigs(void)
 
   Parse program command line.
 */
-
-static const char optstring[] = "bpPh?";
-
 static int
 parsArgv(int argc, char **argv)
 {
+    const char optstring[] = "bpPh?";
+
     int c;
-/* Parse options.						*/
+
+    /* Parse options.						*/
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'b' :

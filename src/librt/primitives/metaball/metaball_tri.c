@@ -93,7 +93,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
-    if(radius < 0) {	/* no control points */
+    if (radius < 0) {	/* no control points */
 	bu_log("Attempting to tessellate metaball with no control points");
 	return -1;
     }
@@ -134,7 +134,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    int rval;
 
 		    /* compute the edge values (if needed) */
-#define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) { \
+#define MEH(a,b,c) if (!(pv&(1<<b)&&pv&(1<<c))) { \
     rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep); \
 }
 
@@ -157,7 +157,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		    rval = nmg_mc_realize_cube(s, pv, (point_t *)edges, tol);
 		    numtri += rval;
-		    if(rval < 0) {
+		    if (rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return rval;
 		    }

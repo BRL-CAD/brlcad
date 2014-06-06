@@ -243,7 +243,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 	char *sofar = db_path_to_string(&stp->st_path);
 	bu_vls_printf(&str, " path ");
 	bu_vls_strcat(&str, sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
     bu_vls_printf(&str, " solid %s}", dp->d_namep);
 
@@ -340,7 +340,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	return TCL_ERROR;
     ap->a_hit = rt_tcl_a_hit;
     ap->a_miss = rt_tcl_a_miss;
-    ap->a_uptr = (genptr_t)interp;
+    ap->a_uptr = (void *)interp;
 
     (void)rt_shootray(ap);
 

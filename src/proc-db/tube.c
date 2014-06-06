@@ -166,7 +166,7 @@ main(int argc, char **argv)
 #endif
     fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
-    length = 187. * inches2mm;
+    length = 187.0 * inches2mm;
 #ifdef never
     spacing = 100.;			/* mm per sample */
     nsamples = ceil(length/spacing);
@@ -438,7 +438,7 @@ read_frame(FILE *fp)
 	    EXAGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
-    if(nsamples < 2) {
+    if (nsamples < 2) {
 	bu_log("Insufficient number of samples for extrapolation. Aborting\n");
 	return -1;
     }

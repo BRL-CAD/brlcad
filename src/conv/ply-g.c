@@ -874,7 +874,7 @@ main( int argc, char *argv[] )
 
     read_ply_data( bot );
 
-    wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
+    wdb_export( out_fp, "ply_bot", (void *)bot, ID_BOT, 1.0 );
 
     return 0;
 }

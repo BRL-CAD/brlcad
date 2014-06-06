@@ -51,7 +51,7 @@ mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
     if (!bi->brep) {
 	bu_log("mk_brep: Unable to copy BREP\n");
     }
-    return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
+    return wdb_export(file, name, (void *)bi, ID_BREP, mk_conv2mm);
 }
 
 

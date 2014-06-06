@@ -31,12 +31,13 @@
 #include "brep.h"
 
 
-void
+static void
 test_cci(ON_Curve *c1, ON_Curve *c2)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_SimpleArray<ON_X_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(c1, c2, x);
 
@@ -52,12 +53,13 @@ test_cci(ON_Curve *c1, ON_Curve *c2)
 }
 
 
-void
+static void
 test_csi(ON_Curve *c1, ON_Surface *s2)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_SimpleArray<ON_X_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(c1, s2, x);
 

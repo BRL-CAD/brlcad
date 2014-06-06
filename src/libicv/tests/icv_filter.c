@@ -75,7 +75,7 @@ ICV_FILTER select_filter(char* uname)
 {
     int i;
     for (i = 0; i<TOTAL_FILTERS-1; i++)
-	if(BU_STR_EQUAL(kernel[i].uname,uname))
+	if (BU_STR_EQUAL(kernel[i].uname,uname))
 	    return kernel[i].filter;
 
     bu_log("Using Low Pass Filter\n");

@@ -317,7 +317,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(ell, struct ell_specific);
-    stp->st_specific = (genptr_t)ell;
+    stp->st_specific = (void *)ell;
 
     VMOVE(ell->ell_V, eip->v);
 
@@ -1465,7 +1465,7 @@ rt_ell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "ell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -1816,7 +1816,7 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	/* split segment */
 	return ell_angle(mpt, a, b, dtol, ntol);
     } else
-	return(acos(VDOT(p0, p1)
+	return (acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
 }
 
