@@ -1603,16 +1603,16 @@ nmg_ed(int arg)
 
 	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
 	    {
-		struct model *m;
+		struct shell *s;
 		struct bn_vlblock*vbp;
 		long *tab;
 
-		m = nmg_find_model(&es_eu->l.magic);
-		NMG_CK_MODEL(m);
+		s = nmg_find_shell(&es_eu->l.magic);
+		NMG_CK_SHELL(s);
 
 		if (*es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC) {
 		    /* get space for list of items processed */
-		    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
+		    tab = (long *)bu_calloc(s->maxindex+1, sizeof(long),
 					    "nmg_ed tab[]");
 		    vbp = rt_vlblock_init();
 
@@ -1691,8 +1691,6 @@ nmg_ed(int arg)
 	    return;
 	case ECMD_NMG_LEXTRU:
 	    {
-		struct model *m, *m_tmp;
-		struct nmgregion *r, *r_tmp;
 		struct shell *s, *s_tmp;
 		struct loopuse *lu=(struct loopuse *)NULL;
 		struct loopuse *lu_tmp;
@@ -1700,25 +1698,18 @@ nmg_ed(int arg)
 		fastf_t area;
 		int wire_loop_count = 0;
 
-		m = (struct model *)es_int.idb_ptr;
-		NMG_CK_MODEL(m);
+		s = (struct shell *)es_int.idb_ptr;
+		NMG_CK_SHELL(s);
 
 		/* look for wire loops */
-		for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-		    NMG_CK_REGION(r);
-		    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-			if (BU_LIST_IS_EMPTY(&s->lu_hd))
-			    continue;
 
-			for (BU_LIST_FOR(lu_tmp, loopuse, &s->lu_hd)) {
-			    if (!lu)
-				lu = lu_tmp;
-			    else if (lu_tmp == lu->lumate_p)
-				continue;
+		for (BU_LIST_FOR(lu_tmp, loopuse, &s->lu_hd)) {
+		    if (!lu)
+			lu = lu_tmp;
+		    else if (lu_tmp == lu->lumate_p)
+			continue;
 
-			    wire_loop_count++;
-			}
-		    }
+		    wire_loop_count++;
 		}
 
 		if (!wire_loop_count) {
@@ -1811,13 +1802,11 @@ nmg_ed(int arg)
 		}
 
 		/* Create a temporary model to store the basis loop */
-		m_tmp = nmg_mm();
-		r_tmp = nmg_mrsv(m_tmp);
-		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
-		lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
+		s_tmp = nmg_ms();
+		lu_copy = nmg_dup_loop(lu, &s_tmp->magic, (long **)0);
 		if (!lu_copy) {
 		    Tcl_AppendResult(INTERP, "Failed to make copy of loop\n", (char *)NULL);
-		    nmg_km(m_tmp);
+		    nmg_ks(s_tmp);
 		    return;
 		}
 
@@ -1829,10 +1818,7 @@ nmg_ed(int arg)
 
 		if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
 		    /* make a new shell to hold the extruded solid */
-
-		    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		    NMG_CK_REGION(r);
-		    es_s = nmg_msv(r);
+		    es_s = nmg_ms;
 		} else {
 		    es_s = s;
 		}
@@ -2345,11 +2331,9 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		struct edgeuse *eu;
 		struct loopuse *lu;
 		struct faceuse *fu;
-		struct shell *s;
-		struct nmgregion *r;
-		struct model *m =
-		    (struct model *) es_int.idb_ptr;
-		NMG_CK_MODEL(m);
+		struct shell *s =
+		    (struct shell *) es_int.idb_ptr;
+		NMG_CK_SHELL(s);
 		/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
 		/* set default first */
@@ -2365,20 +2349,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    break;
 		}
 
-		if (BU_LIST_IS_EMPTY(&m->r_hd))
-		    break;
-
-		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		if (!r)
-		    break;
-		NMG_CK_REGION(r);
-
-		if (BU_LIST_IS_EMPTY(&r->s_hd))
-		    break;
-
-		s = BU_LIST_FIRST(shell, &r->s_hd);
-		if (!s)
-		    break;
 		NMG_CK_SHELL(s);
 
 		if (BU_LIST_IS_EMPTY(&s->fu_hd))
@@ -5485,7 +5455,7 @@ sedit(void)
 
 	case ECMD_NMG_EKILL:
 	    {
-		struct model *m;
+		struct shell *s;
 		struct edge_g_lseg *eg;
 
 		if (!es_eu) {
@@ -5495,7 +5465,7 @@ sedit(void)
 		}
 		NMG_CK_EDGEUSE(es_eu);
 
-		m = nmg_find_model(&es_eu->l.magic);
+		s = nmg_find_shell(&es_eu->l.magic);
 
 		if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		    struct loopuse *lu;
@@ -5541,7 +5511,7 @@ sedit(void)
 			bu_exit(EXIT_FAILURE,  "sedit(): killed edge and emptied loop!\n");
 		    }
 		    es_eu = prev_eu;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(s, &mged_tol);
 
 		    /* fix edge geometry for modified edge (next_eu) */
 		    eg = next_eu->g.lseg_p;
@@ -5554,7 +5524,7 @@ sedit(void)
 		    /* wire edge, just kill it */
 		    (void)nmg_keu(es_eu);
 		    es_eu = (struct edgeuse *)NULL;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(s, &mged_tol);
 		}
 	    }
 
@@ -5562,7 +5532,7 @@ sedit(void)
 	    {
 		struct vertex *v=(struct vertex *)NULL;
 		struct edge_g_lseg *eg;
-		struct model *m;
+		struct shell *s;
 		point_t new_pt;
 		fastf_t area;
 		plane_t pl;
@@ -5573,8 +5543,8 @@ sedit(void)
 		    break;
 		}
 		NMG_CK_EDGEUSE(es_eu);
-		m = nmg_find_model(&es_eu->l.magic);
-		NMG_CK_MODEL(m);
+		s = nmg_find_shell(&es_eu->l.magic);
+		NMG_CK_SHELL(s);
 		if (es_mvalid) {
 		    VMOVE(new_pt, es_mparam);
 		} else if (inpara == 3) {
@@ -5629,7 +5599,7 @@ sedit(void)
 		}
 		es_eu = nmg_esplit(v, es_eu, 0);
 		nmg_vertex_gv(es_eu->vu_p->v_p, new_pt);
-		nmg_rebound(m, &mged_tol);
+		nmg_rebound(s, &mged_tol);
 		eg = es_eu->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
 		VMOVE(eg->e_pt, new_pt);
@@ -5643,7 +5613,7 @@ sedit(void)
 		vect_t extrude_vec;
 		struct loopuse *new_lu;
 		struct faceuse *fu;
-		struct model *m;
+		struct shell *s;
 		plane_t new_lu_pl;
 		fastf_t area;
 
@@ -5675,14 +5645,10 @@ sedit(void)
 		}
 
 		if (BU_LIST_NON_EMPTY(&es_s->fu_hd)) {
-		    struct nmgregion *r;
-
-		    r = es_s->r_p;
-		    (void) nmg_ks(es_s);
-		    es_s = nmg_msv(r);
+		    es_s = nmg_ms();
 		}
 
-		new_lu = nmg_dup_loop(lu_copy, &es_s->l.magic, (long **)0);
+		new_lu = nmg_dup_loop(lu_copy, &es_s->magic, (long **)0);
 		area = nmg_loop_plane_area(new_lu, new_lu_pl);
 		if (area < 0.0) {
 		    Tcl_AppendResult(INTERP, "loop to be extruded as no area!\n", (char *)NULL);
@@ -5707,9 +5673,9 @@ sedit(void)
 
 		nmg_fix_normals(fu->s_p, &mged_tol);
 
-		m = nmg_find_model(&fu->l.magic);
-		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &mged_tol);
+		s = nmg_find_shell(&fu->l.magic);
+		nmg_rebound(s, &mged_tol);
+		(void)nmg_ck_geometry(s, &mged_tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -6985,11 +6951,11 @@ sedit_mouse(const vect_t mousevec)
 	case ECMD_NMG_EPICK:
 	    /* XXX Should just leave desired location in es_mparam for sedit() */
 	    {
-		struct model *m =
-		    (struct model *)es_int.idb_ptr;
+		struct shell *s =
+		    (struct shell *)es_int.idb_ptr;
 		struct edge *e;
 		struct bn_tol tmp_tol;
-		NMG_CK_MODEL(m);
+		NMG_CK_SHELL(s);
 
 		/* Picking an edge should not depend on tolerances! */
 		tmp_tol.magic = BN_TOL_MAGIC;
@@ -7001,7 +6967,7 @@ sedit_mouse(const vect_t mousevec)
 		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
-		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
+		if ((e = nmg_find_e_nearest_pt2(&s->magic, pos_view,
 						view_state->vs_gvp->gv_model2view, &tmp_tol)) == (struct edge *)NULL) {
 		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
@@ -7619,10 +7585,10 @@ sedit_apply(int accept_flag)
     }
 
     if (lu_copy) {
-	struct model *m;
+	struct shell *s;
 
-	m = nmg_find_model(&lu_copy->l.magic);
-	nmg_km(m);
+	s = nmg_find_shell(&lu_copy->l.magic);
+	nmg_ks(s);
 	lu_copy = (struct loopuse *)NULL;
     }
 
@@ -7736,9 +7702,9 @@ sedit_reject(void)
     es_ars_col = (-1);
 
     if (lu_copy) {
-	struct model *m;
-	m = nmg_find_model(&lu_copy->l.magic);
-	nmg_km(m);
+	struct shell *s;
+	s = nmg_find_shell(&lu_copy->l.magic);
+	nmg_ks(s);
 	lu_copy = (struct loopuse *)NULL;
     }
 
@@ -8370,9 +8336,9 @@ label_edited_solid(
 	    /* New way only */
 	    {
 #ifndef NO_MAGIC_CHECKING
-		struct model *m =
-		    (struct model *) es_int.idb_ptr;
-		NMG_CK_MODEL(m);
+		struct shell *s =
+		    (struct shell *) es_int.idb_ptr;
+		NMG_CK_SHELL(s);
 #endif
 
 		if (es_eu) {
