@@ -3,6 +3,8 @@
 /BE.pm
 /CGrammar.pm
 /CGrammar2.pm
+/RGC.pm
+/RGD.pm
 /# dirs:
 /parse-eyeapp-svn-trunk
 /tmp-mod-examples-tmp
