@@ -623,6 +623,104 @@ string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value
     return checkval;
 }
 
+/* Check all attributes for a match to the requested attribute.
+ * If an expression was supplied, check the value of any matches
+ * to the attribute name in the logical expression before
+ * returning success
+ */
+HIDDEN int
+avs_check(const char *keystr, const char *value, int checkval, int strcomparison, struct bu_attribute_value_set *avs)
+{
+    struct bu_attribute_value_pair *avpp;
+
+    for (BU_AVS_FOR(avpp, avs)) {
+	if (!bu_fnmatch(keystr, avpp->name, 0)) {
+	    if (checkval >= 1) {
+
+		/* String based comparisons */
+		if ((checkval == 1) && (strcomparison == 1)) {
+		    if (!bu_fnmatch(value, avpp->value, 0)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 2) && (strcomparison == 1)) {
+		    if (bu_strcmp(value, avpp->value) < 0) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 3) && (strcomparison == 1)) {
+		    if (bu_strcmp(value, avpp->value) > 0) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 4) && (strcomparison == 1)) {
+		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) < 0)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 5) && (strcomparison == 1)) {
+		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) > 0)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+
+
+		/* Numerical Comparisons */
+		if ((checkval == 1) && (strcomparison == 0)) {
+		    if (atol(value) == atol(avpp->value)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 2) && (strcomparison == 0)) {
+		    if (atol(value) < atol(avpp->value)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 3) && (strcomparison == 0)) {
+		    if (atol(value) > atol(avpp->value)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 4) && (strcomparison == 0)) {
+		    if (atol(value) <= atol(avpp->value)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		if ((checkval == 5) && (strcomparison == 0)) {
+		    if (atol(value) >= atol(avpp->value)) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		return 0;
+	    } else {
+		return 1;
+	    }
+	}
+    }
+    return 0;
+}
+
+
 /*
  * -param functions --
  *
@@ -637,11 +735,11 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
     struct bu_vls s_tcl = BU_VLS_INIT_ZERO;
     struct rt_db_internal in;
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
     int checkval = 0;
     int strcomparison = 0;
     size_t i;
     struct directory *dp;
+    int ret = 0;
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to
@@ -689,166 +787,11 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
 	return 0;
     }
 
-    /* Check all attributes for a match to the requested attribute.
-     * If an expression was supplied, check the value of any matches
-     * to the attribute name in the logical expression before
-     * returning success
-     */
-
-    for (BU_AVS_FOR(avpp, &avs)) {
-	if (!bu_fnmatch(bu_vls_addr(&paramname), avpp->name, 0)) {
-	    if (checkval >= 1) {
-
-		/* String based comparisons */
-		if ((checkval == 1) && (strcomparison == 1)) {
-		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 2) && (strcomparison == 1)) {
-		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 3) && (strcomparison == 1)) {
-		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 4) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 5) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-
-
-		/* Numerical Comparisons */
-		if ((checkval == 1) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 2) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 3) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 4) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 5) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&paramname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		bu_avs_free(&avs);
-		bu_vls_free(&paramname);
-		bu_vls_free(&value);
-		return 0;
-	    } else {
-		bu_avs_free(&avs);
-		bu_vls_free(&paramname);
-		bu_vls_free(&value);
-		return 1;
-	    }
-	}
-    }
+    ret = avs_check(bu_vls_addr(&paramname), bu_vls_addr(&value), checkval, strcomparison, &avs);
     bu_avs_free(&avs);
     bu_vls_free(&paramname);
     bu_vls_free(&value);
-    return 0;
+    return ret;
 }
 
 
@@ -876,11 +819,11 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     struct bu_vls attribname = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
     int checkval = 0;
     int strcomparison = 0;
     size_t i;
     struct directory *dp;
+    int ret = 0;
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to
@@ -914,166 +857,11 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	return 0;
     }
 
-    /* Check all attributes for a match to the requested attribute.
-     * If an expression was supplied, check the value of any matches
-     * to the attribute name in the logical expression before
-     * returning success
-     */
-
-    for (BU_AVS_FOR(avpp, &avs)) {
-	if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
-	    if (checkval >= 1) {
-
-		/* String based comparisons */
-		if ((checkval == 1) && (strcomparison == 1)) {
-		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 2) && (strcomparison == 1)) {
-		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 3) && (strcomparison == 1)) {
-		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 4) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 5) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-
-
-		/* Numerical Comparisons */
-		if ((checkval == 1) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 2) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 3) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 4) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		if ((checkval == 5) && (strcomparison == 0)) {
-		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 1;
-		    } else {
-			bu_avs_free(&avs);
-			bu_vls_free(&attribname);
-			bu_vls_free(&value);
-			return 0;
-		    }
-		}
-		bu_avs_free(&avs);
-		bu_vls_free(&attribname);
-		bu_vls_free(&value);
-		return 0;
-	    } else {
-		bu_avs_free(&avs);
-		bu_vls_free(&attribname);
-		bu_vls_free(&value);
-		return 1;
-	    }
-	}
-    }
+    ret = avs_check(bu_vls_addr(&attribname), bu_vls_addr(&value), checkval, strcomparison, &avs);
     bu_avs_free(&avs);
     bu_vls_free(&attribname);
     bu_vls_free(&value);
-    return 0;
+    return ret;
 }
 
 
