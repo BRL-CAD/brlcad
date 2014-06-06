@@ -40,8 +40,6 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal nmg_intern;
     struct rt_db_internal new_intern;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl faces;
     struct face *fp;
@@ -125,11 +123,11 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	goto out2;
     }
 
-    m = (struct model *)nmg_intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)nmg_intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &s->magic);
 
     for (i = 0 ; i < BU_PTBL_END(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
@@ -144,12 +142,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&faces);
 
     /* count shells */
-    shell_count = 0;
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    shell_count++;
-	}
-    }
+    shell_count = 1;
 
     if (shell_count != 1) {
 	bu_vls_printf(gedp->ged_result_str, "shell count is not one\n");
@@ -171,12 +164,10 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &OBJ[ID_ARB8];
 
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
 	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
 	nmg_simplify_shell(s);
 
-	if (nmg_to_arb(m, arb_int)) {
+	if (nmg_to_arb(s, arb_int)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -201,7 +192,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
 
-	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_tgc(s, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -226,7 +217,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_poly(s, poly_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -240,9 +231,6 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     }
 
 out1:
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-
     if (BU_LIST_NON_EMPTY(&s->lu_hd))
 	bu_vls_printf(gedp->ged_result_str,
 		"wire loops in %s have been ignored in conversion\n",  nmg_name);
