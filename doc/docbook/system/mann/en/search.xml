@@ -253,6 +253,24 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
+	  <term><emphasis remap="B" role="bold">-param</emphasis> <emphasis remap="I">param[&gt;/&lt;/=val]</emphasis></term>
+	  <listitem>
+		<para>
+		  Returns TRUE if the object has parameter <emphasis remap="I">param</emphasis>.  Unlike <option>-attr</option>,
+                  which looks only at general attributes stored as metadata on objects, the <option>-param</option>
+                  filters based only on the internal geometric object's characteristics. If a specific value is
+		  also supplied for the parameter with an equal condition, TRUE is returned if
+		  the object both has the parameter and the parameter is set to value
+		  <emphasis remap="I">val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
+		  there are two possibilities - if <emphasis remap="I">val</emphasis> is numerical
+		  a numerical comparison is performed, otherwise a string comparison is performed.
+		  Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis>
+		  are treated as patterns under shell pattern matching rules when a string comparison
+		  is performed, but in numerical mode only the parameter name is pattern matched.
+		</para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
 	  <term><emphasis remap="B" role="bold">-path</emphasis> <emphasis remap="I">pattern</emphasis></term>
 	  <listitem>
 		<para>
@@ -699,6 +717,15 @@
 	</para>
   </example>
 
+  <example><title>Finding all Plate-Mode BoT Objects</title>
+
+	<para>
+		<userinput>search -type bot -param mode=plate </userinput>
+	</para>
+	<para>
+		Prints all BoT primitives using "plate" mode, instead of the closed-mesh-requiring "volume" mode.
+        </para>
+  </example>
 
   <example><title>Using <command>search</command> Results</title>
 	<para>

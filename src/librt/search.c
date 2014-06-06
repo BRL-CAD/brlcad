@@ -119,6 +119,7 @@ static OPTION options[] = {
     { "-not",       N_NOT,          c_not,          O_ZERO },
     { "-o",         N_OR,           c_or,	    O_ZERO },
     { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
+    { "-param",	    N_PARAM,	    c_objparam,	    O_ARGV },
     { "-path",      N_PATH,         c_path,         O_ARGV },
     { "-print",     N_PRINT,        c_print,        O_ZERO },
     { "-regex",     N_REGEX,        c_regex,        O_ARGV },
@@ -622,6 +623,246 @@ string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value
     return checkval;
 }
 
+/*
+ * -param functions --
+ *
+ * True if the database object being examined has the parameter
+ * supplied to the param option
+ */
+HIDDEN int
+f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
+{
+    struct bu_vls paramname = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+    struct bu_vls s_tcl = BU_VLS_INIT_ZERO;
+    struct rt_db_internal in;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    int checkval = 0;
+    int strcomparison = 0;
+    size_t i;
+    struct directory *dp;
+
+    /* Check for unescaped >, < or = characters.  If present, the
+     * attribute must not only be present but the value assigned to
+     * the attribute must satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument the behavior will
+     * follow ASCII lexicographical order.  In the case of equality
+     * between strings, fnmatch is used to support pattern matching
+     */
+
+    checkval = string_to_name_and_val(plan->attr_data, &paramname, &value);
+
+    /* Now that we have the value, check to see if it is all numbers.
+     * If so, use numerical comparison logic - otherwise use string
+     * logic.
+     */
+
+    for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
+	if (!(isdigit((int)(bu_vls_addr(&value)[i])))) strcomparison = 1;
+    }
+
+    /* Get parameters for object as an avs.
+     */
+
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
+    if (!dp)
+	return 0;
+
+    RT_DB_INTERNAL_INIT(&in);
+    if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	rt_db_free_internal(&in);
+	return 0;
+    }
+
+
+    if ((&in)->idb_meth->ft_get(&s_tcl, &in, NULL) == BRLCAD_ERROR) {
+	rt_db_free_internal(&in);
+	return 0;
+    }
+    rt_db_free_internal(&in);
+
+    bu_avs_init_empty(&avs);
+    if (tcl_list_to_avs(bu_vls_addr(&s_tcl), &avs, 1)) {
+	bu_avs_free(&avs);
+	bu_vls_free(&s_tcl);
+	return 0;
+    }
+
+    /* Check all attributes for a match to the requested attribute.
+     * If an expression was supplied, check the value of any matches
+     * to the attribute name in the logical expression before
+     * returning success
+     */
+
+    for (BU_AVS_FOR(avpp, &avs)) {
+	if (!bu_fnmatch(bu_vls_addr(&paramname), avpp->name, 0)) {
+	    if (checkval >= 1) {
+
+		/* String based comparisons */
+		if ((checkval == 1) && (strcomparison == 1)) {
+		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 2) && (strcomparison == 1)) {
+		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 3) && (strcomparison == 1)) {
+		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 4) && (strcomparison == 1)) {
+		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 5) && (strcomparison == 1)) {
+		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+
+
+		/* Numerical Comparisons */
+		if ((checkval == 1) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 2) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 3) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 4) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		if ((checkval == 5) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
+			bu_avs_free(&avs);
+			bu_vls_free(&paramname);
+			bu_vls_free(&value);
+			return 0;
+		    }
+		}
+		bu_avs_free(&avs);
+		bu_vls_free(&paramname);
+		bu_vls_free(&value);
+		return 0;
+	    } else {
+		bu_avs_free(&avs);
+		bu_vls_free(&paramname);
+		bu_vls_free(&value);
+		return 1;
+	    }
+	}
+    }
+    bu_avs_free(&avs);
+    bu_vls_free(&paramname);
+    bu_vls_free(&value);
+    return 0;
+}
+
+
+HIDDEN int
+c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_ATTR, f_objparam);
+    newplan->attr_data = pattern;
+    (*resultplan) = newplan;
+    return BRLCAD_OK;
+}
+
 
 /*
  * -attr functions --
@@ -672,7 +913,6 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	bu_avs_free(&avs);
 	return 0;
     }
-    avpp = avs.avp;
 
     /* Check all attributes for a match to the requested attribute.
      * If an expression was supplied, check the value of any matches
@@ -680,7 +920,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * returning success
      */
 
-    for (i = 0; i < (size_t)avs.count; i++, avpp++) {
+    for (BU_AVS_FOR(avpp, &avs)) {
 	if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
 	    if (checkval >= 1) {
 
@@ -865,8 +1105,6 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
     struct directory *dp;
     int found_nonstd_attr = 0;
     int found_attr = 0;
-    size_t i;
-
 
     /* Get attributes for object and check all of them to see if there
      * is not a match to the standard attributes.  If any is found
@@ -883,8 +1121,7 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
 	return 0;
     }
 
-    avpp = avs.avp;
-    for (i = 0; i < (size_t)avs.count; i++, avpp++) {
+    for (BU_AVS_FOR(avpp, &avs)) {
 	found_attr = 1;
 	if (!BU_STR_EQUAL(avpp->name, "GIFTmater") &&
 	    !BU_STR_EQUAL(avpp->name, "aircode") &&
