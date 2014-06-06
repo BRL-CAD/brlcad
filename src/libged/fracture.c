@@ -59,7 +59,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct shell *s)
     }
 
     /* make sure the geometry/bounding boxes are up to date */
-	nmg_shell_s(s, &gedp->ged_wdbp->wdb_tol);
+	nmg_shell_a(s, &gedp->ged_wdbp->wdb_tol);
 
 
     /* Export NMG as a new solid */
@@ -170,7 +170,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
 	snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
-	fracture_add_nmg_part(gedp, newname, new_shell);
+	fracture_add_nmg_part(gedp, newname, new_s);
 	if (frac_stat) return GED_ERROR;
     }
 

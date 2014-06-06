@@ -40,8 +40,6 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal nmg_intern;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     const char *nmg_name;
     struct bn_tol tol;
@@ -83,13 +81,11 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    m = (struct model *)nmg_intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)nmg_intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* hum, here we go */
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	for (BU_LIST_FOR(s, shell, &r->s_hd))
-	    nmg_fix_normals(s, &tol);
+    nmg_fix_normals(s, &tol);
 
     return GED_OK;
 }

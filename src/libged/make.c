@@ -560,20 +560,16 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	part_ip->part_hrad = scale*0.125;
 	part_ip->part_type = RT_PARTICLE_TYPE_CONE;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "nmg")) {
-	struct model *m;
-	struct nmgregion *r;
 	struct shell *s;
 
-	m = nmg_mm();
-	r = nmg_mrsv(m);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
+	s = nmg_ms();
 	nmg_vertex_g(s->vu_p->v_p, origin[X], origin[Y], origin[Z]);
 	(void)nmg_meonvu(s->vu_p);
 	(void)nmg_ml(s);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_NMG;
 	internal.idb_meth = &OBJ[ID_NMG];
-	internal.idb_ptr = (genptr_t)m;
+	internal.idb_ptr = (genptr_t)s;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pipe")) {
 	struct wdb_pipept *ps;
 

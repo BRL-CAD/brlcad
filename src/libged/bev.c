@@ -181,7 +181,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	if (i < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
 	    /* Destroy NMG */
-	    nmg_km(bev_nmg_shell);
+	    nmg_ks(bev_nmg_shell);
 	    return GED_ERROR;
 	}
 	argc--;

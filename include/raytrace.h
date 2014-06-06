@@ -6190,7 +6190,7 @@ RT_EXPORT extern struct edgeuse *nmg_ebreaker(struct vertex *v,
 					      const struct bn_tol *tol);
 RT_EXPORT extern struct vertex *nmg_e2break(struct edgeuse *eu1,
 					    struct edgeuse *eu2);
-RT_EXPORT extern int nmg_unbreak_edges(struct edgeuse *eu1_first);
+RT_EXPORT extern int nmg_unbreak_edge(struct edgeuse *eu1_first);
 RT_EXPORT extern int nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first);
 RT_EXPORT extern struct edgeuse *nmg_eins(struct edgeuse *eu);
 RT_EXPORT extern void nmg_mv_eu_between_shells(struct shell *dest,
@@ -6512,7 +6512,7 @@ RT_EXPORT extern int nmg_decompose_shell(struct shell *s,
 RT_EXPORT extern void nmg_stash_shell_to_file(const char *filename,
 					      const struct shell *s,
 					      const char *title);
-RT_EXPORT extern int nmg_unbreak_shell_edge(uint32_t *magic_p);
+RT_EXPORT extern int nmg_unbreak_shell_edges(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
 RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
@@ -6585,12 +6585,12 @@ RT_EXPORT extern int nmg_break_edges(uint32_t *magic_p,
 				     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_lu_is_convex(struct loopuse *lu,
 				      const struct bn_tol *tol);
-RT_EXPORT extern int nmg_to_arb(const struct model *m,
+RT_EXPORT extern int nmg_to_arb(const struct shell *s,
 				struct rt_arb_internal *arb_int);
-RT_EXPORT extern int nmg_to_tgc(const struct model *m,
+RT_EXPORT extern int nmg_to_tgc(const struct shell *s,
 				struct rt_tgc_internal *tgc_int,
 				const struct bn_tol *tol);
-RT_EXPORT extern int nmg_to_poly(const struct model *m,
+RT_EXPORT extern int nmg_to_poly(const struct shell *s,
 				 struct rt_pg_internal *poly_int,
 				 const struct bn_tol *tol);
 RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
@@ -6598,13 +6598,13 @@ RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
 
 RT_EXPORT extern int nmg_simplify_shell_edges(struct shell *s,
 					      const struct bn_tol *tol);
-RT_EXPORT extern int nmg_edge_collapse(struct model *m,
+RT_EXPORT extern int nmg_edge_collapse(struct shell *s,
 				       const struct bn_tol *tol,
 				       const fastf_t tol_coll,
 				       const fastf_t min_angle);
 
 /* From nmg_copy.c */
-RT_EXPORT extern struct model *nmg_clone_model(const struct model *original);
+RT_EXPORT extern struct shell *nmg_clone_shell(const struct shell *original);
 
 /* bot.c */
 RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,
@@ -6953,12 +6953,6 @@ RT_EXPORT extern void nmg_snurb_fu_to_vlist(struct bu_list		*vhead,
 RT_EXPORT extern void nmg_s_to_vlist(struct bu_list		*vhead,
 				     const struct shell	*s,
 				     int			poly_markers);
-RT_EXPORT extern void nmg_r_to_vlist(struct bu_list		*vhead,
-				     const struct nmgregion	*r,
-				     int			poly_markers);
-RT_EXPORT extern void nmg_m_to_vlist(struct bu_list	*vhead,
-				     struct model	*m,
-				     int		poly_markers);
 RT_EXPORT extern void nmg_offset_eu_vert(point_t			base,
 					 const struct edgeuse	*eu,
 					 const vect_t		face_normal,
@@ -6993,10 +6987,6 @@ RT_EXPORT extern void nmg_pl_fu(FILE *fp,
 				int blue);
 RT_EXPORT extern void nmg_pl_s(FILE *fp,
 			       const struct shell *s);
-RT_EXPORT extern void nmg_pl_r(FILE *fp,
-			       const struct nmgregion *r);
-RT_EXPORT extern void nmg_pl_m(FILE *fp,
-			       const struct model *m);
 RT_EXPORT extern void nmg_vlblock_v(struct bn_vlblock *vbp,
 				    const struct vertex *v,
 				    long *tab);
@@ -7038,12 +7028,6 @@ RT_EXPORT extern void nmg_vlblock_fu(struct bn_vlblock *vbp,
 				     long *tab, int fancy);
 RT_EXPORT extern void nmg_vlblock_s(struct bn_vlblock *vbp,
 				    const struct shell *s,
-				    int fancy);
-RT_EXPORT extern void nmg_vlblock_r(struct bn_vlblock *vbp,
-				    const struct nmgregion *r,
-				    int fancy);
-RT_EXPORT extern void nmg_vlblock_m(struct bn_vlblock *vbp,
-				    const struct model *m,
 				    int fancy);
 /* visualization helper routines */
 RT_EXPORT extern void nmg_pl_edges_in_2_shells(struct bn_vlblock	*vbp,
@@ -7158,7 +7142,7 @@ RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
 						   const struct bn_tol *tol,
 						   struct resource *resp);
 RT_EXPORT extern int nmg_boolean(union tree *tp,
-				 struct model *m,
+				 struct shell *s,
 				 const struct bn_tol *tol,
 				 struct resource *resp);
 

@@ -3665,7 +3665,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_s, tsp->ts_tol);
+	nmg_triangulate_shell(*tsp->ts_s, tsp->ts_tol);
 	result = 0;
 
     } else {
@@ -3687,7 +3687,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_nmg_shell_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct shell *s;
     struct bu_list vhead;
@@ -3784,7 +3784,7 @@ dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
 
 static union tree *
-dgo_bot_check_region_end(struct db_tree_state *UNUSED(tsp),
+dgo_bot_check_shell_end(struct db_tree_state *UNUSED(tsp),
 			 const struct db_full_path *UNUSED(pathp),
 			 union tree *curtree,
 			 genptr_t UNUSED(client_data))
@@ -4107,7 +4107,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 				       ncpu,
 				       &dgop->dgo_wdbp->wdb_initial_tree_state,
 				       0,
-				       dgo_bot_check_region_end,
+				       dgo_bot_check_shell_end,
 				       dgo_bot_check_leaf,
 				       (genptr_t)dgcdp);
 		}

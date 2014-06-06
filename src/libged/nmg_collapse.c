@@ -38,7 +38,7 @@ int
 ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 {
     char *new_name;
-    struct model *m;
+    struct shell *s;
     struct rt_db_internal intern;
     struct directory *dp;
     struct bu_ptbl faces;
@@ -112,11 +112,11 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     } else
 	min_angle = 0.0;
 
-    m = (struct model *)intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &s->magic);
     for (BU_PTBL_FOR(fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_log("\tnot planar\n");
@@ -128,10 +128,10 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     }
     bu_ptbl_free(&faces);
 
-    /* triangulate model */
-    nmg_triangulate_model(m, &gedp->ged_wdbp->wdb_tol);
+    /* triangulate shell */
+    nmg_triangulate_shell(s, &gedp->ged_wdbp->wdb_tol);
 
-    count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
+    count = (size_t)nmg_edge_collapse(s, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
 
     dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

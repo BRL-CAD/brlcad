@@ -36,7 +36,7 @@
 
 
 static union tree *
-facetize_region_end(struct db_tree_state *tsp,
+facetize_shell_end(struct db_tree_state *tsp,
 		    const struct db_full_path *pathp,
 		    union tree *curtree,
 		    genptr_t client_data)
@@ -267,7 +267,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_ks(nmg_shell);
-	    nmg_shell = (struct model *)NULL;
+	    nmg_shell = (struct shell *)NULL;
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
 

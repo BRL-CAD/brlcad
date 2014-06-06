@@ -2634,8 +2634,6 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 {
     struct directory *old_dp, *new_dp;
     struct rt_db_internal old_intern, new_intern;
-    struct model *m_tmp, *m;
-    struct nmgregion *r_tmp, *r;
     struct shell *s_tmp, *s;
     int shell_count=0;
     struct bu_vls shell_name;
@@ -2666,57 +2664,45 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    m = (struct model *)old_intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)old_intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     bu_vls_init(&shell_name);
-    for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &wdbp->wdb_tol);
-	    bu_free((genptr_t)trans_tbl, "trans_tbl");
+    s_tmp = nmg_dup_shell(s, &trans_tbl, &wdbp->wdb_tol);
+    bu_free((genptr_t)trans_tbl, "trans_tbl");
 
-	    m_tmp = nmg_mmr();
-	    r_tmp = BU_LIST_FIRST(nmgregion, &m_tmp->r_hd);
-
-	    BU_LIST_DEQUEUE(&s_tmp->l);
-	    BU_LIST_APPEND(&r_tmp->s_hd, &s_tmp->l);
-	    s_tmp->r_p = r_tmp;
-	    nmg_m_reindex(m_tmp, 0);
-	    nmg_m_reindex(m, 0);
-
-	    bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    while (db_lookup(wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
-		bu_vls_trunc(&shell_name, 0);
-		shell_count++;
-		bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    }
-
-	    /* Export NMG as a new solid */
-	    RT_DB_INTERNAL_INIT(&new_intern);
-	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    new_intern.idb_type = ID_NMG;
-	    new_intern.idb_meth = &OBJ[ID_NMG];
-	    new_intern.idb_ptr = (genptr_t)m_tmp;
-
-	    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	    if (new_dp == RT_DIR_NULL) {
-		WDB_TCL_ALLOC_ERR_return;
-	    }
-
-	    /* make sure the geometry/bounding boxes are up to date */
-	    nmg_rebound(m_tmp, &wdbp->wdb_tol);
-
-
-	    if (rt_db_put_internal(new_dp, wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-		/* Free memory */
-		nmg_km(m_tmp);
-		Tcl_AppendResult(wdbp->wdb_interp, "rt_db_put_internal() failure\n", (char *)NULL);
-		return TCL_ERROR;
-	    }
-	    /* Internal representation has been freed by rt_db_put_internal */
-	    new_intern.idb_ptr = (genptr_t)NULL;
-	}
+    bu_vls_printf(&shell_name, "shell.%d", shell_count);
+    while (db_lookup(wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
+	bu_vls_trunc(&shell_name, 0);
+	shell_count++;
+	bu_vls_printf(&shell_name, "shell.%d", shell_count);
     }
+
+    /* Export NMG as a new solid */
+    RT_DB_INTERNAL_INIT(&new_intern);
+    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    new_intern.idb_type = ID_NMG;
+    new_intern.idb_meth = &OBJ[ID_NMG];
+    new_intern.idb_ptr = (genptr_t)s_tmp;
+
+    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    if (new_dp == RT_DIR_NULL) {
+	WDB_TCL_ALLOC_ERR_return;
+    }
+
+    /* make sure the geometry/bounding boxes are up to date */
+    nmg_rebound(s_tmp, &wdbp->wdb_tol);
+
+
+    if (rt_db_put_internal(new_dp, wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	/* Free memory */
+	nmg_ks(s_tmp);
+	Tcl_AppendResult(wdbp->wdb_interp, "rt_db_put_internal() failure\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* Internal representation has been freed by rt_db_put_internal */
+    new_intern.idb_ptr = (genptr_t)NULL;
     bu_vls_free(&shell_name);
 
     return TCL_OK;
@@ -5208,7 +5194,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
-    struct model *nmg_model;
+    struct shell *nmg_shell;
 
     /* static due to longjmp, keep gcc happy */
     static int triangulate;
@@ -5297,8 +5283,8 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	bu_vls_free(&tmp_vls);
     }
     facetize_tree = (union tree *)0;
-    nmg_model = nmg_mm();
-    init_state.ts_m = &nmg_model;
+    nmg_shell = nmg_ms();
+    init_state.ts_s = &nmg_shell;
 
     i = db_walk_tree(dbip, argc, (const char **)argv,
 		     1,
@@ -5315,7 +5301,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
     if (i < 0) {
 	Tcl_AppendResult(wdbp->wdb_interp, "facetize: error in db_walk_tree()\n", (char *)NULL);
 	/* Destroy NMG */
-	nmg_km(nmg_model);
+	nmg_ks(nmg_shell);
 	return TCL_ERROR;
     }
 
@@ -5328,12 +5314,12 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(wdbp->wdb_interp, "WARNING: facetization failed!!!\n", (char *)NULL);
 	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
-	    nmg_km(nmg_model);
-	    nmg_model = (struct model *)NULL;
+	    nmg_ks(nmg_shell);
+	    nmg_shell = (struct shell *)NULL;
 	    return TCL_ERROR;
 	}
 
-	failed = nmg_boolean(facetize_tree, nmg_model, &wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(facetize_tree, nmg_shell, &wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -5342,12 +5328,12 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	Tcl_AppendResult(wdbp->wdb_interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
 	db_free_tree(facetize_tree, &rt_uniresource);
 	facetize_tree = (union tree *)NULL;
-	nmg_km(nmg_model);
-	nmg_model = (struct model *)NULL;
+	nmg_ks(nmg_shell);
+	nmg_shell = (struct shell *)NULL;
 	return TCL_ERROR;
     }
     /* New region remains part of this nmg "model" */
-    NMG_CK_REGION(facetize_tree->tr_d.td_r);
+    NMG_CK_SHELL(facetize_tree->tr_d.td_s);
     Tcl_AppendResult(wdbp->wdb_interp, "facetize:  ", facetize_tree->tr_d.td_name,
 		     "\n", (char *)NULL);
 
@@ -5359,26 +5345,22 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(wdbp->wdb_interp, "WARNING: triangulation failed!!!\n", (char *)NULL);
 	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
-	    nmg_km(nmg_model);
-	    nmg_model = (struct model *)NULL;
+	    nmg_ks(nmg_shell);
+	    nmg_shell = (struct shell *)NULL;
 	    return TCL_ERROR;
 	}
-	nmg_triangulate_model(nmg_model, &wdbp->wdb_tol);
+	nmg_triangulate_shell(nmg_shell, &wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 
     if (make_bot) {
 	struct rt_bot_internal *bot;
-	struct nmgregion *r;
-	struct shell *s;
 
 	Tcl_AppendResult(wdbp->wdb_interp, "facetize:  converting to BOT format\n", (char *)NULL);
 
-	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	bot = (struct rt_bot_internal *)nmg_bot(s, &wdbp->wdb_tol);
-	nmg_km(nmg_model);
-	nmg_model = (struct model *)NULL;
+	bot = (struct rt_bot_internal *)nmg_bot(nmg_shell, &wdbp->wdb_tol);
+	nmg_ks(nmg_shell);
+	nmg_shell = (struct shell *)NULL;
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
@@ -5395,8 +5377,8 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &OBJ[ID_NMG];
-	intern.idb_ptr = (genptr_t)nmg_model;
-	nmg_model = (struct model *)NULL;
+	intern.idb_ptr = (genptr_t)nmg_shell;
+	nmg_shell = (struct shell *)NULL;
     }
 
     dp = db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
@@ -5411,7 +5393,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+    facetize_tree->tr_d.td_s = (struct shell *)NULL;
 
     /* Free boolean tree, and the regions in it */
     db_free_tree(facetize_tree, &rt_uniresource);
@@ -8636,8 +8618,6 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     struct directory *dp;
     struct rt_db_internal nmg_intern;
     struct rt_db_internal new_intern;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl faces;
     struct face *fp;
@@ -8711,11 +8691,11 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    m = (struct model *)nmg_intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)nmg_intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &s->magic);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -8728,17 +8708,14 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 
     /* count shells */
-    for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR (s, shell, &r->s_hd))
-	    shell_count++;
-    }
+    shell_count++;
 
     if ((do_arb || do_all) && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
 	BU_ALLOC(arb_int, struct rt_arb_internal);
 
-	if (nmg_to_arb(m, arb_int)) {
+	if (nmg_to_arb(s, arb_int)) {
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_ARB8;
@@ -8746,15 +8723,12 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    success = 1;
 	} else if (do_arb) {
 	    /* see if we can get an arb by simplifying the NMG */
-
-	    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
 	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
-		(void) nmg_edge_fuse(&m->magic, &wdbp->wdb_tol);
-		(void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
-		(void) nmg_unbreak_region_edges(&r->l.magic);
-		if (nmg_to_arb(m, arb_int)) {
+		(void) nmg_edge_fuse(&s->magic, &wdbp->wdb_tol);
+		(void) nmg_edge_g_fuse(&s->magic, &wdbp->wdb_tol);
+		(void) nmg_unbreak_shell_edges(&s->magic);
+		if (nmg_to_arb(s, arb_int)) {
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
 		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    new_intern.idb_type = ID_ARB8;
@@ -8776,7 +8750,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
-	if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
+	if (nmg_to_tgc(s, tgc_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_TGC;
@@ -8795,7 +8769,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	if (nmg_to_poly(m, poly_int, &wdbp->wdb_tol)) {
+	if (nmg_to_poly(s, poly_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(poly_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_POLY;
@@ -8809,9 +8783,6 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     }
 
     if (success) {
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-
 	if (BU_LIST_NON_EMPTY(&s->lu_hd))
 	    Tcl_AppendResult(wdbp->wdb_interp, "wire loops in ", nmg_name,
 			     " have been ignored in conversion\n", (char *)NULL);
@@ -8866,7 +8837,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 		     const char *argv[])
 {
     const char *new_name;
-    struct model *m;
+    struct shell *s;
     struct rt_db_internal intern;
     struct directory *dp;
     struct bu_ptbl faces;
@@ -8935,11 +8906,11 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     } else
 	min_angle = 0.0;
 
-    m = (struct model *)intern.idb_ptr;
-    NMG_CK_MODEL(m);
+    s = (struct shell *)intern.idb_ptr;
+    NMG_CK_SHELL(s);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &s->magic);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -8950,10 +8921,10 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     }
     bu_ptbl_free(&faces);
 
-    /* triangulate model */
-    nmg_triangulate_model(m, &wdbp->wdb_tol);
+    /* triangulate shell */
+    nmg_triangulate_shell(s, &wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle);
+    count = nmg_edge_collapse(s, &wdbp->wdb_tol, tol_coll, min_angle);
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

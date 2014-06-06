@@ -38,8 +38,6 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *old_dp, *new_dp;
     struct rt_db_internal old_intern, new_intern;
-    struct model *m_tmp, *m;
-    struct nmgregion *r_tmp, *r;
     struct shell *s_tmp, *s;
     int shell_count=0;
     struct bu_vls shell_name = BU_VLS_INIT_ZERO;
