@@ -1159,7 +1159,7 @@ struct combined_tree_state {
 #define OP_NOT		MKOP(8)		/**< @brief  Unary:  not L */
 #define OP_GUARD	MKOP(9)		/**< @brief  Unary:  not L, or else! */
 #define OP_XNOP		MKOP(10)	/**< @brief  Unary:  L, mark region */
-#define OP_NMG_TESS	MKOP(11)	/**< @brief  Leaf: tr_stp -> nmgregion */
+#define OP_NMG_TESS	MKOP(11)	/**< @brief  Leaf: tr_stp -> shell */
 /* LIBWDB import/export interface to combinations */
 #define OP_DB_LEAF	MKOP(12)	/**< @brief  Leaf of combination, db fmt */
 #define OP_FREE		MKOP(13)	/**< @brief  Unary:  L has free chain */
@@ -1186,7 +1186,7 @@ union tree {
 	struct region *tc_pad;		/**< @brief  unused */
 	struct combined_tree_state *tc_ctsp;
     } tr_c;
-    struct tree_nmgregion {
+    struct tree_shell {
 	uint32_t magic;
 	int td_op;			/**< @brief  leaf, OP_NMG_TESS */
 	const char *td_name;		/**< @brief  If non-null, dynamic string describing heritage of this region */
@@ -2053,7 +2053,7 @@ struct rt_selection_operation {
  *
  * This needs to be at the end of the raytrace.h header file, so that
  * all the structure names are known.  The "union record" and "struct
- * nmgregion" pointers are problematic, so generic pointers are used
+ * shell" pointers are problematic, so generic pointers are used
  * when those header files have not yet been seen.
  *
  * DEPRECATED: the size of this structure will likely change with new
@@ -6092,8 +6092,8 @@ RT_EXPORT extern void nmg_jeg(struct edge_g_lseg *dest_eg,
 
 /* From nmg_mod.c */
 /*	REGION Routines */
-RT_EXPORT extern void nmg_merge_regions(struct nmgregion *r1,
-					struct nmgregion *r2,
+RT_EXPORT extern void nmg_merge_shells(struct shell *s1,
+					struct shell *s2,
 					const struct bn_tol *tol);
 
 /*	SHELL Routines */
@@ -6498,8 +6498,6 @@ RT_EXPORT extern void nmg_propagate_normals(struct faceuse *fu_in,
 RT_EXPORT extern void nmg_connect_same_fu_orients(struct shell *s);
 RT_EXPORT extern void nmg_fix_decomposed_shell_normals(struct shell *s,
 						       const struct bn_tol *tol);
-RT_EXPORT extern struct model *nmg_mk_model_from_region(struct nmgregion *r,
-							int reindex);
 RT_EXPORT extern void nmg_fix_normals(struct shell *s_orig,
 				      const struct bn_tol *tol);
 RT_EXPORT extern int nmg_break_long_edges(struct shell *s,
@@ -6515,8 +6513,6 @@ RT_EXPORT extern void nmg_stash_shell_to_file(const char *filename,
 RT_EXPORT extern int nmg_unbreak_shell_edges(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
-RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
-					    struct nmgregion *r);
 RT_EXPORT extern int nmg_find_isect_faces(const struct vertex *new_v,
 					  struct bu_ptbl *faces,
 					  int *free_edges,

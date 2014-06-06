@@ -40,7 +40,7 @@
 
 
 void
-nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)
+nmg_merge_shells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 {
  //   struct model *m;
 

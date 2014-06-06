@@ -3440,19 +3440,6 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 }
 
 
-void
-nmg_r_radial_check(const struct shell *s, const struct bn_tol *tol)
-{
-    NMG_CK_SHELL(s);
-    BN_CK_TOL(tol);
-
-    if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_r_radial_check(s=%p)\n", (void *)s);
-
-    nmg_s_radial_check(s, tol);
-}
-
-
 /*
  * Local Variables:
  * mode: C

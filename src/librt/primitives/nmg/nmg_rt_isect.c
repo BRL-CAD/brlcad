@@ -2310,45 +2310,45 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
  * Implicit return: adds hit points to the hit-list "hl"
  */
 HIDDEN void
-nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
+nmg_isect_ray_shell(struct ray_data *rd)
 {
     struct faceuse *fu_p;
     struct loopuse *lu_p;
     struct edgeuse *eu_p;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("nmg_isect_ray_shell(%p, %p)\n", (void *)rd, (void *)s_p);
+	bu_log("nmg_isect_ray_shell(%p, %p)\n", (void *)rd, (void *)rd->rd_s);
 
-    NMG_CK_SHELL(s_p);
-    NMG_CK_SHELL_A(s_p->sa_p);
+    NMG_CK_SHELL(rd->rd_s);
+    NMG_CK_SHELL_A(rd->rd_s->sa_p);
 
     /* does ray isect shell rpp ?  if not, we can just return.  there
      * is no need to record the miss for the shell, as there is only
      * one "use" of a shell.
      */
     if (!rt_in_rpp(rd->rp, rd->rd_invdir,
-		   s_p->sa_p->min_pt, s_p->sa_p->max_pt)) {
+		   rd->rd_s->sa_p->min_pt, rd->rd_s->sa_p->max_pt)) {
 	if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	    bu_log("nmg_isect_ray_shell(no RPP overlap) %p, %p\n", (void *)rd, (void *)s_p);
+	    bu_log("nmg_isect_ray_shell(no RPP overlap) %p, %p\n", (void *)rd, (void *)rd->rd_s);
 	return;
     }
 
     /* ray intersects shell, check sub-objects */
 
-    for (BU_LIST_FOR(fu_p, faceuse, &(s_p->fu_hd)))
+    for (BU_LIST_FOR(fu_p, faceuse, &(rd->rd_s->fu_hd)))
 	isect_ray_faceuse(rd, fu_p);
 
-    for (BU_LIST_FOR(lu_p, loopuse, &(s_p->lu_hd)))
+    for (BU_LIST_FOR(lu_p, loopuse, &(rd->rd_s->lu_hd)))
 	isect_ray_loopuse(rd, lu_p);
 
-    for (BU_LIST_FOR(eu_p, edgeuse, &(s_p->eu_hd)))
+    for (BU_LIST_FOR(eu_p, edgeuse, &(rd->rd_s->eu_hd)))
 	isect_ray_edgeuse(rd, eu_p);
 
-    if (s_p->vu_p)
-	(void)isect_ray_vertexuse(rd, s_p->vu_p);
+    if (rd->rd_s->vu_p)
+	(void)isect_ray_vertexuse(rd, rd->rd_s->vu_p);
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("nmg_isect_ray_shell(done) %p, %p\n", (void *)rd, (void *)s_p);
+	bu_log("nmg_isect_ray_shell(done) %p, %p\n", (void *)rd, (void *)rd->rd_s);
 
     /* sanity check */
     NMG_CK_HITMISS_LISTS(rd);
@@ -2678,7 +2678,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     BU_LIST_INIT(&rd.rd_hit);
     BU_LIST_INIT(&rd.rd_miss);
 
-    nmg_isect_ray_shell(&rd, s);
+    nmg_isect_ray_shell(&rd);
     NMG_FREE_HITLIST(&rd.rd_miss, &ap);
 
     /* count the number of hits */
