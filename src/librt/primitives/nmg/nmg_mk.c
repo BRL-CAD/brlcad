@@ -30,8 +30,6 @@
  * in each of the above cases the letters or words following are an
  * attempt at a mnemonic representation for what is manipulated
  *
- * m	Model
- * r	Region
  * s	shell
  * f	face
  * fu	faceuse
@@ -71,6 +69,91 @@
 
 /************************************************************************
  *									*
+ *			"Make" Helper Routines				*
+ *									*
+ ************************************************************************/
+
+
+/**
+ * Make Vertexuse on existing vertex
+ *
+ * This is a support routine for this module, and is not intended for
+ * general use, as it requires lots of cooperation from the caller.
+ * (Like setting the parent's down pointer appropriately).
+ *
+ * This means that a vu is created but is not attached to the parent
+ * structure.  This is "bad" and requires the caller to fix.
+ *
+ * upptr is a pointer to parent struct
+ */
+static struct vertexuse *
+nmg_mvu(struct vertex *v, uint32_t *upptr, struct shell *s)
+{
+    struct vertexuse *vu;
+
+    NMG_CK_VERTEX(v);
+    NMG_CK_SHELL(s);
+
+    if (*upptr != NMG_SHELL_MAGIC &&
+	*upptr != NMG_LOOPUSE_MAGIC &&
+	*upptr != NMG_EDGEUSE_MAGIC) {
+	bu_log("nmg_mvu() in %s:%d magic not shell, loop, or edge.  Was %x (%s)\n",
+	       __FILE__, __LINE__,
+	       *upptr, bu_identify_magic(*upptr));
+	bu_bomb("nmg_mvu() Cannot build vertexuse without parent\n");
+    }
+
+    GET_VERTEXUSE(vu, s);
+
+    vu->v_p = v;
+    vu->a.plane_p = (struct vertexuse_a_plane *)NULL;
+    BU_LIST_APPEND(&v->vu_hd, &vu->l);
+    vu->up.magic_p = upptr;
+    vu->l.magic = NMG_VERTEXUSE_MAGIC;	/* Vertexuse struct is GOOD */
+
+    if (RTG.NMG_debug & DEBUG_BASIC) {
+	bu_log("nmg_mvu(v=%p, up=%p) returns vu=%p\n",
+	       (void *)v, (void *)upptr, (void *)vu);
+    }
+
+    return vu;
+}
+
+
+/**
+ * Make Vertex, Vertexuse
+ *
+ * This is a support routine for this module, and is not intended for
+ * general use, as it requires lots of cooperation from the caller.
+ * (Like setting the parent's down pointer appropriately).
+ *
+ * This means that a vu is created but is not attached to the parent
+ * structure.  This is "bad" and requires the caller to fix.
+ */
+static struct vertexuse *
+nmg_mvvu(uint32_t *upptr, struct shell *s)
+{
+    struct vertex *v;
+    struct vertexuse *ret_vu;
+
+    NMG_CK_SHELL(s);
+    GET_VERTEX(v, s);
+    BU_LIST_INIT(&v->vu_hd);
+    v->vg_p = (struct vertex_g *)NULL;
+    v->magic = NMG_VERTEX_MAGIC;	/* Vertex struct is GOOD */
+    ret_vu = nmg_mvu(v, upptr, s);
+
+    if (RTG.NMG_debug & DEBUG_BASIC) {
+	bu_log("nmg_mvvu(upptr=%p, s=%p) returns vu=%p\n",
+	       (void *)upptr, (void *)s, (void *)ret_vu);
+    }
+
+    return ret_vu;
+}
+
+
+/************************************************************************
+ *									*
  *			"Make" Routines					*
  *									*
  * The subroutines create new topological entities and return a		*
@@ -80,7 +163,7 @@
 
 
 /**
- *  The nmg_m*() routines are used to create a topology-only object
+ * The nmg_m*() routines are used to create a topology-only object
  * which at first has no geometry associated with it at all.
  * A topology-only object can be used to answer questions like:
  *	is this vertex ON this shell?
@@ -99,7 +182,7 @@
  * answer questions about where things are located and how large they are.
  *
  * The abstract objects are:
- *	model, nmgregion, shell, face, loop, edge and vertex.
+ *	shell, face, loop, edge and vertex.
  * The uses of those objects are:
  * 	faceuse, loopuse, edgeuse and vertexuse.
  * Geometry can optionally be associated with the abstract objects:
@@ -108,7 +191,6 @@
  *	edge_g		(to track edge subdivision heritage, for linear edges)
  *	vertex_g	(Cartesian coordinates)
  * The uses of those objects can optionally have attributes:
- *	nmgregion_a	(region bounding box)	[nmgregions have no uses]
  *	shell_a		(shell bounding box)	[shells have no uses]
  *	vertexuse_a	(special surface normal, for normal interpolation)
  *
@@ -116,12 +198,6 @@
  *
  * As a topology-only object, it would have the following structures:
  *
- * 1 model structure
- *		This is the handle which everything else hangs on.
- *		The model structure r_hd references 1 region structure.
- * 1 nmgregion structure.
- *		The region structure s_hd references 1 shell structure.
- *		Also, m_p references the model.
  * 1 shell structure.
  *		The shell structure fu_hd references 12 faceuse structures.
  *		One for each side of each of the 6 faces of the cube.
@@ -257,83 +333,6 @@ nmg_ms(void)
 
 
 /**
- * Make Vertexuse on existing vertex
- *
- * This is a support routine for this module, and is not intended for
- * general use, as it requires lots of cooperation from the caller.
- * (Like setting the parent's down pointer appropriately).
- *
- * This means that a vu is created but is not attached to the parent
- * structure.  This is "bad" and requires the caller to fix.
- *
- * upptr is a pointer to parent struct
- */
-static struct vertexuse *
-nmg_mvu(struct vertex *v, uint32_t *upptr, struct shell *s)
-{
-    struct vertexuse *vu;
-
-    NMG_CK_VERTEX(v);
-    NMG_CK_SHELL(s);
-
-    if (*upptr != NMG_SHELL_MAGIC &&
-	*upptr != NMG_LOOPUSE_MAGIC &&
-	*upptr != NMG_EDGEUSE_MAGIC) {
-	bu_log("nmg_mvu() in %s:%d magic not shell, loop, or edge.  Was %x (%s)\n",
-	       __FILE__, __LINE__,
-	       *upptr, bu_identify_magic(*upptr));
-	bu_bomb("nmg_mvu() Cannot build vertexuse without parent\n");
-    }
-
-    GET_VERTEXUSE(vu, s);
-
-    vu->v_p = v;
-    vu->a.plane_p = (struct vertexuse_a_plane *)NULL;
-    BU_LIST_APPEND(&v->vu_hd, &vu->l);
-    vu->up.magic_p = upptr;
-    vu->l.magic = NMG_VERTEXUSE_MAGIC;	/* Vertexuse struct is GOOD */
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mvu(v=%p, up=%p) returns vu=%p\n",
-	       (void *)v, (void *)upptr, (void *)vu);
-    }
-    return vu;
-}
-
-
-/**
- * Make Vertex, Vertexuse
- *
- * This is a support routine for this module, and is not intended for
- * general use, as it requires lots of cooperation from the caller.
- * (Like setting the parent's down pointer appropriately).
- *
- * This means that a vu is created but is not attached to the parent
- * structure.  This is "bad" and requires the caller to fix.
- */
-static struct vertexuse *
-nmg_mvvu(uint32_t *upptr, struct shell *s)
-{
-    struct vertex *v;
-    struct vertexuse *ret_vu;
-
-    NMG_CK_SHELL(s);
-    GET_VERTEX(v, s);
-    BU_LIST_INIT(&v->vu_hd);
-    v->vg_p = (struct vertex_g *)NULL;
-    v->magic = NMG_VERTEX_MAGIC;	/* Vertex struct is GOOD */
-    ret_vu = nmg_mvu(v, upptr, s);
-
-    if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mvvu(upptr=%p, s=%p) returns vu=%p\n",
-	       (void *)upptr, (void *)s, (void *)ret_vu);
-    }
-
-    return ret_vu;
-}
-
-
-/**
  * Make Shell, Vertex Use, Vertex
  *
  * Create a new shell.  The shell will consist
@@ -343,7 +342,6 @@ nmg_mvvu(uint32_t *upptr, struct shell *s)
  * (struct shell *)
  *
  * Implicit Returns -
- * The new shell is also found with s=BU_LIST_FIRST(shell, &r->s_hd);
  * The new vertexuse is s->vu_p;
  */
 struct shell *
@@ -392,7 +390,9 @@ nmg_mf(struct loopuse *lu1)
     if (*lu1->up.magic_p != NMG_SHELL_MAGIC) {
 	bu_bomb("nmg_mf() loop must be child of shell for making face\n");
     }
+
     lu2 = lu1->lumate_p;
+
     NMG_CK_LOOPUSE(lu2);
     if (lu2->up.magic_p != lu1->up.magic_p) {
 	bu_bomb("nmg_mf() loopuse mate does not have same parent\n");
@@ -578,6 +578,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	       (void *)magic, (void *)v, nmg_orientation(orientation),
 	       (void *)lu1, (void *)vu1);
     }
+
     return lu1;
 }
 
@@ -953,26 +954,121 @@ nmg_ml(struct shell *s)
 
 /************************************************************************
  *									*
+ *			"KILL" Helper Routines				*
+ *									*
+ ************************************************************************/
+
+
+/**
+ * Internal routine to release face geometry when no more faces use
+ * it.
+ */
+static void
+nmg_kfg(uint32_t *magic_p)
+{
+    switch (*magic_p) {
+	case NMG_FACE_G_PLANE_MAGIC: {
+	    /* If face_g is not referred to by any other face, free it */
+	    struct face_g_plane *pp;
+	    pp = (struct face_g_plane *)magic_p;
+	    if (BU_LIST_NON_EMPTY(&(pp->f_hd))) return;
+	    FREE_FACE_G_PLANE(pp);
+	}
+	    break;
+	case NMG_FACE_G_SNURB_MAGIC: {
+	    /* If face_g is not referred to by any other face, free it */
+	    struct face_g_snurb *sp;
+	    sp = (struct face_g_snurb *)magic_p;
+	    if (BU_LIST_NON_EMPTY(&(sp->f_hd))) return;
+	    bu_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
+	    bu_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
+	    bu_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
+	    FREE_FACE_G_SNURB(sp);
+	}
+	    break;
+	default:
+	    bu_bomb("nmg_kfg() bad magic\n");
+    }
+}
+
+
+/************************************************************************
+ *									*
  *				"Kill" Routines				*
  *									*
  * These subroutines delete (kill) a topological entity,		*
  * eliminating any related subordinate entities where appropriate.	*
  *									*
- * If the superior entity becomes empty as a result of a "kill"	*
+ * If the superior entity becomes empty as a result of a "kill"		*
  * operation, and that superior entity isn't allowed to *be* empty,	*
  * then a TRUE (1) return code is given, indicating that the		*
  * caller needs to immediately delete the superior entity before	*
- * performing any other NMG operations.				*
+ * performing any other NMG operations.					*
  *									*
- * During this interval, the superior entity is in an "illegal"	*
+ * During this interval, the superior entity is in an "illegal"		*
  * state that the verify routines (nmg_vshell, etc.) and subsequent	*
  * NMG processing routines will not accept, so that code which fails	*
- * to honor the return codes will "blow up" downstream.		*
+ * to honor the return codes will "blow up" downstream.			*
  * Unfortunately, in some cases the problem won't be detected for	*
  * quite a while, but this is better than having subsequent code	*
  * encountering entities that *look* valid, but shouldn't be.		*
  *									*
  ************************************************************************/
+
+
+/**
+ * Internal routine to kill an edge geometry structure (of either
+ * type), if all the edgeuses on its list have vanished.  Regardless,
+ * the edgeuse's geometry pointer is cleared.
+ *
+ * This routine does only a single edgeuse.  If the edgeuse mate has
+ * geometry to be killed, make a second call.  Sometimes only one of
+ * the two needs to release the geometry.
+ *
+ * Returns -
+ * 0 If the old edge geometry (eu->g.magic_p) has other uses.
+ * 1 If the old edge geometry has been destroyed. Caller beware!
+ *
+ * NOT INTENDED FOR GENERAL USE!
+ * However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
+ */
+int
+nmg_keg(struct edgeuse *eu)
+{
+    if (!eu)
+	return 1;
+
+    NMG_CK_EDGEUSE(eu);
+
+    if (!eu->g.magic_p)
+	return 1; /* no geometry to kill */
+
+    switch (*eu->g.magic_p) {
+	case NMG_EDGE_G_LSEG_MAGIC: {
+	    struct edge_g_lseg *lp;
+	    lp = eu->g.lseg_p;
+	    eu->g.magic_p = NULL;
+	    if (BU_LIST_NON_EMPTY(&lp->eu_hd2)) return 0;
+	    FREE_EDGE_G_LSEG(lp);
+	    break;
+	}
+
+	case NMG_EDGE_G_CNURB_MAGIC: {
+	    struct edge_g_cnurb *eg;
+	    eg = eu->g.cnurb_p;
+	    eu->g.magic_p = NULL;
+	    if (BU_LIST_NON_EMPTY(&eg->eu_hd2)) return 0;
+	    if (eg->order != 0) {
+		bu_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
+		bu_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
+	    }
+	    FREE_EDGE_G_CNURB(eg);
+	    break;
+	}
+    }
+
+    return 1;		/* edge geometry has been destroyed */
+}
 
 
 /**
@@ -1061,39 +1157,6 @@ nmg_kvu(struct vertexuse *vu)
     FREE_VERTEXUSE(vu);
 
     return ret;
-}
-
-
-/**
- * Internal routine to release face geometry when no more faces use
- * it.
- */
-static void
-nmg_kfg(uint32_t *magic_p)
-{
-    switch (*magic_p) {
-	case NMG_FACE_G_PLANE_MAGIC: {
-	    /* If face_g is not referred to by any other face, free it */
-	    struct face_g_plane *pp;
-	    pp = (struct face_g_plane *)magic_p;
-	    if (BU_LIST_NON_EMPTY(&(pp->f_hd))) return;
-	    FREE_FACE_G_PLANE(pp);
-	}
-	    break;
-	case NMG_FACE_G_SNURB_MAGIC: {
-	    /* If face_g is not referred to by any other face, free it */
-	    struct face_g_snurb *sp;
-	    sp = (struct face_g_snurb *)magic_p;
-	    if (BU_LIST_NON_EMPTY(&(sp->f_hd))) return;
-	    bu_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
-	    bu_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
-	    bu_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
-	    FREE_FACE_G_SNURB(sp);
-	}
-	    break;
-	default:
-	    bu_bomb("nmg_kfg() bad magic\n");
-    }
 }
 
 
@@ -1252,61 +1315,6 @@ nmg_klu(struct loopuse *lu1)
 
 
 /**
- * Internal routine to kill an edge geometry structure (of either
- * type), if all the edgeuses on its list have vanished.  Regardless,
- * the edgeuse's geometry pointer is cleared.
- *
- * This routine does only a single edgeuse.  If the edgeuse mate has
- * geometry to be killed, make a second call.  Sometimes only one of
- * the two needs to release the geometry.
- *
- * Returns -
- * 0 If the old edge geometry (eu->g.magic_p) has other uses.
- * 1 If the old edge geometry has been destroyed. Caller beware!
- *
- * NOT INTENDED FOR GENERAL USE!
- * However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
- */
-/* static */ int
-nmg_keg(struct edgeuse *eu)
-{
-    if (!eu)
-	return 1;
-
-    NMG_CK_EDGEUSE(eu);
-
-    if (!eu->g.magic_p)
-	return 1; /* no geometry to kill */
-
-    switch (*eu->g.magic_p) {
-	case NMG_EDGE_G_LSEG_MAGIC: {
-	    struct edge_g_lseg *lp;
-	    lp = eu->g.lseg_p;
-	    eu->g.magic_p = NULL;
-	    if (BU_LIST_NON_EMPTY(&lp->eu_hd2)) return 0;
-	    FREE_EDGE_G_LSEG(lp);
-	    break;
-	}
-
-	case NMG_EDGE_G_CNURB_MAGIC: {
-	    struct edge_g_cnurb *eg;
-	    eg = eu->g.cnurb_p;
-	    eu->g.magic_p = NULL;
-	    if (BU_LIST_NON_EMPTY(&eg->eu_hd2)) return 0;
-	    if (eg->order != 0) {
-		bu_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
-		bu_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
-	    }
-	    FREE_EDGE_G_CNURB(eg);
-	    break;
-	}
-    }
-
-    return 1;		/* edge geometry has been destroyed */
-}
-
-
-/**
  * Delete an edgeuse & its mate from a shell or loop.
  *
  * Returns -
@@ -1441,6 +1449,88 @@ nmg_keu(register struct edgeuse *eu1)
 
 
 /**
+ * Kill zero length edgeuse from a shell and
+ * return the number of edgeuse killed. If the
+ * shell becomes empty, this function will bomb.
+ *
+ */
+int
+nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
+{
+    int empty_loop = 0;
+    int empty_face = 0;
+    int empty_shell = 0;
+    int eu_killed = 0;
+    struct loopuse *lu;
+    struct faceuse *fu;
+    struct edgeuse *eu;
+
+    NMG_CK_SHELL(s);
+
+    eu_killed = 0;
+    empty_shell = 0;
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+	NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME) {
+	    fu = BU_LIST_PNEXT(faceuse, fu);
+	    continue;
+	}
+	empty_face = 0;
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+	    NMG_CK_LOOPUSE(lu);
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		bu_bomb("loopuse does not contains edgeuse\n");
+	    }
+	    empty_loop = 0;
+	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	    while (BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
+		    bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
+				     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
+		    /* fuse the two vertices */
+		    nmg_jv(eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
+
+		    eu_killed++;
+		    if (nmg_keu(eu)) {
+			empty_loop = 1;
+		    }
+		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+		} else {
+		    eu = BU_LIST_PNEXT(edgeuse, eu);
+		}
+	    }
+	    if (empty_loop) {
+		if (nmg_klu(lu)) {
+		    empty_face = 1;
+		}
+		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	    } else {
+		lu = BU_LIST_PNEXT(loopuse, lu);
+	    }
+	}
+
+	if (empty_face) {
+	    if (nmg_kfu(fu)) {
+		empty_shell = 1;
+	    }
+	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+	} else {
+	    fu = BU_LIST_PNEXT(faceuse, fu);
+	}
+    }
+
+    if (empty_shell) {
+	bu_bomb("nmg_keu_zl(): removing zero length edgeuse resulted in an empty shell\n");
+    }
+
+    return eu_killed;
+}
+
+
+/**
  * Kill a shell and all children
  *
  * Returns -
@@ -1462,6 +1552,7 @@ nmg_ks(struct shell *s)
 	(void)nmg_klu(BU_LIST_FIRST(loopuse, &s->lu_hd));
     while (BU_LIST_NON_EMPTY(&s->eu_hd))
 	(void)nmg_keu(BU_LIST_FIRST(edgeuse, &s->eu_hd));
+
     if (s->vu_p)
 	nmg_kvu(s->vu_p);
 
@@ -1482,6 +1573,7 @@ nmg_ks(struct shell *s)
 
     return 0;
 }
+
 
 
 /************************************************************************
@@ -1959,12 +2051,16 @@ nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
 	BU_LIST_INSERT(&eg->eu_hd2, &(eu->eumate_p->l2));
 	eu->eumate_p->g.magic_p = magic_p;
     }
-    if (eu->g.magic_p != eu->eumate_p->g.magic_p) bu_bomb("nmg_use_edge_g() eu and mate not using same geometry?\n");
+
+    if (eu->g.magic_p != eu->eumate_p->g.magic_p) {
+	    bu_bomb("nmg_use_edge_g() eu and mate not using same geometry?\n");
+    }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_use_edge_g(eu=%p, magic_p=%p) old_eg=%p, ret=%d\n",
 	       (void *)eu, (void *)magic_p, (void *)old, ndead);
     }
+
     return ndead;
 }
 
@@ -2138,7 +2234,6 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
     }
 
     /* There is at least one other use of this face geometry */
-
     fu->orientation = OT_SAME;
     fu->fumate_p->orientation = OT_OPPOSITE;
 
@@ -2869,86 +2964,7 @@ nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 }
 
 
-/**
- * Kill zero length edgeuse from a shell and
- * return the number of edgeuse killed. If the
- * shell becomes empty, this function will bomb.
- *
- */
-int
-nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
-{
-    int empty_loop = 0;
-    int empty_face = 0;
-    int empty_shell = 0;
-    int eu_killed = 0;
-    struct loopuse *lu;
-    struct faceuse *fu;
-    struct edgeuse *eu;
 
-    NMG_CK_SHELL(s);
-
-    eu_killed = 0;
-    empty_shell = 0;
-    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
-	NMG_CK_FACEUSE(fu);
-	if (fu->orientation != OT_SAME) {
-	    fu = BU_LIST_PNEXT(faceuse, fu);
-	    continue;
-	}
-	empty_face = 0;
-	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
-	    NMG_CK_LOOPUSE(lu);
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-		bu_bomb("loopuse does not contains edgeuse\n");
-	    }
-	    empty_loop = 0;
-	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    while (BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
-		NMG_CK_EDGEUSE(eu);
-		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
-		    bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
-				     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
-		    /* fuse the two vertices */
-		    nmg_jv(eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
-
-		    eu_killed++;
-		    if (nmg_keu(eu)) {
-			empty_loop = 1;
-		    }
-		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-		} else {
-		    eu = BU_LIST_PNEXT(edgeuse, eu);
-		}
-	    }
-	    if (empty_loop) {
-		if (nmg_klu(lu)) {
-		    empty_face = 1;
-		}
-		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    } else {
-		lu = BU_LIST_PNEXT(loopuse, lu);
-	    }
-	}
-
-	if (empty_face) {
-	    if (nmg_kfu(fu)) {
-		empty_shell = 1;
-	    }
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	} else {
-	    fu = BU_LIST_PNEXT(faceuse, fu);
-	}
-    }
-
-    if (empty_shell) {
-	bu_bomb("nmg_keu_zl(): removing zero length edgeuse resulted in an empty shell\n");
-    }
-
-    return eu_killed;
-}
 
 /*
  * Local Variables:
