@@ -84,7 +84,7 @@ extern "C" {
     void rt_brep_free(register struct soltab *stp);
     int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
-    int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
@@ -3915,11 +3915,11 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 }
 
 int
-rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_brep_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_brep_internal *bi;
 
-    if (!r || !m || !ip || !ttol || !tol)
+    if (!s || !ip || !ttol || !tol)
 	return -1;
 
     RT_CK_DB_INTERNAL(ip);
