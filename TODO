@@ -1581,6 +1581,11 @@ NMG/BoT
   
 * implement the routine 'nmg_merge_regions' to fit new nmg structure.
 
+* in src/libged/facetize.c, merge operation is skipped temporarily.
+  Now it works good on facetize operation on single-shell shape after
+  the removing work, but still need improving especially implemeting 
+  the new-add funtion 'rt_comb_merge'.
+
 RTGL
 ----
 
