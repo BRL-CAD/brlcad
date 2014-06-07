@@ -200,6 +200,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	if (!BU_SETJUMP) {
 	    /* try */
 	    failed = nmg_boolean(facetize_tree, nmg_shell, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	    nmg_shell = facetize_tree->tr_d.td_s; /* zhaoanqing */
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
