@@ -479,16 +479,16 @@ sub convert1final {
 
   # pretty print the objects
   if ($G::pretty_print) {
-    print "DEVEL: pretty printing objects...\n";
-    my $f = "${ifil}.pretty_print.txt";
+    print "DEVEL: pretty printing C objects...\n";
+    my $f = "${ifil}.c_pretty_print.txt";
     open my $fp, '>', $f
       or die "$f: $!";
     push @{$tfils_aref}, $f;
     push @{$ofils_aref}, $f
       if $G::debug;
     foreach my $o (@objs) {
-      $o->gen_pretty;
-      $o->print_pretty($fp);
+      $o->gen_pretty('c');
+      $o->print_pretty($fp, 'c');
       #$o->dump();
     }
   }

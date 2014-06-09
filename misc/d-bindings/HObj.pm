@@ -16,14 +16,15 @@ our %tag
   = (
      'num'        => '$', # the inout sequence number (indexed from 0)
      'type'       => '$', # see 'C-BNF.txt'
-     'orig_line'  => '$', # originally extracted array flattened to one line
+     'orig_line'  => '$', # originally extracted array flattened to one line (in C format)
      'first_line' => '$', # line number of first line
      'last_line'  => '$', # line number of last line
 
+     'd_line'     => '$', # 'orig_line' with some D conversions
+
      # arrays need special accessors
-     'tokens'     => '@', # original line tokenized
-     'orig_array' => '@', # as extracted from the original header
-     'pretty'     => '@', # orig line split by 'exract_bracketed'
+     'pretty_c'   => '@', # 'orig_line' split by 'gen_pretty' (in C format)
+     'pretty_d'   => '@', # 'd_line' split by 'gen_pretty'    (in D format)
     );
 
 struct(HObj => \%tag);
@@ -38,47 +39,36 @@ sub get_new_hobj {
 		'orig_line'  => '',
 		'first_line' => '',
 		'last_line'  => '',
+		'd_line'     => '',
 
 		# arrays initially empty
-		'tokens'     => [], # original line tokenized
-		'orig_array' => [], # as extracted from the original header
-		'pretty'     => [], # orig line split by 'exract_bracketed'
+		'pretty_c'     => [],
+		'pretty_d'   => [],
 	       );
 
   return $b;
 } # get_new_hobj
 
 # arrays need special accessors
-sub tokens {
+sub pretty_c {
   my $self = shift @_;
   my $aref = shift @_;
   if (defined $aref) {
-    $self->{tokens} = [@{$aref}];
+    $self->{pretty_c} = [@{$aref}];
   }
   else {
-    return $self->{tokens};
+    return $self->{pretty_c}; # an array ref
   }
 } # special accessor
 
-sub orig_array {
+sub pretty_d {
   my $self = shift @_;
   my $aref = shift @_;
   if (defined $aref) {
-    $self->{orig_array} = [@{$aref}];
+    $self->{pretty_d} = [@{$aref}];
   }
   else {
-    return $self->{orig_array};
-  }
-} # special accessor
-
-sub pretty {
-  my $self = shift @_;
-  my $aref = shift @_;
-  if (defined $aref) {
-    $self->{pretty} = [@{$aref}];
-  }
-  else {
-    return $self->{pretty};
+    return $self->{pretty_d}; # an array ref
   }
 } # special accessor
 
@@ -114,8 +104,17 @@ sub lastchar {
 sub gen_pretty {
   # put extracted object into pretty format for printing
   my $self = shift @_;
+  my $ptyp = shift @_;
 
-  my $text = $self->orig_line(); # the flattened line
+  my $text;
+  if ($ptyp eq 'c') {
+    # this is C code
+    $text = $self->orig_line(); # the flattened line
+  }
+  elsif ($ptyp eq 'd') {
+    # this is D code
+    $text = $self->d_line(); # the flattened line
+  }
 
   # use a tmp array and a line
   my @arr = ();
@@ -201,7 +200,14 @@ sub gen_pretty {
   }
 
   # and save the mess
-  $self->pretty(\@arr2);
+  if ($ptyp eq 'c') {
+    # this is C code
+    $self->pretty_c(\@arr2);
+  }
+  elsif ($ptyp eq 'd') {
+    # this is D code
+    $self->pretty_d(\@arr2);
+  }
 
 =pod
 
@@ -215,11 +221,21 @@ sub gen_pretty {
 sub print_pretty {
   my $self = shift @_;
   my $fp   = shift @_;
+  my $ptyp = shift @_;
 
-  # this is C code
+  if ($ptyp eq 'c') {
+    # this is C code
 
-  foreach my $line (@{$self->pretty()}) {
-    print $fp "$line\n";
+    foreach my $line (@{$self->pretty_c()}) {
+      print $fp "$line\n";
+    }
+  }
+  elsif ($ptyp eq 'd') {
+    # this is D code
+
+    foreach my $line (@{$self->pretty_d()}) {
+      print $fp "$line\n";
+    }
   }
 
 } # print_pretty
@@ -230,25 +246,20 @@ sub dump {
   printf "  num: %d\n",        $self->num();
   printf "  type: %s\n",       $self->type();
   printf "  orig_line: \"%s\"\n",  $self->orig_line();
+  printf "  d_line: \"%s\"\n",  $self->d_line();
   printf "  first_line: %d\n", $self->first_line();
   printf "  last_line: %d\n",  $self->last_line();
 
   my ($sref);
 
-  $sref = $self->tokens();
-  say "  tokens:";
+  $sref = $self->pretty_c();
+  say "  pretty_c:";
   if (defined $sref) {
     say "    $_" for @$sref;
   }
 
-  $sref = $self->orig_array();
-  say "  orig_array:";
-  if (defined $sref) {
-    say "    $_" for @$sref;
-  }
-
-  $sref = $self->pretty();
-  say "  pretty:";
+  $sref = $self->pretty_d();
+  say "  pretty_d:";
   if (defined $sref) {
     say "    $_" for @$sref;
   }
