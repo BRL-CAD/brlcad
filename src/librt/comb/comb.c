@@ -1102,32 +1102,41 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
  * Merge second combination to the first one.
  */
 void
-rt_comb_merge(struct rt_comb_internal *rt1, struct rt_comb_internal *rt2, const struct bn_tol *tol)
+rt_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2, const struct bn_tol *tol)
 {
-//   struct model *m;
+    comb1->tree = rt_tree_union(comb1->tree, comb2->tree);
+    comb2->tree = (union tree *)NULL;
+}
 
-//   NMG_CK_REGION(r1);
-//   NMG_CK_REGION(r2);
-//   BN_CK_TOL(tol);
+/**
+ * Union two tree into single one.
+ */
+union tree *rt_tree_union(union tree *tr1, union tree *tr2)
+{
+    union tree *union_root;
 
-//   m = r1->m_p;
-//   NMG_CK_MODEL(m);
+    BU_ALLOC(union_root, union tree);
+    RT_TREE_INIT(union_root);
 
-//   if (r2->m_p != m)
-	//bu_bomb("nmg_merge_regions: Tried to merge regions from different models!!");
+    union_root->tr_op = OP_UNION;
+    union_root->tr_b.tb_regionp = REGION_NULL;
+    union_root->tr_b.tb_left = tr1;
+    union_root->tr_b.tb_right = tr2;
 
-//   /* move all of r2's faces into r1 */
-//   while (BU_LIST_NON_EMPTY(&r2->s_hd)) {
-	//struct shell *s;
+    return union_root;
+}
 
-	//s = BU_LIST_FIRST(shell, &r2->s_hd);
-	//BU_LIST_DEQUEUE(&s->l);
-	//s->r_p = r1;
-	//BU_LIST_APPEND(&r1->s_hd, &s->l);
-//   }
+/**
+ * Flatten tree into a tree_list.
+ */
+struct rt_tree_array *rt_tree_flatten(union tree *tr, const int count)
+{
+    struct rt_tree_array *tree_list;
 
-//   (void)nmg_kr(r2);
-//   nmg_rebound(m, tol);
+    tree_list = (struct rt_tree_array *)bu_calloc(count, sizeof(struct rt_tree_array), "tree list");
+    db_flatten_tree(tree_list, tr, OP_UNION, 1, &rt_uniresource);
+
+    return tree_list;
 }
 
 /*

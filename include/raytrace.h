@@ -7389,9 +7389,9 @@ RT_EXPORT extern int	nmg_is_eu_on_line3(const struct edgeuse	*eu,
 					   const point_t		pt,
 					   const vect_t		dir,
 					   const struct bn_tol	*tol);
-RT_EXPORT extern struct edge_g_lseg	*nmg_find_eg_between_2fg(const struct faceuse	*ofu1,
-								 const struct faceuse	*fu2,
-								 const struct bn_tol	*tol);
+RT_EXPORT extern struct edge_g_lseg *nmg_find_eg_between_2fg(const struct faceuse	*ofu1,
+							     const struct faceuse	*fu2,
+							     const struct bn_tol	*tol);
 RT_EXPORT extern struct edgeuse *nmg_does_fu_use_eg(const struct faceuse	*fu1,
 						    const uint32_t	*eg);
 RT_EXPORT extern int rt_line_on_plane(const point_t	pt,
@@ -7974,7 +7974,21 @@ RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 RT_EXPORT extern const char *rt_version(void);
 
 /* comb.c */
-RT_EXPORT extern void rt_comb_merge(struct rt_comb_internal *rt1, struct rt_comb_internal *rt2, const struct bn_tol *tol);
+
+/**
+ * Merge second combination to the first one.
+ */
+RT_EXPORT extern void rt_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2, const struct bn_tol *tol);
+
+/**
+ * Union two tree into single one.
+ */
+RT_EXPORT extern union tree *rt_tree_union(union tree *tr1, union tree *tr2);
+
+/**
+ * Flatten tree into a tree_list.
+ */
+RT_EXPORT extern struct rt_tree_array *rt_tree_flatten(union tree *tr, const int count);
 
 __END_DECLS
 

@@ -179,9 +179,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		     &init_state,
 		     0,			/* take all regions */
 		     facetize_shell_end,
-		     nmg_use_tnurbs ?
-		     nmg_booltree_leaf_tnurb :
-		     nmg_booltree_leaf_tess,
+		     nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
 		     (genptr_t)&facetize_tree
 	);
 
