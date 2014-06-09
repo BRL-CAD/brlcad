@@ -8,3 +8,6 @@ sub get_spaces {
   my $s = sprintf "%-*.*s", $ns, $ns, ' ';
   return $s;
 } # get_spaces
+
+# mandatory true return for a Perl module
+1;
