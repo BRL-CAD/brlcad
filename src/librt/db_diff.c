@@ -181,7 +181,7 @@ rt_intern_struct_size(int type) {
     return 0;
 }
 
-/* Exposed as private function to librt, but not (currently) beyond librt - 
+/* Exposed as private function to librt, but not (currently) beyond librt -
  * see librt_private.h */
 int
 tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)

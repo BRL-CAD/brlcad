@@ -166,8 +166,8 @@ extern int cyclic_path(const struct db_full_path *fp, const char *name);
 /* db_diff.c */
 
 /**
- * Function to convert an ft_get list of paramaters into an avs.
- * @return 0 if the converstion succeeds, -1 if it does not.
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
  */
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
