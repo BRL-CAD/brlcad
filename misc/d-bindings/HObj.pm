@@ -85,7 +85,7 @@ sub pretty {
 # open brackets
 my %ob
   = (
-     '(' => 0,
+     #'(' => 0,
      #'[' => 1,
      '{' => 2,
      '<' => 3,
@@ -93,7 +93,7 @@ my %ob
 # close brackets
 my %cb
   = (
-     ')' => 0,
+     #')' => 0,
      #']' => 1,
      '}' => 2,
      '>' => 3,
@@ -144,6 +144,13 @@ sub gen_pretty {
       $line = $level ? F::get_spaces($level) : '';
       $line .= $c;
     }
+    elsif ($c eq ';') {
+      # a semi the current line and starts a new line (no change in
+      # level)
+      $line .= $c;
+      push @arr, $line;
+      $line = $level ? F::get_spaces($level) : '';
+    }
     else {
       if ($c eq ' ') {
 	$line .= $c if ($line && lastchar($line) ne ' ');
@@ -171,6 +178,7 @@ sub gen_pretty {
 =cut
 
   # now tidy up a bit
+  my @arr2 = ();
   foreach my $line (@arr) {
     # remove spaces around square brackets
     $line =~ s{\s* \[}{\[}xg;
@@ -183,11 +191,17 @@ sub gen_pretty {
 
     # remove spaces before open parens
     $line =~ s{\s* \(}{\(}xg;
+    # remove spaces before close parens
+    $line =~ s{\s* \)}{\)}xg;
+    # remove spaces after open parens
+    $line =~ s{\( \s*}{\(}xg;
 
+    push @arr2, $line
+      if ($line =~ /\S/);
   }
 
   # and save the mess
-  $self->pretty(\@arr);
+  $self->pretty(\@arr2);
 
 =pod
 
@@ -200,6 +214,14 @@ sub gen_pretty {
 
 sub print_pretty {
   my $self = shift @_;
+  my $fp   = shift @_;
+
+  # this is C code
+
+  foreach my $line (@{$self->pretty()}) {
+    print $fp "$line\n";
+  }
+
 } # print_pretty
 
 sub dump {
