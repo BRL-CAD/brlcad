@@ -180,6 +180,10 @@ sub gen_pretty {
 
     # remove spaces before semicolons
     $line =~ s{\s* ;}{;}xg;
+
+    # remove spaces before open parens
+    $line =~ s{\s* \(}{\(}xg;
+
   }
 
   # and save the mess
