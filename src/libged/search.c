@@ -210,7 +210,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls argvls = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-D] [-Q] [-h] [path] [expressions...]\n";
+    const char *usage = "[-a] [-v] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
 
