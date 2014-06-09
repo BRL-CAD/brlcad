@@ -10,6 +10,7 @@ use CGrammar2; # <== an auto-generated file
 
 # for globals
 use G;
+use F;
 
 # for debugging:
 my $COMP = 0;
@@ -115,13 +116,6 @@ sub dump_parse_tree {
 
 } # dump_parse_tree
 
-sub get_spaces {
-  my $level = shift @_;
-  my $ns = $level * 3;
-  my $s = sprintf "%-*.*s", $ns, $ns, ' ';
-  return $s;
-} # get_spaces
-
 sub print_parse_tree {
   my $fp    = shift @_;
   my $ptree = shift @_;
@@ -138,7 +132,7 @@ sub print_object {
   my $level = shift @_; # use for number of leading spaces
 
   $level = 0 if !defined $level;
-  my $s = $level ? get_spaces($level) : '';
+  my $s = $level ? F::get_spaces($level) : '';
 
   # get type of object
   my $r = ref $obj;
