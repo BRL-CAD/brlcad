@@ -380,9 +380,11 @@ sub extract_object {
   my $cfirst   = -1; # curly braces
   my $pfirst   = -1; # parentheses
   my $sfirst   = -1; # square brackets
+
   my $clast    = -1; # curly braces
   my $plast    = -1; # parentheses
   my $slast    = -1; # square brackets
+
   my $semilast = -1; # semicolon
 
   for (my $i = 0; $i < $slen; ++$i) {
@@ -467,7 +469,7 @@ sub extract_object {
   my $first_line = $first_index + 1;
   my $last_line  = $last_index + 1;
 
-  $obj->orig_line("$s\n");
+  $obj->orig_line("$s");
   $obj->first_line($first_line);
   $obj->last_line($first_line);
 
