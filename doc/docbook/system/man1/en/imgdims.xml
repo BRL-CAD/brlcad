@@ -31,7 +31,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Imgdims</emphasis>
+<para><command>imgdims</command>
 uses the autosizing capability of
 <citerefentry><refentrytitle>libbn</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 to guess the dimensions (in pixels)
