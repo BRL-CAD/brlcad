@@ -22,6 +22,9 @@
     <arg choice='plain'><replaceable>file_name</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
+    or
+</cmdsynopsis>
+<cmdsynopsis>
   <command>imgdims</command>
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
     <arg choice='plain'><replaceable>num_bytes</replaceable></arg>
@@ -37,7 +40,7 @@ uses the autosizing capability of
 to guess the dimensions (in pixels)
 of an image.
 The image size may be expressed either implicitly,
-by specifying the name of the file,
+by specifying the name of the file;
 or explicitly,
 by specifying a number of bytes.</para>
 
