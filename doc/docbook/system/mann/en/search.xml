@@ -268,6 +268,116 @@
 		  are treated as patterns under shell pattern matching rules when a string comparison
 		  is performed, but in numerical mode only the parameter name is pattern matched.
 		</para>
+                <para>
+                  The following table outlines what parameters are visible to the <option>-param</option> option.  Because
+                  BRL-CAD uses the same internal containers for some types, some parameters will be present even when
+                  they do not make sense for the specific subtype.  Examples include using arb8's container for arb4
+                  and tgc for rcc.  Note:  there are also a number of primitives whose parameters are not exposed in a way that
+                  that <option>-param</option> can access them: arbn, ars, brep, bspline, dsp, metaball, nmg, pipe,
+                  pnts, and poly.
+                  
+		  <table><title>Primitive Parameters</title>
+
+			<tgroup cols="2">
+                          <thead>
+		                <row>
+			          <entry>Primitive</entry>
+			          <entry>Available Parameters</entry>
+		                </row>
+		          </thead>
+			  <tbody>
+				<row>
+				  <entry>arb8 (arb4, arb5, arb6, arb7)</entry>
+				  <entry>V1, V2, V3, V4, V5, V6, V7, V8</entry>
+				</row>
+				<row>
+				  <entry>bot</entry>
+				  <entry>mode, orient, V, F, T</entry>
+				</row>
+				<row>
+				  <entry>cline</entry>
+				  <entry>V, H, R, T</entry>
+				</row>
+				<row>
+				  <entry>ebm</entry>
+				  <entry>F, W, N, H, M</entry>
+				</row>
+				<row>
+				  <entry>ehy</entry>
+				  <entry>V, H, A, r_1, r_2, c</entry>
+				</row>
+				<row>
+				  <entry>ell (sph)</entry>
+				  <entry>V, A, B, C</entry>
+				</row>
+				<row>
+				  <entry>epa</entry>
+				  <entry>V, H, A, r_1, r_2</entry>
+				</row>
+				<row>
+				  <entry>eto</entry>
+				  <entry>V, N, C, r, r_d</entry>
+				</row>
+				<row>
+				  <entry>extrude</entry>
+				  <entry>V, H, A, B, S, K</entry>
+				</row>
+				<row>
+				  <entry>grip</entry>
+				  <entry>V, N, L</entry>
+				</row>
+				<row>
+				  <entry>half</entry>
+				  <entry>N, d</entry>
+				</row>
+				<row>
+				  <entry>hf</entry>
+				  <entry>cfile, dfile, fmt, w, n, shorts, file2mm, v, x, y, xlen, ylen, zscale</entry>
+				</row>
+				<row>
+				  <entry>hyp</entry>
+				  <entry>V, H, A, b, bnr</entry>
+				</row>
+				<row>
+				  <entry>part</entry>
+				  <entry>V, H, r_v, r_h</entry>
+				</row>
+				<row>
+				  <entry>revolve</entry>
+				  <entry>V, axis, R, ang, sk_name</entry>
+				</row>
+				<row>
+				  <entry>rhc</entry>
+				  <entry>V, H, B, r, c</entry>
+				</row>
+				<row>
+				  <entry>rpc</entry>
+				  <entry>V, H, B, r</entry>
+				</row>
+				<row>
+				  <entry>sketch</entry>
+				  <entry>V, A, B, VL, SL</entry>
+				</row>
+				<row>
+				  <entry>submodel</entry>
+				  <entry>file, treetop, meth</entry>
+				</row>
+				<row>
+				  <entry>tgc (rcc, rec, tec, trc)</entry>
+				  <entry>V, H, A, B, C, D</entry>
+				</row>
+				<row>
+				  <entry>tor</entry>
+				  <entry>V, H, r_a, r_h</entry>
+				</row>
+				<row>
+				  <entry>vol</entry>
+				  <entry>file, w, n, d, lo, hi, size, mat</entry>
+				</row>
+			  </tbody>
+			</tgroup>
+		  </table>
+                </para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
