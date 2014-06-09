@@ -43,46 +43,6 @@ our %crw
      'while'    => {},
     );
 
-# 64-bit mapping from C types to D types
-#   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-my %d64map
-  = (
-     'long double'        => 'real',
-     'unsigned long long' => 'ulong',
-     'long long'          => 'long',
-     'unsigned long'	  => 'ulong', # Linux [int (Windows)]
-     'long'               => 'long', # Linux [int (Windows)]
-     'unsigned'           => 'uint',
-     'unsigned int'       => 'int',
-     'unsigned short'     => 'ushort',
-     'signed char'        => 'byte',
-     'unsigned char'      => 'ubyte',
-     'wchar_t'            => 'wchar', # or dchar
-     'bool'               => 'bool', # byte, int
-     'size_t'             => 'size_t',
-     'ptrdiff_t'          => 'ptrdiff_t'
-    );
-
-# 32-bit mapping from C types to D types
-#   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-my %d32map
-  = (
-     'long double'        => 'real',
-     'unsigned long long' => 'ulong',
-     'long long'          => 'long',
-     'unsigned long'      => 'uint',
-     'long'               => 'int',
-     'unsigned int'       => 'uint',
-     'int'                => 'int',
-     'unsigned short'     => 'ushort',
-     'signed char'        => 'byte',
-     'unsigned char'      => 'ubyte',
-     'wchar_t'            => 'wchar', # or dchar
-     'bool'               => 'bool',  # byte, int
-     'size_t'             => 'size_t',
-     'ptrdiff_t'          => 'ptrdiff_t',
-    );
-
 # keywords used as types in BRL-CAD headers
 our @bkw
   = (
