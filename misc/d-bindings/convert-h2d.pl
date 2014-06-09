@@ -143,7 +143,7 @@ foreach my $arg (@ARGV) {
     $G::clean        = 1;
     $G::devel        = 1;
     $G::quitundef    = 0;
-    $G::maxchunks    = 100;
+    $G::maxchunks    = 0;
     $G::inspect_tree = 0;
 
     $G::pretty_print = 1;
@@ -160,8 +160,8 @@ die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
 if ($G::devel) {
-  #@ifils = ("${BP::IDIR}/bu.h");
-  @ifils = ("./bu2.h");
+  @ifils = ("${BP::IDIR}/bu.h");
+  #@ifils = ("./bu2.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
