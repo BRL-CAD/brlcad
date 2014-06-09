@@ -420,7 +420,7 @@ sub convert1final {
     }
 
     # always getting chunks
-    my $obj = Hobj::get_new_hobj();
+    my $obj = HObj::get_new_hobj();
     $obj->num($nchunks);
 
     $i = CExtract::extract_object({
@@ -477,6 +477,15 @@ sub convert1final {
     ParsePPCHeader::print_parse_tree($fp, $ptree);
   }
 
+  # pretty print the objects
+  if ($G::pretty_print) {
+    print "DEVEL: pretty printing objects...\n";
+    foreach my $o (@objs) {
+      $o->gen_pretty;
+      $o->dump();
+    }
+  }
+
   # now process @olines and write them out
 
   open my $fpo, '>', $ofil
@@ -520,6 +529,7 @@ sub convert_with_gcc_E {
   #$opts .= ' -v'; # report include paths
   $opts .= ' -P'; # omit line markers
   $opts .= ' -undef'; # Do not predefine any system-specific or GCC-specific macros. The standard predefined macros remain defined.
+  $opts .= ' -x c'; # input file is C source code
 
   my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
   print "debug-cmd: '$cmd'\n"
