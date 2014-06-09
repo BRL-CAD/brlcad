@@ -2,13 +2,12 @@
 
 # converts a C .h file to a rudimentary .d file for linking C to D
 
-use v5.10; # for 'say'
+use v5.14; # for 'say', etc.
 
 use strict;
 use warnings;
 
-use Running::Commentary; # better 'system' (Conway)
-use Text::Balanced;      # extract balanced test (Conway)
+use Running::Commentary;                # a better 'system' (Conway)
 
 use File::Basename;
 use lib('.');
@@ -33,7 +32,7 @@ die "ERROR:  Unknown include dir for BRL-CAD public headers: '$BP::DIDIR' (see D
 my $p = basename($0);
 my $usage  = "Usage: $p mode [options...]\n\n";
 $usage    .= "  modes:   -r | -cN | -h=X | -b | -e\n";
-$usage    .= "  options: -f -d -c -n=X -h";
+$usage    .= "  options: -f -d -c -n=X -t -h";
 if (!@ARGV) {
   say <<"HERE";
 $usage
@@ -144,8 +143,10 @@ foreach my $arg (@ARGV) {
     $G::clean        = 1;
     $G::devel        = 1;
     $G::quitundef    = 0;
-    $G::maxchunks    = 1;
+    $G::maxchunks    = 100;
     $G::inspect_tree = 0;
+
+    $G::pretty_print = 1;
 
   }
 
@@ -159,7 +160,8 @@ die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
 if ($G::devel) {
-  @ifils = ("${BP::IDIR}/bu.h");
+  #@ifils = ("${BP::IDIR}/bu.h");
+  @ifils = ("./bu2.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
@@ -337,6 +339,7 @@ options:
   -h    help
   -C    cleans out all generated files and the stored file hashes
   -n=X  parse after reading X chunks instead of the entire file
+   t    test mode for developers
 
 Notes:
 
