@@ -22,6 +22,7 @@ our $quitundef    = 0; # >0 - stop at first undef chunk
 our $maxchunks    = 0; # >0 - stop after N successful chunks
 our $inspect_tree = 0; # >0 - try to interpret parse tree
 our $addfunc      = 0; # >0 - add a function to the top of the header for devel
+our $pretty_print = 0; # >0 - pretty print objects
 
 Readonly our $NEW  => -1;
 Readonly our $SAME =>  0;
