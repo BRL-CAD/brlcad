@@ -218,16 +218,30 @@ struct db_full_path {
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
+    matp_t 	      * fp_mat;		/**< @brief array of boolean flags */
 };
 #define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
 
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
+#define DB_FULL_PATH_CUR_MATRIX(_pp) ((_pp)->fp_mat[(_pp)->fp_len-1])
 #define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
+#define DB_FULL_PATH_SET_CUR_MATRIX(_pp, _m) { \
+    (_pp)->fp_mat[(_pp)->fp_len-1] = (matp_t)bu_calloc((_pp)->fp_maxlen, sizeof(matp_t), "new db_full_path mat array"); \
+    (void)memcpy((void *)(_pp->fp_mat[(_pp)->fp_len-1]), (const void *)(_m), sizeof(mat_t)); \
+    }
 #define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
 #define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
 #define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
+#define DB_FULL_PATH_GET_MATRIX(_pp, _i) ((_pp)->fp_mat[(_i)])
+#define DB_FULL_PATH_SET_MATRIX(_pp, _i, _m) { \
+    (_pp)->fp_mat[(_i)] = (matp_t)bu_calloc((_pp)->fp_maxlen, sizeof(matp_t), "new db_full_path mat array"); \
+    (void)memcpy((void *)(_pp->fp_mat[(_i)]), (const void *)(_m), sizeof(mat_t)); \
+    }
+
+
+
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
@@ -3543,6 +3557,7 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
  */
 #define DB_FP_PRINT_BOOL         0x1    /* print boolean operations */
 #define DB_FP_PRINT_TYPE         0x2    /* print object types */
+#define DB_FP_PRINT_MATRIX       0x4    /* print notice that a matrix is present */
 RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 	                                 const struct db_full_path *full_path,
 					 const struct db_i *dbip,  /* needed for type determination */
