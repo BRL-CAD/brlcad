@@ -146,7 +146,7 @@ foreach my $arg (@ARGV) {
     $G::maxchunks    = 0;
     $G::inspect_tree = 0;
 
-    $G::pretty_print = 1;
+    $G::pretty_print = 0;
 
   }
 
