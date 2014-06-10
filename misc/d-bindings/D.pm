@@ -752,7 +752,7 @@ sub check_final {
   # attempt to build the D source file
   my $dfil = shift @_;
 
-  my $cmd = "dmd $dfil";
+  my $cmd = "dmd -c $dfil";
 
   # Act like system(), only louder and cleaner...
   run "Checking the build for file '$dfil'" => $cmd
