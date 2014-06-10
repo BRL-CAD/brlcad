@@ -450,6 +450,10 @@ sub convert1final {
   print "DEBUG:  Processed $nchunks objects...\n"
     if $G::debug;
 
+=pod
+
+  # don't go this route for now
+
   # parse the tree
   my $ptree = ParsePPCHeader::parse_cfile
     ({
@@ -478,6 +482,8 @@ sub convert1final {
       if $G::debug;
     ParsePPCHeader::print_parse_tree($fp, $ptree);
   }
+
+=cut
 
   # pretty print the objects
   if ($G::pretty_print) {
@@ -509,15 +515,12 @@ sub convert1final {
   }
 
   # now process @olines and write them out
-  say "WARNING:  No final converion yet!";
-
-=pod
+  #say "WARNING:  No final converion yet!";
 
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
 
-  print $fpo "module $stem;\n";
-  print $fpo "\n";
+  say $fpo "module $stem;\n";
 
   my @sysmods = (sort keys %sysmod);
   if (@sysmods) {
@@ -532,8 +535,13 @@ sub convert1final {
   print $fpo "extern (C) {\n";
   print $fpo "\n";
 
-  foreach my $line (@olines) {
-    print $fpo $line;
+  foreach my $o (@objs) {
+    $o->do_all_conversions();
+    $o->print_final();
+
+    #$o->print_pretty($fp, 'c');
+    #$o->print_pretty($fp2, 'd');
+    #$o->dump();
   }
 
   # ender
