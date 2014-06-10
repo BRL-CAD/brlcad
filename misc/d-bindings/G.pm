@@ -43,9 +43,30 @@ our %d64map
      'signed char'        => 'byte',
      'unsigned char'      => 'ubyte',
      'wchar_t'            => 'wchar', # or dchar
-     'bool'               => 'bool', # byte, int
-     'size_t'             => 'size_t',
-     'ptrdiff_t'          => 'ptrdiff_t'
+     #'bool'               => 'bool', # byte, int
+     #'size_t'             => 'size_t',
+     #'ptrdiff_t'          => 'ptrdiff_t'
+    );
+
+# the preferred order for checking
+our @d64map_keys
+  = (
+     'unsigned long long',
+     'long long',
+
+     'unsigned long',
+     'long',
+
+     'unsigned int',
+     'unsigned short',
+     'unsigned char',
+
+     'unsigned',
+
+     'long double',
+     'signed char',
+
+      'wchar_t',
     );
 
 # 32-bit mapping from C types to D types
@@ -63,9 +84,9 @@ our %d32map
      'signed char'        => 'byte',
      'unsigned char'      => 'ubyte',
      'wchar_t'            => 'wchar', # or dchar
-     'bool'               => 'bool',  # byte, int
-     'size_t'             => 'size_t',
-     'ptrdiff_t'          => 'ptrdiff_t',
+     #'bool'               => 'bool',  # byte, int
+     #'size_t'             => 'size_t',
+     #'ptrdiff_t'          => 'ptrdiff_t',
     );
 
 # input type for functions in ParsePPCHeader
