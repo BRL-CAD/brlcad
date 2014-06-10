@@ -15,7 +15,8 @@ use F;
 our %tag
   = (
      'num'        => '$', # the inout sequence number (indexed from 0)
-     'type'       => '$', # see 'C-BNF.txt'
+     'type'       => '$', # 'typedef'
+     'name'       => '$', # name of typedef, if any
      'orig_line'  => '$', # originally extracted array flattened to one line (in C format)
      'first_line' => '$', # line number of first line
      'last_line'  => '$', # line number of last line
@@ -133,6 +134,63 @@ sub c_line_to_d_line {
 sub c_to_d {
   my $self = shift @_;
 
+  # process pretty_d lines as a group, insert back into pretty_d lines
+  my $daref = $self->pretty_d();
+
+  # use a tmp array copy
+  my @arr = @$daref;
+  my $nl  = @arr;
+
+  my $typ = $self->type;
+  my $nam = $self->name;
+
+  if ($typ eq 'typedef') {
+    my $tok = shift @arr;
+    die "FATAL:  \$tok ne '$typ', it's '$tok'"
+      if $tok ne $typ;
+    $nl  = @arr;
+
+    if ($nl == 1) {
+      # example: 'tfoo* bar;
+      my $line = shift @arr;
+      $line =~ s{;}{ ; };
+      my @d = split ' ', $line;
+      my $tok = pop @d;
+      die "FATAL:  \$tok ne ';', it's '$tok'"
+	if $tok ne ';';
+      $tok = pop @d;
+      die "FATAL:  \$tok ne '$nam', it's '$tok'"
+	if $tok ne $nam;
+      # we should have all we need to write the single D line
+      $line = "alias $nam = ";
+      $line .= join ' ', @d;
+      $line .= ';';
+      @arr = ($line);
+
+      # save the work, we're done
+      $self->pretty_d(\@arr);
+      return;
+    }
+  }
+
+  if (0 && $G::debug) {
+    say "DEBUUG:  dumping \@arr:";
+    print Dumper(\@arr);
+    die "DEBUG exit";
+  }
+
+  for (my $i = 0; $i < $nl; ++$i) {
+    my $line = $daref->[$i];
+
+    # process the line
+    # ...
+
+    #push @arr, $line;
+  }
+
+  # save the work
+  $self->pretty_d(\@arr);
+
 } # c_to_d
 
 sub print_final {
@@ -173,16 +231,12 @@ sub do_all_conversions {
   # convert C line to D line
   $self->c_line_to_d_line();
 
-  # make the pretty arrays
-  $self->gen_pretty('c');
+  # make the pretty D array
   $self->gen_pretty('d');
 
-=pod
-
+  # convert the D array to final D lines
   # final conversion
   $self->c_to_d();
-
-=cut
 
 } # do_all_conversions
 
@@ -246,10 +300,12 @@ sub gen_pretty {
 
     # check for typedef
     if ($line =~ m{\A typedef \s* \z}x) {
+      $self->type('typedef');
       push @arr, 'typedef';
       $line = '';
     }
   }
+
   # remainder of any line
   push @arr, $line
     if $line;
@@ -282,6 +338,22 @@ sub gen_pretty {
 
     push @arr2, $line
       if ($line =~ /\S/);
+  }
+
+  # extract the "name" of any typedef
+  if ($self->type() eq 'typedef') {
+    my $nl = @arr2;
+    my $line = $arr2[$nl-1];
+    $line =~ s{;}{ ; }g;
+    my @d = split ' ', $line;
+    my $end = pop @d;
+    if ($end ne ';') {
+      say "FATAL:  last typedef line: '$line'";
+      die "   Line not ended with semicolon."
+    }
+    # the name should be the next to last token
+    my $name = pop @d;
+    $self->name($name);
   }
 
   # and save the mess
@@ -329,6 +401,7 @@ sub dump {
   say    "Dumping an Hobj object:";
   printf "  num: %d\n",        $self->num();
   printf "  type: %s\n",       $self->type();
+  printf "  name: %s\n",       $self->name();
   printf "  orig_line: \"%s\"\n",  $self->orig_line();
   printf "  d_line: \"%s\"\n",  $self->d_line();
   printf "  first_line: %d\n", $self->first_line();
@@ -336,11 +409,15 @@ sub dump {
 
   my ($sref);
 
+=pod
+
   $sref = $self->pretty_c();
   say "  pretty_c:";
   if (defined $sref) {
     say "    $_" for @$sref;
   }
+
+=cut
 
   $sref = $self->pretty_d();
   say "  pretty_d:";

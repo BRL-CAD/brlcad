@@ -451,8 +451,10 @@ sub convert1final {
   }
 
   # report number of chunks found
-  print "DEBUG:  Processed $nchunks objects...\n"
-    if $G::debug;
+  if ($G::debug) {
+    my $s = $nchunks > 1 ? 's' : '';
+    say "DEBUG:  Processed $nchunks object${s}...";
+  }
 
 =pod
 
@@ -541,6 +543,11 @@ sub convert1final {
   foreach my $o (@objs) {
     $o->do_all_conversions();
     $o->print_final($fpo, $ifil);
+    if ($G::debug) {
+      my $num = $o->num();
+      say "DEBUG:  dumping object number $num:";
+      $o->dump();
+    }
   }
 
   # ender
@@ -564,8 +571,8 @@ sub convert_with_gcc_E {
   $opts .= ' -x c'; # input file is C source code
 
   my $cmd = "gcc -E $opts $incdirs $ifil > $ofil";
-  print "debug-cmd: '$cmd'\n"
-    if $G::debug;
+  print "DEBUG: cmd:  '$cmd'\n"
+    if (0 && $G::debug);
 
   my $msg = qx($cmd);
 
