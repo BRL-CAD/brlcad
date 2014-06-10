@@ -416,11 +416,27 @@ int main( int argc, char **argv )
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
+	osg::ref_ptr<osg::Group> comb = new osg::Group;
+	comb->setName(curr_dp->d_namep);
+	osg_nodes[curr_dp] = comb.get();
+    }
+    for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
 	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
+	    if (curr_path->fp_mat[curr_path->fp_len - 1]) {
+		mat_t m;
+		MAT_TRANSPOSE(m, curr_path->fp_mat[curr_path->fp_len - 1]);
+		osg::Matrixd osgMat(m);
+		osg::ref_ptr<osg::MatrixTransform> mt = new osg::MatrixTransform(osgMat);
+		mt->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
+		osg_nodes[curr_dp]->addChild(mt);
+	    } else {
+		osg_nodes[curr_dp]->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
+	    }
 	}
 	db_search_free(&comb_children);
     }
