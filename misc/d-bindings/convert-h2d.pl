@@ -7,8 +7,6 @@ use v5.14; # for 'say', etc.
 use strict;
 use warnings;
 
-use Running::Commentary;                # a better 'system' (Conway)
-
 use File::Basename;
 use lib('.');
 
