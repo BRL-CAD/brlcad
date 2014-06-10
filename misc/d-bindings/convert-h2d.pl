@@ -158,8 +158,8 @@ die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
 if ($G::devel) {
-  @ifils = ("${BP::IDIR}/bu.h");
-  #@ifils = ("./bu2.h");
+  #@ifils = ("${BP::IDIR}/bu.h");
+  @ifils = ("./test_hdr.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
