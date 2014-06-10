@@ -25,31 +25,31 @@
 </refsynopsisdiv>
 
 <refsect1><title>WARNING</title>
-<para><emphasis remap='I'>Lgt</emphasis> is deprecated.  Use
+<para><command>lgt</command> is deprecated.  Use
 <citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 instead.</para>
 </refsect1>
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Lgt</emphasis>
+<para><command>lgt</command>
 is an image rendering tool for the
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 solids modeling data base.
 The program can run interactively or detached from a terminal session
 (batch mode).
-The interactive user interface consists of a terminal independent pop-up
+The interactive user interface consists of a terminal-independent pop-up
 hierarchical menu system (though IRIS users have the option of using the
 mouse-driven graphics menus instead).
 The experienced user may wish to exit this menu system (by typing a `q')
 and use the single-letter command interface as described below.
 For information on the hierarchical menus and detailed information on the
 commands and overall usage of <emphasis remap='I'>lgt</emphasis> please refer to the paper
-<emphasis remap='B'>The "lgt" Lighting Model</emphasis> which is included in the BRL-CAD
+<emphasis remap='B'>The "lgt" Lighting Model</emphasis>, which is included in the BRL-CAD
 documentation.
 <emphasis remap='B'>Note</emphasis>
 that specifying the
 <emphasis remap='B'>viewing direction</emphasis>
-involves setting up light source zero,
+involves setting up light source zero;
 see the
 <emphasis remap='B'>L</emphasis>
 command below for more information.
@@ -395,7 +395,7 @@ This is useful when computing a view from inside the model.</para>
 </variablelist>
 
 <para>Required arguments to the program are
-<emphasis remap='I'>model.g</emphasis>
+<emphasis remap='I'>model.g</emphasis> ,
 which is the name of the
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 data base, followed by one or more
