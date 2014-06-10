@@ -40,13 +40,12 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
-#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
-#include <BulletCollision/CollisionShapes/btBoxShape.h>
-#include <BulletCollision/CollisionDispatch/btCollisionObject.h>
-#include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
-
-/* private headers */
 #include "./simcollisionalgo.h"
+#include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
+#include "BulletCollision/CollisionShapes/btBoxShape.h"
+#include "BulletCollision/CollisionDispatch/btCollisionObject.h"
+#include "BulletCollision/CollisionDispatch/btBoxBoxDetector.h"
+#include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
 
 #if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
@@ -56,20 +55,14 @@
 
 #define USE_PERSISTENT_CONTACTS 1
 
-#define DEBUG_MF 1
-
-
-btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
-					       const btCollisionAlgorithmConstructionInfo& ci,
-					       btCollisionObject* col0,
-					       btCollisionObject* col1)
-    : btActivatingCollisionAlgorithm(ci, col0, col1),
-m_ownManifold(false),
-m_manifoldPtr(mf)
+btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap)
+: btActivatingCollisionAlgorithm(ci, col0Wrap, col1Wrap),
+    m_ownManifold(false),
+    m_manifoldPtr(mf)
 {
-if (!m_manifoldPtr)
+if (!m_manifoldPtr && m_dispatcher->needsCollision(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject()))
 {
-	m_manifoldPtr = m_dispatcher->getNewManifold(col0,col1);
+	m_manifoldPtr = m_dispatcher->getNewManifold(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject());
 	m_ownManifold = true;
 }
 }
@@ -83,12 +76,7 @@ if (m_ownManifold)
 }
 }
 
-
-void
-btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
-					 btCollisionObject* col1,
-					 const btDispatcherInfo& dispatchInfo,
-					 btManifoldResult* resultOut)
+void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
 {
     if (!m_manifoldPtr)
 	return;
@@ -109,8 +97,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
     int i;
 
     //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+    struct rigid_body *rbA = (struct rigid_body *)col0Wrap->getCollisionObject()->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)col1Wrap->getCollisionObject()->getUserPointer();
 
     if (rbA != NULL && rbB != NULL) {
 
