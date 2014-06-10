@@ -1139,6 +1139,31 @@ struct rt_tree_array *rt_tree_flatten(union tree *tr, const int count)
     return tree_list;
 }
 
+void nmg_tree_init(union tree *tp)
+{
+    BU_ALLOC(tp, union tree);
+    RT_TREE_INIT(tp);
+    tp->tr_d.td_s = nmg_ms();
+}
+
+void nmg_tree_free(union tree *tp)
+{
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NMG_TESS:
+	    nmg_ks(tp->tr_d.td_s);
+
+	case OP_UNION:
+	    nmg_tree_free(tp->tr_b.tb_left);
+	    nmg_tree_free(tp->tr_b.tb_right);
+
+	default:
+	    bu_log("rt_tree_free: bad op %d\n", tp->tr_op);
+	    bu_bomb("rt_tree_free\n");
+    }
+}
+
 /*
  * Local Variables:
  * mode: C

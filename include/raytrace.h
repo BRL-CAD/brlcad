@@ -7990,6 +7990,16 @@ RT_EXPORT extern union tree *rt_tree_union(union tree *tr1, union tree *tr2);
  */
 RT_EXPORT extern struct rt_tree_array *rt_tree_flatten(union tree *tr, const int count);
 
+/**
+ * Initialize tree for nmg.
+ */
+RT_EXPORT extern void nmg_tree_init(union tree *tp);
+
+/**
+ * Free tree for nmg.
+ */
+RT_EXPORT extern void nmg_tree_free(union tree *tp);
+
 __END_DECLS
 
 #endif /* RAYTRACE_H */

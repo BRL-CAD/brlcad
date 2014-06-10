@@ -83,7 +83,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
-    union tree *nmg_tree;
+    union rt_comb_internal *nmg_comb;
 
     static const char *usage = "[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]";
 
@@ -170,11 +170,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		  "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 		  gedp->ged_wdbp->wdb_ttol.abs, gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.norm);
 
-    BU_ALLOC(nmg_tree, union tree);
-    nmg_tree->tr_d.td_s = nmg_ms();
+    BU_ALLOC(nmg_comb, struct rt_comb_internal);
+    BU_ALLOC(nmg_comb->tree, union tree);
+    nmg_comb->tree->tr_d.td_s = nmg_ms();
 
     facetize_tree = (union tree *)0;
-    init_state.ts_s = &nmg_tree->tr_d.td_s;
+    init_state.ts_s = &nmg_comb->tree->tr_d.td_s;
 
     i = db_walk_tree(dbip, argc, (const char **)argv,
 		     1,
