@@ -4,12 +4,12 @@ typedef long __tok;
 
 typedef long __val[2];
 
-/*
-
 typedef struct
 {
   long __val[2];
 } __quad_t;
+
+/*
 
 
 typedef struct
