@@ -101,6 +101,37 @@ sub lastchar {
 
 } # lastchar
 
+
+sub c_line_to_d_line {
+  # convert C types to D types
+  my $self = shift @_;
+
+  my $ctext = $self->orig_line(); # the flattened line
+
+
+} # c_line_to_d_line
+
+sub c_to_d {
+  my $self = shift @_;
+
+} # c_to_d
+
+sub do_all_conversions {
+  my $self = shift @_;
+
+  # convert C line to D line
+  $self->c_line_to_d_line();
+
+  # make the pretty arrays
+  $self->gen_pretty('c');
+  $self->gen_pretty('d');
+
+  # final conversion
+  $self->c_to_d();
+
+
+} # do_all_conversions
+
 sub gen_pretty {
   # put extracted object into pretty format for printing
   my $self = shift @_;
