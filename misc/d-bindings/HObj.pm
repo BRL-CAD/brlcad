@@ -106,8 +106,25 @@ sub c_line_to_d_line {
   # convert C types to D types
   my $self = shift @_;
 
-  my $ctext = $self->orig_line(); # the flattened line
+  my $ctext = $self->orig_line(); # the flattened C line
 
+  foreach my $k (@G::d64map_keys) {
+    my $val = $G::d64map{$k};
+
+    # build the regex
+    my @d = split(' ', $k);
+    my $r = "\\b";
+    $r .= shift @d;
+    while (@d) {
+      $r .= "\\s+";
+      $r .= shift @d;
+    }
+
+    # apply it
+    $ctext =~ /$r/g;
+  }
+
+  $self->d_line();
 
 } # c_line_to_d_line
 
@@ -122,6 +139,8 @@ sub do_all_conversions {
   # convert C line to D line
   $self->c_line_to_d_line();
 
+=pod
+
   # make the pretty arrays
   $self->gen_pretty('c');
   $self->gen_pretty('d');
@@ -129,6 +148,7 @@ sub do_all_conversions {
   # final conversion
   $self->c_to_d();
 
+=cut
 
 } # do_all_conversions
 
