@@ -2,9 +2,9 @@ extern ptrdiff_t t;
 
 typedef long __tok;
 
-/*
-
 typedef long __val[2];
+
+/*
 
 typedef struct
 {

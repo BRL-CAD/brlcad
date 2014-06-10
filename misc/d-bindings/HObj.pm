@@ -161,9 +161,25 @@ sub c_to_d {
       $tok = pop @d;
       die "FATAL:  \$tok ne '$nam', it's '$tok'"
 	if $tok ne $nam;
+
+      # if name has an array indicator we need to add it to the D type
+      # e.g., 'val[3] long'
+      my $brexp = '';
+
+=pod
+
+      if ($tok =~ m{\A [a-zA-Z_]+ (\[ [0-9] \]) \z}x) {
+	$brexp = $1;
+      }
+
+=cut
+
       # we should have all we need to write the single D line
-      $line = "alias $nam = ";
+      $line = "alias ";
       $line .= join ' ', @d;
+      $line .= $brexp
+	if $brexp;
+      $line .= " $nam";
       $line .= ';';
       @arr = ($line);
 
