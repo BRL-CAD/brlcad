@@ -62,7 +62,7 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 	pp->fp_bool = (int *)bu_calloc(pp->fp_maxlen, sizeof(int),
 	    "db_full_path bool array");
 	pp->fp_mat = (matp_t *)bu_calloc(pp->fp_maxlen, sizeof(matp_t),
-	    "db_full_path matricies array");
+	    "db_full_path matrices array");
     } else if (pp->fp_len >= pp->fp_maxlen) {
 	pp->fp_maxlen *= 4;
 	pp->fp_names = (struct directory **)bu_realloc(
@@ -76,7 +76,7 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 	pp->fp_mat = (matp_t *)bu_realloc(
 	    (char *)pp->fp_mat,
 	    pp->fp_maxlen * sizeof(matp_t),
-	    "enlarged db_full_path matricies array");
+	    "enlarged db_full_path matrices array");
     }
     pp->fp_names[pp->fp_len++] = dp;
 }
@@ -129,7 +129,7 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	pathp->fp_bool = (int *)bu_calloc(pathp->fp_maxlen, sizeof(int),
 		"empty fp_bool bool extension");
 	pathp->fp_mat = (matp_t *)bu_calloc(pathp->fp_maxlen, sizeof(matp_t),
-		"db_full_path matricies array");
+		"db_full_path matrices array");
 	return;
     }
 
@@ -147,7 +147,7 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	pathp->fp_mat = (matp_t *)bu_realloc(
 		(char *)pathp->fp_mat,
 		pathp->fp_maxlen * sizeof(matp_t),
-		"enlarged db_full_path matricies array");
+		"enlarged db_full_path matrices array");
     }
 }
 
@@ -497,7 +497,7 @@ db_free_full_path(struct db_full_path *pp)
     }
 }
 
-/* TODO - make the identical test incorporate booleans and matricies as well, if present */
+/* TODO - make the identical test incorporate booleans and matrices as well, if present */
 int
 db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
 {
@@ -515,7 +515,7 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
     return 1;
 }
 
-/* TODO - make the subset test incorporate booleans (and matricies?), if present */
+/* TODO - make the subset test incorporate booleans (and matrices?), if present */
 int
 db_full_path_subset(
     const struct db_full_path *a,
@@ -559,7 +559,7 @@ db_full_path_subset(
     return 0;
 }
 
-/* TODO - make the match top test incorporate booleans and matricies as well, if present */
+/* TODO - make the match top test incorporate booleans and matrices as well, if present */
 int
 db_full_path_match_top(
     const struct db_full_path *a,
