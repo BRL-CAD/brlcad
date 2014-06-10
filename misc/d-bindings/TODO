@@ -1,3 +1,12 @@
+Some subtleties
+===============
+
+During object extraction and conversion, determine need for some D
+modules, e.g., the ptrdiff_t is known but a special module module must
+be explicitly imported.
+
+Likewise, file pointers and other C stdio kinds of things.
+
 Simple converter
 ================
 
