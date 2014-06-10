@@ -38,10 +38,14 @@
  *  THE SOFTWARE.
  */
 
+extern "C" {
 #include "common.h"
 #include "bu/log.h"
+#include "bu/list.h"
+#include "raytrace.h"
+#include "rtfunc.h"
+}
 
-#if 0
 #include <osgUtil/Optimizer>
 #include <osgDB/ReadFile>
 
@@ -287,23 +291,18 @@ struct SnapeImageHandler : public osgGA::GUIEventHandler
     int                     _key;
     osg::ref_ptr<SnapImage> _snapImage;
 };
-#endif
-
 
 int main( int argc, char **argv )
 {
-#if 0
+    std::map<struct directory *, struct bu_list *> vlists;
+    std::map<struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
-    struct rt_db_internal intern;
-    struct bu_list plot_segments;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
     const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
-#endif
     if (argc != 3 || !argv) {
 	bu_exit(1, "Error - please specify a .g file and an object\n");
     }
-#if 0
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_exit(1, "Cannot stat file %s\n", argv[1]);
     }
@@ -322,17 +321,98 @@ int main( int argc, char **argv )
 	bu_exit(1, "ERROR: Unable to fine object %s in %s\n", argv[2], argv[1]);
     }
 
-    RT_DB_INTERNAL_INIT(&intern);
+    /* Get the plot vlists associated with the solid objects below the supplied object */
+    const char *solid_search = "! -type comb";
+    const char *comb_search = "-type comb";
+    struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, solid_search, 1, &dp, dbip);
+    for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
+	/* Get the vlist associated with this particular object */
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
+	if (vlists.find(curr_dp) == vlists.end()) {
+	    struct bu_list *plot_segments;
+	    struct rt_db_internal intern;
+	    RT_DB_INTERNAL_INIT(&intern);
+	    if (rt_db_get_internal(&intern, curr_dp, dbip, NULL, &rt_uniresource) < 0) {
+		bu_exit(1, "ERROR: Unable to get internal representation of %s\n", curr_dp->d_namep);
+	    }
+	    BU_GET(plot_segments, struct bu_list);
+	    BU_LIST_INIT(plot_segments);
+	    if (rt_obj_plot(plot_segments, &intern, &rttol, &tol) < 0) {
+		bu_exit(1, "ERROR: Unable to get plot segment list from %s\n", curr_dp->d_namep);
+	    }
+	    vlists[curr_dp] = plot_segments;
+	    rt_db_free_internal(&intern);
 
-    if (rt_db_get_internal(intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);
-    }
+	    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+	    osg::ref_ptr<osg::Vec3Array> vertArray = new osg::Vec3Array;
+	    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+	    osg::ref_ptr<osg::Group> wrapper = new osg::Group;
+	    geode->setName(curr_dp->d_namep);
+	    wrapper->setName(curr_dp->d_namep);
+	    {
+		int currentVertex=0;
+		std::vector<int>startIndexes;
+		std::vector<int>stopIndexes;
+		struct bn_vlist *vp;
+		for (BU_LIST_FOR(vp, bn_vlist, plot_segments))
+		{
+		    int j;
+		    int nused = vp->nused;
+		    const int *cmd = vp->cmd;
+		    point_t *pt = vp->pt;
 
-    /* Get the vlist associated with this particular object */
-    BU_LIST_INIT(&plot_segments);
-    if (rt_obj_plot(&plot_segments, &intern, &tol, &rttol) < 0) {
-	bu_exit(1, "ERROR: Unable to get plot segment list from %s\n", dp->d_namep);
+		    for (j=0 ; j < nused ; j++, cmd++, pt++, currentVertex++)
+		    {
+			switch (*cmd)
+			{
+			    case BN_VLIST_POLY_START:
+				break;
+			    case BN_VLIST_POLY_MOVE:  // fallthrough
+			    case BN_VLIST_LINE_MOVE:
+				if (startIndexes.size() > 0)
+				{
+				    // finish off the last linestrip
+				    stopIndexes.push_back(currentVertex-1);
+				}
+				// remember where the new linestrip begins
+				startIndexes.push_back(currentVertex);
+
+				// start a new linestrip
+				vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
+
+				break;
+			    case BN_VLIST_POLY_DRAW: // fallthrough
+			    case BN_VLIST_POLY_END: // fallthrough
+			    case BN_VLIST_LINE_DRAW:
+				// continue existing linestrip
+				vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
+				break;
+			    case BN_VLIST_POINT_DRAW:
+				break;
+			}
+		    }
+		}
+
+		if (startIndexes.size() > 0)
+		    stopIndexes.push_back(--currentVertex);
+
+		geom->setUseDisplayList(true);
+		geom->setVertexArray(vertArray);
+
+		for (unsigned j=0 ; j < startIndexes.size() ; j++) {
+		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, startIndexes[j], (stopIndexes[j]-startIndexes[j])+1 ));
+		}
+
+		geom->setName(curr_dp->d_namep);     // set drawable to same name as region
+		geode->addDrawable(geom);
+	    }
+	    wrapper->addChild(geode);
+	    osg_nodes[curr_dp] = wrapper.get();
+	}
     }
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, comb_search, 1, &dp, dbip);
 
     // construct the viewer.
     osgViewer::Viewer viewer;
@@ -353,7 +433,7 @@ int main( int argc, char **argv )
     hudCamera->setViewport(0,0,windows[0]->getTraits()->width, windows[0]->getTraits()->height);
 
     viewer.addSlave(hudCamera, false);
-
+#if 0
     // set the scene to render
     viewer.setSceneData(scene.get());
 
