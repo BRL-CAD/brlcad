@@ -1,9 +1,13 @@
+// C object type: 1
 extern ptrdiff_t t;
 
+// C object type: 2
 typedef long __tok;
 
+// C object type: 3
 typedef long __val[2];
 
+// C object type: 4
 typedef struct
 {
   long __val[2];
