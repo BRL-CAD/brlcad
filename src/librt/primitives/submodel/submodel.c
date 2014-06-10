@@ -881,10 +881,12 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-    sip->dbip = dbip;
-
+    BU_VLS_INIT(&sip->file);
+    BU_VLS_INIT(&sip->treetop);
+    sip->meth = 0;
     if (mat == NULL) mat = bn_mat_identity;
     MAT_COPY(sip->root2leaf, mat);
+    sip->dbip = dbip;
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
 
@@ -974,7 +976,9 @@ rt_submodel_ifree(struct rt_db_internal *ip)
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
     sip->magic = 0;			/* sanity */
-
+    bu_vls_free(&sip->file);
+    bu_vls_free(&sip->treetop);
+    sip->dbip = DBI_NULL;
     bu_free((void *)sip, "submodel ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }

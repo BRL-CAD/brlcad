@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Hex</emphasis>
+<para><command>hex</command>
 reads each
 <emphasis remap='I'>file</emphasis>
 in sequence and

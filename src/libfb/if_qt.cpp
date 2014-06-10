@@ -35,15 +35,42 @@
 #include <ctype.h>
 
 #include <QApplication>
+#include <QPainter>
 #include <QWindow>
+#include <QBackingStore>
+#include <QResizeEvent>
 
 #include "fb.h"
 #include "bu/file.h"
 #include "bu/str.h"
 
+class QMainWindow: public QWindow {
+
+public:
+    QMainWindow(QWindow *parent = 0);
+    ~QMainWindow();
+
+    virtual void render(QPainter *painter);
+public slots:
+    void renderNow();
+
+protected:
+    bool event(QEvent *event);
+
+    void resizeEvent(QResizeEvent *event);
+    void exposeEvent(QExposeEvent *event);
+
+private:
+    QPixmap *pixmap;
+    QBackingStore *m_backingStore;
+    bool m_update_pending;
+};
+
 struct qtinfo {
     QApplication *qapp;
-    QWindow *win;
+    QMainWindow *win;
+
+    int alive;
 
     unsigned long qi_mode;
     unsigned long qi_flags;
@@ -103,7 +130,7 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qapp = new QApplication(argc, argv);
 
-    qi->win = new QWindow();
+    qi->win = new QMainWindow();
     qi->win->setWidth(width);
     qi->win->setHeight(height);
     qi->win->show();
@@ -204,6 +231,8 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 	return -1;
     }
 
+    qi->alive = 1;
+
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
 
@@ -220,7 +249,12 @@ qt_close(FBIO *ifp)
 
     fb_log("qt_close\n");
 
-    return qi->qapp->exec();
+    /* if a window was created wait for user input and process events */
+    if (qi->alive == 1) {
+	return qi->qapp->exec();
+    }
+
+    return 0;
 }
 
 
@@ -279,9 +313,14 @@ qt_view(FBIO *UNUSED(ifp), int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(
 
 
 HIDDEN int
-qt_getview(FBIO *UNUSED(ifp), int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+qt_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    fb_log("qt_getview\n");
+    FB_CK_FBIO(ifp);
+
+    *xcenter = ifp->if_xcenter;
+    *ycenter = ifp->if_ycenter;
+    *xzoom = ifp->if_xzoom;
+    *yzoom = ifp->if_yzoom;
 
     return 0;
 }
@@ -425,9 +464,77 @@ FBIO qt_interface =  {
 };
 
 
+/**
+ * ===================================================== Main window class ===============================================
+ */
+
+QMainWindow::QMainWindow(QWindow *win)
+    : QWindow(win)
+    , m_update_pending(false)
+{
+    m_backingStore = new QBackingStore(this);
+    create();
+    /* TODO fix this */
+    pixmap = new QPixmap(100, 100);
+}
+
+QMainWindow::~QMainWindow()
+{
+    delete m_backingStore;
+    close();
+}
+
+void QMainWindow::exposeEvent(QExposeEvent *)
+{
+    if (isExposed()) {
+	renderNow();
+    }
+}
+
+void QMainWindow::resizeEvent(QResizeEvent *resizeEv)
+{
+    m_backingStore->resize(resizeEv->size());
+    if (isExposed())
+	renderNow();
+}
+
+bool QMainWindow::event(QEvent *ev)
+{
+    if (ev->type() == QEvent::UpdateRequest) {
+	m_update_pending = false;
+	renderNow();
+	return true;
+    }
+    return QWindow::event(ev);
+}
+
+void QMainWindow::renderNow()
+{
+    if (!isExposed()) {
+	return;
+    }
+
+    QRect rect(0, 0, width(), height());
+    m_backingStore->beginPaint(rect);
+
+    QPaintDevice *device = m_backingStore->paintDevice();
+    QPainter painter(device);
+
+    render(&painter);
+
+    m_backingStore->endPaint();
+    m_backingStore->flush(rect);
+}
+
+void QMainWindow::render(QPainter *painter)
+{
+    painter->drawPixmap(0, 0, *pixmap);
+}
+
+
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
