@@ -120,7 +120,7 @@ sub c_line_to_d_line {
       $r .= shift @d;
     }
 
-    say  "DEBUG:  regex: '$r'";
+    #say "DEBUG:  regex: '$r'";
 
     # apply it
     $text =~ s/$r/$val/g;
