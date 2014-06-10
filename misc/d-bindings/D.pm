@@ -514,7 +514,7 @@ sub convert1final {
 
   }
 
-  # now process @olines and write them out
+  # process objects and write them out
   #say "WARNING:  No final converion yet!";
 
   open my $fpo, '>', $ofil
@@ -527,28 +527,21 @@ sub convert1final {
     foreach my $h (@sysmods) {
       my $mod = $sysmod{$h};
       next if !$mod;
-      print $fpo "import $mod;\n";
+      say $fpo "import $mod;";
     }
     print $fpo "\n";
   }
 
-  print $fpo "extern (C) {\n";
-  print $fpo "\n";
+  say $fpo "extern (C) {";
 
   foreach my $o (@objs) {
     $o->do_all_conversions();
-    $o->print_final();
-
-    #$o->print_pretty($fp, 'c');
-    #$o->print_pretty($fp2, 'd');
-    #$o->dump();
+    $o->print_final($fpo, $ifil);
   }
 
   # ender
   print $fpo "\n";
   print $fpo "} // extern (C) {\n";
-
-=cut
 
 } # convert1final
 

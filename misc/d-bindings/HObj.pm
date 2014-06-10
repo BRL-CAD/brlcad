@@ -42,7 +42,7 @@ sub get_new_hobj {
 		'd_line'     => '',
 
 		# arrays initially empty
-		'pretty_c'     => [],
+		'pretty_c'   => [],
 		'pretty_d'   => [],
 	       );
 
@@ -106,7 +106,7 @@ sub c_line_to_d_line {
   # convert C types to D types
   my $self = shift @_;
 
-  my $ctext = $self->orig_line(); # the flattened C line
+  my $text = $self->orig_line(); # the flattened C line
 
   foreach my $k (@G::d64map_keys) {
     my $val = $G::d64map{$k};
@@ -121,10 +121,10 @@ sub c_line_to_d_line {
     }
 
     # apply it
-    $ctext =~ /$r/g;
+    $text =~ s/$r/$val/g;
   }
 
-  $self->d_line();
+  $self->d_line($text);
 
 } # c_line_to_d_line
 
@@ -133,17 +133,49 @@ sub c_to_d {
 
 } # c_to_d
 
+sub print_final {
+  # print the C one-liner and data for reference; then pretty-print
+  # the D version
+  my $self  = shift @_;
+  my $fp    = shift @_;
+  my $ppfil = shift @_; # the .i file
+
+  my $slin = $self->first_line();
+  my $elin = $self->last_line();
+  my $num  = $self->num();
+
+  my $cline = $self->orig_line();
+
+  print $fp "\n";
+
+  say $fp "//==========================================================";
+  say $fp "// the C version (object number $num):";
+  say $fp "//==========================================================";
+  say $fp "//   from C preprocessed file '$ppfil'"
+    if (defined $ppfil);
+  say $fp "//   line $slin to line $elin";
+  say $fp "// $cline";
+  say $fp "// the D version:";
+
+  $self->print_pretty($fp, 'd');
+
+  say $fp "//==========================================================";
+  say $fp "// end C version (object number $num)";
+  say $fp "//==========================================================";
+
+} # print_final
+
 sub do_all_conversions {
   my $self = shift @_;
 
   # convert C line to D line
   $self->c_line_to_d_line();
 
-=pod
-
   # make the pretty arrays
   $self->gen_pretty('c');
   $self->gen_pretty('d');
+
+=pod
 
   # final conversion
   $self->c_to_d();
@@ -274,19 +306,18 @@ sub print_pretty {
   my $fp   = shift @_;
   my $ptyp = shift @_;
 
+  my $aref;
   if ($ptyp eq 'c') {
     # this is C code
-
-    foreach my $line (@{$self->pretty_c()}) {
-      print $fp "$line\n";
-    }
+    $aref = $self->pretty_c();
   }
   elsif ($ptyp eq 'd') {
     # this is D code
+    $aref = $self->pretty_d();
+  }
 
-    foreach my $line (@{$self->pretty_d()}) {
-      print $fp "$line\n";
-    }
+  foreach my $line (@$aref) {
+    say $fp $line;
   }
 
 } # print_pretty
