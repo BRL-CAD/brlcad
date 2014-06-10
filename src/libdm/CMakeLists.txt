@@ -117,6 +117,11 @@ set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+
+if(BRLCAD_ENABLE_OSG)
+  BRLCAD_ADDEXEC(osg-test osg-test.cpp "libbu;${OSG_LIBRARIES}" NO_STRICT NO_INSTALL)
+endif(BRLCAD_ENABLE_OSG)
+
 set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
@@ -126,6 +131,7 @@ set(libdm_ignore_files
   dm-rtgl.c
   dm-tk.c
   osg.cpp
+  osg-test.cpp
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})
