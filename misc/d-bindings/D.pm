@@ -744,8 +744,5 @@ sub flatten_c_header {
   #print Dumper(\%syshdr); die "debug exit";
 } # flatten_c_header
 
-sub get_c_statement {
-} # get_c_statement
-
 # mandatory true return from a Perl module
 1;
