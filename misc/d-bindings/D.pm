@@ -1,5 +1,7 @@
 package D;
 
+use v5.14;
+
 use strict;
 use warnings;
 
@@ -498,8 +500,7 @@ sub convert1final {
       if $G::debug;
 
     foreach my $o (@objs) {
-      $o->gen_pretty('c');
-      $o->gen_pretty('d');
+      $o->do_all_conversions();
       $o->print_pretty($fp, 'c');
       $o->print_pretty($fp2, 'd');
       #$o->dump();
@@ -508,6 +509,9 @@ sub convert1final {
   }
 
   # now process @olines and write them out
+  say "WARNING:  No final converion yet!";
+
+=pod
 
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
@@ -535,6 +539,8 @@ sub convert1final {
   # ender
   print $fpo "\n";
   print $fpo "} // extern (C) {\n";
+
+=cut
 
 } # convert1final
 
