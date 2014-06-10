@@ -412,7 +412,18 @@ int main( int argc, char **argv )
 	    osg_nodes[curr_dp] = wrapper.get();
 	}
     }
+    db_search_free(&solids);
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, comb_search, 1, &dp, dbip);
+    for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
+	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
+	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
+	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
+	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
+	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
+	}
+	db_search_free(&comb_children);
+    }
 
     // construct the viewer.
     osgViewer::Viewer viewer;
