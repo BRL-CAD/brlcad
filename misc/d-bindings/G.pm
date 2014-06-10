@@ -33,13 +33,23 @@ Readonly our $DIFF =>  1;
 our %d64map
   = (
      'long double'        => 'real',
+
      'unsigned long long' => 'ulong',
      'long long'          => 'long',
      'unsigned long'	  => 'ulong', # Linux [int (Windows)]
      'long'               => 'long', # Linux [int (Windows)]
+
+     # these variants are missing:
+     'unsigned long long int' => 'ulong',
+     'long long int'          => 'long',
+     'unsigned long int'      => 'ulong', # Linux [int (Windows)]
+     'long int'               => 'long', # Linux [int (Windows)]
+
+
      'unsigned'           => 'uint',
      'unsigned int'       => 'int',
      'unsigned short'     => 'ushort',
+
      'signed char'        => 'byte',
      'unsigned char'      => 'ubyte',
      'wchar_t'            => 'wchar', # or dchar
@@ -56,6 +66,12 @@ our @d64map_keys
 
      'unsigned long',
      'long',
+
+     # these variants are missing:
+     'unsigned long long int',
+     'long long int',
+     'unsigned long int', # Linux [int (Windows)]
+     'long int', # Linux [int (Windows)]
 
      'unsigned int',
      'unsigned short',
