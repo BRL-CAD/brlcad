@@ -8,6 +8,7 @@ use warnings;
 use Data::Dumper;
 use File::Copy;
 use File::Basename;
+use Running::Commentary;                # a better 'system' (Conway)
 
 use lib('.');
 
@@ -211,6 +212,9 @@ sub convert {
 	if $G::debug;
 
       convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
+
+      # check for a good compile
+      check_final($ofil);
 
     }
     #==== method 2 ====
@@ -743,6 +747,18 @@ sub flatten_c_header {
 
   #print Dumper(\%syshdr); die "debug exit";
 } # flatten_c_header
+
+sub check_final {
+  # attempt to build the D source file
+  my $dfil = shift @_;
+
+  my $cmd = "dmd $dfil";
+
+  # Act like system(), only louder and cleaner...
+  run "Checking the build for file '$dfil'" => $cmd
+    or die "Couldn't build";
+
+} # check_final
 
 # mandatory true return from a Perl module
 1;
