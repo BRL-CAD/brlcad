@@ -445,6 +445,8 @@ int main( int argc, char **argv )
 		if (curr_path->fp_bool[curr_path->fp_len - 1] == 4) {
 		    osg::StateSet* state = mt->getOrCreateStateSet();
 		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+		    ls->setPattern(0xCF33);
+		    ls->setFactor(1);
 		    state->setAttributeAndModes(ls.get());
 		}
 	    } else {
@@ -453,6 +455,8 @@ int main( int argc, char **argv )
 		    property_wrapper->setName(DB_FULL_PATH_CUR_DIR(curr_path)->d_namep);
 		    osg::StateSet* state = property_wrapper->getOrCreateStateSet();
 		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+		    ls->setPattern(0xCF33);
+		    ls->setFactor(1);
 		    state->setAttributeAndModes(ls.get());
 		    property_wrapper->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
 		    osg_nodes[curr_dp]->addChild(property_wrapper);
