@@ -218,7 +218,7 @@ struct db_full_path {
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
-    matp_t 	      * fp_mat;		/**< @brief array of boolean flags */
+    matp_t 	      * fp_mat;		/**< @brief array of matrix pointers */
 };
 #define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
 
