@@ -39,7 +39,7 @@ our %d64map
      'unsigned long'	  => 'ulong', # Linux [int (Windows)]
      'long'               => 'long', # Linux [int (Windows)]
 
-     # these variants are missing:
+     # these explicit variants are missing:
      'unsigned long long int' => 'ulong',
      'long long int'          => 'long',
      'unsigned long int'      => 'ulong', # Linux [int (Windows)]
@@ -63,15 +63,14 @@ our @d64map_keys
   = (
      'unsigned long long',
      'long long',
-
      'unsigned long',
      'long',
 
-     # these variants are missing:
+     # these explicit variants are missing:
      'unsigned long long int',
      'long long int',
      'unsigned long int', # Linux [int (Windows)]
-     'long int', # Linux [int (Windows)]
+     'long int',          # Linux [int (Windows)]
 
      'unsigned int',
      'unsigned short',
@@ -90,12 +89,23 @@ our @d64map_keys
 our %d32map
   = (
      'long double'        => 'real',
+
      'unsigned long long' => 'ulong',
      'long long'          => 'long',
      'unsigned long'      => 'uint',
      'long'               => 'int',
+
+     # these explicit variants are missing:
+     'unsigned long long int' => 'ulong',
+     'long long int'          => 'long',
+     'unsigned long int'      => 'uint',
+     'long int'               => 'int',
+
+     # this impplicit variant is missing
+     'unsigned'           => 'uint',
+
      'unsigned int'       => 'uint',
-     'int'                => 'int',
+     #'int'                => 'int',
      'unsigned short'     => 'ushort',
      'signed char'        => 'byte',
      'unsigned char'      => 'ubyte',
@@ -103,6 +113,31 @@ our %d32map
      #'bool'               => 'bool',  # byte, int
      #'size_t'             => 'size_t',
      #'ptrdiff_t'          => 'ptrdiff_t',
+    );
+
+# the preferred order for checking
+our @d32map_keys
+  = (
+     'unsigned long long' => 'ulong',
+     'long long'          => 'long',
+     'unsigned long'      => 'uint',
+     'long'               => 'int',
+
+     # these explicit variants are missing:
+     'unsigned long long int' => 'ulong',
+     'long long int'          => 'long',
+     'unsigned long int'      => 'uint',
+     'long int'               => 'int',
+
+     # this impplicit variant is missing
+     'unsigned'           => 'uint',
+
+     'unsigned int'       => 'uint',
+     'unsigned short'     => 'ushort',
+     'signed char'        => 'byte',
+     'unsigned char'      => 'ubyte',
+
+     'wchar_t'            => 'wchar', # or dchar
     );
 
 # input type for functions in ParsePPCHeader
