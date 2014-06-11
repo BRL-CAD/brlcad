@@ -2156,116 +2156,67 @@ pullback_samples(PBCData* data,
     if (!data)
 	return NULL;
 
-    if (data->surftree) {
-	const ON_Curve* curve = data->curve;
-	ON_2dPointArray *samples = new ON_2dPointArray();
-	int numKnots = curve->SpanCount();
-	double *knots = new double[numKnots + 1];
-	curve->GetSpanVector(knots);
+    const ON_Curve* curve = data->curve;
+    const ON_Surface* surf = data->surf;
+    ON_2dPointArray *samples = new ON_2dPointArray();
+    int numKnots = curve->SpanCount();
+    double *knots = new double[numKnots + 1];
+    curve->GetSpanVector(knots);
 
-	int istart = 0;
-	while (t >= knots[istart])
-	    istart++;
+    int istart = 0;
+    while (t >= knots[istart])
+	istart++;
 
-	if (istart > 0) {
-	    istart--;
-	    knots[istart] = t;
-	}
+    if (istart > 0) {
+	istart--;
+	knots[istart] = t;
+    }
 
-	int istop = numKnots;
-	while (s <= knots[istop])
-	    istop--;
+    int istop = numKnots;
+    while (s <= knots[istop])
+	istop--;
 
-	if (istop < numKnots) {
-	    istop++;
-	    knots[istop] = s;
-	}
+    if (istop < numKnots) {
+	istop++;
+	knots[istop] = s;
+    }
 
-	int samplesperknotinterval;
-	int degree = curve->Degree();
+    int samplesperknotinterval;
+    int degree = curve->Degree();
 
-	if (degree > 1) {
-	    samplesperknotinterval = 3 * degree;
-	} else {
-	    samplesperknotinterval = 18 * degree;
-	}
-	ON_2dPoint pt;
-	for (int i = istart; i <= istop; i++) {
-	    if (i <= numKnots / 2) {
-		if (i > 0) {
-		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		    for (int j = 1; j < samplesperknotinterval; j++) {
-			if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-			    samples->Append(pt);
-			}
-		    }
-		}
-		if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-		    samples->Append(pt);
-		}
-	    } else {
-		if (i > 0) {
-		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		    for (int j = 1; j < samplesperknotinterval; j++) {
-			if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-			    samples->Append(pt);
-			}
-		    }
-		    if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
+    if (degree > 1) {
+	samplesperknotinterval = 3 * degree;
+    } else {
+	samplesperknotinterval = 18 * degree;
+    }
+    ON_2dPoint pt;
+    ON_3dPoint p = ON_3dPoint::UnsetPoint;
+    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+    for (int i = istart; i <= istop; i++) {
+	if (i <= numKnots / 2) {
+	    if (i > 0) {
+		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		for (int j = 1; j < samplesperknotinterval; j++) {
+		    p = curve->PointAt(knots[i - 1] + j * delta);
+		    p3d = ON_3dPoint::UnsetPoint;
+		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
 			samples->Append(pt);
 		    }
 		}
 	    }
-	}
-	delete[] knots;
-	return samples;
-    } else {
-	const ON_Curve* curve = data->curve;
-	const ON_Surface* surf = data->surf;
-	ON_2dPointArray *samples = new ON_2dPointArray();
-	int numKnots = curve->SpanCount();
-	double *knots = new double[numKnots + 1];
-	curve->GetSpanVector(knots);
-
-	int istart = 0;
-	while (t >= knots[istart])
-	    istart++;
-
-	if (istart > 0) {
-	    istart--;
-	    knots[istart] = t;
-	}
-
-	int istop = numKnots;
-	while (s <= knots[istop])
-	    istop--;
-
-	if (istop < numKnots) {
-	    istop++;
-	    knots[istop] = s;
-	}
-
-	int samplesperknotinterval;
-	int degree = curve->Degree();
-
-	if (degree > 1) {
-	    samplesperknotinterval = 3 * degree;
+	    p = curve->PointAt(knots[i]);
+	    p3d = ON_3dPoint::UnsetPoint;
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+		samples->Append(pt);
+	    }
 	} else {
-	    samplesperknotinterval = 18 * degree;
-	}
-	ON_2dPoint pt;
-	ON_3dPoint p = ON_3dPoint::UnsetPoint;
-	ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-	for (int i = istart; i <= istop; i++) {
-	    if (i <= numKnots / 2) {
-		if (i > 0) {
-		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		    for (int j = 1; j < samplesperknotinterval; j++) {
-			p = curve->PointAt(knots[i - 1] + j * delta);
-			p3d = ON_3dPoint::UnsetPoint;
-			if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
-			    samples->Append(pt);
-			}
+	    if (i > 0) {
+		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		for (int j = 1; j < samplesperknotinterval; j++) {
+		    p = curve->PointAt(knots[i - 1] + j * delta);
+		    p3d = ON_3dPoint::UnsetPoint;
+		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+			samples->Append(pt);
 		    }
 		}
 		p = curve->PointAt(knots[i]);
@@ -2273,27 +2224,11 @@ pullback_samples(PBCData* data,
 		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
 		    samples->Append(pt);
 		}
-	    } else {
-		if (i > 0) {
-		    double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
-		    for (int j = 1; j < samplesperknotinterval; j++) {
-			p = curve->PointAt(knots[i - 1] + j * delta);
-			p3d = ON_3dPoint::UnsetPoint;
-			if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
-			    samples->Append(pt);
-			}
-		    }
-		    p = curve->PointAt(knots[i]);
-		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
-			samples->Append(pt);
-		    }
-		}
 	    }
 	}
-	delete[] knots;
-	return samples;
     }
+    delete[] knots;
+    return samples;
 }
 
 
@@ -2717,269 +2652,138 @@ pullback_samples_from_closed_surface(PBCData* data,
     if (!data)
 	return;
 
-    if (data->surftree) {
-	if (!data->surf || !data->curve)
-	    return;
-
-	const ON_Curve* curve= data->curve;
-	const ON_Surface *surf = data->surf;
-	ON_2dPointArray *samples= new ON_2dPointArray();
-	size_t numKnots = curve->SpanCount();
-	double *knots = new double[numKnots+1];
-
-	curve->GetSpanVector(knots);
-
-	size_t istart = 0;
-	while ((istart < (numKnots+1)) && (t >= knots[istart]))
-	    istart++;
-
-	if (istart > 0) {
-	    knots[--istart] = t;
-	}
-
-	size_t istop = numKnots;
-	while ((istop > 0) && (s <= knots[istop]))
-	    istop--;
-
-	if (istop < numKnots) {
-	    knots[++istop] = s;
-	}
-
-	size_t degree = curve->Degree();
-	size_t samplesperknotinterval=18*degree;
-
-	ON_2dPoint pt;
-	ON_2dPoint prev_pt;
-	double prev_t = knots[istart];
-	double offset = 0.0;
-	double delta;
-	for (size_t i=istart; i<istop; i++) {
-	    delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
-	    if (i <= numKnots/2) {
-		offset = PBC_FROM_OFFSET;
-	    } else {
-		offset = -PBC_FROM_OFFSET;
-	    }
-	    for (size_t j=0; j<=samplesperknotinterval; j++) {
-		if ((j == samplesperknotinterval) && (i < istop - 1))
-		    continue;
-
-		double curr_t = knots[i]+j*delta;
-		if (curr_t < (s-t)/2.0) {
-		    offset = PBC_FROM_OFFSET;
-		} else {
-		    offset = -PBC_FROM_OFFSET;
-		}
-		if (toUV(*data, pt, curr_t, offset)) {
-		    if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
-			ForceToClosestSeam(surf, pt, PBC_TOL);
-		    }
-		    if ((i == istart) && (j == 0)) {
-			// first point just append and set reference in prev_pt
-			samples->Append(pt);
-			prev_pt = pt;
-			prev_t = curr_t;
-			continue;
-		    }
-		    int udir= 0;
-		    int vdir= 0;
-		    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
-			if (surf->IsAtSeam(pt.x,pt.y) > 0) {
-			    SwapUVSeamPoint(surf, pt);
-			} else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
-			    if (samples->Count() == 1) {
-				samples->Empty();
-				SwapUVSeamPoint(surf, prev_pt);
-				samples->Append(prev_pt);
-			    }
-			} else if (data->curve->IsClosed()) {
-			    ON_2dPoint from,to;
-			    double seam_t;
-			    if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
-				samples->Append(from);
-				data->segments.push_back(samples);
-				samples= new ON_2dPointArray();
-				samples->Append(to);
-				prev_pt = to;
-				prev_t = seam_t;
-			    } else {
-				std::cout << "Can not find seam crossing...." << std::endl;
-			    }
-			}
-		    }
-		    samples->Append(pt);
-
-		    prev_pt = pt;
-		    prev_t = curr_t;
-		}
-	    }
-	}
-	delete [] knots;
-
-	if (samples != NULL) {
-	    data->segments.push_back(samples);
-
-	    int numsegs = data->segments.size();
-
-	    if (numsegs > 1) {
-		if (curve->IsClosed()) {
-		    ON_2dPointArray *reordered_samples= new ON_2dPointArray();
-		    // must have walked over seam but have closed curve so reorder stitching
-		    int seg = 0;
-		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
-			samples = *rit;
-			if (seg < numsegs-1) { // since end points should be repeated
-			    reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
-			} else {
-			    reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
-			}
-			data->segments.erase((++rit).base());
-			rit = data->segments.rbegin();
-			delete samples;
-		    }
-		    data->segments.clear();
-		    data->segments.push_back(reordered_samples);
-		} else {
-		    //punt for now
-		}
-	    }
-	}
-
+    if (!data->surf || !data->curve)
 	return;
-    } else {
-	if (!data->surf || !data->curve)
-	    return;
 
-	const ON_Curve* curve= data->curve;
-	const ON_Surface *surf = data->surf;
+    const ON_Curve* curve= data->curve;
+    const ON_Surface *surf = data->surf;
 
-	ON_2dPointArray *samples= new ON_2dPointArray();
-	size_t numKnots = curve->SpanCount();
-	double *knots = new double[numKnots+1];
+    ON_2dPointArray *samples= new ON_2dPointArray();
+    size_t numKnots = curve->SpanCount();
+    double *knots = new double[numKnots+1];
 
-	curve->GetSpanVector(knots);
+    curve->GetSpanVector(knots);
 
-	size_t istart = 0;
-	while ((istart < (numKnots+1)) && (t >= knots[istart]))
-	    istart++;
+    size_t istart = 0;
+    while ((istart < (numKnots+1)) && (t >= knots[istart]))
+	istart++;
 
-	if (istart > 0) {
-	    knots[--istart] = t;
-	}
-
-	size_t istop = numKnots;
-	while ((istop > 0) && (s <= knots[istop]))
-	    istop--;
-
-	if (istop < numKnots) {
-	    knots[++istop] = s;
-	}
-
-	size_t degree = curve->Degree();
-	size_t samplesperknotinterval=18*degree;
-
-	ON_2dPoint pt;
-	ON_2dPoint prev_pt;
-	double prev_t = knots[istart];
-	double offset = 0.0;
-	double delta;
-	for (size_t i=istart; i<istop; i++) {
-	    delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
-	    if (i <= numKnots/2) {
-		offset = PBC_FROM_OFFSET;
-	    } else {
-		offset = -PBC_FROM_OFFSET;
-	    }
-	    for (size_t j=0; j<=samplesperknotinterval; j++) {
-		if ((j == samplesperknotinterval) && (i < istop - 1))
-		    continue;
-
-		double curr_t = knots[i]+j*delta;
-		if (curr_t < (s-t)/2.0) {
-		    offset = PBC_FROM_OFFSET;
-		} else {
-		    offset = -PBC_FROM_OFFSET;
-		}
-		ON_3dPoint p = curve->PointAt(curr_t);
-		ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
-		    if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
-			ForceToClosestSeam(surf, pt, PBC_TOL);
-		    }
-		    if ((i == istart) && (j == 0)) {
-			// first point just append and set reference in prev_pt
-			samples->Append(pt);
-			prev_pt = pt;
-			prev_t = curr_t;
-			continue;
-		    }
-		    int udir= 0;
-		    int vdir= 0;
-		    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
-			if (surf->IsAtSeam(pt.x,pt.y) > 0) {
-			    SwapUVSeamPoint(surf, pt);
-			} else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
-			    if (samples->Count() == 1) {
-				samples->Empty();
-				SwapUVSeamPoint(surf, prev_pt);
-				samples->Append(prev_pt);
-			    }
-			} else if (data->curve->IsClosed()) {
-			    ON_2dPoint from,to;
-			    double seam_t;
-			    if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
-				samples->Append(from);
-				data->segments.push_back(samples);
-				samples= new ON_2dPointArray();
-				samples->Append(to);
-				prev_pt = to;
-				prev_t = seam_t;
-			    } else {
-				std::cout << "Can not find seam crossing...." << std::endl;
-			    }
-			}
-		    }
-		    samples->Append(pt);
-
-		    prev_pt = pt;
-		    prev_t = curr_t;
-		}
-	    }
-	}
-	delete [] knots;
-
-	if (samples != NULL) {
-	    data->segments.push_back(samples);
-
-	    int numsegs = data->segments.size();
-
-	    if (numsegs > 1) {
-		if (curve->IsClosed()) {
-		    ON_2dPointArray *reordered_samples= new ON_2dPointArray();
-		    // must have walked over seam but have closed curve so reorder stitching
-		    int seg = 0;
-		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
-			samples = *rit;
-			if (seg < numsegs-1) { // since end points should be repeated
-			    reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
-			} else {
-			    reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
-			}
-			data->segments.erase((++rit).base());
-			rit = data->segments.rbegin();
-			delete samples;
-		    }
-		    data->segments.clear();
-		    data->segments.push_back(reordered_samples);
-
-		} else {
-		    //punt for now
-		}
-	    }
-	}
-
-	return;
+    if (istart > 0) {
+	knots[--istart] = t;
     }
+
+    size_t istop = numKnots;
+    while ((istop > 0) && (s <= knots[istop]))
+	istop--;
+
+    if (istop < numKnots) {
+	knots[++istop] = s;
+    }
+
+    size_t degree = curve->Degree();
+    size_t samplesperknotinterval=18*degree;
+
+    ON_2dPoint pt;
+    ON_2dPoint prev_pt;
+    double prev_t = knots[istart];
+    double offset = 0.0;
+    double delta;
+    for (size_t i=istart; i<istop; i++) {
+	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
+	if (i <= numKnots/2) {
+	    offset = PBC_FROM_OFFSET;
+	} else {
+	    offset = -PBC_FROM_OFFSET;
+	}
+	for (size_t j=0; j<=samplesperknotinterval; j++) {
+	    if ((j == samplesperknotinterval) && (i < istop - 1))
+		continue;
+
+	    double curr_t = knots[i]+j*delta;
+	    if (curr_t < (s-t)/2.0) {
+		offset = PBC_FROM_OFFSET;
+	    } else {
+		offset = -PBC_FROM_OFFSET;
+	    }
+	    ON_3dPoint p = curve->PointAt(curr_t);
+	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,0,BREP_EDGE_MISS_TOLERANCE)) {
+		if (IsAtSeam(surf,pt,PBC_TOL) > 0) {
+		    ForceToClosestSeam(surf, pt, PBC_TOL);
+		}
+		if ((i == istart) && (j == 0)) {
+		    // first point just append and set reference in prev_pt
+		    samples->Append(pt);
+		    prev_pt = pt;
+		    prev_t = curr_t;
+		    continue;
+		}
+		int udir= 0;
+		int vdir= 0;
+		if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir)) {
+		    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+			SwapUVSeamPoint(surf, pt);
+		    } else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+			if (samples->Count() == 1) {
+			    samples->Empty();
+			    SwapUVSeamPoint(surf, prev_pt);
+			    samples->Append(prev_pt);
+			}
+		    } else if (data->curve->IsClosed()) {
+			ON_2dPoint from,to;
+			double seam_t;
+			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
+			    samples->Append(from);
+			    data->segments.push_back(samples);
+			    samples= new ON_2dPointArray();
+			    samples->Append(to);
+			    prev_pt = to;
+			    prev_t = seam_t;
+			} else {
+			    std::cout << "Can not find seam crossing...." << std::endl;
+			}
+		    }
+		}
+		samples->Append(pt);
+
+		prev_pt = pt;
+		prev_t = curr_t;
+	    }
+	}
+    }
+    delete [] knots;
+
+    if (samples != NULL) {
+	data->segments.push_back(samples);
+
+	int numsegs = data->segments.size();
+
+	if (numsegs > 1) {
+	    if (curve->IsClosed()) {
+		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
+		// must have walked over seam but have closed curve so reorder stitching
+		int seg = 0;
+		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+		    samples = *rit;
+		    if (seg < numsegs-1) { // since end points should be repeated
+			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
+		    } else {
+			reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+		    }
+		    data->segments.erase((++rit).base());
+		    rit = data->segments.rbegin();
+		    delete samples;
+		}
+		data->segments.clear();
+		data->segments.push_back(reordered_samples);
+
+	    } else {
+		//punt for now
+	    }
+	}
+    }
+
+    return;
 }
 
 
