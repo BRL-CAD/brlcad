@@ -42,6 +42,7 @@ extern "C" {
 #include "common.h"
 #include "bu/log.h"
 #include "bu/list.h"
+#include "mater.h"
 #include "raytrace.h"
 #include "rtfunc.h"
 }
@@ -51,6 +52,7 @@ extern "C" {
 
 #include <osgViewer/Viewer>
 #include <osgViewer/CompositeViewer>
+#include <osgViewer/ViewerEventHandlers>
 
 #include <osgGA/TrackballManipulator>
 
@@ -219,93 +221,6 @@ osg::Camera* createHUD()
     return camera;
 }
 
-struct SnapImage : public osg::Camera::DrawCallback
-{
-    SnapImage(const std::string& filename):
-	_filename(filename),
-	_snapImage(false)
-    {
-	_image = new osg::Image;
-    }
-
-    virtual void operator () (osg::RenderInfo& renderInfo) const
-    {
-
-	if (!_snapImage) return;
-
-	osg::notify(osg::NOTICE)<<"Camera callback"<<std::endl;
-
-	osg::Camera* camera = renderInfo.getCurrentCamera();
-	osg::Viewport* viewport = camera ? camera->getViewport() : 0;
-
-	osg::notify(osg::NOTICE)<<"Camera callback "<<camera<<" "<<viewport<<std::endl;
-
-	if (viewport && _image.valid())
-	{
-	    _image->readPixels(int(viewport->x()),int(viewport->y()),int(viewport->width()),int(viewport->height()),
-		    GL_RGBA,
-		    GL_UNSIGNED_BYTE);
-	    osgDB::writeImageFile(*_image, _filename);
-
-	    osg::notify(osg::NOTICE)<<"Taken screenshot, and written to '"<<_filename<<"'"<<std::endl;
-	}
-
-	_snapImage = false;
-    }
-
-    std::string                         _filename;
-    mutable bool                        _snapImage;
-    mutable osg::ref_ptr<osg::Image>    _image;
-};
-
-struct SnapeImageHandler : public osgGA::GUIEventHandler
-{
-
-    SnapeImageHandler(int key,SnapImage* si):
-	_key(key),
-	_snapImage(si) {}
-
-    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter&)
-    {
-	if (ea.getHandled()) return false;
-
-	switch(ea.getEventType())
-	{
-	    case(osgGA::GUIEventAdapter::KEYUP):
-		{
-		    if (ea.getKey() == _key)
-		    {
-			osg::notify(osg::NOTICE)<<"event handler"<<std::endl;
-			_snapImage->_snapImage = true;
-			return true;
-		    }
-
-		    break;
-		}
-	    default:
-		break;
-	}
-
-	return false;
-    }
-
-    int                     _key;
-    osg::ref_ptr<SnapImage> _snapImage;
-};
-
-void
-get_obj_color(const struct db_i *dbip, const struct directory *dp, int r, int g, int b)
-{
-    // TODO - pick our way through the attributes, color tables and override flags to
-    // determine what color a given instance of a given object actually is.
-    //
-    // Will need to study osg::StateAttribute::OVERRIDE and maybe osg::StateAttribute::PROTECTED
-    // as well, which I believe map to our inherit flags.
-    //
-    // rt_comb_get_color seems to have part of this, but doesn't handle inherit.
-}
-
-
 int main( int argc, char **argv )
 {
     std::map<struct directory *, struct bu_list *> vlists;
@@ -443,11 +358,24 @@ int main( int argc, char **argv )
 	(void)rt_db_get_internal(&intern, curr_dp, dbip, (fastf_t *)NULL, &rt_uniresource);
 	struct rt_comb_internal *comb_internal= (struct rt_comb_internal *)intern.idb_ptr;
 
+	float color[3] = {-1.0, -1.0, -1.0};
 	/* Set color for this comb */
-	if (comb_internal->inherit || comb_internal->region_flag) {
-	    rt_comb_get_color(rgb, comb_internal);
+	if (comb_internal->rgb_valid) {
+	    VSCALE(color, comb_internal->rgb, (1.0/255.0) );
+	} else {
+	    struct mater *mp = MATER_NULL;
+	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		if (comb_internal->region_id <= mp->mt_high && comb_internal->region_id >= mp->mt_low) {
+		    color[0] = mp->mt_r/255.0;
+		    color[1] = mp->mt_g/255.0;
+		    color[2] = mp->mt_b/255.0;
+		    break;
+		}
+	    }
+	}
+	if (color[0] > -1) {
 	    osg::ref_ptr<osg::Material> mtl = new osg::Material;
-	    mtl->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(rgb[0]/255, rgb[1]/255, rgb[2]/255, 1.0f));
+	    mtl->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(color[0], color[1], color[2], 1.0f));
 	    osg::StateSet* state = comb->getOrCreateStateSet();
 	    if (comb_internal->inherit || comb_internal->region_flag) {
 		state->setAttributeAndModes(mtl, osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
@@ -502,8 +430,10 @@ int main( int argc, char **argv )
     // construct the viewer.
     osgViewer::Viewer viewer;
 
-    // create a HUD as slave camera attached to the master view.
+    viewer.setUpViewInWindow(0, 0, 640, 480);
 
+    // create a HUD as slave camera attached to the master view.
+#if 0
     viewer.setUpViewAcrossAllScreens();
 
     osgViewer::Viewer::Windows windows;
@@ -518,8 +448,10 @@ int main( int argc, char **argv )
     hudCamera->setViewport(0,0,windows[0]->getTraits()->width, windows[0]->getTraits()->height);
 
     viewer.addSlave(hudCamera, false);
-
+#endif
     viewer.setSceneData(osg_nodes[dp]);
+
+    viewer.addEventHandler(new osgViewer::StatsHandler);
 
     return viewer.run();
 }
