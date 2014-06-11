@@ -207,7 +207,7 @@ sub convert {
 
       convert_with_gcc_E($cinfil, $ppfil);
 
-      # convert it to "final" form (eventually)
+      # convert it to "final" form
       print "DEBUG:  converting '$ppfil' to D module '$ofil'...\n"
 	if $G::debug;
 
@@ -418,9 +418,9 @@ sub convert1final {
 
     my @d = split(' ', $line);
 
-    my $key = $d[0];
+    my $first_token = $d[0];
 
-    if ($key =~ m{\A \s* \#}x) {
+    if ($first_token =~ m{\A \s* \#}x) {
       # ignore cpp comment lines
       next LINE;
     }
@@ -435,7 +435,7 @@ sub convert1final {
 				   obj             => $obj,
 				 });
 
-    push @olines, $obj->orig_line();
+    push @olines, $obj->c_line();
     push @objs, $obj;
 
     # update number of chunks being processed
@@ -491,7 +491,7 @@ sub convert1final {
 
 =cut
 
-  # pretty print the objects
+  # pretty print the objects if desired
   if ($G::pretty_print) {
     my ($f, $f2, $fp, $fp2);
 
@@ -521,7 +521,7 @@ sub convert1final {
   }
 
   # process objects and write them out
-  #say "WARNING:  No final converion yet!";
+  #say "WARNING:  No final conversion yet!";
 
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
