@@ -293,6 +293,17 @@ struct SnapeImageHandler : public osgGA::GUIEventHandler
     osg::ref_ptr<SnapImage> _snapImage;
 };
 
+void
+get_obj_color(const struct db_i *dbip, const struct directory *dp, int r, int g, int b)
+{
+    // TODO - pick our way through the attributes, color tables and override flags to
+    // determine what color a given instance of a given object actually is.
+    //
+    // Will need to study osg::StateAttribute::OVERRIDE and maybe osg::StateAttribute::PROTECTED
+    // as well, which I believe map to our color flags.
+}
+
+
 int main( int argc, char **argv )
 {
     std::map<struct directory *, struct bu_list *> vlists;
