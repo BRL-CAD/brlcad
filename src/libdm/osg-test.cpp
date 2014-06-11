@@ -434,10 +434,28 @@ int main( int argc, char **argv )
     db_search_free(&solids);
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
+	unsigned char rgb[3] = { 255, 0, 0 };
+	struct rt_db_internal intern;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
 	osg::ref_ptr<osg::Group> comb = new osg::Group;
 	comb->setName(curr_dp->d_namep);
 	osg_nodes[curr_dp] = comb.get();
+	(void)rt_db_get_internal(&intern, curr_dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+	struct rt_comb_internal *comb_internal= (struct rt_comb_internal *)intern.idb_ptr;
+
+	/* Set color for this comb */
+	if (comb_internal->inherit || comb_internal->region_flag) {
+	    rt_comb_get_color(rgb, comb_internal);
+	    osg::ref_ptr<osg::Material> mtl = new osg::Material;
+	    mtl->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(rgb[0]/255, rgb[1]/255, rgb[2]/255, 1.0f));
+	    osg::StateSet* state = comb->getOrCreateStateSet();
+	    if (comb_internal->inherit || comb_internal->region_flag) {
+		state->setAttributeAndModes(mtl, osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
+	    } else {
+		state->setAttributeAndModes(mtl, osg::StateAttribute::ON);
+	    }
+	}
+	rt_db_free_internal(&intern);
     }
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
