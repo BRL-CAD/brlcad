@@ -110,6 +110,67 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 }
 
 
+ON_BOOL32
+GetDomainSplits(
+	const ON_Surface *surf,
+	const ON_Interval &u_interval,
+	const ON_Interval &v_interval,
+	ON_Interval domSplits[2][2]
+        )
+{
+    ON_3dPoint min, max;
+    ON_Interval dom[2];
+    double length[2];
+
+    // initialize intervals
+    for (int i = 0; i < 2; i++) {
+	for (int j = 0; j < 2; j++) {
+	    domSplits[i][j] = ON_Interval::EmptyInterval;
+	}
+    }
+
+    min[0] = u_interval.m_t[0];
+    min[1] = v_interval.m_t[0];
+    max[0] = u_interval.m_t[1];
+    max[1] = v_interval.m_t[1];
+
+    for (int i=0; i<2; i++) {
+	if (surf->IsClosed(i)) {
+	    dom[i] = surf->Domain(i);
+	    length[i] = dom[i].Length();
+	    if ((max[i] - min[i]) >= length[i]) {
+		domSplits[i][0] = dom[i];
+	    } else {
+		double minbound = min[i];
+		double maxbound = max[i];
+		while (minbound < dom[i].m_t[0]) {
+		    minbound += length[i];
+		    maxbound += length[i];
+		}
+		while (minbound > dom[i].m_t[1]) {
+		    minbound -= length[i];
+		    maxbound -= length[i];
+		}
+		if (maxbound > dom[i].m_t[1]) {
+		    domSplits[i][0].m_t[0] = minbound;
+		    domSplits[i][0].m_t[1] = dom[i].m_t[1];
+		    domSplits[i][1].m_t[0] = dom[i].m_t[0];
+		    domSplits[i][1].m_t[1] = maxbound - length[i];
+		} else {
+		    domSplits[i][0].m_t[0] = minbound;
+		    domSplits[i][0].m_t[1] = maxbound;
+		}
+	    }
+	} else {
+	    domSplits[i][0].m_t[0] = min[i];
+	    domSplits[i][0].m_t[1] = max[i];
+	}
+    }
+
+    return true;
+}
+
+
 /*
  * Wrapped OpenNURBS 'EvNormal()' because it fails when at surface singularity
  * but not on edge of domain. If fails and at singularity this wrapper will
@@ -162,24 +223,116 @@ surface_GetBoundingBox(
 	ON_BOOL32 bGrowBox
         )
 {
-    /* defined static for first time thru initialization, will
+    /* TODO: Address for threading
+     * defined static for first time thru initialization, will
      * have to do something else here for multiple threads
      */
-    static ON_NurbsSurface *localcopy = ON_NurbsSurface::New();
-    ON_NurbsSurface *nurbssurf = NULL;
+    static ON_RevSurface *rev_surface = ON_RevSurface::New();
+    static ON_NurbsSurface *nurbs_surface = ON_NurbsSurface::New();
+    static ON_Extrusion *extr_surface = new ON_Extrusion();
+    static ON_PlaneSurface *plane_surface = new ON_PlaneSurface();
+    static ON_SumSurface *sum_surface = ON_SumSurface::New();
+    static ON_SurfaceProxy *proxy_surface = new ON_SurfaceProxy();
 
-    if ((nurbssurf = dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf))) != NULL) {
-	*localcopy = *nurbssurf;
-	if (localcopy->Trim(0, u_interval) && localcopy->Trim(1, v_interval)) {
-	    return localcopy->GetBoundingBox(bbox, bGrowBox);
-	}
-    } if (surf->GetNurbForm(*localcopy)) {
-	if (localcopy->Trim(0, u_interval) && localcopy->Trim(1, v_interval)) {
-	    return localcopy->GetBoundingBox(bbox, bGrowBox);
+    ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
+    if (!GetDomainSplits(surf,u_interval,v_interval,domSplits)) {
+	return false;
+    }
+
+    bool growcurrent = bGrowBox;
+    for (int i=0; i<2; i++) {
+	if (domSplits[0][i] == ON_Interval::EmptyInterval)
+	    continue;
+
+	for (int j=0; j<2; j++) {
+	    if (domSplits[1][j] != ON_Interval::EmptyInterval) {
+		if (dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *rev_surface = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
+		    if (rev_surface->Trim(0, domSplits[0][i]) && rev_surface->Trim(1, domSplits[1][j])) {
+			if (!rev_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+			growcurrent = true;
+		    }
+		} else if (dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *nurbs_surface = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
+		    if (nurbs_surface->Trim(0, domSplits[0][i]) && nurbs_surface->Trim(1, domSplits[1][j])) {
+			if (!nurbs_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *extr_surface = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
+		    if (extr_surface->Trim(0, domSplits[0][i]) && extr_surface->Trim(1, domSplits[1][j])) {
+			if (!extr_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *plane_surface = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
+		    if (plane_surface->Trim(0, domSplits[0][i]) && plane_surface->Trim(1, domSplits[1][j])) {
+			if (!plane_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *sum_surface = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
+		    if (sum_surface->Trim(0, domSplits[0][i]) && sum_surface->Trim(1, domSplits[1][j])) {
+			if (!sum_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *proxy_surface = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
+		    if (proxy_surface->Trim(0, domSplits[0][i]) && proxy_surface->Trim(1, domSplits[1][j])) {
+			if (!proxy_surface->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else {
+		    std::cerr << "Unknown Surface Type" << std::endl;
+		}
+	    }
 	}
     }
 
-    return false;
+    return true;
+}
+
+
+ON_BOOL32
+face_GetBoundingBox(
+	const ON_BrepFace &face,
+        ON_BoundingBox& bbox,
+	ON_BOOL32 bGrowBox
+        )
+{
+    const ON_Surface *surf = face.SurfaceOf();
+
+    // may be a smaller trimmed subset of surface so worth getting
+    // face boundary
+    bool growcurrent = bGrowBox;
+    ON_3dPoint min, max;
+    for (int li = 0; li < face.LoopCount(); li++) {
+	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
+	    trim->GetBoundingBox(min, max, growcurrent);
+	    growcurrent = true;
+	}
+    }
+
+    ON_Interval u_interval(min.x, max.x);
+    ON_Interval v_interval(min.y, max.y);
+    if (!surface_GetBoundingBox(surf, u_interval,v_interval,bbox,growcurrent)) {
+	return false;
+    }
+
+    return true;
 }
 
 
