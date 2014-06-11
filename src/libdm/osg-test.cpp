@@ -300,7 +300,9 @@ get_obj_color(const struct db_i *dbip, const struct directory *dp, int r, int g,
     // determine what color a given instance of a given object actually is.
     //
     // Will need to study osg::StateAttribute::OVERRIDE and maybe osg::StateAttribute::PROTECTED
-    // as well, which I believe map to our color flags.
+    // as well, which I believe map to our inherit flags.
+    //
+    // rt_comb_get_color seems to have part of this, but doesn't handle inherit.
 }
 
 
