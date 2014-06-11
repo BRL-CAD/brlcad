@@ -2447,9 +2447,10 @@ ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
 
 /*
  *  If point lies on a seam(s) swap to opposite side of UV.
+ *  hint = 1 swap E/W, 2 swap N/S or default 3 swap both
  */
 void
-SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p)
+SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
 {
     int seam;
     ON_Interval dom[2];
@@ -2469,16 +2470,30 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p)
 	    } else {
 		p.y = dom[1].m_t[1]; // on south swap to north seam
 	    }
-	} else { //on both seams
-	    if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
-		p.x = dom[0].m_t[0]; // on east swap to west seam
+	} else { //on both seams check hint 1=east/west only, 2=north/south, 3 = both
+	    if (hint == 1) {
+		if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		    p.x = dom[0].m_t[0]; // on east swap to west seam
+		} else {
+		    p.x = dom[0].m_t[1]; // on west swap to east seam
+		}
+	    } else if (hint == 2) {
+		if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		    p.y = dom[1].m_t[0]; // on north swap to south seam
+		} else {
+		    p.y = dom[1].m_t[1]; // on south swap to north seam
+		}
 	    } else {
-		p.x = dom[0].m_t[1]; // on west swap to east seam
-	    }
-	    if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
-		p.y = dom[1].m_t[0]; // on north swap to south seam
-	    } else {
-		p.y = dom[1].m_t[1]; // on south swap to north seam
+		if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		    p.x = dom[0].m_t[0]; // on east swap to west seam
+		} else {
+		    p.x = dom[0].m_t[1]; // on west swap to east seam
+		}
+		if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		    p.y = dom[1].m_t[0]; // on north swap to south seam
+		} else {
+		    p.y = dom[1].m_t[1]; // on south swap to north seam
+		}
 	    }
 	}
     }
