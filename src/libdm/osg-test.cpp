@@ -321,12 +321,15 @@ int main( int argc, char **argv )
 	bu_exit(1, "ERROR: Unable to fine object %s in %s\n", argv[2], argv[1]);
     }
 
+    /* Need to initialize this for rt_obj_plot, which may call RT_ADD_VLIST */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
     /* Get the plot vlists associated with the solid objects below the supplied object */
     const char *solid_search = "! -type comb";
     const char *comb_search = "-type comb";
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
-    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, solid_search, 1, &dp, dbip);
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
@@ -413,7 +416,7 @@ int main( int argc, char **argv )
 	}
     }
     db_search_free(&solids);
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, comb_search, 1, &dp, dbip);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
 	osg::ref_ptr<osg::Group> comb = new osg::Group;
@@ -460,12 +463,10 @@ int main( int argc, char **argv )
     hudCamera->setViewport(0,0,windows[0]->getTraits()->width, windows[0]->getTraits()->height);
 
     viewer.addSlave(hudCamera, false);
-#if 0
-    // set the scene to render
-    viewer.setSceneData(scene.get());
+
+    viewer.setSceneData(osg_nodes[dp]);
 
     return viewer.run();
-#endif
 }
 // Local Variables:
 // tab-width: 8
