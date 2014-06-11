@@ -215,7 +215,7 @@ sub extract_object {
   # the current index
   my $i           = $argref->{curr_index};  # $i - current @lines index
 
-  # an object instance
+  # a new object instance to fill
   my $obj         = $argref->{obj};
 
 =pod
@@ -321,7 +321,7 @@ sub extract_object {
     $ss .= ' ';
   }
 
-  # now close up '*'
+  # now close up adjacent asterisks ('*')
   while ($ss =~ s{\*[\s]+\*}{\*\*}) {
     ; # noopt
   }
@@ -335,6 +335,8 @@ sub extract_object {
   # get new length
   $s = $ss;
   $slen = length $s;
+
+=pod
 
   # track '{}', '()', '[]' first and last positions
   my $cfirst   = -1; # curly braces
@@ -425,11 +427,13 @@ sub extract_object {
     $t = $typ;
   }
 
+=cut
+
   # object gets info
   my $first_line = $first_index + 1;
   my $last_line  = $last_index + 1;
 
-  $obj->orig_line("$s");
+  $obj->c_line($s);
   $obj->first_line($first_line);
   $obj->last_line($first_line);
 

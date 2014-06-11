@@ -17,14 +17,14 @@ our %tag
      'num'        => '$', # the inout sequence number (indexed from 0)
      'type'       => '$', # 'typedef'
      'name'       => '$', # name of typedef, if any
-     'orig_line'  => '$', # originally extracted array flattened to one line (in C format)
+     'c_line'     => '$', # originally extracted array flattened to one line (in C format)
      'first_line' => '$', # line number of first line
      'last_line'  => '$', # line number of last line
 
-     'd_line'     => '$', # 'orig_line' with some D conversions
+     'd_line'     => '$', # 'c_line' with some D conversions
 
      # arrays need special accessors
-     'pretty_c'   => '@', # 'orig_line' split by 'gen_pretty' (in C format)
+     'pretty_c'   => '@', # 'c_line' split by 'gen_pretty' (in C format)
      'pretty_d'   => '@', # 'd_line' split by 'gen_pretty'    (in D format)
     );
 
@@ -37,7 +37,7 @@ sub get_new_hobj {
     = HObj->new(
 		'num'        => '',
 		'type'       => '',
-		'orig_line'  => '',
+		'c_line'     => '',
 		'first_line' => '',
 		'last_line'  => '',
 		'd_line'     => '',
@@ -107,7 +107,7 @@ sub c_line_to_d_line {
   # convert C types to D types
   my $self = shift @_;
 
-  my $text = $self->orig_line(); # the flattened C line
+  my $text = $self->c_line(); # the flattened C line
 
   foreach my $k (@G::d64map_keys) {
     my $val = $G::d64map{$k};
@@ -151,13 +151,18 @@ sub c_to_d {
     $nl  = @arr;
 
     if ($nl == 1) {
-      # example: 'tfoo* bar;
+      # note D form 1 is the new amd preferred form
+      # C: typedef int* bar;   # D form 1: alias bar = int*;   # 'bar' is the name, 'int*' is the type
+      #                        # D form 2: alias int* bar;
+      # C: typedef int bar[2]; # D form 1: alias bar = int[2]; # 'bar' (array of 2 ints) is the name, 'int' is the type
+      #                        # D form 2: alias int[2] bar;
       my $line = shift @arr;
       $line =~ s{;}{ ; };
       my @d = split ' ', $line;
       my $tok = pop @d;
       die "FATAL:  \$tok ne ';', it's '$tok'"
 	if $tok ne ';';
+
       $tok = pop @d;
       die "FATAL:  \$tok ne '$nam', it's '$tok'"
 	if $tok ne $nam;
@@ -166,20 +171,16 @@ sub c_to_d {
       # e.g., 'val[3] long'
       my $brexp = '';
 
-=pod
-
-      if ($tok =~ m{\A [a-zA-Z_]+ (\[ [0-9] \]) \z}x) {
-	$brexp = $1;
+      if ($tok =~ m{\A ([a-zA-Z_]+) (\[ [0-9] \]) \z}x) {
+	$tok   = $1;
+	$brexp = $2;
       }
 
-=cut
-
       # we should have all we need to write the single D line
-      $line = "alias ";
+      $line = "alias $tok = ";
       $line .= join ' ', @d;
       $line .= $brexp
 	if $brexp;
-      $line .= " $nam";
       $line .= ';';
       @arr = ($line);
 
@@ -220,7 +221,7 @@ sub print_final {
   my $elin = $self->last_line();
   my $num  = $self->num();
 
-  my $cline = $self->orig_line();
+  my $cline = $self->c_line();
 
   print $fp "\n";
 
@@ -264,7 +265,7 @@ sub gen_pretty {
   my $text;
   if ($ptyp eq 'c') {
     # this is C code
-    $text = $self->orig_line(); # the flattened line
+    $text = $self->c_line(); # the flattened line
   }
   elsif ($ptyp eq 'd') {
     # this is D code
@@ -418,7 +419,7 @@ sub dump {
   printf "  num: %d\n",        $self->num();
   printf "  type: %s\n",       $self->type();
   printf "  name: %s\n",       $self->name();
-  printf "  orig_line: \"%s\"\n",  $self->orig_line();
+  printf "  c_line: \"%s\"\n",  $self->c_line();
   printf "  d_line: \"%s\"\n",  $self->d_line();
   printf "  first_line: %d\n", $self->first_line();
   printf "  last_line: %d\n",  $self->last_line();
