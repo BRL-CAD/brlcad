@@ -62,6 +62,7 @@ extern "C" {
 #include <osg/MatrixTransform>
 #include <osg/Camera>
 #include <osg/RenderInfo>
+#include <osg/LineStipple>
 
 #include <osgDB/WriteFile>
 
@@ -410,6 +411,8 @@ int main( int argc, char **argv )
 
 		geom->setName(curr_dp->d_namep);     // set drawable to same name as region
 		geode->addDrawable(geom);
+		osg::StateSet* state = geode->getOrCreateStateSet();
+		state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 	    }
 	    wrapper->addChild(geode);
 	    osg_nodes[curr_dp] = wrapper.get();
@@ -437,8 +440,25 @@ int main( int argc, char **argv )
 		osg::ref_ptr<osg::MatrixTransform> mt = new osg::MatrixTransform(osgMat);
 		mt->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
 		osg_nodes[curr_dp]->addChild(mt);
+
+		/* If this child is subtracted in this comb, stipple the line drawings */
+		if (curr_path->fp_bool[curr_path->fp_len - 1] == 4) {
+		    osg::StateSet* state = mt->getOrCreateStateSet();
+		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+		    state->setAttributeAndModes(ls.get());
+		}
 	    } else {
-		osg_nodes[curr_dp]->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
+		if (curr_path->fp_bool[curr_path->fp_len - 1] == 4) {
+		    osg::ref_ptr<osg::Group> property_wrapper = new osg::Group;
+		    property_wrapper->setName(DB_FULL_PATH_CUR_DIR(curr_path)->d_namep);
+		    osg::StateSet* state = property_wrapper->getOrCreateStateSet();
+		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+		    state->setAttributeAndModes(ls.get());
+		    property_wrapper->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
+		    osg_nodes[curr_dp]->addChild(property_wrapper);
+		} else {
+		    osg_nodes[curr_dp]->addChild(osg_nodes[DB_FULL_PATH_CUR_DIR(curr_path)]);
+		}
 	    }
 	}
 	db_search_free(&comb_children);
