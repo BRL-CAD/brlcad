@@ -14,8 +14,6 @@ typedef struct
 } __quad_t;
 
 /*
-
-
 typedef struct
 {
   __u_long __val[2];
