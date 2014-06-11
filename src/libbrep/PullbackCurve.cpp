@@ -563,7 +563,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 		    int level = 1;
 		    if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			if (NEAR_ZERO(min_distance,tol)) {
 			    /////////////////////////////////////////
 			    // Could check normals and CV angles here
 			    /////////////////////////////////////////
@@ -592,7 +592,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -619,7 +619,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -646,7 +646,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -673,7 +673,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -701,7 +701,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -728,7 +728,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -755,7 +755,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -782,7 +782,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -812,7 +812,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -839,7 +839,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -866,7 +866,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -893,7 +893,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -921,7 +921,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -948,7 +948,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -975,7 +975,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1002,7 +1002,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1032,7 +1032,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1059,7 +1059,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1086,7 +1086,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1113,7 +1113,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1141,7 +1141,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1168,7 +1168,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1195,7 +1195,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1222,7 +1222,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1252,7 +1252,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1279,7 +1279,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1306,7 +1306,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1333,7 +1333,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1361,7 +1361,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1388,7 +1388,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1415,7 +1415,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
@@ -1442,7 +1442,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 			int level = 1;
 			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    if (NEAR_ZERO(min_distance,tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
