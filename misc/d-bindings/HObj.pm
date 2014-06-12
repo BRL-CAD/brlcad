@@ -312,7 +312,7 @@ sub c_to_d {
       if $G::debug;
     die "FATAL" if $err;
 
-
+    # this looks good so far
     @arr = ("alias $oline{name} = $oline{type};");
 
   }
