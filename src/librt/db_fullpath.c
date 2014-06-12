@@ -488,12 +488,15 @@ db_free_full_path(struct db_full_path *pp)
 	for (i = 0; i < pp->fp_len; i++) {
 	    if (pp->fp_mat[i]) {
 		bu_free((char *)pp->fp_mat[i], "free matrix");
+		pp->fp_mat[i] = NULL;
 	    }
 	}
 	bu_free((char *)pp->fp_mat, "db_full_path matrix array");
 
 	pp->fp_maxlen = pp->fp_len = 0;
 	pp->fp_names = (struct directory **)0;
+	pp->fp_bool = (int *)0;
+	pp->fp_mat = (matp_t *)0;
     }
 }
 
