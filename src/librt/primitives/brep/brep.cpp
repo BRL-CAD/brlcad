@@ -2133,7 +2133,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	    int vdir=0;
 	    ON_2dPoint start = start_2d;
 	    ON_2dPoint end = end_2d;
-	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir)) {
+	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
 		double seam_t;
 		ON_2dPoint from = ON_2dPoint::UnsetPoint;
 		ON_2dPoint to = ON_2dPoint::UnsetPoint;
@@ -2147,6 +2147,24 @@ getEdgePoints(const ON_BrepTrim &trim,
 		}
 	    }
 	}
+    } else {
+	    int udir=0;
+	    int vdir=0;
+	    ON_2dPoint start = start_2d;
+	    ON_2dPoint end = end_2d;
+	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
+		double seam_t;
+		ON_2dPoint from = ON_2dPoint::UnsetPoint;
+		ON_2dPoint to = ON_2dPoint::UnsetPoint;
+		if (FindTrimSeamCrossing(trim,t1,t2,seam_t,from,to,BREP_SAME_POINT_TOLERANCE)) {
+		    ON_2dPoint seam_2d = trim.PointAt(seam_t);
+		    ON_3dPoint seam_3d = s->PointAt(seam_2d.x,seam_2d.y);
+		    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
+		    if (param_points.find(tpercent) == param_points.end()) {
+			param_points[tpercent] = new ON_3dPoint(seam_3d);
+		    }
+		}
+	    }
     }
 }
 
@@ -2864,14 +2882,18 @@ int
 number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_trim_points)
 {
     int rc = 0;
-    for (int i=1; i < brep_trim_points.Count(); i++) {
-	ON_2dPoint &p1 = brep_trim_points[i-1].p2d;
-	ON_2dPoint &p2 = brep_trim_points[i].p2d;
-
-	int udir=0;
-	int vdir=0;
-	if (ConsecutivePointsCrossClosedSeam(surf,p1,p2,udir,vdir)) {
-	    rc++;
+    ON_2dPoint *prev_non_seam_pt = NULL;
+    for (int i=0; i < brep_trim_points.Count(); i++) {
+	ON_2dPoint *pt = &brep_trim_points[i].p2d;
+	if (!IsAtSeam(surf,*pt,BREP_SAME_POINT_TOLERANCE)) {
+	    int udir=0;
+	    int vdir=0;
+	    if (prev_non_seam_pt != NULL) {
+		if (ConsecutivePointsCrossClosedSeam(surf,*prev_non_seam_pt,*pt,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
+		    rc++;
+		}
+	    }
+	    prev_non_seam_pt = pt;
 	}
     }
 

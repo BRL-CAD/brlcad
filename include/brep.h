@@ -960,18 +960,14 @@ extern BREP_EXPORT void SwapUVSeamPoint(const ON_Surface *surf,ON_2dPoint &p, in
 extern BREP_EXPORT void ForceToClosestSeam(const ON_Surface *surf,ON_2dPoint &pt,double tol= 0.0);
 extern BREP_EXPORT bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
 extern BREP_EXPORT bool FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
-extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *surf,const ON_3dPoint& p,ON_2dPoint& p2d,ON_3dPoint& p3d,int quadrant = 0,double tol = 1e-6);
-extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,const ON_Interval* interval,double tol = 1e-6);
-extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint pt,const ON_2dPoint &prev_pt, int &udir, int &vdir);
+extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *surf,const ON_3dPoint& p,ON_2dPoint& p2d,ON_3dPoint& p3d,double &current_distance,int quadrant = 0,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
+extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double& distance,const ON_Interval* interval,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
+extern BREP_EXPORT bool ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir,double tol = 1e-6);
 extern BREP_EXPORT ON_BOOL32 face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
 extern BREP_EXPORT ON_BOOL32 surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
 extern BREP_EXPORT ON_BOOL32 surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
 
-extern BREP_EXPORT PBCData *
-pullback_samples(const ON_Surface *surf,
-		 const ON_Curve *curve,
-		 double tolerance = 1.0e-6,
-		 double flatness = 1.0e-3);
+extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,const ON_Curve *curve,double tolerance = 1.0e-6,double flatness = 1.0e-3);
 
 extern BREP_EXPORT bool check_pullback_data(std::list<PBCData *> &pbcs);
 
