@@ -138,7 +138,9 @@ sub c_line_to_d_line {
 sub c_to_d {
   my $self = shift @_;
 
-  # process pretty_d lines as a group, insert back into pretty_d lines
+  # process input pretty_d lines as a group, insert back into pretty_d
+  # lines
+
   my $daref = $self->pretty_d();
 
   # use a tmp array copy
@@ -350,48 +352,13 @@ sub gen_pretty {
   # now tidy up a bit, and convert to D where necessary
   my @arr2 = ();
 
-  # some regexes
-  my $r_first_line
-    = qr{\A \s*
-	 (typedef)?            # capture $1
-	 \s*
-	 (struct|enum|union)?  # capture $2
-
-	 ([\s\S]*)             # capture $3
-
-	 (\{)                  # capture $4
-
-	 \s* \z
-      }ox;
-
-  my $r_only_line
-    = qr{\A \s*
-	 (typedef)            # capture $1
-
-	 ([\s\S]*)            # capture $2
-
-	 (;)                  # capture $3
-
-	 \s* \z
-      }ox;
-
-  my $r_last_line
-    = qr{\A \s*
-	 (\})                     # capture $1
-
-	 ([\S\s]*)                # capture $2
-
-	 (\;)                     # capture $3
-
-	 \s* \z
-      }ox;
-
   # for D only use: hold parts from first (or only) and last lines
   my %fline = ();
   my %oline = ();
   my %lline = ();
 
   my $nl = @arr;
+
  LINE:
   for (my $i = 0; $i < $nl; ++$i) {
     my $line = $arr[$i];
@@ -420,7 +387,7 @@ sub gen_pretty {
       # (if it is '{')
 
       # possibilities for the ENTIRE line:
-      if ($line =~ m{$r_first_line}) {
+      if ($line =~ m{$R::r_first_line}) {
 	if ($G::debug) {
 	  F::debug_regex("first line match: '$line'",
 			 ($1, $2, $3, $4));
@@ -441,7 +408,7 @@ sub gen_pretty {
 	# we don't save the line
 	next LINE;
       }
-      elsif ($line =~ m{$r_only_line}) {
+      elsif ($line =~ m{$R::r_only_line}) {
 	if ($G::debug) {
 	  F::debug_regex("only line match: '$line'",
 			 ($1, $2, $3));
@@ -485,7 +452,7 @@ sub gen_pretty {
     elsif ($i == $nl - 1 && $ptyp eq 'd') {
       # last line
       # possibilities for the ENTIRE line:
-      if ($line =~ m{$r_last_line}) {
+      if ($line =~ m{$R::r_last_line}) {
 	if ($G::debug) {
 	  F::debug_regex("last line match: '$line'",
 			 ($1, $2, $3));
@@ -517,46 +484,6 @@ sub gen_pretty {
       if ($line =~ /\S/);
   }
 
-  # have we any D conversions?
-  my $nF = (keys %fline);
-  my $nO = (keys %oline);
-  my $nL = (keys %lline);
-  if ($nO) {
-
-    # update objetc status
-    $self->converted(1);
-  }
-  elsif ($nF && $nL) {
-
-    # update objetc status
-    $self->converted(1);
-  }
-  elsif ($nF || $nL) {
-    die "FATAL:  Unexpected first or last line without the other."
-  }
-
-=pod
-
-  # extract the "name" of any typedef
-  if ($self->type() eq 'typedef') {
-    my $nl = @arr2;
-    my $line = $arr2[$nl-1];
-    $line =~ s{;}{ ; }g;
-    my @d = split ' ', $line;
-    my $end = pop @d;
-    if ($end ne ';') {
-      say "FATAL:  last typedef line: '$line'";
-      die "   Line not ended with semicolon."
-    }
-    # the name, if any, should be the next to last token
-    my $name = pop @d;
-    if ($name ne '}') {
-      $self->name2($name);
-    }
-  }
-
-=cut
-
   # and save the mess
   if ($ptyp eq 'c') {
     # this is C code
@@ -565,6 +492,30 @@ sub gen_pretty {
   elsif ($ptyp eq 'd') {
     # this is D code
     $self->pretty_d(\@arr2);
+    # a little inefficient, but cleaner to do seprately
+    $self->c_to_d();
+  }
+
+  # have we any D conversions?
+  my $nF = (keys %fline);
+  my $nO = (keys %oline);
+  my $nL = (keys %lline);
+  if ($nO) {
+
+    # update object status
+    $self->converted(1);
+  }
+  elsif ($nF && $nL) {
+
+    # update object status
+    $self->converted(1);
+  }
+  elsif ($nF || $nL) {
+    die "FATAL:  Unexpected first or last line without the other."
+  }
+
+  if ($ptyp eq 'd') {
+
   }
 
 =pod
