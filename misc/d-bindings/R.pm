@@ -1,4 +1,4 @@
-pachage R;
+package R;
 
 use v5.14;
 
