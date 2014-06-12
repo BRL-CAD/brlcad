@@ -1,17 +1,34 @@
-// C object type: 1
+// C object: 0
 extern ptrdiff_t t;
 
-// C object type: 2
+// C object: 1
 typedef long __tok;
 
-// C object type: 3
+// C object: 2
 typedef long __val[2];
 
-// C object type: 4
+// C object: 3
 typedef struct
 {
   long __val[2];
 } __quad_t;
+
+// C object: 4
+typedef struct blah
+{
+  long t;
+} blah_t, foo_t;
+
+// C object: 5
+struct {
+  short t;
+} bar_t;
+
+// C object: 6
+typedef enum {
+  FAIL,
+  PASS = 2
+} raz;
 
 /*
 typedef struct
