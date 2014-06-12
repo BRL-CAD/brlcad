@@ -56,10 +56,6 @@ our %d64map
      #'bool'               => 'bool', # byte, int
      #'size_t'             => 'size_t',
      #'ptrdiff_t'          => 'ptrdiff_t',
-
-     # other
-     'NULL'               => 'null',
-
     );
 
 # the preferred order for checking
@@ -86,9 +82,6 @@ our @d64map_keys
      'signed char',
 
       'wchar_t',
-
-     # other
-     'NULL',
     );
 
 # 32-bit mapping from C types to D types
@@ -108,7 +101,7 @@ our %d32map
      'unsigned long int'      => 'uint',
      'long int'               => 'int',
 
-     # this impplicit variant is missing
+     # this implicit variant is missing
      'unsigned'           => 'uint',
 
      'unsigned int'       => 'uint',
@@ -139,7 +132,7 @@ our @d32map_keys
      'unsigned long int'      => 'uint',
      'long int'               => 'int',
 
-     # this impplicit variant is missing
+     # this implicit variant is missing
      'unsigned'           => 'uint',
 
      'unsigned int'       => 'uint',
