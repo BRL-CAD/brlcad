@@ -54,6 +54,9 @@ int
 main(int argc, char *argv[])
 {
     int ret = 0;
+    int64_t elapsedtime;
+
+    elapsedtime = bu_gettime();
 
     /*
      * You have to initialize the schema before you do anything else.
@@ -118,6 +121,22 @@ main(int argc, char *argv[])
 
 	step->printLoadStatistics();
 
+	elapsedtime = bu_gettime() - elapsedtime;
+	{
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
+	    int seconds = elapsedtime / 1000000;
+	    int minutes = seconds / 60;
+	    int hours = minutes / 60;
+
+	    minutes = minutes % 60;
+	    seconds = seconds %60;
+
+	    bu_vls_printf(&vls, "Load time: %02d:%02d:%02d\n", hours, minutes, seconds);
+	    std::cerr << bu_vls_addr(&vls) << std::endl;
+	    bu_vls_free(&vls);
+	}
+	elapsedtime = bu_gettime();
+
 	BRLCADWrapper *dotg  = new BRLCADWrapper();
 	if (!dotg) {
 	    std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
@@ -139,6 +158,21 @@ main(int argc, char *argv[])
     }
     delete step;
     Factory::DeleteObjects();
+
+    elapsedtime = bu_gettime() - elapsedtime;
+    {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	int seconds = elapsedtime / 1000000;
+	int minutes = seconds / 60;
+	int hours = minutes / 60;
+
+	minutes = minutes % 60;
+	seconds = seconds %60;
+
+	bu_vls_printf(&vls, "Convert time: %02d:%02d:%02d\n", hours, minutes, seconds);
+	std::cerr << bu_vls_addr(&vls) << std::endl;
+	bu_vls_free(&vls);
+    }
 
     return ret;
 }

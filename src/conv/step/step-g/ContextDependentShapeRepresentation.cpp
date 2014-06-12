@@ -77,13 +77,24 @@ ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_1()
 {
     if (!representation_relation.empty()) {
 	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
-	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
-	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
-		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
-		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
-		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+	if (representation_relation.size() == 1) { // just have an SSR
+	    irr = representation_relation.begin();
+	    if (irr != representation_relation.end()) {
+		if (dynamic_cast<ShapeRepresentationRelationship *>(*irr) != NULL) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
 
-		return rr->GetRepresentationRelationshipRep_1();
+		    return rr->GetRepresentationRelationshipRep_1();
+		}
+	    }
+	} else {
+	    for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+		if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+			(dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+			(dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		    return rr->GetRepresentationRelationshipRep_1();
+		}
 	    }
 	}
     }
@@ -95,13 +106,24 @@ ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_2()
 {
     if (!representation_relation.empty()) {
 	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
-	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
-	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
-		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
-		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
-		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+	if (representation_relation.size() == 1) { // just have an SSR
+	    irr = representation_relation.begin();
+	    if (irr != representation_relation.end()) {
+		if (dynamic_cast<ShapeRepresentationRelationship *>(*irr) != NULL) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
 
-		return rr->GetRepresentationRelationshipRep_2();
+		    return rr->GetRepresentationRelationshipRep_2();
+		}
+	    }
+	} else {
+	    for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+		if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+			(dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+			(dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		    return rr->GetRepresentationRelationshipRep_2();
+		}
 	    }
 	}
     }

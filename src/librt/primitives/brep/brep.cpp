@@ -2133,7 +2133,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	    int vdir=0;
 	    ON_2dPoint start = start_2d;
 	    ON_2dPoint end = end_2d;
-	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir)) {
+	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
 		double seam_t;
 		ON_2dPoint from = ON_2dPoint::UnsetPoint;
 		ON_2dPoint to = ON_2dPoint::UnsetPoint;
@@ -2147,6 +2147,24 @@ getEdgePoints(const ON_BrepTrim &trim,
 		}
 	    }
 	}
+    } else {
+	    int udir=0;
+	    int vdir=0;
+	    ON_2dPoint start = start_2d;
+	    ON_2dPoint end = end_2d;
+	    if (ConsecutivePointsCrossClosedSeam(s,start,end,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
+		double seam_t;
+		ON_2dPoint from = ON_2dPoint::UnsetPoint;
+		ON_2dPoint to = ON_2dPoint::UnsetPoint;
+		if (FindTrimSeamCrossing(trim,t1,t2,seam_t,from,to,BREP_SAME_POINT_TOLERANCE)) {
+		    ON_2dPoint seam_2d = trim.PointAt(seam_t);
+		    ON_3dPoint seam_3d = s->PointAt(seam_2d.x,seam_2d.y);
+		    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
+		    if (param_points.find(tpercent) == param_points.end()) {
+			param_points[tpercent] = new ON_3dPoint(seam_3d);
+		    }
+		}
+	    }
     }
 }
 
@@ -2864,14 +2882,18 @@ int
 number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_trim_points)
 {
     int rc = 0;
-    for (int i=1; i < brep_trim_points.Count(); i++) {
-	ON_2dPoint &p1 = brep_trim_points[i-1].p2d;
-	ON_2dPoint &p2 = brep_trim_points[i].p2d;
-
-	int udir=0;
-	int vdir=0;
-	if (ConsecutivePointsCrossClosedSeam(surf,p1,p2,udir,vdir)) {
-	    rc++;
+    ON_2dPoint *prev_non_seam_pt = NULL;
+    for (int i=0; i < brep_trim_points.Count(); i++) {
+	ON_2dPoint *pt = &brep_trim_points[i].p2d;
+	if (!IsAtSeam(surf,*pt,BREP_SAME_POINT_TOLERANCE)) {
+	    int udir=0;
+	    int vdir=0;
+	    if (prev_non_seam_pt != NULL) {
+		if (ConsecutivePointsCrossClosedSeam(surf,*prev_non_seam_pt,*pt,udir,vdir,BREP_SAME_POINT_TOLERANCE)) {
+		    rc++;
+		}
+	    }
+	    prev_non_seam_pt = pt;
 	}
     }
 
@@ -2935,72 +2957,57 @@ bool
 shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	ON_2dPoint p = ON_2dPoint::UnsetPoint;
+	ON_Interval dom[2];
+	int entering = is_entering(surf,brep_loop_points);
+
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
 	int seam = 0;
 	int i;
+	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
+	BrepTrimPoint end_btp;
+	ON_SimpleArray<BrepTrimPoint> part1;
+	ON_SimpleArray<BrepTrimPoint> part2;
+
+	end_btp.p2d = ON_2dPoint::UnsetPoint;
 	int numpoints = brep_loop_points.Count();
-	for (i=0; i < numpoints; i++) {
-	    p = brep_loop_points[i].p2d;
-	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
-		while (++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
-		    ON_2dPoint n = brep_loop_points[i].p2d;
-		    if ((seam=IsAtSeam(surf, n, BREP_SAME_POINT_TOLERANCE)) <= 0) {
-			break;
-		    }
-		    p = n;
+	bool first_seam_pt = true;
+	for(i=0; i < numpoints; i++) {
+	    btp = brep_loop_points[i];
+	    if ((seam=IsAtSeam(surf, btp.p2d, BREP_SAME_POINT_TOLERANCE)) > 0) {
+		if (first_seam_pt) {
+		    part1.Append(btp);
+		    first_seam_pt = false;
 		}
-		ForceToClosestSeam(surf,p,BREP_SAME_POINT_TOLERANCE);
-		btp = brep_loop_points[i-1];
-		break;
+		end_btp = btp;
+		SwapUVSeamPoint(surf, end_btp.p2d);
+		part2.Append(end_btp);
+	    } else {
+		if (dom[0].Includes(btp.p2d.x,false) && dom[1].Includes(btp.p2d.y,false)) {
+		    part1.Append(brep_loop_points[i]);
+		} else {
+		    btp = brep_loop_points[i];
+		    btp.p2d = UnwrapUVPoint(surf,brep_loop_points[i].p2d,BREP_SAME_POINT_TOLERANCE);
+		    part2.Append(btp);
+		}
 	    }
+	    prev_pt = &brep_loop_points[i].p2d;
 	}
-	BrepTrimPoint seam_btp = btp;
-	ON_SimpleArray<BrepTrimPoint> shifted_points;
-	ON_2dPoint unwrapped = UnwrapUVPoint(surf,seam_btp.p2d,BREP_SAME_POINT_TOLERANCE);
 
-	int entering = is_entering(surf,brep_loop_points);
-	if (entering > 0) {
-	    if (entering == 1) { // crosses in U
-		shifted_points.Append(seam_btp);
-		for (int j=i; j < brep_loop_points.Count(); j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		for (int j=1; j < i-1; j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		SwapUVSeamPoint(surf, p);
-		// heading left and hit left seam do this
-		btp.p2d = p;
-		shifted_points.Append(btp);
-	    } else if (entering == 2) {
-		SwapUVSeamPoint(surf, p);
-		// heading left and hit left seam do this
-		btp.p2d = p;
-		shifted_points.Append(btp);
-		for (int j=i; j < brep_loop_points.Count(); j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		for (int j=1; j < i-1; j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		shifted_points.Append(seam_btp);
-	    }
-
-	    brep_loop_points.Empty();
-	    brep_loop_points.Append(shifted_points.Count(),shifted_points.Array());
+	brep_loop_points.Empty();
+	if (entering == 1) {
+	    brep_loop_points.Append(part1.Count()-1,part1.Array());
+	    brep_loop_points.Append(part2.Count(),part2.Array());
+	} else {
+	    brep_loop_points.Append(part2.Count()-1,part2.Array());
+	    brep_loop_points.Append(part1.Count(),part1.Array());
 	}
     }
     return true;
 }
+
 
 /*
  * extend_over_seam_crossings
@@ -3091,7 +3098,81 @@ poly2tri_CDT(struct bu_list *vhead,
 		BrepTrimPoint btp;
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
+		ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
+		ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 		double delta =  trim->Domain().Length() / 10.0;
+		ON_Interval trim_dom = trim->Domain();
+		// need to determine direction
+		int side = IsAtSingularity(s, p2d_begin, BREP_SAME_POINT_TOLERANCE);// 0 = south, 1 = east, 2 = north, 3 = west
+		if (li == 0) { // outer trim CCW
+		    if (side == 0) { //south - we want to head east to keep CCW
+			delta = p2d_begin.x - p2d_end.x;
+			if (delta > 0.0) {
+			    delta -= s->Domain(0).Length();
+			    delta /= -10.0;
+			} else {
+			    delta /= -10.0;
+			}
+		    } else if (side == 1) { //east
+			delta = p2d_begin.y - p2d_end.y;
+			if (delta > 0.0) {
+			    delta -= s->Domain(0).Length();
+			    delta /= -10.0;
+			} else {
+			    delta /= -10.0;
+			}
+		    } else if (side == 2) { //north
+			delta = p2d_begin.x - p2d_end.x;
+			if (delta > 0.0) {
+			    delta /= -10.0;
+			} else {
+			    delta += s->Domain(0).Length();
+			    delta /= -10.0;
+			}
+		    } else if (side == 3) { // west
+			delta = p2d_begin.y - p2d_end.y;
+			if (delta > 0.0) {
+			    delta /= -10.0;
+			} else {
+			    delta += s->Domain(0).Length();
+			    delta /= -10.0;
+			}
+		    }
+		} else { // inner trim CW
+		    if (side == 0) { //south
+			delta = p2d_begin.x - p2d_end.x;
+			if (delta > 0.0) {
+			    delta /= -10.0;
+			} else {
+			    delta += s->Domain(0).Length();
+			    delta /= -10.0;
+			}
+		    } else if (side == 1) { //east
+			delta = p2d_begin.y - p2d_end.y;
+			if (delta > 0.0) {
+			    delta /= -10.0;
+			} else {
+			    delta += s->Domain(0).Length();
+			    delta /= -10.0;
+			}
+		    } else if (side == 2) { //north
+			delta = p2d_begin.x - p2d_end.x;
+			if (delta > 0.0) {
+			    delta -= s->Domain(0).Length();
+			    delta /= -10.0;
+			} else {
+			    delta /= -10.0;
+			}
+		    } else if (side == 3) { // west
+			delta = p2d_begin.y - p2d_end.y;
+			if (delta > 0.0) {
+			    delta -= s->Domain(0).Length();
+			    delta /= -10.0;
+			} else {
+			    delta /= -10.0;
+			}
+		    }
+		}
 		for (int i=1; i<=10; i++) {
 		    btp.p3d = p3d;
 		    btp.p2d = v1.Point();
