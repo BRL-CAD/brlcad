@@ -111,9 +111,8 @@ sub convert {
     }
 
     # don't overwrite
-    if (-e $ofil && !$G::force) {
-      $process = 0;
-    }
+    $process = 0
+      if (-e $ofil && !$G::force);
 
     if (!$process) {
       print "D::convert(): Skipping input file '$ifil'...\n"
@@ -146,7 +145,7 @@ sub convert {
 
 =cut
 
-      # use gcc; need a C input file
+      # use gcc; need a modified header as the C input file
       my $cinfil = "./di/$stem.h.c";
       push @tmpfils, $cinfil;
       push @{$ofils_ref}, $cinfil
@@ -211,10 +210,10 @@ sub convert {
       print "DEBUG:  converting '$ppfil' to D module '$ofil'...\n"
 	if $G::debug;
 
-      convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
+      my $nchunks = convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
 
       # check for a good compile
-      check_final($ofil);
+      check_final($ofil, $nchunks);
 
     }
     #==== method 2 ====
@@ -557,6 +556,8 @@ sub convert1final {
   print $fpo "\n";
   print $fpo "} // extern (C) {\n";
 
+  return $nchunks;
+
 } # convert1final
 
 sub convert_with_gcc_E {
@@ -760,7 +761,11 @@ sub flatten_c_header {
 
 sub check_final {
   # attempt to build the D source file
-  my $dfil = shift @_;
+  my $dfil    = shift @_;
+  my $nchunks = shift @_;
+
+  $nchunks = 0
+    if !defined $nchunks;
 
   my $cmd = "dmd -c $dfil";
 
@@ -769,6 +774,12 @@ sub check_final {
 
   run "Checking the build for file '$dfil'" => $cmd
     or die "FATAL:  Couldn't build '$dfil'.";
+
+  if ($G::verbose || $G::debug) {
+    say "Successful build of file '$dfil'.";
+    say "  Total C objects processed: $nchunks"
+      if $nchunks;
+  }
 
 } # check_final
 
