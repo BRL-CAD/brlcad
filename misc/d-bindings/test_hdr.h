@@ -1,3 +1,11 @@
+// C object: -1
+typedef (struct t*)0 blah0;
+typedef (struct t *)0 blah1;
+typedef ( struct t*) 0 blah2;
+typedef ( struct t * * ) 0 blah3;
+
+typedef ((struct t*)0) blah4;
+
 // C object: 0
 extern ptrdiff_t t;
 
