@@ -8,7 +8,7 @@ sub trim_string {
   my $s = shift @_;
   $s =~ s{\A \s*}{}xs;
   $s =~ s{\s* \z}{}xs;
-  rerurn $s;
+  return $s;
 } # trim_string
 
 sub get_spaces {
