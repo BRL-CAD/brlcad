@@ -321,7 +321,7 @@ int main( int argc, char **argv )
 
     // The settings below do not seem to improve FPS, and the latter results in no geometry being
     // visible without improving the FPS.
-    viewer.getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
+    //viewer.getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
     //viewer.getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 
     osgUtil::Optimizer optimizer;
