@@ -4,6 +4,13 @@ package F;
 
 use v5.14;
 
+sub trim_string {
+  my $s = shift @_;
+  $s =~ s{\A \s*}{}xs;
+  $s =~ s{\s* \z}{}xs;
+  rerurn $s;
+} # trim_string
+
 sub get_spaces {
   my $level = shift @_;
   my $ns = $level * 3;
@@ -15,6 +22,7 @@ sub debug_regex {
   my $msg  = shift @_;
   my @arr  = @_;
 
+  say "==============================================================";
   say "DEBUG: $msg";
 
   my $nl = @arr;
