@@ -2957,72 +2957,57 @@ bool
 shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	ON_2dPoint p = ON_2dPoint::UnsetPoint;
+	ON_Interval dom[2];
+	int entering = is_entering(surf,brep_loop_points);
+
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
 	int seam = 0;
 	int i;
+	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
+	BrepTrimPoint end_btp;
+	ON_SimpleArray<BrepTrimPoint> part1;
+	ON_SimpleArray<BrepTrimPoint> part2;
+
+	end_btp.p2d = ON_2dPoint::UnsetPoint;
 	int numpoints = brep_loop_points.Count();
-	for (i=0; i < numpoints; i++) {
-	    p = brep_loop_points[i].p2d;
-	    if ((seam=IsAtSeam(surf, p, BREP_SAME_POINT_TOLERANCE)) > 0) {
-		while (++i < numpoints) { // may get a case where several points in a row lie on seam so make sure to get last point
-		    ON_2dPoint n = brep_loop_points[i].p2d;
-		    if ((seam=IsAtSeam(surf, n, BREP_SAME_POINT_TOLERANCE)) <= 0) {
-			break;
-		    }
-		    p = n;
+	bool first_seam_pt = true;
+	for(i=0; i < numpoints; i++) {
+	    btp = brep_loop_points[i];
+	    if ((seam=IsAtSeam(surf, btp.p2d, BREP_SAME_POINT_TOLERANCE)) > 0) {
+		if (first_seam_pt) {
+		    part1.Append(btp);
+		    first_seam_pt = false;
 		}
-		ForceToClosestSeam(surf,p,BREP_SAME_POINT_TOLERANCE);
-		btp = brep_loop_points[i-1];
-		break;
+		end_btp = btp;
+		SwapUVSeamPoint(surf, end_btp.p2d);
+		part2.Append(end_btp);
+	    } else {
+		if (dom[0].Includes(btp.p2d.x,false) && dom[1].Includes(btp.p2d.y,false)) {
+		    part1.Append(brep_loop_points[i]);
+		} else {
+		    btp = brep_loop_points[i];
+		    btp.p2d = UnwrapUVPoint(surf,brep_loop_points[i].p2d,BREP_SAME_POINT_TOLERANCE);
+		    part2.Append(btp);
+		}
 	    }
+	    prev_pt = &brep_loop_points[i].p2d;
 	}
-	BrepTrimPoint seam_btp = btp;
-	ON_SimpleArray<BrepTrimPoint> shifted_points;
-	ON_2dPoint unwrapped = UnwrapUVPoint(surf,seam_btp.p2d,BREP_SAME_POINT_TOLERANCE);
 
-	int entering = is_entering(surf,brep_loop_points);
-	if (entering > 0) {
-	    if (entering == 1) { // crosses in U
-		shifted_points.Append(seam_btp);
-		for (int j=i; j < brep_loop_points.Count(); j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		for (int j=1; j < i-1; j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		SwapUVSeamPoint(surf, p);
-		// heading left and hit left seam do this
-		btp.p2d = p;
-		shifted_points.Append(btp);
-	    } else if (entering == 2) {
-		SwapUVSeamPoint(surf, p);
-		// heading left and hit left seam do this
-		btp.p2d = p;
-		shifted_points.Append(btp);
-		for (int j=i; j < brep_loop_points.Count(); j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		for (int j=1; j < i-1; j++) {
-		    p = brep_loop_points[j].p2d;
-		    brep_loop_points[j].p2d = UnwrapUVPoint(surf,p,BREP_SAME_POINT_TOLERANCE);
-		    shifted_points.Append(brep_loop_points[j]);
-		}
-		shifted_points.Append(seam_btp);
-	    }
-
-	    brep_loop_points.Empty();
-	    brep_loop_points.Append(shifted_points.Count(),shifted_points.Array());
+	brep_loop_points.Empty();
+	if (entering == 1) {
+	    brep_loop_points.Append(part1.Count()-1,part1.Array());
+	    brep_loop_points.Append(part2.Count(),part2.Array());
+	} else {
+	    brep_loop_points.Append(part2.Count()-1,part2.Array());
+	    brep_loop_points.Append(part1.Count(),part1.Array());
 	}
     }
     return true;
 }
+
 
 /*
  * extend_over_seam_crossings
