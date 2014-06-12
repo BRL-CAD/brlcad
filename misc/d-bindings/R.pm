@@ -56,6 +56,8 @@ our $r_null_2
 
       [^\(\)\*]+  # collect all but parens and asterisks
 
+      [\*\s]+     # don't forget the asterisk(s)!
+
       \)          # inside close paren
       \s* 0 \s*   # zero between the outer parens
       \)          # outside close paren
@@ -67,6 +69,8 @@ our $r_null_1
       \(          # inside open paren
 
       [^\(\)\*]+  # collect all but parens and asterisks
+
+      [\*\s]+     # don't forget the asterisk(s)!
 
       \)          # inside close paren
       \s* 0       # zero after the close paren
