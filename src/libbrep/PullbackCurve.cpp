@@ -34,12 +34,12 @@
 #include <limits>
 #include <set>
 #include <map>
+#include <string>
 
 #include "brep.h"
 
 /* interface header */
 #include "PullbackCurve.h"
-
 
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
