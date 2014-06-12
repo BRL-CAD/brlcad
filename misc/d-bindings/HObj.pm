@@ -378,7 +378,13 @@ sub print_final {
     if (defined $ppfil);
   say $fp "//   line $slin to line $elin";
   say $fp "// $cline";
-  say $fp "// the D version:";
+
+  if ($self->converted) {
+    say $fp "// the D version (pretty-printed):";
+  }
+  else {
+    say $fp "// no conversion necessary but a prettier C version:";
+  }
 
   $self->print_pretty($fp, 'd');
 
