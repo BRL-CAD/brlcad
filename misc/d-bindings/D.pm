@@ -399,6 +399,9 @@ sub convert1final {
   # chunks go into an array
   my @objs = ();
 
+  # reset the name hash for this file (module)
+  HObj::reset_names();
+
   # use for limiting chunk (object) processing
   my $nchunks = 0;
 
@@ -762,8 +765,10 @@ sub check_final {
   my $cmd = "dmd -c $dfil";
 
   # Act like system(), only louder and cleaner...
+  run_with -silent;
+
   run "Checking the build for file '$dfil'" => $cmd
-    or die "Couldn't build";
+    or die "FATAL:  Couldn't build '$dfil'.";
 
 } # check_final
 
