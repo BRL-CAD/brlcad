@@ -11,6 +11,7 @@ use Data::Dumper; $Data::Dumper::Indent = 1;
 use Class::Struct;
 
 use F;
+use R;
 
 my $next_name_num = 1;
 my %names = ();
@@ -142,58 +143,201 @@ sub c_to_d {
   # lines
 
   my $daref = $self->pretty_d();
+  my $nd = @$daref;
 
-  # use a tmp array copy
+  # put new lines in a tmp array which will become the new pretty_d
   my @arr = @$daref;
-  my $nl  = @arr;
 
-  my $typ = $self->type;
-  my $nam = $self->name;
+  # conversion notes:
 
-  if ($typ eq 'typedef') {
-    my $line = shift @arr;
-    die "FATAL:  typedef first \$line doesn't lead with token 'typedef': '$line'"
-      if ($line !~ m{\A \s* typedef \s*}x);
-    $nl  = @arr;
+  # note D form 1 is the new and preferred form
+  # C: typedef int* bar;   # D form 1: alias bar = int*;   # 'bar' is the name, 'int*' is the type
+  #                        # D form 2: alias int* bar;
+  # C: typedef int bar[2]; # D form 1: alias bar = int[2]; # 'bar' (array of 2 ints) is the name, 'int' is the type
+  #                        # D form 2: alias int[2] bar;
 
-    if ($nl == 1) {
-      # note D form 1 is the new and preferred form
-      # C: typedef int* bar;   # D form 1: alias bar = int*;   # 'bar' is the name, 'int*' is the type
-      #                        # D form 2: alias int* bar;
-      # C: typedef int bar[2]; # D form 1: alias bar = int[2]; # 'bar' (array of 2 ints) is the name, 'int' is the type
-      #                        # D form 2: alias int[2] bar;
-      my $line = shift @arr;
-      $line =~ s{;}{ ; };
-      my @d = split ' ', $line;
-      my $tok = pop @d;
-      die "FATAL:  \$tok ne ';', it's '$tok'"
-	if $tok ne ';';
+  # convert to D where necessary
+  # hold parts from first (or only) and last lines
+  my %fline = ();
+  my %oline = ();
+  my %lline = ();
 
-      $tok = pop @d;
-      die "FATAL:  \$tok ne '$nam', it's '$tok'"
-	if $tok ne $nam;
+ LINE:
+  for (my $i = 0; $i < $nd; ++$i) {
+    my $line = $daref->[$i];
 
-      # if name has an array indicator we need to add it to the D type
-      # e.g., 'val[3] long'
-      my $brexp = '';
+    if ($i == 0) {
+      # first line
 
-      if ($tok =~ m{\A ([a-zA-Z_]+) (\[ [0-9] \]) \z}x) {
-	$tok   = $1;
-	$brexp = $2;
+      # check out types and subtypes for text before a first bracket
+      # (if it is '{')
+
+      # possibilities for the ENTIRE line:
+      if ($line =~ m{$R::r_first_line}) {
+	# save the captures first!
+	my ($t, $type, $name, $curly) = (defined $1 ? F::trim_string($1) : '',
+					 defined $2 ? F::trim_string($2) : '',
+					 defined $3 ? F::trim_string($3) : '',
+					 defined $4 ? F::trim_string($4) : '');
+
+	if ($G::debug) {
+	  F::debug_regex("first line match: '$line'",
+			 ($t, $type, $name, $curly));
+	}
+
+	$fline{typedef} = $t ? 1 : 0;
+	$fline{type}    = $type;
+	$fline{name}    = $name;
+	$fline{curly}   = $curly;
+
+	# we don't save the line
+	next LINE;
       }
+      elsif ($line =~ m{$R::r_only_line}) {
+	# save the captures first!
+	my ($t, $toks, $semi) = (defined $1 ? F::trim_string($1) : '',
+				 defined $2 ? F::trim_string($2) : '',
+				 defined $3 ? F::trim_string($3) : '');
+	if ($G::debug) {
+	  F::debug_regex("only line match: '$line'",
+			 ($t, $toks, $semi));
+	}
 
-      # we should have all we need to write the single D line
-      $line = "alias $tok = ";
-      $line .= join ' ', @d;
-      $line .= $brexp
-	if $brexp;
-      $line .= ';';
-      @arr = ($line);
+	$oline{typedef} = $t ? 1 : 0;
+        $oline{semi} = $semi;
 
-      # save the work, we're done
-      $self->pretty_d(\@arr);
-      return;
+	if ($toks) {
+	  # the tokens
+	  my @d = split ' ', $toks;
+
+	  my $name = pop @d;
+	  # if name has an array indicator we need to add it to the D
+	  # type, e.g., 'val[3] long'
+	  my $arrind = '';
+	  if ($name =~ m{\A ([a-zA-Z_]+) (\[ [0-9] \]) \z}x) {
+	    $name   = $1;
+	    $arrind = $2;
+	  }
+	  $arrind = F::trim_string($arrind)
+	    if $arrind;
+
+	  if ($G::debug) {
+	    say "DEBUG:  only line : '$line', name = '$name'";
+	  }
+
+          my $type = join ' ', @d;
+	  $type = F::trim_string($type);
+	  $type .= $arrind
+	    if $arrind;
+
+	  $name = F::trim_string($name)
+	    if $name;
+	  $type = F::trim_string($type)
+	    if $type;
+
+	  $oline{name} = $name;
+	  $oline{type} = $type;
+	}
+
+	if ($G::debug) {
+	  say "DEBUG:  only line : '$line', semi = '$semi'";
+	}
+
+	# we don't save the line
+	next LINE;
+      }
     }
+    # D lines only ========================
+    elsif ($i == $nd - 1) {
+      # last line
+      # possibilities for the ENTIRE line:
+      if ($line =~ m{$R::r_last_line}) {
+	# save the captures first!
+	my ($curly, $toks, $semi) = (defined $1 ? F::trim_string($1) : '',
+				     defined $2 ? F::trim_string($2) : '',
+				     defined $3 ? F::trim_string($3) : '');
+	if ($G::debug) {
+	  F::debug_regex("last line match: '$line'",
+			 ($curly, $toks, $semi));
+	}
+
+	$lline{curly} = $curly;
+	$lline{semi}  = $semi;
+
+	if ($toks) {
+	  # the tokens, e.g., *t, z;
+	  my @d = split ',', $2;
+	  my @names = ();
+	  foreach my $d (@d) {
+	    my @s = split ' ', $d;
+	    my $n = join '', @s;
+	    push @names, $n
+	  }
+	  $lline{names} = [@names];
+	}
+	else {
+	  $lline{names} = [];
+	}
+
+	# we don't save the line
+	next LINE;
+      }
+    }
+
+    push @arr, $line;
+  }
+
+  # have we any D conversions?
+  my $nF = scalar (keys %fline);
+  my $nO = scalar (keys %oline);
+  my $nL = scalar (keys %lline);
+  my $nA = $nO || $nF || $nL;
+
+  # requirements
+  my %is_required
+    = (
+       fline => { type => 1, curly => 1 },
+       oline => { typedef => 1, type => 1, name => 1, curly => 1 },
+       lline => { curly => 1, semi => 1 },
+    );
+
+  if ($nO) {
+    my $err = 0;
+    my $h = 'oline';
+    my $r = \%oline;
+    my $o = 'one line only';
+    my @k = qw(typedef type name);
+
+    $err += check_lines($h, $r, $o, \@k, \%is_required)
+      if $G::debug;
+    die "FATAL" if $err;
+
+
+    @arr = ("alias $oline{name} = $oline{type};");
+
+  }
+  elsif ($nF && $nL) {
+    my $err = 0;
+    my ($h, $r, $o, @k);
+
+    $h = 'fline';
+    $r = \%fline;
+    $o = 'first line';
+    @k = qw(typedef type name curly);
+    $err += check_lines($h, $r, $o, \@k, \%is_required)
+      if $G::debug;
+
+    $h = 'lline';
+    $r = \%lline;
+    $o = 'last line';
+    @k = qw(curly names semi);
+    $err += check_lines($h, $r, $o, \@k, \%is_required)
+      if $G::debug;
+    die "FATAL" if $err;
+
+  }
+  elsif ($nF || $nL) {
+    die "FATAL:  Unexpected first or last line without the other."
   }
 
   if (0 && $G::debug) {
@@ -202,17 +346,13 @@ sub c_to_d {
     die "DEBUG exit";
   }
 
-  for (my $i = 0; $i < $nl; ++$i) {
-    my $line = $daref->[$i];
+  # save the work (but only if changed)
+  if ($nA) {
+    $self->pretty_d(\@arr);
 
-    # process the line
-    # ...
-
-    #push @arr, $line;
+    # update object status
+    $self->converted(1);
   }
-
-  # save the work
-  $self->pretty_d(\@arr);
 
 } # c_to_d
 
@@ -255,11 +395,8 @@ sub do_all_conversions {
   $self->c_line_to_d_line();
 
   # make the pretty D array and convert to D constructs where necessary
+  # also convert the D array to final D lines
   $self->gen_pretty('d');
-
-  # convert the D array to final D lines
-  # final conversion
-  #$self->c_to_d();
 
 } # do_all_conversions
 
@@ -352,11 +489,6 @@ sub gen_pretty {
   # now tidy up a bit, and convert to D where necessary
   my @arr2 = ();
 
-  # for D only use: hold parts from first (or only) and last lines
-  my %fline = ();
-  my %oline = ();
-  my %lline = ();
-
   my $nl = @arr;
 
  LINE:
@@ -379,107 +511,6 @@ sub gen_pretty {
     # remove spaces after open parens
     $line =~ s{\( \s*}{\(}xg;
 
-    # D lines only ========================
-    if ($i == 0 && $ptyp eq 'd') {
-      # first line
-
-      # check out types and subtypes for text before a first bracket
-      # (if it is '{')
-
-      # possibilities for the ENTIRE line:
-      if ($line =~ m{$R::r_first_line}) {
-	if ($G::debug) {
-	  F::debug_regex("first line match: '$line'",
-			 ($1, $2, $3, $4));
-	}
-
-	if (defined $1 && $1 =~ /\S/) {
-	  $fline{typedef} = 1;
-	}
-	if (defined $2 && $2 =~ /\S/) {
-	  my $s = F::trim_string($2);
-	  $fline{$s} = 1;
-	}
-	if (defined $3 && $3 =~ /\S/) {
-	  my $name = F::trim_string($3);
-	  $fline{name} = $name;
-	}
-
-	# we don't save the line
-	next LINE;
-      }
-      elsif ($line =~ m{$R::r_only_line}) {
-	if ($G::debug) {
-	  F::debug_regex("only line match: '$line'",
-			 ($1, $2, $3));
-	}
-
-	if (defined $1 && $1 =~ /\S/) {
-	  $oline{typedef} = 1;
-	}
-
-	if (defined $2 && $2 =~ /\S/) {
-	  # the tokens
-	  my @d = split ' ', $2;
-
-	  my $name = pop @d;
-	  # if name has an array indicator we need to add it to the D
-	  # type, e.g., 'val[3] long'
-	  my $arrind = '';
-	  if ($name =~ m{\A ([a-zA-Z_]+) (\[ [0-9] \]) \z}x) {
-	    $name   = $1;
-	    $arrind = $2;
-	  }
-
-          my $type = join ' ', @d;
-	  $type .= $arrind
-	    if $arrind;
-
-	  $oline{name} = $name
-	    if $name;
-	  $oline{type} = $type
-	    if $type;
-	}
-
-	my $semi = defined $3 ? $3 : '';
-        $oline{semi} = $semi;
-
-	# we don't save the line
-	next LINE;
-      }
-    }
-    # D lines only ========================
-    elsif ($i == $nl - 1 && $ptyp eq 'd') {
-      # last line
-      # possibilities for the ENTIRE line:
-      if ($line =~ m{$R::r_last_line}) {
-	if ($G::debug) {
-	  F::debug_regex("last line match: '$line'",
-			 ($1, $2, $3));
-	}
-
-	my $curly = defined $1 ? $1 : '';
-	my $semi  = defined $3 ? $3 : '';
-
-	if (defined $2 && $2 =~ /\S/) {
-	  # the tokens, e.g., *t, z;
-	  my @d = split ',', $2;
-	  my @names = ();
-	  foreach my $d (@d) {
-	    my @s = split ' ', $d;
-	    my $n = join '', @s;
-	    push @names, $n
-	  }
-	  $lline{names} = [@names];
-	}
-	$lline{curly} = $curly;
-	$lline{semi}  = $semi;
-
-	# we don't save the line
-	next LINE;
-      }
-    }
-
     push @arr2, $line
       if ($line =~ /\S/);
   }
@@ -492,30 +523,8 @@ sub gen_pretty {
   elsif ($ptyp eq 'd') {
     # this is D code
     $self->pretty_d(\@arr2);
-    # a little inefficient, but cleaner to do seprately
+    # a little inefficient, but cleaner to do separately
     $self->c_to_d();
-  }
-
-  # have we any D conversions?
-  my $nF = (keys %fline);
-  my $nO = (keys %oline);
-  my $nL = (keys %lline);
-  if ($nO) {
-
-    # update object status
-    $self->converted(1);
-  }
-  elsif ($nF && $nL) {
-
-    # update object status
-    $self->converted(1);
-  }
-  elsif ($nF || $nL) {
-    die "FATAL:  Unexpected first or last line without the other."
-  }
-
-  if ($ptyp eq 'd') {
-
   }
 
 =pod
@@ -589,5 +598,26 @@ sub get_next_name {
   return $n;
 } # get_next_name
 
+sub check_lines {
+  # a debugging function
+  my ($h, $r, $o, $kref, $iref) = @_;
+
+  my $err = 0;
+  foreach my $k (@$kref) {
+    my ($m, $e) = ('NOTE', 0);
+    ($m, $e) = ('ERROR', 1)
+      if exists $iref->{$h}{$k};
+    if (!exists $r->{$k}) {
+      say "$m: Object '$o' has no key '$k'";
+      ++$err if $e;
+    }
+    elsif (!$r->{$k}) {
+      say "$m: Object '$o' has no value for key '$k'";
+      ++$err if $e;
+    }
+  }
+    die "FATAL" if $err;
+
+} # check_lines
 # mandatory true return for a module
 1;
