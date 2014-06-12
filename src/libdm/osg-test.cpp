@@ -55,6 +55,8 @@ extern "C" {
 #include <osgViewer/ViewerEventHandlers>
 
 #include <osgGA/TrackballManipulator>
+#include <osgGA/StateSetManipulator>
+
 
 #include <osg/Material>
 #include <osg/Geode>
@@ -303,15 +305,30 @@ int main( int argc, char **argv )
 
     // construct the viewer.
     osgViewer::Viewer viewer;
-    viewer.setSceneData(osg_nodes[dp]);
     viewer.setUpViewInWindow(0, 0, 640, 480);
 
+    // add the state manipulator
+    viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
+
+    // add the thread model handler
+    viewer.addEventHandler(new osgViewer::ThreadingHandler);
+
+    // add the window size toggle handler
+    viewer.addEventHandler(new osgViewer::WindowSizeHandler);
+
+    // add the stats handler
     viewer.addEventHandler(new osgViewer::StatsHandler);
 
     // The settings below do not seem to improve FPS, and the latter results in no geometry being
     // visible without improving the FPS.
     viewer.getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
     //viewer.getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+
+    osgUtil::Optimizer optimizer;
+    optimizer.optimize(osg_nodes[dp]);
+    viewer.setSceneData(osg_nodes[dp]);
+
+    viewer.realize();
 
     return viewer.run();
 }
