@@ -40,5 +40,37 @@ our $r_last_line
        \s* \z
     }ox;
 
+# for C line conversions
+#   transform, e.g., '((struct wdb_metaballpt *)0)'
+#   or               '(struct wdb_metaballpt *)0' to 'null'
+
+# Note the outside set of parens may not exist, but they'll need to be
+# paired and I'm not sure how to check that inside one regex, so I'll
+# define two separate ones.
+
+# two pairs of parens
+our $r_null_2
+  = qr{
+      \( \s*      # outside open paren
+      \(          # inside open paren
+
+      [^\(\)\*]+  # collect all but parens and asterisks
+
+      \)          # inside close paren
+      \s* 0 \s*   # zero between the outer parens
+      \)          # outside close paren
+    }ox;
+
+# one pair of parens
+our $r_null_1
+  = qr{
+      \(          # inside open paren
+
+      [^\(\)\*]+  # collect all but parens and asterisks
+
+      \)          # inside close paren
+      \s* 0       # zero after the close paren
+    }ox;
+
 # mandatory true return for a Perl module
 1;
