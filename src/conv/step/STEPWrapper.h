@@ -67,6 +67,7 @@ typedef std::list<std::string> LIST_OF_STRINGS;
 typedef std::list<SDAI_Application_instance *> LIST_OF_ENTITIES;
 typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
 typedef std::map<std::string, STEPcomplex *> MAP_OF_SUPERTYPES;
+typedef std::map<std::string, int> MAP_OF_PRODUCT_NAME_TO_ENTITY_ID;
 typedef std::map<int, std::string> MAP_OF_ENTITY_ID_TO_PRODUCT_NAME;
 typedef std::map<int, int> MAP_OF_ENTITY_ID_TO_PRODUCT_ID;
 typedef std::vector<double> VECTOR_OF_REALS;
