@@ -129,6 +129,10 @@ sub c_line_to_d_line {
     $text =~ s/$r/$val/g;
   }
 
+  # some other one liners:
+  $text =~ s/$R::r_null_2/typeof\(null\)/g;
+  $text =~ s/$R::r_null_1/typeof\(null\)/g;
+
   $self->d_line($text);
 
   $self->converted(1)
