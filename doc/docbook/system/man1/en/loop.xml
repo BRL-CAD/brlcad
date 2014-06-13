@@ -17,6 +17,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>loop</command>
+    <arg choice="opt" rep="norepeat">-c</arg>
     <arg choice='plain'><replaceable>start</replaceable></arg>
     <arg choice='plain'><replaceable>finish</replaceable></arg>
     <arg choice='opt'><replaceable>increment</replaceable></arg>
@@ -25,7 +26,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Loop</emphasis>
+<para><command>loop</command>
 generates a sequence of numbers between
 <emphasis remap='I'>start</emphasis>
 and
@@ -33,7 +34,8 @@ and
 inclusive, one per line, on stdout.
 This is mostly useful for driving loops when writing Shell programs
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-The default increment is +1 when start&lt;finish, and -1 when start&gt;finish.
+The default increment is +1 when <emphasis remap='I'>start</emphasis>&lt;<emphasis remap='I'>finish</emphasis>,
+and -1 when <emphasis remap='I'>start</emphasis>&gt;<emphasis remap='I'>finish</emphasis>.
 An optional
 <emphasis remap='I'>increment</emphasis>
 may be specified.
@@ -48,6 +50,9 @@ integer arguments, if leading zeros are specified, they will
 be preserved on output.  This is useful for generating sequences
 of file names which are numbered with leading zeros.</para>
 </refsect1>
+
+<para><command>-c</command> is used for character (char) looping.
+</para>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <literallayout remap='.nf'>
