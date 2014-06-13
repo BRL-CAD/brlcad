@@ -75,6 +75,7 @@ class SDAI_Application_instance;
 #include "Loop.h"
 #include "VertexLoop.h"
 #include "Face.h"
+#include "OrientedFace.h"
 #include "FaceBound.h"
 #include "FaceOuterBound.h"
 #include "FaceSurface.h"
@@ -1056,6 +1057,25 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 	face->Reverse(1);
 	face->m_bRev = face->m_bRev ? false : true;
     }
+    return true;
+}
+
+
+bool
+OrientedFace::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    // need edge bounds to determine extents for some of the infinitely
+    // defined surfaces like cones/cylinders/planes
+    if (!face_element->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+
     return true;
 }
 
