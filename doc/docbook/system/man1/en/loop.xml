@@ -49,10 +49,10 @@ value will be generated continuously.</para>
 integer arguments, if leading zeros are specified, they will
 be preserved on output.  This is useful for generating sequences
 of file names which are numbered with leading zeros.</para>
-</refsect1>
 
 <para><command>-c</command> is used for character (char) looping.
 </para>
+</refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <literallayout remap='.nf'>
