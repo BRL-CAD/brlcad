@@ -37,6 +37,11 @@
 
 #include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+#include <osgGA/StateSetManipulator>
+
 #include <osg/ImageUtils>
 #include <osg/TextureRectangle>
 #include <osg/Geode>
@@ -85,11 +90,14 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
     geode->addDrawable(OSG(ifp)->pictureQuad);
 
+#if 0
     OSG(ifp)->viewer->getCamera()->setViewMatrix(osg::Matrix::identity());
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
     osg::Vec3 bottomright(width, height, 0.0f);
     OSG(ifp)->viewer->getCamera()->setProjectionMatrixAsOrtho2D(topleft.x(),bottomright.x(),topleft.y(),bottomright.y());
     OSG(ifp)->viewer->getCamera()->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+#endif
+
 
     OSG(ifp)->viewer->setSceneData(geode.get());
     OSG(ifp)->viewer->realize();
