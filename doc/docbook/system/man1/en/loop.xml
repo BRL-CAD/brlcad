@@ -45,7 +45,7 @@ value will be generated continuously.</para>
 
 <para>Both floating point and integer arguments can be used.  On
 integer arguments, if leading zeros are specified, they will
-be preserver on output.  This is useful for generating sequences
+be preserved on output.  This is useful for generating sequences
 of file names which are numbered with leading zeros.</para>
 </refsect1>
 
@@ -57,7 +57,7 @@ do
 done
 </literallayout> <!-- .fi -->
 
-<para>Will display the values 10, 15, 20, 25, and 30.</para>
+<para>will display the values 10, 15, 20, 25, 30 .</para>
 
 
 <literallayout remap='.nf'>
@@ -67,7 +67,7 @@ do
 done
 </literallayout> <!-- .fi -->
 
-<para>Will display the values 008, 007, 006, 005.</para>
+<para>will display the values 008, 007, 006, 005 .</para>
 
 
 <literallayout remap='.nf'>
@@ -77,7 +77,7 @@ do
 done
 </literallayout> <!-- .fi -->
 
-<para>Will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6.</para>
+<para>will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6 .</para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
