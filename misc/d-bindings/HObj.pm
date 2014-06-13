@@ -109,34 +109,22 @@ sub c_line_to_d_line {
   # convert C types to D types
   my $self = shift @_;
 
-  my $text = $self->c_line(); # the flattened C line
+  my $line = $self->c_line(); # the flattened C line
 
-  foreach my $k (@G::d64map_keys) {
-    my $val = $G::d64map{$k};
-
-    # build the regex
-    my @d = split(' ', $k);
-    my $r = "\\b";
-    $r .= shift @d;
-    while (@d) {
-      $r .= "\\s+";
-      $r .= shift @d;
-    }
-
-    #say "DEBUG:  regex: '$r'";
-
-    # apply it
-    $text =~ s/$r/$val/g;
+  # warning: don't do anything to typedefs here--we handle them later
+  # to ensure we don't try to redefine D types
+  if ($line =~ /typedef/) {
+    $self->d_line($line);
+    return;
   }
 
-  # some other one liners:
-  $text =~ s/$R::r_null_2/typeof\(null\)/g;
-  $text =~ s/$R::r_null_1/typeof\(null\)/g;
+  $line = c_types_to_d_types($line);
 
-  $self->d_line($text);
+  # save the converted line
+  $self->d_line($line);
 
   $self->converted(1)
-    if $text ne $self->c_line;
+    if $line ne $self->c_line;
 
 } # c_line_to_d_line
 
@@ -153,6 +141,8 @@ sub c_to_d {
   my @arr = @$daref;
 
   # conversion notes:
+
+die "FATAL: have to handle typedefs that try to refine D types such as 'wchar'";
 
   # note D form 1 is the new and preferred form
   # C: typedef int* bar;   # D form 1: alias bar = int*;   # 'bar' is the name, 'int*' is the type
@@ -285,6 +275,11 @@ sub c_to_d {
 
 	# we don't save the line
 	next LINE;
+      }
+
+      # substitute correct types for unchecked body lines
+      if (exists $fline{typedef} && $fline{typedef}
+	 ) {
       }
     }
 
@@ -629,5 +624,40 @@ sub check_lines {
     die "FATAL" if $err;
 
 } # check_lines
+
+sub c_types_to_d_types {
+  my $line = shift @_;
+
+  foreach my $k (@G::dmap_keys) {
+    my $val = $G::dmap{$k};
+
+    # build the regex
+    my @d = split(' ', $k);
+    my $r = "\\b";
+    $r .= shift @d;
+    while (@d) {
+      $r .= "\\s+";
+      $r .= shift @d;
+    }
+
+    #say "DEBUG:  regex: '$r'";
+
+    # apply it
+    $line =~ s/$r/$val/g;
+  }
+
+=pod
+
+  # some other one liners:
+  $line =~ s/$R::r_null_2/typeof\(null\)/g;
+  $line =~ s/$R::r_null_1/typeof\(null\)/g;
+
+=cut
+
+  return $line;
+
+} # convert_c_types_to_d_types
+
+
 # mandatory true return for a module
 1;
