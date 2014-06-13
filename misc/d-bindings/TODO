@@ -1,3 +1,10 @@
+Limitations
+===========
+
+Currently, neither nested, curly-braced expressions nor function
+bodies are explicitly handled, but they are not normally expected to
+appear in a C library API header.
+
 Some subtleties
 ===============
 
