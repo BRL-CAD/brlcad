@@ -2822,6 +2822,8 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint start = axis_position->GetOrigin();
+    start = start * LocalUnits::length;
+
     ON_3dVector dir = axis_position->GetNormal();
     ON_3dPoint end = start + dir;
 
