@@ -80,9 +80,18 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 
     OSG(ifp)->image = new osg::Image;
     OSG(ifp)->image->allocateImage(width, height, 1, GL_RGB, GL_UNSIGNED_BYTE);
+    OSG(ifp)->image->setPixelBufferObject(new osg::PixelBufferObject(OSG(ifp)->image));
+
+    return 0;
+}
+
+HIDDEN int
+osg_close(FBIO *ifp)
+{
+    FB_CK_FBIO(ifp);
 
     OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
-	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
+	    osg::Vec3(ifp->if_width,0.0f,0.0f), osg::Vec3(0.0f,0.0f, ifp->if_height), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
     OSG(ifp)->texture = new osg::TextureRectangle(OSG(ifp)->image);
     OSG(ifp)->texture->setFilter(osg::Texture::MIN_FILTER,osg::Texture::LINEAR);
     OSG(ifp)->texture->setFilter(osg::Texture::MAG_FILTER,osg::Texture::LINEAR);
@@ -105,16 +114,10 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 
 
     OSG(ifp)->viewer->setSceneData(geode.get());
+
+    OSG(ifp)->viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
+
     OSG(ifp)->viewer->realize();
-    OSG(ifp)->viewer->frame();
-
-    return 0;
-}
-
-HIDDEN int
-osg_close(FBIO *ifp)
-{
-    FB_CK_FBIO(ifp);
 
     osgDB::writeImageFile(*OSG(ifp)->image, std::string("test.png"));
 
@@ -189,8 +192,6 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	if (++y >= ifp->if_height)
 	    break;
     }
-
-    OSG(ifp)->viewer->frame();
 
     return ret;
 }
