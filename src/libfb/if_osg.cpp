@@ -133,9 +133,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
     register int y;
     size_t scan_count;  /* # pix on this scanline */
     size_t pix_count;   /* # pixels to send */
-    int ybase;
     ssize_t ret;
-    register unsigned char *cp;
 
     //fb_log("write got called!");
 
