@@ -10,6 +10,7 @@ ENDIF()
 SET(CMAKE_SHARED_MODULE_PREFIX ${OSG_PLUGIN_PREFIX})
 
 add_subdirectory(osg)
+add_subdirectory(png)
 
 if(FREETYPE_FOUND)
     add_subdirectory(freetype)
