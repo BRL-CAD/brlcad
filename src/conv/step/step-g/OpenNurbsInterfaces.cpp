@@ -2633,6 +2633,32 @@ Parabola::LoadONBrep(ON_Brep *brep)
 }
 
 
+void
+Line::SetParameterTrim(double start_param, double end_param)
+{
+    double startpoint[3];
+    double endpoint[3];
+
+    t = start_param;
+    s = end_param;
+
+    ON_3dPoint start = pnt->Point3d();
+    ON_3dVector vdir =  dir->Orientation();
+    ON_3dPoint end = start + (vdir*dir->Magnitude());
+    ON_Line l(start, end);
+
+    if (s < t) {
+	double tmp = s;
+	s = t;
+	t = tmp;
+    }
+    VMOVE(startpoint,l.PointAt(t));
+    VMOVE(endpoint,l.PointAt(s));
+
+    SetPointTrim(startpoint, endpoint);
+}
+
+
 bool
 Line::LoadONBrep(ON_Brep *brep)
 {
@@ -2644,8 +2670,19 @@ Line::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    ON_3dPoint startpnt = start->Point3d();
-    ON_3dPoint endpnt = end->Point3d();
+    ON_3dPoint startpnt = ON_3dPoint::UnsetPoint;
+    ON_3dPoint endpnt = ON_3dPoint::UnsetPoint;
+
+    if (trimmed) { //explicitly trimmed
+	startpnt = trim_startpoint;
+	endpnt = trim_endpoint;
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+	startpnt = start->Point3d();
+	endpnt = end->Point3d();
+    } else {
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
+	return false;
+    }
 
     startpnt = startpnt * LocalUnits::length;
     endpnt = endpnt * LocalUnits::length;
