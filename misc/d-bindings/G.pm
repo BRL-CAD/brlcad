@@ -5,7 +5,9 @@ use Readonly;
 # globals
 
 # no Windows for now
-Readonly our $WIN => 0;
+Readonly our $WIN  => 0;
+# 64-bit only
+Readonly our $BITS => 64;
 
 # file type suffixes
 Readonly our $Hsuf => '.h';
@@ -29,9 +31,22 @@ Readonly our $NEW  => -1;
 Readonly our $SAME =>  0;
 Readonly our $DIFF =>  1;
 
+our %dmap, @dmap_keys;
+my %d64map, @d64map_keys;
+my %d32map, @d32map_keys;
+
+if ($BITS == 64) {
+  %dmap      = %d64map;
+  @dmap_keys = @d64map_keys;
+}
+else {
+  %dmap      = %d64map;
+  @dmap_keys = @d64map_keys;
+}
+
 # 64-bit mapping from C types to D types
 #   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-our %d64map
+%d64map
   = (
      'long double'        => 'real',
 
@@ -45,6 +60,7 @@ our %d64map
      'long long int'          => 'long',
      'unsigned long int'      => 'ulong', # Linux [int (Windows)]
      'long int'               => 'long', # Linux [int (Windows)]
+     'long unsigned int'      => 'ulong', # Linux [int (Windows)]
 
 
      'unsigned'           => 'uint',
@@ -60,7 +76,7 @@ our %d64map
     );
 
 # the preferred order for checking
-our @d64map_keys
+@d64map_keys
   = (
      'unsigned long long',
      'long long',
@@ -72,6 +88,7 @@ our @d64map_keys
      'long long int',
      'unsigned long int', # Linux [int (Windows)]
      'long int',          # Linux [int (Windows)]
+     'long unsigned int', # Linux [int (Windows)]
 
      'unsigned int',
      'unsigned short',
@@ -87,7 +104,7 @@ our @d64map_keys
 
 # 32-bit mapping from C types to D types
 #   from: http://wiki.dlang.org/Converting_C_.h_Files_to_D_Modules#Types
-our %d32map
+%d32map
   = (
      'long double'        => 'real',
 
@@ -120,7 +137,7 @@ our %d32map
     );
 
 # the preferred order for checking
-our @d32map_keys
+@d32map_keys
   = (
      'unsigned long long' => 'ulong',
      'long long'          => 'long',
