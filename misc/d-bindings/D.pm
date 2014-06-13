@@ -8,7 +8,7 @@ use warnings;
 use Data::Dumper;
 use File::Copy;
 use File::Basename;
-use Running::Commentary;                # a better 'system' (Conway)
+use Running::Commentary;  # a better 'system' (Conway)
 
 use lib('.');
 
@@ -210,10 +210,7 @@ sub convert {
       print "DEBUG:  converting '$ppfil' to D module '$ofil'...\n"
 	if $G::debug;
 
-      my $nchunks = convert1final($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
-
-      # check for a good compile
-      check_final($ofil, $nchunks);
+      convert1final_and_run($ofil, $ppfil, \%syshdr, $stem, $ofils_ref, \@tmpfils);
 
     }
     #==== method 2 ====
@@ -371,7 +368,7 @@ sub process_tu_file {
 
 =cut
 
-sub convert1final {
+sub convert1final_and_run {
   my $ofil       = shift @_; # $ofil
   my $ifil       = shift @_; # $ppfil
   my $sref       = shift @_; # \%syshdr
@@ -525,6 +522,12 @@ sub convert1final {
   # process objects and write them out
   #say "WARNING:  No final conversion yet!";
 
+  my $nobjs = @objs;
+
+  my $iternum = $G::iterate ? 1 : $nobjs;
+
+ ITERATE:
+
   open my $fpo, '>', $ofil
     or die "$ofil: $!";
 
@@ -542,7 +545,8 @@ sub convert1final {
 
   say $fpo "extern (C) {";
 
-  foreach my $o (@objs) {
+  for (my $i = 0; $i < $iternum; ++$i) {
+    my $o = $objs[$i];
     $o->do_all_conversions();
     $o->print_final($fpo, $ifil);
     if ($G::debug) {
@@ -556,7 +560,14 @@ sub convert1final {
   print $fpo "\n";
   print $fpo "} // extern (C) {\n";
 
-  return $nchunks;
+
+  # check for a good compile
+  check_final($ofil, $nobjs, $iternum);
+
+  if ($G::iterate && $iternum < $nobjs) {
+    ++$iternum;
+    goto ITERATE;
+  }
 
 } # convert1final
 
@@ -763,21 +774,29 @@ sub check_final {
   # attempt to build the D source file
   my $dfil    = shift @_;
   my $nchunks = shift @_;
+  my $iternum = shift @_;
 
-  $nchunks = 0
-    if !defined $nchunks;
+  my $diff = $nchunks - $iternum;
 
   my $cmd = "dmd -c $dfil";
+
+  my $pass = $iternum - 1;
+  my $errmsg = <<"HERE";
+FATAL:  Couldn't build '$dfil'.
+       Total C objects successfully processed: $pass out of $nchunks.
+HERE
 
   # Act like system(), only louder and cleaner...
   run_with -silent;
 
   run "Checking the build for file '$dfil'" => $cmd
-    or die "FATAL:  Couldn't build '$dfil'.";
+    or die $errmsg;
+
+#'FATAL: Total C objects processed: $iternum out of $nchunks.';
 
   if ($G::verbose || $G::debug) {
     say "Successful build of file '$dfil'.";
-    say "  Total C objects processed: $nchunks"
+    say "  Total C objects processed: $iternum out of $nchunks."
       if $nchunks;
   }
 

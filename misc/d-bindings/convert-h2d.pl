@@ -104,11 +104,11 @@ foreach my $arg (@ARGV) {
     $G::clean = 1;
   }
   elsif ($arg =~ m{\A -n}xms) {
-    if ($val !~ m{\A (?: 0 | [1-9][0-9]*) \z}x) {
-      say "ERROR:  X in option '-n=X' must be a positive integer,";
-      die   "        but it's value is '$val'.\n";
-    }
     $G::maxchunks = $val;
+    if ($val < 0) {
+      $G::maxchunks = 0;
+      $G::iterate   = 1;
+    }
   }
 
   # modes
@@ -158,8 +158,8 @@ die "ERROR:  No mode selected.\n"
   if !$mode_selected;
 
 if ($G::devel) {
-  #@ifils = ("${BP::IDIR}/bu.h");
-  @ifils = ("./test_hdr.h");
+  @ifils = ("${BP::IDIR}/bu.h");
+  #@ifils = ("./test_hdr.h");
 }
 
 # collect all .h and .d files; note that some .h files are obsolete
@@ -332,11 +332,18 @@ modes:
 
 options:
 
+
   -f    force overwriting files
   -d    debug
   -h    help
   -C    cleans out all generated files and the stored file hashes
+
   -n=X  parse after reading X chunks instead of the entire file
+
+        use '-n=-1' to run in an iterative node which expands the
+        run set by one object at a time until an added object
+        causes the set to fail a build
+
    t    test mode for developers
 
 Notes:
