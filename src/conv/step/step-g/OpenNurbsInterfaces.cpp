@@ -1729,6 +1729,8 @@ Plane::LoadONBrep(ON_Brep *brep)
     // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     ON_Plane p(origin, xaxis, yaxis);
 
@@ -1774,6 +1776,8 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     // make sure origin is part of the bbox
     trim_curve_3d_bbox->Set(origin, true);
@@ -1907,12 +1911,16 @@ Circle::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     ON_Plane p(origin, xaxis, yaxis);
-    ON_3dPoint center = origin * LocalUnits::length;
 
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle c(p, center, radius * LocalUnits::length);
+    ON_Circle c(p, origin, radius * LocalUnits::length);
 
     ON_3dPoint P = c.PointAt(t);
 
@@ -1952,12 +1960,15 @@ static double
 radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
 {
     ON_3dPoint origin = conic->GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = conic->GetXAxis();
     ON_3dVector yaxis = conic->GetYAxis();
 
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     // get p after translating to origin
-    ON_3dPoint canonical_p = p - center;
+    ON_3dPoint canonical_p = p - origin;
 
     // decompose into x and y components
     double x = canonical_p * xaxis;
@@ -1987,16 +1998,18 @@ Circle::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double r = radius * LocalUnits::length;
     ON_Plane plane(origin, xaxis, yaxis);
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle circle(plane, center, r);
+    ON_Circle circle(plane, origin, r);
 
     ON_3dPoint startpt;
     ON_3dPoint endpt;
@@ -2068,7 +2081,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dVector tangentP1, tangentP2;
 
     circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
-    tangentP1 = circle.TangentAt(t);
+    tangentP1 = circle.TangentAt(angle);
 
     for (int i = 0; i < narcs; i++) {
 	angle = angle + dtheta;
@@ -2094,7 +2107,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 	circleP1 = circleP2;
 	tangentP1 = tangentP2;
     }
-    cpts.Append(endpt);
+    cpts.Append(circle.PointAt(s));
     W[2 * narcs] = 1.0;
 
     int degree = 2;
@@ -2149,7 +2162,10 @@ Ellipse::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dPoint center = origin * LocalUnits::length;
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
