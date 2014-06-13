@@ -977,6 +977,7 @@ if(BRLCAD_OSG_BUILD)
     CACHE STRING "OpenSceneGraph include dirs" FORCE
     )
   set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
+  set(OSG_LIBRARIES "${OSG_LIBRARY};${OSGUTIL_LIBRARY};${OSGDB_LIBRARY};${OSGGA_LIBRARY};${OSGTEXT_LIBRARY};${OSGVIEWER_LIBRARY};${OPENTHREADS_LIBRARY}" CACHE STRING "OpenSceneGraph Libraries")
 else(BRLCAD_OSG_BUILD)
   find_package(OpenThreads)
 endif(BRLCAD_OSG_BUILD)

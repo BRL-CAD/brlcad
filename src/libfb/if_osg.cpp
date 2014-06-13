@@ -75,7 +75,7 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     OSG(ifp)->image->allocateImage(width, height, 0, GL_RGB, GL_UNSIGNED_BYTE);
 
     OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
-	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, image->s(), image->t());
+	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
     OSG(ifp)->texture = new osg::TextureRectangle(OSG(ifp)->image);
     OSG(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSG(ifp)->texture, osg::StateAttribute::ON);
 
@@ -83,17 +83,17 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
     osg::StateSet* stateset = geode->getOrCreateStateSet();
     stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-    geode->addDrawable(OSG(ifp)->pictureQuad->get());
+    geode->addDrawable(OSG(ifp)->pictureQuad);
 
-    OSG(ifp)->viewer.getCamera()->setViewMatrix(osg::Matrix::identity());
+    OSG(ifp)->viewer->getCamera()->setViewMatrix(osg::Matrix::identity());
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
     osg::Vec3 bottomright(width, height, 0.0f);
-    OSG(ifp)->viewer.getCamera()->setProjectionMatrixAsOrtho2D(topleft.x(),bottomright.x(),topleft.y(),bottomright.y());
-    OSG(ifp)->viewer.getCamera()->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    OSG(ifp)->viewer->getCamera()->setProjectionMatrixAsOrtho2D(topleft.x(),bottomright.x(),topleft.y(),bottomright.y());
+    OSG(ifp)->viewer->getCamera()->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
 
-    OSG(ifp)->viewer.setSceneData(geode.get());
-    OSG(ifp)->viewer.realize();
-    OSG(ifp)->viewer.frame();
+    OSG(ifp)->viewer->setSceneData(geode.get());
+    OSG(ifp)->viewer->realize();
+    OSG(ifp)->viewer->frame();
 
     return 0;
 }
@@ -103,9 +103,8 @@ osg_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
 
-    OSG(ifp)->viewer.run();
+    return OSG(ifp)->viewer->run();
 
-    return 0;
 }
 
 
@@ -169,7 +168,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	else
 	    scan_count = pix_count;
 
-	scanline = &(((unsigned char *)OSG(ifp)->image->data(0,y,0)));
+	scanline = (void *)(OSG(ifp)->image->data(0,y,0));
 
 	memcpy(scanline, pixelp, scan_count*3);
 
@@ -180,7 +179,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    break;
     }
 
-    OSG(ifp)->viewer.frame();
+    OSG(ifp)->viewer->frame();
 
     return ret;
 }
