@@ -1821,13 +1821,23 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double tan_semi_angle = tan(semi_angle * LocalUnits::planeangle);
     double height = (radius * LocalUnits::length) / tan_semi_angle;
+
+    origin = origin + norm * (-height);
+    if (NEAR_ZERO(height, BN_TOL_DIST)) {
+	// make sure origin is part of the bbox
+	trim_curve_3d_bbox->Set(origin, true);
+
+	height = trim_curve_3d_bbox->Diagonal().Length();
+    }
+
     double hplus = height * 2.01;
     double r1 = hplus * tan_semi_angle;
 
-    origin = origin + norm * (-height);
     ON_Plane p(origin, xaxis, yaxis);
     ON_Cone c(p, hplus, r1);
 
