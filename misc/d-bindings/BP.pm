@@ -132,5 +132,3 @@ sub _process_file {
 
 # mandatory true return from a Perl module
 1;
-
-
