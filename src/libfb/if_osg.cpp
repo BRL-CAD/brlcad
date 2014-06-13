@@ -39,6 +39,8 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 
+#include <osgDB/WriteFile>
+
 #include <osgGA/TrackballManipulator>
 #include <osgGA/StateSetManipulator>
 
@@ -82,6 +84,9 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
 	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
     OSG(ifp)->texture = new osg::TextureRectangle(OSG(ifp)->image);
+    OSG(ifp)->texture->setFilter(osg::Texture::MIN_FILTER,osg::Texture::LINEAR);
+    OSG(ifp)->texture->setFilter(osg::Texture::MAG_FILTER,osg::Texture::LINEAR);
+    OSG(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);
     OSG(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSG(ifp)->texture, osg::StateAttribute::ON);
 
 
@@ -110,6 +115,8 @@ HIDDEN int
 osg_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
+
+    osgDB::writeImageFile(*OSG(ifp)->image, std::string("test.png"));
 
     return OSG(ifp)->viewer->run();
 
