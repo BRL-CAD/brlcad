@@ -39,8 +39,8 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 
-#include <osgGA/TrackballManipulator>
 #include <osgGA/StateSetManipulator>
+#include "osgGA_FrameBufferManipulator.h"
 
 #include <osg/ImageUtils>
 #include <osg/TextureRectangle>
@@ -107,7 +107,7 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 
     OSG(ifp)->viewer->setSceneData(geode);
 
-    OSG(ifp)->viewer->setCameraManipulator( new osgGA::TrackballManipulator() );
+    OSG(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
 
     OSG(ifp)->viewer->realize();
 

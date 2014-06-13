@@ -42,7 +42,7 @@ endif(BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_OSG)
   set(FBOSGDEFS "-DIF_OSG")
   set(LINKLIBS ${LINKLIBS} ${OSG_LIBRARIES})
-  set(fbosg_srcs if_osg.cpp)
+  set(fbosg_srcs if_osg.cpp osgGA_FrameBufferManipulator.cpp)
 endif()
 
 if(BRLCAD_ENABLE_QT)
@@ -105,6 +105,8 @@ set(libfb_ignore_files
   if_X24.c
   if_ogl.c
   if_osg.cpp
+  osgGA_FrameBufferManipulator.cpp
+  osgGA_FrameBufferManipulator.h
   if_qt.cpp
   if_wgl.c
   if_tk.c
