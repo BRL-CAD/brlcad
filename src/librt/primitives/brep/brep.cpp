@@ -3277,58 +3277,232 @@ poly2tri_CDT(struct bu_list *vhead,
 	    if (num_loop_points > 1) {
 		ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
 		ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points-1].p2d;
+		ON_3dPoint brep_loop_begin3d = s->PointAt(brep_loop_begin.x,brep_loop_begin.y);
+		ON_3dPoint brep_loop_end3d = s->PointAt(brep_loop_end.x,brep_loop_end.y);
 
-		if (!V2NEAR_EQUAL(brep_loop_begin,brep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
-		    if (IsAtSeam(s,brep_loop_begin,BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s,brep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
-			for (int rli = li+1; rli < loop_cnt; rli++) {
-			    int rnum_loop_points = brep_loop_points[rli].Count();
-			    ON_2dPoint rbrep_loop_begin = brep_loop_points[rli][0].p2d;
-			    ON_2dPoint rbrep_loop_end = brep_loop_points[rli][rnum_loop_points-1].p2d;
-			    if (!V2NEAR_EQUAL(rbrep_loop_begin,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
-				if (IsAtSeam(s,rbrep_loop_begin,BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
-				    double t0,t1;
-				    ON_LineCurve line1(brep_loop_end,rbrep_loop_begin);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
-				    bridgePoints.push_back(linepoints3d);
-				    line1.GetDomain(&t0, &t1);
-				    std::map<double, ON_3dPoint*>::const_iterator i;
-				    for (i = linepoints3d->begin();
-					    i != linepoints3d->end();) {
-					BrepTrimPoint btp;
+		if (!V2NEAR_EQUAL(brep_loop_begin,brep_loop_end,BREP_SAME_POINT_TOLERANCE) &&
+			VNEAR_EQUAL(brep_loop_begin3d,brep_loop_end3d,BREP_SAME_POINT_TOLERANCE)) {
+		    int seam_begin = 0;
+		    int seam_end = 0;
+		    if ((seam_begin=IsAtSeam(s,brep_loop_begin,BREP_SAME_POINT_TOLERANCE)) &&
+			    (seam_end=IsAtSeam(s,brep_loop_end,BREP_SAME_POINT_TOLERANCE))) {
+			bool loop_not_closed = true;
+			if ((li+1) < loop_cnt) {
+			    // close using remaining loops
+			    for (int rli = li+1; rli < loop_cnt; rli++) {
+				int rnum_loop_points = brep_loop_points[rli].Count();
+				ON_2dPoint rbrep_loop_begin = brep_loop_points[rli][0].p2d;
+				ON_2dPoint rbrep_loop_end = brep_loop_points[rli][rnum_loop_points-1].p2d;
+				if (!V2NEAR_EQUAL(rbrep_loop_begin,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+				    if (IsAtSeam(s,rbrep_loop_begin,BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s,rbrep_loop_end,BREP_SAME_POINT_TOLERANCE)) {
+					double t0,t1;
+					ON_LineCurve line1(brep_loop_end,rbrep_loop_begin);
+					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					std::map<double, ON_3dPoint*>::const_iterator i;
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
 
-					if (++i == linepoints3d->end())
-					    continue;
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
 
-					// skips first point
-					btp.t = (*i).first;
-					btp.p3d = (*i).second;
-					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					btp.e = ON_UNSET_VALUE;
-					brep_loop_points[li].Append(btp);
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					//brep_loop_points[li].Append(brep_loop_points[rli].Count(),brep_loop_points[rli].Array());
+					for (int j=1;j<rnum_loop_points;j++) {
+					    brep_loop_points[li].Append(brep_loop_points[rli][j]);
+					}
+					ON_LineCurve line2(rbrep_loop_end,brep_loop_begin);
+					linepoints3d = getUVCurveSamples(s,&line2,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line2.GetDomain(&t0, &t1);
+
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end(); i++) {
+					    BrepTrimPoint btp;
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					brep_loop_points[rli].Empty();
+					loop_not_closed = false;
 				    }
-				    //brep_loop_points[li].Append(brep_loop_points[rli].Count(),brep_loop_points[rli].Array());
-				    for (int j=1;j<rnum_loop_points;j++) {
-					brep_loop_points[li].Append(brep_loop_points[rli][j]);
-				    }
-				    ON_LineCurve line2(rbrep_loop_end,brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s,&line2,1000.0, ttol, tol, info);
-				    bridgePoints.push_back(linepoints3d);
-				    line2.GetDomain(&t0, &t1);
-				    for (i = linepoints3d->begin();
-					    i != linepoints3d->end(); i++) {
-					BrepTrimPoint btp;
-					if (++i == linepoints3d->end())
-					    continue;
-
-					// skips first point
-					btp.t = (*i).first;
-					btp.p3d = (*i).second;
-					btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
-					btp.e = ON_UNSET_VALUE;
-					brep_loop_points[li].Append(btp);
-				    }
-				    brep_loop_points[rli].Empty();
 				}
+			    }
+			}
+			if (loop_not_closed)
+			{
+			    // no matching loops found that would close so use domain boundary
+			    ON_Interval u = s->Domain(0);
+			    ON_Interval v = s->Domain(1);
+			    if (seam_end == 1) {
+				if (NEAR_EQUAL(brep_loop_end.x,u.m_t[0],BREP_SAME_POINT_TOLERANCE)) {
+				    // low end so decreasing
+
+				    // now where do we have to close to
+				    if (seam_begin == 1) {
+					// has to be on opposite seam
+					double t0,t1;
+					ON_2dPoint p = brep_loop_end;
+					p.y = v.m_t[0];
+					ON_LineCurve line1(brep_loop_end,p);
+					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					std::map<double, ON_3dPoint*>::const_iterator i;
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					line1.SetStartPoint(p);
+					p.x = u.m_t[1];
+					line1.SetEndPoint(p);
+					linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					line1.SetStartPoint(p);
+					line1.SetEndPoint(brep_loop_begin);
+					linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+
+				    } else if (seam_begin == 2) {
+
+				    } else {
+					//both
+				    }
+
+				} else { //assume on other end
+				    // high end so increasing
+				    // now where do we have to close to
+				    if (seam_begin == 1) {
+					// has to be on opposite seam
+					double t0,t1;
+					ON_2dPoint p = brep_loop_end;
+					p.y = v.m_t[1];
+					ON_LineCurve line1(brep_loop_end,p);
+					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					std::map<double, ON_3dPoint*>::const_iterator i;
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					line1.SetStartPoint(p);
+					p.x = u.m_t[0];
+					line1.SetEndPoint(p);
+					linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+					line1.SetStartPoint(p);
+					line1.SetEndPoint(brep_loop_begin);
+					linepoints3d = getUVCurveSamples(s,&line1,1000.0, ttol, tol, info);
+					bridgePoints.push_back(linepoints3d);
+					line1.GetDomain(&t0, &t1);
+					for (i = linepoints3d->begin();
+						i != linepoints3d->end();i++) {
+					    BrepTrimPoint btp;
+
+					    // skips first point
+					    if (i == linepoints3d->begin())
+						continue;
+
+					    btp.t = (*i).first;
+					    btp.p3d = (*i).second;
+					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					    btp.e = ON_UNSET_VALUE;
+					    brep_loop_points[li].Append(btp);
+					}
+				    } else if (seam_begin == 2) {
+
+				    } else {
+					//both
+				    }
+				}
+			    } else if (seam_end == 2) {
+				if (NEAR_EQUAL(brep_loop_end.y,v.m_t[0],BREP_SAME_POINT_TOLERANCE)) {
+
+				} else { //assume on other end
+
+				}
+			    } else {
+				//both
 			    }
 			}
 		    }
