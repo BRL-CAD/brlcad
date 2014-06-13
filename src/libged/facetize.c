@@ -83,7 +83,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
-    union rt_comb_internal *nmg_comb;
+    struct rt_comb_internal *nmg_comb;
 
     static const char *usage = "[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]";
 
@@ -171,10 +171,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		  gedp->ged_wdbp->wdb_ttol.abs, gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.norm);
 
     BU_ALLOC(nmg_comb, struct rt_comb_internal);
-    BU_ALLOC(nmg_comb->tree, union tree);
-    nmg_comb->tree->tr_d.td_s = nmg_ms();
+    nmg_comb_init(nmg_comb);
 
-    facetize_tree = (union tree *)0;
+    BU_ALLOC(facetize_tree, union tree);
+    nmg_tree_init(facetize_tree);
+
     init_state.ts_s = &nmg_comb->tree->tr_d.td_s;
 
     i = db_walk_tree(dbip, argc, (const char **)argv,
@@ -186,11 +187,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		     (genptr_t)&facetize_tree
 	);
 
-
     if (i < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facetize: error in db_walk_tree()\n");
 	/* Destroy NMG */
-	nmg_ks(nmg_tree->tr_d.td_s);
+	nmg_comb_free(nmg_comb);
 	return GED_ERROR;
     }
 
@@ -200,16 +200,15 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
-	    nmg_tree->tr_d.td_s = facetize_tree->tr_d.td_s; /* zhaoanqing */
+	    //failed = nmg_boolean(facetize_tree, nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	    nmg_comb->tree = facetize_tree;
+	    failed = 0;
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: facetization failed!!!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
-	    nmg_ks(nmg_tree->tr_d.td_s);
-	    nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	    nmg_comb_free(nmg_comb);
+	    nmg_tree_free(facetize_tree);
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
 
@@ -218,14 +217,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if (failed) {
 	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
-	db_free_tree(facetize_tree, &rt_uniresource);
-	facetize_tree = (union tree *)NULL;
-	nmg_ks(nmg_tree->tr_d.td_s);
-	nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	nmg_comb_free(nmg_comb);
+	nmg_tree_free(facetize_tree);
 	return GED_ERROR;
     }
-    /* New region remains part of this nmg "model" */
-    NMG_CK_SHELL(facetize_tree->tr_d.td_s);
+
     bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
 
     /* Triangulate model, if requested */
@@ -234,17 +230,15 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	if (!BU_SETJUMP) {
 	    /* try */
 	    if (marching_cube == 1)
-		nmg_triangulate_shell_mc(nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
+		nmg_triangulate_shell_mc(nmg_comb->tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
 	    else
-		nmg_triangulate_shell(nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
+		nmg_triangulate_shell(nmg_comb->tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
-	    nmg_ks(nmg_tree->tr_d.td_s);
-	    nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	    nmg_tree_free(nmg_comb->tree);
+	    nmg_tree_free(facetize_tree);
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
     }
@@ -257,7 +251,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	/* WTF, FIXME: this is only dumping the first shell of the first region */
 
-	s = nmg_tree->tr_d.td_s;
+	s = nmg_comb->tree->tr_d.td_s;
 
 	if (!BU_SETJUMP) {
 	    /* try */
@@ -266,18 +260,16 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
-	    nmg_ks(nmg_tree->tr_d.td_s);
-	    nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	    nmg_comb_free(nmg_comb);
+	    nmg_tree_free(facetize_tree);
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
 
-	nmg_ks(nmg_tree->tr_d.td_s);
-	nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	nmg_comb_free(nmg_comb);
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
@@ -291,8 +283,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &OBJ[ID_NMG];
-	intern.idb_ptr = (genptr_t)nmg_tree->tr_d.td_s;
-	nmg_tree->tr_d.td_s = (struct shell *)NULL;
+	intern.idb_ptr = (genptr_t)nmg_comb;
     }
 
     dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
@@ -307,11 +298,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    facetize_tree->tr_d.td_s = (struct shell *)NULL;
-
     /* Free boolean tree, and the regions in it */
-    db_free_tree(facetize_tree, &rt_uniresource);
-    facetize_tree = (union tree *)NULL;
+    /*nmg_tree_free(facetize_tree);*/
 
     return GED_OK;
 }

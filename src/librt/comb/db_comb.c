@@ -151,7 +151,7 @@ db_flatten_tree(
 	case OP_DB_LEAF:
 	    rt_tree_array->tl_op = op;
 	    rt_tree_array->tl_tree = tp;
-	    return rt_tree_array+1;
+	    return rt_tree_array + 1;
 
 	case OP_UNION:
 	case OP_INTERSECT:

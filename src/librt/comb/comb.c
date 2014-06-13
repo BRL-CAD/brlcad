@@ -1102,16 +1102,17 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
  * Merge second combination to the first one.
  */
 void
-rt_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2, const struct bn_tol *tol)
+nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2, const struct bn_tol *tol)
 {
-    comb1->tree = rt_tree_union(comb1->tree, comb2->tree);
+    comb1->tree = nmg_tree_union(comb1->tree, comb2->tree);
     comb2->tree = (union tree *)NULL;
 }
 
 /**
  * Union two tree into single one.
  */
-union tree *rt_tree_union(union tree *tr1, union tree *tr2)
+union tree *
+nmg_tree_union(union tree *tr1, union tree *tr2)
 {
     union tree *union_root;
 
@@ -1126,50 +1127,161 @@ union tree *rt_tree_union(union tree *tr1, union tree *tr2)
     return union_root;
 }
 
-/**
- * Flatten tree into a tree_list.
- */
-struct rt_tree_array *rt_tree_flatten(union tree *tr, const int count)
+void
+nmg_comb_init(struct rt_comb_internal *comb)
 {
-    struct rt_tree_array *tree_list;
-
-    tree_list = (struct rt_tree_array *)bu_calloc(count, sizeof(struct rt_tree_array), "tree list");
-    db_flatten_tree(tree_list, tr, OP_UNION, 1, &rt_uniresource);
-
-    return tree_list;
+    BU_ALLOC(comb->tree, union tree);
+    nmg_tree_init(comb->tree);
 }
 
-void nmg_tree_init(union tree *tp)
+void
+nmg_comb_free(struct rt_comb_internal *comb)
 {
-    BU_ALLOC(tp, union tree);
+    nmg_tree_free(comb->tree);
+    bu_free(comb, "rt_comb_internal");
+}
+
+void
+nmg_tree_init(union tree *tp)
+{
     RT_TREE_INIT(tp);
     tp->tr_d.td_s = nmg_ms();
 }
 
-void nmg_tree_free(union tree *tp)
+void
+nmg_tree_free(union tree *tp)
 {
-    RT_CK_TREE(tp);
-
     switch (tp->tr_op) {
 	case OP_NMG_TESS:
 	    nmg_ks(tp->tr_d.td_s);
+	    return;
 
 	case OP_UNION:
 	    nmg_tree_free(tp->tr_b.tb_left);
 	    nmg_tree_free(tp->tr_b.tb_right);
+	    return;
 
 	default:
-	    bu_log("rt_tree_free: bad op %d\n", tp->tr_op);
-	    bu_bomb("rt_tree_free\n");
+	    return;
     }
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+int
+nmg_tree_node_count(union tree *tp)
+{
+    int count1;
+    int count2;
+
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NMG_TESS:
+	    return 1;
+
+	case OP_UNION:
+	    count1 = nmg_tree_node_count(tp->tr_b.tb_left);
+	    count2 = nmg_tree_node_count(tp->tr_b.tb_right);
+	    return count1 + count2 + 1;
+
+	default:
+	    return 0;
+    }
+}
+
+int
+nmg_tree_leaf_count(union tree *tp)
+{
+    int count1;
+    int count2;
+
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NMG_TESS:
+	    return 1;
+
+	case OP_UNION:
+	    count1 = nmg_tree_leaf_count(tp->tr_b.tb_left);
+	    count2 = nmg_tree_leaf_count(tp->tr_b.tb_right);
+	    return count1 + count2;
+
+	default:
+	    return 0;
+    }
+}
+
+int
+nmg_tree_maxindex_count(union tree *tp)
+{
+    int maxindex1;
+    int maxindex2;
+
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NMG_TESS:
+	    return tp->tr_d.td_s->maxindex;
+
+	case OP_UNION:
+	    maxindex1 = nmg_tree_maxindex_count(tp->tr_b.tb_left);
+	    maxindex2 = nmg_tree_maxindex_count(tp->tr_b.tb_right);
+	    return maxindex1 + maxindex2;
+    }
+
+    return 0;
+}
+
+struct rt_tree_array *
+nmg_tree_leaf_flatten(union tree *tp, const int leaf_count)
+{
+    struct rt_tree_array *tree_array;
+    int array_index;
+
+    tree_array = (struct rt_tree_array *)bu_calloc(leaf_count, sizeof(struct rt_tree_array), "tree list");
+    array_index = 0;
+
+    nmg_tree_leaf_flatten_helper(tree_array, tp, &array_index);
+
+    return tree_array;
+}
+
+void
+nmg_tree_leaf_flatten_helper(struct rt_tree_array *tree_array, union tree* tp, int *array_index)
+{
+    switch (tp->tr_op) {
+	case OP_NMG_TESS:
+	    tree_array[*array_index].tl_op = tp->tr_op;
+	    tree_array[*array_index].tl_tree = tp;
+	    ++(*array_index);
+	    break;
+
+	case OP_UNION:
+	    nmg_tree_leaf_flatten_helper(tree_array, tp->tr_b.tb_left, array_index);
+	    nmg_tree_leaf_flatten_helper(tree_array, tp->tr_b.tb_right, array_index);
+	    break;
+
+	default:
+	    return;
+    }
+}
+
+union tree *
+nmg_tree_leaf_build(struct rt_tree_array *tree_array, const int leaf_count)
+{
+    union tree *last_node;
+    union tree *curr_node;
+    int index;
+
+    if (leaf_count == 0) {
+	return NULL;
+    }
+
+    last_node = tree_array[0].tl_tree;
+
+    for (index = 1; index < leaf_count; ++index) {
+	curr_node = tree_array[index].tl_tree;
+	last_node = nmg_tree_union(last_node, curr_node);
+    }
+
+    return last_node;
+}
