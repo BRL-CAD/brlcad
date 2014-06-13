@@ -37,13 +37,17 @@
 
 #include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
-
-#include <GLFW/glfw3.h>
+#include <osg/ImageUtils>
+#include <osg/TextureRectangle>
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/StateSet>
 
 struct osginfo {
-    GLFWwindow 		*glfw;
-    GLuint		texture_name;
-    void		*texture_data;
+    osgViewer::Viewer *viewer;
+    osg::Image *image;
+    osg::TextureRectangle *texture;
+    osg::Geometry *pictureQuad;
 };
 
 #define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
@@ -64,70 +68,34 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     if (height > 0)
 	ifp->if_height = height;
 
-    // Although we are not making direct use of osgViewer currently, we need its
-    // initialization to make sure we have all the libraries we need loaded and
-    // ready.
-    osgViewer::Viewer *viewer = new osgViewer::Viewer();
-    delete viewer;
+    OSG(ifp)->viewer = new osgViewer::Viewer();
+    OSG(ifp)->viewer->setUpViewInWindow(0, 0, width, height);
+
+    OSG(ifp)->image = new osg::Image;
+    OSG(ifp)->image->allocateImage(width, height, 0, GL_RGB, GL_UNSIGNED_BYTE);
+
+    OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
+	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, image->s(), image->t());
+    OSG(ifp)->texture = new osg::TextureRectangle(OSG(ifp)->image);
+    OSG(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSG(ifp)->texture, osg::StateAttribute::ON);
 
 
-    /* Initialize GLFW Window.  TODO - this will eventually become an
-     * osgViewer setup, once the initial dev work is done. */
-    glfwInit();
-    GLFWwindow *glfw = glfwCreateWindow(width, height, "osg", NULL, NULL);
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    osg::StateSet* stateset = geode->getOrCreateStateSet();
+    stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+    geode->addDrawable(OSG(ifp)->pictureQuad->get());
 
-    int major, minor, rev;
-    glfwGetVersion(&major, &minor, &rev);
-    printf("\n\nOpenGL Version %d.%d.%d\n\n", major, minor, rev);
+    OSG(ifp)->viewer.getCamera()->setViewMatrix(osg::Matrix::identity());
+    osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+    osg::Vec3 bottomright(width, height, 0.0f);
+    OSG(ifp)->viewer.getCamera()->setProjectionMatrixAsOrtho2D(topleft.x(),bottomright.x(),topleft.y(),bottomright.y());
+    OSG(ifp)->viewer.getCamera()->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
 
-    OSG(ifp)->glfw = glfw;
-
-    glfwSwapInterval( 1 );
-
-    glfwMakeContextCurrent(glfw);
-    glClearColor (0.0, 0.0, 0.0, 1);
-    glViewport(0, 0, width, height);
-    glViewport(0,0,width, height);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, width, height, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    /* Set up the texture that will hold the raytrace results */
-    glGenTextures(1, &(OSG(ifp)->texture_name));
-    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    OSG(ifp)->texture_data = calloc(1, width * height * 3);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
-
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glfwMakeContextCurrent(NULL);
+    OSG(ifp)->viewer.setSceneData(geode.get());
+    OSG(ifp)->viewer.realize();
+    OSG(ifp)->viewer.frame();
 
     return 0;
-}
-
-HIDDEN void
-_display(FBIO *ifp)
-{
-    glDrawBuffer(GL_FRONT_AND_BACK);
-
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 1);
-    glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 0);
-    glVertex3f(0, ifp->if_height, 0);
-    glTexCoord2d(1, 1);
-    glVertex3f(ifp->if_width, -1, 0);
-    glTexCoord2d(1, 0);
-    glVertex3f(ifp->if_width, ifp->if_height, 0);
-
-    glEnd();
 }
 
 HIDDEN int
@@ -135,18 +103,7 @@ osg_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
 
-    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
-
-    while( !glfwWindowShouldClose(OSG(ifp)->glfw) )
-    {
-	_display(ifp);
-	glfwSwapBuffers(OSG(ifp)->glfw);
-	glfwPollEvents();
-    }
-
-    glfwDestroyWindow(OSG(ifp)->glfw);
-    glfwTerminate();
+    OSG(ifp)->viewer.run();
 
     return 0;
 }
@@ -212,7 +169,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	else
 	    scan_count = pix_count;
 
-	scanline = &(((unsigned char *)OSG(ifp)->texture_data)[(y*ifp->if_width+x)*3]);
+	scanline = &(((unsigned char *)OSG(ifp)->image->data(0,y,0)));
 
 	memcpy(scanline, pixelp, scan_count*3);
 
@@ -223,13 +180,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    break;
     }
 
-    glfwMakeContextCurrent(OSG(ifp)->glfw);
-    glBindTexture(GL_TEXTURE_2D, OSG(ifp)->texture_name);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ifp->if_width, ifp->if_height, GL_RGB, GL_UNSIGNED_BYTE, OSG(ifp)->texture_data);
-    _display(ifp);
-    glfwSwapBuffers(OSG(ifp)->glfw);
-    glFlush();
-    glfwMakeContextCurrent(NULL);
+    OSG(ifp)->viewer.frame();
 
     return ret;
 }
