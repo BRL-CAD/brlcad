@@ -145,15 +145,13 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	return 0;       /* OK, no pixels transferred */
 
     x = xstart;
-    ybase = y = ystart;
+    y = ystart;
 
     if (x < 0 || x >= ifp->if_width ||
 	    y < 0 || y >= ifp->if_height)
 	return -1;
 
     ret = 0;
-
-    cp = (unsigned char *)(pixelp);
 
     while (pix_count) {
 	void *scanline;
