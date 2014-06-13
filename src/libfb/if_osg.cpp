@@ -72,7 +72,7 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     OSG(ifp)->viewer->setUpViewInWindow(0, 0, width, height);
 
     OSG(ifp)->image = new osg::Image;
-    OSG(ifp)->image->allocateImage(width, height, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    OSG(ifp)->image->allocateImage(width, height, 1, GL_RGB, GL_UNSIGNED_BYTE);
 
     OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
 	    osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
