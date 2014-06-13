@@ -39,8 +39,6 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 
-#include <osgDB/WriteFile>
-
 #include <osgGA/TrackballManipulator>
 #include <osgGA/StateSetManipulator>
 
@@ -49,12 +47,15 @@
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/StateSet>
+#include <osg/Timer>
 
 struct osginfo {
     osgViewer::Viewer *viewer;
     osg::Image *image;
     osg::TextureRectangle *texture;
     osg::Geometry *pictureQuad;
+    osg::Timer *timer;
+    int last_update_time;
 };
 
 #define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
@@ -75,21 +76,15 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     if (height > 0)
 	ifp->if_height = height;
 
+    OSG(ifp)->timer = new osg::Timer;
+    OSG(ifp)->last_update_time = 0;
+
     OSG(ifp)->viewer = new osgViewer::Viewer();
     OSG(ifp)->viewer->setUpViewInWindow(0, 0, width, height);
 
     OSG(ifp)->image = new osg::Image;
     OSG(ifp)->image->allocateImage(width, height, 1, GL_RGB, GL_UNSIGNED_BYTE);
     OSG(ifp)->image->setPixelBufferObject(new osg::PixelBufferObject(OSG(ifp)->image));
-
-    return 0;
-}
-
-HIDDEN int
-osg_close(FBIO *ifp)
-{
-    FB_CK_FBIO(ifp);
-
     OSG(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
 	    osg::Vec3(ifp->if_width,0.0f,0.0f), osg::Vec3(0.0f,0.0f, ifp->if_height), 0.0f, 0.0, OSG(ifp)->image->s(), OSG(ifp)->image->t());
     OSG(ifp)->texture = new osg::TextureRectangle(OSG(ifp)->image);
@@ -99,30 +94,34 @@ osg_close(FBIO *ifp)
     OSG(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSG(ifp)->texture, osg::StateAttribute::ON);
 
 
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    osg::Geode *geode = new osg::Geode;
     osg::StateSet* stateset = geode->getOrCreateStateSet();
     stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
     geode->addDrawable(OSG(ifp)->pictureQuad);
 
-#if 0
     OSG(ifp)->viewer->getCamera()->setViewMatrix(osg::Matrix::identity());
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
     osg::Vec3 bottomright(width, height, 0.0f);
-    OSG(ifp)->viewer->getCamera()->setProjectionMatrixAsOrtho2D(topleft.x(),bottomright.x(),topleft.y(),bottomright.y());
+    OSG(ifp)->viewer->getCamera()->setProjectionMatrixAsOrtho2D(-width/2,width/2,-height/2, height/2);
     OSG(ifp)->viewer->getCamera()->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
-#endif
 
+    OSG(ifp)->viewer->setSceneData(geode);
 
-    OSG(ifp)->viewer->setSceneData(geode.get());
-
-    OSG(ifp)->viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
+    OSG(ifp)->viewer->setCameraManipulator( new osgGA::TrackballManipulator() );
 
     OSG(ifp)->viewer->realize();
 
-    osgDB::writeImageFile(*OSG(ifp)->image, std::string("test.png"));
+    OSG(ifp)->timer->setStartTick();
+
+    return 0;
+}
+
+HIDDEN int
+osg_close(FBIO *ifp)
+{
+    FB_CK_FBIO(ifp);
 
     return OSG(ifp)->viewer->run();
-
 }
 
 
@@ -193,6 +192,11 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    break;
     }
 
+    OSG(ifp)->image->dirty();
+    if (OSG(ifp)->timer->time_m() - OSG(ifp)->last_update_time > 10) {
+	OSG(ifp)->viewer->frame();
+	OSG(ifp)->last_update_time = OSG(ifp)->timer->time_m();
+    }
     return ret;
 }
 
