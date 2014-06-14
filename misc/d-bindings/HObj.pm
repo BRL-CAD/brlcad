@@ -13,6 +13,8 @@ use Class::Struct;
 use F;
 use R;
 
+# vars for creating unique names for various data structures during
+# C-to-D conversion
 my $next_name_num = 1;
 my %names = ();
 
