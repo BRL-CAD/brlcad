@@ -40,8 +40,8 @@ if ($BITS == 64) {
   @dmap_keys = @d64map_keys;
 }
 else {
-  %dmap      = %d64map;
-  @dmap_keys = @d64map_keys;
+  %dmap      = %d32map;
+  @dmap_keys = @d32map_keys;
 }
 
 # 64-bit mapping from C types to D types
