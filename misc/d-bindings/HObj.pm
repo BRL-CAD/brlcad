@@ -280,9 +280,8 @@ die "FATAL: have to handle typedefs that try to refine D types such as 'wchar'";
       }
 
       # substitute correct types for unchecked body lines
-      if (exists $fline{typedef} && $fline{typedef}
-	 ) {
-      }
+      $line = c_types_to_d_types($line)
+	if (exists $fline{typedef} && $fline{typedef});
     }
 
     push @arr, $line;
