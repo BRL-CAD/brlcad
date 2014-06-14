@@ -29,7 +29,7 @@ our %tag
 
      # arrays need special accessors
      'pretty_c'   => '@', # 'c_line' split by 'gen_pretty' (in C format)
-     'pretty_d'   => '@', # 'd_line' split by 'gen_pretty'    (in D format)
+     'pretty_d'   => '@', # 'd_line' split by 'gen_pretty' (in D format)
     );
 
 struct(HObj => \%tag);
