@@ -186,6 +186,37 @@ our @otyp
 our %otyp;
 @otyp{@otyp} = ();
 
+# all D types
+our @dtyp
+  = (
+     'void',
+     'bool',
+     'byte',
+     'ubyte',
+     'short',
+     'ushort',
+     'int',
+     'uint',
+     'long',
+     'ulong',
+     'cent',
+     'ucent',
+     'float',
+     'double',
+     'real',
+     'ifloat',
+     'idouble',
+     'ireal',
+     'cfloat',
+     'cdouble',
+     'creal',
+     'char',
+     'wchar',
+     'dchar',
+);
+our %dtyp;
+@dtyp{@dtyp} = ();
+
 # mandatory true return for a Perl module
 1;
 
