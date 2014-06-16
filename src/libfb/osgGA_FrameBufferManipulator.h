@@ -62,12 +62,7 @@ class OSGGA_EXPORT FrameBufferManipulator : public StandardManipulator
         virtual void setDistance( double distance );
         double getDistance() const;
 
-        virtual void setTrackballSize( const double& size );
-        inline double getTrackballSize() const;
-        virtual void setWheelZoomFactor( double wheelZoomFactor );
-        inline double getWheelZoomFactor() const;
-
-        virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = false );
+	virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = false );
         double getMinimumDistance( bool *relativeToModelSize = NULL ) const;
 
         virtual osgUtil::SceneView::FusionDistanceMode getFusionDistanceMode() const;
@@ -75,12 +70,6 @@ class OSGGA_EXPORT FrameBufferManipulator : public StandardManipulator
 
     protected:
 
-        virtual bool handleMouseWheel( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us );
-
-        virtual bool performMovementLeftMouseButton( const double eventTimeDelta, const double dx, const double dy );
-        virtual bool performMovementMiddleMouseButton( const double eventTimeDelta, const double dx, const double dy );
-        virtual bool performMovementRightMouseButton( const double eventTimeDelta, const double dx, const double dy );
-        virtual bool performMouseDeltaMovement( const float dx, const float dy );
         virtual void applyAnimationStep( const double currentProgress, const double prevProgress );
 
         float tb_project_to_sphere( float r, float x, float y );

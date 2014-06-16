@@ -31,11 +31,9 @@ int FrameBufferManipulator::_minimumDistanceFlagIndex = allocateRelativeFlag();
 /// Constructor.
 FrameBufferManipulator::FrameBufferManipulator( int flags )
    : inherited( flags ),
-     _distance( 1. ),
-     _trackballSize( 0.8 )
+     _distance( 1. )
 {
     setMinimumDistance( 0.05, true );
-    setWheelZoomFactor( 0.1 );
     if( _flags & SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT )
         setAnimationTime( 0.2 );
 }
@@ -48,8 +46,6 @@ FrameBufferManipulator::FrameBufferManipulator( const FrameBufferManipulator& om
      _center( om._center ),
      _rotation( om._rotation ),
      _distance( om._distance ),
-     _trackballSize( om._trackballSize ),
-     _wheelZoomFactor( om._wheelZoomFactor ),
      _minimumDistance( om._minimumDistance )
 {
 }
@@ -215,88 +211,6 @@ double FrameBufferManipulator::getElevation() const
 }
 
 
-// doc in parent
-bool FrameBufferManipulator::handleMouseWheel( const GUIEventAdapter& ea, GUIActionAdapter& us )
-{
-    osgGA::GUIEventAdapter::ScrollingMotion sm = ea.getScrollingMotion();
-
-    // handle centering
-    if( _flags & SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT )
-    {
-
-        if( ((sm == GUIEventAdapter::SCROLL_DOWN && _wheelZoomFactor > 0.)) ||
-            ((sm == GUIEventAdapter::SCROLL_UP   && _wheelZoomFactor < 0.)) )
-        {
-
-            if( getAnimationTime() <= 0. )
-            {
-                // center by mouse intersection (no animation)
-                setCenterByMousePointerIntersection( ea, us );
-            }
-            else
-            {
-                // start new animation only if there is no animation in progress
-                if( !isAnimating() )
-                    startAnimationByMousePointerIntersection( ea, us );
-
-            }
-
-        }
-    }
-
-    switch( sm )
-    {
-        // mouse scroll up event
-        case GUIEventAdapter::SCROLL_UP:
-        {
-            // perform zoom
-            us.requestRedraw();
-            us.requestContinuousUpdate( isAnimating() || _thrown );
-            return true;
-        }
-
-        // mouse scroll down event
-        case GUIEventAdapter::SCROLL_DOWN:
-        {
-            // perform zoom
-            us.requestRedraw();
-            us.requestContinuousUpdate( isAnimating() || _thrown );
-            return true;
-        }
-
-        // unhandled mouse scrolling motion
-        default:
-            return false;
-   }
-}
-
-
-// doc in parent
-bool FrameBufferManipulator::performMovementLeftMouseButton( const double UNUSED(eventTimeDelta), const double UNUSED(dx), const double UNUSED(dy) )
-{
-    return true;
-}
-
-
-// doc in parent
-bool FrameBufferManipulator::performMovementMiddleMouseButton( const double UNUSED(eventTimeDelta), const double UNUSED(dx), const double UNUSED(dy) )
-{
-    return true;
-}
-
-
-// doc in parent
-bool FrameBufferManipulator::performMovementRightMouseButton( const double UNUSED(eventTimeDelta), const double UNUSED(dx), const double UNUSED(dy) )
-{
-    return true;
-}
-
-
-bool FrameBufferManipulator::performMouseDeltaMovement( const float UNUSED(dx), const float UNUSED(dy) )
-{
-    return true;
-}
-
 
 void FrameBufferManipulator::applyAnimationStep( const double currentProgress, const double prevProgress )
 {
@@ -353,29 +267,6 @@ void FrameBufferManipulator::FrameBufferAnimationData::start( const osg::Vec3d& 
 }
 
 
-/**
- * Helper trackball method that projects an x,y pair onto a sphere of radius r OR
- * a hyperbolic sheet if we are away from the center of the sphere.
- */
-float FrameBufferManipulator::tb_project_to_sphere( float r, float x, float y )
-{
-    float d, t, z;
-
-    d = sqrt(x*x + y*y);
-                                 /* Inside sphere */
-    if (d < r * 0.70710678118654752440)
-    {
-        z = sqrt(r*r - d*d);
-    }                            /* On hyperbola */
-    else
-    {
-        t = r / 1.41421356237309504880;
-        z = t*t / d;
-    }
-    return z;
-}
-
-
 /** Get the FusionDistanceMode. Used by SceneView for setting up stereo convergence.*/
 osgUtil::SceneView::FusionDistanceMode FrameBufferManipulator::getFusionDistanceMode() const
 {
@@ -428,23 +319,6 @@ void FrameBufferManipulator::setDistance( double distance )
 double FrameBufferManipulator::getDistance() const
 {
     return _distance;
-}
-
-
-/** Set the size of the trackball. Value is relative to the model size. */
-void FrameBufferManipulator::setTrackballSize( const double& UNUSED(size) )
-{
-}
-
-
-/** Set the mouse wheel zoom factor.
-    The amount of camera movement on each mouse wheel event
-    is computed as the current distance to the center multiplied by this factor.
-    For example, value of 0.1 will short distance to center by 10% on each wheel up event.
-    Use negative value for reverse mouse wheel direction.*/
-void FrameBufferManipulator::setWheelZoomFactor( double wheelZoomFactor )
-{
-    _wheelZoomFactor = wheelZoomFactor;
 }
 
 

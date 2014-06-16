@@ -31,9 +31,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+extern "C" {
 #include "bu/log.h"
 #include "bu/str.h"
 #include "fb.h"
+}
 
 #include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
@@ -49,6 +51,8 @@
 #include <osg/StateSet>
 #include <osg/Timer>
 
+#include <iostream>
+
 struct osginfo {
     osgViewer::Viewer *viewer;
     osg::Image *image;
@@ -59,6 +63,94 @@ struct osginfo {
 };
 
 #define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
+
+// KetHandler --
+// Allow user to do interesting things with an
+// OcclusionQueryNode-enabled scene graph at run time.
+class KeyHandler : public osgGA::GUIEventHandler
+{
+public:
+    KeyHandler( osg::Node& node )
+      : _node( node ),
+        _enable( true ),
+        _debug( false )
+    {}
+
+    bool handle( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& )
+    {
+        switch( ea.getEventType() )
+        {
+            case(osgGA::GUIEventAdapter::KEYUP):
+            {
+                if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F6)
+                {
+                    // F6 -- Toggle osgOQ testing.
+		    std::cout << "F6!";
+                    return true;
+                }
+                else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F7)
+                {
+                    // F7 -- Toggle display of OQ test bounding volumes
+		    std::cout << "F7!";
+                    return true;
+                }
+                else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F8)
+                {
+                    // F8 -- Gether stats and display
+		    std::cout << "F8!";
+                    return true;
+                }
+                else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F9)
+                {
+                    // F9 -- Remove all OcclusionQueryNodes
+		    std::cout << "F9!";
+                    return true;
+                }
+                else if (ea.getKey()=='o')
+                {
+		    std::cout << "o!";
+                    return true;
+                }
+                return false;
+            }
+            case(osgGA::GUIEventAdapter::PUSH):
+            {
+		std::cout << "PUSH!\n";
+		return false;
+	    }
+            case(osgGA::GUIEventAdapter::RELEASE):
+            {
+		std::cout << "RELEASE!\n";
+		return false;
+	    }
+            case(osgGA::GUIEventAdapter::DOUBLECLICK):
+            {
+		std::cout << "DOUBLECLICK!\n";
+		return false;
+	    }
+            case(osgGA::GUIEventAdapter::DRAG):
+            {
+		std::cout << "DRAG!\n";
+		return false;
+	    }
+            case(osgGA::GUIEventAdapter::MOVE):
+            {
+		std::cout << "MOVE!\n";
+		return false;
+	    }
+
+            default:
+                return false;
+                break;
+        }
+        return false;
+    }
+
+    osg::Node& _node;
+
+    bool _enable, _debug;
+};
+
 
 HIDDEN int
 osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
@@ -108,6 +200,8 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     OSG(ifp)->viewer->setSceneData(geode);
 
     OSG(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
+    OSG(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSG(ifp)->viewer->getCamera()->getOrCreateStateSet()));
+    OSG(ifp)->viewer->addEventHandler(new KeyHandler(*geode));
 
     OSG(ifp)->viewer->realize();
 
@@ -121,7 +215,7 @@ osg_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
 
-    return OSG(ifp)->viewer->run();
+    return (*OSG(ifp)->viewer).ViewerBase::run();
 }
 
 
