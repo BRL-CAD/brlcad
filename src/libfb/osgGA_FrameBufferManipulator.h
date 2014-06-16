@@ -50,19 +50,7 @@ class OSGGA_EXPORT FrameBufferManipulator : public StandardManipulator
         virtual void getTransformation( osg::Vec3d& eye, osg::Quat& rotation ) const;
         virtual void getTransformation( osg::Vec3d& eye, osg::Vec3d& center, osg::Vec3d& up ) const;
 
-        void setHeading( double azimuth );
-        double getHeading() const;
-        void setElevation( double elevation );
-        double getElevation() const;
-
-        virtual void setCenter( const osg::Vec3d& center );
-        const osg::Vec3d& getCenter() const;
-        virtual void setRotation( const osg::Quat& rotation );
-        const osg::Quat& getRotation() const;
-        virtual void setDistance( double distance );
-        double getDistance() const;
-
-	virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = false );
+       	virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = false );
         double getMinimumDistance( bool *relativeToModelSize = NULL ) const;
 
         virtual osgUtil::SceneView::FusionDistanceMode getFusionDistanceMode() const;
@@ -70,27 +58,12 @@ class OSGGA_EXPORT FrameBufferManipulator : public StandardManipulator
 
     protected:
 
-        virtual void applyAnimationStep( const double currentProgress, const double prevProgress );
-
-        float tb_project_to_sphere( float r, float x, float y );
-        virtual bool startAnimationByMousePointerIntersection( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us );
-
         osg::Vec3d _center;
         osg::Quat  _rotation;
         double     _distance;
 
-        double _trackballSize;
-        double _wheelZoomFactor;
-
         double _minimumDistance;
         static int _minimumDistanceFlagIndex;
-
-        class FrameBufferAnimationData : public AnimationData {
-        public:
-            osg::Vec3d _movement;
-            void start( const osg::Vec3d& movement, const double startTime );
-        };
-        virtual void allocAnimationData() { _animationData = new FrameBufferAnimationData(); }
 };
 
 }

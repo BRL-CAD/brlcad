@@ -34,8 +34,6 @@ FrameBufferManipulator::FrameBufferManipulator( int flags )
      _distance( 1. )
 {
     setMinimumDistance( 0.05, true );
-    if( _flags & SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT )
-        setAnimationTime( 0.2 );
 }
 
 
@@ -144,29 +142,6 @@ void FrameBufferManipulator::getTransformation( osg::Vec3d& eye, osg::Vec3d& cen
     up = _rotation * osg::Vec3d( 0., 1., 0. );
 }
 
-
-void FrameBufferManipulator::setHeading( double UNUSED(azimuth) ) {}
-double FrameBufferManipulator::getHeading() const {return 0.0;}
-void FrameBufferManipulator::setElevation( double UNUSED(elevation) ){}
-double FrameBufferManipulator::getElevation() const {return 0.0;}
-
-void FrameBufferManipulator::applyAnimationStep( const double UNUSED(currentProgress), const double UNUSED(prevProgress) )
-{
-}
-
-
-bool FrameBufferManipulator::startAnimationByMousePointerIntersection(
-      const osgGA::GUIEventAdapter& UNUSED(ea), osgGA::GUIActionAdapter& UNUSED(us) )
-{
-    return true;
-}
-
-
-void FrameBufferManipulator::FrameBufferAnimationData::start( const osg::Vec3d& UNUSED(movement), const double UNUSED(startTime) )
-{
-}
-
-
 /** Get the FusionDistanceMode. Used by SceneView for setting up stereo convergence.*/
 osgUtil::SceneView::FusionDistanceMode FrameBufferManipulator::getFusionDistanceMode() const
 {
@@ -178,49 +153,6 @@ float FrameBufferManipulator::getFusionDistanceValue() const
 {
     return _distance;
 }
-
-
-/** Set the center of the manipulator. */
-void FrameBufferManipulator::setCenter( const Vec3d& center )
-{
-    _center = center;
-}
-
-
-/** Get the center of the manipulator. */
-const Vec3d& FrameBufferManipulator::getCenter() const
-{
-    return _center;
-}
-
-
-/** Set the rotation of the manipulator. */
-void FrameBufferManipulator::setRotation( const Quat& rotation )
-{
-    _rotation = rotation;
-}
-
-
-/** Get the rotation of the manipulator. */
-const Quat& FrameBufferManipulator::getRotation() const
-{
-    return _rotation;
-}
-
-
-/** Set the distance of camera to the center. */
-void FrameBufferManipulator::setDistance( double distance )
-{
-    _distance = distance;
-}
-
-
-/** Get the distance of the camera to the center. */
-double FrameBufferManipulator::getDistance() const
-{
-    return _distance;
-}
-
 
 /** Set the minimum distance of the eye point from the center
     before the center is pushed forward.*/
