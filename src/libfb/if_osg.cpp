@@ -53,7 +53,8 @@ extern "C" {
 #include <iostream>
 
 
-/* The following is a customization of OrbitManipulator for Framebuffer applications */
+/* The following is a customization of StandardManipulator for Framebuffer applications */
+
 /* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield
  *
  * This library is open source and may be redistributed and/or modified under
@@ -73,9 +74,6 @@ extern "C" {
 */
 
 #include <osgGA/StandardManipulator>
-
-#include <osg/BoundsChecking>
-#include <cassert>
 
 using namespace osg;
 using namespace osgGA;
@@ -245,18 +243,11 @@ float FrameBufferManipulator::getFusionDistanceValue() const
 
 } // end osgGA namespace
 
-struct osginfo {
-    osgViewer::Viewer *viewer;
-    osg::Image *image;
-    osg::TextureRectangle *texture;
-    osg::Geometry *pictureQuad;
-    osg::Timer *timer;
-    int last_update_time;
-};
+/*********************************************************************************************/
+/**************************** End FrameBufferManipulator *************************************/
+/*********************************************************************************************/
 
-#define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
-
-// KetHandler --
+// KeyHandler --
 // Allow user to do interesting things with an
 // OcclusionQueryNode-enabled scene graph at run time.
 class KeyHandler : public osgGA::GUIEventHandler
@@ -342,6 +333,21 @@ public:
 
     bool _enable, _debug;
 };
+/*********************************************************************************************/
+/*********************************** End KeyHandler ******************************************/
+/*********************************************************************************************/
+
+
+struct osginfo {
+    osgViewer::Viewer *viewer;
+    osg::Image *image;
+    osg::TextureRectangle *texture;
+    osg::Geometry *pictureQuad;
+    osg::Timer *timer;
+    int last_update_time;
+};
+
+#define OSG(ptr) ((struct osginfo *)((ptr)->u6.p))
 
 
 HIDDEN int
