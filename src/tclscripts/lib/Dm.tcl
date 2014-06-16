@@ -40,7 +40,7 @@
     itk_option define -linewidth linewidth Linewidth 1
     itk_option define -perspective perspective Perspective 0
     itk_option define -transparency transparency Transparency 0
-    itk_option define -type type Type wgl
+    itk_option define -type type Type osg 
     itk_option define -zbuffer zbuffer Zbuffer 0
     itk_option define -zclip zclip Zclip 0
 
@@ -126,11 +126,7 @@
     private variable initializing 1
     private variable tkwin
 
-    if {$tcl_platform(os) != "Windows NT"} {
-	private variable priv_type X
-    } else {
-	private variable priv_type wgl
-    }
+    private variable priv_type osg
 
     private variable help
 }
@@ -146,13 +142,7 @@
 	set display :0
     }
 
-    if {[catch {dm_bestXType $display} priv_type]} {
-	if {$tcl_platform(os) != "Windows NT"} {
-	    set priv_type X
-	} else {
-	    set priv_type wgl
-	}
-    }
+    set priv_type osg
 
     # process options now (i.e. -type may have been specified)
     eval itk_initialize $args
@@ -262,9 +252,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::configbody Dm::type {
     switch $itk_option(-type) {
-	X -
-	ogl -
-	wgl {
+	osg {
 	    if {$initializing} {
 		set priv_type $itk_option(-type)
 	    } else {

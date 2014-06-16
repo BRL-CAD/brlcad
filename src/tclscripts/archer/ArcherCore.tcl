@@ -4415,7 +4415,7 @@ namespace eval ArcherCore {
     $color add command -label "Select..." \
 	-command [::itcl::code $this selectDisplayColor $_node]
 
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "osg") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
 	$_menu add cascade -label "Transparency" \
 	    -menu $_menu.trans
@@ -5896,11 +5896,7 @@ namespace eval ArcherCore {
 	set size [winfo width $itk_component(ged)]
     }
 
-    if {$tcl_platform(platform) == "windows"} {
-	$itk_component(ged) $app -s $size -F /dev/wgll
-    } {
-	$itk_component(ged) $app -s $size -F /dev/ogll
-    }
+    $itk_component(ged) $app -s $size -F /dev/osg
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {

@@ -2683,9 +2683,9 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::buildDisplayPreferences {} {
-    set oglParent $itk_component(preferenceTabs)
+    set osgParent $itk_component(preferenceTabs)
     itk_component add displayF {
-	::ttk::frame $oglParent.displayF
+	::ttk::frame $osgParent.displayF
     } {}
 
     set parent $itk_component(displayF)

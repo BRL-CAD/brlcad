@@ -50,7 +50,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -linewidth linewidth Linewidth 1
     itk_option define -perspective perspective Perspective 0
     itk_option define -transparency transparency Transparency 0
-    itk_option define -type type Type wgl
+    itk_option define -type type Type osg
     itk_option define -zbuffer zbuffer Zbuffer 0
     itk_option define -zclip zclip Zclip 0
 
@@ -965,11 +965,7 @@ package provide cadwidgets::Ged 1.0
     $itk_component(lpw) add llp
     $itk_component(lpw) add lrp
 
-    if {$tcl_platform(platform) == "windows"} {
-	set dmType wgl
-    } else {
-	set dmType ogl
-    }
+    set dmType osg
 
     # create four views
     itk_component add ul {
