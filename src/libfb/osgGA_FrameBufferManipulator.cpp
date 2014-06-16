@@ -145,125 +145,25 @@ void FrameBufferManipulator::getTransformation( osg::Vec3d& eye, osg::Vec3d& cen
 }
 
 
-/** Sets the transformation by heading. Heading is given as an angle in radians giving a azimuth in xy plane.
-    Its meaning is similar to longitude used in cartography and navigation.
-    Positive number is going to the east direction.*/
-void FrameBufferManipulator::setHeading( double azimuth )
+void FrameBufferManipulator::setHeading( double UNUSED(azimuth) ) {}
+double FrameBufferManipulator::getHeading() const {return 0.0;}
+void FrameBufferManipulator::setElevation( double UNUSED(elevation) ){}
+double FrameBufferManipulator::getElevation() const {return 0.0;}
+
+void FrameBufferManipulator::applyAnimationStep( const double UNUSED(currentProgress), const double UNUSED(prevProgress) )
 {
-    CoordinateFrame coordinateFrame = getCoordinateFrame( _center );
-    Vec3d localUp = getUpVector( coordinateFrame );
-    Vec3d localRight = getSideVector( coordinateFrame );
-
-    Vec3d dir = Quat( getElevation(), localRight ) * Quat( azimuth, localUp ) * Vec3d( 0., -_distance, 0. );
-
-    setTransformation( _center + dir, _center, localUp );
-}
-
-
-/// Returns the heading in radians. \sa setHeading
-double FrameBufferManipulator::getHeading() const
-{
-    CoordinateFrame coordinateFrame = getCoordinateFrame( _center );
-    Vec3d localFront = getFrontVector( coordinateFrame );
-    Vec3d localRight = getSideVector( coordinateFrame );
-
-    Vec3d center, eye, tmp;
-    getTransformation( eye, center, tmp );
-
-    Plane frontPlane( localFront, center );
-    double frontDist = frontPlane.distance( eye );
-    Plane rightPlane( localRight, center );
-    double rightDist = rightPlane.distance( eye );
-
-    return atan2( rightDist, -frontDist );
-}
-
-
-/** Sets the transformation by elevation. Elevation is given as an angle in radians from xy plane.
-    Its meaning is similar to latitude used in cartography and navigation.
-    Positive number is going to the north direction, negative to the south.*/
-void FrameBufferManipulator::setElevation( double elevation )
-{
-    CoordinateFrame coordinateFrame = getCoordinateFrame( _center );
-    Vec3d localUp = getUpVector( coordinateFrame );
-    Vec3d localRight = getSideVector( coordinateFrame );
-
-    Vec3d dir = Quat( -elevation, localRight ) * Quat( getHeading(), localUp ) * Vec3d( 0., -_distance, 0. );
-
-    setTransformation( _center + dir, _center, localUp );
-}
-
-
-/// Returns the elevation in radians. \sa setElevation
-double FrameBufferManipulator::getElevation() const
-{
-    CoordinateFrame coordinateFrame = getCoordinateFrame( _center );
-    Vec3d localUp = getUpVector( coordinateFrame );
-    localUp.normalize();
-
-    Vec3d center, eye, tmp;
-    getTransformation( eye, center, tmp );
-
-    Plane plane( localUp, center );
-    double dist = plane.distance( eye );
-
-    return asin( -dist / (eye-center).length() );
-}
-
-
-
-void FrameBufferManipulator::applyAnimationStep( const double currentProgress, const double prevProgress )
-{
-    FrameBufferAnimationData *ad = dynamic_cast< FrameBufferAnimationData* >( _animationData.get() );
-    assert( ad );
-
-    // compute new center
-    osg::Vec3d prevCenter, prevEye, prevUp;
-    getTransformation( prevEye, prevCenter, prevUp );
-    osg::Vec3d newCenter = osg::Vec3d(prevCenter) + (ad->_movement * (currentProgress - prevProgress));
-
-    // fix vertical axis
-    if( getVerticalAxisFixed() )
-    {
-
-        CoordinateFrame coordinateFrame = getCoordinateFrame( newCenter );
-        Vec3d localUp = getUpVector( coordinateFrame );
-
-        fixVerticalAxis( newCenter - prevEye, prevUp, prevUp, localUp, false );
-   }
-
-   // apply new transformation
-   setTransformation( prevEye, newCenter, prevUp );
 }
 
 
 bool FrameBufferManipulator::startAnimationByMousePointerIntersection(
-      const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us )
+      const osgGA::GUIEventAdapter& UNUSED(ea), osgGA::GUIActionAdapter& UNUSED(us) )
 {
-    // get current transformation
-    osg::Vec3d prevCenter, prevEye, prevUp;
-    getTransformation( prevEye, prevCenter, prevUp );
-
-    // center by mouse intersection
-    if( !setCenterByMousePointerIntersection( ea, us ) )
-        return false;
-
-    FrameBufferAnimationData *ad = dynamic_cast< FrameBufferAnimationData*>( _animationData.get() );
-    assert( ad );
-
-    // setup animation data and restore original transformation
-    ad->start( osg::Vec3d(_center) - prevCenter, ea.getTime() );
-    setTransformation( prevEye, prevCenter, prevUp );
-
     return true;
 }
 
 
-void FrameBufferManipulator::FrameBufferAnimationData::start( const osg::Vec3d& movement, const double startTime )
+void FrameBufferManipulator::FrameBufferAnimationData::start( const osg::Vec3d& UNUSED(movement), const double UNUSED(startTime) )
 {
-    AnimationData::start( startTime );
-
-    _movement = movement;
 }
 
 
