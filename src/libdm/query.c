@@ -40,76 +40,17 @@ int dm_validXType(char *dpy_string, char *name);
 char *dm_bestXType(char *dpy_string);
 
 int
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
 dm_validXType(char *UNUSED(dpy_string), char *name)
-#else
-dm_validXType(char *dpy_string, char *name)
-#endif
 {
-    if (BU_STR_EQUAL(name, "wgl")) {
-#ifdef DM_WGL
+    if (BU_STR_EQUAL(name, "osg")) {
+#ifdef DM_OSG
 	return 1;
 #else
 	bu_log("Specified display type [%s] is not available in this compilation.", name);
-	return 0;
-#endif /* DM_WGL */
-    }
-
-    if (BU_STR_EQUAL(name, "rtgl")) {
-#ifdef DM_RTGL
-	Display *dpy;
-	int return_val;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return 1;
-	    }
-	    XCloseDisplay(dpy);
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_RTGL */
+#endif /* DM_OSG */
 	return 0;
     }
-
-    if (BU_STR_EQUAL(name, "ogl")) {
-#ifdef DM_OGL
-	Display *dpy;
-	int return_val;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return 1;
-	    }
-	    XCloseDisplay(dpy);
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_OGL */
-	return 0;
-    }
-
-    if (BU_STR_EQUAL(name, "X")) {
-#ifdef DM_X
-	Display *dpy;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    XCloseDisplay(dpy);
-	    return 1;
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_X */
-	return 0;
-    }
-
-    if (BU_STR_EQUAL(name, "tk")) {
-#ifdef DM_TK
-	return 1;
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_TK */
-	return 0;
-    }
+    bu_log("Specified display type [%s] is not available in this compilation.", name);
 
     return 0;
 }
@@ -119,62 +60,12 @@ dm_validXType(char *dpy_string, char *name)
   */
 
 char *
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
 dm_bestXType(char *UNUSED(dpy_string))
-#else
-dm_bestXType(char *dpy_string)
-#endif
 {
-#ifdef DM_WGL
-    /* should probably make sure wgl works */
-    return "wgl";
+#ifdef DM_OSG
+    return "osg";
 #endif
-
-#ifdef DM_RTGL
-    {
-	Display *dpy;
-	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return "rtgl";
-	    }
-	    XCloseDisplay(dpy);
-	}
-    }
-#endif
-
-#ifdef DM_OGL
-    {
-	Display *dpy;
-	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return "ogl";
-	    }
-	    XCloseDisplay(dpy);
-	}
-    }
-#endif
-
-#ifdef DM_X
-    {
-	Display *dpy;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    XCloseDisplay(dpy);
-	    return "X";
-	}
-    }
-#endif
-
-#ifdef DM_TK
-    return "tk";
-#else
     return "nu";
-#endif
 }
 
 /*
