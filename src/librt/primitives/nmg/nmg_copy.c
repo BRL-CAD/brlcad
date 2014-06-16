@@ -588,14 +588,16 @@ nmg_construct_shell_a(const struct shell_a *original, genptr_t *structArray)
 
 
 static struct shell *
-nmg_construct_shell(const struct shell *original, genptr_t *structArray)
+nmg_construct_shell(const struct shell *original)
 {
     struct shell         *ret;
+    genptr_t             *structArray;
     const struct faceuse *originalFaceUse;
     const struct loopuse *originalLoopUse;
     const struct edgeuse *originalEdgeUse;
 
-    NMG_GETSTRUCT(ret, shell);
+    structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
+    ret = nmg_ms();
 
     ret->magic = NMG_SHELL_MAGIC;
     ret->sa_p    = (struct shell_a *)NULL;
@@ -653,6 +655,8 @@ nmg_construct_shell(const struct shell *original, genptr_t *structArray)
 	    ret->vu_p = nmg_construct_vertexuse(ret, original->vu_p, structArray);
     }
 
+    bu_free(structArray, "nmg_clone_shell() structArray");
+
     return ret;
 }
 
@@ -663,34 +667,7 @@ nmg_construct_shell(const struct shell *original, genptr_t *structArray)
 struct shell *
 nmg_clone_shell(const struct shell *original)
 {
-    struct shell           *ret;
-    genptr_t               *structArray;
-    struct bn_tol           tolerance;
-
-    NMG_CK_SHELL(original);
-
-    structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
-
-    ret = nmg_ms();
-    ret->index    = original->index;
-    ret->maxindex = original->maxindex;
-
-    structArray[ret->index] = ret;
-
-    tolerance.magic   = BN_TOL_MAGIC;
-    tolerance.dist    = 0.0005;
-    tolerance.dist_sq = tolerance.dist * tolerance.dist;
-    tolerance.perp    = 1e-6;
-    tolerance.para    = 1 - tolerance.perp;
-
-    ret = (struct shell *)structArray[original->index];
-
-	if (newShell == NULL)
-		    newShell = nmg_construct_shell(originalShell, structArray);
-
-    bu_free(structArray, "nmg_clone_shell() structArray");
-
-    return ret;
+    return nmg_construct_shell(original);
 }
 
 

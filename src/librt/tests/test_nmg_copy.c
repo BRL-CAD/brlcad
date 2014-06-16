@@ -162,7 +162,7 @@ nmg_compare_shell_a(struct shell_a *sa1, struct shell_a *sa2)
 }
 
 int
-nmg_compare_shell(struct shell *s1, struct shell *s2)
+test_nmg_clone_shell(struct shell *s1, struct shell *s2)
 {
     int result;
 
@@ -255,37 +255,28 @@ nmg_compare_shell(struct shell *s1, struct shell *s2)
 	}
     }
 
+    /* Testing manifolds of model */
+    if (s1->manifolds != (char *)NULL && s2->manifolds != (char *)NULL) {
+	if (*s1->manifolds != *s2->manifolds) {
+	    bu_log("Error manifolds of shell. s1: %ld, s2: %ld\n", *s1->manifolds, *s2->manifolds);
+	    result = -1;
+	}
+    } else {
+	if (s1->manifolds != s2->manifolds) {
+	    bu_log("Error manifolds of shell. One is NULL, but other is not NULL\n");
+	    result = -1;
+	}
+    }
+
     /* Testing index of shell */
     if (s1->index != s2->index) {
 	bu_log("Error index of shell. s1: %ld, s2: %ld\n", s1->index, s2->index);
 	result = -1;
     }
 
-    return result;
-}
-
-int
-nmg_compare_region_a(struct nmgregion_a *ra1, struct nmgregion_a *ra2)
-{
-    int result;
-
-    result = 0;
-
-    /* Testing min_pt of nmgregion_a */
-    if (!NEAR_EQUAL(ra1->min_pt, ra2->min_pt, SMALL_FASTF)) {
-	bu_log("Error min_pt of nmgregion_a.");
-	result = -1;
-    }
-
-    /* Testing max_pt of nmgregion_a */
-    if (!NEAR_EQUAL(ra1->max_pt, ra2->max_pt, SMALL_FASTF)) {
-	bu_log("Error max_pt of nmgregion_a.");
-	result = -1;
-    }
-
-    /* Testing index of nmgregion_a */
-    if (ra1->index != ra2->index) {
-	bu_log("Error index of nmgregion_a. ra1: %ld, ra2: %ld\n", ra1->index, ra2->index);
+    /* Testing maxindex of model */
+    if (s1->maxindex != s2->maxindex) {
+	bu_log("Error maxindex of shell. s1: %ld, s2: %ld\n", s1->maxindex, s2->maxindex);
 	result = -1;
     }
 
@@ -293,161 +284,37 @@ nmg_compare_region_a(struct nmgregion_a *ra1, struct nmgregion_a *ra2)
 }
 
 int
-nmg_compare_region(struct nmgregion *r1, struct nmgregion *r2)
+testcase_nmg_ms()
 {
     int result;
-
-    int slen1;
-    int slen2;
     struct shell *s1;
     struct shell *s2;
 
-    result = 0;
+    s1 = nmg_ms();
+    s2 = nmg_clone_shell(s1);
 
-    /* Testing ra_p of nmgregion */
-    if (r1->ra_p != (struct nmgregion_a *)NULL && r2->ra_p != (struct nmgregion_a *)NULL) {
-	if (nmg_compare_region_a(r1->ra_p, r2->ra_p) < 0) {
-	    result = -1;
-	}
-    } else {
-	if (r1->ra_p != r2->ra_p) {
-	    bu_log("Error nmgregion_a of region. One is NULL, but other is not NULL\n");
-	    result = -1;
-	}
-    }
+    result = test_nmg_clone_shell(s1, s2);
 
-    /* Testing s_hd of nmgregion */
-    slen1 = bu_list_len(&r1->s_hd);
-    slen2 = bu_list_len(&r2->s_hd);
-
-    if (slen1 != slen2) {
-	bu_log("Error s_hd's size of region. r1: %d, r2: %d\n", slen1, slen2);
-	result = -1;
-	return result;
-    }
-
-    for (BU_LIST_FOR2(s1, s2, shell, &r1->s_hd, &r2->s_hd)) {
-	if (nmg_compare_shell(s1, s2) < 0) {
-	    result = -1;
-	}
-    }
-
-    /* Testing index of nmgregion */
-    if (r1->index != r2->index) {
-	bu_log("Error index of region. r1: %ld, r2: %ld\n", r1->index, r2->index);
-	result = -1;
-    }
+    nmg_ks(s1);
+    nmg_ks(s2);
 
     return result;
 }
 
 int
-test_nmg_clone_model(struct model *m1, struct model *m2)
+testcase_nmg_msv()
 {
     int result;
+    struct shell *s1;
+    struct shell *s2;
 
-    int rlen1;
-    int rlen2;
-    struct nmgregion *r1;
-    struct nmgregion *r2;
+    s1 = nmg_msv();
+    s2 = nmg_clone_shell(s1);
 
-    result = 0;
+    result = test_nmg_clone_shell(s1, s2);
 
-    /* Testing r_hd of model */
-    rlen1 = bu_list_len(&m1->r_hd);
-    rlen2 = bu_list_len(&m2->r_hd);
-
-    if (rlen1 != rlen2) {
-	bu_log("Error r_hd's size of model. m1: %d, m2: %d\n", rlen1, rlen2);
-	result = -1;
-	return result;
-    }
-
-    for (BU_LIST_FOR2(r1, r2, nmgregion, &m1->r_hd, &m2->r_hd)) {
-	if (nmg_compare_region(r1, r2) < 0) {
-	    result = -1;
-	}
-    }
-
-    /* Testing manifolds of model */
-    if (m1->manifolds != (char *)NULL && m2->manifolds != (char *)NULL) {
-	if (*m1->manifolds != *m2->manifolds) {
-	    bu_log("Error manifolds of model. m1: %ld, m2: %ld\n", *m1->manifolds, *m2->manifolds);
-	    result = -1;
-	}
-    } else {
-	if (m1->manifolds != m2->manifolds) {
-	    bu_log("Error manifolds of model. One is NULL, but other is not NULL\n");
-	    result = -1;
-	}
-    }
-
-    /* Testing index of model */
-    if (m1->index != m2->index) {
-	bu_log("Error index of model. m1: %ld, m2: %ld\n", m1->index, m2->index);
-	result = -1;
-    }
-
-    /* Testing maxindex of model */
-    if (m1->maxindex != m2->maxindex) {
-	bu_log("Error maxindex of model. m1: %ld, m2: %ld\n", m1->maxindex, m2->maxindex);
-	result = -1;
-    }
-
-    return result;
-}
-
-int
-testcase_nmg_mm()
-{
-    int result;
-    struct model *m1;
-    struct model *m2;
-
-    m1 = nmg_mm();
-    m2 = nmg_clone_model(m1);
-
-    result = test_nmg_clone_model(m1, m2);
-
-    nmg_km(m1);
-    nmg_km(m2);
-
-    return result;
-}
-
-int
-testcase_nmg_mmr()
-{
-    int result;
-    struct model *m1;
-    struct model *m2;
-
-    m1 = nmg_mmr();
-    m2 = nmg_clone_model(m1);
-
-    result = test_nmg_clone_model(m1, m2);
-
-    nmg_km(m1);
-    nmg_km(m2);
-
-    return result;
-}
-
-int
-testcase_nmg_mrsv()
-{
-    int result;
-    struct model *m1;
-    struct model *m2;
-
-    m1 = nmg_mmr();
-    nmg_mrsv(m1);
-    m2 = nmg_clone_model(m1);
-
-    result = test_nmg_clone_model(m1, m2);
-
-    nmg_km(m1);
-    nmg_km(m2);
+    nmg_ks(s1);
+    nmg_ks(s2);
 
     return result;
 }
@@ -459,16 +326,12 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }
 
-    if (testcase_nmg_mm() < 0) {
-	bu_exit(1, "Test Case by nmg_mm failed!\n");
+    if (testcase_nmg_ms() < 0) {
+	bu_exit(1, "Test Case by nmg_ms failed!\n");
     }
 
-    if (testcase_nmg_mmr() < 0) {
-	bu_exit(1, "Test Case by nmg_mmr failed!\n");
-    }
-
-    if (testcase_nmg_mrsv() < 0) {
-	bu_exit(1, "Test Case by nmg_mrsv failed!\n");
+    if (testcase_nmg_msv() < 0) {
+	bu_exit(1, "Test Case by nmg_msv failed!\n");
     }
 
     bu_log("All unit tests succeeded.\n");
