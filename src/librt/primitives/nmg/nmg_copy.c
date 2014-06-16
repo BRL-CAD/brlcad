@@ -667,7 +667,7 @@ nmg_clone_shell(const struct shell *original)
     genptr_t               *structArray;
     struct bn_tol           tolerance;
 
-    NMG_CK_MODEL(original);
+    NMG_CK_SHELL(original);
 
     structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
 
@@ -684,6 +684,9 @@ nmg_clone_shell(const struct shell *original)
     tolerance.para    = 1 - tolerance.perp;
 
     ret = (struct shell *)structArray[original->index];
+
+	if (newShell == NULL)
+		    newShell = nmg_construct_shell(originalShell, structArray);
 
     bu_free(structArray, "nmg_clone_shell() structArray");
 
