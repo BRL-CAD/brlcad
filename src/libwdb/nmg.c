@@ -40,16 +40,16 @@
 
 
 int
-mk_nmg(struct rt_wdb *filep, const char *name, struct model *m)
+mk_nmg(struct rt_wdb *filep, const char *name, struct shell *s)
 {
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     /* FIXME: wdb_export is documented as always free'ing the entity
      * passed to it.  that means this routine needs to make a copy of
      * the geometry.
      */
 
-    return wdb_export(filep, name, (genptr_t)m, ID_NMG, mk_conv2mm);
+    return wdb_export(filep, name, (genptr_t)s, ID_NMG, mk_conv2mm);
 }
 
 

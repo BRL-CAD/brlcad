@@ -602,7 +602,7 @@ WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_
  * 0 OK
  *
  */
-WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
+WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct shell *s );
 
 /**
  *

@@ -41,7 +41,6 @@
 
 
 static struct shell *s;
-static struct model *m;
 static struct bn_tol tol;
 
 
@@ -160,7 +159,6 @@ dump_patch(int (*patch)[4])
 int
 main(int argc, char **argv)
 {
-    struct nmgregion *r;
     char *id_name = "BRL-CAD t-NURBS NMG Example";
     char *tea_name = "UtahTeapot";
     char *uplot_name = "teapot.plot3";
@@ -200,11 +198,7 @@ main(int argc, char **argv)
 
     mk_id(outfp, id_name);
 
-    m = nmg_mm();
-    NMG_CK_MODEL(m);
-    r = nmg_mrsv(m);
-    NMG_CK_REGION(r);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
     NMG_CK_SHELL(s);
 
     /* Step through each patch and create a NMG TNURB face
@@ -216,15 +210,15 @@ main(int argc, char **argv)
     }
 
     /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &tol);
+    (void)nmg_shell_fuse(s, &tol);
 
     /* write NMG to output file */
-    (void)mk_nmg(outfp, tea_name, m);
+    (void)mk_nmg(outfp, tea_name, s);
     wdb_close(outfp);
 
-    /* Make a vlist drawing of the model */
+    /* Make a vlist drawing of the shell */
     BU_LIST_INIT(&vhead);
-    nmg_m_to_vlist(&vhead, m, 0);
+    nmg_s_to_vlist(&vhead, s, 0);
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
