@@ -43,7 +43,7 @@
 #include "bu.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm/dm-X.h"
+#include "dm/dm-osg.h"
 
 
 struct cmdtab {
@@ -82,7 +82,7 @@ struct plot_list{
 
 struct plot_list HeadPlot;
 
-int dm_type = DM_TYPE_X;
+int dm_type = DM_TYPE_OSG;
 
 
 /*

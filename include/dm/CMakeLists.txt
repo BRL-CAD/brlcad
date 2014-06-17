@@ -1,17 +1,11 @@
 set(dm_headers
   defines.h
   dm-Null.h
-  dm-X.h
-  dm-glx.h
-  dm-ogl.h
   dm-osg.h
   dm-pex.h
   dm-plot.h
   dm-ps.h
   dm-qt.h
-  dm-rtgl.h
-  dm-tk.h
-  dm-wgl.h
   dm_xvars.h
   )
 

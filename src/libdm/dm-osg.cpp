@@ -620,9 +620,6 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     privvars->mvars.bound = dmp->dm_bound;
     privvars->mvars.boundFlag = dmp->dm_boundFlag;
 
-    /* this is important so that osg_configureWin knows to set the font */
-    pubvars->fontstruct = NULL;
-
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin =

@@ -51,33 +51,10 @@ extern "C" {
 #include "dm.h"
 }
 
-#ifdef DM_X
-#  include "dm/dm_xvars.h"
-#  include <X11/Xutil.h>
-#  include "dm/dm-X.h"
-#endif /* DM_X */
-
-#ifdef DM_TK
-#  include "dm/dm_xvars.h"
-#  include "tk.h"
-#  include "dm/dm-tk.h"
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-ogl.h"
-#endif /* DM_OGL */
-
 #ifdef DM_OSG
 #  include "dm/dm_xvars.h"
 #  include "dm/dm-osg.h"
 #endif /* DM_OSG */
-
-#ifdef DM_WGL
-#  include "dm/dm_xvars.h"
-#  include <tkwinport.h>
-#  include "dm/dm-wgl.h"
-#endif /* DM_WGL */
 
 #ifdef USE_FBSERV
 #  include "fb.h"
@@ -136,51 +113,6 @@ dmo_openFb(struct dm_obj *dmop)
     }
 
     switch (dmop->dmo_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
-	    break;
-#endif
-
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
-	    break;
-#endif
-
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
 	    *dmop->dmo_fbs.fbs_fbp = osg_interface; /* struct copy */
@@ -198,30 +130,6 @@ dmo_openFb(struct dm_obj *dmop)
 			       dmop->dmo_dmp->dm_width,
 			       dmop->dmo_dmp->dm_height,
 			       ((struct osg_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->graphicsContext);
-	    break;
-#endif
-
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
 	    break;
 #endif
 	default: {

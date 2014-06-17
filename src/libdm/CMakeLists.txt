@@ -27,36 +27,6 @@ set(libdm_DEFINES "")
 
 # Set libdm compilation definitions
 get_property(libdm_DEFINES GLOBAL PROPERTY libdm_DEFINES)
-# Add the individual OS specific files and definitions
-if(WIN32 AND BRLCAD_ENABLE_OPENGL)
-  list(APPEND libdm_DEFINES DM_WGL IF_WGL)
-  set(dmw32_srcs dm-wgl.c)
-endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
-
-if(BRLCAD_ENABLE_X11)
-  set(DM_X_LIBS ${X11_LIBRARIES} ${X11_Xi_LIB})
-endif(BRLCAD_ENABLE_X11)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_X IF_X)
-  set(dmx11_srcs dm-X.c)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_OGL IF_OGL)
-  set(dmogl_srcs dm-ogl.c)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_RTGL)
-  list(APPEND libdm_DEFINES DM_RTGL IF_RTGL)
-  set(dmrtgl_srcs dm-rtgl.c)
-endif(BRLCAD_ENABLE_RTGL)
-
-if(BRLCAD_ENABLE_TK AND NOT WIN32)
-  list(APPEND libdm_DEFINES DM_TK IF_TK)
-  set(DM_TKLIB ${TCL_TK_LIBRARY})
-  set(dmtk_srcs dm-tk.c)
-endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
@@ -72,19 +42,14 @@ endif(BRLCAD_ENABLE_QT)
 if(BRLCAD_ENABLE_OSG)
   list(APPEND libdm_DEFINES DM_OSG IF_OSG)
   set(dmosg_srcs dm-osg.cpp)
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
+  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES} ${OPENGL_LIBRARY}  ${TCL_TK_LIBRARY})
 endif(BRLCAD_ENABLE_OSG)
 
 
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
-  ${dmx11_srcs}
-  ${dmw32_srcs}
-  ${dmogl_srcs}
   ${dmosg_srcs}
-  ${dmrtgl_srcs}
-  ${dmtk_srcs}
   ${dmqt_srcs}
   adc.c
   axes.c
@@ -120,13 +85,8 @@ if(BRLCAD_ENABLE_OSG)
 endif(BRLCAD_ENABLE_OSG)
 
 set(libdm_ignore_files
-  dm-wgl.c
-  dm-X.c
-  dm-ogl.c
   dm-osg.cpp
   dm-qt.cpp
-  dm-rtgl.c
-  dm-tk.c
   osg.cpp
   osg-test.cpp
   TODO

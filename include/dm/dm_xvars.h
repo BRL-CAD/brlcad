@@ -64,16 +64,16 @@ struct dm_xvars {
     Tk_Window xtkwin;
     int depth;
     Colormap cmap;
-#ifdef IF_WGL
+#ifdef _WIN32
     PIXELFORMATDESCRIPTOR *vip;
     HFONT fontstruct;
     HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
 #endif
-#if defined(DM_X) || defined (DM_OGL) || defined (DM_RTGL)
+#ifdef HAVE_X11_XLIB_H
     XVisualInfo *vip;
     XFontStruct *fontstruct;
 #endif
-#ifdef DM_TK
+#ifdef HAVE_TK
     int tkfontset;
     Tk_Font tkfontstruct;
 #endif

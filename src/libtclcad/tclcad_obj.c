@@ -62,42 +62,26 @@
 #include "ged.h"
 #include "dm/dm-Null.h"
 
-#ifdef DM_X
-#  ifdef WITH_TK
-#    include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
 #endif
+
+#ifdef HAVE_X11_XLIB_H
 #  include <X11/Xutil.h>
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-X.h"
-#endif /* DM_X */
-
-#ifdef DM_TK
-#  ifdef WITH_TK
-#    include "tk.h"
-#  endif
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-tk.h"
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-ogl.h"
-#endif /* DM_OGL */
+#endif /* X11 */
 
 #ifdef DM_OSG
 #  include "dm/dm_xvars.h"
 #  include "dm/dm-osg.h"
 #endif /* DM_OSG */
 
-#ifdef DM_WGL
-#  include <tkwinport.h>
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-wgl.h"
+#ifdef HAVE_TK
+#  ifdef _WIN32
+#    include <tkwinport.h>
+#  endif
 #endif /* DM_WGL */
 
-#ifdef DM_QT
-#  include "dm/dm_xvars.h"
-#endif /* DM_QT */
+#include "dm/dm_xvars.h"
 
 /* Private headers */
 #include "tclcad_private.h"

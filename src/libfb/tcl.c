@@ -73,23 +73,6 @@
 /* from libfb/fb_obj.c */
 extern int Fbo_Init(Tcl_Interp *interp);
 
-/* XXX -- At some point these routines should be moved to FBIO */
-#ifdef IF_WGL
-extern FBIO wgl_interface;
-static const char *wgl_device_name = "/dev/wgl";
-extern void wgl_configureWindow(FBIO *ifp, int width, int height);
-extern int wgl_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int wgl_refresh(FBIO *ifp, int x, int y, int w, int h);
-#endif
-
-#ifdef IF_OGL
-extern FBIO ogl_interface;
-static const char *ogl_device_name = "/dev/ogl";
-extern void ogl_configureWindow(FBIO *ifp, int width, int height);
-extern int ogl_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
-#endif
-
 #ifdef IF_OSG
 extern FBIO osg_interface;
 static const char *osg_device_name = "/dev/osg";
@@ -97,26 +80,6 @@ extern void osg_configureWindow(FBIO *ifp, int width, int height);
 extern int osg_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int osg_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
-
-#ifdef IF_X
-extern FBIO X24_interface;
-static const char *X_device_name = "/dev/X";
-extern void X24_configureWindow(FBIO *ifp, int width, int height);
-extern int X24_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int X24_refresh(FBIO *ifp, int x, int y, int w, int h);
-#endif
-
-#ifdef IF_TK
-extern FBIO tk_interface;
-static const char *tk_device_name = "/dev/tk";
-#if 0
-/*XXX TJM implement this interface */
-extern void tk_configureWindow(FBIO *ifp, int width, int height);
-extern int tk_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
-#endif
-#endif
-
 
 int
 #if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_OSG) && !defined(IF_TK)
@@ -139,94 +102,6 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	bu_log("fb_open_existing: failed to allocate ifp memory\n");
 	return TCL_ERROR;
     }
-
-#ifdef IF_X
-    if (BU_STR_EQUIV(argv[1], X_device_name)) {
-	found=1;
-	*ifp = X24_interface; /* struct copy */
-
-	ifp->if_name = (char *)malloc((unsigned)strlen(X_device_name) + 1);
-	bu_strlcpy(ifp->if_name, X_device_name, strlen(X_device_name)+1);
-
-	/* Mark OK by filling in magic number */
-	ifp->if_magic = FB_MAGIC;
-
-	if ((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
-	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
-	    free((void *) ifp);
-	    bu_log("fb_open_existing: failed to open X framebuffer\n");
-	    return TCL_ERROR;
-	}
-    }
-#endif  /* IF_X */
-
-#ifdef IF_TK
-#if 0
-/* XXX TJM implement tk_open_existing */
-    if (BU_STR_EQUIV(argv[1], tk_device_name)) {
-	found=1;
-	*ifp = tk_interface; /* struct copy */
-
-	ifp->if_name = malloc((unsigned)strlen(tk_device_name) + 1);
-	bu_strlcpy(ifp->if_name, tk_device_name, strlen(tk_device_name)+1);
-
-	/* Mark OK by filling in magic number */
-	ifp->if_magic = FB_MAGIC;
-
-	if ((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
-	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
-	    free((void *) ifp);
-	    bu_log("fb_open_existing: failed to open tk framebuffer\n");
-	    return TCL_ERROR;
-	}
-    }
-#endif
-#endif  /* IF_TK */
-
-#ifdef IF_WGL
-    if (BU_STR_EQUIV(argv[1], wgl_device_name)) {
-	found=1;
-	*ifp = wgl_interface; /* struct copy */
-
-	ifp->if_name = malloc((unsigned)strlen(wgl_device_name) + 1);
-	bu_strlcpy(ifp->if_name, wgl_device_name, strlen(wgl_device_name)+1);
-
-	/* Mark OK by filling in magic number */
-	ifp->if_magic = FB_MAGIC;
-
-	if ((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
-	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
-	    free((void *) ifp);
-	    bu_log("fb_open_existing: failed to open wgl framebuffer\n");
-	    return TCL_ERROR;
-	}
-    }
-#endif  /* IF_WGL */
-
-#ifdef IF_OGL
-    if (BU_STR_EQUIV(argv[1], ogl_device_name)) {
-	found=1;
-	*ifp = ogl_interface; /* struct copy */
-
-	ifp->if_name = (char *)malloc((unsigned)strlen(ogl_device_name) + 1);
-	bu_strlcpy(ifp->if_name, ogl_device_name, strlen(ogl_device_name)+1);
-
-	/* Mark OK by filling in magic number */
-	ifp->if_magic = FB_MAGIC;
-
-	if ((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
-	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
-	    free((void *) ifp);
-	    bu_log("fb_open_existing: failed to open ogl framebuffer\n");
-	    return TCL_ERROR;
-	}
-    }
-#endif  /* IF_OGL */
-
 #ifdef IF_OSG
     if (BU_STR_EQUIV(argv[1], osg_device_name)) {
 	found=1;
@@ -268,26 +143,10 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     free((void *) ifp);
 
     bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
-#ifdef IF_X
-    bu_vls_strcat(&vls, X_device_name);
-    bu_vls_strcat(&vls, "\n");
-#endif  /* IF_X */
-#ifdef IF_WGL
-    bu_vls_strcat(&vls, wgl_device_name);
-    bu_vls_strcat(&vls, "\n");
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    bu_vls_strcat(&vls, ogl_device_name);
-    bu_vls_strcat(&vls, "\n");
-#endif  /* IF_OGL */
 #ifdef IF_OSG
     bu_vls_strcat(&vls, osg_device_name);
     bu_vls_strcat(&vls, "\n");
 #endif  /* IF_OSG */
-#ifdef IF_TK
-    bu_vls_strcat(&vls, tk_device_name);
-    bu_vls_strcat(&vls, "\n");
-#endif  /* IF_TK */
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -322,35 +181,11 @@ fb_configureWindow(FBIO *ifp, int width, int height)
     if (!ifp || !ifp->if_name || width < 0 || height < 0) {
 	return;
     }
-
-#ifdef IF_X
-    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
-	X24_configureWindow(ifp, width, height);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
-	wgl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
-	ogl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_OGL */
 #ifdef IF_OSG
     if (!bu_strncmp(ifp->if_name, osg_device_name, strlen(osg_device_name))) {
 	osg_configureWindow(ifp, width, height);
     }
 #endif  /* IF_OSG */
-#ifdef IF_TK
-#if 0
-/* XXX TJM implement tk_configureWindow */
-    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
-	tk_configureWindow(ifp, width, height);
-    }
-#endif
-#endif  /* IF_TK */
 }
 
 
@@ -379,39 +214,12 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 	return TCL_OK;
     }
 
-#ifdef IF_X
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
-	status = X24_refresh(ifp, x, y, w, h);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
-	status = wgl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
-	status = ogl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_OGL */
 #ifdef IF_OSG
     status = -1;
     if (!bu_strncmp(ifp->if_name, osg_device_name, strlen(osg_device_name))) {
 	status = osg_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OSG */
-#ifdef IF_TK
-#if 0
-/* XXX TJM implement tk_refresh */
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
-	status = tk_refresh(ifp, x, y, w, h);
-    }
-#endif
-#endif  /* IF_TK */
 
     if (status < 0) {
 	return TCL_ERROR;

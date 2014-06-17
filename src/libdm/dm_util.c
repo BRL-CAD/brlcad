@@ -26,7 +26,31 @@
 
 #include "./dm_util.h"
 
-#if defined(DM_OGL) || defined(DM_WGL) || defined(DM_RTGL)
+#if defined(DM_OSG)
+
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ *  * parameter names that shadow system symbols.  protect the system
+ *   * symbols by redefining the parameters prior to header inclusion.
+ *    */
+#define j1 J1
+#define y1 Y1
+#define read rd
+#define index idx
+#define access acs
+#define remainder rem
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+#undef remainder
+#undef access
+#undef index
+#undef read
+#undef y1
+#undef j1
+
 int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
 {
