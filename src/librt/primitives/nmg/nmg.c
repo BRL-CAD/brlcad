@@ -310,7 +310,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *r points to shell that holds this tessellation.
  */
 int
 rt_nmg_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
@@ -2413,11 +2413,9 @@ rt_nmg_export5(
     double local2mm,
     const struct db_i *dbip)
 {
-    struct rt_comb_internal *comb;
     struct shell *s;
     unsigned char *dp;
     uint32_t **ptrs;
-    uint32_t **ptrs_single;
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;
     int kind_counts[NMG_N_KINDS];
@@ -2427,42 +2425,26 @@ rt_nmg_export5(
     int double_count;
     int i;
     int subscript, fastf_byte_count;
-    int maxindex_count;
-    int leaf_count;
-    struct rt_tree_array *leaf_array;
-    int start_index;
 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
-    comb = (struct rt_comb_internal *)ip->idb_ptr;
+    s = (struct shell *)ip->idb_ptr;
+    NMG_CK_SHELL(s);
 
-    maxindex_count = nmg_tree_maxindex_count(comb->tree);
-    leaf_count = nmg_tree_leaf_count(comb->tree);
-    leaf_array = nmg_tree_leaf_flatten(comb->tree, leaf_count);
-    ptrs = (uint32_t **)bu_calloc(maxindex_count + 1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
-    ecnt = (struct nmg_exp_counts *)bu_calloc(maxindex_count + 1, sizeof(struct nmg_exp_counts), "ecnt[]");
+    memset((char *)&cntbuf, 0, sizeof(cntbuf));
+    ptrs = nmg_s_struct_count(&cntbuf, s);
 
-    start_index = 0;
-
-    for (i = 0; i < leaf_count; i++)
-    {
-	s = leaf_array[i].tl_tree->tr_d.td_s;
-	ptrs_single = nmg_s_struct_count(&cntbuf, s);
-	memcpy(ptrs + start_index * sizeof(uint32_t *), ptrs_single, s->maxindex * sizeof(uint32_t *));
-	start_index += s->maxindex;
-    }
-
+    ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
+					      sizeof(struct nmg_exp_counts), "ecnt[]");
     for (i=0; i<NMG_N_KINDS; i++) {
 	kind_counts[i] = 0;
     }
-
     subscript = 1;
     double_count = 0;
     fastf_byte_count = 0;
-
-    for (i=0; i < maxindex_count; i++) {
+    for (i=0; i< s->maxindex; i++) {
 	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
@@ -2516,7 +2498,7 @@ rt_nmg_export5(
 	if (kind == NMG_KIND_NMGREGION_A ||
 	    kind == NMG_KIND_SHELL_A ||
 	    kind == NMG_KIND_LOOP_G) {
-	    for (i=0; i < maxindex_count; i++) {
+	    for (i=0; i<s->maxindex; i++) {
 		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
@@ -2524,7 +2506,7 @@ rt_nmg_export5(
 	    continue;
 	}
 
-	for (i=0; i< maxindex_count;i++) {
+	for (i=0; i< s->maxindex;i++) {
 	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
@@ -2535,20 +2517,20 @@ rt_nmg_export5(
     subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
     /* Now do some checking to make sure the world is not totally mad */
- //   for (i=0; i < maxindex_count; i++) {
-	//if (ptrs[i] == NULL) continue;
+    for (i=0; i<s->maxindex; i++) {
+	if (ptrs[i] == NULL) continue;
 
-	//if (nmg_index_of_struct(ptrs[i]) != i) {
-	//    bu_log("***ERROR, ptrs[%d]->index = %d\n",
-	//	   i, nmg_index_of_struct(ptrs[i]));
-	//}
-	//if (rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind) {
-	//    bu_log("***ERROR, ptrs[%d] kind(%d) != %d\n",
-	//	   i, rt_nmg_magic_to_kind(*ptrs[i]),
-	//	   ecnt[i].kind);
-	//}
+	if (nmg_index_of_struct(ptrs[i]) != i) {
+	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
+		   i, nmg_index_of_struct(ptrs[i]));
+	}
+	if (rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind) {
+	    bu_log("***ERROR, ptrs[%d] kind(%d) != %d\n",
+		   i, rt_nmg_magic_to_kind(*ptrs[i]),
+		   ecnt[i].kind);
+	}
 
- //   }
+    }
 
     tot_size = 0;
     for (i=0; i< NMG_N_KINDS; i++) {
@@ -2582,7 +2564,7 @@ rt_nmg_export5(
     }
     rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
-    for (i = maxindex_count-1;i >=0; i--) {
+    for (i = s->maxindex-1;i >=0; i--) {
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
@@ -2624,11 +2606,13 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_nmg_ifree(struct rt_db_internal *ip)
 {
-    struct rt_comb_internal *comb;
+    struct shell *s;
 
+    RT_CK_DB_INTERNAL(ip);
     if (ip->idb_ptr) {
-	comb = (struct rt_comb_internal *)ip->idb_ptr;
-	nmg_comb_free(comb);
+	s = (struct shell *)ip->idb_ptr;
+	NMG_CK_SHELL(s);
+	nmg_ks(s);
     }
 
     ip->idb_ptr = GENPTR_NULL;	/* sanity */

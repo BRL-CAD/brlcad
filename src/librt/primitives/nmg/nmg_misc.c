@@ -1748,9 +1748,8 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
  *	loop_g
  *	face_g
  *	shell_a
- *	nmgregion_a
  * The re-bounding must be performed in a bottom-up manner,
- * computing the loops first, and working up to the nmgregions.
+ * computing the loops.
  */
 void
 nmg_rebound(struct shell *s, const struct bn_tol *tol)

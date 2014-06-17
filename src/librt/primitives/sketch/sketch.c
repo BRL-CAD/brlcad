@@ -909,10 +909,10 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_sketch_tess(struct shell **UNUSED(s), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 

@@ -201,7 +201,6 @@ nmg_mvvu(uint32_t *upptr, struct shell *s)
  * 1 shell structure.
  *		The shell structure fu_hd references 12 faceuse structures.
  *		One for each side of each of the 6 faces of the cube.
- *		Also, r_p references the nmgregion.
  * 12 faceuse structures.
  *		Each faceuse structure lu_hd references 1 loopuse structure.
  *		Also, 1 face structure and 1 faceuse structure (its mate),
@@ -287,9 +286,6 @@ nmg_mvvu(uint32_t *upptr, struct shell *s)
  * 1 shell_a structure
  *		Each shell_a structure contains the bounding box for the
  *		shell.  It is referenced by 1 shell structure.
- * 1 nmgregion_a structure
- *		Each nmgregion_a structure contains the bounding box for the
- *		region.  It is referenced by 1 region structure.
  *
  */
 
@@ -1535,8 +1531,6 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
  *
  * Returns -
  * 0 If all is well
- * 1 If parent nmgregion is now empty.  While not "illegal",
- * an empty region is probably worthy of note.
  */
 int
 nmg_ks(struct shell *s)

@@ -721,7 +721,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
 int
-rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
+rt_nurb_tess(struct shell **, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
     return -1;
 }

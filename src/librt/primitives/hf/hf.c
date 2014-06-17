@@ -1894,10 +1894,10 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 /**
  * Returns -
  * -1 failure
- * 0 OK.  *r points to nmgregion that holds this tessellation.
+ * 0 OK.  *s points to shell that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hf_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
 
@@ -1905,8 +1905,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
+    if (s) NMG_CK_SHELL(s);
 
     return -1;
 }

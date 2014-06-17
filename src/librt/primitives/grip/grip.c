@@ -461,12 +461,11 @@ rt_grp_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_grp_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_grip_internal *gip;
 
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
+    if (s) NMG_CK_SHELL(s);
 
     RT_CK_DB_INTERNAL(ip);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
