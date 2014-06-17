@@ -101,8 +101,8 @@ static int
 editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_t pos_model, int newedge)
 {
     static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
-    short *edptr;		/* pointer to arb edit array */
-    short *final;		/* location of points to redo */
+    const short *edptr;		/* pointer to arb edit array */
+    const short *final;		/* location of points to redo */
     static int i;
     const int *iptr;
     int pflag = 0;

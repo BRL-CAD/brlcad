@@ -5416,11 +5416,11 @@ RT_EXPORT extern int rt_arb_edit(struct bu_vls		*error_msg_ret,
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 
 RT_EXPORT extern const int rt_arb_faces[5][24];
-RT_EXPORT extern short earb8[12][18];
-RT_EXPORT extern short earb7[12][18];
-RT_EXPORT extern short earb6[10][18];
-RT_EXPORT extern short earb5[9][18];
-RT_EXPORT extern short earb4[5][18];
+RT_EXPORT extern const short earb8[12][18];
+RT_EXPORT extern const short earb7[12][18];
+RT_EXPORT extern const short earb6[10][18];
+RT_EXPORT extern const short earb5[9][18];
+RT_EXPORT extern const short earb4[5][18];
 
 RT_EXPORT extern const short arb8_edge_vertex_mapping[12][2];
 RT_EXPORT extern const short arb7_edge_vertex_mapping[12][2];

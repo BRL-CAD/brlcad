@@ -1994,8 +1994,8 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    const struct bn_tol *tol)
 {
     int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
-    short *edptr;		/* pointer to arb edit array */
-    short *final;		/* location of points to redo */
+    const short *edptr;		/* pointer to arb edit array */
+    const short *final;		/* location of points to redo */
     int i;
     const int *iptr;
     int edit_class = RT_ARB_EDIT_EDGE;
