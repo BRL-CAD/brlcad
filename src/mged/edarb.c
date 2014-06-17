@@ -275,13 +275,9 @@ editarb(vect_t pos_model)
 int
 f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    int i, j;
     static int face;
-    static int pt[4];
-    static int prod;
     static fastf_t dist;
-    struct rt_arb_internal larb;	/* local copy of arb for new way */
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    struct rt_arb_internal *arb;
 
     CHECK_DBI_NULL;
 
@@ -321,154 +317,13 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* convert from the local unit (as input) to the base unit */
     dist = dist * es_mat[15] * local2base;
 
-    memcpy((char *)&larb, (char *)es_int.idb_ptr, sizeof(struct rt_arb_internal));
+    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
 
-    if ((es_type == ARB6 || es_type == ARB4) && face < 1000) {
-	/* 3 point face */
-	pt[0] = face / 100;
-	i = face - (pt[0]*100);
-	pt[1] = i / 10;
-	pt[2] = i - (pt[1]*10);
-	pt[3] = 1;
-    } else {
-	pt[0] = face / 1000;
-	i = face - (pt[0]*1000);
-	pt[1] = i / 100;
-	i = i - (pt[1]*100);
-	pt[2] = i / 10;
-	pt[3] = i - (pt[2]*10);
-    }
-
-    /* user can input face in any order - will use product of
-     * face points to distinguish faces:
-     *    product       face
-     *       24         1234 for ARB8
-     *     1680         5678 for ARB8
-     *      252         2367 for ARB8
-     *      160         1548 for ARB8
-     *      672         4378 for ARB8
-     *       60         1256 for ARB8
-     *	     10	         125 for ARB6
-     *	     72	         346 for ARB6
-     * --- special case to make ARB6 from ARB4
-     * ---   provides easy way to build ARB6's
-     *        6	         123 for ARB4
-     *	      8	         124 for ARB4
-     *	     12	         134 for ARB4
-     *	     24	         234 for ARB4
-     */
-    prod = 1;
-    for (i = 0; i <= 3; i++) {
-	prod *= pt[i];
-	if (es_type == ARB6 && pt[i] == 6)
-	    pt[i]++;
-	if (es_type == ARB4 && pt[i] == 4)
-	    pt[i]++;
-	pt[i]--;
-	if (pt[i] > 7) {
-	    Tcl_AppendResult(interp, "bad face: ", argv[1], "\n", (char *)NULL);
-	    return TCL_ERROR;
-	}
-    }
-
-    /* find plane containing this face */
-    if (bn_mk_plane_3pts(es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
-			 larb.pt[pt[2]], &mged_tol)) {
-	Tcl_AppendResult(interp, "face: ", argv[1], " is not a plane\n", (char *)NULL);
+    if (arb_extrude(arb, face, dist, &mged_tol, es_peqn)) {
+	Tcl_AppendResult(interp, "Error extruding ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
-
-    /* get normal vector of length == dist */
-    for (i = 0; i < 3; i++)
-	es_peqn[6][i] *= dist;
-
-    /* protrude the selected face */
-    switch (prod) {
-
-	case 24:   /* protrude face 1234 */
-	    if (es_type == ARB6) {
-		Tcl_AppendResult(interp, "ARB6: extrusion of face ", argv[1],
-				 " not allowed\n", (char *)NULL);
-		return TCL_ERROR;
-	    }
-	    if (es_type == ARB4)
-		goto a4toa6;	/* extrude face 234 of ARB4 to make ARB6 */
-
-	    for (i = 0; i < 4; i++) {
-		j = i + 4;
-		VADD2(larb.pt[j], larb.pt[i], es_peqn[6]);
-	    }
-	    break;
-
-	case 6:		/* extrude ARB4 face 123 to make ARB6 */
-	case 8:		/* extrude ARB4 face 124 to make ARB6 */
-	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
-    a4toa6:
-	    ext4to6(pt[0], pt[1], pt[2], &larb, es_peqn);
-	    es_type = ARB6;
-	    sedit_menu();
-	    break;
-
-	case 1680:   /* protrude face 5678 */
-	    for (i = 0; i < 4; i++) {
-		j = i + 4;
-		VADD2(larb.pt[i], larb.pt[j], es_peqn[6]);
-	    }
-	    break;
-
-	case 60:   /* protrude face 1256 */
-	case 10:   /* extrude face 125 of ARB6 */
-	    VADD2(larb.pt[3], larb.pt[0], es_peqn[6]);
-	    VADD2(larb.pt[2], larb.pt[1], es_peqn[6]);
-	    VADD2(larb.pt[7], larb.pt[4], es_peqn[6]);
-	    VADD2(larb.pt[6], larb.pt[5], es_peqn[6]);
-	    break;
-
-	case 672:	/* protrude face 4378 */
-	case 72:	/* extrude face 346 of ARB6 */
-	    VADD2(larb.pt[0], larb.pt[3], es_peqn[6]);
-	    VADD2(larb.pt[1], larb.pt[2], es_peqn[6]);
-	    VADD2(larb.pt[5], larb.pt[6], es_peqn[6]);
-	    VADD2(larb.pt[4], larb.pt[7], es_peqn[6]);
-	    break;
-
-	case 252:   /* protrude face 2367 */
-	    VADD2(larb.pt[0], larb.pt[1], es_peqn[6]);
-	    VADD2(larb.pt[3], larb.pt[2], es_peqn[6]);
-	    VADD2(larb.pt[4], larb.pt[5], es_peqn[6]);
-	    VADD2(larb.pt[7], larb.pt[6], es_peqn[6]);
-	    break;
-
-	case 160:   /* protrude face 1548 */
-	    VADD2(larb.pt[1], larb.pt[0], es_peqn[6]);
-	    VADD2(larb.pt[5], larb.pt[4], es_peqn[6]);
-	    VADD2(larb.pt[2], larb.pt[3], es_peqn[6]);
-	    VADD2(larb.pt[6], larb.pt[7], es_peqn[6]);
-	    break;
-
-	case 120:
-	case 180:
-	    Tcl_AppendResult(interp, "ARB6: extrusion of face ", argv[1],
-			     " not allowed\n", (char *)NULL);
-	    return TCL_ERROR;
-
-	default:
-	    Tcl_AppendResult(interp, "bad face: ", argv[1], "\n", (char *)NULL);
-	    return TCL_ERROR;
-    }
-
-    /* redo the plane equations */
-    if (rt_arb_calc_planes(&error_msg, &larb, es_type, es_peqn, &mged_tol)) {
-	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
-			 "Cannot calculate new plane equations for faces\n",
-			 (char *)NULL);
-	bu_vls_free(&error_msg);
-	return TCL_ERROR;
-    }
-    bu_vls_free(&error_msg);
-
-    /* copy local copy back to original */
-    memcpy((char *)es_int.idb_ptr, (char *)&larb, sizeof(struct rt_arb_internal));
 
     /* draw the updated solid */
     replot_editing_solid();

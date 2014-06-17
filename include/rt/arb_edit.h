@@ -31,6 +31,7 @@
 
 #include "common.h"
 #include "bn.h"
+#include "db.h"
 #include "rtgeom.h"
 
 __BEGIN_DECLS
@@ -408,6 +409,12 @@ mv_edge(struct rt_arb_internal *arb,
 	const struct bn_tol *tol,
        	fastf_t peqn[7][4]);
 
+/* Extrude an arb face */
+RT_EXPORT extern int
+arb_extrude(struct rt_arb_internal *arb,
+	int face, fastf_t dist,
+	const struct bn_tol *tol,
+	fastf_t peqn[7][4]);
 
 
 __END_DECLS

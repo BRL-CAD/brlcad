@@ -243,13 +243,9 @@ edarb_extrude(void *data, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
-    int i, j;
     int face;
-    int pt[4];
-    int prod;
     fastf_t dist;
     fastf_t peqn[7][4];
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     static const char *usage = "arb face distance";
 
     /* must be wanting help */
@@ -290,154 +286,11 @@ edarb_extrude(void *data, int argc, const char *argv[])
     /* convert from the local unit (as input) to the base unit */
     dist = dist * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->ged_wdbp->wdb_tol)) {
-	bu_vls_printf(gedp->ged_result_str, "%s. Cannot calculate plane equations for faces\n", bu_vls_addr(&error_msg));
+    if (arb_extrude(arb, face, dist, &gedp->ged_wdbp->wdb_tol, peqn)) {
+	bu_vls_printf(gedp->ged_result_str, "ARB%d: error extruding face\n", type);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-
-    if ((type == ARB6 || type == ARB4) && face < 1000) {
-	/* 3 point face */
-	pt[0] = face / 100;
-	i = face - (pt[0]*100);
-	pt[1] = i / 10;
-	pt[2] = i - (pt[1]*10);
-	pt[3] = 1;
-    } else {
-	pt[0] = face / 1000;
-	i = face - (pt[0]*1000);
-	pt[1] = i / 100;
-	i = i - (pt[1]*100);
-	pt[2] = i / 10;
-	pt[3] = i - (pt[2]*10);
-    }
-
-    /* user can input face in any order - will use product of
-     * face points to distinguish faces:
-     *    product       face
-     *       24         1234 for ARB8
-     *     1680         5678 for ARB8
-     *      252         2367 for ARB8
-     *      160         1548 for ARB8
-     *      672         4378 for ARB8
-     *       60         1256 for ARB8
-     *	     10	         125 for ARB6
-     *	     72	         346 for ARB6
-     * --- special case to make ARB6 from ARB4
-     * ---   provides easy way to build ARB6's
-     *        6	         123 for ARB4
-     *	      8	         124 for ARB4
-     *	     12	         134 for ARB4
-     *	     24	         234 for ARB4
-     */
-    prod = 1;
-    for (i = 0; i <= 3; i++) {
-	prod *= pt[i];
-	if (type == ARB6 && pt[i] == 6)
-	    pt[i]++;
-	if (type == ARB4 && pt[i] == 4)
-	    pt[i]++;
-	pt[i]--;
-	if (pt[i] > 7) {
-	    bu_vls_printf(gedp->ged_result_str, "bad face: %s\n", argv[3]);
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
-    }
-
-    /* find plane containing this face */
-    if (bn_mk_plane_3pts(peqn[6], arb->pt[pt[0]], arb->pt[pt[1]],
-			 arb->pt[pt[2]], &gedp->ged_wdbp->wdb_tol)) {
-	bu_vls_printf(gedp->ged_result_str, "face: %s is not a plane\n", argv[3]);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    /* get normal vector of length == dist */
-    for (i = 0; i < 3; i++)
-	peqn[6][i] *= dist;
-
-    /* protrude the selected face */
-    switch (prod) {
-
-	case 24:   /* protrude face 1234 */
-	    if (type == ARB6) {
-		bu_vls_printf(gedp->ged_result_str, "ARB6: extrusion of face %s not allowed\n", argv[3]);
-		return GED_ERROR;
-	    }
-	    if (type == ARB4)
-		goto a4toa6;	/* extrude face 234 of ARB4 to make ARB6 */
-
-	    for (i = 0; i < 4; i++) {
-		j = i + 4;
-		VADD2(arb->pt[j], arb->pt[i], peqn[6]);
-	    }
-	    break;
-
-	case 6:		/* extrude ARB4 face 123 to make ARB6 */
-	case 8:		/* extrude ARB4 face 124 to make ARB6 */
-	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
-    a4toa6:
-	    ext4to6(pt[0], pt[1], pt[2], arb, peqn);
-	    type = ARB6;
-	    break;
-
-	case 1680:   /* protrude face 5678 */
-	    for (i = 0; i < 4; i++) {
-		j = i + 4;
-		VADD2(arb->pt[i], arb->pt[j], peqn[6]);
-	    }
-	    break;
-
-	case 60:   /* protrude face 1256 */
-	case 10:   /* extrude face 125 of ARB6 */
-	    VADD2(arb->pt[3], arb->pt[0], peqn[6]);
-	    VADD2(arb->pt[2], arb->pt[1], peqn[6]);
-	    VADD2(arb->pt[7], arb->pt[4], peqn[6]);
-	    VADD2(arb->pt[6], arb->pt[5], peqn[6]);
-	    break;
-
-	case 672:	/* protrude face 4378 */
-	case 72:	/* extrude face 346 of ARB6 */
-	    VADD2(arb->pt[0], arb->pt[3], peqn[6]);
-	    VADD2(arb->pt[1], arb->pt[2], peqn[6]);
-	    VADD2(arb->pt[5], arb->pt[6], peqn[6]);
-	    VADD2(arb->pt[4], arb->pt[7], peqn[6]);
-	    break;
-
-	case 252:   /* protrude face 2367 */
-	    VADD2(arb->pt[0], arb->pt[1], peqn[6]);
-	    VADD2(arb->pt[3], arb->pt[2], peqn[6]);
-	    VADD2(arb->pt[4], arb->pt[5], peqn[6]);
-	    VADD2(arb->pt[7], arb->pt[6], peqn[6]);
-	    break;
-
-	case 160:   /* protrude face 1548 */
-	    VADD2(arb->pt[1], arb->pt[0], peqn[6]);
-	    VADD2(arb->pt[5], arb->pt[4], peqn[6]);
-	    VADD2(arb->pt[2], arb->pt[3], peqn[6]);
-	    VADD2(arb->pt[6], arb->pt[7], peqn[6]);
-	    break;
-
-	case 120:
-	case 180:
-	    bu_vls_printf(gedp->ged_result_str, "ARB6: extrusion of face %s not allowed\n", argv[3]);
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad face: %s\n", argv[3]);
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-    }
-
-    /* redo the plane equations */
-    if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->ged_wdbp->wdb_tol)) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&error_msg));
-	bu_vls_free(&error_msg);
-	return TCL_ERROR;
-    }
-    bu_vls_free(&error_msg);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     rt_db_free_internal(&intern);
