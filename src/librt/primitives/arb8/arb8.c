@@ -61,6 +61,7 @@
 #include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"
+#include "rt/arb_edit.h"
 #include "raytrace.h"
 #include "nurb.h"
 
