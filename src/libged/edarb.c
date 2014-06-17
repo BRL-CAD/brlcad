@@ -32,32 +32,6 @@
 #include "ged_private.h"
 
 
-/* EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
- * to produce ARB6
- */
-static void
-ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb, fastf_t peqn[7][4])
-{
-    point_t pts[8];
-    int i;
-
-    VMOVE(pts[0], arb->pt[pt1]);
-    VMOVE(pts[1], arb->pt[pt2]);
-    VMOVE(pts[4], arb->pt[pt3]);
-    VMOVE(pts[5], arb->pt[pt3]);
-
-    /* extrude "distance" to get remaining points */
-    VADD2(pts[2], pts[1], &peqn[6][0]);
-    VADD2(pts[3], pts[0], &peqn[6][0]);
-    VADD2(pts[6], pts[4], &peqn[6][0]);
-    VMOVE(pts[7], pts[6]);
-
-    /* copy to the original record */
-    for (i=0; i<8; i++)
-	VMOVE(arb->pt[i], pts[i]);
-}
-
-
 /* MV_EDGE: Moves an arb edge (end1, end2) with bounding planes bp1
  * and bp2 through point "thru".  The edge has (non-unit) slope "dir".
  * Note that the fact that the normals here point in rather than out
@@ -108,6 +82,11 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
     int pflag = 0;
     fastf_t peqn[7][4];
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const short earb4[5][18] = earb4_edit_array;
 
     if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->ged_wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s. Cannot calculate plane equations for faces\n", bu_vls_addr(&error_msg));
@@ -212,11 +191,12 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
 	}
     }
     if (newp == 8) {
+	const int arb_faces[5][24] = rt_arb_faces;
 	/* special...redo next planes using pts defined in faces */
 	for (i=0; i<3; i++) {
 	    if ((newp = *edptr++) == -1)
 		break;
-	    iptr = &rt_arb_faces[type-4][4*newp];
+	    iptr = &arb_faces[type-4][4*newp];
 	    p1 = *iptr++;
 	    p2 = *iptr++;
 	    p3 = *iptr++;

@@ -42,11 +42,8 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-void ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb), old_ext4to6();
-
 extern struct rt_db_internal es_int;
 extern struct rt_db_internal es_int_orig;
-
 
 int newedge;
 
@@ -69,6 +66,11 @@ editarb(vect_t pos_model)
     static int i;
     const int *iptr;
     struct rt_arb_internal *arb;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const short earb4[5][18] = earb4_edit_array;
 
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -188,10 +190,11 @@ editarb(vect_t pos_model)
     }
     if (newp == 8) {
 	/* special...redo next planes using pts defined in faces */
+	const int local_arb_faces[5][24] = rt_arb_faces;
 	for (i=0; i<3; i++) {
 	    if ((newp = *edptr++) == -1)
 		break;
-	    iptr = &rt_arb_faces[es_type-4][4*newp];
+	    iptr = &local_arb_faces[es_type-4][4*newp];
 	    p1 = *iptr++;
 	    p2 = *iptr++;
 	    p3 = *iptr++;
@@ -431,7 +434,7 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	case 8:		/* extrude ARB4 face 124 to make ARB6 */
 	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
     a4toa6:
-	    ext4to6(pt[0], pt[1], pt[2], &larb);
+	    ext4to6(pt[0], pt[1], pt[2], &larb, es_peqn);
 	    es_type = ARB6;
 	    sedit_menu();
 	    break;
@@ -753,33 +756,6 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     sedit();
     return TCL_OK;
 }
-
-
-/* EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
- * to produce ARB6
- */
-void
-ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb)
-{
-    point_t pts[8];
-    int i;
-
-    VMOVE(pts[0], arb->pt[pt1]);
-    VMOVE(pts[1], arb->pt[pt2]);
-    VMOVE(pts[4], arb->pt[pt3]);
-    VMOVE(pts[5], arb->pt[pt3]);
-
-    /* extrude "distance" to get remaining points */
-    VADD2(pts[2], pts[1], &es_peqn[6][0]);
-    VADD2(pts[3], pts[0], &es_peqn[6][0]);
-    VADD2(pts[6], pts[4], &es_peqn[6][0]);
-    VMOVE(pts[7], pts[6]);
-
-    /* copy to the original record */
-    for (i=0; i<8; i++)
-	VMOVE(arb->pt[i], pts[i]);
-}
-
 
 /* Permute command - permute the vertex labels of an ARB
  * Format: permute tuple */

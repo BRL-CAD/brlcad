@@ -37,6 +37,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"
+#include "rt/arb_edit.h"
 #include "dg.h"
 #include "nurb.h"
 #include "wdb.h"
@@ -738,6 +739,11 @@ set_e_axes_pos(int both)
 {
     int i;
     struct dm_list *dmlp;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const int local_arb_faces[5][24] = rt_arb_faces;
 
     update_views = 1;
     switch (es_int.idb_type) {
@@ -788,19 +794,19 @@ set_e_axes_pos(int both)
 		    case ECMD_ARB_MOVE_FACE:
 			switch (es_type) {
 			    case ARB4:
-				i = rt_arb_faces[0][es_menu * 4];
+				i = local_arb_faces[0][es_menu * 4];
 				break;
 			    case ARB5:
-				i = rt_arb_faces[1][es_menu * 4];
+				i = local_arb_faces[1][es_menu * 4];
 				break;
 			    case ARB6:
-				i = rt_arb_faces[2][es_menu * 4];
+				i = local_arb_faces[2][es_menu * 4];
 				break;
 			    case ARB7:
-				i = rt_arb_faces[3][es_menu * 4];
+				i = local_arb_faces[3][es_menu * 4];
 				break;
 			    case ARB8:
-				i = rt_arb_faces[4][es_menu * 4];
+				i = local_arb_faces[4][es_menu * 4];
 				break;
 			    default:
 				i = 0;
