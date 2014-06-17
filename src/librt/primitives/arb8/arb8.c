@@ -158,7 +158,7 @@ const struct bu_structparse rt_arb_parse[] = {
 };
 
 
-short local_arb6_edge_vertex_mapping[10][2] = {
+const short local_arb6_edge_vertex_mapping[10][2] = {
     {0, 1},	/* edge 12 */
     {1, 2},	/* edge 23 */
     {2, 3},	/* edge 34 */
@@ -172,7 +172,7 @@ short local_arb6_edge_vertex_mapping[10][2] = {
 };
 
 
-short local_arb4_edge_vertex_mapping[6][2] = {
+const short local_arb4_edge_vertex_mapping[6][2] = {
     {0, 1},	/* edge 12 */
     {1, 2},	/* edge 23 */
     {2, 0},	/* edge 31 */
@@ -2264,7 +2264,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
 
 int
-rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
+rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])[2])
 {
     size_t edge_count = 0;
     int arb_type;
@@ -2328,7 +2328,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 {
     int i;
     fastf_t dist=MAX_FASTF, tmp_dist;
-    short (*edge_list)[2] = {0};
+    const short (*edge_list)[2] = {0};
     int edge_count = 0;
     struct bn_tol tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;

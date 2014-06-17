@@ -5422,11 +5422,11 @@ RT_EXPORT extern short earb6[10][18];
 RT_EXPORT extern short earb5[9][18];
 RT_EXPORT extern short earb4[5][18];
 
-RT_EXPORT extern short arb8_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb7_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb6_edge_vertex_mapping[10][2];
-RT_EXPORT extern short arb5_edge_vertex_mapping[9][2];
-RT_EXPORT extern short arb4_edge_vertex_mapping[5][2];
+RT_EXPORT extern const short arb8_edge_vertex_mapping[12][2];
+RT_EXPORT extern const short arb7_edge_vertex_mapping[12][2];
+RT_EXPORT extern const short arb6_edge_vertex_mapping[10][2];
+RT_EXPORT extern const short arb5_edge_vertex_mapping[9][2];
+RT_EXPORT extern const short arb4_edge_vertex_mapping[5][2];
 
 /* epa.c */
 RT_EXPORT extern void rt_ell(fastf_t *ov,

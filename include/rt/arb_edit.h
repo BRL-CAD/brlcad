@@ -90,7 +90,7 @@ short earb8[12][18] = {
     {3,7, 0,1, 2,0,3,7, 5,2,3,7, -1,0,0,0, 4,6},	/* edge 48 */
 };
 
-short arb8_edge_vertex_mapping[12][2] = {
+const short arb8_edge_vertex_mapping[12][2] = {
     {0,1},	/* edge 12 */
     {1,2},	/* edge 23 */
     {2,3},	/* edge 34 */
@@ -123,7 +123,7 @@ short earb7[12][18] = {
     {-1,-1, -1,-1, 5,2,3,4, 4,0,1,4, 8,2,1,-1, 6,5},	/* point 5 */
 };
 
-short arb7_edge_vertex_mapping[12][2] = {
+const short arb7_edge_vertex_mapping[12][2] = {
     {0,1},	/* edge 12 */
     {1,2},	/* edge 23 */
     {2,3},	/* edge 34 */
@@ -154,7 +154,7 @@ short earb6[10][18] = {
     {-1,-1, -1,-1, 2,0,3,6, 1,1,2,6, 4,2,3,6, 4,-1},	/* point 6 */
 };
 
-short arb6_edge_vertex_mapping[10][2] = {
+const short arb6_edge_vertex_mapping[10][2] = {
     {0,1},	/* edge 12 */
     {1,2},	/* edge 23 */
     {2,3},	/* edge 34 */
@@ -182,7 +182,7 @@ short earb5[9][18] = {
     {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 5 */
 };
 
-short arb5_edge_vertex_mapping[9][2] = {
+const short arb5_edge_vertex_mapping[9][2] = {
     {0,1},	/* edge 12 */
     {1,2},	/* edge 23 */
     {2,3},	/* edge 34 */
@@ -205,7 +205,7 @@ short earb4[5][18] = {
     {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
 };
 
-short arb4_edge_vertex_mapping[5][2] = {
+const short arb4_edge_vertex_mapping[5][2] = {
     {0,0},	/* point 1 */
     {1,1},	/* point 2 */
     {2,2},	/* point 3 */
