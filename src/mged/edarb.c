@@ -153,8 +153,11 @@ editarb(vect_t pos_model)
 	bp2 = *edptr++;
 
 	/* move the edge */
-	if (mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir))
+	RT_ARB_CK_MAGIC((struct rt_arb_internal *)es_int.idb_ptr);
+	if (mv_edge((struct rt_arb_internal *)es_int.idb_ptr, pos_model, bp1, bp2, pt1, pt2, edge_dir, &mged_tol, es_peqn)){
+	    Tcl_AppendResult(INTERP, "edge (direction) parallel to face normal\n", (char *)NULL);
 	    goto err;
+	}
     }
 
     /* editing is done - insure planar faces */
@@ -266,39 +269,6 @@ editarb(vect_t pos_model)
 
     return 1;		/* BAD */
 }
-
-
-/* MV_EDGE: Moves an arb edge (end1, end2) with bounding planes bp1
- * and bp2 through point "thru".  The edge has (non-unit) slope "dir".
- * Note that the fact that the normals here point in rather than out
- * makes no difference for computing the correct intercepts.  After
- * the intercepts are found, they should be checked against the other
- * faces to make sure that they are always "inside".
- */
-int
-mv_edge(
-    vect_t thru,
-    int bp1, int bp2, int end1, int end2,
-    const vect_t dir)
-{
-    struct rt_arb_internal *arb;
-    fastf_t t1, t2;
-
-    if (bn_isect_line3_plane(&t1, thru, dir, es_peqn[bp1], &mged_tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, es_peqn[bp2], &mged_tol) < 0) {
-	Tcl_AppendResult(INTERP, "edge (direction) parallel to face normal\n", (char *)NULL);
-	return 1;
-    }
-
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
-    RT_ARB_CK_MAGIC(arb);
-
-    VJOIN1(arb->pt[end1], thru, t1, dir);
-    VJOIN1(arb->pt[end2], thru, t2, dir);
-
-    return 0;
-}
-
 
 /* Extrude command - project an arb face */
 /* Format: extrude face distance */

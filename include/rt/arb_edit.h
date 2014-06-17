@@ -30,6 +30,7 @@
 #define ARB_EDIT_H
 
 #include "common.h"
+#include "bn.h"
 #include "rtgeom.h"
 
 __BEGIN_DECLS
@@ -389,6 +390,25 @@ __BEGIN_DECLS
  */
 RT_EXPORT extern void
 ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb, fastf_t peqn[7][4]);
+
+
+/* MV_EDGE: Moves an arb edge (end1, end2) with bounding planes bp1
+ * and bp2 through point "thru".  The edge has (non-unit) slope "dir".
+ * Note that the fact that the normals here point in rather than out
+ * makes no difference for computing the correct intercepts.  After
+ * the intercepts are found, they should be checked against the other
+ * faces to make sure that they are always "inside".
+ */
+RT_EXPORT extern int
+mv_edge(struct rt_arb_internal *arb,
+	const vect_t thru,
+	const int bp1, const int bp2,
+	const int end1, const int end2,
+	const vect_t dir,
+	const struct bn_tol *tol,
+       	fastf_t peqn[7][4]);
+
+
 
 __END_DECLS
 

@@ -57,7 +57,27 @@ ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb, fastf_t peqn[7][
 	VMOVE(arb->pt[i], pts[i]);
 }
 
+int
+mv_edge(struct rt_arb_internal *arb,
+	const vect_t thru,
+	const int bp1, const int bp2,
+	const int end1, const int end2,
+	const vect_t dir,
+	const struct bn_tol *tol,
+       	fastf_t peqn[7][4])
+{
+    fastf_t t1, t2;
 
+    if (bn_isect_line3_plane(&t1, thru, dir, peqn[bp1], tol) < 0 ||
+	bn_isect_line3_plane(&t2, thru, dir, peqn[bp2], tol) < 0) {
+	return 1;
+    }
+
+    VJOIN1(arb->pt[end1], thru, t1, dir);
+    VJOIN1(arb->pt[end2], thru, t2, dir);
+
+    return 0;
+}
 
 /** @} */
 

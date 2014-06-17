@@ -522,7 +522,6 @@ void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(vect_t pos_model);
-int mv_edge(vect_t thru, int bp1, int bp2, int end1, int end2, const vect_t dir);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */

@@ -31,37 +31,6 @@
 #include "rt/arb_edit.h"
 #include "ged_private.h"
 
-
-/* MV_EDGE: Moves an arb edge (end1, end2) with bounding planes bp1
- * and bp2 through point "thru".  The edge has (non-unit) slope "dir".
- * Note that the fact that the normals here point in rather than out
- * makes no difference for computing the correct intercepts.  After
- * the intercepts are found, they should be checked against the other
- * faces to make sure that they are always "inside".
- */
-static int
-mv_edge(struct ged *gedp,
-	struct rt_arb_internal *arb,
-	vect_t thru,
-	int bp1, int bp2,
-	int end1, int end2,
-	const vect_t dir, fastf_t peqn[7][4])
-{
-    fastf_t t1, t2;
-
-    if (bn_isect_line3_plane(&t1, thru, dir, peqn[bp1], &gedp->ged_wdbp->wdb_tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, peqn[bp2], &gedp->ged_wdbp->wdb_tol) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "edge (direction) parallel to face normal\n");
-	return 1;
-    }
-
-    VJOIN1(arb->pt[end1], thru, t1, dir);
-    VJOIN1(arb->pt[end2], thru, t2, dir);
-
-    return 0;
-}
-
-
 /*
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is
@@ -157,8 +126,10 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
 	bp2 = *edptr++;
 
 	/* move the edge */
-	if (mv_edge(gedp, arb, pos_model, bp1, bp2, pt1, pt2, edge_dir, peqn))
+	if (mv_edge(arb, pos_model, bp1, bp2, pt1, pt2, edge_dir ,&gedp->ged_wdbp->wdb_tol, peqn)) {
+	    bu_vls_printf(gedp->ged_result_str, "edge (direction) parallel to face normal\n");
 	    goto err;
+	}
     }
 
     /* editing is done - insure planar faces */
