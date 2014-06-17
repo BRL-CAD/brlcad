@@ -17,11 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup arb_edit */
+/** @{ */
 /** @file arb_edit.h
  *
+ * @brief
  * Editing operations for arb primitives.
  *
  */
+
+#ifndef ARB_EDIT_H
+#define ARB_EDIT_H
+
+#include "common.h"
+
+__BEGIN_DECLS
+
+#ifndef RT_EXPORT
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
+#  else
+#    define RT_EXPORT
+#  endif
+#endif
 
 /**
  * face definitions for each arb type
@@ -191,29 +213,19 @@ short arb4_edge_vertex_mapping[5][2] = {
     {4,4},	/* point 4 */
 };
 
-
 #if 0
 /**
- * Compare three database instances.
- *
- * This does a "3-way" diff to identify changes in the left and
- * right databases relative to the ancestor database, and provides
- * functional hooks for the various cases.
- *
- * Returns an int with bit flags set according to the above
- * diff3 categories.
- *
- * Negative returns indicate an error.
+ * EXT4TO6():   extrudes face pt1 pt2 pt3 of an ARB4 "distance"
+ * to produce ARB6
  */
-RT_EXPORT extern int
-db_diff3(const struct db_i *dbip_left,
-	const struct db_i *dbip_ancestor,
-	const struct db_i *dbip_right,
-	const struct bn_tol *diff_tol,
-	db_compare_criteria_t flags,
-	struct bu_ptbl *diff3_results);
+RT_EXPORT extern void
+ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb, fastf_t peqn[7][4]);
 #endif
+__END_DECLS
 
+#endif  /* ARB_EDIT_H */
+
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8
