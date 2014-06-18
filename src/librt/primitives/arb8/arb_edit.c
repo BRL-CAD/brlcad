@@ -420,7 +420,334 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
     return 0;
 }
 
+int
+arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int face, const char *axis, const struct bn_tol *tol)
+{
+    int i, j, k;
+    int type;
+    int uvec[8], svec[11];
+    static int pt[4];
+    static int prod;
+    static vect_t work;
+    struct rt_arb_internal larb;	/* local copy of solid */
 
+    /* check which axis */
+    k = -1;
+    if (BU_STR_EQUAL(axis, "x"))
+	k = 0;
+    if (BU_STR_EQUAL(axis, "y"))
+	k = 1;
+    if (BU_STR_EQUAL(axis, "z"))
+	k = 2;
+    if (k < 0) {
+	return 1;
+    }
+
+    work[0] = work[1] = work[2] = 1.0;
+    work[k] = -1.0;
+
+    /* make local copy of arb */
+    memcpy((char *)&larb, (char *)arb, sizeof(struct rt_arb_internal));
+    
+    if (rt_arb_get_cgtype(&type, arb, tol, uvec, svec) == 0) type = 0;
+
+    if (type != ARB8 && type != ARB6) {return 1;}
+
+    if (face > 9999 || (face < 1000 && type != ARB6)) {return 1;}
+
+    if (type == ARB6 && face < 1000) {
+	/* 3 point face */
+	pt[0] = face / 100;
+	i = face - (pt[0]*100);
+	pt[1] = i / 10;
+	pt[2] = i - (pt[1]*10);
+	pt[3] = 1;
+    } else {
+	pt[0] = face / 1000;
+	i = face - (pt[0]*1000);
+	pt[1] = i / 100;
+	i = i - (pt[1]*100);
+	pt[2] = i / 10;
+	pt[3] = i - (pt[2]*10);
+    }
+
+    /* user can input face in any order - will use product of
+     * face points to distinguish faces:
+     *    product       face
+     *       24         1234 for ARB8
+     *     1680         5678 for ARB8
+     *      252         2367 for ARB8
+     *      160         1548 for ARB8
+     *      672         4378 for ARB8
+     *       60         1256 for ARB8
+     *	     10	         125 for ARB6
+     *	     72	         346 for ARB6
+     */
+    prod = 1;
+    for (i = 0; i <= 3; i++) {
+	prod *= pt[i];
+	pt[i]--;
+	if (pt[i] > 7) {
+	    return 1;
+	}
+    }
+
+    /* mirror the selected face */
+    switch (prod) {
+
+	case 24:   /* mirror face 1234 */
+	    if (type == ARB6) {
+		return 1;
+	    }
+	    for (i = 0; i < 4; i++) {
+		j = i + 4;
+		VELMUL(larb.pt[j], larb.pt[i], work);
+	    }
+	    break;
+
+	case 1680:   /* mirror face 5678 */
+	    for (i = 0; i < 4; i++) {
+		j = i + 4;
+		VELMUL(larb.pt[i], larb.pt[j], work);
+	    }
+	    break;
+
+	case 60:   /* mirror face 1256 */
+	case 10:	/* mirror face 125 of ARB6 */
+	    VELMUL(larb.pt[3], larb.pt[0], work);
+	    VELMUL(larb.pt[2], larb.pt[1], work);
+	    VELMUL(larb.pt[7], larb.pt[4], work);
+	    VELMUL(larb.pt[6], larb.pt[5], work);
+	    break;
+
+	case 672:   /* mirror face 4378 */
+	case 72:	/* mirror face 346 of ARB6 */
+	    VELMUL(larb.pt[0], larb.pt[3], work);
+	    VELMUL(larb.pt[1], larb.pt[2], work);
+	    VELMUL(larb.pt[5], larb.pt[6], work);
+	    VELMUL(larb.pt[4], larb.pt[7], work);
+	    break;
+
+	case 252:   /* mirror face 2367 */
+	    VELMUL(larb.pt[0], larb.pt[1], work);
+	    VELMUL(larb.pt[3], larb.pt[2], work);
+	    VELMUL(larb.pt[4], larb.pt[5], work);
+	    VELMUL(larb.pt[7], larb.pt[6], work);
+	    break;
+
+	case 160:   /* mirror face 1548 */
+	    VELMUL(larb.pt[1], larb.pt[0], work);
+	    VELMUL(larb.pt[5], larb.pt[4], work);
+	    VELMUL(larb.pt[2], larb.pt[3], work);
+	    VELMUL(larb.pt[6], larb.pt[7], work);
+	    break;
+
+	case 120:
+	case 180:
+	    return 1;
+	default:
+	    return 1;
+    }
+
+    /* redo the plane equations */
+    {
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	if (rt_arb_calc_planes(&error_msg, &larb, type, peqn, tol)) {
+	    return 1;
+	}
+	bu_vls_free(&error_msg);
+    }
+
+    /* copy to original */
+    memcpy((char *)arb, (char *)&larb, sizeof(struct rt_arb_internal));
+
+    return 0;
+}
+
+int
+arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol)
+{
+    int type;
+    int pflag = 0;
+    int uvec[8], svec[11];
+    static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
+    const short *edptr;		/* pointer to arb edit array */
+    const short *final;		/* location of points to redo */
+    static int i;
+    const int *iptr;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const short earb4[5][18] = earb4_edit_array;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    if (rt_arb_get_cgtype(&type, arb, tol, uvec, svec) == 0) return 1;
+
+    /* set the pointer */
+    switch (type) {
+	case ARB4:
+	    edptr = &earb4[edge][0];
+	    final = &earb4[edge][16];
+	    pflag = 1;
+	    break;
+	case ARB5:
+	    edptr = &earb5[edge][0];
+	    final = &earb5[edge][16];
+	    if (edge == 8)
+		pflag = 1;
+	    break;
+	case ARB6:
+	    edptr = &earb6[edge][0];
+	    final = &earb6[edge][16];
+	    if (edge > 7)
+		pflag = 1;
+	    break;
+	case ARB7:
+	    edptr = &earb7[edge][0];
+	    final = &earb7[edge][16];
+	    if (edge == 11)
+		pflag = 1;
+	    break;
+	case ARB8:
+	    edptr = &earb8[edge][0];
+	    final = &earb8[edge][16];
+	    break;
+	default:
+	    return 1;
+    }
+
+
+    /* do the arb editing */
+
+    if (pflag) {
+	/* moving a point - not an edge */
+	VMOVE(arb->pt[edge], pos_model);
+	edptr += 4;
+    } else {
+	vect_t edge_dir;
+
+	/* moving an edge */
+	pt1 = *edptr++;
+	pt2 = *edptr++;
+	/* direction of this edge */
+	if (newedge) {
+	    /* edge direction comes from edgedir() in pos_model */
+	    VMOVE(edge_dir, pos_model);
+	    VMOVE(pos_model, arb->pt[pt1]);
+	    newedge = 0;
+	} else {
+	    /* must calculate edge direction */
+	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
+	}
+	if (ZERO(MAGNITUDE(edge_dir)))
+	    goto err;
+	/* bounding planes bp1, bp2 */
+	bp1 = *edptr++;
+	bp2 = *edptr++;
+
+	/* move the edge */
+	if (mv_edge(arb, pos_model, bp1, bp2, pt1, pt2, edge_dir, tol, peqn)){
+	    goto err;
+	}
+    }
+
+    /* editing is done - insure planar faces */
+    /* redo plane eqns that changed */
+    newp = *edptr++; 	/* plane to redo */
+
+    if (newp == 9) {
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	int arb_calc_ret = 0;
+	arb_calc_ret = rt_arb_calc_planes(&error_msg, arb, type, peqn, tol);
+	bu_vls_free(&error_msg);
+	if (arb_calc_ret) goto err;
+    }
+
+    if (newp >= 0 && newp < 6) {
+	for (i=0; i<3; i++) {
+	    /* redo this plane (newp), use points p1, p2, p3 */
+	    p1 = *edptr++;
+	    p2 = *edptr++;
+	    p3 = *edptr++;
+	    if (bn_mk_plane_3pts(peqn[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+
+	    /* next plane */
+	    if ((newp = *edptr++) == -1 || newp == 8)
+		break;
+	}
+    }
+    if (newp == 8) {
+	/* special...redo next planes using pts defined in faces */
+	const int local_arb_faces[5][24] = rt_arb_faces;
+	for (i=0; i<3; i++) {
+	    if ((newp = *edptr++) == -1)
+		break;
+	    iptr = &local_arb_faces[type-4][4*newp];
+	    p1 = *iptr++;
+	    p2 = *iptr++;
+	    p3 = *iptr++;
+	    if (bn_mk_plane_3pts(peqn[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+	}
+    }
+
+    /* the changed planes are all redone push necessary points back
+     * into the planes.
+     */
+    edptr = final;	/* point to the correct location */
+    for (i=0; i<2; i++) {
+	if ((p1 = *edptr++) == -1)
+	    break;
+	/* intersect proper planes to define vertex p1 */
+	if (rt_arb_3face_intersect(arb->pt[p1], (const plane_t *)peqn, type, p1*3))
+	    goto err;
+    }
+
+    /* Special case for ARB7: move point 5 .... must recalculate plane
+     * 2 = 456
+     */
+    if (type == ARB7 && pflag) {
+	if (bn_mk_plane_3pts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	    goto err;
+    }
+
+    /* carry along any like points */
+    switch (type) {
+	case ARB8:
+	    break;
+
+	case ARB7:
+	    VMOVE(arb->pt[7], arb->pt[4]);
+	    break;
+
+	case ARB6:
+	    VMOVE(arb->pt[5], arb->pt[4]);
+	    VMOVE(arb->pt[7], arb->pt[6]);
+	    break;
+
+	case ARB5:
+	    for (i=5; i<8; i++)
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
+
+	case ARB4:
+	    VMOVE(arb->pt[3], arb->pt[0]);
+	    for (i=5; i<8; i++)
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
+    }
+
+    return 0;		/* OK */
+
+ err:
+    return 1;		/* BAD */
+
+} 
 
 /** @} */
 

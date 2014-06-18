@@ -434,6 +434,22 @@ arb_extrude(struct rt_arb_internal *arb,
 RT_EXPORT extern int
 arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const struct bn_tol *tol);
 
+
+/* Mirror an arb face about the x, y or z axis */
+RT_EXPORT extern int
+arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int face, const char *axis, const struct bn_tol *tol);
+
+/* An ARB edge is moved by finding the direction of the line
+ * containing the edge and the 2 "bounding" planes.  The new edge is
+ * found by intersecting the new line location with the bounding
+ * planes.  The two "new" planes thus defined are calculated and the
+ * affected points are calculated by intersecting planes.  This keeps 
+ * ALL faces planar.
+ */
+RT_EXPORT extern int
+arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol);
+
+
 __END_DECLS
 
 #endif  /* ARB_EDIT_H */
