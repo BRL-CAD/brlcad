@@ -443,7 +443,7 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
  * containing the edge and the 2 "bounding" planes.  The new edge is
  * found by intersecting the new line location with the bounding
  * planes.  The two "new" planes thus defined are calculated and the
- * affected points are calculated by intersecting planes.  This keeps 
+ * affected points are calculated by intersecting planes.  This keeps
  * ALL faces planar.
  */
 RT_EXPORT extern int
