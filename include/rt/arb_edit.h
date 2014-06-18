@@ -417,6 +417,23 @@ arb_extrude(struct rt_arb_internal *arb,
 	fastf_t peqn[7][4]);
 
 
+/* Permute the vertex labels of an ARB
+ *
+ *	     Minimum and maximum tuple lengths
+ *     ------------------------------------------------
+ *	Solid	# vertices needed	# vertices
+ *	type	 to disambiguate	in THE face
+ *     ------------------------------------------------
+ *	ARB4		3		    3
+ *	ARB5		2		    4
+ *	ARB6		2		    4
+ *	ARB7		1		    4
+ *	ARB8		3		    4
+ *     ------------------------------------------------
+ */
+RT_EXPORT extern int
+arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const struct bn_tol *tol);
+
 __END_DECLS
 
 #endif  /* ARB_EDIT_H */

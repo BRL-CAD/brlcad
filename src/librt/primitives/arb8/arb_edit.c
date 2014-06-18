@@ -238,6 +238,189 @@ arb_extrude(struct rt_arb_internal *arb,
 }
 
 
+int
+arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const struct bn_tol *tol)
+{
+    struct rt_arb_internal larb;		/* local copy of solid */
+    struct rt_arb_internal tarb;		/* temporary copy of solid */
+    static size_t min_tuple_size[9] = {0, 0, 0, 0, 3, 2, 2, 1, 3};
+    int vertex, i, k;
+    size_t arglen;
+    size_t face_size;	/* # vertices in THE face */
+    int uvec[8], svec[11];
+    int type;
+    char **p;
+
+    /*
+     * The Permutations
+     *
+     * Each permutation is encoded as an 8-character string,
+     * where the ith character specifies which of the current vertices
+     * (1 through n for an ARBn) should assume the role of vertex i.
+     * Wherever the internal representation of the ARB as an ARB8
+     * stores a redundant copy of a vertex, the string contains a '*'.
+     */
+    static char *perm4[4][7] = {
+	{"123*4***", "124*3***", "132*4***", "134*2***", "142*3***",
+	    "143*2***", 0},
+	{"213*4***", "214*3***", "231*4***", "234*1***", "241*3***",
+	    "243*1***", 0},
+	{"312*4***", "314*2***", "321*4***", "324*1***", "341*2***",
+	    "342*1***", 0},
+	{"412*3***", "413*2***", "421*3***", "423*1***", "431*2***",
+	    "432*1***", 0}
+    };
+    static char *perm5[5][3] = {
+	{"12345***", "14325***", 0},
+	{"21435***", "23415***", 0},
+	{"32145***", "34125***", 0},
+	{"41235***", "43215***", 0},
+	{0, 0, 0}
+    };
+    static char *perm6[6][3] = {
+	{"12345*6*", "15642*3*", 0},
+	{"21435*6*", "25631*4*", 0},
+	{"34126*5*", "36524*1*", 0},
+	{"43216*5*", "46513*2*", 0},
+	{"51462*3*", "52361*4*", 0},
+	{"63254*1*", "64153*2*", 0}
+    };
+    static char *perm7[7][2] = {
+	{"1234567*", 0},
+	{0, 0},
+	{0, 0},
+	{"4321576*", 0},
+	{0, 0},
+	{"6237514*", 0},
+	{"7326541*", 0}
+    };
+    static char *perm8[8][7] = {
+	{"12345678", "12654378", "14325876", "14852376",
+	    "15624873", "15842673", 0},
+	{"21436587", "21563487", "23416785", "23761485",
+	    "26513784", "26731584", 0},
+	{"32147658", "32674158", "34127856", "34872156",
+	    "37624851", "37842651", 0},
+	{"41238567", "41583267", "43218765", "43781265",
+	    "48513762", "48731562", 0},
+	{"51268437", "51486237", "56218734", "56781234",
+	    "58416732", "58761432", 0},
+	{"62157348", "62375148", "65127843", "65872143",
+	    "67325841", "67852341", 0},
+	{"73268415", "73486215", "76238514", "76583214",
+	    "78436512", "78563412", 0},
+	{"84157326", "84375126", "85147623", "85674123",
+	    "87345621", "87654321", 0}
+    };
+    static int vert_loc[] = {
+	/*		-----------------------------
+	 *		   Array locations in which
+	 *		   the vertices are stored
+	 *		-----------------------------
+	 *		1   2   3   4   5   6   7   8
+	 *		-----------------------------
+	 * ARB4 */	0,  1,  2,  4, -1, -1, -1, -1,
+	/* ARB5 */	0,  1,  2,  3,  4, -1, -1, -1,
+	/* ARB6 */	0,  1,  2,  3,  4,  6, -1, -1,
+	/* ARB7 */	0,  1,  2,  3,  4,  5,  6, -1,
+	/* ARB8 */	0,  1,  2,  3,  4,  5,  6,  7
+    };
+#define ARB_VERT_LOC(n, v) vert_loc[((n) - 4) * 8 + (v) - 1]
+
+    RT_ARB_CK_MAGIC(arb);
+
+
+    /* make a local copy of the solid */
+    memcpy((char *)&larb, (char *)arb, sizeof(struct rt_arb_internal));
+
+    /*
+     * Find the encoded form of the specified permutation, if it
+     * exists.
+     */
+    arglen = strlen(encoded_permutation);
+    if (rt_arb_get_cgtype(&type, arb, tol, uvec, svec) == 0) type = 0;
+    if (type < 4 || type > 8) {return 1;}
+    if (arglen < min_tuple_size[type]) {return 1;}
+    face_size = (type == 4) ? 3 : 4;
+    if (arglen > face_size) {return 1;}
+    vertex = encoded_permutation[0] - '1';
+    if ((vertex < 0) || (vertex >= type)) {return 1;}
+    p = (type == 4) ? perm4[vertex] :
+	(type == 5) ? perm5[vertex] :
+	(type == 6) ? perm6[vertex] :
+	(type == 7) ? perm7[vertex] : perm8[vertex];
+    for (;; ++p) {
+	if (*p == 0) {
+	    return 1;
+	}
+	if (bu_strncmp(*p, encoded_permutation, arglen) == 0)
+	    break;
+    }
+
+    /*
+     * Collect the vertices in the specified order
+     */
+    for (i = 0; i < 8; ++i) {
+	char buf[2];
+
+	if ((*p)[i] == '*') {
+	    VSETALL(tarb.pt[i], 0);
+	} else {
+	    sprintf(buf, "%c", (*p)[i]);
+	    k = atoi(buf);
+	    VMOVE(tarb.pt[i], larb.pt[ARB_VERT_LOC(type, k)]);
+	}
+    }
+
+    /*
+     * Reinstall the permuted vertices back into the temporary buffer,
+     * copying redundant vertices as necessary
+     *
+     *		-------+-------------------------
+     *		 Solid |    Redundant storage
+     *		  Type | of some of the vertices
+     *		-------+-------------------------
+     *		 ARB4  |    3=0, 5=6=7=4
+     *		 ARB5  |    5=6=7=4
+     *		 ARB6  |    5=4, 7=6
+     *		 ARB7  |    7=4
+     *		 ARB8  |
+     *		-------+-------------------------
+     */
+    for (i = 0; i < 8; i++) {
+	VMOVE(larb.pt[i], tarb.pt[i]);
+    }
+    switch (type) {
+	case ARB4:
+	    VMOVE(larb.pt[3], larb.pt[0]);
+	    /* break intentionally left out */
+	case ARB5:
+	    VMOVE(larb.pt[5], larb.pt[4]);
+	    VMOVE(larb.pt[6], larb.pt[4]);
+	    VMOVE(larb.pt[7], larb.pt[4]);
+	    break;
+	case ARB6:
+	    VMOVE(larb.pt[5], larb.pt[4]);
+	    VMOVE(larb.pt[7], larb.pt[6]);
+	    break;
+	case ARB7:
+	    VMOVE(larb.pt[7], larb.pt[4]);
+	    break;
+	case ARB8:
+	    break;
+	default:
+	    {
+		return 1;
+	    }
+    }
+
+    /* copy back to original arb */
+    memcpy((char *)arb, (char *)&larb, sizeof(struct rt_arb_internal));
+
+    return 0;
+}
+
+
 
 /** @} */
 
