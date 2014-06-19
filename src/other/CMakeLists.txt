@@ -913,10 +913,6 @@ else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
-# dom2dox - Doc-O-Matic to Doxygen C++ source converter
-include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
-CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
-
 # VDSlib - A View-Dependent Simplification and Rendering Library For
 # the moment, this is marked NOSYS - it's possible that some Debian
 # systems would have 0.9 of vdslib installed, but it's unmaintained
