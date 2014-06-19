@@ -306,9 +306,9 @@ main(int argc, char** argv)
 {
     size_t mcount = 0;
     int verbose_mode = 0;
-    int random_colors = 0;
-    int use_uuidnames = 0;
-    int clean_names = 0;
+    bool random_colors = false;
+    bool use_uuidnames = false;
+    bool clean_names = false;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     const char* id_name = "3dm -> g conversion";
@@ -337,13 +337,13 @@ main(int argc, char** argv)
 		verbose_mode = tmpint;
 		break;
 	    case 'r':  /* randomize colors */
-		random_colors = 1;
+		random_colors = true;
 		break;
 	    case 'u':
-		use_uuidnames = 1;
+		use_uuidnames = true;
 		break;
 	    case 'c':  /* make names unique and brlcad compliant */
-		clean_names = 1;
+		clean_names = true;
 		break;
 	    default:
 		dump.Print(USAGE);
@@ -351,7 +351,7 @@ main(int argc, char** argv)
 	}
     }
     if (use_uuidnames) {
-	clean_names = 0;
+	clean_names = false;
     }
 
     argc -= bu_optind;
