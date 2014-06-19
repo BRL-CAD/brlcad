@@ -52,13 +52,12 @@ static const int UUID_LEN = 50;
 
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map<std::string, std::string> STR_STR_MAP;
-typedef std::map<std::string, int> REGION_CNT_MAP;
+typedef std::map<std::string, size_t> REGION_CNT_MAP;
 typedef std::vector<std::string> MEMBER_VEC;
 typedef std::map<std::string, MEMBER_VEC *> MEMBER_MAP;
 
 static STR_STR_MAP layer_uuid_name_map;
 static STR_STR_MAP layer_name_uuid_map;
-static REGION_CNT_MAP region_cnt_map;
 static MEMBER_MAP member_map;
 
 
@@ -73,17 +72,8 @@ UUIDstr(const ON_UUID &uuid)
 static size_t
 RegionCnt(const std::string &name)
 {
-    REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
-
-    if (iter == region_cnt_map.end()) {
-	region_cnt_map.insert(std::pair<std::string, int>(name, 1));
-	return 1;
-    } else {
-	size_t cnt = iter->second + 1;
-	region_cnt_map.erase(iter);
-	region_cnt_map.insert(std::pair<std::string, int>(name, cnt));
-	return cnt;
-    }
+    static REGION_CNT_MAP region_cnt_map;
+    return ++region_cnt_map[name];
 }
 
 
