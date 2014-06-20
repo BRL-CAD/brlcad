@@ -39,6 +39,10 @@
 #include "wdb.h"
 
 
+namespace
+{
+
+
 static const char * const USAGE = "USAGE: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
 
 /* generic entity name */
@@ -52,19 +56,20 @@ static const int UUID_LEN = 50;
 
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map<std::string, std::string> STR_STR_MAP;
-typedef std::map<std::string, size_t> REGION_CNT_MAP;
 typedef std::vector<std::string> MEMBER_VEC;
 typedef std::map<std::string, MEMBER_VEC *> MEMBER_MAP;
 
-static STR_STR_MAP layer_uuid_name_map;
-static STR_STR_MAP layer_name_uuid_map;
-static MEMBER_MAP member_map;
+
+struct LayerMaps {
+    STR_STR_MAP layer_uuid_name_map, layer_name_uuid_map;
+    MEMBER_MAP member_map;
+};
 
 
 static inline std::string
 UUIDstr(const ON_UUID &uuid)
 {
-    char buf[UUID_LEN];
+    static char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
 }
 
@@ -72,13 +77,13 @@ UUIDstr(const ON_UUID &uuid)
 static size_t
 RegionCnt(const std::string &name)
 {
-    static REGION_CNT_MAP region_cnt_map;
+    static std::map<std::string, std::size_t> region_cnt_map;
     return ++region_cnt_map[name];
 }
 
 
 static void
-MapRegion(const ONX_Model &model, const std::string &region_name, int layer_index)
+MapRegion(const ONX_Model &model, const std::string &region_name, int layer_index, MEMBER_MAP &member_map)
 {
     const ON_Layer& layer = model.m_layer_table[layer_index];
     std::string parent_uuid = UUIDstr(layer.m_layer_id);
@@ -92,21 +97,21 @@ MapRegion(const ONX_Model &model, const std::string &region_name, int layer_inde
 
 
 static void
-MapLayer(const std::string &layer_name, const std::string &uuid, const std::string &parent_uuid)
+MapLayer(const std::string &layer_name, const std::string &uuid, const std::string &parent_uuid, LayerMaps &lmaps)
 {
-    layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
-    layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
-    MEMBER_MAP::iterator iter = member_map.find(uuid);
-    if (iter == member_map.end()) {
+    lmaps.layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
+    lmaps.layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
+    MEMBER_MAP::iterator iter = lmaps.member_map.find(uuid);
+    if (iter == lmaps.member_map.end()) {
 	MEMBER_VEC *vec = new MEMBER_VEC;
-	member_map.insert(std::pair<std::string, MEMBER_VEC *>(uuid, vec));
+	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(uuid, vec));
     }
 
-    iter = member_map.find(parent_uuid);
-    if (iter == member_map.end()) {
+    iter = lmaps.member_map.find(parent_uuid);
+    if (iter == lmaps.member_map.end()) {
 	MEMBER_VEC *vec = new MEMBER_VEC;
 	vec->push_back(layer_name);
-	member_map.insert(std::pair<std::string, MEMBER_VEC *>(parent_uuid, vec));
+	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(parent_uuid, vec));
     } else {
 	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
 	vec->push_back(layer_name);
@@ -115,43 +120,42 @@ MapLayer(const std::string &layer_name, const std::string &uuid, const std::stri
 
 
 static void
-BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump)
+BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, const LayerMaps &lmaps)
 {
     static long groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
 
-    STR_STR_MAP::iterator siter;
+    STR_STR_MAP::const_iterator siter;
     std::string groupname = "";
 
     if (uuid.compare(ROOT_UUID) == 0) {
 	groupname = "all";
     } else {
-	siter = layer_uuid_name_map.find(uuid);
-	if (siter != layer_uuid_name_map.end()) {
+	siter = lmaps.layer_uuid_name_map.find(uuid);
+	if (siter != lmaps.layer_uuid_name_map.end()) {
 	    groupname = siter->second;
 	}
     }
 
     if (groupname.empty()) {
-	std::stringstream converter;
+	std::ostringstream converter;
 	converter << groupcnt;
-	converter >> groupname;
-	groupname = "g" + groupname;
+	groupname = "g" + converter.str();
     }
 
-    MEMBER_MAP::iterator iter = member_map.find(uuid);
-    if (iter != member_map.end()) {
-	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
-	MEMBER_VEC::iterator viter = vec->begin();
+    MEMBER_MAP::const_iterator iter = lmaps.member_map.find(uuid);
+    if (iter != lmaps.member_map.end()) {
+	const MEMBER_VEC *vec = iter->second;
+	MEMBER_VEC::const_iterator viter = vec->begin();
 	while (viter != vec->end()) {
 	    std::string membername = *viter;
 	    (void)mk_addmember(membername.c_str(), &members.l, NULL, WMOP_UNION);
 
-	    siter = layer_name_uuid_map.find(membername);
-	    if (siter != layer_name_uuid_map.end()) {
+	    siter = lmaps.layer_name_uuid_map.find(membername);
+	    if (siter != lmaps.layer_name_uuid_map.end()) {
 		std::string uuid2 = siter->second;
-		BuildHierarchy(outfp, uuid2, dump);
+		BuildHierarchy(outfp, uuid2, dump, lmaps);
 	    }
 	    ++viter;
 	}
@@ -162,19 +166,19 @@ BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump)
 
 
 static void
-BuildHierarchy(struct rt_wdb* outfp, ON_TextLog &dump)
+BuildHierarchy(struct rt_wdb* outfp, ON_TextLog &dump, const LayerMaps &lmaps)
 {
-    MEMBER_MAP::iterator iter = member_map.find(ROOT_UUID);
+    MEMBER_MAP::const_iterator iter = lmaps.member_map.find(ROOT_UUID);
 
-    if (iter != member_map.end()) {
+    if (iter != lmaps.member_map.end()) {
 	std::string uuid = iter->first;
-	BuildHierarchy(outfp, uuid, dump);
+	BuildHierarchy(outfp, uuid, dump, lmaps);
     }
 }
 
 
 static void
-ProcessLayers(const ONX_Model &model, ON_TextLog &dump)
+ProcessLayers(const ONX_Model &model, ON_TextLog &dump, LayerMaps &lmaps)
 {
     ON_UuidIndex uuidIndex;
     int count = model.m_layer_table.Count();
@@ -185,7 +189,7 @@ ProcessLayers(const ONX_Model &model, ON_TextLog &dump)
 	std::string layer_name = ON_String(layer.LayerName()).Array();
 	std::string uuid = UUIDstr(layer.m_layer_id);
 	std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
-	MapLayer(layer_name, uuid, parent_uuid);
+	MapLayer(layer_name, uuid, parent_uuid, lmaps);
     }
 }
 
@@ -195,7 +199,7 @@ ProcessLayers(const ONX_Model &model, ON_TextLog &dump)
 // the '_' character. The allow string is an exception list where
 // these characters are allowed, but not leading or trailing, in
 // the name.
-bool
+static bool
 CleanName(ON_wString &name)
 {
     ON_wString allow(".-_");
@@ -244,7 +248,7 @@ CleanName(ON_wString &name)
 }
 
 
-bool
+static bool
 NameIsUnique(const ON_wString &name, const ONX_Model &model)
 {
     bool found_once = false;
@@ -262,7 +266,7 @@ NameIsUnique(const ON_wString &name, const ONX_Model &model)
 
 
 // Cleans names in 3dm model and makes them unique.
-void
+static void
 MakeCleanUniqueNames(ONX_Model &model)
 {
     size_t obj_counter = 0;
@@ -277,10 +281,9 @@ MakeCleanUniqueNames(ONX_Model &model)
 	    }
 
 	    std::string num_str;
-	    std::stringstream converter;
+	    std::ostringstream converter;
 	    converter << ++obj_counter;
-	    converter >> num_str;
-	    name = base + "." + num_str.c_str();
+	    name = base + "." + converter.str().c_str();
 	    changed = true;
 	}
 	if (changed) {
@@ -288,6 +291,9 @@ MakeCleanUniqueNames(ONX_Model &model)
 	    model.m_object_table[i].m_attributes.m_name = name;
 	}
     }
+}
+
+
 }
 
 
@@ -401,7 +407,8 @@ main(int argc, char** argv)
     dump.Print("Number of NURBS objects read: %d\n", model.m_object_table.Count());
 
     /* process layer table before building regions */
-    ProcessLayers(model, dump);
+    LayerMaps lmaps;
+    ProcessLayers(model, dump, lmaps);
 
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
@@ -481,7 +488,7 @@ main(int argc, char** argv)
 	std::string region_name(geom_base+".r");
 
 	/* add region to hierarchical containers */
-	MapRegion(model, region_name, myAttributes.m_layer_index);
+	MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
 
 	/* object definition
 	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
@@ -490,7 +497,7 @@ main(int argc, char** argv)
 	   Will need to parse layers to get info for each object using a parent layer's settings
 	   Long term, material objects and render objects should be implemented in BRL-CAD
 	   to support conceptually similar breakouts of materials and shaders.
-	*/
+	   */
 
 	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
 	if (pGeometry) {
@@ -631,7 +638,7 @@ main(int argc, char** argv)
     /* use accumulated layer information to build mged hierarchy */
     char *toplevel = (char *)bu_calloc(strlen(outFileName), sizeof(char), "3dm-g toplevel");
     bu_basename(toplevel, outFileName);
-    BuildHierarchy(outfp, dump);
+    BuildHierarchy(outfp, dump, lmaps);
     mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
     bu_free(toplevel, "bu_basename toplevel");
     wdb_close(outfp);
