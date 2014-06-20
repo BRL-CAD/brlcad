@@ -50,7 +50,7 @@ static const char * const GENERIC_NAME = "rhino";
 static const char * const ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
-static const int UUID_LEN = 50;
+static const std::size_t UUID_LEN = 37;
 
 
 
@@ -71,14 +71,6 @@ UUIDstr(const ON_UUID &uuid)
 {
     static char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
-}
-
-
-static size_t
-RegionCnt(const std::string &name)
-{
-    static std::map<std::string, std::size_t> region_cnt_map;
-    return ++region_cnt_map[name];
 }
 
 
@@ -413,6 +405,8 @@ main(int argc, char** argv)
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
 
+    std::map<std::string, std::size_t> region_cnt_map;
+
     dump.Print("\n");
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
@@ -468,7 +462,7 @@ main(int argc, char** argv)
 		    genName += bu_vls_addr(&name);
 		    geom_base = genName;
 		} else {
-		    size_t region_cnt = RegionCnt(genName);
+		    size_t region_cnt = ++region_cnt_map[genName];
 		    bu_vls_printf(&name, "%lu", (long unsigned int)region_cnt);
 		    genName += bu_vls_addr(&name);
 		    geom_base = genName;
