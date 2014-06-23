@@ -34,7 +34,7 @@ optional_ws = [ \t]*;
 comment_lead = ((cpp_comment_lead)|(c_comment_lead));
 
 <code> {
-(optional_ws)(cpp_comment_lead) { 
+(optional_ws)(cpp_comment_lead) {
     YYSETCONDITION(cpp_comment);
     appData->comment_type = cpp_comment;
     return CPP_COMMENT_START;

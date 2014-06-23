@@ -171,7 +171,7 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], &mged_tol)) {
 	Tcl_AppendResult(interp, "Mirface: mirror operation failed\n", (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
 
     /* draw the updated solid */
     replot_editing_solid();

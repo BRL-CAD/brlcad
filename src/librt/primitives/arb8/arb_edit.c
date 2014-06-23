@@ -448,7 +448,7 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
 
     /* make local copy of arb */
     memcpy((char *)&larb, (char *)arb, sizeof(struct rt_arb_internal));
-    
+
     if (rt_arb_get_cgtype(&type, arb, tol, uvec, svec) == 0) type = 0;
 
     if (type != ARB8 && type != ARB6) {return 1;}
@@ -747,7 +747,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
  err:
     return 1;		/* BAD */
 
-} 
+}
 
 /** @} */
 
