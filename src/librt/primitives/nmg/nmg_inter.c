@@ -3639,12 +3639,12 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
     s = nmg_find_shell(&fu->l.magic);
     NMG_CK_SHELL(s);
-    if (UNLIKELY(nmg_find_shell(&eu->l.magic) != s)) {
-	bu_log("nmg_isect_eu_fu() called with EU (%p) from shell (%p)\n",
-	       (void *)eu, (void *)nmg_find_shell(&eu->l.magic));
-	bu_log("\tand FU (%p) from shell (%p)\n", (void *)fu, (void *)s);
-	bu_bomb("nmg_isect_eu_fu() called with EU and FU from different shells");
-    }
+ //   if (UNLIKELY(nmg_find_shell(&eu->l.magic) != s)) {
+	//bu_log("nmg_isect_eu_fu() called with EU (%p) from shell (%p)\n",
+	//       (void *)eu, (void *)nmg_find_shell(&eu->l.magic));
+	//bu_log("\tand FU (%p) from shell (%p)\n", (void *)fu, (void *)s);
+	//bu_bomb("nmg_isect_eu_fu() called with EU and FU from different shells");
+ //   }
 
     vg1 = eu->vu_p->v_p->vg_p;
     NMG_CK_VERTEX_G(vg1);

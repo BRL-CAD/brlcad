@@ -707,6 +707,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_shell_coplanar_face_merge(sB, tol, 1);
 
     nmg_shell_fuse(sA, tol);
+    nmg_shell_fuse(sB, tol);
 
     if (nmg_check_closed_shell(sA, tol)) {
 	if (RTG.NMG_debug & DEBUG_BOOL &&
@@ -783,6 +784,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     (void)nmg_vertex_fuse(&sA->magic, tol);
+    (void)nmg_vertex_fuse(&sB->magic, tol);
 
     (void)nmg_kill_anti_loops(sA);
     (void)nmg_kill_anti_loops(sB);
@@ -809,8 +811,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_simplify_shell_edges(sB, tol);
 
     (void)nmg_break_e_on_v(&sA->magic, tol);
+    (void)nmg_break_e_on_v(&sB->magic, tol);
 
     (void)nmg_edge_fuse(&sA->magic, tol);
+    (void)nmg_edge_fuse(&sB->magic, tol);
 
     if (RTG.NMG_debug & DEBUG_VERIFY) {
 	/* Sometimes the tessellations of non-participating regions
@@ -844,6 +848,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vsshell(sA);
+	nmg_vsshell(sB);
     }
 
     /*
@@ -908,15 +913,17 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vsshell(sA);
+	nmg_vsshell(sB);
     }
 
     nmg_s_reindex(sA, 0);
+    nmg_s_reindex(sB, 0);
 
     /* Allocate storage for classlist[]. Allocate each of the 8 class
      * lists one at a time. This will assist with debugging to
      * determine if each array read/write is within its allocated space.
      */
-    nelem = sA->maxindex;
+    nelem = sA->maxindex + sB->maxindex;
     for (i = 0; i < 8; i++) {
 	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
@@ -929,11 +936,20 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
-    if (sA->manifolds) {
-	bu_free((char *)sA->manifolds, "free manifolds table");
-	sA->manifolds = (char *)NULL;
-    }
-    sA->manifolds = nmg_manifolds(sA);
+ //   if (sA->manifolds) {
+	//bu_free((char *)sA->manifolds, "free manifolds table");
+	//sA->manifolds = (char *)NULL;
+ //   }
+
+ //   sA->manifolds = nmg_manifolds(sA);
+
+ //   if (sB->manifolds) {
+	//bu_free((char *)sB->manifolds, "free manifolds table");
+	//sB->manifolds = (char *)NULL;
+ //   }
+
+ //   sB->manifolds = nmg_manifolds(sB);
+
 
     /*
      * Classify A -vs- B, then B -vs- A.
@@ -956,6 +972,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     if (sA->manifolds) {
 	bu_free((char *)sA->manifolds, "free manifolds table");
 	sA->manifolds = (char *)NULL;
+    }
+
+    if (sB->manifolds) {
+	bu_free((char *)sB->manifolds, "free manifolds table");
+	sB->manifolds = (char *)NULL;
     }
 
     if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
