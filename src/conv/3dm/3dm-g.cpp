@@ -69,7 +69,7 @@ struct LayerMaps {
 static inline std::string
 UUIDstr(const ON_UUID &uuid)
 {
-    static char buf[UUID_LEN];
+    char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
 }
 
@@ -649,11 +649,15 @@ main(int argc, char** argv)
 
 #else /* !OBJ_BREP */
 
+#include <cstdio>
+
+
 int
-main(int argc, char *argv[])
+main()
 {
-    printf("ERROR: Boundary Representation object support is not available with\n"
+    std::printf("ERROR: Boundary Representation object support is not available with\n"
 	   "       this compilation of BRL-CAD.\n");
+
     return 1;
 }
 
