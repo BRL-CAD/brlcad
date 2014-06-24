@@ -906,7 +906,7 @@ if(BRLCAD_GECODE_BUILD)
   set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint
     gecodeset gecodefloat gecodeminimodel gecodedriver gecodeflatzinc)
   set(GECODE_LIBRARIES "${GECODE_LIBRARIES}"  CACHE STRING "Gecode libraries in BRL-CAD" FORCE)
-  set(GECODE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
+  set(GECODE_INCLUDE_DIR "${BRLCAD_BINARY_DIR}/src/other/gecode;${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
 endif(BRLCAD_GECODE_BUILD)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
