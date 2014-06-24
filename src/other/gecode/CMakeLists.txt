@@ -283,7 +283,7 @@ foreach (i RANGE ${length})
   string(REPLACE "<semi>" ";" line "${line}")
   set(CONFIG_OUT "${CONFIG_OUT}${line}")
 endforeach ()
-file(WRITE ${GECODE_BINARY_DIR}/gecode/support/config.hpp
+file(WRITE ${GECODE_BINARY_DIR}/gecode/support/config.hpp.new
 "/* gecode/support/config.hpp.  Generated from config.hpp.in by configure.  */
 /* gecode/support/config.hpp.in.  Generated from configure.ac by autoheader.  */
 
@@ -300,6 +300,10 @@ file(WRITE ${GECODE_BINARY_DIR}/gecode/support/config.hpp
 #define GECODE_BUILD_GIST
 
 ${CONFIG_OUT}")
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${GECODE_BINARY_DIR}/gecode/support/config.hpp.new
+	${GECODE_BINARY_DIR}/gecode/support/config.hpp)
 
 if(NOT DEFINED BIN_DIR)
    set(BIN_DIR bin)
