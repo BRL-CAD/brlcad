@@ -1,0 +1,59 @@
+%include {
+#include <assert.h> /* lemon requires assert to be defined */
+#include <stdio.h>
+#include "main.h"   /* needed for app_data_t definition */
+}
+%%
+/* You need to use the token_type ($$) and extra_argument (data) in a
+ * destructor to avoid unused variable warnings.
+ */
+%destructor statement_list {
+    $$.n = data->ssx_count;
+}
+
+/* basic error handling */
+%stack_overflow {
+    /* must use token_type (yypMinor->yy0) to avoid unused variable warning */
+    fprintf(stderr, "Parser stack overflow. Last token was %d\n", yypMinor->yy0.n);
+}
+
+%syntax_error {
+    /* must use token id number (yymajor) and token_type
+     * (yypMinor->yy0) to avoid unused variable warnings
+     */
+    fprintf(stderr, "Syntax error. Last token (type %d) was %d. Ignoring "
+	    "input tokens until valid input is found.\n", yymajor, yyminor.yy0.n);
+}
+
+%parse_failure {
+    fprintf(stderr, "Parsing failed. Parser has reset.\n");
+}
+
+/* The next two directives specify the third and fourth parameters to
+ * the generated parser routine. They should match the declarations in
+ * main.h.
+ *
+ * Note that when you pass lemon a token, it initially just copies the
+ * token_type argument to its stack. It doesn't attempt to reduce the
+ * new token as part of a rule until it recieves another token. This
+ * means that if you use a pointer type as your token type, and you're
+ * using it to access token-specific data inside a grammar rule, the
+ * data at the pointer address must not change between calls to the
+ * parser routine.
+ */
+%token_type {token_t}
+%extra_argument {app_data_t *data}
+
+/* It's a good idea to prefix the constant token names. Note that
+ * leading and trailing whitespace inside the braces isn't trimmed
+ * away!
+ */
+%token_prefix {TOKEN_}
+
+/* this is a common starting grammar for an input that is a list of
+ * zero or more statements
+ */
+start_symbol ::= statement_list.
+
+statement_list ::= /* empty */.
+statement_list ::= statement_list statement.
