@@ -1,0 +1,16 @@
+diff -u -r boost/numeric/interval/detail/msvc_rounding_control.hpp /cygdrive/c/Users/schulte/boost/numeric/interval/detail/msvc_rounding_control.hpp
+--- boost/numeric/interval/detail/msvc_rounding_control.hpp	2010-11-10 16:52:44.696786200 +0100
++++ /cygdrive/c/Users/schulte/boost/numeric/interval/detail/msvc_rounding_control.hpp	2010-11-10 16:01:56.730082700 +0100
+@@ -79,7 +79,11 @@
+   static void get_rounding_mode(rounding_mode& mode)
+   { mode = msvc2hard(_control87(0, 0)); }
+   static void set_rounding_mode(const rounding_mode mode)
++#if defined(_M_X64) || defined(_M_IA64)
++  { _control87(hard2msvc(mode), _MCW_EM | _MCW_RC ); }
++#else
+   { _control87(hard2msvc(mode), _MCW_EM | _MCW_RC | _MCW_PC | _MCW_IC); }
++#endif
+   static double to_int(const double& x) { return rint(x); }
+ };
+ 
+

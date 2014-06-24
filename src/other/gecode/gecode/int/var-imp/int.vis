@@ -1,0 +1,117 @@
+#
+#  Main authors:
+#     Christian Schulte <schulte@gecode.org>
+#
+#  Copyright:
+#     Christian Schulte, 2006
+#
+#  Last modified:
+#     $Date$ by $Author$
+#     $Revision$
+#
+#  This file is part of Gecode, the generic constraint
+#  development environment:
+#     http://www.gecode.org
+#
+#  Permission is hereby granted, free of charge, to any person obtaining
+#  a copy of this software and associated documentation files (the
+#  "Software"), to deal in the Software without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of the Software, and to
+#  permit persons to whom the Software is furnished to do so, subject to
+#  the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+#  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+[General]
+Name:           Int
+Namespace:      Gecode::Int
+Ifdef:          GECODE_HAS_INT_VARS
+Bits:           0
+Dispose:        false
+[ModEventHeader]
+  /**
+   * \defgroup TaskActorIntMEPC Integer modification events and propagation conditions
+   * \ingroup TaskActorInt
+   */
+  //@{
+[ModEvent]
+Name:           FAILED=FAILED
+  /// Domain operation has resulted in failure
+[ModEvent]
+Name:           NONE=NONE
+  /// Domain operation has not changed domain
+[ModEvent]
+Name:           VAL=ASSIGNED
+Combine:        VAL=VAL, BND=VAL, DOM=VAL
+  /// Domain operation has resulted in a value (assigned variable)
+[ModEvent]
+Name:           BND=SUBSCRIBE
+Combine:        VAL=VAL, BND=BND, DOM=BND
+  /** 
+   * \brief Domain operation has changed the minimum or maximum of the domain
+   *
+   * Note that this implies that the domain has not resulted in a value.
+   *
+   * If a propagator subscribes to this variable, it will be processed
+   * assuming a ME_INT_BND modification event.
+   */
+[ModEvent]
+Name:           DOM
+Combine:        VAL=VAL, BND=BND, DOM=DOM
+  /** 
+   * \brief Domain operation has changed the domain
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also the minimum and maximum of the domain have not changed.
+   */
+[ModEventFooter]
+[PropCondHeader]
+[PropCond]
+Name:           NONE=NONE
+  /// Propagation condition to be ignored (convenience)
+[PropCond]
+Name:           VAL=ASSIGNED
+ScheduledBy:    VAL
+  /**
+   * \brief Propagate when a view becomes assigned (single value)
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_INT_VAL, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_INT_VAL.
+   */
+[PropCond]
+Name:           BND
+ScheduledBy:    VAL, BND
+  /**
+   * \brief Propagate when minimum or maximum of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_INT_BND, then \a p is propagated when a domain
+   * update operation on \a x returns the modification events ME_INT_VAL
+   * or ME_INT_BND.
+   */
+[PropCond]
+Name:           DOM
+ScheduledBy:    VAL, BND, DOM
+  /**
+   * \brief Propagate when domain changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_INT_DOM, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_INT_VAL,
+   * ME_INT_BND, or ME_INT_DOM.
+   */
+[PropCondFooter]
+  //@}
+[End]

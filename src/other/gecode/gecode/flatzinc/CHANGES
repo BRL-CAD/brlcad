@@ -1,0 +1,63 @@
+Version 1.7 (?)
+ * Fixed bug in grammar for annotation expressions
+ * Added cumulative-constraint
+ * Added MiniZinc Challenge-style options
+ * More detailed statistics
+ * Exit with error code when interpretation of FlatZinc fails
+ * Fixed handling of arrays of par sets
+ * Fixed array_set_element constraint
+ * Added specializations for sum_pred and nvalue and fixed exactly_int
+ * Fixed output for problems that have no solution
+Version 1.6 (2009-05-21)
+ * Adapted to changes in FlatZinc:
+   - removed output items
+   - added handling of output annotations
+   - output in alphabetical order, and separate output for different solutions
+   - support nested annotations, in particular the new search annotations
+   - parse (and ignore) predicate declarations
+   - split globals definitions into individual files
+ * Replaced pkg-config based configuration with configure options
+   for finding the Gecode installation
+ * Do not require Gist (and detect it automatically)
+ * Support for parallel (multi-threaded) search
+
+Version 1.5 (released 2009-03-24)
+ * The command line option -mode gist now behaves as advertised
+
+Version 1.4 (released 2009-03-13)
+ * Updated to compile with Gecode 3.0.0
+ * Fixed conditional output items
+ * Print variables as required by the upcoming FlatZinc specification
+
+Version 1.3 (released 2008-08-26)
+ * Can be compiled without support for set variables (if not present in 
+   Gecode)
+ * Updated to new FlatZinc specification:
+   - arrays start at index 1 now
+   - var declarations can have initializers
+   - conditional output using show_cond
+ * Added array_bool_clause, regular, sort, inverse constraints
+ * Fixed constraints introduced by sharing, e.g.
+   var 0..3: x = 3; var 0..2: y = x;
+   will result in failure
+ * Fixed bug that caused initializers for array of var set to fail
+ * Fixed int_div and int_mod
+ * Use mmap where available to map input files directly to memory
+ * Use specialized Boolean linear propagators in globals library
+
+Version 1.2.1 (released 2008-03-06)
+ * Small fixes in the build system (support for static libraries,
+   better support for Mac OS X universal binaries)
+
+Version 1.2 (released 2008-02-29)
+ * Updated to compile with Gecode 2.1.0
+
+Version 1.1 (released 2008-02-13)
+ * Added support for constant declarations (like int: a=3;)
+ * New constraints required by FlatZinc specification (mostly int_lin_*)
+ * More verbose error reports
+ * Accept carriage return (Windows end-of-line)
+ * Fixed bug in output of Boolean variables
+
+Version 1.0 (released 2007-11-15)
+ * initial release

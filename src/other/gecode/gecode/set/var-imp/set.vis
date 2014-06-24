@@ -1,0 +1,197 @@
+#
+#  Main authors:
+#     Guido Tack <tack@gecode.org>
+#
+#  Contributing authors:
+#     Christian Schulte <schulte@gecode.org>
+#
+#  Copyright:
+#     Guido Tack, 2004
+#     Christian Schulte, 2006
+#
+#  Last modified:
+#     $Date$ by $Author$
+#     $Revision$
+#
+#  This file is part of Gecode, the generic constraint
+#  development environment:
+#     http://www.gecode.org
+#
+#  Permission is hereby granted, free of charge, to any person obtaining
+#  a copy of this software and associated documentation files (the
+#  "Software"), to deal in the Software without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of the Software, and to
+#  permit persons to whom the Software is furnished to do so, subject to
+#  the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+#  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+[General]
+Name:           Set
+Namespace:      Gecode::Set
+Ifdef:          GECODE_HAS_SET_VARS
+Bits:           0
+Dispose:        false
+[ModEventHeader]
+  /**
+   * \defgroup TaskActorSetMEPC Set modification events and propagation conditions
+   * \ingroup TaskActorSet
+   */
+  //@{
+[ModEvent]
+Name:           FAILED=FAILED
+  /// Domain operation has resulted in failure
+[ModEvent]
+Name:           NONE=NONE
+  /// Domain operation has not changed domain
+[ModEvent]
+Name:           VAL=ASSIGNED
+Combine:        VAL=VAL,CARD=VAL,LUB=VAL,GLB=VAL,BB=VAL,CLUB=VAL,CGLB=VAL,CBB=VAL
+  /// Domain operation has resulted in a value (assigned variable)
+[ModEvent]
+Name:           CARD
+Combine:        VAL=VAL,CARD=CARD,LUB=CLUB,GLB=CGLB,BB=CBB,CLUB=CLUB,CGLB=CGLB,CBB=CBB
+  /**
+   * \brief Domain operation has changed the variable cardinality
+   *
+   * Note that this implies that the domain has not resulted in a value.
+   */
+[ModEvent]
+Name:           LUB
+Combine:        VAL=VAL,CARD=CLUB,LUB=LUB,GLB=BB,BB=BB,CLUB=CLUB,CGLB=CGLB,CBB=CBB
+  /**
+   * \brief Domain operation has changed the least upper bound
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also neither cardinality nor the greatest lower bound
+   * have changed.
+   */
+[ModEvent]
+Name:           GLB
+Combine:        VAL=VAL,CARD=CGLB,LUB=BB,GLB=GLB,BB=BB,CLUB=CBB,CGLB=CGLB,CBB=CBB
+  /**
+   * \brief Domain operation has changed the greatest lower bound
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also neither cardinality nor the least upper bound
+   * have changed.
+   */
+[ModEvent]
+Name:           BB
+Combine:        VAL=VAL,CARD=CBB,LUB=BB,GLB=BB,BB=BB,CLUB=CBB,CGLB=CBB,CBB=CBB
+  /**
+   * \brief Domain operation has changed both greatest lower and least
+   * upper bound
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also the cardinality has not changed.
+   */
+[ModEvent]
+Name:           CLUB
+Combine:        VAL=VAL,CARD=CLUB,LUB=CLUB,GLB=CBB,BB=CBB,CLUB=CLUB,CGLB=CBB,CBB=CBB
+  /**
+   * \brief Domain operation has changed the least upper bound and the cardinality
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also the greatest lower bound has not changed.
+   */
+[ModEvent]
+Name:           CGLB
+Combine:        VAL=VAL,CARD=CGLB,LUB=CBB,GLB=CGLB,BB=CBB,CLUB=CBB,CGLB=CGLB,CBB=CBB
+  /**
+   * \brief Domain operation has changed the greatest lower bound and the cardinality
+   *
+   * Note that this implies that the domain has not resulted in a value
+   * and that also the least upper bound has not changed.
+   */
+[ModEvent]
+Name:           CBB=SUBSCRIBE
+Combine:        VAL=VAL,CARD=CBB,LUB=CBB,GLB=CBB,BB=CBB,CLUB=CBB,CGLB=CBB,CBB=CBB
+  /**
+   * \brief Domain operation has changed both the greatest lower bound and
+   * the least upper bound, as well as the cardinality
+   *
+   * Note that this implies that the domain has not resulted in a value.
+   *
+   * If a propagator subscribes to this variable, it will be processed
+   * assuming a ME_SET_CBB modification event.
+   *
+   */
+[ModEventFooter]
+[PropCondHeader]
+[PropCond]
+Name:           NONE=NONE
+  /// Propagation condition to be ignored (convenience)
+[PropCond]
+Name:           VAL=ASSIGNED
+ScheduledBy:    VAL
+  /**
+   * \brief Propagate when a view becomes assigned (single value)
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_SET_VAL, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_SET_VAL.
+   */
+[PropCond]
+Name:           CARD
+ScheduledBy:    VAL,CARD,CGLB,CLUB,CBB
+  /**
+   * \brief Propagate when the cardinality of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_SET_CARD, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_SET_VAL,
+   * ME_SET_CARD, ME_SET_CGLB, ME_SET_CLUB, or ME_SET_CBB.
+   */
+[PropCond]
+Name:           CLUB
+ScheduledBy:    VAL,CARD,LUB,BB,CLUB,CGLB,CBB
+  /**
+   * \brief Propagate when the cardinality or the least upper bound
+   * of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_SET_CLUB, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_SET_VAL,
+   * ME_SET_LUB, ME_SET_BB, ME_SET_CARD, ME_SET_CGLB, ME_SET_CLUB,
+   * or ME_SET_CBB.
+   */
+[PropCond]
+Name:           CGLB
+ScheduledBy:    VAL,CARD,GLB,BB,CLUB,CGLB,CBB
+  /**
+   * \brief Propagate when the cardinality or the greatest lower bound
+   * of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_SET_CGLB, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_SET_VAL,
+   * ME_SET_GLB, ME_SET_BB, ME_SET_CARD, ME_SET_CGLB, ME_SET_CLUB,
+   * or ME_SET_CBB.
+   */
+[PropCond]
+Name:           ANY
+ScheduledBy:    VAL,CARD,LUB,GLB,BB,CLUB,CGLB,CBB
+  /**
+   * \brief Propagate when any bound or the cardinality
+   * of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_SET_ANY, then \a p is propagated when a domain
+   * update operation on \a x returns any modification event but ME_SET_FAILED
+   * and ME_SET_NONE.
+   */
+[PropCondFooter]
+  //@}
+[End]

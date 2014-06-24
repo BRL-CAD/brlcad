@@ -1,0 +1,102 @@
+#
+#  Main authors:
+#     Lubomir Moric <lubomir.moric@logis.cz>
+#     Filip Konvicka <filip.konvicka@logis.cz>
+#     Christian Schulte <schulte@gecode.org>
+#     Vincent Barichard <Vincent.Barichard@univ-angers.fr>
+#
+#  Copyright:
+#     LOGIS, s.r.o., 2008
+#     Christian Schulte, 2010
+#     Vincent Barichard, 2012
+#
+#  Last modified:
+#     $Date$ by $Author$
+#     $Revision$
+#
+#  This file is part of Gecode, the generic constraint
+#  development environment:
+#     http://www.gecode.org
+#
+#  Permission is hereby granted, free of charge, to any person obtaining
+#  a copy of this software and associated documentation files (the
+#  "Software"), to deal in the Software without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of the Software, and to
+#  permit persons to whom the Software is furnished to do so, subject to
+#  the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+#  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+[General]
+Name:           Float
+Namespace:      Gecode::Float
+Ifdef:          GECODE_HAS_FLOAT_VARS
+Bits:           0
+Dispose:        false
+[ModEventHeader]
+  /**
+   * \defgroup TaskActorFloatMEPC Float modification events and propagation conditions
+   * \ingroup TaskActorFloat
+   */
+  //@{
+[ModEvent]
+Name:           FAILED=FAILED
+  /// Domain operation has resulted in failure
+[ModEvent]
+Name:           NONE=NONE
+  /// Domain operation has not changed domain
+[ModEvent]
+Name:           VAL=ASSIGNED
+Combine:        VAL=VAL, BND=VAL
+  /// Domain operation has resulted in a value (assigned variable)
+[ModEvent]
+Name:           BND=SUBSCRIBE
+Combine:        VAL=VAL, BND=BND
+  /** 
+   * \brief Domain operation has changed the minimum or maximum of the domain
+   *
+   * Note that this implies that the domain has not resulted in a value.
+   *
+   * If a propagator subscribes to this variable, it will be processed
+   * assuming a ME_FLOAT_BND modification event.
+   */
+[ModEventFooter]
+[PropCondHeader]
+[PropCond]
+Name:           NONE=NONE
+  /// Propagation condition to be ignored (convenience)
+[PropCond]
+Name:           VAL=ASSIGNED
+ScheduledBy:    VAL
+  /**
+   * \brief Propagate when a view becomes assigned (single value)
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_FLOAT_VAL, then \a p is propagated when a domain
+   * update operation on \a x returns the modification event ME_FLOAT_VAL.
+   */
+[PropCond]
+Name:           BND
+ScheduledBy:    VAL, BND
+  /**
+   * \brief Propagate when minimum or maximum of a view changes
+   *
+   * If a propagator \a p depends on a view \a x with propagation
+   * condition PC_FLOAT_BND, then \a p is propagated when a domain
+   * update operation on \a x returns the modification events ME_FLOAT_VAL
+   * or ME_FLOAT_BND.
+   */
+[PropCondFooter]
+  //@}
+[End]

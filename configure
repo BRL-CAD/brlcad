@@ -182,6 +182,10 @@ do
                                   shift;;
      --disable-step-class-libraries)                options="$options -DBRLCAD_SC=SYSTEM";
                                   shift;;
+     --enable-gecode)                options="$options -DBRLCAD_GECODE=BUNDLED";
+                                  shift;;
+     --disable-gecode)                options="$options -DBRLCAD_GECODE=SYSTEM";
+                                  shift;;
      --enable-vds)                options="$options -DBRLCAD_VDS=BUNDLED";
                                   shift;;
      --disable-vds)                options="$options -DBRLCAD_VDS=SYSTEM";
