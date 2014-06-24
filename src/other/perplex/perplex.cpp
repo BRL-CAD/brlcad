@@ -86,7 +86,7 @@ static const mbo_opt_struct options[] =
     mbo_opt_struct('-', 0, NULL)
 };
 
-static const char version[] = "1.0.0";
+static const char version[] = "1.0.1";
 
 static const char usage[] =
 "Usage: perplex [options] input\n"
