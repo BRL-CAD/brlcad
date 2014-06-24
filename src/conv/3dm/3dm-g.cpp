@@ -112,9 +112,9 @@ MapLayer(const std::string &layer_name, const std::string &uuid, const std::stri
 
 
 static void
-BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, const LayerMaps &lmaps)
+BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, long &groupcnt,
+	const LayerMaps &lmaps)
 {
-    static long groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
 
@@ -147,7 +147,7 @@ BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, 
 	    siter = lmaps.layer_name_uuid_map.find(membername);
 	    if (siter != lmaps.layer_name_uuid_map.end()) {
 		std::string uuid2 = siter->second;
-		BuildHierarchy(outfp, uuid2, dump, lmaps);
+		BuildHierarchy(outfp, uuid2, dump, groupcnt, lmaps);
 	    }
 	    ++viter;
 	}
@@ -164,7 +164,8 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog &dump, const LayerMaps &lmaps)
 
     if (iter != lmaps.member_map.end()) {
 	std::string uuid = iter->first;
-	BuildHierarchy(outfp, uuid, dump, lmaps);
+	long groupcnt = 1;
+	BuildHierarchy(outfp, uuid, dump, groupcnt, lmaps);
     }
 }
 
