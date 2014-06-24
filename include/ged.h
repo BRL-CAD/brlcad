@@ -906,6 +906,11 @@ GED_EXPORT extern int ged_bot_vertex_fuse(struct ged *gedp, int argc, const char
 GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * BREP debug plot command
+ */
+GED_EXPORT extern int ged_dplot(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * List attributes (brief).
  */
 GED_EXPORT extern int ged_cat(struct ged *gedp, int argc, const char *argv[]);

@@ -238,6 +238,12 @@ HIDDEN int to_dlist_on(struct ged *gedp,
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
+HIDDEN int to_dplot(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr func,
+		       const char *usage,
+		       int maxargs);
 HIDDEN int to_bot_edge_split(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
@@ -1032,6 +1038,7 @@ static struct to_cmdtab to_cmds[] = {
     {"delete_view",	"vname", TO_UNLIMITED, to_delete_view, GED_FUNC_PTR_NULL},
     {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dir2ae},
     {"dlist_on",	"[0|1]", TO_UNLIMITED, to_dlist_on, GED_FUNC_PTR_NULL},
+    {"dplot",	"dplot_logfile", 1, to_dplot, ged_dplot},
     {"draw",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_draw},
     {"dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dump},
     {"dup",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dup},
@@ -5622,6 +5629,149 @@ to_dlist_on(struct ged *gedp,
     return GED_OK;
 }
 
+HIDDEN int
+to_dplot(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr func,
+	    const char *UNUSED(usage),
+	    int UNUSED(maxargs))
+{
+    register int i;
+    int ac;
+    int ret;
+    char *av[256];
+    struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+    struct bu_vls result_copy = BU_VLS_INIT_ZERO;
+    char *who_av[2] = {"who", NULL};
+    int aflag = 0;
+
+    /* copy all args */
+    ac = argc;
+    for (i = 0; i < ac; ++i)
+	av[i] = bu_strdup((char *)argv[i]);
+    av[ac] = (char *)0;
+
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
+	int ac_more;
+	const char **avmp;
+	const char **av_more = NULL;
+
+	/* save result string */
+	bu_vls_substr(&result_copy, gedp->ged_result_str, 0, bu_vls_strlen(gedp->ged_result_str));
+	bu_vls_trunc(gedp->ged_result_str, 0);
+
+	ret = ged_who(gedp, 1, (const char **)who_av);
+	if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+	    aflag = 1;
+
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	    if (to_is_viewable(gdvp)) {
+		gedp->ged_gvp->gv_x_samples = gdvp->gdv_dmp->dm_width;
+		gedp->ged_gvp->gv_y_samples = gdvp->gdv_dmp->dm_height;
+	    }
+	}
+	if (aflag) {
+	    to_autoview_all_views(current_top);
+	} else {
+	    to_refresh_all_views(current_top);
+	}
+
+	/* restore result string */
+	bu_vls_substr(gedp->ged_result_str, &result_copy, 0, bu_vls_strlen(&result_copy));
+	bu_vls_free(&result_copy);
+
+	if (0 < bu_vls_strlen(&current_top->to_gop->go_more_args_callback)) {
+	    bu_vls_trunc(&callback_cmd, 0);
+	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
+			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
+			  bu_vls_addr(gedp->ged_result_str));
+
+	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
+		bu_vls_trunc(gedp->ged_result_str, 0);
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		Tcl_ResetResult(current_top->to_interp);
+		return GED_ERROR;
+	    }
+
+	    bu_vls_trunc(&temp, 0);
+	    bu_vls_printf(&temp, Tcl_GetStringResult(current_top->to_interp));
+	    Tcl_ResetResult(current_top->to_interp);
+	} else {
+	    bu_log("\r%s", bu_vls_addr(gedp->ged_result_str));
+	    bu_vls_trunc(&temp, 0);
+	    if (bu_vls_gets(&temp, stdin) < 0) {
+		break;
+	    }
+	}
+
+	if (Tcl_SplitList(current_top->to_interp, bu_vls_addr(&temp), &ac_more, &av_more) != TCL_OK) {
+	    continue;
+	}
+
+	if (ac_more < 1) {
+	    /* space has still been allocated */
+	    Tcl_Free((char *)av_more);
+
+	    continue;
+	}
+
+	/* skip first element if empty */
+	avmp = av_more;
+	if (*avmp[0] == '\0') {
+	    --ac_more;
+	    ++avmp;
+	}
+
+	/* ignore last element if empty */
+	if (*avmp[ac_more-1] == '\0')
+	    --ac_more;
+
+	/* copy additional args */
+	for (i = 0; i < ac_more; ++i)
+	    av[ac++] = bu_strdup(avmp[i]);
+	av[ac+1] = (char *)0;
+
+	Tcl_Free((char *)av_more);
+    }
+    /* save result string */
+    bu_vls_substr(&result_copy, gedp->ged_result_str, 0, bu_vls_strlen(gedp->ged_result_str));
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    ret = ged_who(gedp, 1, (const char **)who_av);
+    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+	aflag = 1;
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (to_is_viewable(gdvp)) {
+	    gedp->ged_gvp->gv_x_samples = gdvp->gdv_dmp->dm_width;
+	    gedp->ged_gvp->gv_y_samples = gdvp->gdv_dmp->dm_height;
+	}
+    }
+    if (aflag) {
+	to_autoview_all_views(current_top);
+    } else {
+	to_refresh_all_views(current_top);
+    }
+
+    /* restore result string */
+    bu_vls_substr(gedp->ged_result_str, &result_copy, 0, bu_vls_strlen(&result_copy));
+    bu_vls_free(&result_copy);
+
+    bu_vls_free(&callback_cmd);
+    bu_vls_free(&temp);
+
+    bu_vls_printf(gedp->ged_result_str, "BUILT_BY_MORE_ARGS");
+    for (i = 0; i < ac; ++i) {
+	bu_vls_printf(gedp->ged_result_str, "%s ", av[i]);
+	bu_free((void *)av[i], "to_more_args_func");
+    }
+    return GED_OK;
+}
 
 HIDDEN int
 to_fontsize(struct ged *gedp,

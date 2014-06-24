@@ -210,6 +210,7 @@ package provide cadwidgets::Ged 1.0
 	method delay {args}
 	method dir2ae {args}
 	method dlist_on {args}
+	method dplot {args}
 	method draw {args}
 	method draw_ray {_start _partitions}
 	method dump {args}
@@ -1617,6 +1618,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dlist_on {args} {
     eval $mGed dlist_on $args
+}
+
+::itcl::body cadwidgets::Ged::dplot {args} {
+    eval $mGed dplot $args
 }
 
 ::itcl::body cadwidgets::Ged::draw {args} {
@@ -6151,6 +6156,7 @@ package provide cadwidgets::Ged 1.0
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
+    $help add dplot		{{dplot_log} {draws plotfiles from the given logfile}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add dump		{{file} {write current state of database object to file}}
     $help add dup		{{file [prefix]} {check for dup names in 'file'}}

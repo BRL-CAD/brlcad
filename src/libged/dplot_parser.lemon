@@ -1,0 +1,64 @@
+%include {
+#include "bu.h"
+#include <assert.h>
+#include "dplot_reader.h"
+}
+
+%destructor statement_list {
+    $$.n = data->ssx_count;
+}
+
+%stack_overflow {
+    fprintf(stderr, "Parser stack overflow. Last token was %d\n", yypMinor->yy0.n);
+}
+
+%syntax_error {
+    fprintf(stderr, "Syntax error. Last token (type %d) was %d. Ignoring "
+	    "input tokens until valid input is found.\n", yymajor, yyminor.yy0.n);
+}
+
+%parse_failure {
+    fprintf(stderr, "Parsing failed. Parser has reset.\n");
+}
+
+%token_type {token_t}
+%extra_argument {struct dplot_data *data}
+
+%token_prefix {TOKEN_}
+
+%type count {int}
+%type index {int}
+
+start_symbol ::= statement_list.
+
+statement_list ::= /* empty */.
+statement_list ::= statement_list statement.
+
+statement ::= surface_counts EOL.
+statement ::= ssx_info EOL.
+
+surface_counts ::= SURFACES count(C1) count(C2). {
+    data->brep1_surface_count = C1;
+    data->brep2_surface_count = C2;
+}
+
+ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3). {
+    struct ssx *ssx;
+    BU_GET(ssx, struct ssx);
+    ssx->brep1_surface = I1;
+    ssx->brep2_surface = I2;
+    ssx->final_curve_events = C1;
+    ssx->intersecting_brep1_isocurves = C2;
+    ssx->intersecting_isocurves = C3;
+
+    BU_LIST_PUSH(&data->ssx_list, &ssx->l);
+    ++data->ssx_count;
+}
+
+count(C) ::= NONNEGATIVE_INT(N). {
+    C = N.n;
+}
+
+index(I) ::= NONNEGATIVE_INT(N). {
+    I = N.n;
+}

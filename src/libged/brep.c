@@ -35,6 +35,7 @@
 #include "wdb.h"
 
 #include "./ged_private.h"
+#include "dplot_reader.h"
 
 /* TODO - get rid of the need for brep_specific at this level */
 #include "../librt/primitives/brep/brep_local.h"
@@ -463,6 +464,483 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+enum {
+    DPLOT_INITIAL,
+    DPLOT_SSX_FIRST,
+    DPLOT_SSX,
+    DPLOT_SSX_EVENTS,
+    DPLOT_ISOCSX_FIRST,
+    DPLOT_ISOCSX,
+    DPLOT_ISOCSX_EVENTS
+};
+
+struct dplot_info {
+    struct dplot_data fdata;
+    int mode;
+    struct ged *gedp;
+    FILE *logfile;
+    char *prefix;
+    int ssx_idx;
+    int isocsx_idx;
+    int brep1_surf_idx;
+    int brep2_surf_idx;
+    int brep1_surf_count;
+    int brep2_surf_count;
+    int event_idx;
+    int event_count;
+    int brep1_isocsx_count;
+    int isocsx_count;
+};
+
+#define CLEANUP \
+    fclose(info.logfile); \
+    bu_free(info.prefix, "prefix"); \
+    info.prefix = NULL; \
+    if (info.fdata.ssx) bu_free(info.fdata.ssx, "ssx array");
+
+#define RETURN_MORE \
+    CLEANUP \
+    return GED_MORE;
+
+#define RETURN_ERROR \
+    CLEANUP \
+    info.mode = DPLOT_INITIAL; \
+    return GED_ERROR;
+
+HIDDEN char *
+dplot_idx_string(const char *prefix, const char *infix, int idx, const char *suffix)
+{
+    char *idx_string;
+    char idx_buf[8];
+    int len;
+    size_t bytes;
+
+    int ret = snprintf(idx_buf, sizeof(idx_buf), "%d", idx);
+    if (ret != 1) {
+	return NULL;
+    }
+
+    len = strlen(prefix) + strlen(infix) + strlen(idx_buf) + strlen(suffix);
+    bytes = sizeof(char) * (len + 1);
+    idx_string = (char *)bu_calloc(1, bytes, "index string");
+
+    if (!BU_STR_EMPTY(prefix)) {
+	bu_strlcat(idx_string, prefix, bytes);
+    }
+
+    if (!BU_STR_EMPTY(infix)) {
+	bu_strlcat(idx_string, infix, bytes);
+    }
+
+    bu_strlcat(idx_string, idx_buf, bytes);
+
+    if (!BU_STR_EMPTY(suffix)) {
+	bu_strlcat(idx_string, suffix, bytes);
+    }
+
+    return idx_string;
+}
+
+HIDDEN int
+dplot_overlay(
+    struct ged *gedp,
+    const char *prefix,
+    const char *infix,
+    int idx,
+    const char *name)
+{
+    const char *cmd_av[] = {"overlay", "[filename]", "1.0", "[name]"};
+    int ret, cmd_ac = sizeof(cmd_av) / sizeof(char *);
+
+    char *overlay_name = dplot_idx_string(prefix, infix, idx, ".plot3");
+    if (!overlay_name) {
+	bu_vls_printf(gedp->ged_result_str, "error generating filename\n");
+	return GED_ERROR;
+    }
+    cmd_av[1] = cmd_av[3] = overlay_name;
+
+    if (name) {
+	cmd_av[3] = name;
+    }
+    ret = ged_overlay(gedp, cmd_ac, cmd_av);
+    bu_free(overlay_name, "overlay_name");
+
+    if (ret != GED_OK) {
+	bu_vls_printf(gedp->ged_result_str, "error overlaying plot\n");
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+HIDDEN int
+dplot_erase_overlay(
+    struct dplot_info *info,
+    const char *name)
+{
+    /* Don't have the real name, so can't actually erase. Instead,
+     * overwrite old plot with empty one.
+     */
+    int ret = dplot_overlay(info->gedp, info->prefix, "_empty", 0, name);
+    if (ret != GED_OK) {
+	return ret;
+    }
+    ret = dplot_overlay(info->gedp, info->prefix, "_empty", 1, name);
+    if (ret != GED_OK) {
+	return ret;
+    }
+    ret = dplot_overlay(info->gedp, info->prefix, "_empty", 2, name);
+    return ret;
+}
+
+HIDDEN int
+ged_dplot_ssx(
+    struct dplot_info *info)
+{
+    int i, ret;
+
+    /* draw surfaces, skipping intersecting surfaces if in SSI mode */
+    /* TODO: need to name these overlays so I can selectively erase them */
+    for (i = 0; i < info->brep1_surf_count; ++i) {
+	char *name = dplot_idx_string(info->prefix, "_brep1_surface", i, "");
+	dplot_erase_overlay(info, name);
+	bu_log("");
+	bu_free(name, "name");
+    }
+    for (i = 0; i < info->brep2_surf_count; ++i) {
+	char *name = dplot_idx_string(info->prefix, "_brep2_surface", i, "");
+	dplot_erase_overlay(info, name);
+	bu_free(name, "name");
+    }
+    if (info->mode == DPLOT_SSX_FIRST || info->mode == DPLOT_SSX || info->mode == DPLOT_SSX_EVENTS) {
+	for (i = 0; i < info->brep1_surf_count; ++i) {
+	    if (info->mode != DPLOT_SSX_FIRST && i == info->brep1_surf_idx) {
+		continue;
+	    }
+	    ret = dplot_overlay(info->gedp, info->prefix, "_brep1_surface", i, NULL);
+	    if (ret != GED_OK) {
+		return GED_ERROR;
+	    }
+	}
+	for (i = 0; i < info->brep2_surf_count; ++i) {
+	    if (info->mode != DPLOT_SSX_FIRST && i == info->brep2_surf_idx) {
+		continue;
+	    }
+	    ret = dplot_overlay(info->gedp, info->prefix, "_brep2_surface", i, NULL);
+	    if (ret != GED_OK) {
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    /* draw highlighted surface-surface intersection pair */
+    if (info->mode == DPLOT_SSX || info->mode == DPLOT_SSX_EVENTS) {
+	ret = dplot_overlay(info->gedp, info->prefix, "_highlight_brep1_surface",
+		info->brep1_surf_idx, "dplot_ssx1");
+	if (ret != GED_OK) {
+	    return GED_ERROR;
+	}
+	ret = dplot_overlay(info->gedp, info->prefix, "_highlight_brep2_surface",
+		info->brep2_surf_idx, "dplot_ssx2");
+	if (ret != GED_OK) {
+	    return GED_ERROR;
+	}
+	if (info->mode == DPLOT_SSX) {
+	    /* advance past the completed pair */
+	    ++info->ssx_idx;
+	}
+    }
+    if (info->mode == DPLOT_SSX_FIRST) {
+	info->mode = DPLOT_SSX;
+    }
+    if (info->mode == DPLOT_SSX && info->ssx_idx < info->fdata.ssx_count) {
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show surface-"
+		"surface intersection %d", info->ssx_idx);
+	return GED_MORE;
+    }
+    return GED_OK;
+}
+
+HIDDEN int
+ged_dplot_ssx_events(
+    struct dplot_info *info)
+{
+    int ret;
+
+    /* erase old event plots */
+    ret = dplot_erase_overlay(info, "curr_event");
+    if (ret != GED_OK) {
+	return ret;
+    }
+
+    if (info->mode != DPLOT_SSX_EVENTS) {
+	return GED_OK;
+    }
+
+    if (info->event_count > 0) {
+	/* convert event ssx_idx to string */
+	char *infix = dplot_idx_string("", "_ssx", info->ssx_idx, "_event");
+	if (!infix) {
+	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
+	    return GED_ERROR;
+	}
+
+	/* plot overlay */
+	ret = dplot_overlay(info->gedp, info->prefix, infix, info->event_idx, "curr_event");
+	bu_free(infix, "infix");
+
+	if (ret != GED_OK) {
+	    return ret;
+	}
+	if (info->event_idx == 0) {
+	    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
+	    bu_vls_printf(info->gedp->ged_result_str, "red    = tangent\n");
+	    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
+	}
+    }
+    /* advance to next event, or return to initial state */
+    if (++info->event_idx < info->event_count) {
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show next event\n");
+	return GED_MORE;
+    }
+    info->mode = DPLOT_INITIAL;
+    return GED_OK;
+}
+
+HIDDEN int
+ged_dplot_isocsx(
+    struct dplot_info *info)
+{
+    if (info->mode != DPLOT_ISOCSX && info->mode != DPLOT_ISOCSX_FIRST) {
+	return GED_OK;
+    }
+
+    if (info->mode == DPLOT_ISOCSX_FIRST) {
+	dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
+		info->brep1_surf_idx, "isocsx_curvesurf");
+	dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
+		info->brep2_surf_idx, "isocsx_surf");
+    }
+
+    if (info->mode == DPLOT_ISOCSX) {
+	char *infix = dplot_idx_string("", "_highlight_ssx", info->ssx_idx, "_isocurve");
+	if (!infix) {
+	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
+	    return GED_ERROR;
+	}
+	/* plot surface and the isocurve that intersects it */
+	if (info->isocsx_idx < info->brep1_isocsx_count) {
+	    dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
+		    info->brep1_surf_idx, "isocsx_curvesurf");
+	    dplot_overlay(info->gedp, info->prefix, "_highlight_brep2_surface",
+		    info->brep2_surf_idx, "isocsx_surf");
+	} else {
+	    dplot_overlay(info->gedp, info->prefix, "_highlight_brep1_surface",
+		    info->brep1_surf_idx, "isocsx_surf");
+	    dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
+		    info->brep2_surf_idx, "isocsx_curvesurf");
+	}
+	dplot_overlay(info->gedp, info->prefix, infix, info->isocsx_idx, "isocsx_isocurve");
+	bu_free(infix, "infix");
+    }
+
+    if (info->mode == DPLOT_ISOCSX_FIRST || ++info->isocsx_idx < info->isocsx_count) {
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
+		"isocurve-surface intersection %d", info->isocsx_idx);
+	info->mode = DPLOT_ISOCSX;
+	return GED_MORE;
+    }
+
+    info->mode = DPLOT_INITIAL;
+    return GED_OK;
+}
+
+HIDDEN void *
+dplot_malloc(size_t s) {
+    return bu_malloc(s, "dplot_malloc");
+}
+
+HIDDEN void
+dplot_free(void *p) {
+    bu_free(p, "dplot_free");
+}
+
+HIDDEN void
+dplot_load_file_data(struct dplot_info *info)
+{
+    int i, token_id;
+    perplex_t scanner;
+    void *parser;
+    struct ssx *curr;
+
+    /* initialize scanner and parser */
+    parser = ParseAlloc(dplot_malloc);
+    scanner = perplexFileScanner(info->logfile);
+
+    BU_LIST_INIT(&info->fdata.ssx_list);
+    perplexSetExtra(scanner, (void *)&info->fdata);
+
+    /* parse */
+    while ((token_id = yylex(scanner)) != YYEOF) {
+	Parse(parser, token_id, info->fdata.token_data, &info->fdata);
+    }
+    Parse(parser, 0, info->fdata.token_data, &info->fdata);
+
+    /* clean up */
+    ParseFree(parser, dplot_free);
+    perplexFree(scanner);
+
+    /* move ssx to dynamic array for easy access */
+    info->fdata.ssx = NULL;
+    if (info->fdata.ssx_count > 0) {
+	info->fdata.ssx = (struct ssx *)bu_malloc(
+		sizeof(struct ssx) * info->fdata.ssx_count, "ssx array");
+	i = info->fdata.ssx_count - 1;
+	while (BU_LIST_WHILE(curr, ssx, &info->fdata.ssx_list)) {
+	    info->fdata.ssx[i--] = *curr;
+	    BU_LIST_DEQUEUE(&curr->l);
+	    BU_PUT(curr, struct ssx);
+	}
+    }
+}
+
+int
+ged_dplot(struct ged *gedp, int argc, const char *argv[])
+{
+    static struct dplot_info info;
+    int ret;
+    const char *filename, *cmd;
+    char *dot;
+
+    info.gedp = gedp;
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc < 3) {
+	bu_vls_printf(gedp->ged_result_str, "usage: %s logfile cmd\n",
+		argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "\twhere cmd is one of:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tssx\t(show intersecting "
+		"surface pairs)\n");
+	bu_vls_printf(gedp->ged_result_str, "\tssx N\t(show intersections of "
+		"ssx pair N)\n");
+	bu_vls_printf(gedp->ged_result_str, "\tisocsx N\t(show intersecting "
+		"isocurve-surface pairs of ssx pair N)\n");
+	bu_vls_printf(gedp->ged_result_str, "\tisocsx N M\t(show "
+		"intersections of ssx pair N, isocsx pair M\n");
+	return GED_HELP;
+    }
+    filename = argv[1];
+    cmd = argv[2];
+
+    if (info.mode == DPLOT_INITIAL) {
+	if (BU_STR_EQUAL(cmd, "ssx") && argc == 3) {
+	    info.mode = DPLOT_SSX_FIRST;
+	    info.ssx_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "ssx") && argc == 4) {
+	    /* parse surface pair index */
+	    const char *idx_str = argv[3];
+	    ret = bu_sscanf(idx_str, "%d", &info.ssx_idx);
+	    if (ret != 1) {
+		bu_vls_printf(gedp->ged_result_str, "%s is not a valid "
+			"surface pair (must be a non-negative integer)\n", idx_str);
+		return GED_ERROR;
+	    }
+	    info.mode = DPLOT_SSX_EVENTS;
+	    info.event_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "isocsx") && argc == 4) {
+	    const char *idx_str = argv[3];
+	    ret = bu_sscanf(idx_str, "%d", &info.ssx_idx);
+	    if (ret != 1) {
+		bu_vls_printf(gedp->ged_result_str, "%s is not a valid "
+			"surface pair (must be a non-negative integer)\n", idx_str);
+		return GED_ERROR;
+	    }
+	    info.mode = DPLOT_ISOCSX_FIRST;
+	    info.isocsx_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "isocsx") && argc == 5) {
+	    /* parse surface pair index */
+	    const char *idx_str = argv[3];
+	    ret = bu_sscanf(idx_str, "%d", &info.ssx_idx);
+	    if (ret != 1) {
+		bu_vls_printf(gedp->ged_result_str, "%s is not a valid "
+			"surface pair (must be a non-negative integer)\n", idx_str);
+		return GED_ERROR;
+	    }
+	    idx_str = argv[4];
+	    ret = bu_sscanf(idx_str, "%d", &info.isocsx_idx);
+	    if (ret != 1) {
+		bu_vls_printf(gedp->ged_result_str, "%s is not a valid "
+			"isocurve-surface pair (must be a non-negative integer)\n", idx_str);
+		return GED_ERROR;
+	    }
+	    info.mode = DPLOT_ISOCSX_EVENTS;
+	    info.event_idx = 0;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a recognized "
+		    "command or was given the wrong number of arguments\n",
+		    cmd);
+	    return GED_ERROR;
+	}
+    }
+
+    /* open dplot log file */
+    info.logfile = fopen(filename, "r");
+    if (!info.logfile) {
+	bu_vls_printf(gedp->ged_result_str, "couldn't open log file \"%s\"\n", filename);
+	return GED_ERROR;
+    }
+
+    /* filename before '.' is assumed to be the prefix for all
+     * plot-file names
+     */
+    info.prefix = bu_strdup(filename);
+    dot = strchr(info.prefix, '.');
+    if (dot) {
+	*dot = '\0';
+    }
+
+    dplot_load_file_data(&info);
+
+    if ((info.mode == DPLOT_SSX ||
+	 info.mode == DPLOT_SSX_EVENTS ||
+	 info.mode == DPLOT_ISOCSX) &&
+	(info.ssx_idx < 0 || info.ssx_idx > (info.fdata.ssx_count - 1)))
+    {
+	bu_vls_printf(info.gedp->ged_result_str, "no surface pair %d (valid"
+		" range is [0, %d])\n", info.ssx_idx, info.fdata.ssx_count - 1);
+	RETURN_ERROR;
+    }
+    info.brep1_surf_idx = info.fdata.ssx[info.ssx_idx].brep1_surface;
+    info.brep2_surf_idx = info.fdata.ssx[info.ssx_idx].brep2_surface;
+    info.event_count = info.fdata.ssx[info.ssx_idx].final_curve_events;
+    info.brep1_isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_brep1_isocurves;
+    info.isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
+
+    ret = ged_dplot_ssx(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = ged_dplot_ssx_events(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = ged_dplot_isocsx(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    info.mode = DPLOT_INITIAL;
+    CLEANUP;
+
+    return GED_OK;
+}
 
 /*
  * Local Variables:
