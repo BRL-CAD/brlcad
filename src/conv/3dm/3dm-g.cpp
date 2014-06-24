@@ -74,6 +74,71 @@ UUIDstr(const ON_UUID &uuid)
 }
 
 
+static void xform2mat_t(const ON_Xform &source, mat_t dest)
+{
+    const std::size_t dmax = 4;
+    for (std::size_t row = 0; row < dmax; ++row)
+	for (std::size_t col = 0; col < dmax; ++col)
+	    dest[row*dmax + col] = source[row][col];
+}
+
+
+static void
+create_instance_reference(rt_wdb *outfp, STR_STR_MAP &uuid_map,
+	const ON_InstanceRef &iref, const std::string &comb_name)
+{
+    mat_t matrix;
+    xform2mat_t(iref.m_xform, matrix);
+    wmember members;
+    BU_LIST_INIT(&members.l);
+    const std::string member_name = uuid_map[UUIDstr(iref.m_instance_definition_uuid)] + ".c";
+    mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
+    mk_lfcomb(outfp, comb_name.c_str(), &members, 0); // FIXME create region instead
+}
+
+
+static void
+create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
+	ON_TextLog &dump, STR_STR_MAP &uuid_map, const ON_InstanceDefinition &idef,
+	const std::string &comb_name)
+{
+    wmember members;
+    BU_LIST_INIT(&members.l);
+
+    for (int i = 0; i < idef.m_object_uuid.Count(); ++i) {
+	const ON_UUID member_uuid = idef.m_object_uuid[i];
+	const int geom_index = model.ObjectIndex(member_uuid);
+	if (geom_index == -1) {
+	    dump.Print("referenced uuid=%s does not exist\n", UUIDstr(member_uuid).c_str());
+	    continue;
+	}
+
+	const ON_Geometry *pGeometry = ON_Geometry::Cast(model.m_object_table[geom_index].m_object);
+	if (!pGeometry) {
+	    dump.Print("referenced uuid=%s is not geometry\n", UUIDstr(member_uuid).c_str());
+	    continue;
+	}
+
+	const ON_InstanceRef *instref;
+	std::string member_name;
+	if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	    member_name = uuid_map[UUIDstr(member_uuid)] + ".r";
+	    create_instance_reference(outfp, uuid_map, *instref, member_name);
+	} else {
+	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
+	    if (member_name == ".s") {
+		dump.Print("referenced member name=%s not found -- skipping\n", member_name.c_str());
+		continue;
+	    }
+	}
+
+	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
+    }
+
+    mk_lfcomb(outfp, comb_name.c_str(), &members, 0);
+}
+
+
 static void
 MapRegion(const ONX_Model &model, const std::string &region_name, int layer_index, MEMBER_MAP &member_map)
 {
@@ -112,8 +177,8 @@ MapLayer(const std::string &layer_name, const std::string &uuid, const std::stri
 
 
 static void
-BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, long &groupcnt,
-	const LayerMaps &lmaps)
+BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, const LayerMaps &lmaps,
+	long &groupcnt)
 {
     struct wmember members;
     BU_LIST_INIT(&members.l);
@@ -147,7 +212,7 @@ BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, 
 	    siter = lmaps.layer_name_uuid_map.find(membername);
 	    if (siter != lmaps.layer_name_uuid_map.end()) {
 		std::string uuid2 = siter->second;
-		BuildHierarchy(outfp, uuid2, dump, groupcnt, lmaps);
+		BuildHierarchy(outfp, uuid2, dump, lmaps, groupcnt);
 	    }
 	    ++viter;
 	}
@@ -165,7 +230,7 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog &dump, const LayerMaps &lmaps)
     if (iter != lmaps.member_map.end()) {
 	std::string uuid = iter->first;
 	long groupcnt = 1;
-	BuildHierarchy(outfp, uuid, dump, groupcnt, lmaps);
+	BuildHierarchy(outfp, uuid, dump, lmaps, groupcnt);
     }
 }
 
@@ -284,16 +349,126 @@ MakeCleanUniqueNames(ONX_Model &model)
 	    model.m_object_table[i].m_attributes.m_name = name;
 	}
     }
+
+
+    // FIXME code duplication
+    for (int i = 0; i < model.m_idef_table.Count(); ++i) {
+	bool changed = CleanName(model.m_idef_table[i].m_name);
+	ON_wString name(model.m_idef_table[i].m_name);
+	ON_wString base(name);
+	if (name.Length() == 0 || !NameIsUnique(name, model)) {
+	    if (name.Length() == 0) {
+		base = "noname";
+	    }
+
+	    std::string num_str;
+	    std::ostringstream converter;
+	    converter << ++obj_counter;
+	    name = base + "." + converter.str().c_str();
+	    changed = true;
+	}
+	if (changed) {
+	    model.m_idef_table[i].m_name.Destroy();
+	    model.m_idef_table[i].m_name = name;
+	}
+    }
 }
 
 
+}
+
+
+std::string gen_geom_name(const ONX_Model &model, ON_TextLog &dump, const ON_3dmObjectAttributes &myAttributes, int verbose_mode, bool use_uuidnames, std::size_t &mcount, std::map<std::string, std::size_t> &region_cnt_map)
+{
+    std::string geom_base;
+    if (use_uuidnames) {
+	char uuidstring[UUID_LEN] = {0};
+	ON_UuidToString(myAttributes.m_uuid, uuidstring);
+	ON_String constr(uuidstring);
+	const char* cstr = constr;
+	geom_base = cstr;
+    } else {
+	ON_String constr(myAttributes.m_name);
+	if (constr == NULL) {
+	    std::string genName = "";
+	    struct bu_vls name = BU_VLS_INIT_ZERO;
+
+	    /* Use layer name to help name un-named regions/objects */
+	    if (myAttributes.m_layer_index > 0) {
+		const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
+		ON_wString layer_name = layer.LayerName();
+		bu_vls_strcpy(&name, ON_String(layer_name));
+		genName = bu_vls_addr(&name);
+		if (genName.length() <= 0) {
+		    genName = GENERIC_NAME;
+		}
+		if (verbose_mode) {
+		    dump.Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
+		}
+	    } else {
+		genName = GENERIC_NAME;
+	    }
+
+	    /* For layer named regions use layer region count
+	     * instead of global region count
+	     */
+	    if (genName.compare(GENERIC_NAME) == 0) {
+		bu_vls_printf(&name, "%lu", (long unsigned int)mcount++);
+		genName += bu_vls_addr(&name);
+		geom_base = genName;
+	    } else {
+		size_t region_cnt = ++region_cnt_map[genName];
+		bu_vls_printf(&name, "%lu", (long unsigned int)region_cnt);
+		genName += bu_vls_addr(&name);
+		geom_base = genName;
+	    }
+
+	    if (verbose_mode) {
+		dump.Print("Object has no name - creating one %s.\n", geom_base.c_str());
+	    }
+	    bu_vls_free(&name);
+	} else {
+	    const char* cstr = constr;
+	    geom_base = cstr;
+	}
+    }
+
+    return geom_base;
+}
+
+
+STR_STR_MAP create_geometry_names(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump, int verbose_mode, bool use_uuidnames)
+{
+    STR_STR_MAP uuid_map;
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
+	// object's attributes
+	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
+
+	std::size_t mcount = 0;
+	std::map<std::string, std::size_t> region_cnt_map;
+	std::string geom_base = gen_geom_name(model, dump, myAttributes, verbose_mode, use_uuidnames,
+		mcount, region_cnt_map);
+	uuid_map[UUIDstr(myAttributes.m_uuid)] = geom_base;
+    }
+
+    for (int i = 0; i < model.m_idef_table.Count(); ++i) {
+	std::string geom_base;
+	if (use_uuidnames)
+	    geom_base = UUIDstr(model.m_idef_table[i].m_uuid);
+	else
+	    geom_base = ON_String(model.m_idef_table[i].Name()).Array();
+
+	uuid_map[UUIDstr(model.m_idef_table[i].m_uuid)] = geom_base;
+	create_instance_definition(outfp, model, dump, uuid_map, model.m_idef_table[i], geom_base+".c");
+    }
+
+    return uuid_map;
 }
 
 
 int
 main(int argc, char** argv)
 {
-    size_t mcount = 0;
     int verbose_mode = 0;
     bool random_colors = false;
     bool use_uuidnames = false;
@@ -406,9 +581,9 @@ main(int argc, char** argv)
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
 
-    std::map<std::string, std::size_t> region_cnt_map;
 
     dump.Print("\n");
+    STR_STR_MAP uuid_map = create_geometry_names(outfp, model, dump, verbose_mode, use_uuidnames);
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
 	dump.Print("Object %d of %d...", i + 1, model.m_object_table.Count());
@@ -421,69 +596,17 @@ main(int argc, char** argv)
 	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
-	std::string geom_base;
 	if (verbose_mode) {
 	    myAttributes.Dump(dump); // On debug print
 	    dump.Print("\n");
 	}
 
-	if (use_uuidnames) {
-	    char uuidstring[UUID_LEN] = {0};
-	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
-	    ON_String constr(uuidstring);
-	    const char* cstr = constr;
-	    geom_base = cstr;
-	} else {
-	    ON_String constr(myAttributes.m_name);
-	    if (constr == NULL) {
-		std::string genName = "";
-		struct bu_vls name = BU_VLS_INIT_ZERO;
-
-		/* Use layer name to help name un-named regions/objects */
-		if (myAttributes.m_layer_index > 0) {
-		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
-		    ON_wString layer_name = layer.LayerName();
-		    bu_vls_strcpy(&name, ON_String(layer_name));
-		    genName = bu_vls_addr(&name);
-		    if (genName.length() <= 0) {
-			genName = GENERIC_NAME;
-		    }
-		    if (verbose_mode) {
-			dump.Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
-		    }
-		} else {
-		    genName = GENERIC_NAME;
-		}
-
-		/* For layer named regions use layer region count
-		 * instead of global region count
-		 */
-		if (genName.compare(GENERIC_NAME) == 0) {
-		    bu_vls_printf(&name, "%lu", (long unsigned int)mcount++);
-		    genName += bu_vls_addr(&name);
-		    geom_base = genName;
-		} else {
-		    size_t region_cnt = ++region_cnt_map[genName];
-		    bu_vls_printf(&name, "%lu", (long unsigned int)region_cnt);
-		    genName += bu_vls_addr(&name);
-		    geom_base = genName;
-		}
-
-		if (verbose_mode) {
-		    dump.Print("Object has no name - creating one %s.\n", geom_base.c_str());
-		}
-		bu_vls_free(&name);
-	    } else {
-		const char* cstr = constr;
-		geom_base = cstr;
-	    }
-	}
-
-	std::string geom_name(geom_base+".s");
-	std::string region_name(geom_base+".r");
+	std::string geom_base = uuid_map[UUIDstr(myAttributes.m_uuid)];
+	std::string geom_name = geom_base+".s";
+	std::string region_name(geom_name+".r");
 
 	/* add region to hierarchical containers */
-	MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
+	// TEMPTEST MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
 
 	/* object definition
 	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
@@ -543,9 +666,9 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    brep->Dump(dump);
 	    } else if (pGeometry->HasBrepForm()) {
@@ -565,9 +688,9 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    new_brep->Dump(dump);
 
@@ -597,6 +720,8 @@ main(int argc, char** argv)
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
+
+		create_instance_reference(outfp, uuid_map, *instref, geom_base + ".r");
 	    } else if ((layer = static_cast<const ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
@@ -653,11 +778,11 @@ main(int argc, char** argv)
 #include <cstdio>
 
 
-int
+    int
 main()
 {
     std::printf("ERROR: Boundary Representation object support is not available with\n"
-	   "       this compilation of BRL-CAD.\n");
+	    "       this compilation of BRL-CAD.\n");
 
     return 1;
 }
