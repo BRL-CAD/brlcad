@@ -32,6 +32,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
 #include "bio.h"
 
@@ -40,6 +41,9 @@
 
 #include "brep.h"
 #include "raytrace.h"
+#include "debug_plot.h"
+
+DebugPlot *dplot = NULL;
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
@@ -777,6 +781,26 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     return out;
 }
 
+#if 0
+void
+plot_trimmed_face(
+    const TrimmedFace *face,
+    const char *prefix,
+    unsigned char *color_in,
+    unsigned char *color_out)
+{
+    bu_log("%d outer curves\n", face->m_outerloop.Count());
+    for (int i = 0; i < face->m_outerloop.Count(); ++i) {
+	plot_curve_to_file(face->m_outerloop[i], prefix, color_in);
+    }
+    for (size_t i = 0; i < face->m_innerloop.size(); ++i) {
+	bu_log("%d curves on inner %d\n", face->m_innerloop[i].Count(), i);
+	for (int j = 0; j < face->m_innerloop[i].Count(); ++j) {
+	    plot_curve_to_file(face->m_innerloop[i][j], prefix, color_out);
+	}
+    }
+}
+#endif
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
@@ -825,6 +849,16 @@ split_trimmed_face(
 	out.Append(orig_face->Duplicate());
 	return out;
     }
+
+#if 0
+    unsigned char fcolor[3] = {rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55};
+    plot_trimmed_face(orig_face, "fcurve", fcolor, fcolor);
+
+    unsigned char color[3] = {rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55};
+    for (int i = 0; i < ssx_curves.Count(); ++i) {
+	plot_curve_to_file(ssx_curves[i].Curve(), "curve", color);
+    }
+#endif
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
      * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
@@ -1856,10 +1890,15 @@ get_face_intersection_curves(
 		if (results <= 0) {
 		    continue;
 		}
+
+		dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
+
 		ON_SimpleArray<ON_Curve *> curve_uv, curve_st;
 		for (int k = 0; k < events.Count(); k++) {
-		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
-			|| events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent ||
+			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
+			events[k].m_type == ON_SSX_EVENT::ssx_overlap)
+		    {
 			if (get_subcurve_inside_faces(brep1, brep2, i, j, &events[k]) < 0) {
 			    continue;
 			}
@@ -1886,7 +1925,6 @@ get_face_intersection_curves(
 		}
 
 	    }
-
 	}
     }
 
@@ -2194,6 +2232,13 @@ standardize_loop_orientations(ON_Brep *brep)
 int
 ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
+    static int calls = 0;
+    ++calls;
+    std::ostringstream prefix;
+    prefix << "bool" << calls;
+    dplot = new DebugPlot(prefix.str().c_str());
+    dplot->Surfaces(brep1, brep2);
+
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     try {
 	/* Deal with the trivial cases up front */
@@ -2276,6 +2321,10 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     ON_TextLog log(ws);
     evaluated_brep->IsValid(&log);
     bu_log(ON_String(ws).Array());
+
+    dplot->WriteLog();
+    delete dplot;
+    dplot = NULL;
 
     return 0;
 }

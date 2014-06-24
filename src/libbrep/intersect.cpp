@@ -34,6 +34,9 @@
 #include "bu.h"
 
 #include "brep.h"
+#include "debug_plot.h"
+
+extern DebugPlot *dplot;
 
 // Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
@@ -3220,6 +3223,9 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_SimpleArray<ON_X_EVENT> x_event;
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(boundary, surf2, x_event, isect_tol, overlap_tol, 0, 0, 0, &overlap2d);
+
+	    bool is_brep1_iso = i < 2;
+	    dplot->IsoCSX(x_event, surf2, boundary, is_brep1_iso);
 
 	    // stash surf1 points and surf2 parameters
 	    for (int k = 0; k < x_event.Count(); k++) {
