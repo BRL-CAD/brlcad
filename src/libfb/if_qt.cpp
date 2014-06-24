@@ -122,6 +122,17 @@ static struct modeflags {
     { '\0', 0, 0, "" },
 };
 
+HIDDEN void
+qt_update(FBIO *ifp, int x1, int y1, int w, int h)
+{
+    struct qtinfo *qi = QI(ifp);
+
+    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
+ 	   &(qi->qi_mem[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]), w * h * sizeof(RGBpixel));
+
+    qi->qapp->processEvents();
+}
+
 HIDDEN int
 qt_setup(FBIO *ifp, int width, int height)
 {
@@ -135,12 +146,12 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qapp = new QApplication(argc, argv);
 
-    if ((qi->qi_mem = (unsigned char *) calloc(2,
-	width*height)) == NULL) {
+    if ((qi->qi_pix = (unsigned char *) calloc(width*height*sizeof(RGBpixel),
+	sizeof(char))) == NULL) {
 	fb_log("qt_open: pix malloc failed");
     }
 
-    qi->qi_image = new QImage(qi->qi_mem, width, height, QImage::Format_Mono);
+    qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
 
     qi->win = new QMainWindow(qi->qi_image);
     qi->win->setWidth(width);
@@ -272,6 +283,8 @@ qt_close(FBIO *ifp)
 	return qi->qapp->exec();
     }
 
+    qt_destroy(qi);
+
     return 0;
 }
 
@@ -295,10 +308,36 @@ qt_read(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(p
 
 
 HIDDEN ssize_t
-qt_write(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    /*fb_log("qt_write\n");*/
+    struct qtinfo *qi = QI(ifp);
+    size_t maxcount;
 
+    FB_CK_FBIO(ifp);
+
+    /* Check origin bounds */
+    if (x < 0 || x >= qi->qi_iwidth || y < 0 || y >= qi->qi_iheight)
+	return -1;
+
+    /* Clip write length */
+    maxcount = qi->qi_iwidth * (qi->qi_iheight - y) - x;
+    if (count > maxcount)
+	count = maxcount;
+
+    /* Save it in 24bit backing store */
+    memcpy(&(qi->qi_mem[(y*qi->qi_iwidth+x)*sizeof(RGBpixel)]),
+	   pixelp, count*sizeof(RGBpixel));
+
+    if (x + count <= (size_t)qi->qi_iwidth) {
+	qt_update(ifp, x, y, count, 1);
+    } else {
+	size_t ylines, tcount;
+
+	tcount = count - (qi->qi_iwidth - x);
+	ylines = 1 + (tcount + qi->qi_iwidth - 1) / qi->qi_iwidth;
+
+	qt_update(ifp, 0, y, qi->qi_iwidth, ylines);
+    }
     return count;
 }
 
@@ -322,8 +361,32 @@ qt_wmap(FBIO *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-qt_view(FBIO *UNUSED(ifp), int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+qt_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
+    struct qtinfo *qi = QI(ifp);
+
+    FB_CK_FBIO(ifp);
+
+    /* bypass if no change */
+    if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
+	return 0;
+
+    /* check bounds */
+    if (xcenter < 0 || xcenter >= qi->qi_iwidth
+	|| ycenter < 0 || ycenter >= qi->qi_iheight)
+	return -1;
+    if (xzoom <= 0 || xzoom >= qi->qi_iwidth/2
+	|| yzoom <= 0 || yzoom >= qi->qi_iheight/2)
+	return -1;
+
+    ifp->if_xcenter = xcenter;
+    ifp->if_ycenter = ycenter;
+    ifp->if_xzoom = xzoom;
+    ifp->if_yzoom = yzoom;
+
+    /* TODO make changes */
+
     fb_log("qt_view\n");
 
     return 0;
@@ -455,8 +518,8 @@ FBIO qt_interface =  {
     qt_free,		/* free resources */
     qt_help,		/* help message */
     (char *)"Qt Device",/* device description */
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    2048,		/* max width */
+    2048,		/* max height */
     (char *)"/dev/Qt",	/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

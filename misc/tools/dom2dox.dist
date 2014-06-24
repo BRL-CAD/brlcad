@@ -1,0 +1,9 @@
+SET(dom2dox_ignore_files
+    CMakeLists.txt
+    dom2dox.c
+    dom2dox.h
+    dom2dox_parser.lemon
+    dom2dox_scanner.perplex
+    Doxyfile
+    README.txt
+)
