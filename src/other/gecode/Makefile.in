@@ -1,0 +1,1946 @@
+#  -*-Makefile-*-
+#
+#  Main authors:
+#     Christian Schulte <schulte@gecode.org>
+#     Guido Tack <tack@gecode.org>
+#
+#  Copyright:
+#     Christian Schulte, 2005
+#     Guido Tack, 2005
+#
+#  Last modified:
+#     $Date$ by $Author$
+#     $Revision$
+#
+#  This file is part of Gecode, the generic constraint
+#  development environment:
+#     http://www.gecode.org
+#
+#  Permission is hereby granted, free of charge, to any person obtaining
+#  a copy of this software and associated documentation files (the
+#  "Software"), to deal in the Software without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of the Software, and to
+#  permit persons to whom the Software is furnished to do so, subject to
+#  the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+#  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+#
+# General Settings
+#
+
+export prefix = @prefix@
+export exec_prefix = @exec_prefix@
+export bindir = @bindir@
+export libdir = @libdir@
+export sharedlibdir = @sharedlibdir@
+export includedir = @includedir@
+export srcdir = @srcdir@
+export datarootdir = @datarootdir@
+export datadir = @datadir@
+export docdir= @docdir@
+export top_srcdir = @top_srcdir@
+export top_builddir = .
+
+# Install to different root directory
+DESTDIR=
+
+export subdirs = @subdirs@
+
+export VERSION	= @VERSION@
+
+export CXX = @CXX@
+export CC = @CC@
+export MOC = @MOC@
+ifeq "$(top_srcdir)" "$(top_builddir)"
+CPPFLAGS=-I$(top_srcdir)
+else
+CPPFLAGS=-I$(top_builddir) -I$(top_srcdir)
+endif
+export CPPFLAGS
+export CXXFLAGS = $(CPPFLAGS) @CXXFLAGS@ $(CXXUSR)
+export CFLAGS = $(CPPFLAGS) @CFLAGS@ $(CUSR)
+export EXAMPLES_EXTRA_CXXFLAGS = @EXAMPLES_EXTRA_CXXFLAGS@
+
+export QT_CPPFLAGS = @QTDEFINES@ @QTINCLUDES@
+export LINKQT = @QTLIBS@
+export MPFR_CPPFLAGS = @GMP_CPPFLAGS@ @MPFR_CPPFLAGS@
+ifeq "@enable_mpfr@" "yes"
+export LINKMPFR = @MPFR_LIB_PATH@ @GMP_LIB_PATH@ @MPFR_LINK@ @GMP_LINK@
+else
+export LINKMPFR =
+endif
+
+ifeq "@BUILDDLL@" "yes"
+export LINKSTATICQT
+else
+export LINKSTATICQT = $(LINKQT)
+endif
+
+export GLDFLAGS = @GLDFLAGS@
+export DLLFLAGS = @DLLFLAGS@
+export DLLPATH = @DLLPATH@
+
+export RANLIB = @RANLIB@
+export TAR = tar
+
+#
+# Use suffixes to get consistent treatment of dots
+#
+export OBJSUFFIX	= .@OBJEXT@
+export SBJSUFFIX	= .@SBJEXT@
+export DLLSUFFIX	= @DLL_ARCH@@USERSUFFIX@.@DLLEXT@
+export MANIFESTSUFFIX	= @DLL_ARCH@@USERSUFFIX@.@DLLEXT@.manifest
+export RCSUFFIX		= @DLL_ARCH@@USERSUFFIX@.@DLLEXT@.rc
+export RESSUFFIX	= @DLL_ARCH@@USERSUFFIX@.@DLLEXT@.res
+export LIBSUFFIX	= @DLL_ARCH@@USERSUFFIX@.@LIBEXT@
+export PDBSUFFIX	= @DLL_ARCH@@USERSUFFIX@.pdb
+export EXPSUFFIX	= @DLL_ARCH@@USERSUFFIX@.exp
+export STATICLIBSUFFIX	= .@STATICLIBEXT@
+export EXESUFFIX	= @EXEEXT@
+
+export LIBPREFIX 	= @LIBPREFIX@
+export LINKPREFIX	= @LINKPREFIX@
+export LINKSUFFIX	= @DLL_ARCH@@USERSUFFIX@@LINKSUFFIX@
+
+export SOLINKSUFFIX     = @DLL_ARCH@@USERSUFFIX@@SOLINKSUFFIX@
+export SOSUFFIX         = @DLL_ARCH@@USERSUFFIX@@SOSUFFIX@
+
+#
+# Programs
+#
+export RMF		= rm -rf
+export MV		= mv
+export MANIFEST		= @MANIFEST@ -nologo
+export FIXMANIFEST	= perl $(top_srcdir)/misc/fixmanifest.perl $(DLLSUFFIX)
+export RESCOMP		= @RESCOMP@ -n -i$(top_srcdir)
+export RCGEN		= perl $(top_srcdir)/misc/genrc.perl $(DLLSUFFIX) $(top_srcdir)
+
+ifeq "@need_soname@" "yes"
+export CREATELINK       = ln -fs
+else
+export CREATELINK       = @true
+endif
+
+ifeq "@enable_resource@" "yes"
+%.res: %.rc
+	$(RESCOMP) -fo $@ $< 
+.PRECIOUS: %.res %.rc
+endif
+
+#
+# SUPPORT COMPONENTS
+#
+SUPPORTSRC0 = \
+	exception heap thread/thread thread/windows thread/pthreads \
+	hw-rnd
+SUPPORTHDR0 = \
+	block-allocator cast dynamic-array \
+	dynamic-stack exception heap \
+	macros random sort static-stack \
+	marked-pointer int-type auto-link \
+	thread thread/thread thread/windows thread/pthreads thread/none timer \
+	dynamic-queue bitset-base bitset bitset-offset \
+	hw-rnd
+
+SUPPORTSRC1 =  $(SUPPORTSRC0:%=gecode/support/%.cpp)
+SUPPORTHDR  =  gecode/support.hh \
+	$(SUPPORTHDR0:%=gecode/support/%.hpp)
+SUPPORTOBJ  =  $(SUPPORTSRC1:%.cpp=%$(OBJSUFFIX))
+SUPPORTSRC  =  $(SUPPORTSRC1)
+
+export SUPPORTDLL	= $(LIBPREFIX)@SUPPORT@$(DLLSUFFIX)
+export SUPPORTLIB	= $(LIBPREFIX)@SUPPORT@$(LIBSUFFIX)
+ifeq "@need_soname@" "yes"
+export SUPPORTSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@SUPPORT@$(SOSUFFIX)
+else
+export SUPPORTSONAME     = 
+endif
+export SUPPORTSTATICLIB	= $(LIBPREFIX)@SUPPORT@$(STATICLIBSUFFIX)
+export LINKSUPPORT      = \
+	$(LINKPREFIX)@SUPPORT@$(LINKSUFFIX)
+ifeq "@enable_resource@" "yes"
+export SUPPORTRC	= $(LIBPREFIX)@SUPPORT@$(RCSUFFIX)
+export SUPPORTRES	= $(LIBPREFIX)@SUPPORT@$(RESSUFFIX)
+else
+export SUPPORTRES	=
+export SUPPORTRC	=
+endif
+
+SUPPORTBUILDDIRS = support support/thread
+
+
+#
+# KERNEL COMPONENTS
+#
+
+VARIMPHDR = \
+	gecode/kernel/var-type.hpp \
+	gecode/kernel/var-imp.hpp
+
+VARIMP = $(VARIMPHDR)
+
+KERNELSRC0 = \
+	archive core memory-manager branch region \
+	afc activity rnd
+
+KERNELHDR0 = \
+	archive array shared-array core exception \
+	macros memory-config memory-manager region modevent range-list \
+	propagator advisor view var \
+	branch-var branch-val branch-tiebreak \
+	brancher-view-sel brancher-merit \
+	brancher-val-sel brancher-val-commit brancher-view brancher-view-val \
+	brancher-val-sel-commit \
+	allocators global-afc \
+	afc activity rnd branch-traits
+
+KERNELSRC = $(KERNELSRC0:%=gecode/kernel/%.cpp)
+KERNELHDR	= \
+	gecode/kernel.hh gecode/kernel/wait.hh \
+	$(KERNELHDR0:%=gecode/kernel/%.hpp)
+KERNELOBJ	= $(KERNELSRC:%.cpp=%$(OBJSUFFIX))
+
+export KERNELDLL	= $(LIBPREFIX)@KERNEL@$(DLLSUFFIX)
+export KERNELLIB	= $(LIBPREFIX)@KERNEL@$(LIBSUFFIX)
+ifeq "@need_soname@" "yes"
+export KERNELSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@KERNEL@$(SOSUFFIX)
+else
+export KERNELSONAME     = 
+endif
+export KERNELSTATICLIB	= $(LIBPREFIX)@KERNEL@$(STATICLIBSUFFIX)
+export LINKKERNEL      	= $(LINKPREFIX)@KERNEL@$(LINKSUFFIX)
+ifeq "@enable_resource@" "yes"
+export KERNELRC		= $(LIBPREFIX)@KERNEL@$(RCSUFFIX)
+export KERNELRES	= $(LIBPREFIX)@KERNEL@$(RESSUFFIX)
+else
+export KERNELRES	=
+export KERNELRC		=
+endif
+
+KERNELBUILDDIRS = kernel
+
+EXTRA_HEADERS   = gecode/support/config.hpp
+
+#
+# SEARCH COMPONENTS
+#
+
+SEARCHSRC0 = \
+	stop options cutoff \
+	parallel/engine \
+	dfs parallel/dfs \
+	bab parallel/bab \
+	rbs meta/rbs \
+	meta/nogoods sequential/path parallel/path
+SEARCHHDR0 = \
+	statistics.hpp stop.hpp options.hpp cutoff.hpp \
+	support.hh worker.hh exception.hpp \
+	sequential/path.hh sequential/dfs.hh sequential/bab.hh \
+	parallel/path.hh parallel/engine.hh \
+	parallel/dfs.hh parallel/bab.hh \
+	meta/rbs.hh meta/nogoods.hh \
+	dfs.hpp bab.hpp rbs.hpp engine-base.hpp
+
+SEARCHSRC	= $(SEARCHSRC0:%=gecode/search/%.cpp)
+SEARCHHDR	= gecode/search.hh $(SEARCHHDR0:%=gecode/search/%)
+SEARCHOBJ	= $(SEARCHSRC:%.cpp=%$(OBJSUFFIX))
+
+ifeq "@enable_search@" "yes"
+export SEARCHDLL	= $(LIBPREFIX)@SEARCH@$(DLLSUFFIX)
+export SEARCHSTATICLIB	= $(LIBPREFIX)@SEARCH@$(STATICLIBSUFFIX)
+export SEARCHLIB	= $(LIBPREFIX)@SEARCH@$(LIBSUFFIX)
+export LINKSEARCH       = $(LINKPREFIX)@SEARCH@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export SEARCHSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@SEARCH@$(SOSUFFIX)
+else
+export SEARCHSONAME     = 
+ifeq "@enable_resource@" "yes"
+export SEARCHRC		= $(LIBPREFIX)@SEARCH@$(RCSUFFIX)
+export SEARCHRES	= $(LIBPREFIX)@SEARCH@$(RESSUFFIX)
+else
+export SEARCHRES	=
+export SEARCHRC		=
+endif
+endif
+else
+export SEARCHDLL	=
+export SEARCHSTATICLIB	=
+export SEARCHLIB	=
+export LINKSEARCH       =
+export SEARCHRES	=
+export SEARCHRC		=
+endif
+SEARCHBUILDDIRS = search search/sequential search/parallel search/meta
+
+#
+# INTEGER COMPONENTS
+#
+
+INTSRC0 = \
+	int-set.cpp var-imp/int.cpp var-imp/bool.cpp var/int.cpp \
+	var/bool.cpp array.cpp bool.cpp bool/eqv.cpp \
+	extensional/dfa.cpp extensional/tuple-set.cpp extensional.cpp \
+	dom.cpp rel.cpp precede.cpp element.cpp count.cpp \
+	arithmetic.cpp exec.cpp \
+	exec/when.cpp element/pair.cpp \
+	linear/int-post.cpp linear-int.cpp \
+	linear/bool-post.cpp linear-bool.cpp \
+	branch.cpp distinct.cpp sorted.cpp gcc.cpp \
+	channel.cpp channel/link-single.cpp channel/link-multi.cpp \
+	unshare.cpp sequence.cpp \
+	bin-packing.cpp bin-packing/propagate.cpp \
+	unary.cpp cumulative.cpp cumulatives.cpp \
+	circuit.cpp no-overlap.cpp nvalues.cpp \
+	member.cpp branch/activity.cpp \
+	arithmetic/mult.cpp  \
+	branch/view-sel.cpp branch/val-sel-commit.cpp \
+	branch/view-values.cpp \
+	ldsb.cpp ldsb/sym-imp.cpp ldsb/sym-obj.cpp
+
+INTHDR0 = \
+	limits.hpp support-values.hh support-values.hpp \
+	div.hh div.hpp \
+	exec.hh exec/when.hpp \
+	arithmetic/abs.hpp arithmetic/max.hpp arithmetic/mult.hpp \
+	arithmetic/divmod.hpp \
+	arithmetic/pow-ops.hpp arithmetic/pow.hpp arithmetic/nroot.hpp \
+	bool/or.hpp bool/eq.hpp bool/lq.hpp bool/eqv.hpp bool/base.hpp \
+	bool/clause.hpp bool/ite.hpp \
+	precede.hh precede/single.hpp \
+	branch/traits.hpp branch/var.hpp branch/val.hpp branch/assign.hpp \
+	branch/view-values.hpp branch/merit.hpp \
+	branch/val-sel.hpp branch/val-commit.hpp branch/ngl.hpp \
+	count.hh count/rel.hpp \
+	count/int-base.hpp count/int-eq.hpp \
+	count/int-gq.hpp count/int-lq.hpp \
+	count/view-base.hpp count/view-eq.hpp \
+	count/view-gq.hpp count/view-lq.hpp \
+	view-val-graph.hh view-val-graph/graph.hpp \
+	view-val-graph/bi-link.hpp view-val-graph/comb-ptr-flag.hpp \
+	view-val-graph/edge.hpp view-val-graph/node.hpp \
+	view-val-graph/iter-prune-val.hpp \
+	distinct/graph.hpp distinct/dom-ctrl.hpp \
+	distinct/bnd.hpp distinct/dom.hpp \
+	distinct/val.hpp distinct/ter-dom.hpp \
+	dom/range.hpp dom/set.hpp \
+	element/int.hpp element/view.hpp element/pair.hpp \
+	gcc/bnd.hpp gcc/dom.hpp gcc/bnd-sup.hpp gcc/dom-sup.hpp \
+	gcc/val.hpp gcc/view.hpp gcc/post.hpp \
+	linear/post.hpp \
+	linear/int-noview.hpp linear/int-bin.hpp linear/int-ter.hpp \
+	linear/int-nary.hpp linear/int-dom.hpp \
+	linear/bool-int.hpp linear/bool-view.hpp linear/bool-scale.hpp \
+	extensional/dfa.hpp extensional/layered-graph.hpp \
+	extensional/tuple-set.hpp extensional/base.hpp \
+	extensional/basic.hpp extensional/incremental.hpp \
+	rel/eq.hpp rel/lex.hpp rel/lq-le.hpp rel/nq.hpp \
+	sorted/matching.hpp sorted/narrowing.hpp \
+	sorted/order.hpp sorted/propagate.hpp sorted/sortsup.hpp \
+	int-set-1.hpp int-set-2.hpp var-imp/delta.hpp var/print.hpp var/bool.hpp \
+	var-imp/int.hpp var-imp/bool.hpp var/int.hpp \
+	view/bool.hpp view/cached.hpp view/constint.hpp view/zero.hpp view/int.hpp \
+	view/minus.hpp view/print.hpp view/neg-bool.hpp view/bool-test.hpp \
+	view/offset.hpp view/rel-test.hpp view/scale.hpp view/iter.hpp \
+	arithmetic.hh array.hpp array-traits.hpp bool.hh branch.hh \
+	distinct.hh dom.hh \
+	element.hh exception.hpp  gcc.hh linear.hh \
+	reify.hpp propagator.hpp extensional.hh rel.hh \
+	sorted.hh var-imp.hpp view.hpp \
+	channel.hh channel/dom.hpp channel/val.hpp \
+	channel/base.hpp channel/link-single.hpp channel/link-multi.hpp \
+	sequence.hh sequence/int.hpp sequence/view.hpp \
+	sequence/set-op.hpp sequence/violations.hpp \
+	bin-packing.hh bin-packing/propagate.hpp \
+	task.hh task/fwd-to-bwd.hpp task/array.hpp task/sort.hpp \
+	task/iter.hpp task/tree.hpp task/purge.hpp task/prop.hpp \
+	task/man-to-opt.hpp \
+	unary.hh unary/task.hpp unary/task-view.hpp \
+	unary/tree.hpp unary/overload.hpp unary/detectable.hpp \
+	unary/not-first-not-last.hpp \
+	unary/edge-finding.hpp unary/subsumption.hpp \
+	unary/man-prop.hpp unary/opt-prop.hpp \
+	cumulative.hh cumulative/man-prop.hpp cumulative/opt-prop.hpp \
+	cumulative/task-view.hpp cumulative/overload.hpp \
+	cumulative/basic.hpp cumulative/task.hpp cumulative/edge-finding.hpp \
+	cumulative/tree.hpp cumulative/limits.hpp \
+	cumulatives.hh cumulatives/val.hpp \
+	circuit.hh circuit/base.hpp circuit/val.hpp circuit/dom.hpp \
+	no-overlap.hh no-overlap/dim.hpp no-overlap/box.hpp \
+	no-overlap/base.hpp no-overlap/man.hpp no-overlap/opt.hpp \
+	nvalues.hh nvalues/range-event.hpp \
+	nvalues/sym-bit-matrix.hpp nvalues/graph.hpp \
+	nvalues/bool-base.hpp nvalues/bool-eq.hpp \
+	nvalues/bool-lq.hpp nvalues/bool-gq.hpp \
+	nvalues/int-base.hpp nvalues/int-eq.hpp \
+	nvalues/int-lq.hpp nvalues/int-gq.hpp \
+	val-set.hh val-set.hpp \
+	member.hh member/prop.hpp member/re-prop.hpp \
+	branch/afc.hpp branch/activity.hpp \
+	ldsb.hh ldsb/brancher.hpp ldsb/sym-imp.hpp
+
+INTSRC		= $(INTSRC0:%=gecode/int/%)
+INTHDR		= gecode/int.hh $(INTHDR0:%=gecode/int/%)
+INTOBJ		= $(INTSRC:%.cpp=%$(OBJSUFFIX))
+
+ifeq "@enable_int_vars@" "yes"
+export INTDLL		= $(LIBPREFIX)@INT@$(DLLSUFFIX)
+export INTSTATICLIB	= $(LIBPREFIX)@INT@$(STATICLIBSUFFIX)
+export INTLIB		= $(LIBPREFIX)@INT@$(LIBSUFFIX)
+export LINKINT      	= $(LINKPREFIX)@INT@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export INTSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@INT@$(SOSUFFIX)
+else
+export INTSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export INTRC		= $(LIBPREFIX)@INT@$(RCSUFFIX)
+export INTRES		= $(LIBPREFIX)@INT@$(RESSUFFIX)
+else
+export INTRES		=
+export INTRC		=
+endif
+else
+export INTDLL		=
+export INTSTATICLIB	=
+export INTLIB		=
+export LINKINT      	=
+export INTRES		=
+export INTRC		=
+endif
+INTBUILDDIRS	= \
+	int int/var int/var-imp int/view int/extensional \
+	int/channel int/arithmetic int/linear int/bool int/branch int/exec \
+	int/element int/sequence int/bin-packing \
+	int/unary int/cumulative int/cumulatives int/task \
+	int/ldsb
+
+#
+# FLOAT COMPONENTS
+#
+
+FLOATSRC0 = \
+	var/float.cpp arithmetic.cpp array.cpp branch.cpp rel.cpp linear.cpp \
+	linear/post.cpp branch/activity.cpp rounding.cpp exec.cpp \
+	branch/val-sel-commit.cpp branch/view-sel.cpp dom.cpp
+
+FLOATHDR0 = \
+	var-imp.hpp array.hpp array-traits.hpp limits.hpp exception.hpp \
+	view.hpp view/float.hpp view/minus.hpp view/offset.hpp \
+	view/scale.hpp view/print.hpp view/rel-test.hpp \
+	var-imp/float.hpp var-imp/delta.hpp \
+	var/float.hpp var/print.hpp linear.hh linear/nary.hpp \
+	arithmetic.hh arithmetic/sqr-sqrt-abs.hpp arithmetic/pow-nroot.hpp \
+	arithmetic/mult.hpp arithmetic/div.hpp arithmetic/min-max-channel.hpp \
+	transcendental.hh transcendental/exp-log.hpp trigonometric.hh \
+	trigonometric/sincos.hpp trigonometric/asinacos.hpp \
+	trigonometric/tanatan.hpp \
+	rel.hh rel/eq.hpp rel/lq-le.hpp rel/nq.hpp \
+	branch.hh branch/afc.hpp branch/activity.hpp branch/traits.hpp \
+	branch/var.hpp branch/val.hpp branch/assign.hpp \
+	branch/val-commit.hpp branch/val-sel.hpp branch/merit.hpp \
+	num.hpp val.hpp rounding.hpp nextafter.hpp
+
+FLOATSRC	= $(FLOATSRC0:%=gecode/float/%)
+FLOATHDR	= gecode/float.hh $(FLOATHDR0:%=gecode/float/%)
+FLOATOBJ	= $(FLOATSRC:%.cpp=%$(OBJSUFFIX))
+
+ifeq "@enable_float_vars@" "yes"
+export FLOATDLL		= $(LIBPREFIX)@FLOAT@$(DLLSUFFIX)
+export FLOATSTATICLIB	= $(LIBPREFIX)@FLOAT@$(STATICLIBSUFFIX)
+export FLOATLIB		= $(LIBPREFIX)@FLOAT@$(LIBSUFFIX)
+export LINKFLOAT	= $(LINKPREFIX)@FLOAT@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export FLOATSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@FLOAT@$(SOSUFFIX)
+else
+export FLOATSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export FLOATRC		= $(LIBPREFIX)@FLOAT@$(RCSUFFIX)
+export FLOATRES		= $(LIBPREFIX)@FLOAT@$(RESSUFFIX)
+else
+export FLOATRES		=
+export FLOATRC		=
+endif
+else
+export FLOATDLL	    	=
+export FLOATSTATICLIB	=
+export FLOATLIB		=
+export LINKFLOAT	=
+export FLOATRES		=
+export FLOATRC		=
+endif
+FLOATBUILDDIRS	= \
+	float float/var float/var-imp float/view \
+	float/linear float/branch float/rel float/branch \
+	float/arithmetic float/transcendental float/trigonometric
+
+#
+# SET COMPONENTS
+#
+
+SETSRC0 =								 \
+	branch.cpp cardinality.cpp convex.cpp convex/conv.cpp convex/hull.cpp \
+	dom.cpp rel.cpp \
+	rel-op.cpp rel-op-ternary.cpp rel-op-singleton.cpp \
+	rel-op/post-compl.cpp rel-op/post-nocompl.cpp \
+	rel-op/post-compl-cvv.cpp rel-op/post-nocompl-cvv.cpp \
+	rel-op/post-compl-vvc.cpp rel-op/post-nocompl-vvc.cpp \
+	rel-op/post-compl-cvc.cpp rel-op/post-nocompl-cvc.cpp \
+	rel-op-const-vvc.cpp rel-op-const-vcv.cpp rel-op-const-vcc.cpp \
+	rel-op-const-cvc.cpp rel-op-const-cvv.cpp \
+	int.cpp channel.cpp						 \
+	element.cpp sequence.cpp			 \
+	distinct.cpp distinct/atmostOne.cpp				 \
+	precede.cpp \
+	sequence/seq.cpp sequence/seq-u.cpp array.cpp var-imp/set.cpp	 \
+	var-imp/integerset.cpp var/set.cpp \
+	exec.cpp branch/activity.cpp branch/view-sel.cpp \
+	branch/val-sel-commit.cpp  branch/ngl.cpp \
+	ldsb.cpp ldsb/sym-imp.cpp
+SETHDR0 =								     \
+	limits.hpp \
+	view.hpp exception.hpp int.hh element.hh var-imp.hpp                 \
+	int/card.hpp     						     \
+	int/minmax.hpp int/weights.hpp                                       \
+	channel/sorted.hpp channel/int.hpp channel/bool.hpp channel/set.hpp  \
+	element/inter.hpp element/union.hpp             \
+	element/unionConst.hpp                                               \
+	element/disjoint.hpp array.hpp array-traits.hpp					     \
+	var-imp/set.hpp var-imp/integerset.hpp	     			     \
+	var-imp/delta.hpp var-imp/iter.hpp 				     \
+	var/set.hpp var/print.hpp					     \
+	view/complement.hpp view/const.hpp view/set.hpp view/singleton.hpp   \
+	view/cached.hpp view/print.hpp                                       \
+	rel/subset.hpp rel/re-subset.hpp rel/eq.hpp rel/nq.hpp rel/re-eq.hpp \
+	rel/lq.hpp rel/re-lq.hpp \
+	rel/common.hpp rel/nosubset.hpp sequence.hh	                     \
+	rel-op/union.hpp rel-op/partition.hpp rel-op/subofunion.hpp	     \
+	rel-op/inter.hpp rel-op/superofinter.hpp			     \
+	rel-op/post.hpp rel-op/common.hpp rel.hh			     \
+	distinct.hh distinct/atmostOne.hpp				     \
+	sequence/seq.hpp sequence/seq-u.hpp				     \
+	sequence/common.hpp convex/conv.hpp convex/hull.hpp convex.hh	     \
+	precede.hh precede/single.hpp \
+	rel-op.hh					     \
+	branch.hh branch/afc.hpp branch/activity.hpp branch/traits.hpp \
+	branch/var.hpp branch/val.hpp branch/assign.hpp \
+	branch/merit.hpp branch/val-commit.hpp branch/val-sel.hpp \
+	branch/ngl.hpp \
+	ldsb.hh ldsb/brancher.hpp channel.hh
+
+SETSRC		= $(SETSRC0:%=gecode/set/%)
+SETHDR		= gecode/set.hh $(SETHDR0:%=gecode/set/%)
+SETOBJ		= $(SETSRC:%.cpp=%$(OBJSUFFIX))
+
+ifeq "@enable_set_vars@" "yes"
+export SETDLL		= $(LIBPREFIX)@SET@$(DLLSUFFIX)
+export SETSTATICLIB	= $(LIBPREFIX)@SET@$(STATICLIBSUFFIX)
+export SETLIB		= $(LIBPREFIX)@SET@$(LIBSUFFIX)
+export LINKSET      	= $(LINKPREFIX)@SET@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export SETSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@SET@$(SOSUFFIX)
+else
+export SETSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export SETRC		= $(LIBPREFIX)@SET@$(RCSUFFIX)
+export SETRES		= $(LIBPREFIX)@SET@$(RESSUFFIX)
+else
+export SETRES		=
+export SETRC		=
+endif
+else
+export SETDLL		=
+export SETSTATICLIB	=
+export SETLIB		=
+export LINKSET      	=
+export SETRES		=
+export SETRC		=
+endif
+SETBUILDDIRS	=						\
+	set set/convex set/distinct set/int set/rel set/rel-op	\
+	set/element set/sequence set/var set/var-imp set/view \
+	set/branch set/channel set/ldsb
+
+
+#
+# MINIMODEL COMPONENTS
+#
+
+MMSRC0 = \
+	int-expr.cpp int-rel.cpp int-arith.cpp bool-expr.cpp \
+	set-expr.cpp set-rel.cpp \
+	float-expr.cpp float-rel.cpp float-arith.cpp \
+	reg.cpp
+MMHDR0 = \
+	int-rel.hpp float-rel.hpp exception.hpp matrix.hpp \
+	bool-expr.hpp set-expr.hpp set-rel.hpp \
+	optimize.hpp reg.hpp ldsb.hpp
+
+MMSRC 		= $(MMSRC0:%=gecode/minimodel/%)
+MMHDR 		= gecode/minimodel.hh $(MMHDR0:%=gecode/minimodel/%)
+MMOBJ		= $(MMSRC:%.cpp=%$(OBJSUFFIX))
+MMSBJ		= $(MMSRC:%.cpp=%$(SBJSUFFIX))
+
+ifeq "@enable_minimodel@" "yes"
+export MMDLL		= $(LIBPREFIX)@MM@$(DLLSUFFIX)
+export MMSTATICLIB	= $(LIBPREFIX)@MM@$(STATICLIBSUFFIX)
+export MMLIB		= $(LIBPREFIX)@MM@$(LIBSUFFIX)
+export LINKMM      	= $(LINKPREFIX)@MM@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export MMSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@MM@$(SOSUFFIX)
+else
+export MMSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export MMRC		= $(LIBPREFIX)@MM@$(RCSUFFIX)
+export MMRES		= $(LIBPREFIX)@MM@$(RESSUFFIX)
+else
+export MMRES		=
+export MMRC		=
+endif
+else
+export MMDLL		=
+export MMSTATICLIB	=
+export MMLIB		=
+export LINKMM      	=
+export MMRES		=
+export MMRC		=
+endif
+MMBUILDDIRS	= minimodel
+
+#
+# DRIVER COMPONENTS
+#
+
+DRIVERSRC0 = options.cpp script.cpp
+DRIVERHDR0 = options.hpp script.hpp
+
+DRIVERSRC 	= $(DRIVERSRC0:%=gecode/driver/%)
+DRIVERHDR 	= gecode/driver.hh $(DRIVERHDR0:%=gecode/driver/%)
+DRIVEROBJ	= $(DRIVERSRC:%.cpp=%$(OBJSUFFIX))
+DRIVERSBJ	= $(DRIVERSRC:%.cpp=%$(SBJSUFFIX))
+
+ifeq "@enable_driver@" "yes"
+export DRIVERDLL	= $(LIBPREFIX)@DRIVER@$(DLLSUFFIX)
+export DRIVERSTATICLIB	= $(LIBPREFIX)@DRIVER@$(STATICLIBSUFFIX)
+export DRIVERLIB	= $(LIBPREFIX)@DRIVER@$(LIBSUFFIX)
+export LINKDRIVER      	= $(LINKPREFIX)@DRIVER@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export DRIVERSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@DRIVER@$(SOSUFFIX)
+else
+export DRIVERSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export DRIVERRC		= $(LIBPREFIX)@DRIVER@$(RCSUFFIX)
+export DRIVERRES	= $(LIBPREFIX)@DRIVER@$(RESSUFFIX)
+else
+export DRIVERRES	=
+export DRIVERRC		=
+endif
+else
+export DRIVERDLL	=
+export DRIVERSTATICLIB	=
+export DRIVERLIB	=
+export LINKDRIVER      	=
+export DRIVERRES	=
+export DRIVERRC		=
+endif
+DRIVERBUILDDIRS	= driver
+
+#
+# ITERATOR HEADERS
+#
+ITERHDR0 =							\
+	ranges-add ranges-append ranges-array ranges-cache	\
+	ranges-compl ranges-diff ranges-empty			\
+	ranges-inter ranges-minmax ranges-minus			\
+	ranges-offset ranges-operations ranges-rangelist	\
+	ranges-scale ranges-singleton ranges-singleton-append	\
+	ranges-size ranges-union ranges-values			\
+	ranges-negative ranges-positive ranges-map		\
+	ranges-list                                             \
+	values-array values-minus values-offset values-ranges 	\
+	values-positive values-negative				\
+	values-singleton values-unique values-inter 		\
+	values-union values-map	values-bitset values-list       \
+	values-bitsetoffset
+ITERHDR = gecode/iter.hh \
+	$(ITERHDR0:%=gecode/iter/%.hpp)
+
+
+#
+# GIST
+#
+
+GISTHDR0 = \
+	drawingcursor.hh drawingcursor.hpp \
+	gist.hpp gecodelogo.hh node.hh node.hpp \
+	nodecursor.hh nodecursor.hpp nodevisitor.hh \
+	nodevisitor.hpp layoutcursor.hh layoutcursor.hpp \
+	spacenode.hh spacenode.hpp qtgist.hh \
+	textoutput.hh treecanvas.hh zoomToFitIcon.hpp \
+	visualnode.hh visualnode.hpp nodestats.hh \
+	nodewidget.hh mainwindow.hh preferences.hh \
+	stopbrancher.hh
+
+GISTSRC0 = \
+	drawingcursor.cpp gist.cpp gecodelogo.cpp node.cpp \
+	spacenode.cpp \
+	textoutput.cpp treecanvas.cpp qtgist.cpp visualnode.cpp nodestats.cpp \
+	nodewidget.cpp mainwindow.cpp preferences.cpp stopbrancher.cpp
+
+GISTMOCSRC0 = \
+	moc_treecanvas.cpp moc_qtgist.cpp moc_mainwindow.cpp moc_textoutput.cpp\
+	moc_preferences.cpp moc_nodestats.cpp
+
+GISTSRC = $(GISTSRC0:%=gecode/gist/%)
+GISTMOCSRC = $(GISTMOCSRC0:%=gecode/gist/%)
+GISTHDR = $(GISTHDR0:%=gecode/gist/%) gecode/gist.hh
+
+GISTOBJ	= $(GISTSRC:%.cpp=%$(OBJSUFFIX)) $(GISTMOCSRC:%.cpp=%$(OBJSUFFIX))
+GISTSBJ	= $(GISTSRC:%.cpp=%$(SBJSUFFIX)) $(GISTMOCSRC:%.cpp=%$(SBJSUFFIX))
+
+GISTBUILDDIRS = gist
+
+ifeq "@enable_gist@" "yes"
+export GISTDLL		= $(LIBPREFIX)@GIST@$(DLLSUFFIX)
+export GISTSTATICLIB	= $(LIBPREFIX)@GIST@$(STATICLIBSUFFIX)
+export GISTLIB		= $(LIBPREFIX)@GIST@$(LIBSUFFIX)
+export LINKGIST      	= $(LINKPREFIX)@GIST@$(LINKSUFFIX)
+ifeq "@need_soname@" "yes"
+export GISTSONAME     = \
+	@WLSONAME@$(LIBPREFIX)@GIST@$(SOSUFFIX)
+else
+export GISTSONAME     = 
+endif
+ifeq "@enable_resource@" "yes"
+export GISTRC		= $(LIBPREFIX)@GIST@$(RCSUFFIX)
+export GISTRES		= $(LIBPREFIX)@GIST@$(RESSUFFIX)
+else
+export GISTRES		=
+export GISTRC		=
+endif
+else
+export GISTDLL		=
+export GISTSTATICLIB	=
+export GISTLIB		=
+export LINKGIST      	=
+export GISTSONAME	= 
+export GISTRES		=
+export GISTRC		=
+endif
+
+#
+# FLATZINC
+#
+
+FLATZINCSRC0 = flatzinc.cpp registry.cpp
+FLATZINC_GENSRC0 = parser.tab.cpp lexer.yy.cpp
+FLATZINCHDR0 = ast.hh conexpr.hh option.hh parser.hh \
+	plugin.hh registry.hh symboltable.hh varspec.hh
+
+FLATZINCSRC = $(FLATZINCSRC0:%=gecode/flatzinc/%)
+FLATZINC_GENSRC = $(FLATZINC_GENSRC0:%=gecode/flatzinc/%)
+FLATZINCHDR = $(FLATZINCHDR0:%=gecode/flatzinc/%) gecode/flatzinc.hh
+
+FLATZINCOBJ = \
+	$(FLATZINCSRC:%.cpp=%$(OBJSUFFIX)) \
+	$(FLATZINC_GENSRC:%.cpp=%$(OBJSUFFIX))
+
+FLATZINCEXESRC0 = fzn-gecode.cpp
+FLATZINCEXESRC  = $(FLATZINCEXESRC0:%=tools/flatzinc/%)
+FLATZINCEXEOBJ  = $(FLATZINCEXESRC:%.cpp=%$(OBJSUFFIX))
+
+FLATZINCALLSRC	= $(FLATZINCSRC) $(FLATZINCEXESRC)
+
+FLATZINCBUILDDIRS = gecode/flatzinc tools/flatzinc
+
+ifeq "@enable_flatzinc@" "yes"
+export FLATZINCDLL		= $(LIBPREFIX)@FLATZINC@$(DLLSUFFIX)
+export FLATZINCSTATICLIB	= $(LIBPREFIX)@FLATZINC@$(STATICLIBSUFFIX)
+export FLATZINCLIB		= $(LIBPREFIX)@FLATZINC@$(LIBSUFFIX)
+export LINKFLATZINC		= $(LINKPREFIX)@FLATZINC@$(LINKSUFFIX)
+export FLATZINCMZNLIB		= gecode/flatzinc/mznlib
+FLATZINCEXE	= tools/flatzinc/fzn-gecode$(EXESUFFIX)
+ifeq "@need_soname@" "yes"
+export FLATZINCSONAME = @WLSONAME@$(LIBPREFIX)@FLATZINC@$(SOSUFFIX)
+else
+export FLATZINCSONAME =
+endif
+ifeq "@enable_resource@" "yes"
+export FLATZINCRC		= $(LIBPREFIX)@FLATZINC@$(RCSUFFIX)
+export FLATZINCRES		= $(LIBPREFIX)@FLATZINC@$(RESSUFFIX)
+else
+export FLATZINCRES		=
+export FLATZINCRC		=
+endif
+else
+export FLATZINCDLL		=
+export FLATZINCSTATICLIB	=
+export FLATZINCLIB		=
+export LINKFLATZINC		=
+export FLATZINCSONAME		=
+export FLATZINCMZNLIB		= 
+export FLATZINCRES		=
+export FLATZINCRC		=
+FLATZINCEXE	=
+endif
+
+#
+# EXAMPLES
+#
+
+
+INTEXAMPLEHDR0 =						\
+	scowl
+INTEXAMPLESRC0 =						\
+	alpha bacp bibd donald efpa eq20 golomb-ruler		\
+	graph-color grocery ind-set magic-sequence magic-square	\
+	money ortho-latin partition photo queens sudoku kakuro  \
+	nonogram pentominoes crowded-chess black-hole		\
+	minesweeper domino steel-mill sports-league		\
+	all-interval langford-number warehouses	radiotherapy    \
+	word-square crossword open-shop car-sequencing sat      \
+	bin-packing knights tsp perfect-square schurs-lemma     \
+	dominating-queens colored-matrix
+
+INTEXAMPLEHDR  = $(INTEXAMPLEHDR0:%=examples/%.hpp)
+INTEXAMPLESRC  = $(INTEXAMPLESRC0:%=examples/%.cpp)
+ifeq "@enable_int_vars@" "yes"
+INTEXAMPLEEXE  = $(INTEXAMPLESRC:%.cpp=%$(EXESUFFIX))
+else
+INTEXAMPLEEXE  =
+endif
+
+MPFRFLOATEXAMPLESRC0 = \
+	archimedean-spiral golden-spiral
+MPFRFLOATEXAMPLESRC  = $(MPFRFLOATEXAMPLESRC0:%=examples/%.cpp)
+ifeq "@enable_float_vars@" "yes"
+  ifeq "@enable_mpfr@" "yes"
+  MPFRFLOATEXAMPLEEXE  = $(MPFRFLOATEXAMPLESRC:%.cpp=%$(EXESUFFIX))
+  else
+  MPFRFLOATEXAMPLEEXE  = 
+  endif
+endif
+
+FLOATEXAMPLESRC0 = \
+	cartesian-heart descartes-folium
+FLOATEXAMPLESRC  = $(FLOATEXAMPLESRC0:%=examples/%.cpp)
+ifeq "@enable_float_vars@" "yes"
+FLOATEXAMPLEEXE  = $(FLOATEXAMPLESRC:%.cpp=%$(EXESUFFIX))
+else
+FLOATEXAMPLEEXE  = 
+endif
+
+SETEXAMPLESRC0 = \
+	crew golf hamming steiner queen-armies
+SETEXAMPLESRC  = $(SETEXAMPLESRC0:%=examples/%.cpp)
+ifeq "@enable_set_vars@" "yes"
+SETEXAMPLEEXE  = $(SETEXAMPLESRC:%.cpp=%$(EXESUFFIX))
+else
+SETEXAMPLEEXE  = 
+endif
+
+EXAMPLEBUILDDIRS = examples
+
+EXAMPLEEXE = \
+	$(INTEXAMPLEEXE) $(SETEXAMPLEEXE) $(FLOATEXAMPLEEXE) $(MPFRFLOATEXAMPLEEXE)
+
+
+#
+# THIRD PARTY SOFTWARE
+#
+
+BOOSTHDR = \
+	config/compiler/borland.hpp config/compiler/clang.hpp \
+	config/compiler/codegear.hpp config/compiler/comeau.hpp \
+	config/compiler/common_edg.hpp config/compiler/compaq_cxx.hpp \
+	config/compiler/digitalmars.hpp config/compiler/gcc.hpp \
+	config/compiler/gcc_xml.hpp config/compiler/greenhills.hpp \
+	config/compiler/hp_acc.hpp config/compiler/intel.hpp \
+	config/compiler/kai.hpp config/compiler/metrowerks.hpp \
+	config/compiler/mpw.hpp config/compiler/nvcc.hpp \
+	config/compiler/pathscale.hpp config/compiler/pgi.hpp \
+	config/compiler/sgi_mipspro.hpp config/compiler/sunpro_cc.hpp \
+	config/compiler/vacpp.hpp config/compiler/visualc.hpp \
+	config/no_tr1/cmath.hpp config/no_tr1/utility.hpp \
+	config/platform/aix.hpp config/platform/amigaos.hpp \
+	config/platform/beos.hpp config/platform/bsd.hpp \
+	config/platform/cygwin.hpp config/platform/hpux.hpp \
+	config/platform/irix.hpp config/platform/linux.hpp \
+	config/platform/macos.hpp config/platform/qnxnto.hpp \
+	config/platform/solaris.hpp config/platform/symbian.hpp \
+	config/platform/vms.hpp config/platform/vxworks.hpp \
+	config/platform/win32.hpp config/posix_features.hpp \
+	config/select_compiler_config.hpp \
+	config/select_platform_config.hpp \
+	config/select_stdlib_config.hpp \
+	config/stdlib/dinkumware.hpp  config/stdlib/libcomo.hpp \
+	config/stdlib/libcpp.hpp config/stdlib/libstdcpp3.hpp \
+	config/stdlib/modena.hpp config/stdlib/msl.hpp \
+	config/stdlib/roguewave.hpp config/stdlib/sgi.hpp \
+	config/stdlib/stlport.hpp config/stdlib/vacpp.hpp \
+	config/suffix.hpp config/user.hpp config.hpp \
+	detail/endian.hpp detail/limits.hpp \
+	numeric/interval/arith.hpp \
+	numeric/interval/arith2.hpp \
+	numeric/interval/arith3.hpp \
+	numeric/interval/checking.hpp \
+	numeric/interval/compare/certain.hpp \
+	numeric/interval/compare/explicit.hpp \
+	numeric/interval/compare/lexicographic.hpp \
+	numeric/interval/compare/possible.hpp \
+	numeric/interval/compare/set.hpp \
+	numeric/interval/compare.hpp \
+	numeric/interval/constants.hpp \
+	numeric/interval/detail/alpha_rounding_control.hpp \
+	numeric/interval/detail/bcc_rounding_control.hpp \
+	numeric/interval/detail/bugs.hpp \
+	numeric/interval/detail/c99sub_rounding_control.hpp \
+	numeric/interval/detail/c99_rounding_control.hpp \
+	numeric/interval/detail/division.hpp \
+	numeric/interval/detail/ia64_rounding_control.hpp \
+	numeric/interval/detail/interval_prototype.hpp \
+	numeric/interval/detail/msvc_rounding_control.hpp \
+	numeric/interval/detail/ppc_rounding_control.hpp \
+	numeric/interval/detail/sparc_rounding_control.hpp \
+	numeric/interval/detail/test_input.hpp \
+	numeric/interval/detail/x86gcc_rounding_control.hpp \
+	numeric/interval/detail/x86_rounding_control.hpp \
+	numeric/interval/hw_rounding.hpp \
+	numeric/interval/interval.hpp \
+	numeric/interval/policies.hpp \
+	numeric/interval/rounded_arith.hpp \
+	numeric/interval/rounded_transc.hpp \
+	numeric/interval/rounding.hpp \
+	numeric/interval/transc.hpp \
+	numeric/interval/utility.hpp \
+	numeric/interval.hpp \
+	LICENSE_1_0.txt \
+	limits.hpp non_type.hpp type.hpp
+THIRDHDR = \
+	$(BOOSTHDR:%=gecode/third-party/boost/%)
+
+#
+# COLLECTING ALL
+#
+
+ALLSRC = \
+	$(SUPPORTSRC) $(KERNELSRC) $(SEARCHSRC) \
+        $(INTSRC) $(FLOATSRC) $(SETSRC) $(MMSRC) $(DRIVERSRC) \
+	$(INTEXAMPLESRC) $(SETEXAMPLESRC) $(FLOATEXAMPLESRC)  $(MPFRFLOATEXAMPLESRC) \
+	$(GISTSRC) $(FLATZINCALLSRC)
+ALLGECODEHDR = \
+	$(SUPPORTHDR) $(KERNELHDR) $(SEARCHHDR) \
+        $(INTHDR) $(FLOATHDR) $(SETHDR) $(MMHDR) \
+	$(DRIVERHDR) $(ITERHDR) $(GISTHDR) $(FLATZINCHDR) \
+	$(INTEXAMPLEHDR)
+ALLHDR = \
+	$(ALLGECODEHDR) $(THIRDHDR)
+ALLOBJ0 = $(ALLSRC:%.cpp=%$(OBJSUFFIX)) \
+	$(GISTMOCSRC:%.cpp=%$(OBJSUFFIX)) \
+	$(FLATZINC_GENSRC:%.cpp=%$(OBJSUFFIX))
+ALLOBJ = $(ALLOBJ0:%.c=%$(OBJSUFFIX))
+
+ALLSBJ0 = $(ALLSRC:%.cpp=%$(SBJSUFFIX))
+ALLSBJ  = $(ALLSBJ0:%.c=%$(SBJSUFFIX))
+
+ifeq "@BUILDDLL@" "yes"
+DLLTARGETS= \
+	$(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) $(INTDLL) $(FLOATDLL) $(SETDLL) \
+	$(MMDLL) $(DRIVERDLL) $(GISTDLL) $(FLATZINCDLL)
+export ALLLIB = \
+	$(SUPPORTLIB) $(KERNELLIB) $(SEARCHLIB) $(INTLIB) $(FLOATLIB) $(SETLIB) \
+	$(MMLIB) $(DRIVERLIB) $(GISTLIB) $(FLATZINCLIB)
+else
+DLLTARGETS=
+ifeq "@BUILD_MACOS_FRAMEWORK@" "yes"
+export ALLLIB = gecode.framework/Versions/@GECODE_SOVERSION@/gecode
+else
+export ALLLIB = \
+	$(SUPPORTSTATICLIB) $(KERNELSTATICLIB) $(SEARCHSTATICLIB) \
+	$(INTSTATICLIB) $(FLOATSTATICLIB) $(SETSTATICLIB) $(MMSTATICLIB) \
+	$(DRIVERSTATICLIB) $(GISTSTATICLIB) $(FLATZINCSTATICLIB)
+endif
+endif
+
+ifeq "@BUILDSTATIC@" "yes"
+STATICTARGETS = \
+	$(SUPPORTSTATICLIB) $(KERNELSTATICLIB) $(SEARCHSTATICLIB) \
+	$(INTSTATICLIB) $(FLOATSTATICLIB) $(SETSTATICLIB) $(MMSTATICLIB) \
+	$(DRIVERSTATICLIB) $(GISTSTATICLIB) $(FLATZINCSTATICLIB)
+else
+STATICTARGETS=
+endif
+
+export LIBTARGETS = $(DLLTARGETS) $(STATICTARGETS)
+
+ifeq "@need_soname@" "yes"
+export LIBLINKTARGETS = \
+	$(DLLTARGETS:%$(DLLSUFFIX)=%$(SOSUFFIX)) \
+	$(DLLTARGETS:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+else
+export LIBLINKTARGETS =
+endif
+
+PDBS = $(ALLLIB:%$(LIBSUFFIX)=%$(PDBSUFFIX))
+
+ifeq "@INSTALLLIBS@" "yes"
+LIBLIBTARGETS = $(ALLLIB)
+PDBTARGETS = $(PDBS)
+else
+LIBLIBTARGETS =
+PDBTARGETS =
+endif
+
+EXETARGETS = $(FLATZINCEXE) tools/flatzinc/mzn-gecode@BATCHFILE@
+
+#
+# Testing
+#
+
+INTTESTSRC00 = \
+	channel arithmetic basic bool count dom distinct element extensional \
+	rel linear gcc sorted unshare exec sequence \
+	mm-arithmetic mm-bool mm-lin mm-count mm-rel \
+	bin-packing unary cumulative cumulatives circuit \
+	no-overlap precede nvalues member
+INTTESTSRC0 = test/int.cpp $(INTTESTSRC00:%=test/int/%.cpp)
+INTTESTOBJ = $(INTTESTSRC0:%.cpp=%$(OBJSUFFIX))
+
+FLOATTESTSRC00 = \
+	basic arithmetic transcendental trigonometric linear rel channel \
+	mm-lin dom
+FLOATTESTSRC0 = test/float.cpp $(FLOATTESTSRC00:%=test/float/%.cpp)
+
+ifeq "@enable_float_vars@" "yes"
+FLOATTESTOBJ = $(FLOATTESTSRC0:%.cpp=%$(OBJSUFFIX))
+else
+FLOATTESTOBJ=
+endif
+
+SETTESTSRC00 = \
+	construct dom rel rel-op rel-op-const convex sequence int element \
+	precede distinct exec mm-set channel
+SETTESTSRC0 = test/set.cpp $(SETTESTSRC00:%=test/set/%.cpp)
+
+ifeq "@enable_set_vars@" "yes"
+SETTESTOBJ = $(SETTESTSRC0:%.cpp=%$(OBJSUFFIX))
+else
+SETTESTOBJ=
+endif
+
+BRANCHTESTSRC0 = \
+	test/branch.cpp test/branch/int.cpp test/branch/bool.cpp \
+	test/branch/set.cpp test/branch/float.cpp \
+	test/assign.cpp test/assign/int.cpp test/assign/bool.cpp \
+	test/assign/set.cpp test/assign/float.cpp
+
+SEARCHTESTSRC0 = \
+	test/search.cpp test/nogoods.cpp
+
+ARRAYTESTSRC0 = \
+	test/array.cpp
+
+TESTSRC0 = test/test.cpp test/afc.cpp test/brancher-handle.cpp test/ldsb.cpp
+
+TESTSRC = \
+	$(TESTSRC0) $(INTTESTSRC0) $(SETTESTSRC0) $(FLOATTESTSRC0) \
+	$(BRANCHTESTSRC0) $(SEARCHTESTSRC0) \
+	$(ARRAYTESTSRC0)
+
+TESTHDR0 = \
+	test.hh test.hpp int.hh int.hpp set.hh set.hpp float.hh float.hpp \
+	branch.hh assign.hh
+TESTHDR = $(TESTHDR0:%=test/%)
+TESTOBJ	= $(INTTESTOBJ) $(SETTESTOBJ) $(FLOATTESTOBJ) \
+	$(BRANCHTESTSRC0:%.cpp=%$(OBJSUFFIX)) \
+	$(SEARCHTESTSRC0:%.cpp=%$(OBJSUFFIX)) \
+	$(ARRAYTESTSRC0:%.cpp=%$(OBJSUFFIX)) \
+	$(TESTSRC0:%.cpp=%$(OBJSUFFIX))
+TESTSBJ	= $(TESTOBJ:%$(OBJSUFFIX)=%$(SBJSUFFIX))
+TESTEXE	= test/test$(EXESUFFIX)
+TESTBUILDDIRS = test test/int test/set test/float test/branch test/assign
+
+BUILDDIRS = \
+	tools \
+	$(SUPPORTBUILDDIRS:%=gecode/%) \
+	$(KERNELBUILDDIRS:%=gecode/%) $(SEARCHBUILDDIRS:%=gecode/%) \
+	$(INTBUILDDIRS:%=gecode/%) $(FLOATBUILDDIRS:%=gecode/%) $(SETBUILDDIRS:%=gecode/%) \
+	$(MMBUILDDIRS:%=gecode/%)  \
+	$(DRIVERBUILDDIRS:%=gecode/%)  \
+	$(GISTBUILDDIRS:%=gecode/%) \
+	$(FLATZINCBUILDDIRS) \
+	$(EXAMPLEBUILDDIRS) $(TESTBUILDDIRS)
+
+ifeq "@enable_examples@" "yes"
+all: compilelib
+	@$(MAKE) compileexamples
+	@$(MAKE) makecompletedmessage
+else
+all: compilelib
+	@$(MAKE) makecompletedmessage
+endif
+compilelib: mkcompiledirs
+	@$(MAKE) $(VARIMP) $(LIBTARGETS)
+	@$(MAKE) compilesubdirs
+	@$(MAKE) framework
+	@$(MAKE) flatzinc
+
+compileexamples: $(EXAMPLEEXE)
+
+test: mkcompiledirs
+	@$(MAKE) $(VARIMP) $(TESTEXE)
+
+# A basic integrity test
+check: test
+	$(TESTEXE) -iter 2 -test Branch::Int::Dense::3 \
+			   -test Int::Linear::Int::Int::Eq::Bnd::12::4 \
+			   -test Int::Distinct::Random \
+			   -test Int::Arithmetic::Mult::XYZ::Bnd::C \
+			   -test Int::Arithmetic::Mult::XYZ::Dom::A \
+			   -test Search::BAB::Sol::BalGr::Binary::Binary::Binary::1::1
+
+ifeq "@top_srcdir@" "."
+mkcompiledirs:
+else
+mkcompiledirs:
+	for_builddirs="$(BUILDDIRS)"; for f in $$for_builddirs; do \
+	  (test -z "$(top_builddir)"/$$f || mkdir -p "$(top_builddir)"/$$f); \
+	done
+endif
+
+makecompletedmessage:
+	@echo
+	@echo Compilation of Gecode finished successfully. To use Gecode, either add
+	@echo $(PWD)
+	@echo to your search path for libraries, or install Gecode using
+	@echo make install
+	@echo
+
+# ugly hack by Grégoire Dooms to call a target on a contribs after evaluating all the variables in this Makefile.
+# used as make contribs:cpgraph:doc or make contribs:cpgraph:Makefile.in
+.PHONY: contribs\:%
+contribs\:%:
+	$(MAKE) -C $(shell echo $@ | sed 's/\(contribs:[^:]*\):.*/\1/;s+:+/+') $(shell echo $@ | sed 's/contribs:[^:]*:\(.*\)/\1/;s+:+/+')
+
+# less ugly hack by Guido Tack to call a target
+# Just give ICD (in-contrib-dir) and ICT (in-contrib-target) as arguments
+# to make incontrib
+ICT=
+ICD=
+.PHONY: incontrib
+incontrib:
+	$(MAKE) -C contribs/$(ICD) $(ICT)
+
+compilesubdirs:
+	@for_subdirs="$(subdirs)"; for i in $$for_subdirs; do \
+	  if test -f $$i/Makefile; then \
+	    echo "Making in directory $$i"; \
+	    $(MAKE) -C $$i; \
+	  fi; \
+	done
+
+#
+# Generated variable implementations
+#
+
+VIS = @ALLVIS@
+VISDEP = $(VIS) \
+	$(top_srcdir)/misc/genvarimp.perl Makefile
+
+gecode/kernel/var-type.hpp: $(VISDEP)
+	perl $(top_srcdir)/misc/genvarimp.perl -typehpp $(VIS) > $@
+gecode/kernel/var-imp.hpp: $(VISDEP)
+	perl $(top_srcdir)/misc/genvarimp.perl -header $(VIS) > $@
+
+#
+# Object targets
+#
+
+gecode/support/%$(OBJSUFFIX): $(top_srcdir)/gecode/support/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SUPPORT_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/support/%$(SBJSUFFIX): $(top_srcdir)/gecode/support/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SUPPORT_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+gecode/support/%$(OBJSUFFIX): $(top_srcdir)/gecode/support/%.c
+	$(CC) $(CFLAGS) @GECODE_BUILD_SUPPORT_FLAG@ \
+	@COMPILEOBJ@$@ @CCIN@$<
+gecode/support/%$(SBJSUFFIX): $(top_srcdir)/gecode/support/%.c
+	$(CC) $(CFLAGS) @GECODE_BUILD_SUPPORT_FLAG@ \
+	@COMPILESBJ@$@ @CCIN@$<
+
+gecode/kernel/%$(OBJSUFFIX): $(top_srcdir)/gecode/kernel/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_KERNEL_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/kernel/%$(SBJSUFFIX): $(top_srcdir)/gecode/kernel/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_KERNEL_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/search/%$(OBJSUFFIX): $(top_srcdir)/gecode/search/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SEARCH_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/search/%$(SBJSUFFIX): $(top_srcdir)/gecode/search/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SEARCH_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/int/%$(OBJSUFFIX): $(top_srcdir)/gecode/int/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_INT_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/int/%$(SBJSUFFIX): $(top_srcdir)/gecode/int/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_INT_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/float/%$(OBJSUFFIX): $(top_srcdir)/gecode/float/%.cpp
+	$(CXX) $(CXXFLAGS) $(MPFR_CPPFLAGS) @GECODE_BUILD_FLOAT_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/float/%$(SBJSUFFIX): $(top_srcdir)/gecode/float/%.cpp
+	$(CXX) $(CXXFLAGS) $(MPFR_CPPFLAGS) @GECODE_BUILD_FLOAT_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/set/%$(OBJSUFFIX): $(top_srcdir)/gecode/set/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SET_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/set/%$(SBJSUFFIX): $(top_srcdir)/gecode/set/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_SET_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/minimodel/%$(OBJSUFFIX): $(top_srcdir)/gecode/minimodel/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_MINIMODEL_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/minimodel/%$(SBJSUFFIX): $(top_srcdir)/gecode/minimodel/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_MINIMODEL_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+gecode/driver/%$(OBJSUFFIX): $(top_srcdir)/gecode/driver/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_DRIVER_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+gecode/driver/%$(SBJSUFFIX): $(top_srcdir)/gecode/driver/%.cpp
+	$(CXX) $(CXXFLAGS) @GECODE_BUILD_DRIVER_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+
+examples/%$(OBJSUFFIX): $(top_srcdir)/examples/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) $(QT_CPPFLAGS) \
+	@COMPILEOBJ@$@ @CXXIN@$<
+examples/%$(SBJSUFFIX): $(top_srcdir)/examples/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) $(QT_CPPFLAGS) \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+
+test/%$(OBJSUFFIX): $(top_srcdir)/test/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) \
+		@COMPILEOBJ@$@ @CXXIN@$<
+test/%$(SBJSUFFIX): $(top_srcdir)/test/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) \
+		@COMPILESBJ@$@ @CXXIN@$<
+
+tools/%$(OBJSUFFIX): $(top_srcdir)/tools/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) \
+		@COMPILEOBJ@$@ @CXXIN@$<
+tools/%$(SBJSUFFIX): $(top_srcdir)/tools/%.cpp
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_EXTRA_CXXFLAGS) \
+		@COMPILESBJ@$@ @CXXIN@$<
+
+$(GISTSRC:%.cpp=%$(OBJSUFFIX)): gecode/gist/%$(OBJSUFFIX): $(top_srcdir)/gecode/gist/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_GIST_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+
+$(GISTSRC:%.cpp=%$(SBJSUFFIX)): gecode/gist/%$(SBJSUFFIX): $(top_srcdir)/gecode/gist/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_GIST_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+$(GISTMOCSRC:%.cpp=%$(OBJSUFFIX)): gecode/gist/moc_%$(OBJSUFFIX): gecode/gist/moc_%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_GIST_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+
+$(GISTMOCSRC:%.cpp=%$(SBJSUFFIX)): gecode/gist/moc_%$(SBJSUFFIX): gecode/gist/moc_%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_GIST_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+.PRECIOUS: gecode/gist/moc_%.cpp
+gecode/gist/moc_%.cpp: $(top_srcdir)/gecode/gist/%.hh
+	$(MOC) $(CPPFLAGS) -pgecode/gist $< -o $@
+
+.PRECIOUS: gecode/flatzinc/%.cpp gecode/flatzinc/%.hh
+ifeq "@HAVE_FLEXBISON@" "yes"
+gecode/flatzinc/lexer.yy.cpp: \
+	$(top_srcdir)/gecode/flatzinc/lexer.lxx \
+	$(top_srcdir)/gecode/flatzinc/parser.tab.hh
+	flex -ogecode/flatzinc/lexer.yy.cpp \
+		$(top_srcdir)/gecode/flatzinc/lexer.lxx
+
+gecode/flatzinc/parser.tab.hh gecode/flatzinc/parser.tab.cpp: \
+	$(top_srcdir)/gecode/flatzinc/parser.yxx
+	bison -t -o gecode/flatzinc/parser.tab.cpp -d $<
+	mv gecode/flatzinc/parser.tab.hpp gecode/flatzinc/parser.tab.hh
+else
+ifneq "$(top_srcdir)" "."
+gecode/flatzinc/lexer.yy.cpp: $(top_srcdir)/gecode/flatzinc/lexer.yy.cpp
+	cp $(@:%=$(top_srcdir)/%) $@
+gecode/flatzinc/parser.tab.hh: $(top_srcdir)/gecode/flatzinc/parser.tab.hh
+	cp $(@:%=$(top_srcdir)/%) $@
+gecode/flatzinc/parser.tab.cpp: $(top_srcdir)/gecode/flatzinc/parser.tab.cpp
+	cp $(@:%=$(top_srcdir)/%) $@
+endif
+endif
+
+$(FLATZINCSRC:%.cpp=%$(OBJSUFFIX)): gecode/flatzinc/%$(OBJSUFFIX): $(top_srcdir)/gecode/flatzinc/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_FLATZINC_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+
+$(FLATZINCSRC:%.cpp=%$(SBJSUFFIX)): gecode/flatzinc/%$(SBJSUFFIX): $(top_srcdir)/gecode/flatzinc/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_FLATZINC_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+$(FLATZINC_GENSRC:%.cpp=%$(OBJSUFFIX)): gecode/flatzinc/%$(OBJSUFFIX): gecode/flatzinc/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_FLATZINC_FLAG@ \
+	@COMPILEOBJ@$@ @CXXIN@$<
+
+$(FLATZINC_GENSRC:%.cpp=%$(SBJSUFFIX)): gecode/flatzinc/%$(SBJSUFFIX): gecode/flatzinc/%.cpp
+	$(CXX) $(CXXFLAGS) $(QT_CPPFLAGS) \
+	@GECODE_BUILD_FLATZINC_FLAG@ \
+	@COMPILESBJ@$@ @CXXIN@$<
+
+#
+# DLL Targets
+#
+
+ifeq "$(DLLSUFFIX)" "$(LIBSUFFIX)"
+
+ifeq "@BUILD_MACOS_FRAMEWORK@" "yes"
+export LINKALL = -F. -framework gecode
+else
+export LINKALL = \
+	$(LINKFLATZINC) $(LINKDRIVER) $(LINKGIST) \
+	$(LINKSEARCH) $(LINKMM) $(LINKSET) $(LINKFLOAT) $(LINKINT) \
+	$(LINKKERNEL) $(LINKSUPPORT)
+endif
+
+$(SUPPORTDLL): $(SUPPORTOBJ)
+	$(CXX) $(DLLFLAGS) $(SUPPORTOBJ) $(SUPPORTSONAME) \
+		@LINKOUTPUT@$(SUPPORTDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(KERNELDLL): $(KERNELOBJ) $(SUPPORTDLL)
+	$(CXX) $(DLLFLAGS) $(KERNELOBJ) $(KERNELSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) \
+		@LINKOUTPUT@$(KERNELDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(SEARCHDLL): $(SEARCHOBJ) $(SUPPORTDLL) $(KERNELDLL)
+	$(CXX) $(DLLFLAGS) $(SEARCHOBJ) $(SEARCHSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) \
+		@LINKOUTPUT@$(SEARCHDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(INTDLL): $(INTOBJ) $(SUPPORTDLL) $(KERNELDLL)
+	$(CXX) $(DLLFLAGS) $(INTOBJ) $(INTSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) \
+		@LINKOUTPUT@$(INTDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(FLOATDLL): $(FLOATOBJ) $(SUPPORTDLL) $(KERNELDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(FLOATOBJ) $(FLOATSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKINT) $(LINKMPFR)\
+		@LINKOUTPUT@$(FLOATDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(SETDLL): $(SETOBJ) $(SUPPORTDLL) $(KERNELDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(SETOBJ) $(SETSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKINT) \
+		@LINKOUTPUT@$(SETDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(MMDLL): $(MMOBJ) $(SUPPORTDLL) $(KERNELDLL) $(INTDLL) $(SETDLL) $(FLOATDLL)
+	$(CXX) $(DLLFLAGS) $(MMOBJ) $(MMSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKINT) $(LINKFLOAT) $(LINKSET) \
+		@LINKOUTPUT@$(MMDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(DRIVERDLL): $(DRIVEROBJ) $(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) $(INTDLL) $(MMDLL) $(GISTDLL)
+	$(CXX) $(DLLFLAGS) $(DRIVEROBJ) $(DRIVERSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKSEARCH) $(LINKINT) $(LINKMM) $(LINKGIST) \
+		@LINKOUTPUT@$(DRIVERDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(GISTDLL): $(GISTOBJ) $(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(GISTOBJ) $(GISTSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKSEARCH) $(LINKINT) $(LINKQT) \
+		@LINKOUTPUT@$(GISTDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+$(FLATZINCDLL): $(FLATZINCOBJ) $(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) \
+	$(INTDLL) $(SETDLL) $(FLOATDLL) $(GISTDLL) $(MMDLL) $(DRIVERDLL)
+	$(CXX) $(DLLFLAGS) $(FLATZINCOBJ) $(FLATZINCSONAME) \
+		@DLLPATH@ $(LINKSUPPORT) $(LINKKERNEL) $(LINKSEARCH) $(LINKINT) \
+		$(LINKSET) $(LINKFLOAT) $(LINKMM) $(LINKGIST) $(LINKDRIVER) $(LINKQT) \
+		@LINKOUTPUT@$(FLATZINCDLL)
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOLINKSUFFIX))
+	$(CREATELINK) $@ $(@:%$(DLLSUFFIX)=%$(SOSUFFIX))
+else
+export LINKALL =
+
+ifeq "@enable_resource@" "yes"
+$(SUPPORTRC):
+	$(RCGEN) $(SUPPORTDLL) $(SUPPORTHDR) $(SUPPORTSRC) > $@
+endif
+$(SUPPORTDLL) $(SUPPORTLIB): $(SUPPORTOBJ) $(SUPPORTRES)
+	$(CXX) $(DLLFLAGS) $(SUPPORTOBJ) $(SUPPORTRES) \
+		@LINKOUTPUT@$(SUPPORTDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(SUPPORTDLL).manifest
+	$(MANIFEST) -manifest $(SUPPORTDLL).manifest \
+		    -outputresource:$(SUPPORTDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(KERNELRC):
+	$(RCGEN) $(KERNELDLL) $(KERNELHDR) $(VARIMPHDR) $(KERNELSRC) > $@
+endif
+$(KERNELDLL) $(KERNELLIB): $(KERNELOBJ) $(KERNELRES) $(SUPPORTDLL)
+	$(CXX) $(DLLFLAGS) $(KERNELOBJ) $(KERNELRES) \
+		@DLLPATH@ @LINKOUTPUT@$(KERNELDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(KERNELDLL).manifest
+	$(MANIFEST) -manifest $(KERNELDLL).manifest \
+		    -outputresource:$(KERNELDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(SEARCHRC):
+	$(RCGEN) $(SEARCHDLL) $(SEARCHHDR) $(SEARCHSRC) > $@
+endif
+$(SEARCHDLL) $(SEARCHLIB): $(SEARCHOBJ) $(SEARCHRES) $(SUPPORTDLL) $(KERNELDLL)
+	$(CXX) $(DLLFLAGS) $(SEARCHOBJ) $(SEARCHRES) \
+		@DLLPATH@ @LINKOUTPUT@$(SEARCHDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(SEARCHDLL).manifest
+	$(MANIFEST) -manifest $(SEARCHDLL).manifest \
+		    -outputresource:$(SEARCHDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(INTRC):
+	$(RCGEN) $(INTDLL) $(INTHDR) $(INTSRC) > $@
+endif
+$(INTDLL) $(INTLIB): $(INTOBJ) $(INTRES) $(SUPPORTDLL) $(KERNELDLL)
+	$(CXX) $(DLLFLAGS) $(INTOBJ) $(INTRES) \
+		@DLLPATH@ @LINKOUTPUT@$(INTDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(INTDLL).manifest
+	$(MANIFEST) -manifest $(INTDLL).manifest \
+		    -outputresource:$(INTDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(FLOATRC):
+	$(RCGEN) $(FLOATDLL) $(FLOATHDR) $(FLOATSRC) > $@
+endif
+$(FLOATDLL) $(FLOATLIB): $(FLOATOBJ) $(FLOATRES) $(SUPPORTDLL) $(KERNELDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(FLOATOBJ) $(FLOATRES) \
+		@DLLPATH@ @LINKOUTPUT@$(FLOATDLL) $(GLDFLAGS) $(LINKMPFR)
+	$(FIXMANIFEST) $(FLOATDLL).manifest
+	$(MANIFEST) -manifest $(FLOATDLL).manifest \
+		    -outputresource:$(FLOATDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(SETRC):
+	$(RCGEN) $(SETDLL) $(SETHDR) $(SETSRC) > $@
+endif
+$(SETDLL) $(SETLIB): $(SETOBJ) $(SETRES) $(SUPPORTDLL) $(KERNELDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(SETOBJ) $(SETRES) \
+		@DLLPATH@ @LINKOUTPUT@$(SETDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(SETDLL).manifest
+	$(MANIFEST) -manifest $(SETDLL).manifest \
+		    -outputresource:$(SETDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(MMRC):
+	$(RCGEN) $(MMDLL) $(MMHDR) $(MMSRC) > $@
+endif
+$(MMDLL) $(MMLIB): $(MMOBJ) $(MMRES) \
+	$(SUPPORTDLL) $(KERNELDLL) $(INTDLL) $(FLOATDLL) $(SETDLL)
+	$(CXX) $(DLLFLAGS) $(MMOBJ) $(MMRES) \
+		@DLLPATH@ @LINKOUTPUT@$(MMDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(MMDLL).manifest
+	$(MANIFEST) -manifest $(MMDLL).manifest \
+		    -outputresource:$(MMDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(DRIVERRC):
+	$(RCGEN) $(DRIVERDLL) $(DRIVERHDR) $(DRIVERSRC) > $@
+endif
+$(DRIVERDLL) $(DRIVERLIB): $(DRIVEROBJ) $(DRIVERRES) \
+	$(SUPPORTDLL) $(KERNELDLL) \
+	$(SEARCHDLL) $(INTDLL) $(MMDLL) $(GISTDLL)
+	$(CXX) $(DLLFLAGS) $(DRIVEROBJ) $(DRIVERRES) \
+		@DLLPATH@ @LINKOUTPUT@$(DRIVERDLL) $(GLDFLAGS)
+	$(FIXMANIFEST) $(DRIVERDLL).manifest
+	$(MANIFEST) -manifest $(DRIVERDLL).manifest \
+		    -outputresource:$(DRIVERDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(GISTRC):
+	$(RCGEN) $(GISTDLL) $(GISTHDR) $(GISTSRC) > $@
+endif
+$(GISTDLL) $(GISTLIB): $(GISTOBJ) $(GISTRES) \
+	$(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) $(INTDLL)
+	$(CXX) $(DLLFLAGS) $(GISTOBJ) $(GISTRES) \
+		@DLLPATH@ @LINKOUTPUT@$(GISTDLL) $(GLDFLAGS) $(LINKQT)
+	$(FIXMANIFEST) $(GISTDLL).manifest
+	$(MANIFEST) -manifest $(GISTDLL).manifest \
+		    -outputresource:$(GISTDLL)\;2
+ifeq "@enable_resource@" "yes"
+$(FLATZINCRC):
+	$(RCGEN) $(FLATZINCDLL) $(FLATZINCHDR) $(FLATZINCSRC) > $@
+endif
+$(FLATZINCDLL) $(FLATZINCLIB): $(FLATZINCOBJ) $(FLATZINCRES) \
+	$(SUPPORTDLL) $(KERNELDLL) $(SEARCHDLL) $(INTDLL) \
+	$(SETDLL) $(FLOATDLL) $(GISTDLL) $(MMDLL) $(DRIVERDLL)
+	$(CXX) $(DLLFLAGS) $(FLATZINCOBJ) $(FLATZINCRES) \
+		@DLLPATH@ @LINKOUTPUT@$(FLATZINCDLL) $(GLDFLAGS) $(LINKQT)
+	$(FIXMANIFEST) $(FLATZINCDLL).manifest
+	$(MANIFEST) -manifest $(FLATZINCDLL).manifest \
+		    -outputresource:$(FLATZINCDLL)\;2
+endif
+
+#
+# Static libraries
+#
+
+$(SUPPORTSTATICLIB): $(SUPPORTOBJ)
+	$(AR) $(ARFLAGS) $@ $(SUPPORTOBJ)
+	$(RANLIB) $@
+$(KERNELSTATICLIB): $(KERNELOBJ)
+	$(AR) $(ARFLAGS) $@ $(KERNELOBJ)
+	$(RANLIB) $@
+$(SEARCHSTATICLIB): $(SEARCHOBJ)
+	$(AR) $(ARFLAGS) $@ $(SEARCHOBJ)
+	$(RANLIB) $@
+$(INTSTATICLIB): $(INTOBJ)
+	$(AR) $(ARFLAGS) $@ $(INTOBJ)
+	$(RANLIB) $@
+$(FLOATSTATICLIB): $(FLOATOBJ)
+	$(AR) $(ARFLAGS) $@ $(FLOATOBJ)
+	$(RANLIB) $@
+$(SETSTATICLIB): $(SETOBJ)
+	$(AR) $(ARFLAGS) $@ $(SETOBJ)
+	$(RANLIB) $@
+$(MMSTATICLIB): $(MMOBJ)
+	$(AR) $(ARFLAGS) $@ $(MMOBJ)
+	$(RANLIB) $@
+$(DRIVERSTATICLIB): $(DRIVEROBJ)
+	$(AR) $(ARFLAGS) $@ $(DRIVEROBJ)
+	$(RANLIB) $@
+$(GISTSTATICLIB): $(GISTOBJ)
+	$(AR) $(ARFLAGS) $@ $(GISTOBJ)
+	$(RANLIB) $@
+$(FLATZINCSTATICLIB): $(FLATZINCOBJ)
+	$(AR) $(ARFLAGS) $@ $(FLATZINCOBJ)
+	$(RANLIB) $@
+
+#
+# Mac OS X Framework
+#
+
+.PHONY: framework
+ifeq "@BUILD_MACOS_FRAMEWORK@" "yes"
+framework: gecode.framework/Versions/@GECODE_SOVERSION@/gecode
+
+gecode.framework/Versions/@GECODE_SOVERSION@/gecode: $(STATICTARGETS)
+	$(RMF) gecode.framework
+	mkdir -p gecode.framework/Versions/@GECODE_SOVERSION@
+	$(CXX) -all_load -compatibility_version @GECODE_SOVERSION@.0 \
+	  -current_version @GECODE_SOVERSION@.0 \
+	  $(DLLFLAGS) $(LINKQT) \
+	  -o gecode.framework/Versions/@GECODE_SOVERSION@/gecode $^
+	$(MAKE) doinstallheaders \
+	  prefix=gecode.framework/Versions/@GECODE_SOVERSION@ DESTDIR=
+	mv gecode.framework/Versions/@GECODE_SOVERSION@/include/gecode/* \
+	  gecode.framework/Versions/@GECODE_SOVERSION@/include/
+	rmdir gecode.framework/Versions/@GECODE_SOVERSION@/include/gecode
+	cd gecode.framework/Versions && ln -s @GECODE_SOVERSION@ Current
+	ln -s Versions/Current/include \
+	  gecode.framework/Headers
+	ln -s Versions/Current/gecode \
+	  gecode.framework/gecode
+else
+framework:
+endif
+
+#
+# EXE Targets
+#
+
+.PRECIOUS: examples/%$(OBJSUFFIX)
+ifeq "@enable_resource@" "yes"
+.PRECIOUS: examples/%$(EXESUFFIX).rc examples/%$(EXESUFFIX).res
+examples/%$(EXESUFFIX).rc:
+	$(RCGEN) $(@:%.rc=%) $< > $@
+examples/%$(EXESUFFIX): examples/%$(OBJSUFFIX) examples/%$(EXESUFFIX).res \
+	$(ALLLIB)
+	$(CXX) @EXEOUTPUT@$@ $< $@.res \
+		$(DLLPATH) $(CXXFLAGS) \
+		$(LINKALL) $(GLDFLAGS) $(LINKQT) 
+	$(FIXMANIFEST) $@.manifest
+	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
+else
+examples/%$(EXESUFFIX): examples/%$(OBJSUFFIX) $(ALLLIB)
+	$(CXX) @EXEOUTPUT@$@ $< $(DLLPATH) $(CXXFLAGS) \
+	$(LINKALL) $(GLDFLAGS) $(LINKQT)
+	$(FIXMANIFEST) $@.manifest
+	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
+endif
+
+ifeq "@enable_resource@" "yes"
+TESTRES = $(TESTEXE).res
+$(TESTEXE).rc:
+	$(RCGEN) $(TESTEXE) $(TESTSRC) $(TESTHDR) > $@
+else
+TESTRES =
+endif
+$(TESTEXE): $(TESTOBJ) $(TESTRES) $(ALLLIB)
+	$(CXX) @EXEOUTPUT@$@ $(TESTOBJ) $(TESTRES) $(DLLPATH) $(CXXFLAGS) \
+	$(LINKALL) $(GLDFLAGS)
+	$(FIXMANIFEST) $@.manifest $(DLLSUFFIX)
+	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
+
+.PHONY: flatzinc
+ifeq "@enable_flatzinc@" "yes"
+flatzinc: $(FLATZINCEXE)
+else
+flatzinc:
+endif
+
+ifeq "@enable_resource@" "yes"
+FLATZINCEXERES = $(FLATZINCEXE).res
+$(FLATZINCEXE).rc:
+	$(RCGEN) $(FLATZINCEXE) $(FLATZINCEXESRC) > $@
+else
+FLATZINCEXERES =
+endif
+$(FLATZINCEXE): $(FLATZINCEXEOBJ) $(FLATZINCEXERES) $(ALLLIB)
+	$(CXX) @EXEOUTPUT@$@ $(FLATZINCEXEOBJ) $(FLATZINCEXERES) \
+	$(DLLPATH) $(CXXFLAGS) \
+	$(LINKALL) $(GLDFLAGS) $(LINKSTATICQT) 
+	$(FIXMANIFEST) $@.manifest
+	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
+
+
+#
+# Autoconf
+#
+
+$(top_srcdir)/configure: $(top_srcdir)/configure.ac
+	(cd $(top_srcdir) && autoconf)
+config.status: $(top_srcdir)/configure
+	./config.status --recheck
+Makefile: $(top_srcdir)/Makefile.in config.status
+	./config.status --file $@:$<
+doxygen.hh: $(top_srcdir)/doxygen/doxygen.hh.in config.status
+	./config.status --file $@:$<
+doxygen.conf: $(top_srcdir)/doxygen/doxygen.conf.in config.status
+	./config.status --file $@:$<
+
+
+#
+# Documentation
+#
+
+export ENABLEDOCCHM	= @ENABLEDOCCHM@
+export ENABLEDOCDOCSET	= @ENABLEDOCDOCSET@
+ENABLEDOCSEARCH = @ENABLEDOCSEARCH@
+
+.PHONY: doc
+
+DOCSRC_NOTGENERATED = \
+	misc/doxygen/back.png misc/doxygen/footer.html \
+	misc/doxygen/gecode-logo-100.png \
+	misc/doxygen/stylesheet.css \
+	misc/genlicense.perl misc/genstatistics.perl misc/getrevision.perl \
+	misc/genchangelog.perl
+DOCSRC = $(DOCSRC_NOTGENERATED:%=$(top_srcdir)/%) \
+	doxygen.conf.use header.html \
+	doxygen.hh license.hh stat.hh changelog.hh
+
+changelog.hh: $(top_srcdir)/changelog.in
+	perl $(top_srcdir)/misc/genchangelog.perl < $^ > changelog.hh
+
+ChangeLog: $(top_srcdir)/changelog.in
+	perl $(top_srcdir)/misc/gentxtchangelog.perl < $^ > ChangeLog
+
+license.hh: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(ALLSRC:%=$(top_srcdir)/%) \
+	$(VARIMPHDR)
+	perl $(top_srcdir)/misc/genlicense.perl $^ > license.hh
+
+stat.hh: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(ALLSRC:%=$(top_srcdir)/%) \
+	$(TESTHDR:%=$(top_srcdir)/%) $(TESTSRC:%=$(top_srcdir)/%) \
+	$(VARIMPHDR)
+	perl $(top_srcdir)/misc/genstatistics.perl $^ > stat.hh
+
+
+ifeq "@ENABLEDOCCHM@" "yes"
+
+DOCTARGET=GecodeReference.chm
+
+header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
+	grep -v '<form.*form>' < $< > $@
+doxygen.conf.use: doxygen.conf
+	(echo "GENERATE_HTMLHELP = YES"; \
+	 echo "SEARCHENGINE = NO";\
+	 echo "HAVE_DOT = @GECODE_DOXYGEN_DOT@") | \
+		cat $< - > $@
+
+doc: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(VARIMPHDR) \
+	$(ALLSRC:%=$(top_srcdir)/%) $(DOCSRC)
+	mkdir -p doc/html
+	cp -f $(top_srcdir)/misc/doxygen/back.png \
+	$(top_srcdir)/misc/doxygen/gecode-logo-100.png doc/html
+	doxygen doxygen.conf.use
+	mv doc/html/GecodeReference.chm GecodeReference.chm
+
+else
+ifeq "@ENABLEDOCDOCSET@" "yes"
+
+DOCTARGET=org.gecode.@VERSION@.docset
+
+header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
+	grep -v '<form.*form>' < $< > $@
+doxygen.conf.use: doxygen.conf
+	(echo "SEARCHENGINE = NO";\
+	 echo "HAVE_DOT = @GECODE_DOXYGEN_DOT@";\
+	 echo "GENERATE_DOCSET = YES";\
+	 echo "DOCSET_BUNDLE_ID = org.gecode.@VERSION@";\
+	 echo "DOCSET_FEEDNAME = Gecode") | \
+		cat $< - > $@
+
+doc: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(VARIMPHDR) \
+	$(ALLSRC:%=$(top_srcdir)/%) $(DOCSRC)
+	mkdir -p doc/html
+	cp -f $(top_srcdir)/misc/doxygen/back.png \
+	$(top_srcdir)/misc/doxygen/gecode-logo-100.png doc/html
+	doxygen doxygen.conf.use
+	cd doc/html && make
+	mv doc/html/$(DOCTARGET) .
+
+else
+DOCTARGET=doc/html
+
+ifeq "@ENABLEDOCSEARCH@" "yes"
+
+header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
+	cat < $< > $@
+doxygen.conf.use: doxygen.conf
+	(echo "GENERATE_HTMLHELP = NO"; \
+	 echo "SEARCHENGINE = YES"; \
+	 echo "SERVER_BASED_SEARCH = YES"; \
+	 echo "HAVE_DOT = @GECODE_DOXYGEN_DOT@") | \
+		cat $< - > $@
+else
+
+header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
+	grep -v '<form.*form>' < $< > $@
+doxygen.conf.use: doxygen.conf
+	(echo "GENERATE_HTMLHELP = NO"; \
+	 echo "SEARCHENGINE = NO"; \
+	 echo "HAVE_DOT = @GECODE_DOXYGEN_DOT@") | \
+		cat $< - > $@
+
+endif
+
+doc: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(VARIMPHDR) \
+	$(ALLSRC:%=$(top_srcdir)/%) $(DOCSRC)
+	mkdir -p doc/html
+	cp -f $(top_srcdir)/misc/doxygen/back.png \
+	$(top_srcdir)/misc/doxygen/gecode-logo-100.png doc/html
+	doxygen doxygen.conf.use
+
+ifeq "@ENABLEDOCSEARCH@" "yes"
+	# Work around a doxygen bug (a missing div screws up the layout)
+	mv doc/html/search.php doc/html/search2.php
+	sed -e 's|<div class="qindex">|<div><div class="qindex">|' \
+	  doc/html/search2.php > doc/html/search.php
+	rm doc/html/search2.php
+endif
+
+endif
+endif
+
+#
+# Installation
+#
+
+.PHONY: install
+
+ifeq "@BUILD_MACOS_FRAMEWORK@" "yes"
+install: installframework
+else
+
+ifeq "@enable_examples@" "yes"
+install: installlib installexamples
+else
+install: installlib
+endif
+
+endif
+
+doinstallheaders: $(ALLHDR:%=$(top_srcdir)/%) $(EXTRA_HEADERS) $(VARIMPHDR)
+	mkdir -p $(DESTDIR)$(includedir) && \
+	(cd $(top_srcdir) && tar cf - $(ALLHDR)) | \
+	  (cd $(DESTDIR)$(includedir) && tar xf -) && \
+	for_varimpheaders="$(VARIMPHDR)" && \
+	  for f in $$for_varimpheaders; do \
+	    cp $$f $(DESTDIR)$(includedir)/gecode/kernel; done && \
+	for_extraheaders="$(EXTRA_HEADERS)" && \
+	  for f in $$for_extraheaders; do \
+	    cp $$f $(DESTDIR)$(includedir)/gecode/support; done && \
+	for_mznlib="$(FLATZINCMZNLIB)" && \
+	  for f in $$for_mznlib; do \
+		mkdir -p $(DESTDIR)$(datadir)/gecode/mznlib; \
+		cp $(top_srcdir)/$$f/*.mzn \
+		  $(DESTDIR)$(datadir)/gecode/mznlib; done
+
+doinstalllib:
+	mkdir -p $(DESTDIR)$(sharedlibdir) && \
+	mkdir -p $(DESTDIR)$(libdir) && \
+	mkdir -p $(DESTDIR)$(bindir) && \
+	for_libtargets="$(LIBTARGETS) $(PDBTARGETS)" && \
+	  for f in $$for_libtargets; do \
+	    cp $$f $(DESTDIR)$(sharedlibdir); done && \
+	for_liblinktargets="$(LIBLINKTARGETS)" && \
+	  for f in $$for_liblinktargets; do \
+	    cp -pR $$f $(DESTDIR)$(sharedlibdir); done &&\
+	for_liblibtargets="$(LIBLIBTARGETS)" && \
+	  for f in $$for_liblibtargets; do \
+	    cp $$f $(DESTDIR)$(libdir); done &&\
+	for_exetargets="$(EXETARGETS)" && \
+	  for f in $$for_exetargets; do \
+	    cp $$f $(DESTDIR)$(bindir); done
+
+ifeq "@BUILDSTATIC@" "yes"
+ranliblib:
+	for_static="$(STATICTARGETS)" ; \
+	  for f in $$for_static; do \
+	    $(RANLIB) $(DESTDIR)$(sharedlibdir)/$$f; done
+else
+ranliblib:
+endif
+
+installlib: compilelib
+	$(MAKE) doinstalllib
+	$(MAKE) doinstallheaders
+	$(MAKE) ranliblib
+	$(MAKE) installsubdirs
+
+installexamples: compileexamples
+	mkdir -p $(DESTDIR)$(bindir); \
+	for_exampleexe="$(EXAMPLEEXE)" ; \
+	for f in $$for_exampleexe; do cp $$f $(DESTDIR)$(bindir); done \
+
+installframework: framework
+	mkdir -p $(DESTDIR)/Library/Frameworks/gecode.framework && \
+	(cd gecode.framework && tar cf - *) | \
+	(cd $(DESTDIR)/Library/Frameworks/gecode.framework && tar xf -)
+
+installdoc: doc
+	mkdir -p $(DESTDIR)$(docdir); \
+	cp -r $(DOCTARGET) $(DESTDIR)$(docdir)
+
+installsubdirs:
+	@for_subdirs="$(subdirs)" ; for i in $$for_subdirs; do \
+	  cd $$i && if test -f Makefile; then \
+	    echo "Making install in directory $$i"; \
+	    $(MAKE) install; \
+	  fi; \
+	done
+
+#
+# Source Distribution
+#
+
+.PHONY: distdoc
+
+ifeq "@ENABLEDOCSEARCH@" "yes"
+DOCSUFFIX = search-$(VERSION)
+else
+DOCSUFFIX = $(VERSION)
+endif
+
+distdoc: doc
+	rm -rf gecode-doc-$(DOCSUFFIX) && \
+	mv doc/html gecode-doc-$(DOCSUFFIX) && \
+	$(TAR) cf - gecode-doc-$(DOCSUFFIX) | \
+		gzip -9 > gecode-doc-$(DOCSUFFIX).tar.gz && \
+	7z a -mx9 gecode-doc-$(DOCSUFFIX).7z gecode-doc-$(DOCSUFFIX) && \
+	$(RMF) gecode-doc-$(DOCSUFFIX) && \
+	if test -f doc/gecode-doc.tag; then \
+		mv doc/gecode-doc.tag gecode-doc-$(DOCSUFFIX).tag && \
+		gzip -9 gecode-doc-$(DOCSUFFIX).tag; \
+	fi
+
+
+#
+# Maintenance targets
+#
+
+clean:
+	$(RMF) *.stackdump core gmon.out \
+		vc70.pdb vc80.pdb vc90.pdb vc100.pdb vc110.pdb
+	$(RMF) doxygen.log doxygen.hh doxygen.conf.use stat.hh \
+		 changelog.hh doxygen.hh license.hh header.html
+	$(RMF) $(ALLOBJ) $(ALLSBJ) $(ALLOBJ:%$(OBJSUFFIX)=%.pdb)
+	$(RMF) $(TESTOBJ) $(TESTSBJ) $(TESTOBJ:%$(OBJSUFFIX)=%.pdb)
+	$(RMF) $(GISTMOCSRC)
+	$(RMF) $(LIBTARGETS:%$(DLLSUFFIX)=%$(MANIFESTSUFFIX)) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(RCSUFFIX)) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(RESSUFFIX)) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(EXPSUFFIX))
+	$(RMF) $(EXAMPLEEXE:%.exe=%.pdb) $(EXAMPLEEXE:%=%.manifest) \
+		$(EXAMPLEEXE:%=%.rc) $(EXAMPLEEXE:%=%.res)
+	$(RMF) $(TESTEXE:%.exe=%.pdb) $(TESTEXE:%=%.manifest) \
+		$(TESTEXE:%=%.rc) $(TESTEXE:%=%.res)
+	$(RMF) $(FLATZINCEXE:%.exe=%.pdb) $(FLATZINCEXE:%=%.manifest) \
+		$(FLATZINCEXE:%=%.rc) $(FLATZINCEXE:%=%.res)
+
+veryclean: clean
+	$(RMF) $(LIBTARGETS) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(LIBSUFFIX)) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(PDBSUFFIX))
+	$(RMF) $(LIBTARGETS:%$(DLLSUFFIX)=%$(SOLINKSUFFIX)) \
+		$(LIBTARGETS:%$(DLLSUFFIX)=%$(SOSUFFIX))
+	$(RMF) $(EXAMPLEEXE)
+	$(RMF) $(TESTEXE)
+	$(RMF) $(FLATZINCEXE)
+	$(RMF) doc GecodeReference.chm ChangeLog
+	$(RMF) $(ALLOBJ:%$(OBJSUFFIX)=%.gcno) $(TESTOBJ:%$(OBJSUFFIX)=%.gcno)
+	$(RMF) $(ALLOBJ:%$(OBJSUFFIX)=%.gcda) $(TESTOBJ:%$(OBJSUFFIX)=%.gcda)
+
+distclean: veryclean
+	$(RMF) $(VARIMP)
+	$(RMF) Makefile doxygen.conf
+	$(RMF) $(EXTRA_HEADERS)
+	$(RMF) config.log config.status Makefile.dep
+
+depend: mkcompiledirs
+	@$(MAKE) $(VARIMP)
+	perl $(top_srcdir)/misc/makedepend.perl \
+	$(top_srcdir) \
+	$(ALLSRC) \
+	$(FLATZINC_GENSRC) \
+	$(TESTSRC) > Makefile.dep
+
+-include Makefile.dep
