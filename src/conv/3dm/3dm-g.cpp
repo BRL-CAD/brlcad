@@ -466,7 +466,6 @@ main(int argc, char** argv)
     int verbose_mode = 0;
     bool random_colors = false;
     bool use_uuidnames = false;
-    bool clean_names = false;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     const char* id_name = "3dm -> g conversion";
@@ -500,16 +499,14 @@ main(int argc, char** argv)
 	    case 'u':
 		use_uuidnames = true;
 		break;
-	    case 'c':  /* make names unique and brlcad compliant */
-		clean_names = true;
+	    case 'c':
+		/* deprecated - make names unique and brl-cad compliant */
+		/* now this is always done */
 		break;
 	    default:
 		dump.Print(USAGE);
 		return 1;
 	}
-    }
-    if (use_uuidnames) {
-	clean_names = false;
     }
 
     argc -= bu_optind;
@@ -537,7 +534,7 @@ main(int argc, char** argv)
     else
 	dump.Print("Errors during reading 3dm file.\n");
 
-    if (clean_names) {
+    if (!use_uuidnames) {
 	dump.Print("\nMaking names in 3DM model table \"m_object_table\" BRL-CAD compliant ...\n");
 	MakeCleanUniqueNames(model);
 	dump.Print("Name changes done.\n\n");
