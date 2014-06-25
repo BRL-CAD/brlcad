@@ -66,11 +66,11 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     m2 = MAGSQ(trip->tri_CA);
     VSUB2(work, bp, cp);
     m3 = MAGSQ(work);
-    m4 = MAGSQ(trip->tri_wn);
+    m4 = fabs(VDOT(trip->tri_BA, trip->tri_CA));
     if (m1 < tol->dist_sq
 	|| m2 < tol->dist_sq
 	|| m3 < tol->dist_sq
-	|| m4 < tol->dist_sq)
+	|| m4 >= tol->para)
     {
 	BU_PUT(trip, XGLUE(tri_specific_, TRI_TYPE));
 

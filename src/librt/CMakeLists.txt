@@ -16,7 +16,6 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
-  ${BRLCAD_BOOST_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -75,6 +74,7 @@ set(LIBRT_SOURCES
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
+  primitives/arb8/arb_edit.c
   primitives/arbn/arbn.c
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c
@@ -312,7 +312,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)

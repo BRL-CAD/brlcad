@@ -87,6 +87,7 @@ set(stepg_SOURCES
   Factory.cpp
   FoundedItem.cpp
   FunctionallyDefinedTransformation.cpp
+  GeometricallyBoundedSurfaceShapeRepresentation.cpp
   GeometricRepresentationContext.cpp
   GeometricRepresentationItem.cpp
   GlobalUncertaintyAssignedContext.cpp
@@ -120,8 +121,9 @@ set(stepg_SOURCES
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
-  OrientedEdge.cpp
   OrientedClosedShell.cpp
+  OrientedEdge.cpp
+  OrientedFace.cpp
   PCurve.cpp
   PCurveOrSurface.cpp
   Parabola.cpp
@@ -148,6 +150,7 @@ set(stepg_SOURCES
   ProductDefinitionRelationship.cpp
   ProductDefinitionShape.cpp
   ProductDefinitionUsage.cpp
+  ProductDefinitionWithAssociatedDocuments.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
   PropertyDefinitionRepresentation.cpp
@@ -298,6 +301,7 @@ set(stepg_HDRS
   Factory.h
   FoundedItem.h
   FunctionallyDefinedTransformation.h
+  GeometricallyBoundedSurfaceShapeRepresentation.h
   GeometricRepresentationContext.h
   GeometricRepresentationItem.h
   GlobalUncertaintyAssignedContext.h
@@ -330,8 +334,9 @@ set(stepg_HDRS
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
-  OrientedEdge.h
   OrientedClosedShell.h
+  OrientedEdge.h
+  OrientedFace.h
   PCurve.h
   PCurveOrSurface.h
   Parabola.h
@@ -358,6 +363,7 @@ set(stepg_HDRS
   ProductDefinitionRelationship.h
   ProductDefinitionShape.h
   ProductDefinitionUsage.h
+  ProductDefinitionWithAssociatedDocuments.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
   PropertyDefinitionRepresentation.h
