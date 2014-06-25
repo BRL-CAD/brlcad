@@ -523,6 +523,8 @@ struct mater_info {
     char	*ma_shader;	/**< @brief shader name & parms */
 };
 #define RT_MATER_INFO_INIT_ZERO { VINIT_ZERO, 0.0, 0, 0, 0, NULL }
+/* From MGED initial tree state */
+#define RT_MATER_INFO_INIT_IDN { {1.0, 0.0, 0.0} , -1.0, 0, 0, 0, NULL }
 
 
 /**
@@ -1065,6 +1067,8 @@ struct db_tree_state {
     struct resource *		ts_resp;	/**< @brief  Per-CPU data */
 };
 #define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+/* from mged_initial_tree_state */
+#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 #define TS_SOFAR_MINUS	1	/**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */

@@ -620,6 +620,33 @@ int cyclic_path(const struct db_full_path *fp, const char *name)
     return 0;
 }
 
+int
+db_full_path_transformation_matrix(matp_t matp, struct db_i *dbip,
+	 const struct db_full_path *path, const int depth)
+{
+    int ret = 0;
+    struct db_tree_state ts = RT_DBTS_INIT_IDN;
+    struct db_full_path null_path;
+
+    RT_CHECK_DBI(dbip);
+
+    if (!matp) return -1;
+    if (!path) return -1;
+    if (!dbip) return -1;
+
+    db_full_path_init(&null_path);
+    ts.ts_dbip = dbip;
+    ts.ts_resp = &rt_uniresource;
+
+    ret = db_follow_path(&ts, &null_path, path, LOOKUP_NOISY, depth+1);
+    db_free_full_path(&null_path);
+
+    MAT_COPY(matp, ts.ts_mat);  /* implicit return */
+
+    db_free_db_tree_state(&ts);
+
+    return ret;
+}
 
 /** @} */
 /*

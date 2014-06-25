@@ -203,6 +203,19 @@ RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 					 const struct directory *dp);
 
+/**
+ * Build the transformation matrix obtained when traversing the path
+ * to the specified depth.
+ *
+ * Returns -
+ * -1 Failure
+ * 0 OK
+ */
+RT_EXPORT extern int db_full_path_transformation_matrix(matp_t matp,
+				struct db_i *dbip,
+				const struct db_full_path *path,
+				const int depth);
+
 
 #endif /*DB_FULLPATH_H*/
 
