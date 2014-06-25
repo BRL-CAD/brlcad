@@ -119,14 +119,11 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 	    continue;
 	}
 
-	const ON_InstanceRef *instref;
 	std::string member_name;
-	if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	if (ON_InstanceRef::Cast(pGeometry))
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".r";
-	    create_instance_reference(outfp, uuid_map, *instref, member_name);
-	} else {
+	else
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
-	}
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
@@ -683,48 +680,48 @@ main(int argc, char** argv)
 
 		delete new_brep;
 
-	    } else if ((curve = static_cast<const ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
+	    } else if ((curve = ON_Curve::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(dump);
-	    } else if ((surface = static_cast<const ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
+	    } else if ((surface = ON_Surface::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(dump);
-	    } else if ((mesh = static_cast<const ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
+	    } else if ((mesh = ON_Mesh::Cast(pGeometry))) {
 		dump.Print("Type: ON_Mesh\n");
 		if (verbose_mode > 4) mesh->Dump(dump);
-	    } else if ((revsurf = static_cast<const ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
+	    } else if ((revsurf = ON_RevSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_RevSurface\n");
 		if (verbose_mode > 2) revsurf->Dump(dump);
-	    } else if ((planesurf = static_cast<const ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
+	    } else if ((planesurf = ON_PlaneSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_PlaneSurface\n");
 		if (verbose_mode > 2) planesurf->Dump(dump);
-	    } else if ((instdef = static_cast<const ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
+	    } else if ((instdef = ON_InstanceDefinition::Cast(pGeometry))) {
 		dump.Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(dump);
-	    } else if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	    } else if ((instref = ON_InstanceRef::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
 		create_instance_reference(outfp, uuid_map, *instref, geom_base + ".r");
-	    } else if ((layer = static_cast<const ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
+	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
-	    } else if ((light = static_cast<const ON_Light * >(ON_Light::Cast(pGeometry)))) {
+	    } else if ((light = ON_Light::Cast(pGeometry))) {
 		dump.Print("Type: ON_Light\n");
 		if (verbose_mode > 3) light->Dump(dump);
-	    } else if ((nurbscage = static_cast<const ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
+	    } else if ((nurbscage = ON_NurbsCage::Cast(pGeometry))) {
 		dump.Print("Type: ON_NurbsCage\n");
 		if (verbose_mode > 3) nurbscage->Dump(dump);
-	    } else if ((morphctrl = static_cast<const ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
+	    } else if ((morphctrl = ON_MorphControl::Cast(pGeometry))) {
 		dump.Print("Type: ON_MorphControl\n");
 		if (verbose_mode > 3) morphctrl->Dump(dump);
-	    } else if ((group = static_cast<const ON_Group * >(ON_Group::Cast(pGeometry)))) {
+	    } else if ((group = ON_Group::Cast(pGeometry))) {
 		dump.Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(dump);
-	    } else if ((geom = static_cast<const ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
+	    } else if ((geom = ON_Geometry::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(dump);
