@@ -761,6 +761,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
     intern->idb_ptr = (void *)dsp;
+
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
@@ -769,14 +770,20 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[4]);
     dsp->dsp_ycnt = atoi(cmd_argvs[5]);
     dsp->dsp_smooth = atoi(cmd_argvs[6]);
+    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
+
     MAT_IDN(dsp->dsp_stom);
 
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[8]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
     return GED_OK;
 }
@@ -797,14 +804,8 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
     intern->idb_ptr = (void *)dsp;
-    dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
-	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
-    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
-	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-    else
-	return GED_ERROR;
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, cmd_argvs[4]);
@@ -812,6 +813,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[5]);
     dsp->dsp_ycnt = atoi(cmd_argvs[6]);
     dsp->dsp_smooth = atoi(cmd_argvs[7]);
+
     switch (*cmd_argvs[8]) {
 	case 'a':	/* adaptive */
 	case 'A':
@@ -830,13 +832,21 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     }
 
     MAT_IDN(dsp->dsp_stom);
-
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[10]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
+	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+    else
+	return GED_ERROR;
 
     return GED_OK;
 }

@@ -35,7 +35,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Mac-pix</emphasis>
+<para><command>mac-pix</command>
 reads an Apple MacIntosh MacPaint bitmap file and generates a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 or
@@ -43,8 +43,8 @@ or
 raster image file.
 While the MacPaint file is 720x576 pixels, it is possible to specify
 an alternate size input file with the
-<option>-s</option>
-<option>-w</option>
+<option>-s</option> ,
+<option>-w</option> , 
 and
 <option>-n</option>
 flags;  the usefulness of this is unknown.
@@ -75,6 +75,9 @@ and
 <option>-N</option>
 flags can be used to specify the output width and height.
 If no input file is specified, standard input is read instead.</para>
+
+<para>The <option>-x</option> and <option>-y</option> flags can be used to specify the input x and y offset.
+The <option>-X</option> and <option>-Y</option> flags can be used to specify the output x and y offset.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>

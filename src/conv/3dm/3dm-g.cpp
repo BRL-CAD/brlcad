@@ -119,18 +119,11 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 	    continue;
 	}
 
-	const ON_InstanceRef *instref;
 	std::string member_name;
-	if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	if (ON_InstanceRef::Cast(pGeometry))
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".r";
-	    create_instance_reference(outfp, uuid_map, *instref, member_name);
-	} else {
+	else
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
-	    if (member_name == ".s") {
-		dump.Print("referenced member name=%s not found -- skipping\n", member_name.c_str());
-		continue;
-	    }
-	}
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
@@ -338,7 +331,6 @@ MakeCleanUniqueNames(ONX_Model &model)
 		base = "noname";
 	    }
 
-	    std::string num_str;
 	    std::ostringstream converter;
 	    converter << ++obj_counter;
 	    name = base + "." + converter.str().c_str();
@@ -361,7 +353,6 @@ MakeCleanUniqueNames(ONX_Model &model)
 		base = "noname";
 	    }
 
-	    std::string num_str;
 	    std::ostringstream converter;
 	    converter << ++obj_counter;
 	    name = base + "." + converter.str().c_str();
@@ -472,7 +463,6 @@ main(int argc, char** argv)
     int verbose_mode = 0;
     bool random_colors = false;
     bool use_uuidnames = false;
-    bool clean_names = false;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     const char* id_name = "3dm -> g conversion";
@@ -484,7 +474,7 @@ main(int argc, char** argv)
     ON_TextLog dump;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruhc?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
@@ -506,16 +496,10 @@ main(int argc, char** argv)
 	    case 'u':
 		use_uuidnames = true;
 		break;
-	    case 'c':  /* make names unique and brlcad compliant */
-		clean_names = true;
-		break;
 	    default:
 		dump.Print(USAGE);
 		return 1;
 	}
-    }
-    if (use_uuidnames) {
-	clean_names = false;
     }
 
     argc -= bu_optind;
@@ -543,7 +527,7 @@ main(int argc, char** argv)
     else
 	dump.Print("Errors during reading 3dm file.\n");
 
-    if (clean_names) {
+    if (!use_uuidnames) {
 	dump.Print("\nMaking names in 3DM model table \"m_object_table\" BRL-CAD compliant ...\n");
 	MakeCleanUniqueNames(model);
 	dump.Print("Name changes done.\n\n");
@@ -696,48 +680,48 @@ main(int argc, char** argv)
 
 		delete new_brep;
 
-	    } else if ((curve = static_cast<const ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
+	    } else if ((curve = ON_Curve::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(dump);
-	    } else if ((surface = static_cast<const ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
+	    } else if ((surface = ON_Surface::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(dump);
-	    } else if ((mesh = static_cast<const ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
+	    } else if ((mesh = ON_Mesh::Cast(pGeometry))) {
 		dump.Print("Type: ON_Mesh\n");
 		if (verbose_mode > 4) mesh->Dump(dump);
-	    } else if ((revsurf = static_cast<const ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
+	    } else if ((revsurf = ON_RevSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_RevSurface\n");
 		if (verbose_mode > 2) revsurf->Dump(dump);
-	    } else if ((planesurf = static_cast<const ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
+	    } else if ((planesurf = ON_PlaneSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_PlaneSurface\n");
 		if (verbose_mode > 2) planesurf->Dump(dump);
-	    } else if ((instdef = static_cast<const ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
+	    } else if ((instdef = ON_InstanceDefinition::Cast(pGeometry))) {
 		dump.Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(dump);
-	    } else if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	    } else if ((instref = ON_InstanceRef::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
 		create_instance_reference(outfp, uuid_map, *instref, geom_base + ".r");
-	    } else if ((layer = static_cast<const ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
+	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
-	    } else if ((light = static_cast<const ON_Light * >(ON_Light::Cast(pGeometry)))) {
+	    } else if ((light = ON_Light::Cast(pGeometry))) {
 		dump.Print("Type: ON_Light\n");
 		if (verbose_mode > 3) light->Dump(dump);
-	    } else if ((nurbscage = static_cast<const ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
+	    } else if ((nurbscage = ON_NurbsCage::Cast(pGeometry))) {
 		dump.Print("Type: ON_NurbsCage\n");
 		if (verbose_mode > 3) nurbscage->Dump(dump);
-	    } else if ((morphctrl = static_cast<const ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
+	    } else if ((morphctrl = ON_MorphControl::Cast(pGeometry))) {
 		dump.Print("Type: ON_MorphControl\n");
 		if (verbose_mode > 3) morphctrl->Dump(dump);
-	    } else if ((group = static_cast<const ON_Group * >(ON_Group::Cast(pGeometry)))) {
+	    } else if ((group = ON_Group::Cast(pGeometry))) {
 		dump.Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(dump);
-	    } else if ((geom = static_cast<const ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
+	    } else if ((geom = ON_Geometry::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(dump);
