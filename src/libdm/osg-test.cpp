@@ -87,10 +87,6 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
     (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
 
-    /* Need to initialize this for rt_obj_plot, which may call RT_ADD_VLIST */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
-
     for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
@@ -189,7 +185,7 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
       	struct db_i *dbip,
 	struct directory *dp)
 {
-    const char *comb_search = "-type comb";
+    const char *comb_search = "-type comb ! -type region";
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
@@ -273,6 +269,34 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
     db_search_free(&combs);
 }
 
+
+void
+create_region_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+      	struct db_i *dbip,
+	struct directory *dp)
+{
+    const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
+    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
+
+    const char *region_search = "-type region";
+    struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
+    (void)db_search(&regions, DB_SEARCH_RETURN_UNIQ_DP, region_search, 1, &dp, dbip);
+
+    /*get the comb properies for the group above the region geode - need to refactor some of the above logic... */
+
+    for (int i = (int)BU_PTBL_LEN(&regions) - 1; i >= 0; i--) {
+	/*get the comb properies for the group above the region geode - need to refactor some of the above logic... */
+
+	/*Search for all the full paths below this comb - that's the list of vlists we need for this particular region,
+	 *using the full paths below the current region to place them in their final relative positions.
+	 * (db_full_path_transformation_matrix)
+ 	 */
+    }
+
+    db_search_free(&regions);
+
+}
+
 int main( int argc, char **argv )
 {
     std::map<struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
@@ -299,6 +323,9 @@ int main( int argc, char **argv )
     if (dp == RT_DIR_NULL) {
 	bu_exit(1, "ERROR: Unable to fine object %s in %s\n", argv[2], argv[1]);
     }
+
+    /* Need to initialize this for rt_obj_plot, which may call RT_ADD_VLIST */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     create_solid_nodes(&(osg_nodes), dbip, dp);
     create_comb_nodes(&(osg_nodes), dbip, dp);
