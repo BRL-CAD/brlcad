@@ -776,6 +776,8 @@ dplot_load_file_data(struct dplot_info *info)
     parser = ParseAlloc(dplot_malloc);
     scanner = perplexFileScanner(info->logfile);
 
+    info->fdata.brep1_surface_count = info->fdata.brep2_surface_count = 0;
+    info->fdata.ssx_count = 0;
     BU_LIST_INIT(&info->fdata.ssx_list);
     perplexSetExtra(scanner, (void *)&info->fdata);
 
@@ -914,6 +916,8 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     info.event_count = info.fdata.ssx[info.ssx_idx].final_curve_events;
     info.brep1_isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_brep1_isocurves;
     info.isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
+    info.brep1_surf_count = info.fdata.brep1_surface_count;
+    info.brep2_surf_count = info.fdata.brep2_surface_count;
 
     ret = ged_dplot_ssx(&info);
     if (ret == GED_ERROR) {
