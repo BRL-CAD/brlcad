@@ -121,11 +121,6 @@ proc rhino_options {} {
     grid $w.uuidl  -column 0  -row 6  -sticky e
     grid $w.uuide  -column 1 -columnspan 2  -row 6  -sticky news
 
-    label $w.brlcadcompl   -text "Generate BRL-CAD Compliant Names"
-    checkbutton $w.brlcadcompe -variable ::brlcad_names
-    grid $w.brlcadcompl  -column 0  -row 7  -sticky e
-    grid $w.brlcadcompe  -column 1 -columnspan 2  -row 7  -sticky news
-
     label $w.oll -text "Conversion Log file"
     entry $w.ole -textvariable ::log_file -bg white
     grid $w.oll  -column 0  -row 8  -sticky e
@@ -168,9 +163,6 @@ proc ::rhino_build_cmd {} {
     }
     if {$::use_uuids == 1} {
        append cmd " -u" { }
-    }
-    if {$::brlcad_names == 1} {
-       append cmd " -c" { }
     }
 
     append cmd " -o $::output_file" { }
