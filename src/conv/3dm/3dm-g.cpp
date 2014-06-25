@@ -126,10 +126,6 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 	    create_instance_reference(outfp, uuid_map, *instref, member_name);
 	} else {
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
-	    if (member_name == ".s") {
-		dump.Print("referenced member name=%s not found -- skipping\n", member_name.c_str());
-		continue;
-	    }
 	}
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
@@ -338,7 +334,6 @@ MakeCleanUniqueNames(ONX_Model &model)
 		base = "noname";
 	    }
 
-	    std::string num_str;
 	    std::ostringstream converter;
 	    converter << ++obj_counter;
 	    name = base + "." + converter.str().c_str();
@@ -361,7 +356,6 @@ MakeCleanUniqueNames(ONX_Model &model)
 		base = "noname";
 	    }
 
-	    std::string num_str;
 	    std::ostringstream converter;
 	    converter << ++obj_counter;
 	    name = base + "." + converter.str().c_str();
