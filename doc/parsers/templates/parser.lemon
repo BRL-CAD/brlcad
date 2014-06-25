@@ -35,7 +35,7 @@
  *
  * Note that when you pass lemon a token, it initially just copies the
  * token_type argument to its stack. It doesn't attempt to reduce the
- * new token as part of a rule until it recieves another token. This
+ * new token as part of a rule until it receives another token. This
  * means that if you use a pointer type as your token type, and you're
  * using it to access token-specific data inside a grammar rule, the
  * data at the pointer address must not change between calls to the

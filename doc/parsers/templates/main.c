@@ -35,7 +35,7 @@ main(int argc, char *argv[])
     }
     Parse(parser, 0, data.token_data, &data);
 
-    /* this is where you'd do somthing with the app data */
+    /* this is where you'd do something with the app data */
 
     /* cleanup */
     ParseFree(parser, free);
