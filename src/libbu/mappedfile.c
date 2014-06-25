@@ -338,15 +338,15 @@ fail:
 void
 bu_close_mapped_file(struct bu_mapped_file *mp)
 {
-    BU_CK_MAPPED_FILE(mp);
-
-    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-	bu_pr_mapped_file("close:uses--", mp);
-
     if (UNLIKELY(!mp)) {
 	bu_log("bu_close_mapped_file() called with null pointer\n");
 	return;
     }
+
+    BU_CK_MAPPED_FILE(mp);
+
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
+	bu_pr_mapped_file("close:uses--", mp);
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     --mp->uses;
@@ -357,6 +357,9 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 void
 bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
+    if (UNLIKELY(!mp))
+	return;
+
     BU_CK_MAPPED_FILE(mp);
 
     bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
