@@ -65,6 +65,7 @@ BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBR
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDEXEC(cartesian-heart cartesian-heart.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+BRLCAD_ADDEXEC(gecode_solver_test gecode_solver_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
 
 #BRLCAD_ADDEXEC(solver_test solver_test.cpp libpc NO_INSTALL)
 #BRLCAD_ADDEXEC(vm_test vm_test.cpp libpc NO_INSTALL)
