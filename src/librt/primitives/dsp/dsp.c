@@ -947,7 +947,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (ds.dsp_i.dsp_mp) {
-		BU_CK_MAPPED_FILE(ds.dsp_i.dsp_mp);
 		bu_close_mapped_file(ds.dsp_i.dsp_mp);
 	    } else if (ds.dsp_i.dsp_buf) {
 		bu_free(ds.dsp_i.dsp_buf, "dsp fake data");
@@ -3109,7 +3108,6 @@ rt_dsp_free(register struct soltab *stp)
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (dsp->dsp_i.dsp_mp) {
-		BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 		bu_close_mapped_file(dsp->dsp_i.dsp_mp);
 	    } else if (dsp->dsp_i.dsp_buf) {
 		bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
