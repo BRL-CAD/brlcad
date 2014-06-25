@@ -417,12 +417,12 @@ if {[info exists ::use_gui]} {
    }
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
-   if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] } {
+   if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] && $error == 12} {
       catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       if {[info exists pid]} {
 	set fbserv_pid $pid
 	# Wait a few milliseconds to make sure fbserv has completed its work and is available
-	while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] } {after 300}
+	while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12} {after 300}
       } else {
 	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
 	incr ::RtWizard::wizard_state(fbserv_port)
@@ -439,7 +439,7 @@ if {[info exists ::use_gui]} {
       catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       set fbserv_pid $pid
       # Wait a few milliseconds to make sure fbserv has completed its work and is available
-      while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] } {after 300}
+      while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12 } {after 300}
    }
 
    # Either we're using a specified view model, or we're deducing one based on user options

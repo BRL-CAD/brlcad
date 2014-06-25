@@ -37,54 +37,6 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-
-/*
- * This is just like the rt_initial_tree_state in librt/tree.c,
- * except that the default color is red instead of white.
- * This avoids confusion with illuminate mode.
- * Red is a one-gun color, avoiding convergence problems too.
- */
-static struct db_tree_state mged_initial_tree_state = {
-    RT_DBTS_MAGIC,		/* magic */
-    0,			/* ts_dbip */
-    0,			/* ts_sofar */
-    0, 0, 0,		/* region, air, gmater */
-    100,			/* GIFT los */
-    {
-	/* struct mater_info ts_mater */
-	{
-	    1.0, 0.0, 0.0
-	},
-	/* color, RGB */
-	-1.0,			/* Temperature */
-	0,			/* ma_color_valid=0 --> use default */
-	0,			/* color inherit */
-	0,			/* mater inherit */
-	(char *)NULL		/* shader */
-    },
-    MAT_INIT_IDN,
-    REGION_NON_FASTGEN,		/* ts_is_fastgen */
-    {
-	/* attribute value set */
-	BU_AVS_MAGIC,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL
-    },
-    0,				/* ts_stop_at_regions */
-    NULL,				/* ts_region_start_func */
-    NULL,				/* ts_region_end_func */
-    NULL,				/* ts_leaf_func */
-    NULL,				/* ts_ttol */
-    NULL,				/* ts_tol */
-    NULL,				/* ts_m */
-    NULL,				/* ts_rtip */
-    NULL				/* ts_resp */
-};
-
-
 void
 cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 {
@@ -283,22 +235,7 @@ pathHmat(
     matp_t matp,
     int depth)
 {
-    struct db_tree_state ts;
-    struct db_full_path null_path;
-
-    RT_CHECK_DBI(dbip);
-
-    db_full_path_init(&null_path);
-    ts = mged_initial_tree_state;		/* struct copy */
-    ts.ts_dbip = dbip;
-    ts.ts_resp = &rt_uniresource;
-
-    (void)db_follow_path(&ts, &null_path, &sp->s_fullpath, LOOKUP_NOISY, depth+1);
-    db_free_full_path(&null_path);
-
-    MAT_COPY(matp, ts.ts_mat);	/* implicit return */
-
-    db_free_db_tree_state(&ts);
+    (void)db_full_path_transformation_matrix(matp, dbip, &sp->s_fullpath, depth);
 }
 
 

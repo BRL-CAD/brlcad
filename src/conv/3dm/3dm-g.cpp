@@ -57,7 +57,7 @@ static const std::size_t UUID_LEN = 37;
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map<std::string, std::string> STR_STR_MAP;
 typedef std::vector<std::string> MEMBER_VEC;
-typedef std::map<std::string, MEMBER_VEC *> MEMBER_MAP;
+typedef std::map<std::string, MEMBER_VEC> MEMBER_MAP;
 
 
 struct LayerMaps {
@@ -119,14 +119,11 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 	    continue;
 	}
 
-	const ON_InstanceRef *instref;
 	std::string member_name;
-	if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	if (ON_InstanceRef::Cast(pGeometry))
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".r";
-	    create_instance_reference(outfp, uuid_map, *instref, member_name);
-	} else {
+	else
 	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
-	}
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
@@ -142,10 +139,8 @@ MapRegion(const ONX_Model &model, const std::string &region_name, int layer_inde
     std::string parent_uuid = UUIDstr(layer.m_layer_id);
 
     MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
-    if (miter != member_map.end()) {
-	MEMBER_VEC *vec = (MEMBER_VEC *)miter->second;
-	vec->push_back(region_name);
-    }
+    if (miter != member_map.end())
+	miter->second.push_back(region_name);
 }
 
 
@@ -154,21 +149,10 @@ MapLayer(const std::string &layer_name, const std::string &uuid, const std::stri
 {
     lmaps.layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
     lmaps.layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
-    MEMBER_MAP::iterator iter = lmaps.member_map.find(uuid);
-    if (iter == lmaps.member_map.end()) {
-	MEMBER_VEC *vec = new MEMBER_VEC;
-	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(uuid, vec));
-    }
 
-    iter = lmaps.member_map.find(parent_uuid);
-    if (iter == lmaps.member_map.end()) {
-	MEMBER_VEC *vec = new MEMBER_VEC;
-	vec->push_back(layer_name);
-	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(parent_uuid, vec));
-    } else {
-	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
-	vec->push_back(layer_name);
-    }
+    lmaps.member_map[uuid]; // create if it doesn't exist
+
+    lmaps.member_map[parent_uuid].push_back(layer_name);
 }
 
 
@@ -199,9 +183,9 @@ BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, 
 
     MEMBER_MAP::const_iterator iter = lmaps.member_map.find(uuid);
     if (iter != lmaps.member_map.end()) {
-	const MEMBER_VEC *vec = iter->second;
-	MEMBER_VEC::const_iterator viter = vec->begin();
-	while (viter != vec->end()) {
+	const MEMBER_VEC &vec = iter->second;
+	MEMBER_VEC::const_iterator viter = vec.begin();
+	while (viter != vec.end()) {
 	    std::string membername = *viter;
 	    (void)mk_addmember(membername.c_str(), &members.l, NULL, WMOP_UNION);
 
@@ -477,7 +461,7 @@ main(int argc, char** argv)
     ON_TextLog dump;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruhc?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
@@ -498,10 +482,6 @@ main(int argc, char** argv)
 		break;
 	    case 'u':
 		use_uuidnames = true;
-		break;
-	    case 'c':
-		/* deprecated - make names unique and brl-cad compliant */
-		/* now this is always done */
 		break;
 	    default:
 		dump.Print(USAGE);
@@ -597,7 +577,7 @@ main(int argc, char** argv)
 	std::string region_name(geom_name+".r");
 
 	/* add region to hierarchical containers */
-	// TEMPTEST MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
+	MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
 
 	/* object definition
 	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
@@ -657,9 +637,9 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    brep->Dump(dump);
 	    } else if (pGeometry->HasBrepForm()) {
@@ -679,56 +659,56 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    new_brep->Dump(dump);
 
 		delete new_brep;
 
-	    } else if ((curve = static_cast<const ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
+	    } else if ((curve = ON_Curve::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(dump);
-	    } else if ((surface = static_cast<const ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
+	    } else if ((surface = ON_Surface::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(dump);
-	    } else if ((mesh = static_cast<const ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
+	    } else if ((mesh = ON_Mesh::Cast(pGeometry))) {
 		dump.Print("Type: ON_Mesh\n");
 		if (verbose_mode > 4) mesh->Dump(dump);
-	    } else if ((revsurf = static_cast<const ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
+	    } else if ((revsurf = ON_RevSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_RevSurface\n");
 		if (verbose_mode > 2) revsurf->Dump(dump);
-	    } else if ((planesurf = static_cast<const ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
+	    } else if ((planesurf = ON_PlaneSurface::Cast(pGeometry))) {
 		dump.Print("Type: ON_PlaneSurface\n");
 		if (verbose_mode > 2) planesurf->Dump(dump);
-	    } else if ((instdef = static_cast<const ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
+	    } else if ((instdef = ON_InstanceDefinition::Cast(pGeometry))) {
 		dump.Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(dump);
-	    } else if ((instref = static_cast<const ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+	    } else if ((instref = ON_InstanceRef::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
 		create_instance_reference(outfp, uuid_map, *instref, geom_base + ".r");
-	    } else if ((layer = static_cast<const ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
+	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
-	    } else if ((light = static_cast<const ON_Light * >(ON_Light::Cast(pGeometry)))) {
+	    } else if ((light = ON_Light::Cast(pGeometry))) {
 		dump.Print("Type: ON_Light\n");
 		if (verbose_mode > 3) light->Dump(dump);
-	    } else if ((nurbscage = static_cast<const ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
+	    } else if ((nurbscage = ON_NurbsCage::Cast(pGeometry))) {
 		dump.Print("Type: ON_NurbsCage\n");
 		if (verbose_mode > 3) nurbscage->Dump(dump);
-	    } else if ((morphctrl = static_cast<const ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
+	    } else if ((morphctrl = ON_MorphControl::Cast(pGeometry))) {
 		dump.Print("Type: ON_MorphControl\n");
 		if (verbose_mode > 3) morphctrl->Dump(dump);
-	    } else if ((group = static_cast<const ON_Group * >(ON_Group::Cast(pGeometry)))) {
+	    } else if ((group = ON_Group::Cast(pGeometry))) {
 		dump.Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(dump);
-	    } else if ((geom = static_cast<const ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
+	    } else if ((geom = ON_Geometry::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(dump);

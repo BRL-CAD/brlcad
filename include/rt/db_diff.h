@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef DB_DIFF_H
+#define DB_DIFF_H
+
 /**
  * DIFF bit flags to select various types of results
  */
@@ -227,6 +230,7 @@ db_diff3(const struct db_i *dbip_left,
 	db_compare_criteria_t flags,
 	struct bu_ptbl *diff3_results);
 
+#endif /*DB_DIFF_H*/
 
 /*
  * Local Variables:
