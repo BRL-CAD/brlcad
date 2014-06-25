@@ -593,7 +593,7 @@ dplot_erase_overlay(
 }
 
 HIDDEN int
-ged_dplot_ssx(
+dplot_ssx(
     struct dplot_info *info)
 {
     int i, ret;
@@ -661,7 +661,7 @@ ged_dplot_ssx(
 }
 
 HIDDEN int
-ged_dplot_ssx_events(
+dplot_ssx_events(
     struct dplot_info *info)
 {
     int ret;
@@ -707,7 +707,7 @@ ged_dplot_ssx_events(
 }
 
 HIDDEN int
-ged_dplot_isocsx(
+dplot_isocsx(
     struct dplot_info *info)
 {
     if (info->mode != DPLOT_ISOCSX && info->mode != DPLOT_ISOCSX_FIRST) {
@@ -919,21 +919,21 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
-    ret = ged_dplot_ssx(&info);
+    ret = dplot_ssx(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
-    ret = ged_dplot_ssx_events(&info);
+    ret = dplot_ssx_events(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
-    ret = ged_dplot_isocsx(&info);
+    ret = dplot_isocsx(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {
