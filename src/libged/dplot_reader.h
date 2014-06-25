@@ -11,6 +11,11 @@ typedef struct {
     int n;
 } token_t;
 
+struct isocsx {
+    struct bu_list l;
+    int events;
+};
+
 struct ssx {
     struct bu_list l;
     int brep1_surface;
@@ -18,6 +23,8 @@ struct ssx {
     int final_curve_events;
     int intersecting_brep1_isocurves;
     int intersecting_isocurves;
+    struct bu_list isocsx_list; /* struct isocsx list */
+    int *isocsx_events;
 };
 
 struct dplot_data {

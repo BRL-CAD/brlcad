@@ -810,10 +810,9 @@ dplot_free(void *p) {
 HIDDEN void
 dplot_load_file_data(struct dplot_info *info)
 {
-    int i, token_id;
+    int token_id;
     perplex_t scanner;
     void *parser;
-    struct ssx *curr;
 
     /* initialize scanner and parser */
     parser = ParseAlloc(dplot_malloc);
@@ -837,13 +836,31 @@ dplot_load_file_data(struct dplot_info *info)
     /* move ssx to dynamic array for easy access */
     info->fdata.ssx = NULL;
     if (info->fdata.ssx_count > 0) {
+	int i, j;
+	struct ssx *curr_ssx;
+	struct isocsx *curr_isocsx;
+
 	info->fdata.ssx = (struct ssx *)bu_malloc(
 		sizeof(struct ssx) * info->fdata.ssx_count, "ssx array");
+
 	i = info->fdata.ssx_count - 1;
-	while (BU_LIST_WHILE(curr, ssx, &info->fdata.ssx_list)) {
-	    info->fdata.ssx[i--] = *curr;
-	    BU_LIST_DEQUEUE(&curr->l);
-	    BU_PUT(curr, struct ssx);
+	while (BU_LIST_WHILE(curr_ssx, ssx, &info->fdata.ssx_list)) {
+	    BU_LIST_DEQUEUE(&curr_ssx->l);
+
+	    curr_ssx->isocsx_events = NULL;
+	    if (curr_ssx->intersecting_isocurves > 0) {
+		curr_ssx->isocsx_events = (int *)bu_malloc(sizeof(int) *
+			curr_ssx->intersecting_isocurves, "isocsx array");
+
+		j = curr_ssx->intersecting_isocurves - 1;
+		while (BU_LIST_WHILE(curr_isocsx, isocsx, &curr_ssx->isocsx_list)) {
+		    BU_LIST_DEQUEUE(&curr_isocsx->l);
+		    curr_ssx->isocsx_events[j--] = curr_isocsx->events;
+		    BU_PUT(curr_isocsx, struct isocsx);
+		}
+	    }
+	    info->fdata.ssx[i--] = *curr_ssx;
+	    BU_PUT(curr_ssx, struct ssx);
 	}
     }
 }

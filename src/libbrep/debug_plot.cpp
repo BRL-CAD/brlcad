@@ -107,14 +107,12 @@ DebugPlot::WriteLog()
 		ssx_events[i], (int)ssx_isocsx_brep1_curves[i],
 		(int)ssx_isocsx_events[i].size());
     }
-#if 0
-    // write details on isocurve-surface intersections
+    // write event count for each isocurve-surface intersections
     for (size_t i = 0; i < ssx_isocsx_events.size(); ++i) {
 	for (size_t j = 0; j < ssx_isocsx_events[i].size(); ++j) {
 	    fprintf(fp, "isocsx_events %d\n", ssx_isocsx_events[i][j]);
 	}
     }
-#endif
     fclose(fp);
 }
 

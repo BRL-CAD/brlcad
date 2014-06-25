@@ -36,6 +36,7 @@ statement_list ::= statement_list statement.
 
 statement ::= surface_counts EOL.
 statement ::= ssx_info EOL.
+statement ::= isocsx_info EOL.
 
 surface_counts ::= SURFACES count(C1) count(C2). {
     data->brep1_surface_count = C1;
@@ -44,6 +45,7 @@ surface_counts ::= SURFACES count(C1) count(C2). {
 
 ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3). {
     struct ssx *ssx;
+
     BU_GET(ssx, struct ssx);
     ssx->brep1_surface = I1;
     ssx->brep2_surface = I2;
@@ -53,6 +55,17 @@ ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3). {
 
     BU_LIST_PUSH(&data->ssx_list, &ssx->l);
     ++data->ssx_count;
+}
+
+isocsx_info ::= ISOCSX_EVENTS count(C). {
+    struct ssx *curr_ssx;
+    struct isocsx *isocsx;
+
+    BU_GET(isocsx, struct isocsx);
+    isocsx->events = C;
+
+    curr_ssx = BU_LIST_LAST(ssx, &data->ssx_list);
+    BU_LIST_PUSH(&curr_ssx->isocsx_list, &isocsx->l);
 }
 
 count(C) ::= NONNEGATIVE_INT(N). {
