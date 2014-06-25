@@ -4583,7 +4583,6 @@ rt_dsp_ifree(struct rt_db_internal *ip)
     RT_DSP_CK_MAGIC(dsp_ip);
 
     if (dsp_ip->dsp_mp) {
-	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	bu_close_mapped_file(dsp_ip->dsp_mp);
     }
 
