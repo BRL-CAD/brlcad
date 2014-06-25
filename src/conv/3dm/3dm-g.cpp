@@ -57,7 +57,7 @@ static const std::size_t UUID_LEN = 37;
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map<std::string, std::string> STR_STR_MAP;
 typedef std::vector<std::string> MEMBER_VEC;
-typedef std::map<std::string, MEMBER_VEC *> MEMBER_MAP;
+typedef std::map<std::string, MEMBER_VEC> MEMBER_MAP;
 
 
 struct LayerMaps {
@@ -139,10 +139,8 @@ MapRegion(const ONX_Model &model, const std::string &region_name, int layer_inde
     std::string parent_uuid = UUIDstr(layer.m_layer_id);
 
     MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
-    if (miter != member_map.end()) {
-	MEMBER_VEC *vec = (MEMBER_VEC *)miter->second;
-	vec->push_back(region_name);
-    }
+    if (miter != member_map.end())
+	miter->second.push_back(region_name);
 }
 
 
@@ -151,21 +149,10 @@ MapLayer(const std::string &layer_name, const std::string &uuid, const std::stri
 {
     lmaps.layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
     lmaps.layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
-    MEMBER_MAP::iterator iter = lmaps.member_map.find(uuid);
-    if (iter == lmaps.member_map.end()) {
-	MEMBER_VEC *vec = new MEMBER_VEC;
-	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(uuid, vec));
-    }
 
-    iter = lmaps.member_map.find(parent_uuid);
-    if (iter == lmaps.member_map.end()) {
-	MEMBER_VEC *vec = new MEMBER_VEC;
-	vec->push_back(layer_name);
-	lmaps.member_map.insert(std::pair<std::string, MEMBER_VEC *>(parent_uuid, vec));
-    } else {
-	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
-	vec->push_back(layer_name);
-    }
+    lmaps.member_map[uuid]; // create if it doesn't exist
+
+    lmaps.member_map[parent_uuid].push_back(layer_name);
 }
 
 
@@ -196,9 +183,9 @@ BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, 
 
     MEMBER_MAP::const_iterator iter = lmaps.member_map.find(uuid);
     if (iter != lmaps.member_map.end()) {
-	const MEMBER_VEC *vec = iter->second;
-	MEMBER_VEC::const_iterator viter = vec->begin();
-	while (viter != vec->end()) {
+	const MEMBER_VEC &vec = iter->second;
+	MEMBER_VEC::const_iterator viter = vec.begin();
+	while (viter != vec.end()) {
 	    std::string membername = *viter;
 	    (void)mk_addmember(membername.c_str(), &members.l, NULL, WMOP_UNION);
 
@@ -590,7 +577,7 @@ main(int argc, char** argv)
 	std::string region_name(geom_name+".r");
 
 	/* add region to hierarchical containers */
-	// TEMPTEST MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
+	MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
 
 	/* object definition
 	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
@@ -650,9 +637,9 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    brep->Dump(dump);
 	    } else if (pGeometry->HasBrepForm()) {
@@ -672,9 +659,9 @@ main(int argc, char** argv)
 		rgb[RED] = (unsigned char)r;
 		rgb[GRN] = (unsigned char)g;
 		rgb[BLU] = (unsigned char)b;
-		// TEMPTEST mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
-		// TEMPTEST (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0)
 		    new_brep->Dump(dump);
 
