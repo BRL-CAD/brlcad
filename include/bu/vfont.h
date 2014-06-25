@@ -63,8 +63,8 @@
  *
  */
 
-#ifndef VFONT_H
-#define VFONT_H
+#ifndef BU_VFONT_H
+#define BU_VFONT_H
 
 #include "common.h"
 
@@ -125,7 +125,7 @@ BU_EXPORT extern void vfont_free(struct vfont *font);
 
 __END_DECLS
 
-#endif /* VFONT_H */
+#endif /* BU_VFONT_H */
 
 /** @} */
 /*
