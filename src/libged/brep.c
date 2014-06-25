@@ -754,6 +754,49 @@ dplot_isocsx(
     return GED_OK;
 }
 
+HIDDEN int
+dplot_isocsx_events(struct dplot_info *info)
+{
+    int ret;
+
+    if (info->mode != DPLOT_ISOCSX_EVENTS) {
+	return GED_OK;
+    }
+    ret = dplot_erase_overlay(info, "curr_event");
+    if (ret != GED_OK) {
+	return ret;
+    }
+    if (info->event_count > 0) {
+	/* convert event ssx_idx to string */
+	char *infix = dplot_idx_string("", "_isocsx", info->ssx_idx, "_event");
+	if (!infix) {
+	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
+	    return GED_ERROR;
+	}
+
+	/* plot overlay */
+	ret = dplot_overlay(info->gedp, info->prefix, infix, info->event_idx, "curr_event");
+	bu_free(infix, "infix");
+
+	if (ret != GED_OK) {
+	    return ret;
+	}
+	if (info->event_idx == 0) {
+	    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
+	    bu_vls_printf(info->gedp->ged_result_str, "red    = tangent\n");
+	    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
+	}
+    }
+    /* advance to next event, or return to initial state */
+    if (++info->event_idx < info->event_count) {
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show next event\n");
+	return GED_MORE;
+    }
+
+    info->mode = DPLOT_INITIAL;
+    return GED_OK;
+}
+
 HIDDEN void *
 dplot_malloc(size_t s) {
     return bu_malloc(s, "dplot_malloc");
@@ -918,6 +961,10 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     info.isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
+
+    if (info.mode == DPLOT_ISOCSX_EVENTS) {
+	info.event_count = 0;
+    }
 
     ret = dplot_ssx(&info);
     if (ret == GED_ERROR) {
