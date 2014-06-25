@@ -477,7 +477,7 @@ main(int argc, char** argv)
     ON_TextLog dump;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruhc?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
@@ -498,10 +498,6 @@ main(int argc, char** argv)
 		break;
 	    case 'u':
 		use_uuidnames = true;
-		break;
-	    case 'c':
-		/* deprecated - make names unique and brl-cad compliant */
-		/* now this is always done */
 		break;
 	    default:
 		dump.Print(USAGE);
