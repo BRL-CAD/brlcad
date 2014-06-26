@@ -53,17 +53,9 @@ static const char * const ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 static const std::size_t UUID_LEN = 37;
 
 
-
-/* typedefs and global containers for building layer hierarchy */
 typedef std::map<std::string, std::string> STR_STR_MAP;
 typedef std::vector<std::string> MEMBER_VEC;
-typedef std::map<std::string, MEMBER_VEC> MEMBER_MAP;
-
-
-struct LayerMaps {
-    STR_STR_MAP layer_uuid_name_map, layer_name_uuid_map;
-    MEMBER_MAP member_map;
-};
+typedef std::map<std::string, MEMBER_VEC> UUID_CHILD_MAP;
 
 
 static inline std::string
@@ -76,30 +68,30 @@ UUIDstr(const ON_UUID &uuid)
 
 static void xform2mat_t(const ON_Xform &source, mat_t dest)
 {
-    const std::size_t dmax = 4;
-    for (std::size_t row = 0; row < dmax; ++row)
-	for (std::size_t col = 0; col < dmax; ++col)
+    const int dmax = 4;
+    for (int row = 0; row < dmax; ++row)
+	for (int col = 0; col < dmax; ++col)
 	    dest[row*dmax + col] = source[row][col];
 }
 
 
 static void
-create_instance_reference(rt_wdb *outfp, STR_STR_MAP &uuid_map,
-	const ON_InstanceRef &iref, const std::string &comb_name)
+create_instance_reference(rt_wdb *outfp, const STR_STR_MAP &uuid_name_map,
+	const ON_InstanceRef &iref, const std::string &region_name)
 {
     mat_t matrix;
     xform2mat_t(iref.m_xform, matrix);
     wmember members;
     BU_LIST_INIT(&members.l);
-    const std::string member_name = uuid_map[UUIDstr(iref.m_instance_definition_uuid)] + ".c";
+    const std::string member_name = uuid_name_map.at(UUIDstr(iref.m_instance_definition_uuid)) + ".c";
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
-    mk_lfcomb(outfp, comb_name.c_str(), &members, 0); // FIXME create region instead
+    mk_lfcomb(outfp, region_name.c_str(), &members, 0); // FIXME create region instead
 }
 
 
 static void
 create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
-	ON_TextLog &dump, STR_STR_MAP &uuid_map, const ON_InstanceDefinition &idef,
+	ON_TextLog &dump, const STR_STR_MAP &uuid_name_map, const ON_InstanceDefinition &idef,
 	const std::string &comb_name)
 {
     wmember members;
@@ -121,114 +113,14 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 
 	std::string member_name;
 	if (ON_InstanceRef::Cast(pGeometry))
-	    member_name = uuid_map[UUIDstr(member_uuid)] + ".r";
+	    member_name = uuid_name_map.at(UUIDstr(member_uuid)) + ".r";
 	else
-	    member_name = uuid_map[UUIDstr(member_uuid)] + ".s";
+	    member_name = uuid_name_map.at(UUIDstr(member_uuid)) + ".s";
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
 
     mk_lfcomb(outfp, comb_name.c_str(), &members, 0);
-}
-
-
-static void
-MapRegion(const ONX_Model &model, const std::string &region_name, int layer_index, MEMBER_MAP &member_map)
-{
-    const ON_Layer& layer = model.m_layer_table[layer_index];
-    std::string parent_uuid = UUIDstr(layer.m_layer_id);
-
-    MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
-    if (miter != member_map.end())
-	miter->second.push_back(region_name);
-}
-
-
-static void
-MapLayer(const std::string &layer_name, const std::string &uuid, const std::string &parent_uuid, LayerMaps &lmaps)
-{
-    lmaps.layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
-    lmaps.layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
-
-    lmaps.member_map[uuid]; // create if it doesn't exist
-
-    lmaps.member_map[parent_uuid].push_back(layer_name);
-}
-
-
-static void
-BuildHierarchy(struct rt_wdb* outfp, const std::string &uuid, ON_TextLog &dump, const LayerMaps &lmaps,
-	long &groupcnt)
-{
-    struct wmember members;
-    BU_LIST_INIT(&members.l);
-
-    STR_STR_MAP::const_iterator siter;
-    std::string groupname = "";
-
-    if (uuid.compare(ROOT_UUID) == 0) {
-	groupname = "all";
-    } else {
-	siter = lmaps.layer_uuid_name_map.find(uuid);
-	if (siter != lmaps.layer_uuid_name_map.end()) {
-	    groupname = siter->second;
-	}
-    }
-
-    if (groupname.empty()) {
-	std::ostringstream converter;
-	converter << groupcnt;
-	groupname = "g" + converter.str();
-    }
-
-    MEMBER_MAP::const_iterator iter = lmaps.member_map.find(uuid);
-    if (iter != lmaps.member_map.end()) {
-	const MEMBER_VEC &vec = iter->second;
-	MEMBER_VEC::const_iterator viter = vec.begin();
-	while (viter != vec.end()) {
-	    std::string membername = *viter;
-	    (void)mk_addmember(membername.c_str(), &members.l, NULL, WMOP_UNION);
-
-	    siter = lmaps.layer_name_uuid_map.find(membername);
-	    if (siter != lmaps.layer_name_uuid_map.end()) {
-		std::string uuid2 = siter->second;
-		BuildHierarchy(outfp, uuid2, dump, lmaps, groupcnt);
-	    }
-	    ++viter;
-	}
-	++iter;
-    }
-    mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
-}
-
-
-static void
-BuildHierarchy(struct rt_wdb* outfp, ON_TextLog &dump, const LayerMaps &lmaps)
-{
-    MEMBER_MAP::const_iterator iter = lmaps.member_map.find(ROOT_UUID);
-
-    if (iter != lmaps.member_map.end()) {
-	std::string uuid = iter->first;
-	long groupcnt = 1;
-	BuildHierarchy(outfp, uuid, dump, lmaps, groupcnt);
-    }
-}
-
-
-static void
-ProcessLayers(const ONX_Model &model, ON_TextLog &dump, LayerMaps &lmaps)
-{
-    ON_UuidIndex uuidIndex;
-    int count = model.m_layer_table.Count();
-
-    dump.Print("Number of layers: %d\n", count);
-    for (int i = 0; i < count; ++i) {
-	const ON_Layer& layer = model.m_layer_table[i];
-	std::string layer_name = ON_String(layer.LayerName()).Array();
-	std::string uuid = UUIDstr(layer.m_layer_id);
-	std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
-	MapLayer(layer_name, uuid, parent_uuid, lmaps);
-    }
 }
 
 
@@ -350,13 +242,35 @@ MakeCleanUniqueNames(ONX_Model &model)
 	    model.m_idef_table[i].m_name = name;
 	}
     }
+
+
+    // FIXME code duplication
+    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
+	bool changed = CleanName(model.m_layer_table[i].m_name);
+	ON_wString name(model.m_layer_table[i].m_name);
+	ON_wString base(name);
+	if (name.Length() == 0 || !NameIsUnique(name, model)) {
+	    if (name.Length() == 0) {
+		base = "noname";
+	    }
+
+	    std::ostringstream converter;
+	    converter << ++obj_counter;
+	    name = base + "." + converter.str().c_str();
+	    changed = true;
+	}
+	if (changed) {
+	    model.m_layer_table[i].m_name.Destroy();
+	    model.m_layer_table[i].m_name = name;
+	}
+    }
 }
 
 
-}
-
-
-std::string gen_geom_name(const ONX_Model &model, ON_TextLog &dump, const ON_3dmObjectAttributes &myAttributes, int verbose_mode, bool use_uuidnames, std::size_t &mcount, std::map<std::string, std::size_t> &region_cnt_map)
+std::string gen_geom_name(const ONX_Model &model, ON_TextLog &dump,
+	const ON_3dmObjectAttributes &myAttributes,
+	int verbose_mode, bool use_uuidnames, std::size_t &mcount,
+	std::map<std::string, std::size_t> &region_cnt_map)
 {
     std::string geom_base;
     if (use_uuidnames) {
@@ -415,9 +329,9 @@ std::string gen_geom_name(const ONX_Model &model, ON_TextLog &dump, const ON_3dm
 }
 
 
-STR_STR_MAP create_geometry_names(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump, int verbose_mode, bool use_uuidnames)
+STR_STR_MAP map_geometry_names(const ONX_Model &model, ON_TextLog &dump, int verbose_mode, bool use_uuidnames)
 {
-    STR_STR_MAP uuid_map;
+    STR_STR_MAP uuid_name_map;
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
 	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
@@ -426,7 +340,7 @@ STR_STR_MAP create_geometry_names(rt_wdb *outfp, const ONX_Model &model, ON_Text
 	std::map<std::string, std::size_t> region_cnt_map;
 	std::string geom_base = gen_geom_name(model, dump, myAttributes, verbose_mode, use_uuidnames,
 		mcount, region_cnt_map);
-	uuid_map[UUIDstr(myAttributes.m_uuid)] = geom_base;
+	uuid_name_map[UUIDstr(myAttributes.m_uuid)] = geom_base;
     }
 
     for (int i = 0; i < model.m_idef_table.Count(); ++i) {
@@ -436,11 +350,60 @@ STR_STR_MAP create_geometry_names(rt_wdb *outfp, const ONX_Model &model, ON_Text
 	else
 	    geom_base = ON_String(model.m_idef_table[i].Name()).Array();
 
-	uuid_map[UUIDstr(model.m_idef_table[i].m_uuid)] = geom_base;
-	create_instance_definition(outfp, model, dump, uuid_map, model.m_idef_table[i], geom_base+".c");
+	uuid_name_map[UUIDstr(model.m_idef_table[i].m_uuid)] = geom_base;
     }
 
-    return uuid_map;
+
+    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
+	const ON_Layer &layer = model.m_layer_table[i];
+	std::string layer_uuid = UUIDstr(layer.m_layer_id);
+
+	if (use_uuidnames)
+	    uuid_name_map[layer_uuid] = layer_uuid;
+	else
+	    uuid_name_map[layer_uuid] = ON_String(layer.m_name).Array();
+    }
+
+    return uuid_name_map;
+}
+
+
+static void create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
+	const STR_STR_MAP &uuid_name_map)
+{
+    for (int i = 0; i < model.m_idef_table.Count(); ++i) {
+	std::string geom_base = uuid_name_map.at(UUIDstr(model.m_idef_table[i].m_uuid));
+	create_instance_definition(outfp, model, dump, uuid_name_map,
+		model.m_idef_table[i], geom_base+".c");
+    }
+}
+
+
+static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
+        const STR_STR_MAP &uuid_name_map, const UUID_CHILD_MAP &uuid_child_map)
+{
+    // FIXME nest layers
+    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
+        const ON_Layer &layer = model.m_layer_table[i];
+        const std::string layer_uuid = UUIDstr(layer.m_layer_id);
+        const std::string &layer_name = uuid_name_map.at(layer_uuid) + ".r";
+
+        dump.Print("Creating layer '%s'\n", layer_name.c_str());
+
+        UUID_CHILD_MAP::const_iterator entry = uuid_child_map.find(layer_uuid);
+        if (entry == uuid_child_map.end()) continue; // no children
+
+        const MEMBER_VEC &vec = entry->second;
+        wmember members;
+        BU_LIST_INIT(&members.l);
+        for (MEMBER_VEC::const_iterator it = vec.begin(); it != vec.end(); ++i)
+            mk_addmember(it->c_str(), &members.l, NULL, WMOP_UNION);
+
+        mk_lfcomb(outfp, layer_name.c_str(), &members, 0); // FIXME create region instead
+    }
+}
+
+
 }
 
 
@@ -449,6 +412,7 @@ main(int argc, char** argv)
 {
     int verbose_mode = 0;
     bool random_colors = false;
+    (void)random_colors; // FIXME silence warning
     bool use_uuidnames = false;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
@@ -473,9 +437,7 @@ main(int argc, char** argv)
 	    case 't':	/* tolerance */
 		break;
 	    case 'v':	/* verbose */
-		int tmpint;
-		sscanf(bu_optarg, "%d", &tmpint);
-		verbose_mode = tmpint;
+		sscanf(bu_optarg, "%d", &verbose_mode);
 		break;
 	    case 'r':  /* randomize colors */
 		random_colors = true;
@@ -545,18 +507,13 @@ main(int argc, char** argv)
 
     dump.Print("Number of NURBS objects read: %d\n", model.m_object_table.Count());
 
-    /* process layer table before building regions */
-    LayerMaps lmaps;
-    ProcessLayers(model, dump, lmaps);
-
-    struct wmember all_regions;
-    BU_LIST_INIT(&all_regions.l);
-
 
     dump.Print("\n");
-    STR_STR_MAP uuid_map = create_geometry_names(outfp, model, dump, verbose_mode, use_uuidnames);
-    for (int i = 0; i < model.m_object_table.Count(); ++i) {
+    UUID_CHILD_MAP uuid_child_map;
+    const STR_STR_MAP uuid_name_map = map_geometry_names(model, dump, verbose_mode, use_uuidnames);
+    create_all_idefs(outfp, model, dump, uuid_name_map);
 
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
 	dump.Print("Object %d of %d...", i + 1, model.m_object_table.Count());
 
 	if (verbose_mode) {
@@ -568,16 +525,11 @@ main(int argc, char** argv)
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
 	if (verbose_mode) {
-	    myAttributes.Dump(dump); // On debug print
+	    myAttributes.Dump(dump);
 	    dump.Print("\n");
 	}
 
-	std::string geom_base = uuid_map[UUIDstr(myAttributes.m_uuid)];
-	std::string geom_name = geom_base+".s";
-	std::string region_name(geom_name+".r");
-
-	/* add region to hierarchical containers */
-	MapRegion(model, region_name, myAttributes.m_layer_index, lmaps.member_map);
+	std::string geom_base = uuid_name_map.at(UUIDstr(myAttributes.m_uuid));
 
 	/* object definition
 	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
@@ -590,7 +542,7 @@ main(int argc, char** argv)
 
 	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
 	if (pGeometry) {
-	    ON_Brep *brep;
+	    const ON_Brep *brep;
 	    const ON_Curve *curve;
 	    const ON_Surface *surface;
 	    const ON_Mesh *mesh;
@@ -604,69 +556,33 @@ main(int argc, char** argv)
 	    const ON_MorphControl *morphctrl;
 	    const ON_Group *group;
 	    const ON_Geometry *geom;
-	    int r, g, b;
 
-	    if (random_colors) {
-		r = int(256*drand48() + 1.0);
-		g = int(256*drand48() + 1.0);
-		b = int(256*drand48() + 1.0);
-	    } else {
-		r = (model.WireframeColor(myAttributes) & 0xFF);
-		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
-		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
+	    if ((brep = ON_Brep::Cast(pGeometry))) {
 
-		// If the geometry color is black, set it to red.
-		if (r == 0 && g == 0 && b == 0) {
-		    r = 255;
-		}
-	    }
-
-	    if (verbose_mode) {
-		dump.Print("Color: %d, %d, %d\n", r, g, b);
-	    }
-
-	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
-
+		std::string geom_name = geom_base + ".s";
 		if (verbose_mode) {
 		    dump.Print("primitive is %s.\n", geom_name.c_str());
-		    dump.Print("region created is %s.\n", region_name.c_str());
-		}
-		mk_brep(outfp, geom_name.c_str(), brep);
-
-		unsigned char rgb[3];
-		rgb[RED] = (unsigned char)r;
-		rgb[GRN] = (unsigned char)g;
-		rgb[BLU] = (unsigned char)b;
-		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
-
-		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
-		if (verbose_mode > 0)
 		    brep->Dump(dump);
+		}
+
+		mk_brep(outfp, geom_name.c_str(), const_cast<ON_Brep *>(brep));
+
+                uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name); //FIXME
 	    } else if (pGeometry->HasBrepForm()) {
-		if (verbose_mode > 0)
+		std::string geom_name = geom_base + ".s";
+		if (verbose_mode) {
 		    dump.Print("Type: HasBrepForm\n");
+		    dump.Print("primitive is %s.\n", geom_name.c_str());
+		}
 
 		ON_Brep *new_brep = pGeometry->BrepForm();
-
-		if (verbose_mode) {
-		    dump.Print("primitive is %s.\n", geom_name.c_str());
-		    dump.Print("region created is %s.\n", region_name.c_str());
-		}
-
-		mk_brep(outfp, geom_name.c_str(), new_brep);
-
-		unsigned char rgb[3];
-		rgb[RED] = (unsigned char)r;
-		rgb[GRN] = (unsigned char)g;
-		rgb[BLU] = (unsigned char)b;
-		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
-
-		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
-		if (verbose_mode > 0)
+		if (verbose_mode)
 		    new_brep->Dump(dump);
 
+		mk_brep(outfp, geom_name.c_str(), new_brep);
 		delete new_brep;
 
+                uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name); //FIXME
 	    } else if ((curve = ON_Curve::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Curve\n");
@@ -692,7 +608,7 @@ main(int argc, char** argv)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
-		create_instance_reference(outfp, uuid_map, *instref, geom_base + ".r");
+		create_instance_reference(outfp, uuid_name_map, *instref, geom_base + ".r");
 	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
@@ -726,12 +642,8 @@ main(int argc, char** argv)
 	}
     }
 
-    /* use accumulated layer information to build mged hierarchy */
-    char *toplevel = (char *)bu_calloc(strlen(outFileName), sizeof(char), "3dm-g toplevel");
-    bu_basename(toplevel, outFileName);
-    BuildHierarchy(outfp, dump, lmaps);
-    mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
-    bu_free(toplevel, "bu_basename toplevel");
+    create_all_layers(outfp, model, dump, uuid_name_map, uuid_child_map);
+
     wdb_close(outfp);
 
     /* let them know */
@@ -749,7 +661,7 @@ main(int argc, char** argv)
 #include <cstdio>
 
 
-    int
+int
 main()
 {
     std::printf("ERROR: Boundary Representation object support is not available with\n"
