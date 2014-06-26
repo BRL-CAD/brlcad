@@ -93,12 +93,103 @@ obj_vlist(const struct directory *dp, const struct db_i *dbip, matp_t UNUSED(mat
 }
 
 void
+add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
+{
+    int currentVertex=0;
+    std::vector<int>startIndexes;
+    std::vector<int>stopIndexes;
+    osg::Vec3Array *vertArray = (osg::Vec3Array *)geom->getVertexArray();
+    struct bn_vlist *vp;
+
+    if (!vertArray) {
+	osg::ref_ptr<osg::Vec3Array> new_vertArray = new osg::Vec3Array();
+	geom->setVertexArray(new_vertArray);
+	vertArray = (osg::Vec3Array *)geom->getVertexArray();
+    }
+
+    geom->setUseDisplayList(true);
+
+    for (BU_LIST_FOR(vp, bn_vlist, plot_segments))
+    {
+	int j;
+	int nused = vp->nused;
+	const int *cmd = vp->cmd;
+	point_t *pt = vp->pt;
+
+	for (j=0 ; j < nused ; j++, cmd++, pt++, currentVertex++)
+	{
+	    switch (*cmd)
+	    {
+		case BN_VLIST_POLY_START:
+		    break;
+		case BN_VLIST_POLY_MOVE:  // fallthrough
+		case BN_VLIST_LINE_MOVE:
+		    if (startIndexes.size() > 0)
+		    {
+			// finish off the last linestrip
+			stopIndexes.push_back(currentVertex-1);
+		    }
+		    // remember where the new linestrip begins
+		    startIndexes.push_back(currentVertex);
+
+		    // start a new linestrip
+		    vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
+
+		    break;
+		case BN_VLIST_POLY_DRAW: // fallthrough
+		case BN_VLIST_POLY_END: // fallthrough
+		case BN_VLIST_LINE_DRAW:
+		    // continue existing linestrip
+		    vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    break;
+	    }
+	}
+    }
+
+    if (startIndexes.size() > 0)
+	stopIndexes.push_back(--currentVertex);
+
+
+    for (unsigned j=0 ; j < startIndexes.size() ; j++) {
+	geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, startIndexes[j], (stopIndexes[j]-startIndexes[j])+1 ));
+    }
+
+}
+
+osg::ref_ptr<osg::Group>
+solid_to_node(const struct directory *dp, const struct db_i *dbip)
+{
+    /* Set up the OSG superstructure for the solid geometry node */
+    osg::ref_ptr<osg::Group> wrapper = new osg::Group;
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+    wrapper->setName(dp->d_namep);
+    geode->setName(dp->d_namep);
+    geom->setName(dp->d_namep);     // set drawable to same name as region
+    geode->addDrawable(geom);
+    osg::StateSet* state = geode->getOrCreateStateSet();
+    state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    wrapper->addChild(geode);
+
+    /* Actually add the geometry from the vlist */
+    struct bu_list *plot_segments = obj_vlist(dp, dbip, NULL);
+    add_vlist_to_geom(geom, plot_segments);
+
+    /* Cleanup */
+    RT_FREE_VLIST(plot_segments);
+    BU_PUT(plot_segments, struct bu_list);
+
+    return wrapper;
+}
+
+void
 create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
       	struct db_i *dbip,
 	struct directory *dp)
 {
-    std::map<struct directory *, struct bu_list *> vlists;
-
+    std::map<struct directory *, osg::Group *> processed_nodes;
     const char *solid_search = "! -type comb";
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
     (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
@@ -106,82 +197,10 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
     for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
-	if (vlists.find(curr_dp) == vlists.end()) {
-
-	    /* Get the vlist from librt */
-	    struct bu_list *plot_segments = obj_vlist(curr_dp, dbip, NULL);
-	    vlists[curr_dp] = plot_segments;
-
-	    /* Convert vlist into osg geometry */
-	    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
-	    osg::ref_ptr<osg::Vec3Array> vertArray = new osg::Vec3Array;
-	    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-	    osg::ref_ptr<osg::Group> wrapper = new osg::Group;
-	    geode->setName(curr_dp->d_namep);
-	    wrapper->setName(curr_dp->d_namep);
-	    {
-		int currentVertex=0;
-		std::vector<int>startIndexes;
-		std::vector<int>stopIndexes;
-		struct bn_vlist *vp;
-		for (BU_LIST_FOR(vp, bn_vlist, plot_segments))
-		{
-		    int j;
-		    int nused = vp->nused;
-		    const int *cmd = vp->cmd;
-		    point_t *pt = vp->pt;
-
-		    for (j=0 ; j < nused ; j++, cmd++, pt++, currentVertex++)
-		    {
-			switch (*cmd)
-			{
-			    case BN_VLIST_POLY_START:
-				break;
-			    case BN_VLIST_POLY_MOVE:  // fallthrough
-			    case BN_VLIST_LINE_MOVE:
-				if (startIndexes.size() > 0)
-				{
-				    // finish off the last linestrip
-				    stopIndexes.push_back(currentVertex-1);
-				}
-				// remember where the new linestrip begins
-				startIndexes.push_back(currentVertex);
-
-				// start a new linestrip
-				vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
-
-				break;
-			    case BN_VLIST_POLY_DRAW: // fallthrough
-			    case BN_VLIST_POLY_END: // fallthrough
-			    case BN_VLIST_LINE_DRAW:
-				// continue existing linestrip
-				vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
-				break;
-			    case BN_VLIST_POINT_DRAW:
-				break;
-			}
-		    }
-		}
-
-		if (startIndexes.size() > 0)
-		    stopIndexes.push_back(--currentVertex);
-
-		geom->setUseDisplayList(true);
-		geom->setVertexArray(vertArray);
-
-		for (unsigned j=0 ; j < startIndexes.size() ; j++) {
-		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, startIndexes[j], (stopIndexes[j]-startIndexes[j])+1 ));
-		}
-
-		geom->setName(curr_dp->d_namep);     // set drawable to same name as region
-		geode->addDrawable(geom);
-		osg::StateSet* state = geode->getOrCreateStateSet();
-		state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-	    }
-	    wrapper->addChild(geode);
-	    (*osg_nodes)[curr_dp] = wrapper.get();
-	    RT_FREE_VLIST(plot_segments);
-	    BU_PUT(plot_segments, struct bu_list);
+	if (processed_nodes.find(curr_dp) == processed_nodes.end()) {
+	    osg::ref_ptr<osg::Group> node = solid_to_node(curr_dp, dbip);
+	    (*osg_nodes)[curr_dp] = node.get();
+	    processed_nodes[curr_dp] = node.get();
 	}
     }
     db_search_free(&solids);
