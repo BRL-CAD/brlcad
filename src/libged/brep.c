@@ -980,7 +980,12 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
     if (info.mode == DPLOT_ISOCSX_EVENTS) {
+	int *isocsx_events = info.fdata.ssx[info.ssx_idx].isocsx_events;
+
 	info.event_count = 0;
+	if (isocsx_events) {
+	    info.event_count = isocsx_events[info.event_idx];
+	}
     }
 
     ret = dplot_ssx(&info);
