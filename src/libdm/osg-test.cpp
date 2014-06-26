@@ -205,6 +205,81 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
 
 }
 
+osg::ref_ptr<osg::Group>
+comb_to_node(const struct directory *dp, const struct db_i *dbip)
+{
+    osg::ref_ptr<osg::Group> comb = new osg::Group;
+    comb->setName(dp->d_namep);
+
+    struct rt_db_internal intern;
+    (void)rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+    struct rt_comb_internal *comb_internal= (struct rt_comb_internal *)intern.idb_ptr;
+    /* Set color for this comb */
+    float color[3] = {-1.0, -1.0, -1.0};
+    if (comb_internal->rgb_valid) {
+	VSCALE(color, comb_internal->rgb, (1.0/255.0) );
+    } else {
+	struct mater *mp = MATER_NULL;
+	for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	    if (comb_internal->region_id <= mp->mt_high && comb_internal->region_id >= mp->mt_low) {
+		color[0] = mp->mt_r/255.0;
+		color[1] = mp->mt_g/255.0;
+		color[2] = mp->mt_b/255.0;
+		break;
+	    }
+	}
+    }
+    if (color[0] > -1) {
+	osg::ref_ptr<osg::Material> mtl = new osg::Material;
+	mtl->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(color[0], color[1], color[2], 1.0f));
+	osg::StateSet* state = comb->getOrCreateStateSet();
+	if (comb_internal->inherit || comb_internal->region_flag) {
+	    state->setAttributeAndModes(mtl.get(), osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
+	} else {
+	    state->setAttributeAndModes(mtl.get(), osg::StateAttribute::ON);
+	}
+    }
+    rt_db_free_internal(&intern);
+
+    return comb;
+}
+
+void
+add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_path)
+{
+    if (child_path->fp_mat[child_path->fp_len - 1]) {
+	mat_t m;
+	MAT_TRANSPOSE(m, child_path->fp_mat[child_path->fp_len - 1]);
+	osg::Matrixd osgMat(m);
+	osg::ref_ptr<osg::MatrixTransform> mt = new osg::MatrixTransform(osgMat);
+	mt->addChild(child);
+	comb->addChild(mt);
+
+	/* If this child_path is subtracted in this comb, stipple the line drawings */
+	if (child_path->fp_bool[child_path->fp_len - 1] == 4) {
+	    osg::StateSet* state = mt->getOrCreateStateSet();
+	    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+	    ls->setPattern(0xCF33);
+	    ls->setFactor(1);
+	    state->setAttributeAndModes(ls.get());
+	}
+    } else {
+	if (child_path->fp_bool[child_path->fp_len - 1] == 4) {
+	    osg::ref_ptr<osg::Group> property_wrapper = new osg::Group;
+	    property_wrapper->setName(DB_FULL_PATH_CUR_DIR(child_path)->d_namep);
+	    osg::StateSet* state = property_wrapper->getOrCreateStateSet();
+	    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+	    ls->setPattern(0xCF33);
+	    ls->setFactor(1);
+	    state->setAttributeAndModes(ls.get());
+	    property_wrapper->addChild(child);
+	    comb->addChild(property_wrapper);
+	} else {
+	    comb->addChild(child);
+	}
+    }
+}
+
 void
 create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
       	struct db_i *dbip,
@@ -215,40 +290,8 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
-	osg::ref_ptr<osg::Group> comb = new osg::Group;
-	comb->setName(curr_dp->d_namep);
+	osg::ref_ptr<osg::Group> comb = comb_to_node(curr_dp, dbip);
 	(*osg_nodes)[curr_dp] = comb.get();
-
-	struct rt_db_internal intern;
-	(void)rt_db_get_internal(&intern, curr_dp, dbip, (fastf_t *)NULL, &rt_uniresource);
-	struct rt_comb_internal *comb_internal= (struct rt_comb_internal *)intern.idb_ptr;
-	/* Set color for this comb */
-	float color[3] = {-1.0, -1.0, -1.0};
-	if (comb_internal->rgb_valid) {
-	    VSCALE(color, comb_internal->rgb, (1.0/255.0) );
-	} else {
-	    struct mater *mp = MATER_NULL;
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-		if (comb_internal->region_id <= mp->mt_high && comb_internal->region_id >= mp->mt_low) {
-		    color[0] = mp->mt_r/255.0;
-		    color[1] = mp->mt_g/255.0;
-		    color[2] = mp->mt_b/255.0;
-		    break;
-		}
-	    }
-	}
-	if (color[0] > -1) {
-	    osg::ref_ptr<osg::Material> mtl = new osg::Material;
-	    mtl->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(color[0], color[1], color[2], 1.0f));
-	    osg::StateSet* state = comb->getOrCreateStateSet();
-	    if (comb_internal->inherit || comb_internal->region_flag) {
-		state->setAttributeAndModes(mtl.get(), osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON);
-	    } else {
-		state->setAttributeAndModes(mtl.get(), osg::StateAttribute::ON);
-	    }
-	}
-	rt_db_free_internal(&intern);
-
     }
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
@@ -257,37 +300,7 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
 	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
-	    if (curr_path->fp_mat[curr_path->fp_len - 1]) {
-		mat_t m;
-		MAT_TRANSPOSE(m, curr_path->fp_mat[curr_path->fp_len - 1]);
-		osg::Matrixd osgMat(m);
-		osg::ref_ptr<osg::MatrixTransform> mt = new osg::MatrixTransform(osgMat);
-		mt->addChild((*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)]);
-		(*osg_nodes)[curr_dp]->addChild(mt);
-
-		/* If this child is subtracted in this comb, stipple the line drawings */
-		if (curr_path->fp_bool[curr_path->fp_len - 1] == 4) {
-		    osg::StateSet* state = mt->getOrCreateStateSet();
-		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
-		    ls->setPattern(0xCF33);
-		    ls->setFactor(1);
-		    state->setAttributeAndModes(ls.get());
-		}
-	    } else {
-		if (curr_path->fp_bool[curr_path->fp_len - 1] == 4) {
-		    osg::ref_ptr<osg::Group> property_wrapper = new osg::Group;
-		    property_wrapper->setName(DB_FULL_PATH_CUR_DIR(curr_path)->d_namep);
-		    osg::StateSet* state = property_wrapper->getOrCreateStateSet();
-		    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
-		    ls->setPattern(0xCF33);
-		    ls->setFactor(1);
-		    state->setAttributeAndModes(ls.get());
-		    property_wrapper->addChild((*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)]);
-		    (*osg_nodes)[curr_dp]->addChild(property_wrapper);
-		} else {
-		    (*osg_nodes)[curr_dp]->addChild((*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)]);
-		}
-	    }
+	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)], curr_path);
 	}
 	db_search_free(&comb_children);
     }
