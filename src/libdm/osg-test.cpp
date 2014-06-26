@@ -72,15 +72,31 @@ extern "C" {
 
 #include <osgText/Text>
 
+struct bu_list *
+obj_vlist(const struct directory *dp, const struct db_i *dbip, matp_t UNUSED(mat))
+{
+    struct bu_list *plot_segments;
+    struct rt_db_internal intern;
+    const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
+    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);
+    }
+    BU_GET(plot_segments, struct bu_list);
+    BU_LIST_INIT(plot_segments);
+    if (rt_obj_plot(plot_segments, &intern, &rttol, &tol) < 0) {
+	bu_exit(1, "ERROR: Unable to get plot segment list from %s\n", dp->d_namep);
+    }
+    rt_db_free_internal(&intern);
+    return plot_segments;
+}
 
 void
 create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
       	struct db_i *dbip,
 	struct directory *dp)
 {
-    const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
-
     std::map<struct directory *, struct bu_list *> vlists;
 
     const char *solid_search = "! -type comb";
@@ -91,20 +107,12 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
 	if (vlists.find(curr_dp) == vlists.end()) {
-	    struct bu_list *plot_segments;
-	    struct rt_db_internal intern;
-	    RT_DB_INTERNAL_INIT(&intern);
-	    if (rt_db_get_internal(&intern, curr_dp, dbip, NULL, &rt_uniresource) < 0) {
-		bu_exit(1, "ERROR: Unable to get internal representation of %s\n", curr_dp->d_namep);
-	    }
-	    BU_GET(plot_segments, struct bu_list);
-	    BU_LIST_INIT(plot_segments);
-	    if (rt_obj_plot(plot_segments, &intern, &rttol, &tol) < 0) {
-		bu_exit(1, "ERROR: Unable to get plot segment list from %s\n", curr_dp->d_namep);
-	    }
-	    vlists[curr_dp] = plot_segments;
-	    rt_db_free_internal(&intern);
 
+	    /* Get the vlist from librt */
+	    struct bu_list *plot_segments = obj_vlist(curr_dp, dbip, NULL);
+	    vlists[curr_dp] = plot_segments;
+
+	    /* Convert vlist into osg geometry */
 	    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
 	    osg::ref_ptr<osg::Vec3Array> vertArray = new osg::Vec3Array;
 	    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
@@ -185,7 +193,7 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
       	struct db_i *dbip,
 	struct directory *dp)
 {
-    const char *comb_search = "-type comb ! -type region";
+    const char *comb_search = "-type comb";
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
@@ -269,10 +277,10 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
     db_search_free(&combs);
 }
 
-
+#if 0
 void
 create_region_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
-      	struct db_i *dbip,
+	struct db_i *dbip,
 	struct directory *dp)
 {
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
@@ -289,13 +297,14 @@ create_region_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg
 
 	/*Search for all the full paths below this comb - that's the list of vlists we need for this particular region,
 	 *using the full paths below the current region to place them in their final relative positions.
-	 * (db_full_path_transformation_matrix)
- 	 */
+	 *(db_full_path_transformation_matrix)
+	 */
     }
 
     db_search_free(&regions);
 
 }
+#endif
 
 int main( int argc, char **argv )
 {
