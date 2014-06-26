@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "bio.h"
+#include "bu.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -507,40 +508,6 @@ struct dplot_info {
     info.mode = DPLOT_INITIAL; \
     return GED_ERROR;
 
-HIDDEN char *
-dplot_idx_string(const char *prefix, const char *infix, int idx, const char *suffix)
-{
-    char *idx_string;
-    char idx_buf[8];
-    int len;
-    size_t bytes;
-
-    int ret = snprintf(idx_buf, sizeof(idx_buf), "%d", idx);
-    if (ret != 1) {
-	return NULL;
-    }
-
-    len = strlen(prefix) + strlen(infix) + strlen(idx_buf) + strlen(suffix);
-    bytes = sizeof(char) * (len + 1);
-    idx_string = (char *)bu_calloc(1, bytes, "index string");
-
-    if (!BU_STR_EMPTY(prefix)) {
-	bu_strlcat(idx_string, prefix, bytes);
-    }
-
-    if (!BU_STR_EMPTY(infix)) {
-	bu_strlcat(idx_string, infix, bytes);
-    }
-
-    bu_strlcat(idx_string, idx_buf, bytes);
-
-    if (!BU_STR_EMPTY(suffix)) {
-	bu_strlcat(idx_string, suffix, bytes);
-    }
-
-    return idx_string;
-}
-
 HIDDEN int
 dplot_overlay(
     struct ged *gedp,
@@ -551,19 +518,15 @@ dplot_overlay(
 {
     const char *cmd_av[] = {"overlay", "[filename]", "1.0", "[name]"};
     int ret, cmd_ac = sizeof(cmd_av) / sizeof(char *);
+    struct bu_vls overlay_name = BU_VLS_INIT_ZERO;
 
-    char *overlay_name = dplot_idx_string(prefix, infix, idx, ".plot3");
-    if (!overlay_name) {
-	bu_vls_printf(gedp->ged_result_str, "error generating filename\n");
-	return GED_ERROR;
-    }
-    cmd_av[1] = cmd_av[3] = overlay_name;
-
+    bu_vls_printf(&overlay_name, "%s%s%d.plot3", prefix, infix, idx);
+    cmd_av[1] = cmd_av[3] = bu_vls_cstr(&overlay_name);
     if (name) {
 	cmd_av[3] = name;
     }
     ret = ged_overlay(gedp, cmd_ac, cmd_av);
-    bu_free(overlay_name, "overlay_name");
+    bu_vls_free(&overlay_name);
 
     if (ret != GED_OK) {
 	bu_vls_printf(gedp->ged_result_str, "error overlaying plot\n");
@@ -601,15 +564,16 @@ dplot_ssx(
     /* draw surfaces, skipping intersecting surfaces if in SSI mode */
     /* TODO: need to name these overlays so I can selectively erase them */
     for (i = 0; i < info->brep1_surf_count; ++i) {
-	char *name = dplot_idx_string(info->prefix, "_brep1_surface", i, "");
-	dplot_erase_overlay(info, name);
-	bu_log("");
-	bu_free(name, "name");
+	struct bu_vls name = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&name, "%s_brep1_surface%d", info->prefix, i);
+	dplot_erase_overlay(info, bu_vls_cstr(&name));
+	bu_vls_free(&name);
     }
     for (i = 0; i < info->brep2_surf_count; ++i) {
-	char *name = dplot_idx_string(info->prefix, "_brep2_surface", i, "");
-	dplot_erase_overlay(info, name);
-	bu_free(name, "name");
+	struct bu_vls name = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&name, "%s_brep2_surface%d", info->prefix, i);
+	dplot_erase_overlay(info, bu_vls_cstr(&name));
+	bu_vls_free(&name);
     }
     if (info->mode == DPLOT_SSX_FIRST || info->mode == DPLOT_SSX || info->mode == DPLOT_SSX_EVENTS) {
 	for (i = 0; i < info->brep1_surf_count; ++i) {
@@ -678,15 +642,13 @@ dplot_ssx_events(
 
     if (info->event_count > 0) {
 	/* convert event ssx_idx to string */
-	char *infix = dplot_idx_string("", "_ssx", info->ssx_idx, "_event");
-	if (!infix) {
-	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
-	    return GED_ERROR;
-	}
+	struct bu_vls infix = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&infix, "_ssx%d_event", info->ssx_idx);
 
 	/* plot overlay */
-	ret = dplot_overlay(info->gedp, info->prefix, infix, info->event_idx, "curr_event");
-	bu_free(infix, "infix");
+	ret = dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&infix),
+		info->event_idx, "curr_event");
+	bu_vls_free(&infix);
 
 	if (ret != GED_OK) {
 	    return ret;
@@ -710,7 +672,10 @@ HIDDEN int
 dplot_isocsx(
     struct dplot_info *info)
 {
-    if (info->mode != DPLOT_ISOCSX && info->mode != DPLOT_ISOCSX_FIRST) {
+    if (info->mode != DPLOT_ISOCSX &&
+	info->mode != DPLOT_ISOCSX_FIRST &&
+	info->mode != DPLOT_ISOCSX_EVENTS)
+    {
 	return GED_OK;
     }
 
@@ -722,11 +687,8 @@ dplot_isocsx(
     }
 
     if (info->mode == DPLOT_ISOCSX) {
-	char *infix = dplot_idx_string("", "_highlight_ssx", info->ssx_idx, "_isocurve");
-	if (!infix) {
-	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
-	    return GED_ERROR;
-	}
+	struct bu_vls infix = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&infix, "_highlight_ssx%d_isocurve", info->ssx_idx);
 	/* plot surface and the isocurve that intersects it */
 	if (info->isocsx_idx < info->brep1_isocsx_count) {
 	    dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
@@ -739,8 +701,8 @@ dplot_isocsx(
 	    dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
 		    info->brep2_surf_idx, "isocsx_curvesurf");
 	}
-	dplot_overlay(info->gedp, info->prefix, infix, info->isocsx_idx, "isocsx_isocurve");
-	bu_free(infix, "infix");
+	dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&infix), info->isocsx_idx, "isocsx_isocurve");
+	bu_vls_free(&infix);
     }
 
     if (info->mode == DPLOT_ISOCSX_FIRST || ++info->isocsx_idx < info->isocsx_count) {
@@ -768,15 +730,14 @@ dplot_isocsx_events(struct dplot_info *info)
     }
     if (info->event_count > 0) {
 	/* convert event ssx_idx to string */
-	char *infix = dplot_idx_string("", "_isocsx", info->ssx_idx, "_event");
-	if (!infix) {
-	    bu_vls_printf(info->gedp->ged_result_str, "error generating filename\n");
-	    return GED_ERROR;
-	}
+	struct bu_vls infix = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&infix, "_ssx%d_isocsx%d_event", info->ssx_idx,
+		info->isocsx_idx);
 
 	/* plot overlay */
-	ret = dplot_overlay(info->gedp, info->prefix, infix, info->event_idx, "curr_event");
-	bu_free(infix, "infix");
+	ret = dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&infix),
+		info->event_idx, "curr_event");
+	bu_vls_free(&infix);
 
 	if (ret != GED_OK) {
 	    return ret;
