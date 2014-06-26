@@ -45,8 +45,6 @@ namespace
 
 static const char * const USAGE = "USAGE: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
 
-/* generic entity name */
-static const char * const GENERIC_NAME = "rhino";
 static const char * const ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
@@ -66,6 +64,29 @@ UUIDstr(const ON_UUID &uuid)
 }
 
 
+static inline std::string w2string(const ON_wString &source)
+{
+    if (!source) return "";
+    return ON_String(source).Array();
+}
+
+
+static inline bool is_toplevel(const ON_Layer &layer)
+{
+    return UUIDstr(layer.m_parent_layer_id) == ROOT_UUID;
+}
+
+
+static ON_Color gen_random_color()
+{
+    int red = static_cast<int>(256 * drand48() + 1);
+    int green = static_cast<int>(256 * drand48() + 1);
+    int blue = static_cast<int>(256 * drand48() + 1);
+
+    return ON_Color(red, green, blue);
+}
+
+
 static void xform2mat_t(const ON_Xform &source, mat_t dest)
 {
     const int dmax = 4;
@@ -77,7 +98,7 @@ static void xform2mat_t(const ON_Xform &source, mat_t dest)
 
 static void
 create_instance_reference(rt_wdb *outfp, const STR_STR_MAP &uuid_name_map,
-	const ON_InstanceRef &iref, const std::string &region_name)
+			  const ON_InstanceRef &iref, const std::string &comb_name, const ON_Color &color)
 {
     mat_t matrix;
     xform2mat_t(iref.m_xform, matrix);
@@ -85,14 +106,17 @@ create_instance_reference(rt_wdb *outfp, const STR_STR_MAP &uuid_name_map,
     BU_LIST_INIT(&members.l);
     const std::string member_name = uuid_name_map.at(UUIDstr(iref.m_instance_definition_uuid)) + ".c";
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
-    mk_lfcomb(outfp, region_name.c_str(), &members, 0); // FIXME create region instead
+
+    unsigned char rgb[3] = {color.Red(), color.Green(), color.Blue()};
+    bool do_inherit = false;
+    mk_comb(outfp, comb_name.c_str(), &members.l, false, NULL, NULL, rgb, 0, 0, 0, 0, do_inherit, false, false);
 }
 
 
 static void
 create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
-	ON_TextLog &dump, const STR_STR_MAP &uuid_name_map, const ON_InstanceDefinition &idef,
-	const std::string &comb_name)
+			   ON_TextLog &dump, const STR_STR_MAP &uuid_name_map, const ON_InstanceDefinition &idef,
+			   const std::string &comb_name)
 {
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -113,14 +137,14 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 
 	std::string member_name;
 	if (ON_InstanceRef::Cast(pGeometry))
-	    member_name = uuid_name_map.at(UUIDstr(member_uuid)) + ".r";
+	    member_name = uuid_name_map.at(UUIDstr(member_uuid)) + ".c";
 	else
 	    member_name = uuid_name_map.at(UUIDstr(member_uuid)) + ".s";
 
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
 
-    mk_lfcomb(outfp, comb_name.c_str(), &members, 0);
+    mk_lfcomb(outfp, comb_name.c_str(), &members, false);
 }
 
 
@@ -129,8 +153,8 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 // the '_' character. The allow string is an exception list where
 // these characters are allowed, but not leading or trailing, in
 // the name.
-static bool
-CleanName(ON_wString &name)
+static ON_wString
+CleanName(ON_wString name)
 {
     ON_wString allow(".-_");
     ON_wString new_name;
@@ -174,172 +198,54 @@ CleanName(ON_wString &name)
 	name = new_name;
     }
 
-    return was_cleaned;
+    return name;
 }
 
 
 static bool
-NameIsUnique(const ON_wString &name, const ONX_Model &model)
+name_is_taken(const STR_STR_MAP &uuid_name_map, const std::string &name)
 {
-    bool found_once = false;
-    for (int i = 0; i < model.m_object_table.Count(); i++) {
-	if (name == model.m_object_table[i].m_attributes.m_name) {
-	    if (found_once) {
-		return false;
-	    } else {
-		found_once = true;
-	    }
+    for (STR_STR_MAP::const_iterator it = uuid_name_map.begin();
+	 it != uuid_name_map.end(); ++it) {
+	if (name == it->second) {
+	    return true;
 	}
     }
-    return true;
+
+    return false;
 }
 
 
-// Cleans names in 3dm model and makes them unique.
-static void
-MakeCleanUniqueNames(ONX_Model &model)
+static std::string gen_geom_name(const STR_STR_MAP &uuid_name_map,
+				 const ON_wString &name)
 {
-    size_t obj_counter = 0;
-    int cnt = model.m_object_table.Count();
-    for (int i = 0; i < cnt; i++) {
-	bool changed = CleanName(model.m_object_table[i].m_attributes.m_name);
-	ON_wString name(model.m_object_table[i].m_attributes.m_name);
-	ON_wString base(name);
-	if (name.Length() == 0 || !NameIsUnique(name, model)) {
-	    if (name.Length() == 0) {
-		base = "noname";
-	    }
+    std::string obj_name = w2string(CleanName(name));
+    if (obj_name.empty()) obj_name = "noname";
 
-	    std::ostringstream converter;
-	    converter << ++obj_counter;
-	    name = base + "." + converter.str().c_str();
-	    changed = true;
-	}
-	if (changed) {
-	    model.m_object_table[i].m_attributes.m_name.Destroy();
-	    model.m_object_table[i].m_attributes.m_name = name;
-	}
-    }
-
-
-    // FIXME code duplication
-    for (int i = 0; i < model.m_idef_table.Count(); ++i) {
-	bool changed = CleanName(model.m_idef_table[i].m_name);
-	ON_wString name(model.m_idef_table[i].m_name);
-	ON_wString base(name);
-	if (name.Length() == 0 || !NameIsUnique(name, model)) {
-	    if (name.Length() == 0) {
-		base = "noname";
-	    }
-
-	    std::ostringstream converter;
-	    converter << ++obj_counter;
-	    name = base + "." + converter.str().c_str();
-	    changed = true;
-	}
-	if (changed) {
-	    model.m_idef_table[i].m_name.Destroy();
-	    model.m_idef_table[i].m_name = name;
-	}
-    }
-
-
-    // FIXME code duplication
-    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
-	bool changed = CleanName(model.m_layer_table[i].m_name);
-	ON_wString name(model.m_layer_table[i].m_name);
-	ON_wString base(name);
-	if (name.Length() == 0 || !NameIsUnique(name, model)) {
-	    if (name.Length() == 0) {
-		base = "noname";
-	    }
-
-	    std::ostringstream converter;
-	    converter << ++obj_counter;
-	    name = base + "." + converter.str().c_str();
-	    changed = true;
-	}
-	if (changed) {
-	    model.m_layer_table[i].m_name.Destroy();
-	    model.m_layer_table[i].m_name = name;
-	}
-    }
-}
-
-
-std::string gen_geom_name(const ONX_Model &model, ON_TextLog &dump,
-	const ON_3dmObjectAttributes &myAttributes,
-	int verbose_mode, bool use_uuidnames, std::size_t &mcount,
-	std::map<std::string, std::size_t> &region_cnt_map)
-{
-    std::string geom_base;
-    if (use_uuidnames) {
-	char uuidstring[UUID_LEN] = {0};
-	ON_UuidToString(myAttributes.m_uuid, uuidstring);
-	ON_String constr(uuidstring);
-	const char* cstr = constr;
-	geom_base = cstr;
-    } else {
-	ON_String constr(myAttributes.m_name);
-	if (constr == NULL) {
-	    std::string genName = "";
-	    struct bu_vls name = BU_VLS_INIT_ZERO;
-
-	    /* Use layer name to help name un-named regions/objects */
-	    if (myAttributes.m_layer_index > 0) {
-		const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
-		ON_wString layer_name = layer.LayerName();
-		bu_vls_strcpy(&name, ON_String(layer_name));
-		genName = bu_vls_addr(&name);
-		if (genName.length() <= 0) {
-		    genName = GENERIC_NAME;
-		}
-		if (verbose_mode) {
-		    dump.Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
-		}
-	    } else {
-		genName = GENERIC_NAME;
-	    }
-
-	    /* For layer named regions use layer region count
-	     * instead of global region count
-	     */
-	    if (genName.compare(GENERIC_NAME) == 0) {
-		bu_vls_printf(&name, "%lu", (long unsigned int)mcount++);
-		genName += bu_vls_addr(&name);
-		geom_base = genName;
-	    } else {
-		size_t region_cnt = ++region_cnt_map[genName];
-		bu_vls_printf(&name, "%lu", (long unsigned int)region_cnt);
-		genName += bu_vls_addr(&name);
-		geom_base = genName;
-	    }
-
-	    if (verbose_mode) {
-		dump.Print("Object has no name - creating one %s.\n", geom_base.c_str());
-	    }
-	    bu_vls_free(&name);
-	} else {
-	    const char* cstr = constr;
-	    geom_base = cstr;
-	}
+    std::string geom_base = obj_name;
+    int counter = 0;
+    while (name_is_taken(uuid_name_map, geom_base)) {
+	std::ostringstream s;
+	s << ++counter;
+	geom_base = obj_name + s.str();
     }
 
     return geom_base;
 }
 
 
-STR_STR_MAP map_geometry_names(const ONX_Model &model, ON_TextLog &dump, int verbose_mode, bool use_uuidnames)
+STR_STR_MAP map_geometry_names(const ONX_Model &model, bool use_uuidnames)
 {
     STR_STR_MAP uuid_name_map;
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
-	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
+	std::string geom_base;
+	if (use_uuidnames)
+	    geom_base = UUIDstr(myAttributes.m_uuid);
+	else {
+	    geom_base = gen_geom_name(uuid_name_map, myAttributes.m_name);
+	}
 
-	std::size_t mcount = 0;
-	std::map<std::string, std::size_t> region_cnt_map;
-	std::string geom_base = gen_geom_name(model, dump, myAttributes, verbose_mode, use_uuidnames,
-		mcount, region_cnt_map);
 	uuid_name_map[UUIDstr(myAttributes.m_uuid)] = geom_base;
     }
 
@@ -348,11 +254,10 @@ STR_STR_MAP map_geometry_names(const ONX_Model &model, ON_TextLog &dump, int ver
 	if (use_uuidnames)
 	    geom_base = UUIDstr(model.m_idef_table[i].m_uuid);
 	else
-	    geom_base = ON_String(model.m_idef_table[i].Name()).Array();
+	    geom_base = gen_geom_name(uuid_name_map, model.m_idef_table[i].Name());
 
 	uuid_name_map[UUIDstr(model.m_idef_table[i].m_uuid)] = geom_base;
     }
-
 
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = model.m_layer_table[i];
@@ -361,7 +266,7 @@ STR_STR_MAP map_geometry_names(const ONX_Model &model, ON_TextLog &dump, int ver
 	if (use_uuidnames)
 	    uuid_name_map[layer_uuid] = layer_uuid;
 	else
-	    uuid_name_map[layer_uuid] = ON_String(layer.m_name).Array();
+	    uuid_name_map[layer_uuid] = gen_geom_name(uuid_name_map, layer.m_name);
     }
 
     return uuid_name_map;
@@ -369,48 +274,107 @@ STR_STR_MAP map_geometry_names(const ONX_Model &model, ON_TextLog &dump, int ver
 
 
 static void create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
-	const STR_STR_MAP &uuid_name_map)
+			     const STR_STR_MAP &uuid_name_map)
 {
     for (int i = 0; i < model.m_idef_table.Count(); ++i) {
 	std::string geom_base = uuid_name_map.at(UUIDstr(model.m_idef_table[i].m_uuid));
 	create_instance_definition(outfp, model, dump, uuid_name_map,
-		model.m_idef_table[i], geom_base+".c");
+				   model.m_idef_table[i], geom_base + ".c");
     }
 }
 
 
 static void nest_all_layers(const ONX_Model &model, const STR_STR_MAP &uuid_name_map,
-	UUID_CHILD_MAP &uuid_child_map)
+			    UUID_CHILD_MAP &uuid_child_map, bool random_colors)
 {
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = model.m_layer_table[i];
-	std::string layer_region_name = uuid_name_map.at(UUIDstr(layer.m_layer_id)) + ".r";
-	uuid_child_map[UUIDstr(layer.m_parent_layer_id)].push_back(layer_region_name); //FIXME
+	const bool is_region = !random_colors && is_toplevel(layer);
+
+	std::string layer_name = uuid_name_map.at(UUIDstr(layer.m_layer_id));
+	if (is_region)
+	    layer_name += ".r";
+	else
+	    layer_name += ".c";
+
+	uuid_child_map[UUIDstr(layer.m_parent_layer_id)].push_back(layer_name);
     }
 }
 
 
 static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
-        const STR_STR_MAP &uuid_name_map, const UUID_CHILD_MAP &uuid_child_map)
+			      const STR_STR_MAP &uuid_name_map, const UUID_CHILD_MAP &uuid_child_map,
+			      bool random_colors)
 {
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
-        const ON_Layer &layer = model.m_layer_table[i];
-        const std::string layer_uuid = UUIDstr(layer.m_layer_id);
-        const std::string &layer_name = uuid_name_map.at(layer_uuid) + ".r";
+	const ON_Layer &layer = model.m_layer_table[i];
+	const bool is_region = !random_colors && is_toplevel(layer);
+	const std::string layer_uuid = UUIDstr(layer.m_layer_id);
 
-        dump.Print("Creating layer '%s'\n", layer_name.c_str());
+	std::string layer_name = uuid_name_map.at(layer_uuid);
+	if (is_region)
+	    layer_name += ".r";
+	else
+	    layer_name += ".c";
 
-        UUID_CHILD_MAP::const_iterator entry = uuid_child_map.find(layer_uuid);
-        if (entry == uuid_child_map.end()) continue; // no children
+	dump.Print("Creating layer '%s'\n", layer_name.c_str());
 
-        const MEMBER_VEC &vec = entry->second;
-        wmember members;
-        BU_LIST_INIT(&members.l);
-        for (MEMBER_VEC::const_iterator it = vec.begin(); it != vec.end(); ++it)
-            mk_addmember(it->c_str(), &members.l, NULL, WMOP_UNION);
+	UUID_CHILD_MAP::const_iterator entry = uuid_child_map.find(layer_uuid);
+	if (entry == uuid_child_map.end()) continue; // no children
 
-        mk_lfcomb(outfp, layer_name.c_str(), &members, 0); // FIXME create region instead
+	const MEMBER_VEC &vec = entry->second;
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	for (MEMBER_VEC::const_iterator it = vec.begin(); it != vec.end(); ++it)
+	    mk_addmember(it->c_str(), &members.l, NULL, WMOP_UNION);
+
+	ON_Color color;
+	if (random_colors)
+	    color = gen_random_color();
+	else
+	    color = layer.m_color;
+
+	if (color.Red() == 0 && color.Green() == 0 && color.Blue() == 0) {
+	    dump.Print("Object has no color; setting color to red\n");
+	    color = ON_Color(255, 0, 0);
+	}
+
+	unsigned char rgb[3] = {color.Red(), color.Green(), color.Blue()};
+	bool do_inherit = false;
+	mk_comb(outfp, layer_name.c_str(), &members.l, is_region, NULL, NULL, rgb, 0, 0, 0, 0, do_inherit, false, false);
     }
+}
+
+
+ON_Color get_color(const ONX_Model &model, ON_TextLog &dump,
+		   const ON_3dmObjectAttributes &myAttributes)
+{
+    ON_Color result;
+    switch (myAttributes.ColorSource()) {
+	case ON::color_from_parent:
+	case ON::color_from_layer:
+	    result = model.m_layer_table[myAttributes.m_layer_index].m_color;
+	    break;
+
+	case ON::color_from_object:
+	    result = myAttributes.m_color;
+	    break;
+
+	case ON::color_from_material:
+	    result =  model.m_material_table[myAttributes.m_material_index].m_ambient;
+	    break;
+
+	default:
+	    dump.Print("ERROR: unknown color source\n");
+	    return ON_Color(255, 0, 0);
+    }
+
+    if (result.Red() == 0 && result.Green() == 0 && result.Blue() == 0) {
+	dump.Print("Object has no color; setting color to red\n");
+	result = ON_Color(255, 0, 0);
+    }
+
+    return result;
 }
 
 
@@ -422,7 +386,6 @@ main(int argc, char** argv)
 {
     int verbose_mode = 0;
     bool random_colors = false;
-    (void)random_colors; // FIXME silence warning
     bool use_uuidnames = false;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
@@ -486,12 +449,6 @@ main(int argc, char** argv)
     else
 	dump.Print("Errors during reading 3dm file.\n");
 
-    if (!use_uuidnames) {
-	dump.Print("\nMaking names in 3DM model table \"m_object_table\" BRL-CAD compliant ...\n");
-	MakeCleanUniqueNames(model);
-	dump.Print("Name changes done.\n\n");
-    }
-
     // see if everything is in good shape, be quiet first time around
     if (model.IsValid(&dump)) {
 	dump.Print("Model is VALID\n");
@@ -520,7 +477,8 @@ main(int argc, char** argv)
 
     dump.Print("\n");
     UUID_CHILD_MAP uuid_child_map;
-    const STR_STR_MAP uuid_name_map = map_geometry_names(model, dump, verbose_mode, use_uuidnames);
+    const STR_STR_MAP uuid_name_map = map_geometry_names(model, use_uuidnames);
+
     create_all_idefs(outfp, model, dump, uuid_name_map);
 
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
@@ -538,6 +496,14 @@ main(int argc, char** argv)
 	    myAttributes.Dump(dump);
 	    dump.Print("\n");
 	}
+
+
+	ON_Color color;
+	if (random_colors)
+	    color = gen_random_color();
+	else
+	    color = get_color(model, dump, myAttributes);
+
 
 	std::string geom_base = uuid_name_map.at(UUIDstr(myAttributes.m_uuid));
 
@@ -575,9 +541,9 @@ main(int argc, char** argv)
 		    brep->Dump(dump);
 		}
 
-		mk_brep(outfp, geom_name.c_str(), const_cast<ON_Brep *>(brep)); // FIXME code duplication
+		mk_brep(outfp, geom_name.c_str(), const_cast<ON_Brep *>(brep));
 
-                uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name); //FIXME
+		uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name);
 	    } else if (pGeometry->HasBrepForm()) {
 		std::string geom_name = geom_base + ".s";
 		if (verbose_mode) {
@@ -592,7 +558,7 @@ main(int argc, char** argv)
 		mk_brep(outfp, geom_name.c_str(), new_brep);
 		delete new_brep;
 
-                uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name); //FIXME
+		uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name);
 	    } else if ((curve = ON_Curve::Cast(pGeometry))) {
 		if (verbose_mode > 0)
 		    dump.Print("Type: ON_Curve\n");
@@ -618,9 +584,9 @@ main(int argc, char** argv)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
-		const std::string region_name = geom_base + ".r";
-		create_instance_reference(outfp, uuid_name_map, *instref, region_name);
-		uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(region_name); //FIXME
+		const std::string comb_name = geom_base + ".c";
+		create_instance_reference(outfp, uuid_name_map, *instref, comb_name, color);
+		uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(comb_name);
 	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
@@ -654,8 +620,8 @@ main(int argc, char** argv)
 	}
     }
 
-    nest_all_layers(model, uuid_name_map, uuid_child_map);
-    create_all_layers(outfp, model, dump, uuid_name_map, uuid_child_map);
+    nest_all_layers(model, uuid_name_map, uuid_child_map, random_colors);
+    create_all_layers(outfp, model, dump, uuid_name_map, uuid_child_map, random_colors);
 
     wdb_close(outfp);
 
@@ -678,7 +644,7 @@ int
 main()
 {
     std::printf("ERROR: Boundary Representation object support is not available with\n"
-	    "       this compilation of BRL-CAD.\n");
+		"       this compilation of BRL-CAD.\n");
 
     return 1;
 }
