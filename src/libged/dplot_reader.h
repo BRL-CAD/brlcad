@@ -34,6 +34,7 @@ struct dplot_data {
     int ssx_count;
     struct bu_list ssx_list; /* struct ssx list */
     struct ssx *ssx;
+    struct bu_list isocsx_list; /* struct ssx list */
 };
 
 /* lemon prototypes */

@@ -771,6 +771,9 @@ dplot_free(void *p) {
 HIDDEN void
 dplot_load_file_data(struct dplot_info *info)
 {
+    int i, j;
+    struct ssx *curr_ssx;
+    struct isocsx *curr_isocsx;
     int token_id;
     perplex_t scanner;
     void *parser;
@@ -782,6 +785,7 @@ dplot_load_file_data(struct dplot_info *info)
     info->fdata.brep1_surface_count = info->fdata.brep2_surface_count = 0;
     info->fdata.ssx_count = 0;
     BU_LIST_INIT(&info->fdata.ssx_list);
+    BU_LIST_INIT(&info->fdata.isocsx_list);
     perplexSetExtra(scanner, (void *)&info->fdata);
 
     /* parse */
@@ -797,9 +801,6 @@ dplot_load_file_data(struct dplot_info *info)
     /* move ssx to dynamic array for easy access */
     info->fdata.ssx = NULL;
     if (info->fdata.ssx_count > 0) {
-	int i, j;
-	struct ssx *curr_ssx;
-	struct isocsx *curr_isocsx;
 
 	info->fdata.ssx = (struct ssx *)bu_malloc(
 		sizeof(struct ssx) * info->fdata.ssx_count, "ssx array");

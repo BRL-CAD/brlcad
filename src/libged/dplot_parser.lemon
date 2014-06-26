@@ -36,36 +36,50 @@ statement_list ::= statement_list statement.
 
 statement ::= surface_counts EOL.
 statement ::= ssx_info EOL.
-statement ::= isocsx_info EOL.
 
 surface_counts ::= SURFACES count(C1) count(C2). {
     data->brep1_surface_count = C1;
     data->brep2_surface_count = C2;
 }
 
-ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3). {
+ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3) isocsx_event_counts. {
     struct ssx *ssx;
-
     BU_GET(ssx, struct ssx);
+
     ssx->brep1_surface = I1;
     ssx->brep2_surface = I2;
     ssx->final_curve_events = C1;
     ssx->intersecting_brep1_isocurves = C2;
     ssx->intersecting_isocurves = C3;
+    BU_LIST_INIT(&ssx->isocsx_list);
+
+    /* move the list of event counts from the tmp location to this ssx
+     * instance
+     */
+    BU_LIST_APPEND_LIST(&ssx->isocsx_list, &data->isocsx_list);
 
     BU_LIST_PUSH(&data->ssx_list, &ssx->l);
     ++data->ssx_count;
 }
 
-isocsx_info ::= ISOCSX_EVENTS count(C). {
-    struct ssx *curr_ssx;
+isocsx_event_counts ::= count(C). {
     struct isocsx *isocsx;
-
     BU_GET(isocsx, struct isocsx);
-    isocsx->events = C;
 
-    curr_ssx = BU_LIST_LAST(ssx, &data->ssx_list);
-    BU_LIST_PUSH(&curr_ssx->isocsx_list, &isocsx->l);
+    isocsx->events = C;
+    BU_LIST_INIT(&isocsx->l);
+
+    BU_LIST_PUSH(&data->isocsx_list, &isocsx->l);
+}
+
+isocsx_event_counts ::= isocsx_event_counts count(C). {
+    struct isocsx *isocsx;
+    BU_GET(isocsx, struct isocsx);
+
+    isocsx->events = C;
+    BU_LIST_INIT(&isocsx->l);
+
+    BU_LIST_PUSH(&data->isocsx_list, &isocsx->l);
 }
 
 count(C) ::= NONNEGATIVE_INT(N). {
