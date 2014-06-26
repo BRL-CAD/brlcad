@@ -154,14 +154,13 @@ echo "--          LINE COUNT TOTALS          --"
 echo "-----------------------------------------"
 
 # compute documentation line counts
-dc="`find \"$BASE\" -type f \( -regex '.*/[A-Z]*$' -or -name ChangeLog -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml -or -name \*.bib -or -name \*.tbl -or -name \*.mm \) -not \( -regex '.*docbook/resources/standard.*' -or -regex '.*~' -or -regex '.*/\.[^\.].*' -or -regex '.*/other/.*' -or -regex '.*legal.*' -or -regex '.*CMakeLists.txt.*' \) `"
+dc="`find \"$BASE\" -type f \( -regex '.*/[A-Z]*$' -or -regex '.*/README.*' -or -regex '.*/TODO.*' -or -regex '.*/INSTALL.*' -or -name ChangeLog -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml -or -name \*.bib -or -name \*.tbl -or -name \*.mm -or -name \*csv \) -not \( -regex '.*docbook/resources/standard.*' -or -regex '.*~' -or -regex '.*/\.[^\.].*' -or -regex '.*/other/.*' -or -regex '.*/misc/.*' -or -regex '.*/legal/.*' -or -regex '.*CMakeLists.txt.*' -or -regex '.*CMake.*' -or -regex '.*LICENSE.*\..*' \) `"
 dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
 dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
 dc_lc_total="`sum $dc_lc_lines`"
 
 printf "\t%7d\t%s\n" "$dc_lc_total" "Documentation"
 
-exit
 # compute build infrastructure line counts
 bic1="`find \"$BASE\" -type f \( -name \*.am -or -name Makefile.defs -or -name configure.ac -or -name autogen.sh -or -name CMakeLists.txt -or -name \*.cmake \)`"
 bic2="`find \"$BASE/sh\" -type f \( -name \*.sh \)`"
