@@ -22,8 +22,8 @@
  * librt functions related to fullpaths.
  */
 
-#ifndef DB_FULLPATH_H
-#define DB_FULLPATH_H
+#ifndef RT_DB_FULLPATH_H
+#define RT_DB_FULLPATH_H
 
 /**
  * For collecting paths through the database tree.
@@ -217,7 +217,7 @@ RT_EXPORT extern int db_full_path_transformation_matrix(matp_t matp,
 				const int depth);
 
 
-#endif /*DB_FULLPATH_H*/
+#endif /*RT_DB_FULLPATH_H*/
 
 /*
  * Local Variables:
