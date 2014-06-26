@@ -1308,13 +1308,15 @@ f4_do_ccone1(void)
 
     if (mode == PLATE_MODE) {
 	if (thick <= 0.0) {
-	    bu_log("ERROR: Plate mode CCONE1 has illegal thickness (%f)\n", thick/25.4);
+	    bu_log("WARNING: Plate mode CCONE1 has illegal thickness (%f)\n", thick/25.4);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   group_id, comp_id, element_id);
-	    bu_log("\tCCONE1 solid ignored\n");
-	    return;
+	    bu_log("\tCCONE1 solid plate mode overridden, now being treated as volume mode\n");
+	    mode = VOLUME_MODE;
 	}
+    }
 
+    if (mode == PLATE_MODE) {
 	if (r1-thick < min_radius && r2-thick < min_radius) {
 	    bu_log("ERROR: Plate mode CCONE1 has too large thickness (%f)\n", thick/25.4);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
