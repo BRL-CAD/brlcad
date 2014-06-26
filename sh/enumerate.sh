@@ -162,72 +162,84 @@ dc_lc_total="`sum $dc_lc_lines`"
 printf "\t%7d\t%s\n" "$dc_lc_total" "Documentation"
 
 # compute build infrastructure line counts
-bic1="`find \"$BASE\" -type f \( -name \*.am -or -name Makefile.defs -or -name configure.ac -or -name autogen.sh -or -name CMakeLists.txt -or -name \*.cmake \)`"
-bic2="`find \"$BASE/sh\" -type f \( -name \*.sh \)`"
-bic="$bic1
-$bic2"
+bic="`find \"$BASE\" -type f \( -name configure -or -name CMakeLists.txt -or -regex '.*\.cmake$' -or -regex '.*\.cmake.in$' -or -regex '.*/CMake.*\.in$' -or -regex '.*/CMake.*\.sh$' -or -regex '.*/sh/.*\.sh$' \) -not \( -regex '.*~' -or -regex '.*/\.[^\.].*' -or -regex '.*/other/.*' \) `"
 bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
 bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{print $1}'`"
 bic_lc_total="`sum $bic_lc_lines`"
 bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
 bic_lc_total="`expr $bic_lc_total - $bic_lc_blank`"
 
-# compute header code line counts
-header="`find \"$BASE\" -type f \( -name \*.h -or -name \*.hxx -or -name \*.hpp \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
+printf "\t%7d\t%s\n" "$bic_lc_total" "Build Infrastructure"
+
+# compute header code line counts (intentionally ignoring misc and not /misc/ due to src/external header)
+header="`find \"$BASE\" -type f \( -name \*.h -or -name \*.hxx -or -name \*.hpp \) -not \( -regex '.*/other/.*' -or -regex '.*/sh/.*' -or -regex '.*misc.*' \)`"
 header_lc="`echo \"$header\" | sort | xargs wc -l`"
 header_lc_lines="`echo \"$header_lc\" | grep -v 'total$' | awk '{print $1}'`"
 header_lc_total="`sum $header_lc_lines`"
 header_lc_blank="`echo \"$header\" | xargs awk ' /^[    ]*$/ { ++x } END { print x } '`"
 header_lc_total="`expr $header_lc_total - $header_lc_blank`"
 
+printf "\t\t%7d\t%s\n" "$header_lc_total" "Header"
+
+
 # compute non-header library code line counts
-sourcelib="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep lib`"
+sourcelib="`find \"$BASE\" -type f -regex '.*lib.*' \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) -not \( -regex '.*/other/.*' -or -regex '.*/sh/.*' -or -regex '.*misc.*' \)`"
 sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
 sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcelib_lc_total="`sum $sourcelib_lc_lines`"
 sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
 sourcelib_lc_total="`expr $sourcelib_lc_total - $sourcelib_lc_blank`"
 
+printf "\t\t\t%7d\t%s\n" "$sourcelib_lc_total" "Library Code"
+
 # compute non-header application code line counts
-sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep -v lib`"
+sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) -not \( -regex '.*/other/.*' -or -regex '.*/sh/.*' -or -regex '.*misc.*' -or -regex '.*lib.*' \)`"
 sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
 sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcebin_lc_total="`sum $sourcebin_lc_lines`"
 sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
 sourcebin_lc_total="`expr $sourcebin_lc_total - $sourcebin_lc_blank`"
 
+printf "\t\t\t%7d\t%s\n" "$sourcebin_lc_total" "Application Code"
+
 # compute script code line counts
-scripts="`find \"$BASE\" -type f \( -name \*.sh -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
+scripts="`find \"$BASE\" -type f \( -name \*.sh -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk \) -not \( -regex '.*/other/.*' -or -regex '.*/sh/.*' -or -regex '.*misc.*' \)`"
 scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
 scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{print $1}'`"
 scripts_lc_total="`sum $scripts_lc_lines`"
 scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
 scripts_lc_total="`expr $scripts_lc_total - $scripts_lc_blank`"
 
+printf "\t\t\t%7d\t%s\n" "$scripts_lc_total" "Scripts"
+
 # compute 3rd party code line counts
-other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.h -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh -or -name \*.f -or -name \*.java \) | grep '/other/'`"
+other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.h -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh -or -name \*.f -or -name \*.java \) -not -regex '.*/other/.*'`"
 other_lc="`echo \"$other\" | sort | xargs wc -l`"
 other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{print $1}'`"
 other_lc_total="`sum $other_lc_lines`"
 
+printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code (not counted above)"
+
 # compute line count totals
 sc_lc_total="`echo \"$sourcelib_lc_total $sourcebin_lc_total $scripts_lc_total + + p\" | dc`"
+
+printf "\t\t%7d\t%s\n" "$sc_lc_total" "Non-Header"
+
 sch_lc_total="`echo \"$sc_lc_total $header_lc_total + p\" | dc`"
+
+printf "\t%7d\t%s\n" "$sch_lc_total" "Source Code"
+
 blank_lc_total="`echo \"$bic_lc_blank $header_lc_blank $sourcelib_lc_blank $sourcebin_lc_blank $scripts_lc_blank ++++ p\" | dc`"
+
+printf "%7d\t%s\n" "$blank_lc_total" "Blank Lines (not counted above)"
+
 total_code="`echo \"$bic_lc_total $sch_lc_total + p\" | dc`"
 total_noncode="`echo \"$dc_lc_total p\" | dc`"
+
 total="`echo \"$total_code $total_noncode + p\" | dc`"
 
 printf "%7d\t%s\n" "$total" "BRL-CAD Project Total"
-printf "\t%7d\t%s\n" "$bic_lc_total" "Build Infrastructure"
-printf "\t%7d\t%s\n" "$sch_lc_total" "Source Code"
-printf "\t\t%7d\t%s\n" "$header_lc_total" "Header"
-printf "\t\t%7d\t%s\n" "$sc_lc_total" "Non-Header"
-printf "\t\t\t%7d\t%s\n" "$sourcelib_lc_total" "Library Code"
-printf "\t\t\t%7d\t%s\n" "$sourcebin_lc_total" "Application Code"
-printf "\t\t\t%7d\t%s\n" "$scripts_lc_total" "Scripts"
-printf "%7d\t%s\n" "$blank_lc_total" "Blank Lines (not counted above)"
-printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code (not counted above)"
+
 echo "========================================="
 
 
