@@ -189,7 +189,6 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
       	struct db_i *dbip,
 	struct directory *dp)
 {
-    std::map<struct directory *, osg::Group *> processed_nodes;
     const char *solid_search = "! -type comb";
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
     (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
@@ -197,10 +196,9 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
     for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
-	if (processed_nodes.find(curr_dp) == processed_nodes.end()) {
+	if ((*osg_nodes).find(curr_dp) == (*osg_nodes).end()) {
 	    osg::ref_ptr<osg::Group> node = solid_to_node(curr_dp, dbip);
 	    (*osg_nodes)[curr_dp] = node.get();
-	    processed_nodes[curr_dp] = node.get();
 	}
     }
     db_search_free(&solids);
