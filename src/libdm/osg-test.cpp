@@ -47,6 +47,8 @@ extern "C" {
 #include "rtfunc.h"
 }
 
+#include <map>
+
 #include <osgUtil/Optimizer>
 #include <osgDB/ReadFile>
 
@@ -280,8 +282,13 @@ add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_p
     }
 }
 
+/* In the case of regions, we need to be able to remove and restore the individual
+ * comb children, because for normal display (as opposed to editing mode) we need to
+ * use a single compositite wireframe for regions */
 void
-create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+create_comb_nodes(
+	std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > *child_nodes,
       	struct db_i *dbip,
 	struct directory *dp)
 {
@@ -301,6 +308,7 @@ create_comb_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_n
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
 	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)], curr_path);
+	    child_nodes->insert(std::pair<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> >((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)]));
 	}
 	db_search_free(&comb_children);
     }
@@ -339,6 +347,7 @@ create_region_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg
 int main( int argc, char **argv )
 {
     std::map<struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
+    std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > child_nodes;
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
 
@@ -367,7 +376,7 @@ int main( int argc, char **argv )
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     create_solid_nodes(&(osg_nodes), dbip, dp);
-    create_comb_nodes(&(osg_nodes), dbip, dp);
+    create_comb_nodes(&(osg_nodes), &(child_nodes), dbip, dp);
 
     // construct the viewer.
     osgViewer::Viewer viewer;
