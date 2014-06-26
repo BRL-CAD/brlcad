@@ -44,7 +44,7 @@ raster image file.
 While the MacPaint file is 720x576 pixels, it is possible to specify
 an alternate size input file with the
 <option>-s</option> ,
-<option>-w</option> , 
+<option>-w</option> ,
 and
 <option>-n</option>
 flags;  the usefulness of this is unknown.

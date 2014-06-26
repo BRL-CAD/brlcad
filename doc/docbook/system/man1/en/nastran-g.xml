@@ -18,7 +18,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>nastran-g</command>
-    <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
+    <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
     <arg choice='opt'>-t <replaceable>tolerance_distance</replaceable></arg>
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>-m </arg>
@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>nastran-g</emphasis>
+<para><command>nastran-g</command>
 converts the specified
 <emphasis remap='I'>nastran_input_file</emphasis>
 to a BRL-CAD
@@ -43,7 +43,7 @@ option requests that the output solids created from
 <emphasis remap='I'>NASTRAN CQUAD4</emphasis>
 or
 <emphasis remap='I'>CTRIA3</emphasis>
-elements be stored in the BRL-CAD file as NMG solids rather than the default BOT solids. The
+elements be stored in the BRL-CAD file as NMG solids rather than as the default BOT solids. The
 <option>-m</option>
 option indicates that the units of the NASTRAN file are millimeters, rather than the default
 inches. The converter currently only handles the
@@ -51,6 +51,9 @@ inches. The converter currently only handles the
 and
 <emphasis remap='I'>CQUAD4</emphasis>
 elements.</para>
+
+<para>The <option>-x</option> and <option>-X</option> options are for debug levels.
+</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
