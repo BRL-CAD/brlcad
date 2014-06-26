@@ -379,10 +379,20 @@ static void create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &
 }
 
 
+static void nest_all_layers(const ONX_Model &model, const STR_STR_MAP &uuid_name_map,
+	UUID_CHILD_MAP &uuid_child_map)
+{
+    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
+	const ON_Layer &layer = model.m_layer_table[i];
+	std::string layer_region_name = uuid_name_map.at(UUIDstr(layer.m_layer_id)) + ".r";
+	uuid_child_map[UUIDstr(layer.m_parent_layer_id)].push_back(layer_region_name); //FIXME
+    }
+}
+
+
 static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
         const STR_STR_MAP &uuid_name_map, const UUID_CHILD_MAP &uuid_child_map)
 {
-    // FIXME nest layers
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
         const ON_Layer &layer = model.m_layer_table[i];
         const std::string layer_uuid = UUIDstr(layer.m_layer_id);
@@ -565,7 +575,7 @@ main(int argc, char** argv)
 		    brep->Dump(dump);
 		}
 
-		mk_brep(outfp, geom_name.c_str(), const_cast<ON_Brep *>(brep));
+		mk_brep(outfp, geom_name.c_str(), const_cast<ON_Brep *>(brep)); // FIXME code duplication
 
                 uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(geom_name); //FIXME
 	    } else if (pGeometry->HasBrepForm()) {
@@ -608,7 +618,9 @@ main(int argc, char** argv)
 		    dump.Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(dump);
 
-		create_instance_reference(outfp, uuid_name_map, *instref, geom_base + ".r");
+		const std::string region_name = geom_base + ".r";
+		create_instance_reference(outfp, uuid_name_map, *instref, region_name);
+		uuid_child_map[UUIDstr(model.m_layer_table[myAttributes.m_layer_index].m_layer_id)].push_back(region_name); //FIXME
 	    } else if ((layer = ON_Layer::Cast(pGeometry))) {
 		dump.Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(dump);
@@ -642,6 +654,7 @@ main(int argc, char** argv)
 	}
     }
 
+    nest_all_layers(model, uuid_name_map, uuid_child_map);
     create_all_layers(outfp, model, dump, uuid_name_map, uuid_child_map);
 
     wdb_close(outfp);
