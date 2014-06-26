@@ -396,7 +396,7 @@ static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog 
         const MEMBER_VEC &vec = entry->second;
         wmember members;
         BU_LIST_INIT(&members.l);
-        for (MEMBER_VEC::const_iterator it = vec.begin(); it != vec.end(); ++i)
+        for (MEMBER_VEC::const_iterator it = vec.begin(); it != vec.end(); ++it)
             mk_addmember(it->c_str(), &members.l, NULL, WMOP_UNION);
 
         mk_lfcomb(outfp, layer_name.c_str(), &members, 0); // FIXME create region instead
