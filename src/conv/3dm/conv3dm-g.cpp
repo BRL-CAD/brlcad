@@ -457,14 +457,10 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	    continue;
 	}
 
-	const ON_Geometry *pGeometry = ON_Geometry::Cast(m_model->m_object_table[geom_index].m_object);
-	if (!pGeometry) {
-	    m_log->Print("referenced uuid=%s is not geometry\n", member_uuid.c_str());
-	    continue;
-	}
+	const ON_Object *object = m_model->m_object_table[geom_index].m_object;
 
 	std::string member_name;
-	if (ON_InstanceRef::Cast(pGeometry))
+	if (object->ObjectType() == ON::instance_reference)
 	    member_name = m_obj_map.at(member_uuid).m_name + ".c";
 	else
 	    member_name = m_obj_map.at(member_uuid).m_name + ".s";
@@ -580,7 +576,7 @@ RhinoConverter::create_all_geometry()
 
 	m_log->Print("Object %d of %d...", i + 1, m_model->m_object_table.Count());
 
-	const ON_Geometry* pGeometry = ON_Geometry::Cast(m_model->m_object_table[i].m_object);
+	const ON_Geometry *pGeometry = ON_Geometry::Cast(m_model->m_object_table[i].m_object);
 	if (pGeometry) {
 	    create_geometry(pGeometry, obj_attrs);
 	} else

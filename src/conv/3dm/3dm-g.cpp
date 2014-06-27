@@ -109,3 +109,16 @@ main()
 
 
 #endif //!OBJ_BREP
+
+
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
