@@ -521,8 +521,7 @@ DebugPlot::IsoCSX(
 	    ON_Curve *event_curve = sub_curve(isocurve, events[i].m_a[0],
 		    events[i].m_a[1]);
 
-	    Plot3DCurveFrom2D(surf, event_curve, filename.str().c_str(),
-		    overlap_color);
+	    Plot3DCurve(event_curve, filename.str().c_str(), overlap_color);
 	}
     }
     if (plot_count) {
