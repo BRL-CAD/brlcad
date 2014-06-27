@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "stdio.h" /* for sscanf */
 
 #ifdef OBJ_BREP
 
