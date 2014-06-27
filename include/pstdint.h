@@ -662,7 +662,7 @@ typedef uint_least32_t uint_fast32_t;
  *  (u)intptr_t types and limits.
  */
 
-#if defined (_MSC_VER) && defined (_UINTPTR_T_DEFINED)
+#if defined (_MSC_VER) && (_MSC_VER >= 1600) && defined (_UINTPTR_T_DEFINED)
 # define STDINT_H_UINTPTR_T_DEFINED
 #endif
 
