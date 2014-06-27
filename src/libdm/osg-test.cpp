@@ -459,6 +459,7 @@ full_assembly_node(
     (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&assemblies) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&assemblies, i);
+	osg::ref_ptr<osg::Group> sub_comb = bare_comb_node(osg_nodes, curr_dp, dbip);
 	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
@@ -487,7 +488,7 @@ full_assembly_node(
 		osg::ref_ptr<osg::Group> new_node = solid_node(osg_nodes, curr_child_dp, dbip);
 		(*osg_nodes)[curr_child_dp] = new_node.get();
 	    }
-	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[curr_child_dp], curr_path);
+	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path);
 	}
 	db_search_free(&comb_children);
     }
@@ -515,7 +516,12 @@ characterize_dp(struct directory *dp, struct db_i *dbip)
 	if (dp->d_flags & RT_DIR_REGION) {
 	    ret = 2;
 	} else {
-	    if (db_search(NULL, DB_SEARCH_QUIET, assembly_search, 1, &dp, dbip) > 0) ret = 3;
+	    /* TODO - db_search should let us know the results without needing the table,
+	     * but that doesn't seem to be working... */
+	    struct bu_ptbl search_results = BU_PTBL_INIT_ZERO;
+	    (void)db_search(&search_results, DB_SEARCH_QUIET, assembly_search, 1, &dp, dbip);
+	    if (BU_PTBL_LEN(&search_results) > 0) ret = 3;
+	    db_search_free(&search_results);
 	}
     } else {
 	if (dp->d_flags & RT_DIR_SOLID) ret = 0;
