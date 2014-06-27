@@ -3200,6 +3200,7 @@ ON_Intersect(const ON_Surface *surfA,
 	Subsurface *tree = i >= 2 ? treeA : treeB;
 	ON_2dPointArray &ptarray1 = i >= 2 ? tmp_curve_uvB : tmp_curve_uvA;
 	ON_2dPointArray &ptarray2 = i >= 2 ? tmp_curve_uvA : tmp_curve_uvB;
+	bool is_surfA_iso = i < 2;
 	int knot_dir = i % 2;
 	int surf_dir = 1 - knot_dir;
 	int knot_count = surf1->SpanCount(surf_dir) + 1;
@@ -3224,8 +3225,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(boundary, surf2, x_event, isect_tol, overlap_tol, 0, 0, 0, &overlap2d);
 
-	    bool is_brep1_iso = i < 2;
-	    dplot->IsoCSX(x_event, surf2, boundary, is_brep1_iso);
+	    dplot->IsoCSX(x_event, surf2, boundary, is_surfA_iso);
 
 	    // stash surf1 points and surf2 parameters
 	    for (int k = 0; k < x_event.Count(); k++) {
