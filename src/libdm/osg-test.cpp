@@ -249,6 +249,16 @@ comb_to_node(const struct directory *dp, const struct db_i *dbip)
     return comb;
 }
 
+int
+subtracted_solid(struct db_full_path *path)
+{
+    int ret = 0;
+    for (unsigned int i = 0; i < path->fp_len; i++) {
+	if(path->fp_bool[i] == 4) ret = 1;
+    }
+    return ret;
+}
+
 void
 add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_path)
 {
@@ -340,7 +350,8 @@ create_region_nodes(
 	}
 	region->removeChildren(0, children_cnt);
 
-	/* We now create a pseudo-solid node holding the full region drawable info */
+	/* We now create up to two pseudo-solid nodes holding the full region drawable info - one for non-subtracted
+	 * elements (no stipple) and one (if needed) for subtracted elements (stipple)*/
 	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
 	osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
 	geode->setName(dp->d_namep);
@@ -350,6 +361,23 @@ create_region_nodes(
 	state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 	region->addChild(geode);
 
+	/* Define the subtraction container, but don't add it as a child of the region unless we actually need it.*/
+	osg::ref_ptr<osg::Group> subtraction_wrapper = new osg::Group;
+	osg::ref_ptr<osg::Geode> subtraction_geode = new osg::Geode;
+	osg::ref_ptr<osg::Geometry> subtraction_geom = new osg::Geometry;
+	subtraction_wrapper->setName(dp->d_namep);
+	subtraction_geode->setName(dp->d_namep);
+	subtraction_geom->setName(dp->d_namep);
+	osg::StateSet* subtraction_geode_state = subtraction_geode->getOrCreateStateSet();
+	subtraction_geode_state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+	osg::StateSet* subtraction_state = subtraction_wrapper->getOrCreateStateSet();
+	osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+	ls->setPattern(0xCF33);
+	ls->setFactor(1);
+	subtraction_state->setAttributeAndModes(ls.get());
+	subtraction_geode->addDrawable(subtraction_geom);
+	subtraction_wrapper->addChild(subtraction_geode);
+
 	/*Search for all the solids (using full paths) below the region - that's the list of vlists we need for this particular region,
 	 *using the full paths below the current region to place them in their final relative positions.
 	 *(db_full_path_transformation_matrix)
@@ -357,8 +385,12 @@ create_region_nodes(
 	const char *region_vlist_search = "! -type comb";
 	struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
 	(void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &curr_dp, dbip);
+	int have_subtraction = 0;
 	for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
+
+	    /* Find out how to draw this particular wireframe */
+	    int subtraction_path = subtracted_solid(curr_path);
 
 	    /* Get the final matrix we will need for this vlist */
 	    mat_t tm;
@@ -367,7 +399,12 @@ create_region_nodes(
 
 	    /* Actually add the geometry from the vlist */
 	    struct bu_list *plot_segments = obj_vlist(DB_FULL_PATH_CUR_DIR(curr_path), dbip, tm);
-	    add_vlist_to_geom(geom, plot_segments);
+	    if (subtraction_path) {
+		have_subtraction++;
+		add_vlist_to_geom(subtraction_geom, plot_segments);
+	    } else {
+		add_vlist_to_geom(geom, plot_segments);
+	    }
 
 	    /* Cleanup */
 	    RT_FREE_VLIST(plot_segments);
@@ -375,6 +412,9 @@ create_region_nodes(
 
 	}
 	db_search_free(&region_vlist_contributors);
+	if (have_subtraction) {
+	    region->addChild(subtraction_wrapper);
+	}
 
     }
 
