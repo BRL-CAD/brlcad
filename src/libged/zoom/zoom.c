@@ -29,12 +29,12 @@
 HIDDEN int
 zoom(struct ged *gedp, double sf)
 {
-    gedp->ged_gvp->gv_scale /= sf;
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
-	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
-    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    gedp->dm_gvp->gv_scale /= sf;
+    if (gedp->dm_gvp->gv_scale < RT_MINVIEWSCALE)
+	gedp->dm_gvp->gv_scale = RT_MINVIEWSCALE;
+    gedp->dm_gvp->gv_size = 2.0 * gedp->dm_gvp->gv_scale;
+    gedp->dm_gvp->gv_isize = 1.0 / gedp->dm_gvp->gv_size;
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

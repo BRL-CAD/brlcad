@@ -35,8 +35,8 @@
 int
 _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct dm_display_list *gdlp = NULL;
+    struct dm_display_list *next_gdlp = NULL;
     struct solid *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
@@ -65,9 +65,9 @@ _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheigh
 	}
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    point_t vmin, vmax;
@@ -100,7 +100,7 @@ _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheigh
 			case BN_VLIST_TRI_MOVE:
 			case BN_VLIST_TRI_DRAW:
 			case BN_VLIST_TRI_END:
-			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
+			    MAT4X3PNT(vpt, gedp->dm_gvp->gv_model2view, *pt);
 			    V_MIN(vmin[X], vpt[X]);
 			    V_MAX(vmax[X], vpt[X]);
 			    V_MIN(vmin[Y], vpt[Y]);
@@ -155,8 +155,8 @@ _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheigh
 int
 _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct dm_display_list *gdlp = NULL;
+    struct dm_display_list *next_gdlp = NULL;
     struct solid *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
@@ -185,9 +185,9 @@ _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, doubl
 	}
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    struct bn_vlist *vp;
@@ -214,7 +214,7 @@ _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, doubl
 			case BN_VLIST_TRI_MOVE:
 			case BN_VLIST_TRI_DRAW:
 			case BN_VLIST_TRI_END:
-			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
+			    MAT4X3PNT(vpt, gedp->dm_gvp->gv_model2view, *pt);
 
 			    if (rflag) {
 				point_t vloc;
@@ -478,10 +478,10 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	int ret;
 
 	ret = _ged_select_botpts(gedp, botip,
-				  gedp->ged_gvp->gv_rect.grs_x,
-				  gedp->ged_gvp->gv_rect.grs_y,
-				  gedp->ged_gvp->gv_rect.grs_width,
-				  gedp->ged_gvp->gv_rect.grs_height,
+				  gedp->dm_gvp->gv_rect.grs_x,
+				  gedp->dm_gvp->gv_rect.grs_y,
+				  gedp->dm_gvp->gv_rect.grs_width,
+				  gedp->dm_gvp->gv_rect.grs_height,
 				  vminz,
 				  0);
 
@@ -490,17 +490,17 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     } else {
 	if (pflag)
 	    return _ged_select_partial(gedp,
-				       gedp->ged_gvp->gv_rect.grs_x,
-				       gedp->ged_gvp->gv_rect.grs_y,
-				       gedp->ged_gvp->gv_rect.grs_width,
-				       gedp->ged_gvp->gv_rect.grs_height,
+				       gedp->dm_gvp->gv_rect.grs_x,
+				       gedp->dm_gvp->gv_rect.grs_y,
+				       gedp->dm_gvp->gv_rect.grs_width,
+				       gedp->dm_gvp->gv_rect.grs_height,
 				       0);
 	else
 	    return _ged_select(gedp,
-			       gedp->ged_gvp->gv_rect.grs_x,
-			       gedp->ged_gvp->gv_rect.grs_y,
-			       gedp->ged_gvp->gv_rect.grs_width,
-			       gedp->ged_gvp->gv_rect.grs_height,
+			       gedp->dm_gvp->gv_rect.grs_x,
+			       gedp->dm_gvp->gv_rect.grs_y,
+			       gedp->dm_gvp->gv_rect.grs_width,
+			       gedp->dm_gvp->gv_rect.grs_height,
 			       0);
     }
 }

@@ -71,7 +71,7 @@ struct _ged_id_to_names {
 
 struct _ged_client_data {
     struct ged *gedp;
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     int wireframe_color_override;
     int wireframe_color[3];
     int draw_nmg_only;
@@ -208,7 +208,7 @@ extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 					  const char *path,
 					  const int skip_first);
 extern void _ged_freeDisplayListItem(struct ged *gedp,
-				     struct ged_display_list *gdlp);
+				     struct dm_display_list *gdlp);
 
 
 /* defined in get_comb.c */
@@ -450,7 +450,7 @@ extern int _ged_translate_tgc(struct ged *gedp,
 			      int rflag);
 
 /* defined in vutil.c */
-extern void _ged_mat_aet(struct ged_view *gvp);
+extern void _ged_mat_aet(struct dm_view *gvp);
 extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,

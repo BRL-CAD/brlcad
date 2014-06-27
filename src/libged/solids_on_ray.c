@@ -226,8 +226,8 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    VSET(ray_orig, -gedp->ged_gvp->gv_center[MDX],
-	 -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+    VSET(ray_orig, -gedp->dm_gvp->gv_center[MDX],
+	 -gedp->dm_gvp->gv_center[MDY], -gedp->dm_gvp->gv_center[MDZ]);
     /*
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
@@ -237,7 +237,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 	extremum[1][i] = -INFINITY;
     }
 
-    VMOVEN(ray_dir, gedp->ged_gvp->gv_rotation + 8, 3);
+    VMOVEN(ray_dir, gedp->dm_gvp->gv_rotation + 8, 3);
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
@@ -261,10 +261,10 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
     }
 
-    VMOVEN(unit_H, gedp->ged_gvp->gv_model2view, 3);
-    VMOVEN(unit_V, gedp->ged_gvp->gv_model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * gedp->ged_gvp->gv_scale * INV_GED_V, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * gedp->ged_gvp->gv_scale * INV_GED_V, unit_V);
+    VMOVEN(unit_H, gedp->dm_gvp->gv_model2view, 3);
+    VMOVEN(unit_V, gedp->dm_gvp->gv_model2view + 4, 3);
+    VJOIN1(ray_orig, ray_orig, h * gedp->dm_gvp->gv_scale * INV_GED_V, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * gedp->dm_gvp->gv_scale * INV_GED_V, unit_V);
 
     /* allocate space for display top-levels */
     args = 2 + ged_count_tops(gedp);

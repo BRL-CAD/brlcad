@@ -190,7 +190,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
-		    if (gedp->ged_gvp->gv_perspective > 0) {
+		    if (gedp->dm_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -213,7 +213,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
 		    /* draw */
-		    if (gedp->ged_gvp->gv_perspective > 0) {
+		    if (gedp->dm_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -278,39 +278,39 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 static void
 draw_png_body(struct ged *gedp, unsigned char **image)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
     struct solid *sp;
 
-    mat = gedp->ged_gvp->gv_model2view;
+    mat = gedp->dm_gvp->gv_model2view;
 
-    if (0 < gedp->ged_gvp->gv_perspective) {
+    if (0 < gedp->dm_gvp->gv_perspective) {
 	point_t l, h;
 
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0)) {
+	if (ZERO(gedp->dm_gvp->gv_eye_pos[Z] - 1.0)) {
 	    /* This way works, with reasonable Z-clipping */
-	    ged_persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
+	    ged_persp_mat(perspective_mat, gedp->dm_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 	} else {
 	    /* This way does not have reasonable Z-clipping,
 	     * but includes shear, for GDurf's testing.
 	     */
-	    ged_deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
+	    ged_deering_persp_mat(perspective_mat, l, h, gedp->dm_gvp->gv_eye_pos);
 	}
 
 	bn_mat_mul(newmat, perspective_mat, mat);
 	mat = newmat;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    draw_png_solid(gedp, image, sp, mat);

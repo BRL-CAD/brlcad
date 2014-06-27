@@ -177,8 +177,8 @@ struct dm dm_osg = {
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    {DM_MIN, DM_MIN, DM_MIN},	/* clipmin */
+    {DM_MAX, DM_MAX, DM_MAX},	/* clipmax */
     0,				/* no debugging */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */

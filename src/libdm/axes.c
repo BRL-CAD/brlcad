@@ -40,7 +40,7 @@
 void
 dm_draw_data_axes(struct dm *dmp,
 		  fastf_t sf,
-		  struct ged_data_axes_state *gdasp)
+		  struct dm_data_axes_state *gdasp)
 {
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
@@ -116,7 +116,7 @@ void
 dm_draw_axes(struct dm			*dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct ged_axes_state 	*gasp)
+	     struct dm_axes_state 	*gasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */

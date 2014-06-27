@@ -42,10 +42,10 @@ static void qray_print_fmts(struct ged *gedp);
 static void qray_print_vars(struct ged *gedp);
 static int qray_get_fmt_index(struct ged *gedp, char c);
 
-static struct ged_qray_color def_qray_odd_color = { 0, 255, 255 };
-static struct ged_qray_color def_qray_even_color = { 255, 255, 0 };
-static struct ged_qray_color def_qray_void_color = { 255, 0, 255 };
-static struct ged_qray_color def_qray_overlap_color = { 255, 255, 255 };
+static struct dm_qray_color def_qray_odd_color = { 0, 255, 255 };
+static struct dm_qray_color def_qray_even_color = { 255, 255, 0 };
+static struct dm_qray_color def_qray_void_color = { 255, 0, 255 };
+static struct dm_qray_color def_qray_overlap_color = { 255, 255, 255 };
 
 static struct qray_fmt_data def_qray_fmt_data[] = {
     {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
@@ -82,26 +82,26 @@ qray_print_fmts(struct ged *gedp)
 {
     int i;
 
-    for (i = 0; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
+    for (i = 0; gedp->dm_gdp->gd_qray_fmts[i].type != (char)0; ++i)
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&gedp->dm_gdp->gd_qray_fmts[i].fmt));
 }
 
 
 static void
 qray_print_vars(struct ged *gedp)
 {
-    bu_vls_printf(gedp->ged_result_str, "basename = %s\n", bu_vls_addr(&gedp->ged_gdp->gd_qray_basename));
-    bu_vls_printf(gedp->ged_result_str, "script = %s\n", bu_vls_addr(&gedp->ged_gdp->gd_qray_script));
-    bu_vls_printf(gedp->ged_result_str, "effects = %c\n", gedp->ged_gdp->gd_qray_effects);
-    bu_vls_printf(gedp->ged_result_str, "echo = %d\n", gedp->ged_gdp->gd_qray_cmd_echo);
+    bu_vls_printf(gedp->ged_result_str, "basename = %s\n", bu_vls_addr(&gedp->dm_gdp->gd_qray_basename));
+    bu_vls_printf(gedp->ged_result_str, "script = %s\n", bu_vls_addr(&gedp->dm_gdp->gd_qray_script));
+    bu_vls_printf(gedp->ged_result_str, "effects = %c\n", gedp->dm_gdp->gd_qray_effects);
+    bu_vls_printf(gedp->ged_result_str, "echo = %d\n", gedp->dm_gdp->gd_qray_cmd_echo);
     bu_vls_printf(gedp->ged_result_str, "oddcolor = %d %d %d\n",
-		  gedp->ged_gdp->gd_qray_odd_color.r, gedp->ged_gdp->gd_qray_odd_color.g, gedp->ged_gdp->gd_qray_odd_color.b);
+		  gedp->dm_gdp->gd_qray_odd_color.r, gedp->dm_gdp->gd_qray_odd_color.g, gedp->dm_gdp->gd_qray_odd_color.b);
     bu_vls_printf(gedp->ged_result_str, "evencolor = %d %d %d\n",
-		  gedp->ged_gdp->gd_qray_even_color.r, gedp->ged_gdp->gd_qray_even_color.g, gedp->ged_gdp->gd_qray_even_color.b);
+		  gedp->dm_gdp->gd_qray_even_color.r, gedp->dm_gdp->gd_qray_even_color.g, gedp->dm_gdp->gd_qray_even_color.b);
     bu_vls_printf(gedp->ged_result_str, "voidcolor = %d %d %d\n",
-		  gedp->ged_gdp->gd_qray_void_color.r, gedp->ged_gdp->gd_qray_void_color.g, gedp->ged_gdp->gd_qray_void_color.b);
+		  gedp->dm_gdp->gd_qray_void_color.r, gedp->dm_gdp->gd_qray_void_color.g, gedp->dm_gdp->gd_qray_void_color.b);
     bu_vls_printf(gedp->ged_result_str, "overlapcolor = %d %d %d\n",
-		  gedp->ged_gdp->gd_qray_overlap_color.r, gedp->ged_gdp->gd_qray_overlap_color.g, gedp->ged_gdp->gd_qray_overlap_color.b);
+		  gedp->dm_gdp->gd_qray_overlap_color.r, gedp->dm_gdp->gd_qray_overlap_color.g, gedp->dm_gdp->gd_qray_overlap_color.b);
 
     qray_print_fmts(gedp);
 }
@@ -113,8 +113,8 @@ qray_get_fmt_index(struct ged *gedp,
 {
     int i;
 
-    for (i = 0; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
-	if (c == gedp->ged_gdp->gd_qray_fmts[i].type)
+    for (i = 0; gedp->dm_gdp->gd_qray_fmts[i].type != (char)0; ++i)
+	if (c == gedp->dm_gdp->gd_qray_fmts[i].type)
 	    return i;
 
     return -1;
@@ -159,7 +159,7 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->dm_gdp->gd_qray_fmts[i].fmt));
 	    return GED_OK;
 	} else if (argc == 4) {
 	    /* set value */
@@ -170,8 +170,8 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    bu_vls_trunc(&gedp->ged_gdp->gd_qray_fmts[i].fmt, 0);
-	    bu_vls_printf(&gedp->ged_gdp->gd_qray_fmts[i].fmt, "%s", argv[3]);
+	    bu_vls_trunc(&gedp->dm_gdp->gd_qray_fmts[i].fmt, 0);
+	    bu_vls_printf(&gedp->dm_gdp->gd_qray_fmts[i].fmt, "%s", argv[3]);
 	    return GED_OK;
 	}
 
@@ -182,12 +182,12 @@ ged_qray(struct ged *gedp,
     if (BU_STR_EQUAL(argv[1], "basename")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->ged_gdp->gd_qray_basename));
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->dm_gdp->gd_qray_basename));
 
 	    return GED_OK;
 	} else if (argc == 3) {
 	    /* set value */
-	    bu_vls_strcpy(&gedp->ged_gdp->gd_qray_basename, argv[2]);
+	    bu_vls_strcpy(&gedp->dm_gdp->gd_qray_basename, argv[2]);
 	    return GED_OK;
 	}
 
@@ -198,12 +198,12 @@ ged_qray(struct ged *gedp,
     if (BU_STR_EQUAL(argv[1], "script")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->ged_gdp->gd_qray_script));
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gedp->dm_gdp->gd_qray_script));
 
 	    return GED_OK;
 	} else if (argc == 3) {
 	    /* set value */
-	    bu_vls_strcpy(&gedp->ged_gdp->gd_qray_script, argv[2]);
+	    bu_vls_strcpy(&gedp->dm_gdp->gd_qray_script, argv[2]);
 	    return GED_OK;
 	}
 
@@ -214,7 +214,7 @@ ged_qray(struct ged *gedp,
     if (BU_STR_EQUAL(argv[1], "effects")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gdp->gd_qray_effects);
+	    bu_vls_printf(gedp->ged_result_str, "%c", gedp->dm_gdp->gd_qray_effects);
 
 	    return TCL_OK;
 	} else if (argc == 3) {
@@ -225,7 +225,7 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    gedp->ged_gdp->gd_qray_effects = *argv[2];
+	    gedp->dm_gdp->gd_qray_effects = *argv[2];
 
 	    return GED_OK;
 	}
@@ -237,7 +237,7 @@ ged_qray(struct ged *gedp,
     if (BU_STR_EQUAL(argv[1], "echo")) {
 	if (argc == 2) {
 	    /* get value */
-	    if (gedp->ged_gdp->gd_qray_cmd_echo)
+	    if (gedp->dm_gdp->gd_qray_cmd_echo)
 		bu_vls_printf(gedp->ged_result_str, "1");
 	    else
 		bu_vls_printf(gedp->ged_result_str, "0");
@@ -254,9 +254,9 @@ ged_qray(struct ged *gedp,
 	    }
 
 	    if (ival)
-		gedp->ged_gdp->gd_qray_cmd_echo = 1;
+		gedp->dm_gdp->gd_qray_cmd_echo = 1;
 	    else
-		gedp->ged_gdp->gd_qray_cmd_echo = 0;
+		gedp->dm_gdp->gd_qray_cmd_echo = 0;
 
 	    return GED_OK;
 	}
@@ -269,9 +269,9 @@ ged_qray(struct ged *gedp,
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gdp->gd_qray_odd_color.r,
-			  gedp->ged_gdp->gd_qray_odd_color.g,
-			  gedp->ged_gdp->gd_qray_odd_color.b);
+			  gedp->dm_gdp->gd_qray_odd_color.r,
+			  gedp->dm_gdp->gd_qray_odd_color.g,
+			  gedp->dm_gdp->gd_qray_odd_color.b);
 
 	    return GED_OK;
 	} else if (argc == 5) {
@@ -289,9 +289,9 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    gedp->ged_gdp->gd_qray_odd_color.r = r;
-	    gedp->ged_gdp->gd_qray_odd_color.g = g;
-	    gedp->ged_gdp->gd_qray_odd_color.b = b;
+	    gedp->dm_gdp->gd_qray_odd_color.r = r;
+	    gedp->dm_gdp->gd_qray_odd_color.g = g;
+	    gedp->dm_gdp->gd_qray_odd_color.b = b;
 
 	    return GED_OK;
 	}
@@ -304,9 +304,9 @@ ged_qray(struct ged *gedp,
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gdp->gd_qray_even_color.r,
-			  gedp->ged_gdp->gd_qray_even_color.g,
-			  gedp->ged_gdp->gd_qray_even_color.b);
+			  gedp->dm_gdp->gd_qray_even_color.r,
+			  gedp->dm_gdp->gd_qray_even_color.g,
+			  gedp->dm_gdp->gd_qray_even_color.b);
 
 	    return GED_OK;
 	} else if (argc == 5) {
@@ -324,9 +324,9 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    gedp->ged_gdp->gd_qray_even_color.r = r;
-	    gedp->ged_gdp->gd_qray_even_color.g = g;
-	    gedp->ged_gdp->gd_qray_even_color.b = b;
+	    gedp->dm_gdp->gd_qray_even_color.r = r;
+	    gedp->dm_gdp->gd_qray_even_color.g = g;
+	    gedp->dm_gdp->gd_qray_even_color.b = b;
 
 	    return GED_OK;
 	}
@@ -339,9 +339,9 @@ ged_qray(struct ged *gedp,
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gdp->gd_qray_void_color.r,
-			  gedp->ged_gdp->gd_qray_void_color.g,
-			  gedp->ged_gdp->gd_qray_void_color.b);
+			  gedp->dm_gdp->gd_qray_void_color.r,
+			  gedp->dm_gdp->gd_qray_void_color.g,
+			  gedp->dm_gdp->gd_qray_void_color.b);
 
 	    return GED_OK;
 	} else if (argc == 5) {
@@ -359,9 +359,9 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    gedp->ged_gdp->gd_qray_void_color.r = r;
-	    gedp->ged_gdp->gd_qray_void_color.g = g;
-	    gedp->ged_gdp->gd_qray_void_color.b = b;
+	    gedp->dm_gdp->gd_qray_void_color.r = r;
+	    gedp->dm_gdp->gd_qray_void_color.g = g;
+	    gedp->dm_gdp->gd_qray_void_color.b = b;
 
 	    return GED_OK;
 	}
@@ -374,9 +374,9 @@ ged_qray(struct ged *gedp,
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gdp->gd_qray_overlap_color.r,
-			  gedp->ged_gdp->gd_qray_overlap_color.g,
-			  gedp->ged_gdp->gd_qray_overlap_color.b);
+			  gedp->dm_gdp->gd_qray_overlap_color.r,
+			  gedp->dm_gdp->gd_qray_overlap_color.g,
+			  gedp->dm_gdp->gd_qray_overlap_color.b);
 
 	    return GED_OK;
 	} else if (argc == 5) {
@@ -394,9 +394,9 @@ ged_qray(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    gedp->ged_gdp->gd_qray_overlap_color.r = r;
-	    gedp->ged_gdp->gd_qray_overlap_color.g = g;
-	    gedp->ged_gdp->gd_qray_overlap_color.b = b;
+	    gedp->dm_gdp->gd_qray_overlap_color.r = r;
+	    gedp->dm_gdp->gd_qray_overlap_color.g = g;
+	    gedp->dm_gdp->gd_qray_overlap_color.b = b;
 
 	    return GED_OK;
 	}
@@ -423,7 +423,7 @@ ged_qray(struct ged *gedp,
 
 
 void
-qray_init(struct ged_drawable *gdp)
+qray_init(struct dm_drawable *gdp)
 {
     int i;
     int n = 0;
@@ -444,7 +444,7 @@ qray_init(struct ged_drawable *gdp)
     for (qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
 	++n;
 
-    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_calloc(n+1, sizeof(struct ged_qray_fmt), "qray_fmts");
+    gdp->gd_qray_fmts = (struct dm_qray_fmt *)bu_calloc(n+1, sizeof(struct dm_qray_fmt), "qray_fmts");
 
     for (i = 0; i < n; ++i) {
 	gdp->gd_qray_fmts[i].type = def_qray_fmt_data[i].type;
@@ -457,7 +457,7 @@ qray_init(struct ged_drawable *gdp)
 
 
 void
-qray_free(struct ged_drawable *gdp)
+qray_free(struct dm_drawable *gdp)
 {
     int i;
 
@@ -485,19 +485,19 @@ qray_data_to_vlist(struct ged *gedp,
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_overlap_color.r,
-				    gedp->ged_gdp->gd_qray_overlap_color.g,
-				    gedp->ged_gdp->gd_qray_overlap_color.b);
+				    gedp->dm_gdp->gd_qray_overlap_color.r,
+				    gedp->dm_gdp->gd_qray_overlap_color.g,
+				    gedp->dm_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_odd_color.r,
-				    gedp->ged_gdp->gd_qray_odd_color.g,
-				    gedp->ged_gdp->gd_qray_odd_color.b);
+				    gedp->dm_gdp->gd_qray_odd_color.r,
+				    gedp->dm_gdp->gd_qray_odd_color.g,
+				    gedp->dm_gdp->gd_qray_odd_color.b);
 	else
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_even_color.r,
-				    gedp->ged_gdp->gd_qray_even_color.g,
-				    gedp->ged_gdp->gd_qray_even_color.b);
+				    gedp->dm_gdp->gd_qray_even_color.r,
+				    gedp->dm_gdp->gd_qray_even_color.g,
+				    gedp->dm_gdp->gd_qray_even_color.b);
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
@@ -508,9 +508,9 @@ qray_data_to_vlist(struct ged *gedp,
 
 	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_void_color.r,
-				    gedp->ged_gdp->gd_qray_void_color.g,
-				    gedp->ged_gdp->gd_qray_void_color.b);
+				    gedp->dm_gdp->gd_qray_void_color.r,
+				    gedp->dm_gdp->gd_qray_void_color.g,
+				    gedp->dm_gdp->gd_qray_void_color.b);
 	    RT_ADD_VLIST(vhead, last_out_pt, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_DRAW);
 	}

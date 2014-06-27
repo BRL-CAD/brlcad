@@ -131,13 +131,13 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    prevPerspective =  gedp->ged_gvp->gv_perspective;
+    prevPerspective =  gedp->dm_gvp->gv_perspective;
     _ged_current_gedp = gedp;
 
     /* turn perspective mode off, by default.  A "-p" option in the
      * view script will turn it back on.
      */
-    gedp->ged_gvp->gv_perspective = 0;
+    gedp->dm_gvp->gv_perspective = 0;
 
     /* iterate over the contents of the raytrace script */
     /* TODO: change to bu_fgets or bu_vls_fgets */
@@ -154,7 +154,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    buffer[1] = ' ';
 	    sscanf(buffer, "%d", &perspective);
 	    /* bu_log("perspective=%d\n", perspective);*/
-	    gedp->ged_gvp->gv_perspective = perspective;
+	    gedp->dm_gvp->gv_perspective = perspective;
 
 	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
@@ -183,7 +183,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb %s\")\n", dbName);
 
 		/* restore state before leaving */
-		gedp->ged_gvp->gv_perspective = prevPerspective;
+		gedp->dm_gvp->gv_perspective = prevPerspective;
 		fclose(fp);
 		return GED_ERROR;
 	    }
@@ -249,9 +249,9 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
      * of a commands section, we may finish the computations.
      */
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(gedp->ged_gvp->gv_rotation, _ged_viewrot);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, _ged_eye_model);
-    ged_view_update(gedp->ged_gvp);
+    MAT_COPY(gedp->dm_gvp->gv_rotation, _ged_viewrot);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, _ged_eye_model);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }
@@ -263,9 +263,9 @@ _ged_cm_vsize(const int argc, const char **argv)
     if (argc < 2)
 	return -1;
     /* for some reason, scale is supposed to be half of size... */
-    _ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
-    _ged_current_gedp->ged_gvp->gv_scale = _ged_current_gedp->ged_gvp->gv_size * 0.5;
-    _ged_current_gedp->ged_gvp->gv_isize = 1.0 / _ged_current_gedp->ged_gvp->gv_size;
+    _ged_current_gedp->dm_gvp->gv_size = atof(argv[1]);
+    _ged_current_gedp->dm_gvp->gv_scale = _ged_current_gedp->dm_gvp->gv_size * 0.5;
+    _ged_current_gedp->dm_gvp->gv_isize = 1.0 / _ged_current_gedp->dm_gvp->gv_size;
     return 0;
 }
 

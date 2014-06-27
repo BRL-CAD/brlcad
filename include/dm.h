@@ -29,7 +29,8 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "ged.h"
+#include "bn.h"
+#include "raytrace.h"
 
 #define USE_FBSERV 1
 
@@ -45,9 +46,7 @@
 
 #define DM_O(_m) offsetof(struct dm, _m)
 
-#define GED_MAX 2047.0
-#define GED_MIN -2048.0
-#define GED_RANGE 4095.0
+#define DM_RANGE 4095.0
 #define INV_GED 0.00048828125
 #define INV_4096 0.000244140625
 
@@ -57,13 +56,13 @@
  * X is 0..width, 0..height
  */
 #define DIVBY4096(x) (((double)(x))*INV_4096)
-#define GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
-#define GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * GED_RANGE))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * GED_RANGE))
+#define DM_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
+#define DM_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * DM_RANGE))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * DM_RANGE))
 
 /* +-2048 to +-1 */
-#define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
+#define DM_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
 #ifdef IR_KNOBS
 #  define NOISE 16		/* Size of dead spot on knob */
@@ -464,62 +463,6 @@ DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
 DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
-/* adc.c */
-DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
-				  struct ged_view *gvp);
-
-/* axes.c */
-DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
-					fastf_t viewSize,
-					struct ged_data_axes_state *gdasp);
-
-DM_EXPORT extern void dm_draw_axes(struct dm *dmp,
-				   fastf_t viewSize,
-				   const mat_t rmat,
-				   struct ged_axes_state *gasp);
-
-/* clip.c */
-DM_EXPORT extern int clip(fastf_t *,
-			  fastf_t *,
-			  fastf_t *,
-			  fastf_t *);
-DM_EXPORT extern int vclip(fastf_t *,
-			   fastf_t *,
-			   fastf_t *,
-			   fastf_t *);
-
-/* grid.c */
-DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
-				   struct ged_grid_state *ggsp,
-				   struct ged_view *gvp,
-				   fastf_t base2local);
-
-/* labels.c */
-DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
-				    struct rt_wdb *wdbp,
-				    const char *name,
-				    mat_t viewmat,
-				    int *labelsColor,
-				    int (*labelsHook)(struct dm *dmp_arg, struct rt_wdb *wdbp_arg,
-                                                      const char *name_arg, mat_t viewmat_arg,
-                                                      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
-				    ClientData labelsHookClientdata);
-
-/* rect.c */
-DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
-				   struct ged_rect_state *grsp);
-
-/* scale.c */
-DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
-				    fastf_t viewSize,
-				    int *lineColor,
-				    int *textColor);
-
-/* vers.c */
-DM_EXPORT extern const char *dm_version(void);
-
-
-__END_DECLS
 
 
 /************************************************/
@@ -557,6 +500,370 @@ __END_DECLS
     HIDDEN int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
     HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
     HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
+
+/* View and draw state moved from libged.  *not* final form, but merely
+ * a first step in moving the logic from libged to libdm. */
+
+struct dm_adc_state {
+    int		gas_draw;
+    int		gas_dv_x;
+    int		gas_dv_y;
+    int		gas_dv_a1;
+    int		gas_dv_a2;
+    int		gas_dv_dist;
+    fastf_t	gas_pos_model[3];
+    fastf_t	gas_pos_view[3];
+    fastf_t	gas_pos_grid[3];
+    fastf_t	gas_a1;
+    fastf_t	gas_a2;
+    fastf_t	gas_dst;
+    int		gas_anchor_pos;
+    int		gas_anchor_a1;
+    int		gas_anchor_a2;
+    int		gas_anchor_dst;
+    fastf_t	gas_anchor_pt_a1[3];
+    fastf_t	gas_anchor_pt_a2[3];
+    fastf_t	gas_anchor_pt_dst[3];
+    int		gas_line_color[3];
+    int		gas_tick_color[3];
+    int		gas_line_width;
+};
+
+struct dm_axes_state {
+    int       gas_draw;
+    point_t   gas_axes_pos;		/* in model coordinates */
+    fastf_t   gas_axes_size; 		/* in view coordinates */
+    int	      gas_line_width;    	/* in pixels */
+    int	      gas_pos_only;
+    int	      gas_axes_color[3];
+    int	      gas_label_color[3];
+    int	      gas_triple_color;
+    int	      gas_tick_enabled;
+    int	      gas_tick_length;		/* in pixels */
+    int	      gas_tick_major_length; 	/* in pixels */
+    fastf_t   gas_tick_interval; 	/* in mm */
+    int	      gas_ticks_per_major;
+    int	      gas_tick_threshold;
+    int	      gas_tick_color[3];
+    int	      gas_tick_major_color[3];
+};
+
+struct dm_data_arrow_state {
+    int       gdas_draw;
+    int	      gdas_color[3];
+    int	      gdas_line_width;    	/* in pixels */
+    int       gdas_tip_length;
+    int       gdas_tip_width;
+    int       gdas_num_points;
+    point_t   *gdas_points;		/* in model coordinates */
+};
+
+struct dm_data_axes_state {
+    int       gdas_draw;
+    int	      gdas_color[3];
+    int	      gdas_line_width;    	/* in pixels */
+    fastf_t   gdas_size; 		/* in view coordinates */
+    int       gdas_num_points;
+    point_t   *gdas_points;		/* in model coordinates */
+};
+
+struct dm_data_label_state {
+    int		gdls_draw;
+    int		gdls_color[3];
+    int		gdls_num_labels;
+    int		gdls_size;
+    char	**gdls_labels;
+    point_t	*gdls_points;
+};
+
+struct dm_data_line_state {
+    int       gdls_draw;
+    int	      gdls_color[3];
+    int	      gdls_line_width;    	/* in pixels */
+    int       gdls_num_points;
+    point_t   *gdls_points;		/* in model coordinates */
+};
+
+struct dm_grid_state {
+    int		ggs_draw;		/* draw grid */
+    int		ggs_snap;		/* snap to grid */
+    fastf_t	ggs_anchor[3];
+    fastf_t	ggs_res_h;		/* grid resolution in h */
+    fastf_t	ggs_res_v;		/* grid resolution in v */
+    int		ggs_res_major_h;	/* major grid resolution in h */
+    int		ggs_res_major_v;	/* major grid resolution in v */
+    int		ggs_color[3];
+};
+
+struct dm_other_state {
+    int gos_draw;
+    int	gos_line_color[3];
+    int	gos_text_color[3];
+};
+
+struct dm_rect_state {
+    int		grs_active;	/* 1 - actively drawing a rectangle */
+    int		grs_draw;	/* draw rubber band rectangle */
+    int		grs_line_width;
+    int		grs_line_style;  /* 0 - solid, 1 - dashed */
+    int		grs_pos[2];	/* Position in image coordinates */
+    int		grs_dim[2];	/* Rectangle dimension in image coordinates */
+    fastf_t	grs_x;		/* Corner of rectangle in normalized     */
+    fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
+    fastf_t	grs_width;	/* Width and height of rectangle in      */
+    fastf_t	grs_height;	/* ------ normalized view coordinates.   */
+    int		grs_bg[3];	/* Background color */
+    int		grs_color[3];	/* Rectangle color */
+    int		grs_cdim[2];	/* Canvas dimension in pixels */
+    fastf_t	grs_aspect;	/* Canvas aspect ratio */
+};
+
+struct dm_run_rt {
+    struct bu_list l;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE fd;
+    HANDLE hProcess;
+    DWORD pid;
+
+#  ifdef TCL_OK
+    Tcl_Channel chan;
+#  else
+    void *chan;
+#  endif
+#else
+    int fd;
+    int pid;
+#endif
+    int aborted;
+};
+
+/* FIXME: should be private */
+struct dm_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+/* FIXME: should be private */
+struct dm_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
+struct dm_drawable {
+    struct bu_list		l;
+    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
+    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
+    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
+    struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
+
+    char			**gd_rt_cmd;
+    int				gd_rt_cmd_len;
+    struct dm_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+
+    void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
+
+    int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
+
+    /* qray state */
+    struct bu_vls		gd_qray_basename;	/**< @brief  basename of query ray vlist */
+    struct bu_vls		gd_qray_script;		/**< @brief  query ray script */
+    char			gd_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
+    int				gd_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
+    struct dm_qray_fmt		*gd_qray_fmts;
+    struct dm_qray_color	gd_qray_odd_color;
+    struct dm_qray_color	gd_qray_even_color;
+    struct dm_qray_color	gd_qray_void_color;
+    struct dm_qray_color	gd_qray_overlap_color;
+    int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
+};
+
+typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } DmClipType;
+
+typedef struct {
+    size_t    gpc_num_points;
+    point_t   *gpc_point;		/* in model coordinates */
+} dm_poly_contour;
+
+typedef struct {
+    size_t		gp_num_contours;
+    int			gp_color[3];
+    int			gp_line_width;    	/* in pixels */
+    int			gp_line_style;
+    int			*gp_hole;
+    dm_poly_contour	*gp_contour;
+} dm_polygon;
+
+typedef struct {
+    size_t	gp_num_polygons;
+    dm_polygon	*gp_polygon;
+} dm_polygons;
+
+typedef struct {
+    int			gdps_draw;
+    int			gdps_color[3];
+    int			gdps_line_width;    	/* in pixels */
+    int			gdps_line_style;
+    int			gdps_cflag;             /* contour flag */
+    size_t		gdps_target_polygon_i;
+    size_t		gdps_curr_polygon_i;
+    size_t		gdps_curr_point_i;
+    point_t		gdps_prev_point;
+    DmClipType		gdps_clip_type;
+    fastf_t		gdps_scale;
+    point_t		gdps_origin;
+    mat_t		gdps_rotation;
+    mat_t		gdps_view2model;
+    mat_t		gdps_model2view;
+    dm_polygons	gdps_polygons;
+    fastf_t		gdps_data_vZ;
+} dm_data_polygon_state;
+
+struct dm_view {
+    struct bu_list		l;
+    fastf_t			gv_scale;
+    fastf_t			gv_size;		/**< @brief  2.0 * scale */
+    fastf_t			gv_isize;		/**< @brief  1.0 / size */
+    fastf_t			gv_perspective;		/**< @brief  perspective angle */
+    vect_t			gv_aet;
+    vect_t			gv_eye_pos;		/**< @brief  eye position */
+    vect_t			gv_keypoint;
+    char			gv_coord;		/**< @brief  coordinate system */
+    char			gv_rotate_about;	/**< @brief  indicates what point rotations are about */
+    mat_t			gv_rotation;
+    mat_t			gv_center;
+    mat_t			gv_model2view;
+    mat_t			gv_pmodel2view;
+    mat_t			gv_view2model;
+    mat_t			gv_pmat;		/**< @brief  perspective matrix */
+    void 			(*gv_callback)();	/**< @brief  called in dm_view_update with gvp and gv_clientData */
+    void *			gv_clientData;		/**< @brief  passed to gv_callback */
+    fastf_t			gv_prevMouseX;
+    fastf_t			gv_prevMouseY;
+    fastf_t			gv_minMouseDelta;
+    fastf_t			gv_maxMouseDelta;
+    fastf_t			gv_rscale;
+    fastf_t			gv_sscale;
+    int				gv_mode;
+    int				gv_zclip;
+    struct dm_adc_state 	gv_adc;
+    struct dm_axes_state 	gv_model_axes;
+    struct dm_axes_state 	gv_view_axes;
+    struct dm_data_arrow_state gv_data_arrows;
+    struct dm_data_axes_state 	gv_data_axes;
+    struct dm_data_label_state gv_data_labels;
+    struct dm_data_line_state  gv_data_lines;
+    dm_data_polygon_state 	gv_data_polygons;
+    struct dm_data_arrow_state	gv_sdata_arrows;
+    struct dm_data_axes_state 	gv_sdata_axes;
+    struct dm_data_label_state gv_sdata_labels;
+    struct dm_data_line_state 	gv_sdata_lines;
+    dm_data_polygon_state 	gv_sdata_polygons;
+    struct dm_grid_state 	gv_grid;
+    struct dm_other_state 	gv_center_dot;
+    struct dm_other_state 	gv_prim_labels;
+    struct dm_other_state 	gv_view_params;
+    struct dm_other_state 	gv_view_scale;
+    struct dm_rect_state 	gv_rect;
+    int				gv_adaptive_plot;
+    int				gv_redraw_on_zoom;
+    int				gv_x_samples;
+    int				gv_y_samples;
+    fastf_t			gv_point_scale;
+    fastf_t			gv_curve_scale;
+    fastf_t			gv_data_vZ;
+    /* from ged_dm_view */
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_edit_motion_delta_callback;
+    struct bu_vls		gdv_name;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    /* GED pointer - must go away */
+    void *gdv_gop;
+};
+
+struct dm_display_list {
+    struct bu_list	l;
+    struct directory	*gdl_dp;
+    struct bu_vls	gdl_path;
+    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
+    int			gdl_wflag;
+};
+
+#define DM_DISPLAY_LIST_NULL ((struct dm_display_list *)0)
+#define DM_DRAWABLE_NULL ((struct dm_drawable *)0)
+#define DM_VIEW_NULL ((struct dm_view *)0)
+
+/* axes.c */
+DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
+					fastf_t viewSize,
+					struct dm_data_axes_state *gdasp);
+
+DM_EXPORT extern void dm_draw_axes(struct dm *dmp,
+				   fastf_t viewSize,
+				   const mat_t rmat,
+				   struct dm_axes_state *gasp);
+
+/* adc.c */
+DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
+				  struct dm_view *gvp);
+
+/* clip.c */
+DM_EXPORT extern int clip(fastf_t *,
+			  fastf_t *,
+			  fastf_t *,
+			  fastf_t *);
+DM_EXPORT extern int vclip(fastf_t *,
+			   fastf_t *,
+			   fastf_t *,
+			   fastf_t *);
+
+/* grid.c */
+DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
+				   struct dm_grid_state *ggsp,
+				   struct dm_view *gvp,
+				   fastf_t base2local);
+
+/* labels.c */
+DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
+				    struct rt_wdb *wdbp,
+				    const char *name,
+				    mat_t viewmat,
+				    int *labelsColor,
+				    int (*labelsHook)(struct dm *dmp_arg, struct rt_wdb *wdbp_arg,
+                                                      const char *name_arg, mat_t viewmat_arg,
+                                                      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
+				    ClientData labelsHookClientdata);
+
+/* rect.c */
+DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
+				   struct dm_rect_state *grsp);
+
+/* scale.c */
+DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
+				    fastf_t viewSize,
+				    int *lineColor,
+				    int *textColor);
+
+/* vers.c */
+DM_EXPORT extern const char *dm_version(void);
+
+/* defined in adc.c */
+DM_EXPORT extern void dm_calc_adc_pos(struct dm_view *gvp);
+DM_EXPORT extern void dm_calc_adc_a1(struct dm_view *gvp);
+DM_EXPORT extern void dm_calc_adc_a2(struct dm_view *gvp);
+DM_EXPORT extern void dm_calc_adc_dst(struct dm_view *gvp);
+DM_EXPORT extern void adc_view_to_adc_grid(struct dm_view *gvp);
+DM_EXPORT extern void adc_grid_to_adc_view(struct dm_view *gvp);
+DM_EXPORT extern void adc_model_to_adc_view(struct dm_view *gvp);
+
+/* defined in clip.c */
+DM_EXPORT extern int dm_clip(fastf_t *xp1,
+			       fastf_t *yp1,
+			       fastf_t *xp2,
+			       fastf_t *yp2);
+
+__END_DECLS
 
 #endif /* DM_H */
 

@@ -51,7 +51,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	point_t pt = VINIT_ZERO;
 
-	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
+	bn_mat_trn(mat, gedp->dm_gvp->gv_rotation);
 	anim_v_unpermute(mat);
 
 	if (anim_mat2ypr(mat, pt) == 2) {
@@ -85,8 +85,8 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     anim_dy_p_r2mat(mat, V3ARGS(ypr));
     anim_v_permute(mat);
-    bn_mat_trn(gedp->ged_gvp->gv_rotation, mat);
-    ged_view_update(gedp->ged_gvp);
+    bn_mat_trn(gedp->dm_gvp->gv_rotation, mat);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

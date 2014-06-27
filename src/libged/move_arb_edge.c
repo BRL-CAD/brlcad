@@ -290,7 +290,7 @@ ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    (void)rt_arb_find_e_nearest_pt2(&edge, &vi1, &vi2, &intern, view, gedp->ged_gvp->gv_model2view, ptol);
+    (void)rt_arb_find_e_nearest_pt2(&edge, &vi1, &vi2, &intern, view, gedp->dm_gvp->gv_model2view, ptol);
     bu_vls_printf(gedp->ged_result_str, "%d %d %d", edge, vi1, vi2);
 
     rt_db_free_internal(&intern);

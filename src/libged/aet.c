@@ -49,7 +49,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 
     /* get aet */
     if (argc == 1) {
-	bn_encode_vect(gedp->ged_result_str, gedp->ged_gvp->gv_aet);
+	bn_encode_vect(gedp->ged_result_str, gedp->dm_gvp->gv_aet);
 	return GED_OK;
     }
 
@@ -72,12 +72,12 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (iflag) {
-	    VADD2(gedp->ged_gvp->gv_aet, gedp->ged_gvp->gv_aet, aet);
+	    VADD2(gedp->dm_gvp->gv_aet, gedp->dm_gvp->gv_aet, aet);
 	} else {
-	    VMOVE(gedp->ged_gvp->gv_aet, aet);
+	    VMOVE(gedp->dm_gvp->gv_aet, aet);
 	}
-	_ged_mat_aet(gedp->ged_gvp);
-	ged_view_update(gedp->ged_gvp);
+	_ged_mat_aet(gedp->dm_gvp);
+	dm_view_update(gedp->dm_gvp);
 
 	return GED_OK;
     }
@@ -107,12 +107,12 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(aet, scan);
 
 	if (iflag) {
-	    VADD2(gedp->ged_gvp->gv_aet, gedp->ged_gvp->gv_aet, aet);
+	    VADD2(gedp->dm_gvp->gv_aet, gedp->dm_gvp->gv_aet, aet);
 	} else {
-	    VMOVE(gedp->ged_gvp->gv_aet, aet);
+	    VMOVE(gedp->dm_gvp->gv_aet, aet);
 	}
-	_ged_mat_aet(gedp->ged_gvp);
-	ged_view_update(gedp->ged_gvp);
+	_ged_mat_aet(gedp->dm_gvp);
+	dm_view_update(gedp->dm_gvp);
 
 	return GED_OK;
     }

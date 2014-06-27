@@ -49,7 +49,7 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
 
     /* return Viewrot as a quaternion */
     if (argc == 1) {
-	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+	quat_mat2quat(quat, gedp->dm_gvp->gv_rotation);
 	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
 	return GED_OK;
     }
@@ -71,8 +71,8 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     }
     HMOVE(quat, scan);
 
-    quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
-    ged_view_update(gedp->ged_gvp);
+    quat_quat2mat(gedp->dm_gvp->gv_rotation, quat);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

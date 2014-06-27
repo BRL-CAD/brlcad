@@ -49,7 +49,7 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 
     /* get eye position */
     if (argc == 1) {
-	VSCALE(eye_pos, gedp->ged_gvp->gv_eye_pos, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(eye_pos, gedp->dm_gvp->gv_eye_pos, gedp->ged_wdbp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, eye_pos);
 	return GED_OK;
     }
@@ -84,12 +84,12 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(eye_pos, scan);
     }
 
-    VSCALE(gedp->ged_gvp->gv_eye_pos, eye_pos, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(gedp->dm_gvp->gv_eye_pos, eye_pos, gedp->ged_wdbp->dbip->dbi_local2base);
 
     /* update perspective matrix */
-    ged_mike_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_eye_pos);
+    ged_mike_persp_mat(gedp->dm_gvp->gv_pmat, gedp->dm_gvp->gv_eye_pos);
 
-    ged_view_update(gedp->ged_gvp);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

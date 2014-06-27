@@ -91,19 +91,19 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
     VSCALE(look, look, gedp->ged_wdbp->dbip->dbi_local2base);
 
     VSET(tmp, 0.0, 0.0, 1.0);
-    MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, tmp);
+    MAT4X3PNT(eye, gedp->dm_gvp->gv_view2model, tmp);
 
     VSUB2(dir, eye, look);
     VUNITIZE(dir);
     bn_ae_vec(&new_az, &new_el, dir);
 
-    VSET(gedp->ged_gvp->gv_aet, new_az, new_el, gedp->ged_gvp->gv_aet[Z]);
-    _ged_mat_aet(gedp->ged_gvp);
+    VSET(gedp->dm_gvp->gv_aet, new_az, new_el, gedp->dm_gvp->gv_aet[Z]);
+    _ged_mat_aet(gedp->dm_gvp);
 
-    VJOIN1(new_center, eye, -gedp->ged_gvp->gv_scale, dir);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_center);
+    VJOIN1(new_center, eye, -gedp->dm_gvp->gv_scale, dir);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, new_center);
 
-    ged_view_update(gedp->ged_gvp);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

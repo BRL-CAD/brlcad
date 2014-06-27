@@ -106,8 +106,8 @@ _ged_wait_status(struct bu_vls *logstr,
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -120,9 +120,9 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(dm_display_list, rtcp->gedp->dm_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->dm_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
 		sp->s_flag = DOWN;
@@ -150,7 +150,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 				 rtcp->fp,
 				 value,
 				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+				 rtcp->gedp->dm_gdp->gd_uplotOutputMode);
 }
 
 static void
@@ -169,8 +169,8 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcop->fd);
 	close(rtcop->fd);
 
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
+	if (rtcop->gedp->dm_gdp->gd_rtCmdNotify != (void (*)())0)
+	    rtcop->gedp->dm_gdp->gd_rtCmdNotify(0);
 
 	BU_PUT(rtcop, struct rtcheck_output);
 	return;
@@ -188,8 +188,8 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 void
 rtcheck_vector_handler(ClientData clientData, int mask)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -201,9 +201,9 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(dm_display_list, rtcp->gedp->dm_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->dm_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
 		sp->s_flag = DOWN;
@@ -229,7 +229,7 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 rtcp->fp,
 				 value,
 				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+				 rtcp->gedp->dm_gdp->gd_uplotOutputMode);
 }
 
 void
@@ -248,8 +248,8 @@ rtcheck_output_handler(ClientData clientData, int mask)
 				 (ClientData)rtcop);
 	Tcl_Close(rtcop->interp, rtcop->chan);
 
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
+	if (rtcop->gedp->dm_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    rtcop->gedp->dm_gdp->gd_rtCmdNotify(0);
 
 	BU_PUT(rtcop, struct rtcheck_output);
 
@@ -321,9 +321,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     }
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gedp->dm_gdp->gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
     for (i = 1; i < argc; i++)
@@ -345,13 +345,13 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      * Otherwise, simply append the remaining args.
      */
     if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
+	gedp->dm_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->dm_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
 	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	vp = &gedp->dm_gdp->gd_rt_cmd[0];
 	while (*vp)
 	    Tcl_AppendResult(brlcad_interp, *vp++, " ", (char *)NULL);
 
@@ -396,8 +396,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
-	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
-	perror(gedp->ged_gdp->gd_rt_cmd[0]);
+	(void)execvp(gedp->dm_gdp->gd_rt_cmd[0], gedp->dm_gdp->gd_rt_cmd);
+	perror(gedp->dm_gdp->gd_rt_cmd[0]);
 	exit(16);
     }
 
@@ -421,7 +421,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->pid = pid;
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
-    rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
+    rtcp->csize = gedp->dm_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
     rtcp->interp = brlcad_interp;
 
@@ -491,9 +491,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = e_pipe[1];
     si.wShowWindow = SW_HIDE;
 
-    snprintf(line, sizeof(line), "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	snprintf(name, sizeof(name), "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
+    snprintf(line, sizeof(line), "%s ", gedp->dm_gdp->gd_rt_cmd[0]);
+    for (i = 1; i < gedp->dm_gdp->gd_rt_cmd_len; i++) {
+	snprintf(name, sizeof(name), "%s ", gedp->dm_gdp->gd_rt_cmd[i]);
 	bu_strlcat(line, name, sizeof(line));
     }
 
@@ -526,7 +526,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->pid = pi.dwProcessId;
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
-    rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
+    rtcp->csize = gedp->dm_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
     rtcp->interp = brlcad_interp;
 
@@ -546,8 +546,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     (ClientData)rtcop);
 #endif
 
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->dm_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }

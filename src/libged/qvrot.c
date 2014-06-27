@@ -50,7 +50,7 @@ usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
      */
     MAT_IDN(newrot);
     bn_mat_angles_rad(newrot, xangle, yangle, zangle);
-    bn_mat_mul2(newrot, gedp->ged_gvp->gv_rotation);
+    bn_mat_mul2(newrot, gedp->dm_gvp->gv_rotation);
 }
 
 
@@ -112,9 +112,9 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 
     el = atan2(dz, sqrt(dx * dx + dy * dy));
 
-    bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
+    bn_mat_angles(gedp->dm_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
     usejoy(gedp, 0.0, 0.0, theta*DEG2RAD);
-    ged_view_update(gedp->ged_gvp);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

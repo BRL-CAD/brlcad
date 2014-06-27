@@ -48,7 +48,7 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
 
     /* get view center */
     if (argc == 1) {
-	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
+	MAT_DELTAS_GET_NEG(center, gedp->dm_gvp->gv_center);
 	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, center);
 
@@ -89,8 +89,8 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
     }
 
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    ged_view_update(gedp->ged_gvp);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, center);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

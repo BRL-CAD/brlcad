@@ -136,13 +136,13 @@ ged_free(struct ged *gedp)
 
     gedp->ged_wdbp = RT_WDB_NULL;
 
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-	if (gedp->ged_gdp->gd_headDisplay)
-	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
-	if (gedp->ged_gdp->gd_headVDraw)
-	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
-	qray_free(gedp->ged_gdp);
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
+    if (gedp->dm_gdp != DM_DRAWABLE_NULL) {
+	if (gedp->dm_gdp->gd_headDisplay)
+	    BU_PUT(gedp->dm_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->dm_gdp->gd_headVDraw)
+	    BU_PUT(gedp->dm_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->dm_gdp);
+	BU_PUT(gedp->dm_gdp, struct ged_drawable);
     }
 
     if (gedp->ged_log) {
@@ -184,26 +184,26 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
-    BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
-    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
+    BU_GET(gedp->dm_gdp, struct dm_drawable);
+    BU_GET(gedp->dm_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->dm_gdp->gd_headDisplay);
+    BU_GET(gedp->dm_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->dm_gdp->gd_headVDraw);
+    BU_LIST_INIT(&gedp->dm_gdp->gd_headRunRt.l);
 
     /* yuck */
     if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
 	BU_LIST_INIT(&_FreeSolid.l);
     }
 
-    gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
-    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    qray_init(gedp->ged_gdp);
+    gedp->dm_gdp->gd_freeSolids = &_FreeSolid;
+    gedp->dm_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->dm_gdp);
 
     gedp->ged_selections = bu_hash_tbl_create(0);
 
     /* (in)sanity */
-    gedp->ged_gvp = NULL;
+    gedp->dm_gvp = NULL;
     gedp->ged_fbsp = NULL;
     gedp->ged_dmp = NULL;
     gedp->ged_refresh_clientdata = NULL;
@@ -216,9 +216,9 @@ ged_init(struct ged *gedp)
 
 
 void
-ged_view_init(struct ged_view *gvp)
+ged_view_init(struct dm_view *gvp)
 {
-    if (gvp == GED_VIEW_NULL)
+    if (gvp == DM_VIEW_NULL)
 	return;
 
     gvp->gv_scale = 500.0;
@@ -299,7 +299,7 @@ ged_view_init(struct ged_view *gvp)
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
-    ged_view_update(gvp);
+    dm_view_update(gvp);
 }
 
 

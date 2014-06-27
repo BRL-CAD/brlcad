@@ -71,8 +71,8 @@ basename_without_suffix(const char *p1, const char *suff)
 int
 ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     int i;
     FILE *fp;
     char *base;
@@ -154,8 +154,8 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
-    if (gedp->ged_gvp->gv_perspective > 0)
-	fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
+    if (gedp->dm_gvp->gv_perspective > 0)
+	fprintf(fp, "-p%g ", gedp->dm_gvp->gv_perspective);
     for (i = 2; i < argc; i++)
 	fprintf(fp, "%s ", argv[i]);
 
@@ -167,9 +167,9 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
 	gdlp = next_gdlp;
     }

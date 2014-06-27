@@ -28,6 +28,7 @@
 #include "bio.h"
 
 #include "solid.h"
+#include "dm.h"
 
 #include "./ged_private.h"
 
@@ -41,8 +42,8 @@
 int
 ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     struct solid *sp;
     int is_empty = 1;
     vect_t min, max;
@@ -90,9 +91,9 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
     /* calculate the bounding for of all solids being displayed */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    minus[X] = sp->s_center[X] - sp->s_size;
@@ -126,15 +127,15 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    MAT_IDN(gedp->ged_gvp->gv_center);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    gedp->ged_gvp->gv_scale = radial[X];
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Y]);
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Z]);
+    MAT_IDN(gedp->dm_gvp->gv_center);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, center);
+    gedp->dm_gvp->gv_scale = radial[X];
+    V_MAX(gedp->dm_gvp->gv_scale, radial[Y]);
+    V_MAX(gedp->dm_gvp->gv_scale, radial[Z]);
 
-    gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    gedp->dm_gvp->gv_size = factor * gedp->dm_gvp->gv_scale;
+    gedp->dm_gvp->gv_isize = 1.0 / gedp->dm_gvp->gv_size;
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

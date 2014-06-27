@@ -94,14 +94,14 @@ ged_pov(struct ged *gedp, int argc, const char *argv[])
     /***************** Use the arguments *******************/
 
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
-    gedp->ged_gvp->gv_scale = gedp->ged_wdbp->dbip->dbi_local2base * scale;
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, center);
+    quat_quat2mat(gedp->dm_gvp->gv_rotation, quat);
+    gedp->dm_gvp->gv_scale = gedp->ged_wdbp->dbip->dbi_local2base * scale;
     VSCALE(eye_pos, eye_pos, gedp->ged_wdbp->dbip->dbi_local2base);
-    VMOVE(gedp->ged_gvp->gv_eye_pos, eye_pos);
-    gedp->ged_gvp->gv_perspective = perspective;
+    VMOVE(gedp->dm_gvp->gv_eye_pos, eye_pos);
+    gedp->dm_gvp->gv_perspective = perspective;
 
-    ged_view_update(gedp->ged_gvp);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

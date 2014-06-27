@@ -37,7 +37,7 @@
 int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     static const char *usage = "from to";
@@ -87,7 +87,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path = BU_VLS_INIT_ZERO;

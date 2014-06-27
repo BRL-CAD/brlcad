@@ -343,7 +343,7 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     }
 
     botip = (struct rt_bot_internal *)intern.idb_ptr;
-    (void)rt_bot_find_e_nearest_pt2(&vi1, &vi2, botip, view, gedp->ged_gvp->gv_model2view);
+    (void)rt_bot_find_e_nearest_pt2(&vi1, &vi2, botip, view, gedp->dm_gvp->gv_model2view);
     bu_vls_printf(gedp->ged_result_str, "%d %d", vi1, vi2);
 
     rt_db_free_internal(&intern);
@@ -403,7 +403,7 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     botip = (struct rt_bot_internal *)intern.idb_ptr;
     VMOVE(view, scan); /* convert double to fastf_t */
 
-    nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
+    nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->dm_gvp->gv_model2view);
     bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);
 
     rt_db_free_internal(&intern);
@@ -727,7 +727,7 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
 	    vect_t diff;
 	    fastf_t mag;
 
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+	    MAT4X3PNT(vpt, gedp->dm_gvp->gv_model2view, &botip->vertices[i*3]);
 
 	    if (vpt[Z] < vminz)
 		continue;
@@ -745,7 +745,7 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
 	for (i = 0; i < botip->num_vertices; i++) {
 	    point_t vpt;
 
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+	    MAT4X3PNT(vpt, gedp->dm_gvp->gv_model2view, &botip->vertices[i*3]);
 
 	    if (vpt[Z] < vminz)
 		continue;

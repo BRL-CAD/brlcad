@@ -1066,7 +1066,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
+write_data_arrows(struct dm_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1141,7 +1141,7 @@ write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
 
 
 static void
-write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
+write_data_axes(struct dm_data_axes_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1218,7 +1218,7 @@ write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
 
 
 static void
-write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
+write_data_lines(struct dm_data_line_state *gdlsp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1258,14 +1258,14 @@ write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
 static void
 obj_write_data(struct ged *gedp, FILE *fp)
 {
-    write_data_arrows(&gedp->ged_gvp->gv_data_arrows, fp, 0);
-    write_data_arrows(&gedp->ged_gvp->gv_sdata_arrows, fp, 1);
+    write_data_arrows(&gedp->dm_gvp->gv_data_arrows, fp, 0);
+    write_data_arrows(&gedp->dm_gvp->gv_sdata_arrows, fp, 1);
 
-    write_data_axes(&gedp->ged_gvp->gv_data_axes, fp, 0);
-    write_data_axes(&gedp->ged_gvp->gv_sdata_axes, fp, 1);
+    write_data_axes(&gedp->dm_gvp->gv_data_axes, fp, 0);
+    write_data_axes(&gedp->dm_gvp->gv_sdata_axes, fp, 1);
 
-    write_data_lines(&gedp->ged_gvp->gv_data_lines, fp, 0);
-    write_data_lines(&gedp->ged_gvp->gv_sdata_lines, fp, 1);
+    write_data_lines(&gedp->dm_gvp->gv_data_lines, fp, 0);
+    write_data_lines(&gedp->dm_gvp->gv_sdata_lines, fp, 1);
 }
 
 
@@ -1330,7 +1330,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     const char *cmd_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1507,7 +1507,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(mat);
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay)) {
 	struct solid *sp;
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {

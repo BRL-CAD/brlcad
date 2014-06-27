@@ -46,7 +46,7 @@
 
 
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct dm_run_rt *rrtp;
     struct ged *gedp;
 };
 
@@ -56,8 +56,8 @@ _ged_rt_write(struct ged *gedp,
 	      FILE *fp,
 	      vect_t eye_model)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     size_t i;
     quat_t quat;
     struct solid *sp;
@@ -71,17 +71,17 @@ _ged_rt_write(struct ged *gedp,
      * from 9->14 "should" be safe as it's above our calculation
      * tolerance and above single-precision capability.
      */
-    fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
-    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+    fprintf(fp, "viewsize %.14e;\n", gedp->dm_gvp->gv_size);
+    quat_mat2quat(quat, gedp->dm_gvp->gv_rotation);
     fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
     fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     fprintf(fp, "start 0; clean;\n");
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
@@ -92,9 +92,9 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
@@ -112,9 +112,9 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
@@ -132,15 +132,15 @@ void
 _ged_rt_set_eye_model(struct ged *gedp,
 		      vect_t eye_model)
 {
-    if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
+    if (gedp->dm_gvp->gv_zclip || gedp->dm_gvp->gv_perspective > 0) {
 	vect_t temp;
 
 	VSET(temp, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
+	MAT4X3PNT(eye_model, gedp->dm_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
-	struct ged_display_list *gdlp;
-	struct ged_display_list *next_gdlp;
+	struct dm_display_list *gdlp;
+	struct dm_display_list *next_gdlp;
 	struct solid *sp;
 	int i;
 	vect_t direction;
@@ -151,17 +151,17 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	vect_t diag2;
 	point_t ecenter;
 
-	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
-	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+	VSET(eye_model, -gedp->dm_gvp->gv_center[MDX],
+	     -gedp->dm_gvp->gv_center[MDY], -gedp->dm_gvp->gv_center[MDZ]);
 
 	for (i = 0; i < 3; ++i) {
 	    extremum[0][i] = INFINITY;
 	    extremum[1][i] = -INFINITY;
 	}
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		minus[X] = sp->s_center[X] - sp->s_size;
@@ -177,7 +177,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    gdlp = next_gdlp;
 	}
 
-	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
+	VMOVEN(direction, gedp->dm_gvp->gv_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
 		direction[i] = 0.0;
@@ -196,7 +196,7 @@ void
 _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_run_rt *run_rtp;
+    struct dm_run_rt *run_rtp;
 #ifndef _WIN32
     int count = 0;
 #else
@@ -207,7 +207,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL ||
+	drcdp->rrtp == (struct dm_run_rt *)NULL ||
 	brlcad_interp == (Tcl_Interp *)NULL)
 	return;
 
@@ -282,8 +282,8 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (drcdp->gedp->dm_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    drcdp->gedp->dm_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
@@ -321,7 +321,7 @@ _ged_run_rt(struct ged *gedp)
     struct bu_vls line = BU_VLS_INIT_ZERO;
 #endif
     vect_t eye_model;
-    struct ged_run_rt *run_rtp;
+    struct dm_run_rt *run_rtp;
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
@@ -357,8 +357,8 @@ _ged_run_rt(struct ged *gedp)
 	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
-	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
-	perror(gedp->ged_gdp->gd_rt_cmd[0]);
+	(void)execvp(gedp->dm_gdp->gd_rt_cmd[0], gedp->dm_gdp->gd_rt_cmd);
+	perror(gedp->dm_gdp->gd_rt_cmd[0]);
 	exit(16);
     }
 
@@ -372,9 +372,9 @@ _ged_run_rt(struct ged *gedp)
     _ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GET(run_rtp, struct ged_run_rt);
+    BU_GET(run_rtp, struct dm_run_rt);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->dm_gdp->gd_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
@@ -426,8 +426,8 @@ _ged_run_rt(struct ged *gedp)
     si.hStdOutput  = pipe_err[1];
     si.hStdError   = pipe_err[1];
 
-    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	bu_vls_printf(&line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
+    for (i = 0; i < gedp->dm_gdp->gd_rt_cmd_len; i++) {
+	bu_vls_printf(&line, "%s ", gedp->dm_gdp->gd_rt_cmd[i]);
     }
 
     CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
@@ -447,7 +447,7 @@ _ged_run_rt(struct ged *gedp)
 
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->dm_gdp->gd_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_errDup;
     run_rtp->hProcess = pi.hProcess;
@@ -472,9 +472,9 @@ _ged_run_rt(struct ged *gedp)
 size_t
 ged_count_tops(struct ged *gedp)
 {
-    struct ged_display_list *gdlp = NULL;
+    struct dm_display_list *gdlp = NULL;
     size_t visibleCount = 0;
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay)) {
 	visibleCount++;
     }
     return visibleCount;
@@ -487,10 +487,10 @@ ged_count_tops(struct ged *gedp)
 int
 ged_build_tops(struct ged *gedp, char **start, char **end)
 {
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     char **vp = start;
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay)) {
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
@@ -531,7 +531,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -542,12 +542,12 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 #endif
     }
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gedp->dm_gdp->gd_rt_cmd[0];
     *vp++ = rt;
     *vp++ = "-M";
 
-    if (gedp->ged_gvp->gv_perspective > 0) {
-	(void)sprintf(pstring, "-p%g", gedp->ged_gvp->gv_perspective);
+    if (gedp->dm_gvp->gv_perspective > 0) {
+	(void)sprintf(pstring, "-p%g", gedp->dm_gvp->gv_perspective);
 	*vp++ = pstring;
     }
 
@@ -587,21 +587,21 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
      * Otherwise, simply append the remaining args.
      */
     if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
+	gedp->dm_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->dm_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
 	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	vp = &gedp->dm_gdp->gd_rt_cmd[0];
 	while (*vp)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
 	bu_vls_printf(gedp->ged_result_str, "\n");
     }
     (void)_ged_run_rt(gedp);
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->dm_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }

@@ -598,8 +598,8 @@ dm_draw_labels(struct dm *dmp,
 	    break;
 
 	DM_DRAW_STRING_2D(dmp, pl[i].str,
-			  (((int)(pl[i].pt[X]*GED_MAX))+15)*INV_GED,
-			  (((int)(pl[i].pt[Y]*GED_MAX))+15)*INV_GED, 0, 1);
+			  (((int)(pl[i].pt[X]*DM_MAX))+15)*INV_GED,
+			  (((int)(pl[i].pt[Y]*DM_MAX))+15)*INV_GED, 0, 1);
     }
 
     db_free_full_path(&path);

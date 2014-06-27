@@ -55,7 +55,7 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
 
 	/* calculate eye point */
 	VSET(xlate, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, xlate);
+	MAT4X3PNT(eye, gedp->dm_gvp->gv_view2model, xlate);
 	VSCALE(eye, eye, gedp->ged_wdbp->dbip->dbi_base2local);
 
 	bn_encode_vect(gedp->ged_result_str, eye);
@@ -95,16 +95,16 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
     VSCALE(eye_model, eye_model, gedp->ged_wdbp->dbip->dbi_local2base);
 
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, eye_model);
-    ged_view_update(gedp->ged_gvp);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, eye_model);
+    dm_view_update(gedp->dm_gvp);
 
     /* Second step:  put eye at view 0, 0, 1.
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-    MAT4X3PNT(new_cent, gedp->ged_gvp->gv_view2model, xlate);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent);
-    ged_view_update(gedp->ged_gvp);
+    MAT4X3PNT(new_cent, gedp->dm_gvp->gv_view2model, xlate);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, new_cent);
+    dm_view_update(gedp->dm_gvp);
 
     return TCL_OK;
 }

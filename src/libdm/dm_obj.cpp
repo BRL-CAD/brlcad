@@ -421,7 +421,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct ged_axes_state gas;
+    struct dm_axes_state gas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -436,7 +436,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
+    memset(&gas, 0, sizeof(struct dm_axes_state));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -637,7 +637,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct ged_data_axes_state gdas;
+    struct dm_data_axes_state gdas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -667,7 +667,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    memset(&gdas, 0, sizeof(struct ged_data_axes_state));
+    memset(&gdas, 0, sizeof(struct dm_data_axes_state));
     VMOVE(gdas.gdas_points[0], modelAxesPos);
     gdas.gdas_size = axesSize;
     VMOVE(gdas.gdas_color, axesColor);
@@ -863,7 +863,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct ged_axes_state gas;
+    struct dm_axes_state gas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -895,7 +895,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
+    memset(&gas, 0, sizeof(struct dm_axes_state));
     VMOVE(gas.gas_axes_pos, viewAxesPos);
     gas.gas_axes_size = axesSize;
     VMOVE(gas.gas_axes_color, axesColor);
@@ -2097,10 +2097,10 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * of the zclipping plane in dm-ogl.c. dm-X.c uses
 	 * dm_clipmin and dm_clipmax.
 	 */
-	if (dmop->dmo_dmp->dm_clipmax[2] <= GED_MAX)
+	if (dmop->dmo_dmp->dm_clipmax[2] <= DM_MAX)
 	    dmop->dmo_dmp->dm_bound = 1.0;
 	else
-	    dmop->dmo_dmp->dm_bound = GED_MAX / dmop->dmo_dmp->dm_clipmax[2];
+	    dmop->dmo_dmp->dm_bound = DM_MAX / dmop->dmo_dmp->dm_clipmax[2];
 
 	return TCL_OK;
     }

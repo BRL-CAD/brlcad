@@ -260,7 +260,7 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     nearest = find_metaballpt_nearest_pt(&((struct rt_metaball_internal *)intern.idb_ptr)->metaball_ctrl_head,
-				     model_pt, gedp->ged_gvp->gv_view2model);
+				     model_pt, gedp->dm_gvp->gv_view2model);
     pt_i = _ged_get_metaball_i_pt((struct rt_metaball_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
 
@@ -391,9 +391,9 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
     /* use the view z from the last metaball point */
     lastmbp = BU_LIST_LAST(wdb_metaballpt, &mbip->metaball_ctrl_head);
 
-    MAT4X3PNT(view_coord, gedp->ged_gvp->gv_model2view, lastmbp->coord);
+    MAT4X3PNT(view_coord, gedp->dm_gvp->gv_model2view, lastmbp->coord);
     view_mb_pt[Z] = view_coord[Z];
-    MAT4X3PNT(mb_pt, gedp->ged_gvp->gv_view2model, view_mb_pt);
+    MAT4X3PNT(mb_pt, gedp->dm_gvp->gv_view2model, view_mb_pt);
 
     if (_ged_add_metaballpt(mbip, (struct wdb_metaballpt *)NULL, mb_pt) == (struct wdb_metaballpt *)NULL) {
 	rt_db_free_internal(&intern);

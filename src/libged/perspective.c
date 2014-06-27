@@ -49,7 +49,7 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 
     /* get the perspective angle */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_perspective);
+	bu_vls_printf(gedp->ged_result_str, "%g", gedp->dm_gvp->gv_perspective);
 	return GED_OK;
     }
 
@@ -60,16 +60,16 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	gedp->ged_gvp->gv_perspective = perspective;
+	gedp->dm_gvp->gv_perspective = perspective;
 
-	if (SMALL_FASTF < gedp->ged_gvp->gv_perspective) {
-	    ged_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_perspective,
+	if (SMALL_FASTF < gedp->dm_gvp->gv_perspective) {
+	    ged_persp_mat(gedp->dm_gvp->gv_pmat, gedp->dm_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 	} else {
-	    MAT_COPY(gedp->ged_gvp->gv_pmat, bn_mat_identity);
+	    MAT_COPY(gedp->dm_gvp->gv_pmat, bn_mat_identity);
 	}
 
-	ged_view_update(gedp->ged_gvp);
+	dm_view_update(gedp->dm_gvp);
 
 	return GED_OK;
     }

@@ -85,8 +85,8 @@ ged_setview(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(rvec, scan);
     }
 
-    bn_mat_angles(gedp->ged_gvp->gv_rotation, rvec[X], rvec[Y], rvec[Z]);
-    ged_view_update(gedp->ged_gvp);
+    bn_mat_angles(gedp->dm_gvp->gv_rotation, rvec[X], rvec[Y], rvec[Z]);
+    dm_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

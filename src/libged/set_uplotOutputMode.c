@@ -54,7 +54,7 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
 
     /* Get the plot output mode */
     if (argc == 1) {
-	if (gedp->ged_gdp->gd_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
+	if (gedp->dm_gdp->gd_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
 	    bu_vls_printf(gedp->ged_result_str, "binary");
 	else
 	    bu_vls_printf(gedp->ged_result_str, "text");
@@ -64,10 +64,10 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
 
     if (argv[1][0] == 'b' &&
 	BU_STR_EQUAL("binary", argv[1]))
-	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+	gedp->dm_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
 	     BU_STR_EQUAL("text", argv[1]))
-	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
+	gedp->dm_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;

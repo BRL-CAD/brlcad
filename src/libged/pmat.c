@@ -47,15 +47,15 @@ ged_pmat(struct ged *gedp, int argc, const char *argv[])
 
     /* get the perspective matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmat);
+	bn_encode_mat(gedp->ged_result_str, gedp->dm_gvp->gv_pmat);
 	return GED_OK;
     } else if (argc == 2) {
 	/* set perspective matrix */
 	if (bn_decode_mat(pmat, argv[1]) != 16)
 	    return TCL_ERROR;
 
-	MAT_COPY(gedp->ged_gvp->gv_pmat, pmat);
-	ged_view_update(gedp->ged_gvp);
+	MAT_COPY(gedp->dm_gvp->gv_pmat, pmat);
+	dm_view_update(gedp->dm_gvp);
 
 	return TCL_OK;
     }

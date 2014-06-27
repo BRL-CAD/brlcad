@@ -31,7 +31,7 @@
 
 
 void
-ged_view_update(struct ged_view *gvp)
+ged_view_update(struct dm_view *gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -80,7 +80,7 @@ ged_view_update(struct ged_view *gvp)
  * during view initialization, the shaders regression test fails.
  */
 void
-_ged_mat_aet(struct ged_view *gvp)
+_ged_mat_aet(struct dm_view *gvp)
 {
     mat_t tmat;
     fastf_t twist;
@@ -109,13 +109,13 @@ _ged_do_rot(struct ged *gedp,
     mat_t temp1, temp2;
 
     if (func != (int (*)())0)
-	return (*func)(gedp, coord, gedp->ged_gvp->gv_rotate_about, rmat);
+	return (*func)(gedp, coord, gedp->dm_gvp->gv_rotate_about, rmat);
 
     switch (coord) {
 	case 'm':
 	    /* transform model rotations into view rotations */
-	    bn_mat_inv(temp1, gedp->ged_gvp->gv_rotation);
-	    bn_mat_mul(temp2, gedp->ged_gvp->gv_rotation, rmat);
+	    bn_mat_inv(temp1, gedp->dm_gvp->gv_rotation);
+	    bn_mat_mul(temp2, gedp->dm_gvp->gv_rotation, rmat);
 	    bn_mat_mul(rmat, temp2, temp1);
 	    break;
 	case 'v':
@@ -124,24 +124,24 @@ _ged_do_rot(struct ged *gedp,
     }
 
     /* Calculate new view center */
-    if (gedp->ged_gvp->gv_rotate_about != 'v') {
+    if (gedp->dm_gvp->gv_rotate_about != 'v') {
 	point_t rot_pt;
 	point_t new_origin;
 	mat_t viewchg, viewchginv;
 	point_t new_cent_view;
 	point_t new_cent_model;
 
-	switch (gedp->ged_gvp->gv_rotate_about) {
+	switch (gedp->dm_gvp->gv_rotate_about) {
 	    case 'e':
 		VSET(rot_pt, 0.0, 0.0, 1.0);
 		break;
 	    case 'k':
-		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_keypoint);
+		MAT4X3PNT(rot_pt, gedp->dm_gvp->gv_model2view, gedp->dm_gvp->gv_keypoint);
 		break;
 	    case 'm':
 		/* rotate around model center (0, 0, 0) */
 		VSET(new_origin, 0.0, 0.0, 0.0);
-		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
+		MAT4X3PNT(rot_pt, gedp->dm_gvp->gv_model2view, new_origin);
 		break;
 	    default:
 		return GED_ERROR;
@@ -153,13 +153,13 @@ _ged_do_rot(struct ged *gedp,
 	/* Convert origin in new (viewchg) coords back to old view coords */
 	VSET(new_origin, 0.0, 0.0, 0.0);
 	MAT4X3PNT(new_cent_view, viewchginv, new_origin);
-	MAT4X3PNT(new_cent_model, gedp->ged_gvp->gv_view2model, new_cent_view);
-	MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent_model);
+	MAT4X3PNT(new_cent_model, gedp->dm_gvp->gv_view2model, new_cent_view);
+	MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, new_cent_model);
     }
 
     /* pure rotation */
-    bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    ged_view_update(gedp->ged_gvp);
+    bn_mat_mul2(rmat, gedp->dm_gvp->gv_rotation);
+    ged_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }
@@ -170,9 +170,9 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 {
     point_t model_center;
 
-    MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    ged_view_update(gedp->ged_gvp);
+    MAT4X3PNT(model_center, gedp->dm_gvp->gv_view2model, svec);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, model_center);
+    ged_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }
@@ -194,20 +194,20 @@ _ged_do_tra(struct ged *gedp,
     switch (coord) {
 	case 'm':
 	    VSCALE(delta, tvec, -gedp->ged_wdbp->dbip->dbi_base2local);
-	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
+	    MAT_DELTAS_GET_NEG(vc, gedp->dm_gvp->gv_center);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
-	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
-	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
+	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->dm_gvp->gv_isize);
+	    MAT4X3PNT(work, gedp->dm_gvp->gv_view2model, tvec);
+	    MAT_DELTAS_GET_NEG(vc, gedp->dm_gvp->gv_center);
 	    VSUB2(delta, work, vc);
 	    break;
     }
 
     VSUB2(nvc, vc, delta);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    ged_view_update(gedp->ged_gvp);
+    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, nvc);
+    ged_view_update(gedp->dm_gvp);
 
     return GED_OK;
 }

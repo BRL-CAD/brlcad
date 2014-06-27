@@ -38,7 +38,7 @@
 int
 ged_lod(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_view *gvp;
+    struct dm_view *gvp;
     int printUsage = 0;
     static const char *usage = "lod (on|off|enabled)\n"
 			       "lod scale (points|curves) <factor>\n"
@@ -57,7 +57,7 @@ ged_lod(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    gvp = gedp->ged_gvp;
+    gvp = gedp->dm_gvp;
     if (gvp == NULL) {
 	return GED_OK;
     }
