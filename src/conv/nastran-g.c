@@ -1111,11 +1111,11 @@ main(int argc, char **argv)
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
     bu_setprogname(argv[0]);
-
+/*
     if (argc < 2) {
 	bu_exit(1, Usage, argv[0]);
     }
-
+*/
     fpin = stdin;
 
     units = INCHES;

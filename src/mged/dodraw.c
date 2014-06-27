@@ -220,25 +220,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     }
 }
 
-
-/*
- * Find the transformation matrix obtained when traversing
- * the arc indicated in sp->s_path[] to the indicated depth.
- *
- * Returns -
- * matp is filled with values (never read first).
- * sp may have fields updated.
- */
-void
-pathHmat(
-    struct solid *sp,
-    matp_t matp,
-    int depth)
-{
-    (void)db_full_path_transformation_matrix(matp, dbip, &sp->s_fullpath, depth);
-}
-
-
 /*
  * Given an existing solid structure that may have been subjected to
  * solid editing, recompute the vector list, etc., to make the solid
@@ -264,7 +245,7 @@ replot_original_solid(struct solid *sp)
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    pathHmat(sp, mat, sp->s_fullpath.fp_len-2);
+    (void)db_full_path_transformation_matrix(mat, dbip, &sp->s_fullpath, sp->s_fullpath.fp_len-2);
 
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
