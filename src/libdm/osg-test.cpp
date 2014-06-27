@@ -454,7 +454,7 @@ full_assembly_node(
     unsigned int children_cnt = assembly->getNumChildren();
     assembly->removeChildren(0, children_cnt);
 
-    const char *assembly_search = "-above -type region ! -type region";
+    const char *assembly_search = "-type comb ! -below -type region ! -type region";
     struct bu_ptbl assemblies = BU_PTBL_INIT_ZERO;
     (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&assemblies) - 1; i >= 0; i--) {
