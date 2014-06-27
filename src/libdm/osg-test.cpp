@@ -75,18 +75,19 @@ extern "C" {
 #include <osgText/Text>
 
 struct bu_list *
-obj_vlist(const struct directory *dp, const struct db_i *dbip, matp_t UNUSED(mat))
+obj_vlist(const struct directory *dp, const struct db_i *dbip, mat_t mat)
 {
     struct bu_list *plot_segments;
     struct rt_db_internal intern;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
     const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);
     }
     BU_GET(plot_segments, struct bu_list);
     BU_LIST_INIT(plot_segments);
+
     if (rt_obj_plot(plot_segments, &intern, &rttol, &tol) < 0) {
 	bu_exit(1, "ERROR: Unable to get plot segment list from %s\n", dp->d_namep);
     }
@@ -176,7 +177,9 @@ solid_to_node(const struct directory *dp, const struct db_i *dbip)
     wrapper->addChild(geode);
 
     /* Actually add the geometry from the vlist */
-    struct bu_list *plot_segments = obj_vlist(dp, dbip, NULL);
+    mat_t mat;
+    MAT_IDN(mat);
+    struct bu_list *plot_segments = obj_vlist(dp, dbip, mat);
     add_vlist_to_geom(geom, plot_segments);
 
     /* Cleanup */
@@ -288,7 +291,6 @@ add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_p
 void
 create_comb_nodes(
 	std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
-	std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > *child_nodes,
       	struct db_i *dbip,
 	struct directory *dp)
 {
@@ -308,41 +310,78 @@ create_comb_nodes(
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
 	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)], curr_path);
-	    child_nodes->insert(std::pair<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> >((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)]));
 	}
 	db_search_free(&comb_children);
     }
     db_search_free(&combs);
 }
 
-#if 0
 void
-create_region_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+create_region_nodes(
+	std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > *child_nodes,
 	struct db_i *dbip,
 	struct directory *dp)
 {
-    const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
-
     const char *region_search = "-type region";
     struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
     (void)db_search(&regions, DB_SEARCH_RETURN_UNIQ_DP, region_search, 1, &dp, dbip);
 
-    /*get the comb properies for the group above the region geode - need to refactor some of the above logic... */
-
     for (int i = (int)BU_PTBL_LEN(&regions) - 1; i >= 0; i--) {
-	/*get the comb properies for the group above the region geode - need to refactor some of the above logic... */
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&regions, i);
+	osg::ref_ptr<osg::Group> region = (*osg_nodes)[curr_dp];
+	/* Clear the immediate children from this node and stash them in the child_nodes
+	 * multimap, which retains that information if needed later. A new node will be
+	 * created instead that builds the complete region wireframe */
+	unsigned int children_cnt = region->getNumChildren();
+	for (unsigned int j = 0; j < children_cnt; j++) {
+	    osg::Group *curr_child = (osg::Group *)region->getChild(j);
+	    child_nodes->insert(std::pair<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> >(region, curr_child));
+	}
+	region->removeChildren(0, children_cnt);
 
-	/*Search for all the full paths below this comb - that's the list of vlists we need for this particular region,
+
+	/* We now create a pseudo-solid node holding the full region drawable info */
+	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+	osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+	geode->setName(dp->d_namep);
+	geom->setName(dp->d_namep);     // set drawable to same name as region
+	geode->addDrawable(geom);
+	osg::StateSet* state = geode->getOrCreateStateSet();
+	state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+	region->addChild(geode);
+
+	/*Search for all the solids (using full paths) below the region - that's the list of vlists we need for this particular region,
 	 *using the full paths below the current region to place them in their final relative positions.
 	 *(db_full_path_transformation_matrix)
 	 */
+	const char *region_vlist_search = "! -type comb";
+	struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
+	(void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &curr_dp, dbip);
+	for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
+	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
+
+	    /* Get the final matrix we will need for this vlist */
+	    mat_t tm;
+	    MAT_IDN(tm);
+	    (void)db_full_path_transformation_matrix(tm, dbip, curr_path, curr_path->fp_len-2);
+
+	    /* Actually add the geometry from the vlist */
+	    struct bu_list *plot_segments = obj_vlist(DB_FULL_PATH_CUR_DIR(curr_path), dbip, tm);
+	    add_vlist_to_geom(geom, plot_segments);
+
+	    /* Cleanup */
+	    RT_FREE_VLIST(plot_segments);
+	    BU_PUT(plot_segments, struct bu_list);
+
+	}
+	db_search_free(&region_vlist_contributors);
+
     }
 
     db_search_free(&regions);
 
 }
-#endif
 
 int main( int argc, char **argv )
 {
@@ -376,7 +415,8 @@ int main( int argc, char **argv )
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     create_solid_nodes(&(osg_nodes), dbip, dp);
-    create_comb_nodes(&(osg_nodes), &(child_nodes), dbip, dp);
+    create_comb_nodes(&(osg_nodes), dbip, dp);
+    create_region_nodes(&(osg_nodes), &(child_nodes), dbip, dp);
 
     // construct the viewer.
     osgViewer::Viewer viewer;
