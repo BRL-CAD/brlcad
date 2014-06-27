@@ -64,20 +64,23 @@ UUIDstr(const ON_UUID &uuid)
 }
 
 
-static inline std::string w2string(const ON_wString &source)
+static inline std::string
+w2string(const ON_wString &source)
 {
     if (!source) return "";
     return ON_String(source).Array();
 }
 
 
-static inline bool is_toplevel(const ON_Layer &layer)
+static inline bool
+is_toplevel(const ON_Layer &layer)
 {
     return UUIDstr(layer.m_parent_layer_id) == ROOT_UUID;
 }
 
 
-static ON_Color gen_random_color()
+static ON_Color
+gen_random_color()
 {
     int red = static_cast<int>(256 * drand48() + 1);
     int green = static_cast<int>(256 * drand48() + 1);
@@ -87,7 +90,8 @@ static ON_Color gen_random_color()
 }
 
 
-static void xform2mat_t(const ON_Xform &source, mat_t dest)
+static void
+xform2mat_t(const ON_Xform &source, mat_t dest)
 {
     const int dmax = 4;
     for (int row = 0; row < dmax; ++row)
@@ -98,25 +102,28 @@ static void xform2mat_t(const ON_Xform &source, mat_t dest)
 
 static void
 create_instance_reference(rt_wdb *outfp, const STR_STR_MAP &uuid_name_map,
-			  const ON_InstanceRef &iref, const std::string &comb_name, const ON_Color &color)
+			  const ON_InstanceRef &iref, const std::string &comb_name,
+			  const ON_Color &color)
 {
     mat_t matrix;
     xform2mat_t(iref.m_xform, matrix);
     wmember members;
     BU_LIST_INIT(&members.l);
-    const std::string member_name = uuid_name_map.at(UUIDstr(iref.m_instance_definition_uuid)) + ".c";
+    const std::string member_name =
+	uuid_name_map.at(UUIDstr(iref.m_instance_definition_uuid)) + ".c";
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
     unsigned char rgb[3] = {color.Red(), color.Green(), color.Blue()};
     bool do_inherit = false;
-    mk_comb(outfp, comb_name.c_str(), &members.l, false, NULL, NULL, rgb, 0, 0, 0, 0, do_inherit, false, false);
+    mk_comb(outfp, comb_name.c_str(), &members.l, false, NULL, NULL, rgb,
+	    0, 0, 0, 0, do_inherit, false, false);
 }
 
 
 static void
 create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
-			   ON_TextLog &dump, const STR_STR_MAP &uuid_name_map, const ON_InstanceDefinition &idef,
-			   const std::string &comb_name)
+			   ON_TextLog &dump, const STR_STR_MAP &uuid_name_map,
+			   const ON_InstanceDefinition &idef, const std::string &comb_name)
 {
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -125,13 +132,15 @@ create_instance_definition(rt_wdb *outfp, const ONX_Model &model,
 	const ON_UUID member_uuid = idef.m_object_uuid[i];
 	const int geom_index = model.ObjectIndex(member_uuid);
 	if (geom_index == -1) {
-	    dump.Print("referenced uuid=%s does not exist\n", UUIDstr(member_uuid).c_str());
+	    dump.Print("referenced uuid=%s does not exist\n",
+		       UUIDstr(member_uuid).c_str());
 	    continue;
 	}
 
 	const ON_Geometry *pGeometry = ON_Geometry::Cast(model.m_object_table[geom_index].m_object);
 	if (!pGeometry) {
-	    dump.Print("referenced uuid=%s is not geometry\n", UUIDstr(member_uuid).c_str());
+	    dump.Print("referenced uuid=%s is not geometry\n",
+		       UUIDstr(member_uuid).c_str());
 	    continue;
 	}
 
@@ -216,8 +225,9 @@ name_is_taken(const STR_STR_MAP &uuid_name_map, const std::string &name)
 }
 
 
-static std::string gen_geom_name(const STR_STR_MAP &uuid_name_map,
-				 const ON_wString &name)
+static std::string
+gen_geom_name(const STR_STR_MAP &uuid_name_map,
+	      const ON_wString &name)
 {
     std::string obj_name = w2string(CleanName(name));
     if (obj_name.empty()) obj_name = "noname";
@@ -234,7 +244,8 @@ static std::string gen_geom_name(const STR_STR_MAP &uuid_name_map,
 }
 
 
-STR_STR_MAP map_geometry_names(const ONX_Model &model, bool use_uuidnames)
+static STR_STR_MAP
+map_geometry_names(const ONX_Model &model, bool use_uuidnames)
 {
     STR_STR_MAP uuid_name_map;
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
@@ -273,8 +284,9 @@ STR_STR_MAP map_geometry_names(const ONX_Model &model, bool use_uuidnames)
 }
 
 
-static void create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
-			     const STR_STR_MAP &uuid_name_map)
+static void
+create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
+		 const STR_STR_MAP &uuid_name_map)
 {
     for (int i = 0; i < model.m_idef_table.Count(); ++i) {
 	std::string geom_base = uuid_name_map.at(UUIDstr(model.m_idef_table[i].m_uuid));
@@ -284,8 +296,9 @@ static void create_all_idefs(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &
 }
 
 
-static void nest_all_layers(const ONX_Model &model, const STR_STR_MAP &uuid_name_map,
-			    UUID_CHILD_MAP &uuid_child_map, bool random_colors)
+static void
+nest_all_layers(const ONX_Model &model, const STR_STR_MAP &uuid_name_map,
+		UUID_CHILD_MAP &uuid_child_map, bool random_colors)
 {
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = model.m_layer_table[i];
@@ -302,9 +315,11 @@ static void nest_all_layers(const ONX_Model &model, const STR_STR_MAP &uuid_name
 }
 
 
-static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
-			      const STR_STR_MAP &uuid_name_map, const UUID_CHILD_MAP &uuid_child_map,
-			      bool random_colors)
+static void
+create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog &dump,
+		  const STR_STR_MAP &uuid_name_map,
+		  const UUID_CHILD_MAP &uuid_child_map,
+		  bool random_colors)
 {
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = model.m_layer_table[i];
@@ -341,13 +356,15 @@ static void create_all_layers(rt_wdb *outfp, const ONX_Model &model, ON_TextLog 
 
 	unsigned char rgb[3] = {color.Red(), color.Green(), color.Blue()};
 	bool do_inherit = false;
-	mk_comb(outfp, layer_name.c_str(), &members.l, is_region, NULL, NULL, rgb, 0, 0, 0, 0, do_inherit, false, false);
+	mk_comb(outfp, layer_name.c_str(), &members.l, is_region, NULL, NULL, rgb,
+		0, 0, 0, 0, do_inherit, false, false);
     }
 }
 
 
-ON_Color get_color(const ONX_Model &model, ON_TextLog &dump,
-		   const ON_3dmObjectAttributes &myAttributes)
+static ON_Color
+get_color(const ONX_Model &model, ON_TextLog &dump,
+	  const ON_3dmObjectAttributes &myAttributes)
 {
     ON_Color result;
     switch (myAttributes.ColorSource()) {
