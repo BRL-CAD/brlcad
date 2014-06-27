@@ -162,10 +162,23 @@ add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
 }
 
 osg::ref_ptr<osg::Group>
-solid_to_node(const struct directory *dp, const struct db_i *dbip)
+solid_node(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	const struct directory *dp, const struct db_i *dbip)
 {
+    osg::ref_ptr<osg::Group> wrapper;
+    if ((*osg_nodes).find(dp) == (*osg_nodes).end()) {
+	wrapper = new osg::Group;
+	(*osg_nodes)[dp] = wrapper.get();
+    } else {
+	wrapper = (*osg_nodes)[dp];
+    }
+
+    /* Clear the children from the wrapper, if it has any */
+    unsigned int children_cnt = wrapper->getNumChildren();
+    wrapper->removeChildren(0, children_cnt);
+
     /* Set up the OSG superstructure for the solid geometry node */
-    osg::ref_ptr<osg::Group> wrapper = new osg::Group;
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
     wrapper->setName(dp->d_namep);
@@ -190,9 +203,8 @@ solid_to_node(const struct directory *dp, const struct db_i *dbip)
 }
 
 void
-create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
-      	struct db_i *dbip,
-	struct directory *dp)
+create_solid_nodes(std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+      	struct directory *dp, struct db_i *dbip)
 {
     const char *solid_search = "! -type comb";
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
@@ -202,7 +214,7 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
 	/* Get the vlist associated with this particular object */
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
 	if ((*osg_nodes).find(curr_dp) == (*osg_nodes).end()) {
-	    osg::ref_ptr<osg::Group> node = solid_to_node(curr_dp, dbip);
+	    osg::ref_ptr<osg::Group> node = solid_node(osg_nodes, curr_dp, dbip);
 	    (*osg_nodes)[curr_dp] = node.get();
 	}
     }
@@ -211,9 +223,18 @@ create_solid_nodes(std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_
 }
 
 osg::ref_ptr<osg::Group>
-comb_to_node(const struct directory *dp, const struct db_i *dbip)
+bare_comb_node(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	const struct directory *dp, const struct db_i *dbip)
 {
-    osg::ref_ptr<osg::Group> comb = new osg::Group;
+    osg::ref_ptr<osg::Group> comb;
+    if ((*osg_nodes).find(dp) == (*osg_nodes).end()) {
+	comb = new osg::Group;
+	(*osg_nodes)[dp] = comb.get();
+    } else {
+	comb = (*osg_nodes)[dp];
+    }
+
     comb->setName(dp->d_namep);
 
     struct rt_db_internal intern;
@@ -298,136 +319,269 @@ add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_p
 /* In the case of regions, we need to be able to remove and restore the individual
  * comb children, because for normal display (as opposed to editing mode) we need to
  * use a single compositite wireframe for regions */
-void
-create_comb_nodes(
-	std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
-      	struct db_i *dbip,
-	struct directory *dp)
+osg::ref_ptr<osg::Group>
+full_comb_node(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+      	struct directory *dp, struct db_i *dbip)
 {
+    osg::ref_ptr<osg::Group> comb = bare_comb_node(osg_nodes, dp, dbip);
+
+    /* Clear the immediate children from this node, if it has any */
+    unsigned int children_cnt = comb->getNumChildren();
+    comb->removeChildren(0, children_cnt);
+
     const char *comb_search = "-type comb";
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
     (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
-	osg::ref_ptr<osg::Group> comb = comb_to_node(curr_dp, dbip);
-	(*osg_nodes)[curr_dp] = comb.get();
-    }
-    for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
+	osg::ref_ptr<osg::Group> sub_comb = bare_comb_node(osg_nodes, curr_dp, dbip);
 	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
-	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)], curr_path);
+	    struct directory *curr_child_dp = DB_FULL_PATH_CUR_DIR(curr_path);
+	    if (curr_child_dp->d_flags & RT_DIR_COMB) {
+		osg::ref_ptr<osg::Group> new_node = bare_comb_node(osg_nodes, curr_child_dp, dbip);
+		(*osg_nodes)[curr_child_dp] = new_node.get();
+	    }
+	    if (curr_child_dp->d_flags & RT_DIR_SOLID) {
+		osg::ref_ptr<osg::Group> new_node = solid_node(osg_nodes, curr_child_dp, dbip);
+		(*osg_nodes)[curr_child_dp] = new_node.get();
+	    }
+	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path);
 	}
 	db_search_free(&comb_children);
     }
     db_search_free(&combs);
+
+    return comb;
+}
+
+osg::ref_ptr<osg::Group>
+full_region_node(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	struct directory *dp, struct db_i *dbip)
+{
+    osg::ref_ptr<osg::Group> region = bare_comb_node(osg_nodes, dp, dbip);
+
+    /* Clear the immediate children from this node, if it has any */
+    unsigned int children_cnt = region->getNumChildren();
+    region->removeChildren(0, children_cnt);
+
+    /* We now create up to two pseudo-solid nodes holding the full region drawable info - one for non-subtracted
+     * elements (no stipple) and one (if needed) for subtracted elements (stipple)*/
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+    geode->setName(dp->d_namep);
+    geom->setName(dp->d_namep);     // set drawable to same name as region
+    geode->addDrawable(geom);
+    osg::StateSet* state = geode->getOrCreateStateSet();
+    state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    region->addChild(geode);
+
+    /* Define the subtraction container, but don't add it as a child of the region unless we actually need it.*/
+    osg::ref_ptr<osg::Group> subtraction_wrapper = new osg::Group;
+    osg::ref_ptr<osg::Geode> subtraction_geode = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> subtraction_geom = new osg::Geometry;
+    subtraction_wrapper->setName(dp->d_namep);
+    subtraction_geode->setName(dp->d_namep);
+    subtraction_geom->setName(dp->d_namep);
+    osg::StateSet* subtraction_geode_state = subtraction_geode->getOrCreateStateSet();
+    subtraction_geode_state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    osg::StateSet* subtraction_state = subtraction_wrapper->getOrCreateStateSet();
+    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
+    ls->setPattern(0xCF33);
+    ls->setFactor(1);
+    subtraction_state->setAttributeAndModes(ls.get());
+    subtraction_geode->addDrawable(subtraction_geom);
+    subtraction_wrapper->addChild(subtraction_geode);
+
+    /*Search for all the solids (using full paths) below the region - that's the list of vlists we need for this particular region,
+     *using the full paths below the current region to place them in their final relative positions.
+     *(db_full_path_transformation_matrix)
+     */
+    const char *region_vlist_search = "! -type comb";
+    struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
+    (void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &dp, dbip);
+    int have_subtraction = 0;
+    for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
+	struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
+
+	/* Find out how to draw this particular wireframe */
+	int subtraction_path = subtracted_solid(curr_path);
+
+	/* Get the final matrix we will need for this vlist */
+	mat_t tm;
+	MAT_IDN(tm);
+	(void)db_full_path_transformation_matrix(tm, dbip, curr_path, curr_path->fp_len-2);
+
+	/* Actually add the geometry from the vlist */
+	struct bu_list *plot_segments = obj_vlist(DB_FULL_PATH_CUR_DIR(curr_path), dbip, tm);
+	if (subtraction_path) {
+	    have_subtraction++;
+	    add_vlist_to_geom(subtraction_geom, plot_segments);
+	} else {
+	    add_vlist_to_geom(geom, plot_segments);
+	}
+
+	/* Cleanup */
+	RT_FREE_VLIST(plot_segments);
+	BU_PUT(plot_segments, struct bu_list);
+
+    }
+    db_search_free(&region_vlist_contributors);
+    if (have_subtraction) {
+	region->addChild(subtraction_wrapper);
+    }
+
+    return region;
+}
+
+
+/* In the case of regions, we need to be able to remove and restore the individual
+ * comb children, because for normal display (as opposed to editing mode) we need to
+ * use a single compositite wireframe for regions */
+osg::ref_ptr<osg::Group>
+full_assembly_node(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+      	struct directory *dp, struct db_i *dbip)
+{
+    osg::ref_ptr<osg::Group> assembly = bare_comb_node(osg_nodes, dp, dbip);
+
+    /* Clear the immediate children from this node, if it has any */
+    unsigned int children_cnt = assembly->getNumChildren();
+    assembly->removeChildren(0, children_cnt);
+
+    const char *assembly_search = "-above -type region ! -type region";
+    struct bu_ptbl assemblies = BU_PTBL_INIT_ZERO;
+    (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search, 1, &dp, dbip);
+    for (int i = (int)BU_PTBL_LEN(&assemblies) - 1; i >= 0; i--) {
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&assemblies, i);
+	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
+	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
+	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
+	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
+	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
+	    struct directory *curr_child_dp = DB_FULL_PATH_CUR_DIR(curr_path);
+	    if (curr_child_dp->d_flags & RT_DIR_COMB && !(curr_child_dp->d_flags & RT_DIR_REGION)) {
+		int is_assembly = 0;
+		for (int k = (int)BU_PTBL_LEN(&assemblies) - 1; k >= 0; k--) {
+		    struct directory *assembly_dp = (struct directory *)BU_PTBL_GET(&assemblies, k);
+		    if (assembly_dp == curr_child_dp) is_assembly = 1;
+		}
+		osg::ref_ptr<osg::Group> new_node;
+		if (is_assembly) {
+		    new_node = bare_comb_node(osg_nodes, curr_child_dp, dbip);
+		} else {
+		    new_node = full_comb_node(osg_nodes, curr_child_dp, dbip);
+		}
+		(*osg_nodes)[DB_FULL_PATH_CUR_DIR(curr_path)] = new_node.get();
+	    }
+	    if (curr_child_dp->d_flags & RT_DIR_REGION) {
+		osg::ref_ptr<osg::Group> new_node = full_region_node(osg_nodes, curr_child_dp, dbip);
+		(*osg_nodes)[curr_child_dp] = new_node.get();
+	    }
+	    if (curr_child_dp->d_flags & RT_DIR_SOLID) {
+		osg::ref_ptr<osg::Group> new_node = solid_node(osg_nodes, curr_child_dp, dbip);
+		(*osg_nodes)[curr_child_dp] = new_node.get();
+	    }
+	    add_comb_child((*osg_nodes)[curr_dp], (*osg_nodes)[curr_child_dp], curr_path);
+	}
+	db_search_free(&comb_children);
+    }
+    db_search_free(&assemblies);
+
+    return assembly;
+}
+
+
+/* Determine what type of dp we're dealing with:
+ *
+ * -1 - not drawable
+ *  0 - solid
+ *  1 - comb
+ *  2 - region
+ *  3 - assembly (comb with regions below it)
+ */
+int
+characterize_dp(struct directory *dp, struct db_i *dbip)
+{
+    int ret = -1;
+    const char *assembly_search = "-above -type region ! -type region";
+    if (dp->d_flags & RT_DIR_COMB) {
+	ret = 1;
+	if (dp->d_flags & RT_DIR_REGION) {
+	    ret = 2;
+	} else {
+	    if (db_search(NULL, DB_SEARCH_QUIET, assembly_search, 1, &dp, dbip) > 0) ret = 3;
+	}
+    } else {
+	if (dp->d_flags & RT_DIR_SOLID) ret = 0;
+    }
+
+    return ret;
 }
 
 void
-create_region_nodes(
-	std::map<struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
-	std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > *child_nodes,
-	struct db_i *dbip,
-	struct directory *dp)
+add_dp_to_scene(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	struct directory *dp, struct db_i *dbip)
 {
-    const char *region_search = "-type region";
-    struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
-    (void)db_search(&regions, DB_SEARCH_RETURN_UNIQ_DP, region_search, 1, &dp, dbip);
+    int dp_type = characterize_dp(dp, dbip);
+    switch (dp_type) {
+	case 0:
+	    (void)solid_node(osg_nodes, dp, dbip);
+	    break;
+	case 1:
+	    full_comb_node(osg_nodes, dp, dbip);
+	    break;
+	case 2:
+	    full_region_node(osg_nodes, dp, dbip);
+	    break;
+	case 3:
+	    full_assembly_node(osg_nodes, dp, dbip);
+	    break;
+    }
+}
 
-    for (int i = (int)BU_PTBL_LEN(&regions) - 1; i >= 0; i--) {
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&regions, i);
-	osg::ref_ptr<osg::Group> region = (*osg_nodes)[curr_dp];
-	/* Clear the immediate children from this node and stash them in the child_nodes
-	 * multimap, which retains that information if needed later. A new node will be
-	 * created instead that builds the complete region wireframe */
-	unsigned int children_cnt = region->getNumChildren();
-	for (unsigned int j = 0; j < children_cnt; j++) {
-	    osg::Group *curr_child = (osg::Group *)region->getChild(j);
-	    child_nodes->insert(std::pair<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> >(region, curr_child));
-	}
-	region->removeChildren(0, children_cnt);
 
-	/* We now create up to two pseudo-solid nodes holding the full region drawable info - one for non-subtracted
-	 * elements (no stipple) and one (if needed) for subtracted elements (stipple)*/
-	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-	osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
-	geode->setName(dp->d_namep);
-	geom->setName(dp->d_namep);     // set drawable to same name as region
-	geode->addDrawable(geom);
-	osg::StateSet* state = geode->getOrCreateStateSet();
-	state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-	region->addChild(geode);
+int
+add_path_to_scene(
+	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+	const struct db_full_path *path, struct db_i *dbip)
+{
+    /* Whatever the path looks like, we're going to have to add the
+     * current directory */
+    struct db_full_path working_path;
+    db_full_path_init(&working_path);
+    db_dup_full_path(&working_path, path);
 
-	/* Define the subtraction container, but don't add it as a child of the region unless we actually need it.*/
-	osg::ref_ptr<osg::Group> subtraction_wrapper = new osg::Group;
-	osg::ref_ptr<osg::Geode> subtraction_geode = new osg::Geode;
-	osg::ref_ptr<osg::Geometry> subtraction_geom = new osg::Geometry;
-	subtraction_wrapper->setName(dp->d_namep);
-	subtraction_geode->setName(dp->d_namep);
-	subtraction_geom->setName(dp->d_namep);
-	osg::StateSet* subtraction_geode_state = subtraction_geode->getOrCreateStateSet();
-	subtraction_geode_state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-	osg::StateSet* subtraction_state = subtraction_wrapper->getOrCreateStateSet();
-	osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
-	ls->setPattern(0xCF33);
-	ls->setFactor(1);
-	subtraction_state->setAttributeAndModes(ls.get());
-	subtraction_geode->addDrawable(subtraction_geom);
-	subtraction_wrapper->addChild(subtraction_geode);
+    add_dp_to_scene(osg_nodes, DB_FULL_PATH_CUR_DIR(&working_path), dbip);
 
-	/*Search for all the solids (using full paths) below the region - that's the list of vlists we need for this particular region,
-	 *using the full paths below the current region to place them in their final relative positions.
-	 *(db_full_path_transformation_matrix)
-	 */
-	const char *region_vlist_search = "! -type comb";
-	struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
-	(void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &curr_dp, dbip);
-	int have_subtraction = 0;
-	for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
-	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
+    while (working_path.fp_len > 1) {
+	struct directory *curr_dp = DB_FULL_PATH_CUR_DIR(&working_path);
+	struct directory *parent_dp = working_path.fp_names[working_path.fp_len - 2];
 
-	    /* Find out how to draw this particular wireframe */
-	    int subtraction_path = subtracted_solid(curr_path);
+	osg::ref_ptr<osg::Group> comb = bare_comb_node(osg_nodes, parent_dp, dbip);
+	osg::ref_ptr<osg::Group> child = (*osg_nodes)[curr_dp];
 
-	    /* Get the final matrix we will need for this vlist */
-	    mat_t tm;
-	    MAT_IDN(tm);
-	    (void)db_full_path_transformation_matrix(tm, dbip, curr_path, curr_path->fp_len-2);
+	add_comb_child(comb, child, &working_path);
 
-	    /* Actually add the geometry from the vlist */
-	    struct bu_list *plot_segments = obj_vlist(DB_FULL_PATH_CUR_DIR(curr_path), dbip, tm);
-	    if (subtraction_path) {
-		have_subtraction++;
-		add_vlist_to_geom(subtraction_geom, plot_segments);
-	    } else {
-		add_vlist_to_geom(geom, plot_segments);
-	    }
-
-	    /* Cleanup */
-	    RT_FREE_VLIST(plot_segments);
-	    BU_PUT(plot_segments, struct bu_list);
-
-	}
-	db_search_free(&region_vlist_contributors);
-	if (have_subtraction) {
-	    region->addChild(subtraction_wrapper);
-	}
-
+	DB_FULL_PATH_POP(&working_path);
     }
 
-    db_search_free(&regions);
-
+    db_free_full_path(&working_path);
+    return 0;
 }
 
 int main( int argc, char **argv )
 {
-    std::map<struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
-    std::multimap<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> > child_nodes;
+    std::map<const struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
+    struct db_full_path path;
 
     if (argc != 3 || !argv) {
 	bu_exit(1, "Error - please specify a .g file and an object\n");
@@ -445,17 +599,15 @@ int main( int argc, char **argv )
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
     }
 
-    dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	bu_exit(1, "ERROR: Unable to fine object %s in %s\n", argv[2], argv[1]);
+    /* argv[2] may be a full path, not just an object name - handle it */
+    if (db_string_to_path(&path, dbip, argv[2])) {
+	bu_exit(1, "ERROR: Unable to find object %s in %s\n", argv[2], argv[1]);
     }
 
     /* Need to initialize this for rt_obj_plot, which may call RT_ADD_VLIST */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
-    create_solid_nodes(&(osg_nodes), dbip, dp);
-    create_comb_nodes(&(osg_nodes), dbip, dp);
-    create_region_nodes(&(osg_nodes), &(child_nodes), dbip, dp);
+    add_path_to_scene(&(osg_nodes), &path, dbip);
 
     // construct the viewer.
     osgViewer::Viewer viewer;
@@ -479,8 +631,10 @@ int main( int argc, char **argv )
     //viewer.getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 
     osgUtil::Optimizer optimizer;
-    optimizer.optimize(osg_nodes[dp]);
-    viewer.setSceneData(osg_nodes[dp]);
+    osg::ref_ptr<osg::Group> toplevel = new osg::Group;
+    toplevel->addChild(osg_nodes[DB_FULL_PATH_ROOT_DIR(&path)]);
+    optimizer.optimize(toplevel);
+    viewer.setSceneData(toplevel);
 
     viewer.realize();
 
