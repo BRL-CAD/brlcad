@@ -679,7 +679,9 @@ dplot_isocsx(
 	return GED_OK;
     }
 
-    if (info->mode == DPLOT_ISOCSX_FIRST) {
+    if (info->mode == DPLOT_ISOCSX_FIRST ||
+	info->mode == DPLOT_ISOCSX_EVENTS)
+    {
 	dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
 		info->brep1_surf_idx, "isocsx_curvesurf");
 	dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
@@ -705,14 +707,20 @@ dplot_isocsx(
 	bu_vls_free(&infix);
     }
 
-    if (info->mode == DPLOT_ISOCSX_FIRST || ++info->isocsx_idx < info->isocsx_count) {
-	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
-		"isocurve-surface intersection %d", info->isocsx_idx);
-	info->mode = DPLOT_ISOCSX;
-	return GED_MORE;
+    if (info->mode == DPLOT_ISOCSX_FIRST ||
+	info->mode == DPLOT_ISOCSX)
+    {
+	if (info->mode == DPLOT_ISOCSX_FIRST ||
+	    ++info->isocsx_idx < info->isocsx_count)
+	{
+	    bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
+		    "isocurve-surface intersection %d", info->isocsx_idx);
+	    info->mode = DPLOT_ISOCSX;
+	    return GED_MORE;
+	} else {
+	    info->mode = DPLOT_INITIAL;
+	}
     }
-
-    info->mode = DPLOT_INITIAL;
     return GED_OK;
 }
 
@@ -740,6 +748,8 @@ dplot_isocsx_events(struct dplot_info *info)
 	bu_vls_free(&infix);
 
 	if (ret != GED_OK) {
+	    bu_vls_printf(info->gedp->ged_result_str,
+		    "error overlaying plot\n");
 	    return ret;
 	}
 	if (info->event_idx == 0) {
@@ -750,7 +760,8 @@ dplot_isocsx_events(struct dplot_info *info)
     }
     /* advance to next event, or return to initial state */
     if (++info->event_idx < info->event_count) {
-	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show next event\n");
+	bu_vls_printf(info->gedp->ged_result_str,
+		"Press [Enter] to show next event\n");
 	return GED_MORE;
     }
 
@@ -965,6 +976,13 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = dplot_isocsx(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = dplot_isocsx_events(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {
