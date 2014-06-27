@@ -1976,7 +1976,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	thickness[face_count] = thick;
 	facemode[face_count] = pos;
     } else {
-	thickness[face_count] = 0, 0;
+	thickness[face_count] = 0.0;
 	facemode[face_count] = 0;
     }
 
