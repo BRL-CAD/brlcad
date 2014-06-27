@@ -510,7 +510,7 @@ int
 characterize_dp(struct directory *dp, struct db_i *dbip)
 {
     int ret = -1;
-    const char *assembly_search = "-above -type region ! -type region";
+    const char *is_assembly_search = "-type region";
     if (dp->d_flags & RT_DIR_COMB) {
 	ret = 1;
 	if (dp->d_flags & RT_DIR_REGION) {
@@ -519,7 +519,7 @@ characterize_dp(struct directory *dp, struct db_i *dbip)
 	    /* TODO - db_search should let us know the results without needing the table,
 	     * but that doesn't seem to be working... */
 	    struct bu_ptbl search_results = BU_PTBL_INIT_ZERO;
-	    (void)db_search(&search_results, DB_SEARCH_QUIET, assembly_search, 1, &dp, dbip);
+	    (void)db_search(&search_results, DB_SEARCH_QUIET, is_assembly_search, 1, &dp, dbip);
 	    if (BU_PTBL_LEN(&search_results) > 0) ret = 3;
 	    db_search_free(&search_results);
 	}
