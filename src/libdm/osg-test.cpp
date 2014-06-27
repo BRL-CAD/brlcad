@@ -336,10 +336,10 @@ create_region_nodes(
 	unsigned int children_cnt = region->getNumChildren();
 	for (unsigned int j = 0; j < children_cnt; j++) {
 	    osg::Group *curr_child = (osg::Group *)region->getChild(j);
+	    std::cout << "Removing child " << curr_child->getName() << " from parent " << region->getName() << "\n";
 	    child_nodes->insert(std::pair<osg::ref_ptr<osg::Group>, osg::ref_ptr<osg::Group> >(region, curr_child));
 	}
 	region->removeChildren(0, children_cnt);
-
 
 	/* We now create a pseudo-solid node holding the full region drawable info */
 	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
@@ -360,6 +360,8 @@ create_region_nodes(
 	(void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &curr_dp, dbip);
 	for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
+
+	    std::cout << "Adding child " << DB_FULL_PATH_CUR_DIR(curr_path)->d_namep << " from parent " << dp->d_namep << "\n";
 
 	    /* Get the final matrix we will need for this vlist */
 	    mat_t tm;
