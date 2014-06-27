@@ -49,7 +49,6 @@ public:
     // record surface surface isocurve intersections
     void IsoCSX(
 	const ON_SimpleArray<ON_X_EVENT> &events,
-	const ON_Surface *surf,
 	const ON_Curve *isocurve,
 	bool is_brep1_iso);
 

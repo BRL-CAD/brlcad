@@ -3225,7 +3225,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(boundary, surf2, x_event, isect_tol, overlap_tol, 0, 0, 0, &overlap2d);
 
-	    dplot->IsoCSX(x_event, surf2, boundary, is_surfA_iso);
+	    dplot->IsoCSX(x_event, boundary, is_surfA_iso);
 
 	    // stash surf1 points and surf2 parameters
 	    for (int k = 0; k < x_event.Count(); k++) {
