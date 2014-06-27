@@ -260,7 +260,7 @@ RhinoConverter::write_model(const std::string &path)
     clean_model();
     m_log->Print("Number of NURBS objects read: %d\n\n", m_model->m_object_table.Count());
 
-    char *basename = new char(path.size() + 1);
+    char *basename = new char[path.size() + 1];
     bu_basename(basename, path.c_str());
     m_obj_map[ROOT_UUID].m_name = basename;
     delete[] basename;
