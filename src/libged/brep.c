@@ -655,7 +655,7 @@ dplot_ssx_events(
 	}
 	if (info->event_idx == 0) {
 	    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
-	    bu_vls_printf(info->gedp->ged_result_str, "red    = tangent\n");
+	    bu_vls_printf(info->gedp->ged_result_str, "white  = tangent\n");
 	    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
 	}
     }
@@ -679,30 +679,22 @@ dplot_isocsx(
 	return GED_OK;
     }
 
-    if (info->mode == DPLOT_ISOCSX_FIRST ||
-	info->mode == DPLOT_ISOCSX_EVENTS)
-    {
-	dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
-		info->brep1_surf_idx, "isocsx_curvesurf");
-	dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
-		info->brep2_surf_idx, "isocsx_surf");
-    }
+    dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
+	    info->brep1_surf_idx, "isocsx_b1");
+    dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
+	    info->brep2_surf_idx, "isocsx_b2");
 
     if (info->mode == DPLOT_ISOCSX) {
 	struct bu_vls infix = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&infix, "_highlight_ssx%d_isocurve", info->ssx_idx);
 	/* plot surface and the isocurve that intersects it */
 	if (info->isocsx_idx < info->brep1_isocsx_count) {
-	    dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
-		    info->brep1_surf_idx, "isocsx_curvesurf");
 	    dplot_overlay(info->gedp, info->prefix, "_highlight_brep2_surface",
-		    info->brep2_surf_idx, "isocsx_surf");
+		    info->brep2_surf_idx, "isocsx_b2");
 	} else {
 	    dplot_overlay(info->gedp, info->prefix, "_highlight_brep1_surface",
-		    info->brep1_surf_idx, "isocsx_surf");
-	    dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
-		    info->brep2_surf_idx, "isocsx_curvesurf");
+		    info->brep1_surf_idx, "isocsx_b1");
 	}
+	bu_vls_printf(&infix, "_highlight_ssx%d_isocurve", info->ssx_idx);
 	dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&infix), info->isocsx_idx, "isocsx_isocurve");
 	bu_vls_free(&infix);
     }

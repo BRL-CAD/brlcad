@@ -37,12 +37,12 @@
 #define DEFAULT_PLOT_RES 100
 #define DEFAULT_GRID_RES 10
 
-static unsigned char surface_color[] = {0, 0, 62};
-static unsigned char surface_highlight_color[] = {56, 56, 255};
+static unsigned char surface1_color[] = {0, 0, 62};
+static unsigned char surface2_color[] = {62, 0, 0};
+static unsigned char surface1_highlight_color[] = {56, 56, 255};
+static unsigned char surface2_highlight_color[] = {255, 56, 56};
 
-static unsigned char curve_highlight_color[] = {255, 255, 255};
-
-static unsigned char tangent_color[] = {255, 0, 0};
+static unsigned char tangent_color[] = {255, 255, 255};
 static unsigned char transverse_color[] = {255, 255, 0};
 static unsigned char overlap_color[] = {0, 255, 0};
 
@@ -426,7 +426,7 @@ DebugPlot::Surfaces(const ON_Brep *brep1, const ON_Brep *brep2)
 	std::ostringstream filename;
 	filename << prefix << "_brep1_surface" << i << ".plot3";
 	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface_color);
+		filename.str().c_str(), surface1_color);
     }
 
     brep2_surf_count = brep2->m_S.Count();
@@ -435,7 +435,7 @@ DebugPlot::Surfaces(const ON_Brep *brep1, const ON_Brep *brep2)
 	std::ostringstream filename;
 	filename << prefix << "_brep2_surface" << i << ".plot3";
 	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface_color);
+		filename.str().c_str(), surface2_color);
     }
     have_surfaces = true;
 }
@@ -456,7 +456,7 @@ DebugPlot::SSX(
     if (!bu_file_exists(filename.str().c_str(), NULL)) {
 	surf = brep1->m_S[brep1_surf];
 	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface_highlight_color);
+		filename.str().c_str(), surface1_highlight_color);
     }
 
     // create highlighted plot of brep2 surface if it doesn't exist
@@ -465,7 +465,7 @@ DebugPlot::SSX(
     if (!bu_file_exists(filename.str().c_str(), NULL)) {
 	surf = brep2->m_S[brep2_surf];
 	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface_highlight_color);
+		filename.str().c_str(), surface2_highlight_color);
     }
 
     // create plot of the intersections between these surfaces
@@ -530,7 +530,13 @@ DebugPlot::IsoCSX(
 	filename << prefix << "_highlight_ssx" << ssx_idx << "_isocurve" <<
 	    isocsx_idx << ".plot3";
 	if (!bu_file_exists(filename.str().c_str(), NULL)) {
-	    Plot3DCurve(isocurve, filename.str().c_str(), curve_highlight_color);
+	    if (is_brep1_iso) {
+		Plot3DCurve(isocurve, filename.str().c_str(),
+			surface1_highlight_color);
+	    } else {
+		Plot3DCurve(isocurve, filename.str().c_str(),
+			surface2_highlight_color);
+	    }
 	}
 
 	// remember event count for this isocsx
