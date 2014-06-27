@@ -65,13 +65,11 @@ public:
     // FIXME
     struct ModelObject {
 	std::string m_name;
-	std::string m_brl_name;
 	std::vector<std::string> m_children;
 	bool is_in_idef;
 
 	ModelObject() :
 	    m_name(),
-	    m_brl_name(),
 	    m_children(),
 	    is_in_idef(false)
 	{}

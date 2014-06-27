@@ -48,8 +48,8 @@ namespace
 static const bool verbose_mode = false;
 
 
-static const char * const ROOT_UUID = "00000000-0000-0000-0000-000000000000";
-static const char * const DEFAULT_LAYER_NAME = "Default";
+static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
+static const std::string  DEFAULT_LAYER_NAME = "Default";
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
 static const std::size_t UUID_LEN = 37;
@@ -120,7 +120,7 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
 // the '_' character. The allow string is an exception list where
 // these characters are allowed, but not leading or trailing, in
 // the name.
-static ON_wString
+static std::string
 CleanName(ON_wString name)
 {
     ON_wString allow(".-_");
@@ -165,15 +165,18 @@ CleanName(ON_wString name)
 	name = new_name;
     }
 
-    return name;
+    if (name)
+	return w2string(name);
+    else
+	return "noname";
 }
 
 
 static bool
-name_is_taken(const OBJ_MAP &uuid_name_map, const std::string &name)
+name_is_taken(const OBJ_MAP &obj_map, const std::string &name)
 {
-    for (OBJ_MAP::const_iterator it = uuid_name_map.begin();
-	 it != uuid_name_map.end(); ++it)
+    for (OBJ_MAP::const_iterator it = obj_map.begin();
+	 it != obj_map.end(); ++it)
 	if (name == it->second.m_name)
 	    return true;
 
@@ -183,21 +186,19 @@ name_is_taken(const OBJ_MAP &uuid_name_map, const std::string &name)
 
 
 static std::string
-gen_geom_name(const OBJ_MAP &uuid_name_map,
-	      const ON_wString &name)
+unique_name(const OBJ_MAP &obj_map,
+	    const std::string &name,
+	    const char *suffix)
 {
-    std::string obj_name = w2string(CleanName(name));
-    if (obj_name.empty()) obj_name = "noname";
-
-    std::string geom_base = obj_name;
+    std::string new_name = name + suffix;
     int counter = 0;
-    while (name_is_taken(uuid_name_map, geom_base)) {
+    while (name_is_taken(obj_map, new_name)) {
 	std::ostringstream s;
 	s << ++counter;
-	geom_base = obj_name + s.str();
+	new_name = name + s.str() + suffix;
     }
 
-    return geom_base;
+    return new_name;
 }
 }
 
@@ -309,13 +310,20 @@ void
 RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
+	const ON_Object *object = m_model->m_object_table[i].m_object;
 	const ON_3dmObjectAttributes &myAttributes = m_model->m_object_table[i].m_attributes;
 	const std::string obj_uuid = UUIDstr(myAttributes.m_uuid);
 
+	const char *suffix = ".s";
+	if (object->ObjectType() == ON::instance_reference)
+	    suffix = ".c";
+
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = obj_uuid;
+	    m_obj_map[obj_uuid].m_name = obj_uuid + suffix;
 	else
-	    m_obj_map[obj_uuid].m_name = gen_geom_name(m_obj_map, myAttributes.m_name);
+	    m_obj_map[obj_uuid].m_name = unique_name(m_obj_map,
+					 CleanName(myAttributes.m_name), suffix);
+
     }
 
 
@@ -324,9 +332,10 @@ RhinoConverter::map_uuid_names()
 	const std::string idef_uuid = UUIDstr(idef.m_uuid);
 
 	if (m_use_uuidnames)
-	    m_obj_map[idef_uuid].m_name = idef_uuid;
+	    m_obj_map[idef_uuid].m_name = idef_uuid + ".c";
 	else
-	    m_obj_map[idef_uuid].m_name = gen_geom_name(m_obj_map, idef.Name());
+	    m_obj_map[idef_uuid].m_name =
+		unique_name(m_obj_map, CleanName(idef.Name()), ".c");
     }
 
 
@@ -334,10 +343,15 @@ RhinoConverter::map_uuid_names()
 	const ON_Layer &layer = m_model->m_layer_table[i];
 	const std::string layer_uuid = UUIDstr(layer.m_layer_id);
 
+	const char *suffix = ".c";
+	if (!m_random_colors && is_toplevel(layer))
+	    suffix = ".r";
+
 	if (m_use_uuidnames)
-	    m_obj_map[layer_uuid].m_name = layer_uuid;
+	    m_obj_map[layer_uuid].m_name = layer_uuid + suffix;
 	else
-	    m_obj_map[layer_uuid].m_name = gen_geom_name(m_obj_map, layer.m_name);
+	    m_obj_map[layer_uuid].m_name =
+		unique_name(m_obj_map, CleanName(layer.m_name), suffix);
     }
 }
 
@@ -351,15 +365,7 @@ RhinoConverter::nest_all_layers()
 	const ON_Layer &layer = m_model->m_layer_table[i];
 	const std::string layer_uuid = UUIDstr(layer.m_layer_id);
 	const std::string parent_layer_uuid = UUIDstr(layer.m_parent_layer_id);
-	const bool is_region = !m_random_colors && is_toplevel(layer);
 
-	std::string layer_name = m_obj_map.at(layer_uuid).m_name;
-	if (is_region)
-	    layer_name += ".r";
-	else
-	    layer_name += ".c";
-
-	m_obj_map.at(layer_uuid).m_brl_name = layer_name;
 	m_obj_map.at(parent_layer_uuid).m_children.push_back(layer_uuid);
     }
 }
@@ -389,13 +395,8 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     const bool is_region = !m_random_colors && is_toplevel(layer);
 
     std::string layer_name = m_obj_map.at(layer_uuid).m_name;
-    if (layer_name == DEFAULT_LAYER_NAME)
+    if (layer_name == DEFAULT_LAYER_NAME + ".c" || layer_name == DEFAULT_LAYER_NAME + ".r")
 	layer_name = m_obj_map.at(ROOT_UUID).m_name;
-
-    if (is_region)
-	layer_name += ".r";
-    else
-	layer_name += ".c";
 
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -403,7 +404,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	 it != child_vec.end(); ++it) {
 	const ModelObject &obj = m_obj_map.at(*it);
 	if (obj.is_in_idef) continue;
-	mk_addmember(obj.m_brl_name.c_str(), &members.l, NULL, WMOP_UNION);
+	mk_addmember(obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
 
     // FIXME code duplication
@@ -457,21 +458,13 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	    continue;
 	}
 
-	const ON_Object *object = m_model->m_object_table[geom_index].m_object;
-
-	std::string member_name;
-	if (object->ObjectType() == ON::instance_reference)
-	    member_name = m_obj_map.at(member_uuid).m_name + ".c";
-	else
-	    member_name = m_obj_map.at(member_uuid).m_name + ".s";
-
+	std::string &member_name = m_obj_map.at(member_uuid).m_name;
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
 	m_obj_map.at(member_uuid).is_in_idef = true;
     }
 
-    const std::string comb_name = m_obj_map.at(UUIDstr(idef.m_uuid)).m_name + ".c";
-    mk_lfcomb(m_db, comb_name.c_str(), &members, false);
-
+    const std::string &idef_name = m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
+    mk_lfcomb(m_db, idef_name.c_str(), &members, false);
 }
 
 
@@ -488,11 +481,11 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     BU_LIST_INIT(&members.l);
 
     const std::string iref_uuid = UUIDstr(iref_attrs.m_uuid);
-    const std::string iref_name = m_obj_map.at(iref_uuid).m_name + ".c";
+    const std::string &iref_name = m_obj_map.at(iref_uuid).m_name;
     const bool do_inherit_color = false;
 
     const std::string member_uuid = UUIDstr(iref.m_instance_definition_uuid);
-    const std::string member_name = m_obj_map.at(member_uuid).m_name + ".c";
+    const std::string &member_name = m_obj_map.at(member_uuid).m_name;
 
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
     mk_comb(m_db, iref_name.c_str(), &members.l, false, NULL, NULL,
@@ -501,7 +494,6 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
 
     const std::string parent_uuid =
 	UUIDstr(m_model->m_layer_table[iref_attrs.m_layer_index].m_layer_id);
-    m_obj_map.at(iref_uuid).m_brl_name = iref_name;
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
 }
 
@@ -550,7 +542,7 @@ void
 RhinoConverter::create_brep(const ON_Brep &brep, const ON_3dmObjectAttributes &brep_attrs)
 {
     const std::string brep_uuid = UUIDstr(brep_attrs.m_uuid);
-    const std::string brep_name = m_obj_map.at(brep_uuid).m_name + ".s";
+    const std::string &brep_name = m_obj_map.at(brep_uuid).m_name;
 
     m_log->Print("Creating BREP '%s'\n", brep_name.c_str());
 
@@ -558,9 +550,7 @@ RhinoConverter::create_brep(const ON_Brep &brep, const ON_3dmObjectAttributes &b
     const std::string parent_uuid =
 	UUIDstr(m_model->m_layer_table[brep_attrs.m_layer_index].m_layer_id);
 
-    m_obj_map.at(brep_uuid).m_brl_name = brep_name;
     m_obj_map.at(parent_uuid).m_children.push_back(brep_uuid);
-
 }
 
 
