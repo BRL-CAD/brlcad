@@ -1818,7 +1818,7 @@ nmg_ed(int arg)
 
 		if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
 		    /* make a new shell to hold the extruded solid */
-		    es_s = nmg_ms;
+		    es_s = nmg_ms();
 		} else {
 		    es_s = s;
 		}
