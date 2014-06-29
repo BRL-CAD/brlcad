@@ -481,7 +481,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     struct loopuse *lu1, *lu2;
     struct vertexuse *vu1 = NULL;
     struct vertexuse *vu2;
-    struct shell *s;
+    struct shell *s_p;
 
     /* XXX - why the new union? ctj */
     union {
@@ -496,10 +496,10 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	NMG_CK_VERTEX(v);
     }
 
-    s = nmg_find_shell(magic);
-    GET_LOOP(l, s);
-    GET_LOOPUSE(lu1, s);
-    GET_LOOPUSE(lu2, s);
+    s_p = nmg_find_shell(magic);
+    GET_LOOP(l, s_p);
+    GET_LOOPUSE(lu1, s_p);
+    GET_LOOPUSE(lu2, s_p);
 
     l->lg_p = (struct loop_g *)NULL;
     l->lu_p = lu1;
@@ -557,12 +557,12 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	BU_LIST_INSERT(&p.fu->lu_hd, &lu1->l);
 
 	/* Second, build the vertices */
-	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, s);
-	else vu1 = nmg_mvvu(&lu1->l.magic, s);
+	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, s_p);
+	else vu1 = nmg_mvvu(&lu1->l.magic, s_p);
 	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
-	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, s);
+	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, s_p);
 	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else {
@@ -706,14 +706,14 @@ nmg_meonvu(struct vertexuse *vu)
 {
     struct edge *e;
     struct edgeuse *eu1, *eu2;
-    struct shell *s;
+    struct shell *s_p;
 
     NMG_CK_VERTEXUSE(vu);
 
-    s = nmg_find_shell(vu->up.magic_p);
-    GET_EDGE(e, s);
-    GET_EDGEUSE(eu1, s);
-    GET_EDGEUSE(eu2, s);
+    s_p = nmg_find_shell(vu->up.magic_p);
+    GET_EDGE(e, s_p);
+    GET_EDGEUSE(eu1, s_p);
+    GET_EDGEUSE(eu2, s_p);
 
     BU_LIST_INIT(&eu1->l2);
     BU_LIST_INIT(&eu2->l2);

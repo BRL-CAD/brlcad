@@ -2957,163 +2957,43 @@ missed:
 void
 nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 {
- //   struct model *tmp_m;
- //   struct model *m;
- //   struct shell *dup_s;
- //   struct shell *s1;
- //   struct nmgregion *tmp_r;
- //   struct faceuse *fu;
- //   struct bu_ptbl reverse;
- //   int shell_count;
- //   long **trans_tbl;
+    struct faceuse *fu;
 
- //   if (RTG.NMG_debug & DEBUG_BASIC)
-	//bu_log("nmg_fix_normals(s = %p)\n", (void *)s_orig);
+    if (RTG.NMG_debug & DEBUG_BASIC)
+	bu_log("nmg_fix_normals(s = %p)\n", (void *)s_orig);
 
- //   NMG_CK_SHELL(s_orig);
- //   BN_CK_TOL(tol);
+    NMG_CK_SHELL(s_orig);
+    BN_CK_TOL(tol);
 
- //   /* Currently we can only fix normals for planar faces
- //    * check that there are no TNURB faces
- //    */
- //   for (BU_LIST_FOR (fu, faceuse, &s_orig->fu_hd)) {
-	//struct face *f;
+    /* Currently we can only fix normals for planar faces
+     * check that there are no TNURB faces
+     */
+    for (BU_LIST_FOR (fu, faceuse, &s_orig->fu_hd)) {
+	struct face *f;
 
-	//NMG_CK_FACEUSE(fu);
+	NMG_CK_FACEUSE(fu);
 
-	//if (fu->orientation != OT_SAME)
-	//    continue;
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	//f = fu->f_p;
+	f = fu->f_p;
 
-	//if (!f->g.magic_p) {
-	//    bu_log("nmg_fix_normals failed, found a face with no geometry (%p)\n", (void *)f);
-	//    return;
-	//}
+	if (!f->g.magic_p) {
+	    bu_log("nmg_fix_normals failed, found a face with no geometry (%p)\n", (void *)f);
+	    return;
+	}
 
-	//if (*f->g.magic_p != NMG_FACE_G_PLANE_MAGIC) {
-	//    bu_log("nmg_fix_normals: non-planar face found (%p)\n", (void *)f);
-	//    bu_log("	cannot fix normals\n");
-	//    return;
-	//}
- //   }
+	if (*f->g.magic_p != NMG_FACE_G_PLANE_MAGIC) {
+	    bu_log("nmg_fix_normals: non-planar face found (%p)\n", (void *)f);
+	    bu_log("	cannot fix normals\n");
+	    return;
+	}
+    }
 
- //   m = s_orig->r_p->m_p;
-
- //   /* make a temporary nmgregion for us to work in */
- //   tmp_r = nmg_mrsv(m);
-
- //   /* get rid of the automatically created shell */
- //   (void)nmg_ks(BU_LIST_FIRST(shell, &tmp_r->s_hd));
-
- //   /* make a copy of the shell of interest */
- //   dup_s = nmg_dup_shell(s_orig, &trans_tbl, tol);
-
-
- //   /* decompose the shell */
- //   shell_count = nmg_decompose_shell(dup_s, tol);
-
- //   if (shell_count == 1) {
-	///* just one shell, so fix it and return */
-	//(void)nmg_km(tmp_m);
-	//bu_free((char *)trans_tbl, "translate table");
-	//nmg_connect_same_fu_orients(s_orig);
-	//nmg_fix_decomposed_shell_normals(s_orig, tol);
-	//return;
- //   }
-
-
- //   /* Make sure all OT_SAME faceuses are radial to OT_SAME faceuses */
- //   for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd))
-	//nmg_connect_same_fu_orients(s1);
-
- //   /* Decomposed into more than one shell.
- //    * Need to check for inner void shells.
- //    * Start by making all the shells look like solids (no voids).
- //    */
- //   for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd))
-	//nmg_fix_decomposed_shell_normals(s1, tol);
-
- //   /* initialize a list of shells to be reversed */
- //   bu_ptbl_init(&reverse, 8, "Ptbl for nmg_fix_normals");
-
- //   /* now check which shells are inside others */
- //   for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd)) {
-	//struct shell *s2;
-	//int inner_count=0;
-	//int stop = 0;
-
-	//for (BU_LIST_FOR (s2, shell, &tmp_r->s_hd)) {
-	//    int nmg_class;
-
-	//    if (s1 == s2)
-	//	continue;
-
-	//    nmg_class = nmg_classify_s_vs_s(s1, s2, tol);
-	//    if (nmg_class == NMG_CLASS_AinB)
-	//	inner_count++;
-	//    else if (nmg_class == NMG_CLASS_Unknown) {
-	//	bu_log("nmg_fix_normals: nmg_classify_s_vs_s() failed for shells %p and %p\n",
-	//	       (void *)s1, (void *)s2);
-	//	bu_log("   Continuing anyway (shell is likely to have incorrectly oriented normals)\n");
-	//	stop = 1;
-	//	break;
-	//    }
-	//}
-
-	//if (inner_count % 2) {
-	//    /* shell s1 is inside an odd number of shells, so it must be a void */
-	//    bu_ptbl_ins(&reverse, (long *)s1);
-	//}
-	//if (stop) {
-	//    break;
-	//}
- //   }
-
- //   /* now set faces in original shell to match our calculations */
- //   nmg_connect_same_fu_orients(s_orig);
-
- //   for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd)) {
-	//int reversed;
-
-	//if (bu_ptbl_locate(&reverse, (long *)s1) == (-1))
-	//    reversed = 0;
-	//else
-	//    reversed = 1;
-
-	//for (BU_LIST_FOR (fu, faceuse, &s1->fu_hd)) {
-	//    struct faceuse *fu_in_s;
-	//    vect_t normal;
-	//    vect_t normal_in_s;
-
-	//    if (fu->orientation != OT_SAME)
-	//	continue;
-
-	//    fu_in_s = NMG_INDEX_GETP(faceuse, trans_tbl, fu);
-	//    if (!fu_in_s) {
-	//	bu_log("fu %p does not have correspondence in original shell\n", (void *)fu);
-	//	nmg_pr_fu_briefly(fu, "");
-	//	continue;
-	//    }
-	//    if (fu_in_s->orientation != OT_SAME)
-	//	fu_in_s = fu_in_s->fumate_p;
-
-	//    NMG_GET_FU_NORMAL(normal, fu);
-	//    if (reversed)
-	//	VREVERSE(normal, normal);
-
-	//    NMG_GET_FU_NORMAL(normal_in_s, fu_in_s);
-
-	//    if (VDOT(normal, normal_in_s) < 0.0) {
-	//	nmg_reverse_face_and_radials(fu_in_s, tol);
-	//    }
-	//}
- //   }
-
- //   bu_ptbl_free(&reverse);
- //   bu_free((char *)trans_tbl, "translation table");
-
- //   nmg_km(tmp_m);
+    /* just one shell, so fix it and return */
+    nmg_connect_same_fu_orients(s_orig);
+    nmg_fix_decomposed_shell_normals(s_orig, tol);
+    return;
 }
 
 
@@ -4664,6 +4544,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    /* Make sure the calculated direction is away from the vertex */
 	    if (VDOT(eu_dir, dir) < 0.0)
 		VREVERSE(dir, dir);
+
 	    VMOVE(i_fus->start, start);
 	    VMOVE(i_fus->dir, dir);
 	} else if (i_fus->free_edge) {
@@ -4679,7 +4560,6 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    VUNITIZE(i_fus->dir);
 
 	    VJOIN1(i_fus->start, vg->coord, (-DIST_PT_PLANE(vg->coord, pl)), pl);
-
 	}
 
 	/* Save this info in the int_faces table */
@@ -4693,6 +4573,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 		done = 1;
 	}
     }
+
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("After getting edge lines:\n");
 	nmg_pr_inter(new_v, int_faces);
@@ -4710,7 +4591,6 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 HIDDEN int
 nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bu_ptbl *faces, const struct bn_tol *tol)
 {
-    struct shell *s;
     int edge_no;
 
     if (RTG.NMG_debug & DEBUG_BASIC)
@@ -4720,8 +4600,6 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
     NMG_CK_VERTEX(new_v);
     BN_CK_TOL(tol);
     BU_CK_PTBL(int_faces);
-
-    s = nmg_find_shell(&new_v->magic);
 
     /* loop through edges departing from new_v */
     for (edge_no=0; edge_no<BU_PTBL_END(int_faces); edge_no++) {
@@ -7733,15 +7611,12 @@ int
 nmg_kill_zero_length_edgeuses(struct shell *s)
 {
     int empty_shell=0;
-    struct shell *next_s;
     struct faceuse *fu;
 
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_kill_zero_length_edgeuses(m=%p)\n", (void *)s);
 
     NMG_CK_SHELL(s);
-
-    next_s = s;
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
 
@@ -8455,7 +8330,7 @@ nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
 
 
 HIDDEN int
-Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
+Shell_is_arb(const struct shell *s, struct bu_ptbl *tab)
 {
     struct faceuse *fu;
     struct face *f;

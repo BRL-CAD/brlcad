@@ -936,21 +936,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
- //   if (sA->manifolds) {
-	//bu_free((char *)sA->manifolds, "free manifolds table");
-	//sA->manifolds = (char *)NULL;
- //   }
-
- //   sA->manifolds = nmg_manifolds(sA);
-
- //   if (sB->manifolds) {
-	//bu_free((char *)sB->manifolds, "free manifolds table");
-	//sB->manifolds = (char *)NULL;
- //   }
-
- //   sB->manifolds = nmg_manifolds(sB);
-
-
     /*
      * Classify A -vs- B, then B -vs- A.
      * Carry onAonBshared and onAonBanti classifications forward
@@ -1447,9 +1432,6 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	nmg_pr_s_briefly(tl->tr_d.td_s, "");
     }
 
-    /* move operands into the same model */
-    //nmg_merge_shells(tl->tr_d.td_s, tr->tr_d.td_s);
-
     /* input s1 and s2 are destroyed, output is new shell */
     reg = nmg_do_bool(tl->tr_d.td_s, tr->tr_d.td_s, op, tol);
 
@@ -1560,8 +1542,6 @@ nmg_boolean(union tree *tp, struct shell *s, const struct bn_tol *tol, struct re
 	goto out;
     }
 
-    /* move result into correct model */
-    //nmg_merge_shells(s, tp->tr_d.td_s);
     ret = 0;
 
 out:

@@ -754,12 +754,11 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_submodel_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_submodel_internal *sip;
 
-    if (r) NMG_CK_REGION(*r);
-    if (m) NMG_CK_MODEL(m);
+    if (s) NMG_CK_SHELL(*s);
     RT_CK_DB_INTERNAL(ip);
 
     sip = (struct rt_submodel_internal *)ip->idb_ptr;

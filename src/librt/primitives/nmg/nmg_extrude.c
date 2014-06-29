@@ -803,165 +803,107 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 struct shell *
 nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_tol *tol)
 {
- //   struct model *m;
- //   struct nmgregion *new_r;
- //   struct faceuse *fu;
- //   struct loopuse *lu;
- //   struct vertexuse *vu;
- //   struct nmgregion *old_r;
- //   struct shell *s_tmp;
- //   const int UNDETERMINED = -1;
+    struct faceuse *fu;
+    struct loopuse *lu;
+    struct vertexuse *vu;
+    struct shell *s_tmp;
+    const int UNDETERMINED = -1;
 
- //   NMG_CK_SHELL(in_shell);
- //   BN_CK_TOL(tol);
+    NMG_CK_SHELL(in_shell);
+    BN_CK_TOL(tol);
 
- //   if (RTG.NMG_debug & DEBUG_BASIC)
-	//bu_log("nmg_extrude_cleanup(in_shell=%p)\n", (void *)in_shell);
+    if (RTG.NMG_debug & DEBUG_BASIC)
+	bu_log("nmg_extrude_cleanup(in_shell=%p)\n", (void *)in_shell);
 
- //   m = nmg_find_model(&in_shell->l.magic);
+    /* intersect each face in the shell with every other face in the
+     * same shell
+     */
+    nmg_isect_shell_self(in_shell, tol);
 
- //   /* intersect each face in the shell with every other face in the
- //    * same shell
- //    */
- //   nmg_isect_shell_self(in_shell, tol);
+    /* Extrusion may create loops that overlap */
+    nmg_fix_overlapping_loops(in_shell, tol);
 
- //   /* Extrusion may create loops that overlap */
- //   nmg_fix_overlapping_loops(in_shell, tol);
+    /* look for self-touching loops */
+    for (BU_LIST_FOR(fu, faceuse, &in_shell->fu_hd)) {
+	if (fu->orientation != OT_SAME)
+	    continue;
 
- //   /* look for self-touching loops */
- //   for (BU_LIST_FOR(fu, faceuse, &in_shell->fu_hd)) {
-	//if (fu->orientation != OT_SAME)
-	//    continue;
+	lu = BU_LIST_LAST(loopuse, &fu->lu_hd);
+	while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+	    struct loopuse *new_lu;
+	    int orientation;
 
-	//lu = BU_LIST_LAST(loopuse, &fu->lu_hd);
-	//while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
-	//    struct loopuse *new_lu;
-	//    int orientation;
+	    /* check this loopuse */
+	    while ((vu=(struct vertexuse *)nmg_loop_touches_self(lu)) != (struct vertexuse *)NULL) {
+		/* Split this touching loop, but give both resulting
+		 * loops the same orientation as the original. This
+		 * will result in the part of the loop that needs to
+		 * be discarded having an incorrect orientation with
+		 * respect to the face.  This incorrect orientation
+		 * will be discovered later by "nmg_bad_face_normals"
+		 * and will result in the undesirable portion's demise
+		 */
 
-	//    /* check this loopuse */
-	//    while ((vu=(struct vertexuse *)nmg_loop_touches_self(lu)) != (struct vertexuse *)NULL) {
-	//	/* Split this touching loop, but give both resulting
-	//	 * loops the same orientation as the original. This
-	//	 * will result in the part of the loop that needs to
-	//	 * be discarded having an incorrect orientation with
-	//	 * respect to the face.  This incorrect orientation
-	//	 * will be discovered later by "nmg_bad_face_normals"
-	//	 * and will result in the undesirable portion's demise
-	//	 */
+		orientation = lu->orientation;
+		new_lu = nmg_split_lu_at_vu(lu, vu);
+		new_lu->orientation = orientation;
+		lu->orientation = orientation;
+		new_lu->lumate_p->orientation = orientation;
+		lu->lumate_p->orientation = orientation;
+	    }
 
-	//	orientation = lu->orientation;
-	//	new_lu = nmg_split_lu_at_vu(lu, vu);
-	//	new_lu->orientation = orientation;
-	//	lu->orientation = orientation;
-	//	new_lu->lumate_p->orientation = orientation;
-	//	lu->lumate_p->orientation = orientation;
-	//    }
+	    lu = BU_LIST_PLAST(loopuse, &lu->l);
+	}
+    }
 
-	//    lu = BU_LIST_PLAST(loopuse, &lu->l);
-	//}
- //   }
+    nmg_rebound(in_shell, tol);
 
- //   nmg_rebound(m, tol);
+    /* NMG rules require a region to always have a shell, so in order
+     * to get our in_shell in a new region by itself we must:
+     *   1) Create a new region containing a temporary shell.
+     *   2) Add our in_shell to the region.
+     *   3) Remove the temporary shell.
+     */
+    s_tmp = nmg_ms();
 
- //   /* We now build a temporary region in the model where we can move in_shell
- //    * in order to isolate it from other shells.
- //    */
+    /* now decompose our shell, count number of inside shells */
+    if (nmg_decompose_shell(in_shell, tol) < 2) {
 
- //   /* remember the nmgregion where "in_shell" came from */
- //   old_r = in_shell->r_p;
+	/* We still have only one shell. If there's a problem with it, then
+	 * kill it. Otherwise, move it back to the region it came from.
+	 */
+	if (nmg_bad_face_normals(in_shell, tol)) {
+	    /* shell contains bad face normals */
+	    (void)nmg_ks(in_shell);
+	    in_shell = (struct shell *)NULL;
+	} else if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(in_shell)) {
+	    /* shell was known to be a void shell and became an exterior shell
+	     * OR
+	     * shell was known to be an exterior shell and became a void shell
+	     */
+	    (void)nmg_ks(in_shell);
+	    in_shell = (struct shell *)NULL;
+	}
+    } else {
+	/* look at "new_s" */
+	int kill_it=0;
 
- //   /* NMG rules require a region to always have a shell, so in order
- //    * to get our in_shell in a new region by itself we must:
- //    *   1) Create a new region containing a temporary shell.
- //    *   2) Add our in_shell to the region.
- //    *   3) Remove the temporary shell.
- //    */
- //   new_r = nmg_mrsv(m);
- //   s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
+	if (nmg_bad_face_normals(s_tmp, tol))
+	    kill_it = 1;
 
- //   (void)nmg_mv_shell_to_region(in_shell, new_r);
+	if (!kill_it) {
+	    if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(s_tmp))
+	    kill_it = 1;
+	}
 
- //   if (nmg_ks(s_tmp))
-	//bu_bomb("nmg_extrude_shell: Nothing got moved to new region\n");
+	if (kill_it) {
+	    /* Bad shell, kill it */
+	    if (nmg_ks(s_tmp)) {
+		in_shell = (struct shell *)NULL;
+	    }
+	}
+    }
 
- //   /* now decompose our shell, count number of inside shells */
- //   if (nmg_decompose_shell(in_shell, tol) < 2) {
-
-	///* We still have only one shell. If there's a problem with it, then
-	// * kill it. Otherwise, move it back to the region it came from.
-	// */
-	//if (nmg_bad_face_normals(in_shell, tol)) {
-	//    /* shell contains bad face normals */
-	//    (void)nmg_ks(in_shell);
-	//    in_shell = (struct shell *)NULL;
-	//} else if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(in_shell)) {
-	//    /* shell was known to be a void shell and became an exterior shell
-	//     * OR
-	//     * shell was known to be an exterior shell and became a void shell
-	//     */
-	//    (void)nmg_ks(in_shell);
-	//    in_shell = (struct shell *)NULL;
-	//} else {
-	//    (void)nmg_mv_shell_to_region(in_shell, old_r);
-	//}
-
-	///* kill temporary region */
-	//nmg_kr(new_r);
-	//new_r = NULL;
- //   } else {
-	///* look at each shell in "new_r" */
-	//s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
-	//while (BU_LIST_NOT_HEAD(s_tmp, &new_r->s_hd)) {
-	//    struct shell *next_s;
-	//    int kill_it=0;
-
-	//    next_s = BU_LIST_PNEXT(shell, &s_tmp->l);
-
-	//    if (nmg_bad_face_normals(s_tmp, tol))
-	//	kill_it = 1;
-
-	//    if (!kill_it) {
-	//	if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(s_tmp))
-	//	    kill_it = 1;
-	//    }
-
-	//    if (kill_it) {
-	//	/* Bad shell, kill it */
-	//	if (nmg_ks(s_tmp)) {
-
-	//	    /* All shells have been removed (all were bad).
-	//	     * Kill the now-empty temporary region.
-	//	     */
-	//	    nmg_kr(new_r);
-	//	    new_r = (struct nmgregion *)NULL;
-	//	    in_shell = (struct shell *)NULL;
-	//	    break;
-	//	}
-	//    }
-	//    s_tmp = next_s;
-	//}
- //   }
-
- //   if (new_r) {
-	///* temp region contains multiple valid shells that we must merge */
-
-	//in_shell = BU_LIST_FIRST(shell, &new_r->s_hd);
-	//for (BU_LIST_FOR(s_tmp, shell, &new_r->s_hd)) {
-	//    if (s_tmp == in_shell) {
-	//	continue;
-	//    }
-	//    nmg_js(in_shell, s_tmp, tol);
-	//}
-
-	///* move resulting shell back to the original region */
-	//(void)nmg_mv_shell_to_region(in_shell, old_r);
-
-	///* kill the temporary region */
-	//if (BU_LIST_NON_EMPTY(&new_r->s_hd))
-	//    bu_log("nmg_extrude_cleanup: temporary nmgregion not empty!!\n");
-
-	//(void)nmg_kr(new_r);
- //   }
     return in_shell;
 }
 
@@ -982,185 +924,169 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 void
 nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol)
 {
- //   struct nmgregion *new_r, *old_r;
- //   struct vertexuse *vu;
- //   struct edgeuse *eu;
- //   struct loopuse *lu;
- //   struct faceuse *fu;
- //   struct face_g_plane *fg_p;
- //   struct model *m;
- //   struct shell *is;	/* inside shell */
- //   struct shell *s_tmp;
- //   struct bu_ptbl shells;
- //   long *flags;
- //   long **copy_tbl;
- //   int shell_no;
- //   int is_void;
- //   int s_tmp_is_closed;
+    struct vertexuse *vu;
+    struct edgeuse *eu;
+    struct loopuse *lu;
+    struct faceuse *fu;
+    struct face_g_plane *fg_p;
+    struct shell *is;	/* inside shell */
+    struct shell *s_tmp;
+    struct bu_ptbl shells;
+    long *flags;
+    long **copy_tbl;
+    int shell_no;
+    int is_void;
+    int s_tmp_is_closed;
 
- //   if (RTG.NMG_debug & DEBUG_BASIC)
-	//bu_log("nmg_extrude_shell(s=%p, thick=%f)\n", (void *)s, thick);
+    if (RTG.NMG_debug & DEBUG_BASIC)
+	bu_log("nmg_extrude_shell(s=%p, thick=%f)\n", (void *)s, thick);
 
- //   NMG_CK_SHELL(s);
- //   BN_CK_TOL(tol);
+    NMG_CK_SHELL(s);
+    BN_CK_TOL(tol);
 
- //   if (thick < 0.0) {
-	//bu_log("nmg_extrude_shell: thickness less than zero not allowed");
-	//return;
- //   }
+    if (thick < 0.0) {
+	bu_log("nmg_extrude_shell: thickness less than zero not allowed");
+	return;
+    }
 
- //   if (thick < tol->dist) {
-	//bu_log("nmg_extrude_shell: thickness less than tolerance not allowed");
-	//return;
- //   }
+    if (thick < tol->dist) {
+	bu_log("nmg_extrude_shell: thickness less than tolerance not allowed");
+	return;
+    }
 
- //   m = nmg_find_model((uint32_t *)s);
+    /* move this shell to another region */
+    s_tmp = nmg_ms();
 
- //   /* remember region where this shell came from */
- //   old_r = s->r_p;
- //   NMG_CK_REGION(old_r);
+    /* decompose this shell */
+    (void)nmg_decompose_shell(s, tol);
 
- //   /* move this shell to another region */
- //   new_r = nmg_mrsv(m);
- //   s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
- //   (void)nmg_mv_shell_to_region(s, new_r);
+    /* recompute the bounding boxes */
+    nmg_shell_a(s_tmp, tol);
 
- //   /* decompose this shell */
- //   (void)nmg_decompose_shell(s, tol);
+    /* make a list of all the shells in the new region */
+    bu_ptbl_init(&shells, 64, " &shells ");
+    bu_ptbl_ins(&shells, (long *)s_tmp);
 
- //   /* kill the extra shell created by nmg_mrsv above */
- //   (void)nmg_ks(s_tmp);
+    /* extrude a copy of each shell, one at a time */
+    for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no ++) {
+	s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
 
- //   /* recompute the bounding boxes */
- //   nmg_region_a(new_r, tol);
+	/* first make a copy of this shell */
+	is = nmg_dup_shell(s_tmp, &copy_tbl, tol);
 
- //   /* make a list of all the shells in the new region */
- //   bu_ptbl_init(&shells, 64, " &shells ");
- //   for (BU_LIST_FOR(s_tmp, shell, &new_r->s_hd))
-	//bu_ptbl_ins(&shells, (long *)s_tmp);
+	/* make a translation table for this model */
+	flags = (long *)bu_calloc(s->maxindex, sizeof(long), "nmg_extrude_shell flags");
 
- //   /* extrude a copy of each shell, one at a time */
- //   for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no ++) {
-	//s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
+	/* now adjust all the planes, first move them inward by distance "thick" */
+	for (BU_LIST_FOR(fu, faceuse, &is->fu_hd)) {
+	    NMG_CK_FACEUSE(fu);
+	    NMG_CK_FACE(fu->f_p);
+	    fg_p = fu->f_p->g.plane_p;
+	    NMG_CK_FACE_G_PLANE(fg_p);
 
-	///* first make a copy of this shell */
-	//is = nmg_dup_shell(s_tmp, &copy_tbl, tol);
+	    /* move the faces by the distance "thick" */
+	    if (NMG_INDEX_TEST_AND_SET(flags, fg_p)) {
+		if (fu->f_p->flip)
+		    fg_p->N[W] += thick;
+		else
+		    fg_p->N[W] -= thick;
+	    }
+	}
 
-	///* make a translation table for this model */
-	//flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
+	/* Reverse the normals of all the faces */
+	nmg_invert_shell(is);
 
-	///* now adjust all the planes, first move them inward by distance "thick" */
-	//for (BU_LIST_FOR(fu, faceuse, &is->fu_hd)) {
-	//    NMG_CK_FACEUSE(fu);
-	//    NMG_CK_FACE(fu->f_p);
-	//    fg_p = fu->f_p->g.plane_p;
-	//    NMG_CK_FACE_G_PLANE(fg_p);
+	is_void = nmg_shell_is_void(is);
 
-	//    /* move the faces by the distance "thick" */
-	//    if (NMG_INDEX_TEST_AND_SET(flags, fg_p)) {
-	//	if (fu->f_p->flip)
-	//	    fg_p->N[W] += thick;
-	//	else
-	//	    fg_p->N[W] -= thick;
-	//    }
-	//}
+	/* now start adjusting the vertices.  Use the original shell
+	 * so that we can pass the original vertex to nmg_inside_vert
+	 */
+	for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
+	    if (fu->orientation != OT_SAME)
+		continue;
 
-	///* Reverse the normals of all the faces */
-	//nmg_invert_shell(is);
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		    /* the vertex in a loop of one vertex must show up
+		     * in an edgeuse somewhere, so don't mess with it
+		     * here
+		     */
+		    continue;
+		} else {
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			struct vertex *new_v;
 
-	//is_void = nmg_shell_is_void(is);
+			NMG_CK_EDGEUSE(eu);
+			vu = eu->vu_p;
+			NMG_CK_VERTEXUSE(vu);
+			new_v = NMG_INDEX_GETP(vertex, copy_tbl, vu->v_p);
+			NMG_CK_VERTEX(new_v);
+			if (NMG_INDEX_TEST_AND_SET(flags, new_v)) {
+			    /* move this vertex */
+			    if (nmg_in_vert(new_v, approximate, tol))
+				bu_bomb("Failed to get a new point from nmg_inside_vert\n");
+			}
+		    }
+		}
+	    }
+	}
 
-	///* now start adjusting the vertices.  Use the original shell
-	// * so that we can pass the original vertex to nmg_inside_vert
-	// */
-	//for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
-	//    if (fu->orientation != OT_SAME)
-	//	continue;
+	/* recompute the bounding boxes */
+	nmg_shell_a(is, tol);
 
-	//    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	//	NMG_CK_LOOPUSE(lu);
-	//	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-	//	    /* the vertex in a loop of one vertex must show up
-	//	     * in an edgeuse somewhere, so don't mess with it
-	//	     * here
-	//	     */
-	//	    continue;
-	//	} else {
-	//	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	//		struct vertex *new_v;
+	nmg_vsshell(s);
 
-	//		NMG_CK_EDGEUSE(eu);
-	//		vu = eu->vu_p;
-	//		NMG_CK_VERTEXUSE(vu);
-	//		new_v = NMG_INDEX_GETP(vertex, copy_tbl, vu->v_p);
-	//		NMG_CK_VERTEX(new_v);
-	//		if (NMG_INDEX_TEST_AND_SET(flags, new_v)) {
-	//		    /* move this vertex */
-	//		    if (nmg_in_vert(new_v, approximate, tol))
-	//			bu_bomb("Failed to get a new point from nmg_inside_vert\n");
-	//		}
-	//	    }
-	//	}
-	//    }
-	//}
+	s_tmp_is_closed = !nmg_check_closed_shell(s_tmp, tol);
+	if (s_tmp_is_closed)
+	    is = nmg_extrude_cleanup(is, is_void, tol);
 
-	///* recompute the bounding boxes */
-	//nmg_region_a(is->r_p, tol);
+	/* Inside shell is done */
+	if (is) {
+	    if (s_tmp_is_closed) {
+		if (nmg_check_closed_shell(is, tol)) {
+		    bu_log("nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n");
+		    nmg_close_shell(is, tol);
+		}
 
-	//nmg_vmodel(m);
+		nmg_shell_coplanar_face_merge(is, tol, 0);
+		nmg_simplify_shell(is);
 
-	//s_tmp_is_closed = !nmg_check_closed_shell(s_tmp, tol);
-	//if (s_tmp_is_closed)
-	//    is = nmg_extrude_cleanup(is, is_void, tol);
+		/* now merge the inside and outside shells */
+		nmg_js(s_tmp, is, tol);
+	    } else {
+		if (!nmg_check_closed_shell(is, tol)) {
+		    bu_log("nmg_extrude_shell: inside shell is closed, outer isn't!!\n");
+		    nmg_shell_coplanar_face_merge(is, tol, 0);
+		    nmg_simplify_shell(is);
+		    nmg_js(s_tmp, is, tol);
+		} else {
+		    /* connect the boundaries of the two open shells */
+		    nmg_open_shells_connect(s_tmp, is ,
+					    (const long **)copy_tbl, tol);
+		}
+	    }
+	}
 
-	///* Inside shell is done */
-	//if (is) {
-	//    if (s_tmp_is_closed) {
-	//	if (nmg_check_closed_shell(is, tol)) {
-	//	    bu_log("nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n");
-	//	    nmg_close_shell(is, tol);
-	//	}
+	/* recompute the bounding boxes */
+	nmg_shell_a(s_tmp, tol);
 
-	//	nmg_shell_coplanar_face_merge(is, tol, 0);
-	//	nmg_simplify_shell(is);
+	/* free memory */
+	bu_free((char *)flags, "nmg_extrude_shell: flags");
+	bu_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
+    }
 
-	//	/* now merge the inside and outside shells */
-	//	nmg_js(s_tmp, is, tol);
-	//    } else {
-	//	if (!nmg_check_closed_shell(is, tol)) {
-	//	    bu_log("nmg_extrude_shell: inside shell is closed, outer isn't!!\n");
-	//	    nmg_shell_coplanar_face_merge(is, tol, 0);
-	//	    nmg_simplify_shell(is);
-	//	    nmg_js(s_tmp, is, tol);
-	//	} else {
-	//	    /* connect the boundaries of the two open shells */
-	//	    nmg_open_shells_connect(s_tmp, is ,
-	//				    (const long **)copy_tbl, tol);
-	//	}
-	//    }
-	//}
+    /* put it all back together */
+    for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no++) {
+	struct shell *s2;
 
-	///* recompute the bounding boxes */
-	//nmg_region_a(s_tmp->r_p, tol);
+	s2 = (struct shell *)BU_PTBL_GET(&shells, shell_no);
+	if (s2 != s)
+	    nmg_js(s, s2, tol);
+    }
 
-	///* free memory */
-	//bu_free((char *)flags, "nmg_extrude_shell: flags");
-	//bu_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
- //   }
-
- //   /* put it all back together */
- //   for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no++) {
-	//struct shell *s2;
-
-	//s2 = (struct shell *)BU_PTBL_GET(&shells, shell_no);
-	//if (s2 != s)
-	//    nmg_js(s, s2, tol);
- //   }
-
- //   bu_ptbl_free(&shells);
-
- //   (void)nmg_mv_shell_to_region(s, old_r);
- //   nmg_kr(new_r);
+    bu_ptbl_free(&shells);
+    nmg_ks(s_tmp);
 }
 
 
@@ -1181,180 +1107,144 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 struct shell *
 nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, const struct bn_tol *tol)
 {
-//    fastf_t thick;
-//    int along_normal;
-//    struct model *m;
-//    struct nmgregion *new_r, *old_r;
-//    struct shell *s_tmp, *s2;
-//    struct bu_ptbl shells;
-//    struct bu_ptbl verts;
-//    int shell_no;
-//    int failed=0;
-//
-//    NMG_CK_SHELL(s);
-//    BN_CK_TOL(tol);
-//
-//    if (NEAR_ZERO(dist, tol->dist)) {
-//	bu_log("nmg_extrude_shell: Cannot extrude a distance less than tolerance distance\n");
-//	return s;
-//    }
-//
-//    along_normal = normal_ward;
-//    if (dist < 0.0) {
-//	thick = (-dist);
-//	along_normal = (!normal_ward);
-//    } else
-//	thick = dist;
-//
-//    m = nmg_find_model(&s->l.magic);
-//    NMG_CK_MODEL(m);
-//
-//    old_r = s->r_p;
-//    NMG_CK_REGION(old_r);
-//
-//    /* decompose this shell and extrude each piece separately */
-//    new_r = nmg_mrsv(m);
-//    s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
-//    (void)nmg_mv_shell_to_region(s, new_r);
-//    (void)nmg_decompose_shell(s, tol);
-//
-//    /* kill the not-needed shell created by nmg_mrsv() */
-//    (void)nmg_ks(s_tmp);
-//
-//    /* recompute the bounding boxes */
-//    nmg_region_a(new_r, tol);
-//
-//    /* make a list of all the shells to be extruded */
-//    bu_ptbl_init(&shells, 64, " &shells ");
-//    for (BU_LIST_FOR(s_tmp, shell, &new_r->s_hd))
-//	bu_ptbl_ins(&shells, (long *)s_tmp);
-//
-//    bu_ptbl_init(&verts, 64, " &verts ");
-//
-//    /* extrude each shell */
-//    for (shell_no=0; shell_no < BU_PTBL_END(&shells); shell_no++) {
-//	int vert_no;
-//	int is_void;
-//	long *flags;
-//	struct faceuse *fu;
-//
-//	s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
-//	NMG_CK_SHELL(s_tmp);
-//
-//	is_void = nmg_shell_is_void(s_tmp);
-//
-//	/* make a translation table for this model */
-//	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
-//
-//	/* now adjust all the planes, first move them by distance "thick" */
-//	for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
-//	    struct face_g_plane *fg_p;
-//
-//	    NMG_CK_FACEUSE(fu);
-//	    NMG_CK_FACE(fu->f_p);
-//	    fg_p = fu->f_p->g.plane_p;
-//	    NMG_CK_FACE_G_PLANE(fg_p);
-//
-//	    /* move the faces by the distance "thick" */
-//	    if (NMG_INDEX_TEST_AND_SET(flags, fg_p)) {
-//		if (along_normal ^ fu->f_p->flip)
-//		    fg_p->N[W] += thick;
-//		else
-//		    fg_p->N[W] -= thick;
-//	    }
-//	}
-//
-//	bu_free((char *)flags, "nmg_extrude_shell flags");
-//
-//	/* get table of vertices in this shell */
-//	nmg_vertex_tabulate(&verts, &s_tmp->l.magic);
-//
-//	/* now move all the vertices */
-//	for (vert_no = 0; vert_no < BU_PTBL_END(&verts); vert_no++) {
-//	    struct vertex *new_v;
-//
-//	    new_v = (struct vertex *)BU_PTBL_GET(&verts, vert_no);
-//	    NMG_CK_VERTEX(new_v);
-//
-//	    if (nmg_in_vert(new_v, approximate, tol)) {
-//		bu_log("nmg_extrude_shell: Failed to calculate new vertex at v=%p was (%f %f %f)\n",
-//		       (void *)new_v, V3ARGS(new_v->vg_p->coord));
-//		failed = 1;
-//		goto out;
-//	    }
-//	}
-//
-//	bu_ptbl_free(&verts);
-//
-//	if (approximate) {
-//	    /* need to recalculate plane eqns */
-//	    for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
-//		struct loopuse *lu;
-//		int got_plane=0;
-//
-//		if (fu->orientation != OT_SAME)
-//		    continue;
-//
-//		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-//		    fastf_t area;
-//		    plane_t pl;
-//
-//		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-//			continue;
-//
-//		    if (lu->orientation != OT_SAME)
-//			continue;
-//
-//		    area = nmg_loop_plane_area(lu, pl);
-//
-//		    if (area > 0.0) {
-//			nmg_face_g(fu, pl);
-//			got_plane = 1;
-//			break;
-//		    }
-//		}
-//		if (!got_plane) {
-//		    bu_log("nmg_extrude_shell: Cannot recalculate plane for face:\n");
-//		    nmg_pr_fu_briefly(fu, (char *)NULL);
-//		    failed = 1;
-//		    goto out;
-//		}
-//	    }
-//	}
-//
-//	/* recompute the bounding boxes */
-//	nmg_region_a(s_tmp->r_p, tol);
-//
-//	(void)nmg_extrude_cleanup(s_tmp, is_void, tol);
-//    }
-//
-//out:
-//    bu_ptbl_free(&shells);
-//
-//    /* put it all back together */
-//    if (BU_LIST_NON_EMPTY(&new_r->s_hd)) {
-//	s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
-//	s2 = BU_LIST_PNEXT(shell, &s_tmp->l);
-//	while (BU_LIST_NOT_HEAD(s2, &new_r->s_hd)) {
-//	    struct shell *next_s;
-//
-//	    next_s = BU_LIST_PNEXT(shell, &s2->l);
-//	    nmg_js(s_tmp, s2, tol);
-//
-//	    s2 = next_s;
-//	}
-//    } else
-//	s_tmp = (struct shell *)NULL;
-//
-//    if (s_tmp)
-//	(void)nmg_mv_shell_to_region(s_tmp, old_r);
-//
-//    nmg_kr(new_r);
+    fastf_t thick;
+    int along_normal;
+    struct shell *s_tmp;
+    struct bu_ptbl shells;
+    struct bu_ptbl verts;
+    int shell_no;
+    int failed=0;
 
- //   if (failed)
-	//return (struct shell *)NULL;
- //   else
-	//return s_tmp;
+    NMG_CK_SHELL(s);
+    BN_CK_TOL(tol);
+
+    if (NEAR_ZERO(dist, tol->dist)) {
+	bu_log("nmg_extrude_shell: Cannot extrude a distance less than tolerance distance\n");
+	return s;
+    }
+
+    along_normal = normal_ward;
+    if (dist < 0.0) {
+	thick = (-dist);
+	along_normal = (!normal_ward);
+    } else
+	thick = dist;
+
+    (void)nmg_decompose_shell(s, tol);
+
+    /* recompute the bounding boxes */
+    nmg_shell_a(s, tol);
+
+    /* make a list of all the shells to be extruded */
+    bu_ptbl_init(&shells, 64, " &shells ");
+    bu_ptbl_ins(&shells, (long *)s);
+
+    bu_ptbl_init(&verts, 64, " &verts ");
+
+    /* extrude each shell */
+    for (shell_no=0; shell_no < BU_PTBL_END(&shells); shell_no++) {
+	int vert_no;
+	int is_void;
+	long *flags;
+	struct faceuse *fu;
+
+	s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
+	NMG_CK_SHELL(s_tmp);
+
+	is_void = nmg_shell_is_void(s_tmp);
+
+	/* make a translation table for this model */
+	flags = (long *)bu_calloc(s->maxindex, sizeof(long), "nmg_extrude_shell flags");
+
+	/* now adjust all the planes, first move them by distance "thick" */
+	for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
+	    struct face_g_plane *fg_p;
+
+	    NMG_CK_FACEUSE(fu);
+	    NMG_CK_FACE(fu->f_p);
+	    fg_p = fu->f_p->g.plane_p;
+	    NMG_CK_FACE_G_PLANE(fg_p);
+
+	    /* move the faces by the distance "thick" */
+	    if (NMG_INDEX_TEST_AND_SET(flags, fg_p)) {
+		if (along_normal ^ fu->f_p->flip)
+		    fg_p->N[W] += thick;
+		else
+		    fg_p->N[W] -= thick;
+	    }
+	}
+
+	bu_free((char *)flags, "nmg_extrude_shell flags");
+
+	/* get table of vertices in this shell */
+	nmg_vertex_tabulate(&verts, &s_tmp->magic);
+
+	/* now move all the vertices */
+	for (vert_no = 0; vert_no < BU_PTBL_END(&verts); vert_no++) {
+	    struct vertex *new_v;
+
+	    new_v = (struct vertex *)BU_PTBL_GET(&verts, vert_no);
+	    NMG_CK_VERTEX(new_v);
+
+	    if (nmg_in_vert(new_v, approximate, tol)) {
+		bu_log("nmg_extrude_shell: Failed to calculate new vertex at v=%p was (%f %f %f)\n",
+		       (void *)new_v, V3ARGS(new_v->vg_p->coord));
+		failed = 1;
+		goto out;
+	    }
+	}
+
+	bu_ptbl_free(&verts);
+
+	if (approximate) {
+	    /* need to recalculate plane eqns */
+	    for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
+		struct loopuse *lu;
+		int got_plane=0;
+
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    fastf_t area;
+		    plane_t pl;
+
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+			continue;
+
+		    if (lu->orientation != OT_SAME)
+			continue;
+
+		    area = nmg_loop_plane_area(lu, pl);
+
+		    if (area > 0.0) {
+			nmg_face_g(fu, pl);
+			got_plane = 1;
+			break;
+		    }
+		}
+		if (!got_plane) {
+		    bu_log("nmg_extrude_shell: Cannot recalculate plane for face:\n");
+		    nmg_pr_fu_briefly(fu, (char *)NULL);
+		    failed = 1;
+		    goto out;
+		}
+	    }
+	}
+
+	/* recompute the bounding boxes */
+	nmg_shell_a(s_tmp, tol);
+
+	(void)nmg_extrude_cleanup(s_tmp, is_void, tol);
+    }
+
+out:
+    bu_ptbl_free(&shells);
+
+    if (failed)
+	return (struct shell *)NULL;
+    else
+	return s_tmp;
 
     return (struct shell *)NULL;
 }

@@ -756,10 +756,9 @@ struct superell_vert_strip {
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
-rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_superell_tess(struct shell **s, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
-    if (r) NMG_CK_REGION(*r);
-    if (m) NMG_CK_MODEL(m);
+    if (s) NMG_CK_SHELL(s);
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     bu_log("called rt_superell_tess()\n");
