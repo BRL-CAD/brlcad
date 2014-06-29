@@ -153,7 +153,7 @@ add_solid(const struct directory *dp,
 	eptr->l.s = nmg_ms();
 
 	if (!OBJ[id].ft_tessellate ||
-	    OBJ[id].ft_tessellate(&s, eptr->l.s, &intern,
+	    OBJ[id].ft_tessellate(&s, &intern,
 					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
 					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0)
 	{
@@ -174,11 +174,6 @@ add_solid(const struct directory *dp,
 	struct rt_db_internal intern2;
 
 	if (dgcdp->do_polysolids) {
-	    struct shell *s=(struct shell *)NULL;
-
-	    /* create and prep a BoT version of this solid */
-	    s = eptr->l.s;
-
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.s
 		|| (bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)

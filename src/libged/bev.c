@@ -268,7 +268,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_REGION(tmp_tree->tr_d.td_s);
     bu_vls_printf(gedp->ged_result_str, "%s: facetize %s\n", cmdname, tmp_tree->tr_d.td_name);
 
-    nmg_vshell(bev_nmg_shell);
+    nmg_vsshell(bev_nmg_shell);
 
     /* Triangulate model, if requested */
     if (triangulate) {
