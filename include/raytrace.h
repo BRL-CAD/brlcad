@@ -7978,7 +7978,7 @@ RT_EXPORT extern const char *rt_version(void);
 /**
  * Merge second combination to the first one.
  */
-RT_EXPORT extern void nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2, const struct bn_tol *tol);
+RT_EXPORT extern void nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2);
 
 /**
  * Union two tree into single one.
