@@ -1295,16 +1295,16 @@ static struct to_cmdtab to_cmds[] = {
     {"v2m_point",	"x y z", 5, to_view_func, ged_v2m_point},
     {"vdraw",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_version},
-    {"view",	"quat|ypr|aet|center|eye|size [args]", 7, to_view_func_plus, dm_view_func},
+    {"view",	"quat|ypr|aet|center|eye|size [args]", 7, to_view_func_plus, ged_view_func},
     {"view_axes",	"vname [args]", TO_UNLIMITED, to_view_axes, GED_FUNC_PTR_NULL},
     {"view_callback",	"vname [args]", TO_UNLIMITED, to_view_callback, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, to_view_win_size, GED_FUNC_PTR_NULL},
-    {"view2grid_lu",	"x y z", 5, to_view_func_less, dm_view2grid_lu},
-    {"view2model",	"", 2, to_view_func_less, dm_view2model},
-    {"view2model_lu",	"x y z", 5, to_view_func_less, dm_view2model_lu},
-    {"view2model_vec",	"x y z", 5, to_view_func_less, dm_view2model_vec},
+    {"view2grid_lu",	"x y z", 5, to_view_func_less, ged_view2grid_lu},
+    {"view2model",	"", 2, to_view_func_less, ged_view2model},
+    {"view2model_lu",	"x y z", 5, to_view_func_less, ged_view2model_lu},
+    {"view2model_vec",	"x y z", 5, to_view_func_less, ged_view2model_vec},
     {"view2screen",	"", 2, to_view2screen, GED_FUNC_PTR_NULL},
-    {"viewdir",	"[-i]", 3, to_view_func_less, dm_viewdir},
+    {"viewdir",	"[-i]", 3, to_view_func_less, ged_viewdir},
     {"vmake",	"pname ptype", TO_UNLIMITED, to_vmake, GED_FUNC_PTR_NULL},
     {"vnirt",	"[args]", TO_UNLIMITED, to_view_func, ged_vnirt},
     {"vslew",	"x y", TO_UNLIMITED, to_vslew, GED_FUNC_PTR_NULL},
@@ -10045,7 +10045,7 @@ to_new_view(struct ged *gedp,
     bu_vls_init(&new_gdvp->gdv_callback);
     bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
     bu_vls_printf(&new_gdvp->gdv_name, argv[name_index]);
-    dm_view_init(new_gdvp);
+    ged_view_init(new_gdvp);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
 
     new_gdvp->gv_point_scale = 1.0;

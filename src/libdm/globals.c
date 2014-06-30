@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libged */
+/** @addtogroup libdm */
 /** @{ */
-/** @file libged/globals.c
+/** @file libdm/globals.c
  *
  * Global variables in LIBGED.
  *
@@ -34,14 +34,12 @@
 
 #include "bio.h"
 
-#include "solid.h"
-
-#include "./ged_private.h"
+#include "dg.h"
 
 /**
- * head of free solid list
+ * head of drawable geometry object list
  */
-struct solid _FreeSolid;
+struct dg_obj HeadDGObj;
 
 /*
  * Local Variables:

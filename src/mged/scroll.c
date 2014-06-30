@@ -270,7 +270,7 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*DM_MAX);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -661,7 +661,7 @@ scroll_display(int y_top)
 	    }
 
 	    if (f > 0)
-		xpos = (f + SL_TOL) * GED_MAX;
+		xpos = (f + SL_TOL) * DM_MAX;
 	    else if (f < 0)
 		xpos = (f - SL_TOL) * -MENUXLIM;
 	    else

@@ -166,7 +166,7 @@ dm_draw_ticks(struct dm *dmp, struct dm_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y + d2 - t2;
     x2 = gvp->gv_adc.gas_dv_x + d1 -t1;
     y2 = gvp->gv_adc.gas_dv_y + d2 + t2;
-    if (dm_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			DM_TO_PM1(x1), DM_TO_PM1(Y1) * dmp->dm_aspect,
 			DM_TO_PM1(x2), DM_TO_PM1(y2) * dmp->dm_aspect);
@@ -177,7 +177,7 @@ dm_draw_ticks(struct dm *dmp, struct dm_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y + d1 + t1;
     x2 = gvp->gv_adc.gas_dv_x - d2 - t2;
     y2 = gvp->gv_adc.gas_dv_y + d1 - t1;
-    if (dm_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			DM_TO_PM1(x1), DM_TO_PM1(Y1) * dmp->dm_aspect,
 			DM_TO_PM1(x2), DM_TO_PM1(y2) * dmp->dm_aspect);
@@ -188,7 +188,7 @@ dm_draw_ticks(struct dm *dmp, struct dm_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y - d2 + t2;
     x2 = gvp->gv_adc.gas_dv_x - d1 + t1;
     y2 = gvp->gv_adc.gas_dv_y - d2 - t2;
-    if (dm_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			DM_TO_PM1(x1), DM_TO_PM1(Y1) * dmp->dm_aspect,
 			DM_TO_PM1(x2), DM_TO_PM1(y2) * dmp->dm_aspect);
@@ -199,7 +199,7 @@ dm_draw_ticks(struct dm *dmp, struct dm_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y - d1 - t1;
     x2 = gvp->gv_adc.gas_dv_x + d2 + t2;
     y2 = gvp->gv_adc.gas_dv_y - d1 + t1;
-    if (dm_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			DM_TO_PM1(x1), DM_TO_PM1(Y1) * dmp->dm_aspect,
 			DM_TO_PM1(x2), DM_TO_PM1(y2) * dmp->dm_aspect);

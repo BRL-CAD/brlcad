@@ -155,7 +155,7 @@ mged_bound_solid(struct solid *sp)
 void
 drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
 {
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     struct solid *sp;
 
     if (!existing_sp) {
@@ -210,7 +210,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -349,7 +349,7 @@ replot_modified_solid(
 int
 invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
 {
-    struct ged_display_list *gdlp;
+    struct dm_display_list *gdlp;
     struct solid *sp;
     struct directory *dp;
     int type = 0;

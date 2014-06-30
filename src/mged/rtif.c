@@ -178,8 +178,8 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     mat_t rot;
     struct bn_vlist *vp = NULL;
     struct directory *dp = NULL;
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct dm_display_list *gdlp = NULL;
+    struct dm_display_list *next_gdlp = NULL;
     vect_t eye_model = VINIT_ZERO;
     vect_t sav_center = VINIT_ZERO;
     vect_t sav_start = VINIT_ZERO;
@@ -220,9 +220,9 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+		next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		    if (LAST_SOLID(sp) != dp) continue;

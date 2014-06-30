@@ -359,15 +359,15 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[2], 1, 1.0);
 	for (i=0; i<(size_t)num_lines; i++)
 	    DM_DRAW_LINE_2D(dmp,
-			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
-			    GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dmp->dm_aspect));
+			    GED2PM1(((int)(lines[i*2][X]*DM_MAX))),
+			    GED2PM1(((int)(lines[i*2][Y]*DM_MAX)) * dmp->dm_aspect),
+			    GED2PM1(((int)(lines[i*2+1][X]*DM_MAX))),
+			    GED2PM1(((int)(lines[i*2+1][Y]*DM_MAX)) * dmp->dm_aspect));
 	for (i=0; i<8+1; i++) {
 	    if (pl[i].str[0] == '\0') break;
 	    DM_DRAW_STRING_2D(dmp, pl[i].str,
-			      GED2PM1(((int)(pl[i].pt[X]*GED_MAX))+15),
-			      GED2PM1(((int)(pl[i].pt[Y]*GED_MAX))+15), 0, 1);
+			      GED2PM1(((int)(pl[i].pt[X]*DM_MAX))+15),
+			      GED2PM1(((int)(pl[i].pt[Y]*DM_MAX))+15), 0, 1);
 	}
     }
 
@@ -457,8 +457,8 @@ dotitles(struct bu_vls *overlay_vls)
 	    if (STATE == ST_O_EDIT && illump->s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
-		xloc = (int)(temp[X]*GED_MAX);
-		yloc = (int)(temp[Y]*GED_MAX);
+		xloc = (int)(temp[X]*DM_MAX);
+		yloc = (int)(temp[Y]*DM_MAX);
 		DM_SET_FGCOLOR(dmp,
 			       color_scheme->cs_edit_info[0],
 			       color_scheme->cs_edit_info[1],

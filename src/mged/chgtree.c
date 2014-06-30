@@ -138,17 +138,17 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 struct solid *
 find_solid_with_path(struct db_full_path *pathp)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     struct solid *sp;
     int count = 0;
     struct solid *ret = (struct solid *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
@@ -187,8 +187,8 @@ find_solid_with_path(struct db_full_path *pathp)
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
@@ -212,9 +212,9 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
 	    is_empty = 0;
@@ -267,7 +267,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);
 	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
-	illum_gdlp = GED_DISPLAY_LIST_NULL;
+	illum_gdlp = DM_DISPLAY_LIST_NULL;
 	illump = 0;
 	(void)chg_state(ST_O_PICK, ST_VIEW, "error recovery");
 	return TCL_ERROR;

@@ -857,11 +857,9 @@ DM_EXPORT extern void adc_view_to_adc_grid(struct dm_view *gvp);
 DM_EXPORT extern void adc_grid_to_adc_view(struct dm_view *gvp);
 DM_EXPORT extern void adc_model_to_adc_view(struct dm_view *gvp);
 
-/* defined in clip.c */
-DM_EXPORT extern int dm_clip(fastf_t *xp1,
-			       fastf_t *yp1,
-			       fastf_t *xp2,
-			       fastf_t *yp2);
+/* dm-generic.c */
+DM_EXPORT extern void dm_view_update(struct dm_view *gvp);
+
 
 __END_DECLS
 

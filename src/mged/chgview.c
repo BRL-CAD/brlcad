@@ -69,9 +69,9 @@ extern long nvectors;
 
 extern vect_t e_axes_pos;
 
-fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
-fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
-fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
+fastf_t ar_scale_factor = DM_MAX / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = DM_MAX / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = DM_MAX / ADC_ANGLE_FACTOR;
 
 vect_t edit_absolute_model_rotate;
 vect_t edit_absolute_object_rotate;
@@ -246,8 +246,8 @@ edit_com(int argc,
 	 const char *argv[],
 	 int kind)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
     struct cmd_list *save_cmd_list;
@@ -265,10 +265,10 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
 	    initial_blank_screen = 0;
@@ -457,12 +457,12 @@ edit_com(int argc,
 	    curr_cmd_list = &head_cmd_list;
 	}
 
-	gedp->ged_gvp = view_state->vs_gvp;
+	gedp->dm_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
 		non_empty = 1;
@@ -491,7 +491,7 @@ edit_com(int argc,
 
     curr_dm_list = save_dmlp;
     curr_cmd_list = save_cmd_list;
-    gedp->ged_gvp = view_state->vs_gvp;
+    gedp->dm_gvp = view_state->vs_gvp;
 
     return TCL_OK;
 }
@@ -604,7 +604,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    curr_cmd_list = &head_cmd_list;
 	}
 
-	gedp->ged_gvp = view_state->vs_gvp;
+	gedp->dm_gvp = view_state->vs_gvp;
 
 	{
 	    int ac = 1;
@@ -630,7 +630,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     }
     curr_dm_list = save_dmlp;
     curr_cmd_list = save_cmd_list;
-    gedp->ged_gvp = view_state->vs_gvp;
+    gedp->dm_gvp = view_state->vs_gvp;
 
     return TCL_OK;
 }
@@ -722,8 +722,8 @@ mged_freemem(void)
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
@@ -735,10 +735,10 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	button(BE_REJECT);
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
 		      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
 		      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
@@ -887,8 +887,8 @@ static char **path_parse (char *path);
 int
 f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     struct directory *dp;
     struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
@@ -1015,10 +1015,10 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    int a_new_match;
@@ -1132,8 +1132,8 @@ bail_out:
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct dm_display_list *gdlp;
+    struct dm_display_list *next_gdlp;
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -1154,10 +1154,10 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
 	    is_empty = 0;
@@ -2653,8 +2653,8 @@ mged_zoom(double val)
     }
 
     ret = TCL_OK;
-    if (gedp->ged_gvp && gedp->ged_gvp->gv_adaptive_plot &&
-	gedp->ged_gvp->gv_redraw_on_zoom)
+    if (gedp->dm_gvp && gedp->dm_gvp->gv_adaptive_plot &&
+	gedp->dm_gvp->gv_redraw_on_zoom)
     {
 	ret = redraw_visible_objects();
     }

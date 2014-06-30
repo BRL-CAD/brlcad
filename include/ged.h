@@ -368,7 +368,7 @@ GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       const char *filename,
 				       int existing_only);
-GED_EXPORT extern void dm_view_init(struct dm_view *gvp);
+GED_EXPORT extern void ged_view_init(struct dm_view *gvp);
 
 /* defined in grid.c */
 GED_EXPORT extern void ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
@@ -1687,27 +1687,27 @@ GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]
 /**
  * Get/set view attributes
  */
-GED_EXPORT extern int dm_view_func(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view_func(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert view coordinates to grid coordinates.
  */
-GED_EXPORT extern int dm_view2grid_lu(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Get the view2model matrix.
  */
-GED_EXPORT extern int dm_view2model(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view2model(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert view coordinates to model coordinates.
  */
-GED_EXPORT extern int dm_view2model_lu(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view2model_lu(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert a view vector to a model vector.
  */
-GED_EXPORT extern int dm_view2model_vec(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view2model_vec(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Rotate the view. Note - x, y and z are rotations in view coordinates.
@@ -1717,7 +1717,7 @@ GED_EXPORT extern int ged_vrot(struct ged *gedp, int argc, const char *argv[]);
 /**
  * Return the view direction.
  */
-GED_EXPORT extern int dm_viewdir(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_viewdir(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Write region ident codes to filename.

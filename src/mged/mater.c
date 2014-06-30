@@ -51,7 +51,7 @@
 void
 color_soltab(void)
 {
-    ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    ged_color_soltab(gedp->dm_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
 }
 
