@@ -57,7 +57,7 @@ static const bool verbose_mode = false;
 
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 static const std::string DEFAULT_LAYER_NAME = "Default";
-static std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
+static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
 static const std::size_t UUID_LEN = 37;
