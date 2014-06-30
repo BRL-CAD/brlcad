@@ -88,33 +88,17 @@
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
 #define DM_TYPE_NULL	0
-#define DM_TYPE_PLOT	1
-#define DM_TYPE_PS	2
-#define DM_TYPE_X	3
-#define DM_TYPE_OGL	4
-#define DM_TYPE_GLX	5
-#define DM_TYPE_PEX	6
-#define DM_TYPE_WGL	7
-#define DM_TYPE_TK	8
-#define DM_TYPE_RTGL	9
 #define DM_TYPE_TXT	10
 #define DM_TYPE_QT	11
 #define DM_TYPE_OSG	12
+#define DM_TYPE_X	3
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
 #define DM_DASHED_LINE 1
 
 #define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
-#define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
-#define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
 #define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
-#define IS_DM_TYPE_TK(_t) ((_t) == DM_TYPE_TK)
-#define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
-#define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
-#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
-#define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
-#define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
 #define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
 #define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
 #define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
@@ -428,13 +412,7 @@ struct display_manager {
 
 __BEGIN_DECLS
 
-DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_osg;
-DM_EXPORT extern struct dm dm_plot;
-DM_EXPORT extern struct dm dm_ps;
-DM_EXPORT extern struct dm dm_rtgl;
-DM_EXPORT extern struct dm dm_tk;
-DM_EXPORT extern struct dm dm_wgl;
 DM_EXPORT extern struct dm dm_X;
 DM_EXPORT extern struct dm dm_txt;
 DM_EXPORT extern struct dm dm_qt;

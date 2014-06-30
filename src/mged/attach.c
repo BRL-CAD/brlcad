@@ -49,65 +49,18 @@
 #include "./mged_dm.h"
 
 #define NEED_GUI(_type) (\
-	IS_DM_TYPE_WGL(_type) || \
-	IS_DM_TYPE_OGL(_type) || \
 	IS_DM_TYPE_OSG(_type) || \
-	IS_DM_TYPE_RTGL(_type) || \
-	IS_DM_TYPE_GLX(_type) || \
-	IS_DM_TYPE_PEX(_type) || \
-	IS_DM_TYPE_TK(_type) || \
-	IS_DM_TYPE_X(_type) || \
 	IS_DM_TYPE_TXT(_type) || \
 	IS_DM_TYPE_QT(_type))
 
 
 /* All systems can compile these! */
-extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-extern int PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
 extern int Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-
-#ifdef DM_X
-extern int X_dm_init();
-extern void X_fb_open();
-#endif /* DM_X */
-
-#if 0
-/* Turn this off until we get it working properly... */
-#ifdef DM_TK
-extern int tk_dm_init();
-extern void tk_fb_open();
-#endif /* DM_TK */
-#endif
-
-#ifdef DM_WGL
-extern int Wgl_dm_init();
-extern void Wgl_fb_open();
-#endif /* DM_WGL */
-
-#ifdef DM_OGL
-# if defined(HAVE_TK)
-extern int Ogl_dm_init();
-extern void Ogl_fb_open();
-# endif
-#endif /* DM_OGL */
 
 #ifdef DM_OSG
 extern int Osg_dm_init();
 extern void Osg_fb_open();
 #endif /* DM_OSG */
-
-#ifdef DM_RTGL
-extern int Rtgl_dm_init();
-extern void Rtgl_fb_open();
-#endif /* DM_RTGL */
-
-#ifdef DM_GLX
-extern int Glx_dm_init();
-#endif /* DM_GLX */
-
-#ifdef DM_PEX
-extern int Pex_dm_init();
-#endif /* DM_PEX */
 
 #ifdef DM_QT
 extern int Qt_dm_init();
@@ -125,38 +78,10 @@ struct dm_list *curr_dm_list = (struct dm_list *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)DM_MIN, (int)DM_MAX };
 
 struct w_dm which_dm[] = {
-    { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
-    { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
     { DM_TYPE_TXT, "txt", Txt_dm_init },
-#ifdef DM_X
-    { DM_TYPE_X, "X", X_dm_init },
-#endif /* DM_X */
-#if 0
-/* turn off until working */
-#ifdef DM_TK
-    { DM_TYPE_TK, "tk", tk_dm_init },
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-    { DM_TYPE_WGL, "wgl", Wgl_dm_init },
-#endif /* DM_WGL */
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-    { DM_TYPE_OGL, "ogl", Ogl_dm_init },
-#  endif
-#endif /* DM_OGL */
 #ifdef DM_OSG
     { DM_TYPE_OSG, "osg", Osg_dm_init },
 #endif /* DM_OSG */
-#ifdef DM_RTGL
-    { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
-#endif /* DM_RTGL */
-#ifdef DM_GLX
-    { DM_TYPE_GLX, "glx", Glx_dm_init },
-#endif /* DM_GLX */
-#ifdef DM_PEX
-    { DM_TYPE_PEX, "pex", Pex_dm_init },
-#endif /* DM_PEX */
 #ifdef DM_QT
     { DM_TYPE_QT, "qt", Qt_dm_init },
 #endif /* DM_QT */
@@ -167,36 +92,12 @@ struct w_dm which_dm[] = {
 void
 mged_fb_open(void)
 {
-#ifdef DM_X
-    if (dmp->dm_type == DM_TYPE_X)
-	X_fb_open();
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-    if (dmp->dm_type == DM_TYPE_TK)
-	tk_fb_open();
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-    if (dmp->dm_type == DM_TYPE_WGL)
-	Wgl_fb_open();
-#endif /* DM_WGL */
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-    if (dmp->dm_type == DM_TYPE_OGL)
-	Ogl_fb_open();
-#  endif
-#endif /* DM_OGL */
 #ifdef DM_OSG
 #  if defined(HAVE_TK)
     if (dmp->dm_type == DM_TYPE_OSG)
 	Osg_fb_open();
 #  endif
 #endif /* DM_OSG */
-#ifdef DM_RTGL
-    if (dmp->dm_type == DM_TYPE_RTGL)
-	Rtgl_fb_open();
-#endif /* DM_RTGL */
 #ifdef DM_QT
     if (dmp->dm_type == DM_TYPE_QT)
 	Qt_fb_open();

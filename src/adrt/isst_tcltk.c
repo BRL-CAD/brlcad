@@ -62,10 +62,8 @@ static struct isst_s *isst;
 #ifdef _WIN32
 __declspec(dllexport) int Isst_Init(Tcl_Interp *interp);
 __declspec(dllexport) extern int Issttcltk_Init(Tcl_Interp *interp) { return Isst_Init(interp); }
-#define DM_TYPE_ISST DM_TYPE_WGL
-#else
-#define DM_TYPE_ISST DM_TYPE_OGL
 #endif
+#define DM_TYPE_ISST DM_TYPE_OSG
 
 void resize_isst(struct isst_s *);
 
