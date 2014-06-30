@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file 3dm-g.cpp
+/** @file conv3dm-g.cpp
  *
  * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
  * file.
@@ -30,6 +30,7 @@
 
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -52,14 +53,12 @@ namespace conv3dm
 class RhinoConverter
 {
 public:
-    RhinoConverter(
-	const std::string &output_path,
-	bool use_uuidnames,
-	bool random_colors);
-
+    RhinoConverter(const std::string &output_path);
     ~RhinoConverter();
 
-    void write_model(const std::string &path);
+
+    void write_model(const std::string &path, bool use_uuidnames,
+		     bool random_colors);
 
 
     // FIXME
@@ -77,33 +76,25 @@ public:
 
 
 private:
-    struct Color {
-	unsigned char m_rgb[3];
-
-	Color(unsigned char red, unsigned char green, unsigned char blue)
-	{
-	    m_rgb[0] = red;
-	    m_rgb[1] = green;
-	    m_rgb[2] = blue;
-	}
-    };
+    class Color;
 
 
     RhinoConverter(const RhinoConverter &source);
     RhinoConverter &operator=(const RhinoConverter &source);
 
-    void destroy();
     void clean_model();
     void map_uuid_names();
     void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
     void create_all_geometry();
+
     void create_geometry(const ON_Geometry *pGeometry,
 			 const ON_3dmObjectAttributes &obj_attrs);
 
     void create_layer(const ON_Layer &layer);
     void create_idef(const ON_InstanceDefinition &idef);
+
     void create_iref(const ON_InstanceRef &iref,
 		     const ON_3dmObjectAttributes &iref_attrs);
 
@@ -113,12 +104,12 @@ private:
     Color get_color(const ON_3dmObjectAttributes &obj_attrs);
 
 
-    const bool m_use_uuidnames;
-    const bool m_random_colors;
-    ONX_Model *m_model;
-    ON_TextLog *m_log;
-    rt_wdb *m_db;
+    bool m_use_uuidnames;
+    bool m_random_colors;
     std::map<std::string, ModelObject> m_obj_map;
+    std::auto_ptr<ON_TextLog> m_log;
+    std::auto_ptr<ONX_Model> m_model;
+    rt_wdb *m_db;
 };
 
 

@@ -31,7 +31,7 @@
 
 #ifdef OBJ_BREP
 
-#include "conv3dm-g.h"
+#include "conv3dm-g.hpp"
 #include "bu/getopt.h"
 #include <iostream>
 
@@ -83,8 +83,8 @@ main(int argc, char** argv)
 	return 1;
     }
 
-    conv3dm::RhinoConverter converter(outputFileName, use_uuidnames, random_colors);
-    converter.write_model(inputFileName);
+    conv3dm::RhinoConverter converter(outputFileName);
+    converter.write_model(inputFileName, use_uuidnames, random_colors);
 
     return 0;
 }
