@@ -34,9 +34,6 @@
 #include "vmath.h"
 #include "debug_plot.h"
 
-#define DEFAULT_PLOT_RES 100
-#define DEFAULT_GRID_RES 10
-
 static unsigned char surface1_color[] = {0, 0, 62};
 static unsigned char surface2_color[] = {62, 0, 0};
 static unsigned char surface1_highlight_color[] = {56, 56, 255};
@@ -62,6 +59,11 @@ write_plot_to_file(
     const unsigned char *color)
 {
     FILE *fp = fopen(filename, "w");
+
+    if (!color) {
+	unsigned char clr[] = {255, 0, 0};
+	color = clr;
+    }
 
     pl_linmod(fp, "solid");
     pl_color(fp, color[0], color[1], color[2]);
@@ -180,10 +182,16 @@ void
 DebugPlot::Plot3DCurve(
     const ON_Curve *crv,
     const char *filename,
-    unsigned char *color)
+    unsigned char *color,
+    struct bu_list *vlist /* = NULL */)
 {
-    struct bu_list vhead;
-    BU_LIST_INIT(&vhead);
+    struct bu_list vhead_tmp;
+    BU_LIST_INIT(&vhead_tmp);
+
+    struct bu_list *vhead = &vhead_tmp;
+    if (vlist) {
+	vhead = vlist;
+    }
 
     ON_Interval crv_dom = crv->Domain();
 
@@ -192,7 +200,7 @@ DebugPlot::Plot3DCurve(
     ON_3dPoint p;
     p = crv->PointAt(crv_dom.ParameterAt(0.0));
     VMOVE(pt1, p);
-    BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_MOVE);
+    BN_ADD_VLIST(&vlist_free_list, vhead, pt1, BN_VLIST_LINE_MOVE);
 
     /* Dynamic sampling approach - start with an initial guess
      * for the next point of one tenth of the domain length
@@ -211,10 +219,13 @@ DebugPlot::Plot3DCurve(
 	p = crv->PointAt(crv_dom.ParameterAt(t));
 	VMOVE(pt1, p);
 
-	BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(&vlist_free_list, vhead, pt1, BN_VLIST_LINE_DRAW);
     }
 
-    write_plot_to_file(filename, &vhead, color);
+    if (!vlist) {
+	write_plot_to_file(filename, vhead, color);
+	bu_list_free(vhead);
+    }
 }
 
 void
@@ -364,49 +375,47 @@ plot_point(ON_3dPoint pt, double diameter, const char *prefix, unsigned char *co
 #endif
 
 void
+DebugPlot::PlotBoundaryIsocurves(
+    struct bu_list *vlist,
+    const ON_Surface &surf,
+    int knot_dir)
+{
+    int surf_dir = 1 - knot_dir;
+    int knot_count = surf.SpanCount(surf_dir) + 1;
+
+    double *surf_knots = new double[knot_count];
+    surf.GetSpanVector(surf_dir, surf_knots);
+
+    // knots that can be boundaries of Bezier patches
+    ON_SimpleArray<double> surf_bknots;
+    surf_bknots.Append(surf_knots[0]);
+    for (int i = 1; i < knot_count; i++) {
+	if (surf_knots[i] > *(surf_bknots.Last())) {
+	    surf_bknots.Append(surf_knots[i]);
+	}
+    }
+    if (surf.IsClosed(surf_dir)) {
+	surf_bknots.Remove();
+    }
+
+    for (int i = 0; i < surf_bknots.Count(); i++) {
+	ON_Curve *surf_boundary_iso = surf.IsoCurve(knot_dir, surf_bknots[i]);
+	Plot3DCurve(surf_boundary_iso, NULL, NULL, vlist);
+    }
+}
+
+void
 DebugPlot::PlotSurface(
     const ON_Surface &surf,
-    int isocurveres,
-    int gridres,
     const char *filename,
     unsigned char *color)
 {
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
 
-    ON_Interval udom = surf.Domain(0);
-    ON_Interval vdom = surf.Domain(1);
+    PlotBoundaryIsocurves(&vhead, surf, 0);
+    PlotBoundaryIsocurves(&vhead, surf, 1);
 
-    fastf_t pt1[3], pt2[3];
-    for (int u = 0; u <= gridres; u++) {
-	for (int v = 1; v <= isocurveres; v++) {
-	    ON_3dPoint p = surf.PointAt(
-		    udom.ParameterAt((double)u/(double)gridres),
-		    vdom.ParameterAt((double)(v-1)/(double)isocurveres));
-	    VMOVE(pt1, p);
-	    p = surf.PointAt(
-		    udom.ParameterAt((double)u/(double)gridres),
-		    vdom.ParameterAt((double)v/(double)isocurveres));
-	    VMOVE(pt2, p);
-	    BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(&vlist_free_list, &vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
-
-    for (int v = 0; v <= gridres; v++) {
-	for (int u = 1; u <= isocurveres; u++) {
-	    ON_3dPoint p = surf.PointAt(
-		    udom.ParameterAt((double)(u-1)/(double)isocurveres),
-		    vdom.ParameterAt((double)v/(double)gridres));
-	    VMOVE(pt1, p);
-	    p = surf.PointAt(
-		    udom.ParameterAt((double)u/(double)isocurveres),
-		    vdom.ParameterAt((double)v/(double)gridres));
-	    VMOVE(pt2, p);
-	    BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(&vlist_free_list, &vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
     write_plot_to_file(filename, &vhead, color);
     return;
 }
@@ -425,8 +434,7 @@ DebugPlot::Surfaces(const ON_Brep *brep1, const ON_Brep *brep2)
 	ON_Surface *surf = brep1->m_S[i];
 	std::ostringstream filename;
 	filename << prefix << "_brep1_surface" << i << ".plot3";
-	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface1_color);
+	PlotSurface(*surf, filename.str().c_str(), surface1_color);
     }
 
     brep2_surf_count = brep2->m_S.Count();
@@ -434,8 +442,7 @@ DebugPlot::Surfaces(const ON_Brep *brep1, const ON_Brep *brep2)
 	ON_Surface *surf = brep2->m_S[i];
 	std::ostringstream filename;
 	filename << prefix << "_brep2_surface" << i << ".plot3";
-	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface2_color);
+	PlotSurface(*surf, filename.str().c_str(), surface2_color);
     }
     have_surfaces = true;
 }
@@ -455,8 +462,7 @@ DebugPlot::SSX(
     filename << prefix << "_highlight_brep1_surface" << brep1_surf << ".plot3";
     if (!bu_file_exists(filename.str().c_str(), NULL)) {
 	surf = brep1->m_S[brep1_surf];
-	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface1_highlight_color);
+	PlotSurface(*surf, filename.str().c_str(), surface1_highlight_color);
     }
 
     // create highlighted plot of brep2 surface if it doesn't exist
@@ -464,8 +470,7 @@ DebugPlot::SSX(
     filename << prefix << "_highlight_brep2_surface" << brep2_surf << ".plot3";
     if (!bu_file_exists(filename.str().c_str(), NULL)) {
 	surf = brep2->m_S[brep2_surf];
-	PlotSurface(*surf, DEFAULT_PLOT_RES, DEFAULT_GRID_RES,
-		filename.str().c_str(), surface2_highlight_color);
+	PlotSurface(*surf, filename.str().c_str(), surface2_highlight_color);
     }
 
     // create plot of the intersections between these surfaces

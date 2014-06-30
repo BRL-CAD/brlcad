@@ -69,8 +69,6 @@ private:
 
     void PlotSurface(
 	const ON_Surface &surf,
-	int isocurveres,
-	int gridres,
 	const char *filename,
 	unsigned char *color);
 
@@ -85,7 +83,14 @@ private:
     Plot3DCurve(
 	const ON_Curve *crv,
 	const char *filename,
-	unsigned char *color);
+	unsigned char *color,
+	struct bu_list *vlist = NULL);
+
+    void
+    PlotBoundaryIsocurves(
+	struct bu_list *vlist,
+	const ON_Surface &surf,
+	int knot_dir);
 };
 
 #if 0
