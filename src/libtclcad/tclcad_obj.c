@@ -5643,9 +5643,10 @@ to_dplot(struct ged *gedp,
     char *av[256];
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
     struct bu_vls result_copy = BU_VLS_INIT_ZERO;
-    char *who_av[2] = {"who", NULL};
+    struct ged_dm_view *gdvp;
+    char *who_av[3] = {"who", "b", NULL};
+    int first = 1;
     int aflag = 0;
 
     /* copy all args */
@@ -5653,6 +5654,12 @@ to_dplot(struct ged *gedp,
     for (i = 0; i < ac; ++i)
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
+
+    /* check for displayed objects */
+    ret = ged_who(gedp, 2, (const char **)who_av);
+    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+	aflag = 1;
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
 	int ac_more;
@@ -5668,18 +5675,19 @@ to_dplot(struct ged *gedp,
 	    aflag = 1;
 
 	bu_vls_trunc(gedp->ged_result_str, 0);
+
 	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	    if (to_is_viewable(gdvp)) {
 		gedp->ged_gvp->gv_x_samples = gdvp->gdv_dmp->dm_width;
 		gedp->ged_gvp->gv_y_samples = gdvp->gdv_dmp->dm_height;
 	    }
 	}
-	if (aflag) {
+	if (first && aflag) {
+	    first = 0;
 	    to_autoview_all_views(current_top);
 	} else {
 	    to_refresh_all_views(current_top);
 	}
-
 	/* restore result string */
 	bu_vls_substr(gedp->ged_result_str, &result_copy, 0, bu_vls_strlen(&result_copy));
 	bu_vls_free(&result_copy);
@@ -5737,30 +5745,13 @@ to_dplot(struct ged *gedp,
 
 	Tcl_Free((char *)av_more);
     }
-    /* save result string */
-    bu_vls_substr(&result_copy, gedp->ged_result_str, 0, bu_vls_strlen(gedp->ged_result_str));
-
-    bu_vls_trunc(gedp->ged_result_str, 0);
-    ret = ged_who(gedp, 1, (const char **)who_av);
-    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
-	aflag = 1;
-
-    bu_vls_trunc(gedp->ged_result_str, 0);
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_x_samples = gdvp->gdv_dmp->dm_width;
 	    gedp->ged_gvp->gv_y_samples = gdvp->gdv_dmp->dm_height;
 	}
     }
-    if (aflag) {
-	to_autoview_all_views(current_top);
-    } else {
-	to_refresh_all_views(current_top);
-    }
-
-    /* restore result string */
-    bu_vls_substr(gedp->ged_result_str, &result_copy, 0, bu_vls_strlen(&result_copy));
-    bu_vls_free(&result_copy);
+    to_refresh_all_views(current_top);
 
     bu_vls_free(&callback_cmd);
     bu_vls_free(&temp);
