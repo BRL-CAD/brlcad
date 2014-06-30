@@ -43,6 +43,7 @@ class ON_3dmObjectAttributes;
 class ON_Geometry;
 class ON_InstanceRef;
 class ON_Layer;
+class ON_Material;
 struct rt_wdb;
 
 
@@ -101,7 +102,10 @@ private:
     void create_brep(const ON_Brep &brep,
 		     const ON_3dmObjectAttributes &brep_attrs);
 
-    Color get_color(const ON_3dmObjectAttributes &obj_attrs);
+    Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
+
+    std::pair<std::string, std::string>
+    get_shader(int index) const;
 
 
     bool m_use_uuidnames;

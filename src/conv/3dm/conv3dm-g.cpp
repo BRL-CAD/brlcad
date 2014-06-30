@@ -57,7 +57,7 @@ static const bool verbose_mode = false;
 
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 static const std::string DEFAULT_LAYER_NAME = "Default";
-static const std::string DEFAULT_SHADER = "plastic";
+static std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
 static const std::size_t UUID_LEN = 37;
@@ -118,27 +118,6 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
     for (int row = 0; row < dmax; ++row)
 	for (int col = 0; col < dmax; ++col)
 	    dest[row*dmax + col] = source[row][col];
-}
-
-
-
-
-std::string
-get_shader_args(const ON_Material &material)
-{
-    std::ostringstream args;
-    args << "{";
-    args << " tr " << material.m_transparency;
-    args << " re " << material.m_reflectivity;
-    args << " sp " << material.m_specular;
-    args << " di " << material.m_diffuse;
-    args << " ri " << material.m_index_of_refraction;
-    args << " sh " << material.m_shine;
-    // args << " ex " << ??;
-    args << " em " << material.m_emission;
-    args << " }";
-
-    return args.str();
 }
 
 
@@ -243,6 +222,7 @@ namespace conv3dm
 
 
 
+
 class RhinoConverter::Color
 {
 public:
@@ -270,9 +250,9 @@ private:
 RhinoConverter::Color
 RhinoConverter::Color::random()
 {
-    int red = static_cast<int>(256 * drand48() + 1);
-    int green = static_cast<int>(256 * drand48() + 1);
-    int blue = static_cast<int>(256 * drand48() + 1);
+    int red = static_cast<int>(255 * drand48());
+    int green = static_cast<int>(255 * drand48());
+    int blue = static_cast<int>(255 * drand48());
 
     return Color(red, green, blue);
 }
@@ -512,9 +492,8 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     const std::vector<std::string> &child_vec = m_obj_map.at(layer_uuid).m_children;
     const bool is_region = !m_random_colors && is_toplevel(layer);
     const bool do_inherit = false;
-
-    const ON_Material &material = m_model->m_material_table[layer.m_material_index];
-    const std::string shader_args = get_shader_args(material);
+    const std::pair<std::string, std::string> shader =
+	get_shader(layer.m_material_index);
 
 
     std::string layer_name = m_obj_map.at(layer_uuid).m_name;
@@ -543,7 +522,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     }
 
     mk_comb(m_db, layer_name.c_str(), &members.l, is_region,
-	    DEFAULT_SHADER.c_str(), shader_args.c_str(), color.get_rgb(),
+	    shader.first.c_str(), shader.second.c_str(), color.get_rgb(),
 	    0, 0, 0, 0, do_inherit, false, false);
 
 }
@@ -605,16 +584,15 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     const std::string iref_uuid = UUIDstr(iref_attrs.m_uuid);
     const std::string &iref_name = m_obj_map.at(iref_uuid).m_name;
     const bool do_inherit = false;
-
-    const ON_Material &material = m_model->m_material_table[iref_attrs.m_material_index];
-    const std::string shader_args = get_shader_args(material);
+    const std::pair<std::string, std::string> shader =
+	get_shader(iref_attrs.m_material_index);
 
     const std::string member_uuid = UUIDstr(iref.m_instance_definition_uuid);
     const std::string &member_name = m_obj_map.at(member_uuid).m_name;
 
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
     mk_comb(m_db, iref_name.c_str(), &members.l, false,
-	    DEFAULT_SHADER.c_str(), shader_args.c_str(),
+	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(iref_attrs).get_rgb(),
 	    0, 0, 0, 0, do_inherit, false, false);
 
@@ -627,7 +605,7 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
 
 
 RhinoConverter::Color
-RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs)
+RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 {
     Color color;
     if (m_random_colors)
@@ -658,6 +636,32 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs)
 	return Color(255, 0, 0);
     } else
 	return color;
+}
+
+
+
+
+std::pair<std::string, std::string>
+RhinoConverter::get_shader(int index) const
+{
+    if (index == -1)
+	return DEFAULT_SHADER;
+
+    const ON_Material &material = m_model->m_material_table[index];
+
+    std::ostringstream args;
+    args << "{";
+    args << " tr " << material.m_transparency;
+    args << " re " << material.m_reflectivity;
+    args << " sp " << material.m_specular;
+    args << " di " << material.m_diffuse;
+    args << " ri " << material.m_index_of_refraction;
+    args << " sh " << material.m_shine;
+    // args << " ex " << ??;
+    args << " em " << material.m_emission;
+    args << " }";
+
+    return std::make_pair(DEFAULT_SHADER.first, args.str());
 }
 
 
@@ -706,78 +710,57 @@ void
 RhinoConverter::create_geometry(const ON_Geometry *pGeometry,
 				const ON_3dmObjectAttributes &obj_attrs)
 {
-    const ON_Brep *brep;
-    const ON_Curve *curve;
-    const ON_Surface *surface;
-    const ON_Mesh *mesh;
-    const ON_RevSurface *revsurf;
-    const ON_PlaneSurface *planesurf;
-    const ON_InstanceDefinition *instdef;
-    const ON_InstanceRef *instref;
-    const ON_Layer *layer;
-    const ON_Light *light;
-    const ON_NurbsCage *nurbscage;
-    const ON_MorphControl *morphctrl;
-    const ON_Group *group;
-    const ON_Geometry *geom;
-
-    if ((brep = ON_Brep::Cast(pGeometry))) {
+    if (const ON_Brep *brep = ON_Brep::Cast(pGeometry)) {
 	create_brep(*brep, obj_attrs);
     } else if (pGeometry->HasBrepForm()) {
 	ON_Brep *new_brep = pGeometry->BrepForm();
 	create_brep(*new_brep, obj_attrs);
 	delete new_brep;
-    } else if ((curve = ON_Curve::Cast(pGeometry))) {
+    } else if (const ON_Curve *curve = ON_Curve::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Curve\n");
 	if (verbose_mode) curve->Dump(*m_log);
-    } else if ((surface = ON_Surface::Cast(pGeometry))) {
+    } else if (const ON_Surface *surface = ON_Surface::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Surface\n");
 	if (verbose_mode) surface->Dump(*m_log);
-    } else if ((mesh = ON_Mesh::Cast(pGeometry))) {
+    } else if (const ON_Mesh *mesh = ON_Mesh::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Mesh\n");
 	if (verbose_mode) mesh->Dump(*m_log);
-    } else if ((revsurf = ON_RevSurface::Cast(pGeometry))) {
+    } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_RevSurface\n");
 	if (verbose_mode) revsurf->Dump(*m_log);
-    } else if ((planesurf = ON_PlaneSurface::Cast(pGeometry))) {
+    } else if (const ON_PlaneSurface *planesurf = ON_PlaneSurface::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_PlaneSurface\n");
 	if (verbose_mode) planesurf->Dump(*m_log);
-    } else if ((instdef = ON_InstanceDefinition::Cast(pGeometry))) {
+    } else if (const ON_InstanceDefinition *instdef = ON_InstanceDefinition::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_InstanceDefinition\n");
 	if (verbose_mode) instdef->Dump(*m_log);
-    } else if ((instref = ON_InstanceRef::Cast(pGeometry))) {
+    } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(pGeometry)) {
+
 	m_log->Print("Type: ON_InstanceRef\n");
 	if (verbose_mode) instref->Dump(*m_log);
-
 	create_iref(*instref, obj_attrs);
-    } else if ((layer = ON_Layer::Cast(pGeometry))) {
+
+    } else if (const ON_Layer *layer = ON_Layer::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Layer\n");
 	if (verbose_mode) layer->Dump(*m_log);
-    } else if ((light = ON_Light::Cast(pGeometry))) {
+    } else if (const ON_Light *light = ON_Light::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Light\n");
 	if (verbose_mode) light->Dump(*m_log);
-    } else if ((nurbscage = ON_NurbsCage::Cast(pGeometry))) {
+    } else if (const ON_NurbsCage *nurbscage = ON_NurbsCage::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_NurbsCage\n");
 	if (verbose_mode) nurbscage->Dump(*m_log);
-    } else if ((morphctrl = ON_MorphControl::Cast(pGeometry))) {
+    } else if (const ON_MorphControl *morphctrl = ON_MorphControl::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_MorphControl\n");
 	if (verbose_mode) morphctrl->Dump(*m_log);
-    } else if ((group = ON_Group::Cast(pGeometry))) {
-	m_log->Print("Skipping:Type: ON_Group\n");
+    } else if (const ON_Group *group = ON_Group::Cast(pGeometry)) {
+	m_log->Print("Skipping: Type: ON_Group\n");
 	if (verbose_mode) group->Dump(*m_log);
-    } else if ((geom = ON_Geometry::Cast(pGeometry))) {
-	m_log->Print("Skipping: Type: ON_Geometry\n");
-	if (verbose_mode) geom->Dump(*m_log);
-    } else {
-	m_log->Print("WARNING: Encountered an unexpected kind of object.\n"
-		     "Please report to devs@brlcad.org\n");
-    }
+    } else m_log->Print("Skipping unkown object type\n");
 
     if (verbose_mode) {
 	m_log->PopIndent();
 	m_log->Print("\n\n");
-    } else
-	m_log->Print("\n");
+    }
 }
 
 
