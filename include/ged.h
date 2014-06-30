@@ -337,12 +337,6 @@ GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_
 GED_EXPORT extern void ged_results_clear(struct ged_results *results);
 GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
-
-GED_EXPORT extern int ged_vclip(vect_t a,
-				vect_t b,
-				fastf_t *min,
-				fastf_t *max);
-
 /* defined in copy.c */
 GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 				 struct ged *to_gedp,
