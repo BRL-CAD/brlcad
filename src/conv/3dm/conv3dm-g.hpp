@@ -44,6 +44,7 @@ class ON_Geometry;
 class ON_InstanceRef;
 class ON_Layer;
 class ON_Material;
+class ON_Bitmap;
 struct rt_wdb;
 
 
@@ -62,29 +63,16 @@ public:
 		     bool random_colors);
 
 
-    // FIXME
-    struct ModelObject {
-	std::string m_name;
-	std::vector<std::string> m_children;
-	bool is_in_idef;
-
-	ModelObject() :
-	    m_name(),
-	    m_children(),
-	    is_in_idef(false)
-	{}
-    };
-
-
 private:
     class Color;
-
+    struct ModelObject;
 
     RhinoConverter(const RhinoConverter &source);
     RhinoConverter &operator=(const RhinoConverter &source);
 
     void clean_model();
     void map_uuid_names();
+    void create_all_bitmaps();
     void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
@@ -93,6 +81,7 @@ private:
     void create_geometry(const ON_Geometry *pGeometry,
 			 const ON_3dmObjectAttributes &obj_attrs);
 
+    void create_bitmap(const ON_Bitmap *bitmap);
     void create_layer(const ON_Layer &layer);
     void create_idef(const ON_InstanceDefinition &idef);
 
@@ -106,6 +95,12 @@ private:
 
     std::pair<std::string, std::string>
     get_shader(int index) const;
+
+    bool is_name_taken(const std::string &name) const;
+
+    std::string unique_name(const std::string &name,
+			    const std::string &suffix) const;
+
 
 
     bool m_use_uuidnames;

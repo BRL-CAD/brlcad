@@ -35,14 +35,13 @@
 
 #include "conv3dm-g.hpp"
 
-
 #include <sstream>
 #include <stdexcept>
 
 #include "bu/getopt.h"
+#include "icv.h"
 #include "vmath.h"
 #include "wdb.h"
-
 
 
 
@@ -61,9 +60,6 @@ static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
 static const std::size_t UUID_LEN = 37;
-
-
-typedef std::map<std::string, conv3dm::RhinoConverter::ModelObject> OBJ_MAP;
 
 
 static struct _InitOpenNURBS {
@@ -106,6 +102,31 @@ static inline bool
 is_toplevel(const ON_Layer &layer)
 {
     return UUIDstr(layer.m_parent_layer_id) == ROOT_UUID;
+}
+
+
+
+
+std::string
+gen_bitmap_id(std::size_t index)
+{
+    std::ostringstream ss;
+    ss << "bitmap_" << index;
+    return ss.str();
+}
+
+
+
+
+static std::string
+basename(const std::string &path)
+{
+    char *buf = new char[path.size() + 1];
+    bu_basename(buf, path.c_str());
+    std::string result = buf;
+    delete[] buf;
+
+    return result;
 }
 
 
@@ -182,36 +203,6 @@ CleanName(ON_wString name)
 
 
 
-static bool
-is_name_taken(const OBJ_MAP &obj_map, const std::string &name)
-{
-    for (OBJ_MAP::const_iterator it = obj_map.begin();
-	 it != obj_map.end(); ++it)
-	if (name == it->second.m_name)
-	    return true;
-
-
-    return false;
-}
-
-
-
-
-static std::string
-unique_name(const OBJ_MAP &obj_map,
-	    const std::string &name,
-	    const std::string &suffix)
-{
-    std::string new_name = name + suffix;
-    int counter = 0;
-    while (is_name_taken(obj_map, new_name)) {
-	std::ostringstream s;
-	s << ++counter;
-	new_name = name + s.str() + suffix;
-    }
-
-    return new_name;
-}
 }
 
 
@@ -242,6 +233,21 @@ private:
     void set_rgb(int red, int green, int blue);
 
     unsigned char m_rgb[3];
+};
+
+
+
+
+struct RhinoConverter::ModelObject {
+    std::string m_name;
+    std::vector<std::string> m_children;
+    bool is_in_idef;
+
+    ModelObject() :
+	m_name(),
+	m_children(),
+	is_in_idef(false)
+    {}
 };
 
 
@@ -359,12 +365,10 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     clean_model();
     m_log->Print("Number of NURBS objects read: %d\n\n", m_model->m_object_table.Count());
 
-    char *basename = new char[path.size() + 1];
-    bu_basename(basename, path.c_str());
-    m_obj_map[ROOT_UUID].m_name = basename;
-    delete[] basename;
+    m_obj_map[ROOT_UUID].m_name = basename(path);
 
     map_uuid_names();
+    create_all_bitmaps();
     create_all_idefs();
     create_all_geometry();
     nest_all_layers();
@@ -417,10 +421,10 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = obj_uuid + suffix;
+	    m_obj_map[obj_uuid].m_name = unique_name(obj_uuid, suffix);
 	else
-	    m_obj_map[obj_uuid].m_name = unique_name(m_obj_map,
-					 CleanName(myAttributes.m_name), suffix);
+	    m_obj_map[obj_uuid].m_name =
+		unique_name(CleanName(myAttributes.m_name), suffix);
 
     }
 
@@ -430,10 +434,10 @@ RhinoConverter::map_uuid_names()
 	const std::string idef_uuid = UUIDstr(idef.m_uuid);
 
 	if (m_use_uuidnames)
-	    m_obj_map[idef_uuid].m_name = idef_uuid + ".c";
+	    m_obj_map[idef_uuid].m_name = unique_name(idef_uuid, ".c");
 	else
 	    m_obj_map[idef_uuid].m_name =
-		unique_name(m_obj_map, CleanName(idef.Name()), ".c");
+		unique_name(CleanName(idef.Name()), ".c");
     }
 
 
@@ -446,11 +450,64 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".r";
 
 	if (m_use_uuidnames)
-	    m_obj_map[layer_uuid].m_name = layer_uuid + suffix;
+	    m_obj_map[layer_uuid].m_name = unique_name(layer_uuid, suffix);
 	else
 	    m_obj_map[layer_uuid].m_name =
-		unique_name(m_obj_map, CleanName(layer.m_name), suffix);
+		unique_name(CleanName(layer.m_name), suffix);
     }
+
+
+    for (int i = 0; i < m_model->m_bitmap_table.Count(); ++i) {
+	const ON_Bitmap *bitmap = m_model->m_bitmap_table[i];
+	const std::string bitmap_uuid = gen_bitmap_id(i);
+
+	if (m_use_uuidnames)
+	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_uuid, ".pix");
+	else {
+	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
+	    if (bitmap_name == "noname")
+		bitmap_name = CleanName(bitmap->m_bitmap_filename);
+
+	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_name, ".pix");
+	}
+    }
+}
+
+
+
+
+void
+RhinoConverter::create_all_bitmaps()
+{
+    m_log->Print("Creating bitmaps...\n");
+
+    for (int i = 0; i < m_model->m_bitmap_table.Count(); ++i) {
+	const ON_Bitmap *bitmap = m_model->m_bitmap_table[i];
+	const std::string bitmap_uuid = gen_bitmap_id(i);
+	const std::string &bitmap_name = m_obj_map.at(bitmap_uuid).m_name;
+
+	m_log->Print("Creating bitmap '%s'\n", bitmap_name.c_str());
+	create_bitmap(bitmap);
+    }
+}
+
+
+
+
+void
+RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
+{
+    if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
+	const std::string path = w2string(bitmap->m_bitmap_filename);
+	char buf[BUFSIZ]; // BUFSIZ is currently required by libicv
+	ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
+
+	if (format == ICV_IMAGE_UNKNOWN) {
+	    m_log->Print("Skipping unsupported image format\n");
+	    return;
+	}
+    } else
+	m_log->Print("Skipping non-embedded bitmap\n"); // FIXME
 }
 
 
@@ -474,6 +531,8 @@ RhinoConverter::nest_all_layers()
 void
 RhinoConverter::create_all_layers()
 {
+    m_log->Print("Creating layers...\n");
+
     for (int i = 0; i < m_model->m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model->m_layer_table[i];
 	const std::string &layer_name = m_obj_map.at(UUIDstr(layer.m_layer_id)).m_name;
@@ -533,10 +592,14 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 void
 RhinoConverter::create_all_idefs()
 {
-    m_log->Print("Creating ON_InstanceDefinitions...\n");
+    m_log->Print("Creating Instance Definitions...\n");
 
     for (int i = 0; i < m_model->m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model->m_idef_table[i];
+	const std::string &idef_name =
+	    m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
+
+	m_log->Print("Creating idef '%s'\n", idef_name.c_str());
 	create_idef(idef);
     }
 }
@@ -564,7 +627,8 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	m_obj_map.at(member_uuid).is_in_idef = true;
     }
 
-    const std::string &idef_name = m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
+    const std::string &idef_name =
+	m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
     mk_lfcomb(m_db, idef_name.c_str(), &members, false);
 }
 
@@ -599,6 +663,39 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     const std::string parent_uuid =
 	UUIDstr(m_model->m_layer_table[iref_attrs.m_layer_index].m_layer_id);
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
+}
+
+
+
+
+bool
+RhinoConverter::is_name_taken(const std::string &name) const
+{
+    for (std::map<std::string, ModelObject>::const_iterator it = m_obj_map.begin();
+	 it != m_obj_map.end(); ++it)
+	if (name == it->second.m_name)
+	    return true;
+
+
+    return false;
+}
+
+
+
+
+std::string
+RhinoConverter::unique_name(const std::string &name,
+			    const std::string &suffix) const
+{
+    std::string new_name = name + suffix;
+    int counter = 0;
+    while (is_name_taken(new_name)) {
+	std::ostringstream s;
+	s << ++counter;
+	new_name = name + s.str() + suffix;
+    }
+
+    return new_name;
 }
 
 
@@ -736,8 +833,12 @@ RhinoConverter::create_geometry(const ON_Geometry *pGeometry,
 	if (verbose_mode) instdef->Dump(*m_log);
     } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(pGeometry)) {
 
-	m_log->Print("Type: ON_InstanceRef\n");
+	const std::string &iref_name =
+	    m_obj_map.at(UUIDstr(obj_attrs.m_uuid)).m_name;
+
+	m_log->Print("Creating iref '%s'\n", iref_name.c_str());
 	if (verbose_mode) instref->Dump(*m_log);
+
 	create_iref(*instref, obj_attrs);
 
     } else if (const ON_Layer *layer = ON_Layer::Cast(pGeometry)) {
