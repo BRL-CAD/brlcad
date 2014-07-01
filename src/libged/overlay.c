@@ -74,7 +74,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     }
 
     vbp = rt_vlblock_init();
-    ret = rt_uplot_to_vlist(vbp, fp, char_size, gedp->dm_gdp->gd_uplotOutputMode);
+    ret = rt_uplot_to_vlist(vbp, fp, char_size, gedp->ged_gdp->gd_uplotOutputMode);
     fclose(fp);
 
     if (ret < 0) {

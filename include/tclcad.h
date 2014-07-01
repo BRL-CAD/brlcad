@@ -87,9 +87,20 @@ __BEGIN_DECLS
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
 
+struct ged_dm_view {
+    struct bu_list		l;
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_edit_motion_delta_callback;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop;
+};
+
 struct ged_obj {
     struct ged		*go_gedp;
-    struct dm_view	go_head_views;
+    struct ged_dm_view	go_head_views;
     struct bu_vls	go_name;
     struct bu_observer	go_observers;
     struct bu_vls	go_more_args_callback;
@@ -126,9 +137,9 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 								    int argc,
 								    const char *argv[]);
 TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
-				  struct dm_view *gdvp);
+				  struct ged_dm_view *gdvp);
 TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-					  struct dm_view *gdvp,
+					  struct ged_dm_view *gdvp,
 					  int restore_zbuffer);
 
 /* defined in cmdhist_obj.c */

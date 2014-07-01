@@ -49,14 +49,19 @@ endif(BRLCAD_ENABLE_OSG)
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
+  ${dmosg_srcs}
+  ${dmqt_srcs}
   adc.c
   axes.c
   clip.c
   color.c
+  dm-Null.c
   dm-generic.c
+  dm-plot.c
+  dm-ps.c
   dm_obj.cpp
   dm_util.c
-  globals.c
+  dm-txt.c
   grid.c
   knob.c
   labels.c
@@ -66,13 +71,9 @@ set(LIBDM_SRCS
   scale.c
   tcl.c
   vers.c
-  dm-Null.c
-  dm-txt.c
-  ${dmosg_srcs}
-  ${dmqt_srcs}
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${PNG_LIBRARY};${DM_EXTRA_LIBS}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)

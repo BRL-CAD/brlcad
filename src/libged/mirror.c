@@ -208,7 +208,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	e_argv[2] = NULL;
 
 	(void)ged_draw(gedp, 2, e_argv);
-	dm_view_update(gedp->dm_gvp);
+	ged_view_update(gedp->ged_gvp);
     }
 
     return GED_OK;

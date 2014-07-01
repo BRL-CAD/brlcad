@@ -59,25 +59,25 @@ static void
 rect_vls_print(struct ged *gedp)
 {
     bu_vls_printf(gedp->ged_result_str, "bg = %d %d %d\n",
-		  gedp->dm_gvp->gv_rect.grs_bg[0],
-		  gedp->dm_gvp->gv_rect.grs_bg[1],
-		  gedp->dm_gvp->gv_rect.grs_bg[2]);
+		  gedp->ged_gvp->gv_rect.grs_bg[0],
+		  gedp->ged_gvp->gv_rect.grs_bg[1],
+		  gedp->ged_gvp->gv_rect.grs_bg[2]);
     bu_vls_printf(gedp->ged_result_str, "cdim = %d %d\n",
-		  gedp->dm_gvp->gv_rect.grs_cdim[X],
-		  gedp->dm_gvp->gv_rect.grs_cdim[Y]);
+		  gedp->ged_gvp->gv_rect.grs_cdim[X],
+		  gedp->ged_gvp->gv_rect.grs_cdim[Y]);
     bu_vls_printf(gedp->ged_result_str, "color = %d %d %d\n",
-		  gedp->dm_gvp->gv_rect.grs_color[0],
-		  gedp->dm_gvp->gv_rect.grs_color[1],
-		  gedp->dm_gvp->gv_rect.grs_color[2]);
+		  gedp->ged_gvp->gv_rect.grs_color[0],
+		  gedp->ged_gvp->gv_rect.grs_color[1],
+		  gedp->ged_gvp->gv_rect.grs_color[2]);
     bu_vls_printf(gedp->ged_result_str, "dim = %d %d\n",
-		  gedp->dm_gvp->gv_rect.grs_dim[X],
-		  gedp->dm_gvp->gv_rect.grs_dim[Y]);
-    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->dm_gvp->gv_rect.grs_draw);
-    bu_vls_printf(gedp->ged_result_str, "lstyle = %d\n", gedp->dm_gvp->gv_rect.grs_line_style);
-    bu_vls_printf(gedp->ged_result_str, "lwidth = %d\n", gedp->dm_gvp->gv_rect.grs_line_width);
+		  gedp->ged_gvp->gv_rect.grs_dim[X],
+		  gedp->ged_gvp->gv_rect.grs_dim[Y]);
+    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_rect.grs_draw);
+    bu_vls_printf(gedp->ged_result_str, "lstyle = %d\n", gedp->ged_gvp->gv_rect.grs_line_style);
+    bu_vls_printf(gedp->ged_result_str, "lwidth = %d\n", gedp->ged_gvp->gv_rect.grs_line_width);
     bu_vls_printf(gedp->ged_result_str, "pos = %d %d\n",
-		  gedp->dm_gvp->gv_rect.grs_pos[X],
-		  gedp->dm_gvp->gv_rect.grs_pos[Y]);
+		  gedp->ged_gvp->gv_rect.grs_pos[X],
+		  gedp->ged_gvp->gv_rect.grs_pos[Y]);
 }
 
 
@@ -86,7 +86,7 @@ rect_vls_print(struct ged *gedp)
  * position and dimensions in normalized view coordinates.
  */
 static void
-rect_image2view(struct dm_rect_state *grsp)
+rect_image2view(struct ged_rect_state *grsp)
 {
     grsp->grs_x = (grsp->grs_pos[X] / (fastf_t)grsp->grs_cdim[X] - 0.5) * 2.0;
     grsp->grs_y = ((0.5 - (grsp->grs_cdim[Y] - grsp->grs_pos[Y]) / (fastf_t)grsp->grs_cdim[Y]) / grsp->grs_aspect * 2.0);
@@ -99,7 +99,7 @@ rect_image2view(struct dm_rect_state *grsp)
  * Adjust the rubber band rectangle to have the same aspect ratio as the window.
  */
 static void
-rect_adjust_for_zoom(struct dm_rect_state *grsp)
+rect_adjust_for_zoom(struct ged_rect_state *grsp)
 {
     fastf_t width, height;
 
@@ -138,8 +138,8 @@ rect_rt(struct ged *gedp, int port)
     /* initialize result in case we need to report something here */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (ZERO(gedp->dm_gvp->gv_rect.grs_width) &&
-	ZERO(gedp->dm_gvp->gv_rect.grs_height))
+    if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
+	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
     if (port < 0) {
@@ -147,21 +147,21 @@ rect_rt(struct ged *gedp, int port)
 	return GED_ERROR;
     }
 
-    xmin = gedp->dm_gvp->gv_rect.grs_pos[X];
-    ymin = gedp->dm_gvp->gv_rect.grs_pos[Y];
+    xmin = gedp->ged_gvp->gv_rect.grs_pos[X];
+    ymin = gedp->ged_gvp->gv_rect.grs_pos[Y];
 
-    if (gedp->dm_gvp->gv_rect.grs_dim[X] >= 0) {
-	xmax = xmin + gedp->dm_gvp->gv_rect.grs_dim[X];
+    if (gedp->ged_gvp->gv_rect.grs_dim[X] >= 0) {
+	xmax = xmin + gedp->ged_gvp->gv_rect.grs_dim[X];
     } else {
 	xmax = xmin;
-	xmin += gedp->dm_gvp->gv_rect.grs_dim[X];
+	xmin += gedp->ged_gvp->gv_rect.grs_dim[X];
     }
 
-    if (gedp->dm_gvp->gv_rect.grs_dim[Y] >= 0) {
-	ymax = ymin + gedp->dm_gvp->gv_rect.grs_dim[Y];
+    if (gedp->ged_gvp->gv_rect.grs_dim[Y] >= 0) {
+	ymax = ymin + gedp->ged_gvp->gv_rect.grs_dim[Y];
     } else {
 	ymax = ymin;
-	ymin += gedp->dm_gvp->gv_rect.grs_dim[Y];
+	ymin += gedp->ged_gvp->gv_rect.grs_dim[Y];
     }
 
     {
@@ -174,15 +174,15 @@ rect_rt(struct ged *gedp, int port)
 	struct bu_vls cvls = BU_VLS_INIT_ZERO;
 	char *av[14];
 
-	bu_vls_printf(&wvls, "%d", gedp->dm_gvp->gv_rect.grs_cdim[X]);
-	bu_vls_printf(&nvls, "%d", gedp->dm_gvp->gv_rect.grs_cdim[Y]);
-	bu_vls_printf(&vvls, "%lf", gedp->dm_gvp->gv_rect.grs_aspect);
+	bu_vls_printf(&wvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[X]);
+	bu_vls_printf(&nvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[Y]);
+	bu_vls_printf(&vvls, "%lf", gedp->ged_gvp->gv_rect.grs_aspect);
 	bu_vls_printf(&fvls, "%d", port);
 	bu_vls_printf(&jvls, "%d, %d, %d, %d", xmin, ymin, xmax, ymax);
 	bu_vls_printf(&cvls, "%d/%d/%d",
-		      gedp->dm_gvp->gv_rect.grs_bg[0],
-		      gedp->dm_gvp->gv_rect.grs_bg[1],
-		      gedp->dm_gvp->gv_rect.grs_bg[2]);
+		      gedp->ged_gvp->gv_rect.grs_bg[0],
+		      gedp->ged_gvp->gv_rect.grs_bg[1],
+		      gedp->ged_gvp->gv_rect.grs_bg[2]);
 
 	av[0] = "rt";
 	av[1] = "-w";
@@ -229,48 +229,48 @@ rect_zoom(struct ged *gedp)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (ZERO(gedp->dm_gvp->gv_rect.grs_width) &&
-	ZERO(gedp->dm_gvp->gv_rect.grs_height))
+    if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
+	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
-    rect_adjust_for_zoom(&gedp->dm_gvp->gv_rect);
+    rect_adjust_for_zoom(&gedp->ged_gvp->gv_rect);
 
     /* find old view center */
-    MAT_DELTAS_GET_NEG(old_model_center, gedp->dm_gvp->gv_center);
-    MAT4X3PNT(old_view_center, gedp->dm_gvp->gv_model2view, old_model_center);
+    MAT_DELTAS_GET_NEG(old_model_center, gedp->ged_gvp->gv_center);
+    MAT4X3PNT(old_view_center, gedp->ged_gvp->gv_model2view, old_model_center);
 
     /* calculate new view center */
     VSET(new_view_center,
-	 gedp->dm_gvp->gv_rect.grs_x + gedp->dm_gvp->gv_rect.grs_width / 2.0,
-	 gedp->dm_gvp->gv_rect.grs_y + gedp->dm_gvp->gv_rect.grs_height / 2.0,
+	 gedp->ged_gvp->gv_rect.grs_x + gedp->ged_gvp->gv_rect.grs_width / 2.0,
+	 gedp->ged_gvp->gv_rect.grs_y + gedp->ged_gvp->gv_rect.grs_height / 2.0,
 	 old_view_center[Z]);
 
     /* find new model center */
-    MAT4X3PNT(new_model_center, gedp->dm_gvp->gv_view2model, new_view_center);
+    MAT4X3PNT(new_model_center, gedp->ged_gvp->gv_view2model, new_view_center);
 
     /* zoom in to fill rectangle */
-    if (gedp->dm_gvp->gv_rect.grs_width >= 0.0)
-	width = gedp->dm_gvp->gv_rect.grs_width;
+    if (gedp->ged_gvp->gv_rect.grs_width >= 0.0)
+	width = gedp->ged_gvp->gv_rect.grs_width;
     else
-	width = -gedp->dm_gvp->gv_rect.grs_width;
+	width = -gedp->ged_gvp->gv_rect.grs_width;
 
-    if (gedp->dm_gvp->gv_rect.grs_height >= 0.0)
-	height = gedp->dm_gvp->gv_rect.grs_height;
+    if (gedp->ged_gvp->gv_rect.grs_height >= 0.0)
+	height = gedp->ged_gvp->gv_rect.grs_height;
     else
-	height = -gedp->dm_gvp->gv_rect.grs_height;
+	height = -gedp->ged_gvp->gv_rect.grs_height;
 
     if (width >= height)
 	sf = width / 2.0;
     else
-	sf = height / 2.0 * gedp->dm_gvp->gv_rect.grs_aspect;
+	sf = height / 2.0 * gedp->ged_gvp->gv_rect.grs_aspect;
 
     if (sf <= SMALL_FASTF || INFINITY < sf)
 	return GED_OK;
 
     /* set the new model center */
-    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, new_model_center);
-    gedp->dm_gvp->gv_scale *= sf;
-    dm_view_update(gedp->dm_gvp);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_model_center);
+    gedp->ged_gvp->gv_scale *= sf;
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -321,15 +321,15 @@ ged_rect(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->dm_gvp->gv_rect.grs_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_draw);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gedp->dm_gvp->gv_rect.grs_draw = 1;
+		gedp->ged_gvp->gv_rect.grs_draw = 1;
 	    else
-		gedp->dm_gvp->gv_rect.grs_draw = 0;
+		gedp->ged_gvp->gv_rect.grs_draw = 0;
 
 	    return GED_OK;
 	}
@@ -341,15 +341,15 @@ ged_rect(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "cdim")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d",
-			  gedp->dm_gvp->gv_rect.grs_cdim[X],
-			  gedp->dm_gvp->gv_rect.grs_cdim[Y]);
+			  gedp->ged_gvp->gv_rect.grs_cdim[X],
+			  gedp->ged_gvp->gv_rect.grs_cdim[Y]);
 	    return GED_OK;
 	} else if (argc == 2) {
-	    gedp->dm_gvp->gv_rect.grs_cdim[X] = user_pt[X];
-	    gedp->dm_gvp->gv_rect.grs_cdim[Y] = user_pt[Y];
-	    gedp->dm_gvp->gv_rect.grs_aspect = (fastf_t)gedp->dm_gvp->gv_rect.grs_cdim[X] / gedp->dm_gvp->gv_rect.grs_cdim[Y];
+	    gedp->ged_gvp->gv_rect.grs_cdim[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_cdim[Y] = user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_aspect = (fastf_t)gedp->ged_gvp->gv_rect.grs_cdim[X] / gedp->ged_gvp->gv_rect.grs_cdim[Y];
 
-	    rect_image2view(&gedp->dm_gvp->gv_rect);
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
 
 	    return GED_OK;
 	}
@@ -361,14 +361,14 @@ ged_rect(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dim")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d",
-			  gedp->dm_gvp->gv_rect.grs_dim[X],
-			  gedp->dm_gvp->gv_rect.grs_dim[Y]);
+			  gedp->ged_gvp->gv_rect.grs_dim[X],
+			  gedp->ged_gvp->gv_rect.grs_dim[Y]);
 	    return GED_OK;
 	} else if (argc == 2) {
-	    gedp->dm_gvp->gv_rect.grs_dim[X] = user_pt[X];
-	    gedp->dm_gvp->gv_rect.grs_dim[Y] = user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_dim[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_dim[Y] = user_pt[Y];
 
-	    rect_image2view(&gedp->dm_gvp->gv_rect);
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
 
 	    return GED_OK;
 	}
@@ -380,14 +380,14 @@ ged_rect(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "pos")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d",
-			  gedp->dm_gvp->gv_rect.grs_pos[X],
-			  gedp->dm_gvp->gv_rect.grs_pos[Y]);
+			  gedp->ged_gvp->gv_rect.grs_pos[X],
+			  gedp->ged_gvp->gv_rect.grs_pos[Y]);
 	    return GED_OK;
 	} else if (argc == 2) {
-	    gedp->dm_gvp->gv_rect.grs_pos[X] = user_pt[X];
-	    gedp->dm_gvp->gv_rect.grs_pos[Y] = user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_pos[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_pos[Y] = user_pt[Y];
 
-	    rect_image2view(&gedp->dm_gvp->gv_rect);
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
 
 	    return GED_OK;
 	}
@@ -399,14 +399,14 @@ ged_rect(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "bg")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->dm_gvp->gv_rect.grs_bg[X],
-			  gedp->dm_gvp->gv_rect.grs_bg[Y],
-			  gedp->dm_gvp->gv_rect.grs_bg[Z]);
+			  gedp->ged_gvp->gv_rect.grs_bg[X],
+			  gedp->ged_gvp->gv_rect.grs_bg[Y],
+			  gedp->ged_gvp->gv_rect.grs_bg[Z]);
 	    return GED_OK;
 	} else if (argc == 3) {
-	    gedp->dm_gvp->gv_rect.grs_bg[0] = (int)user_pt[X];
-	    gedp->dm_gvp->gv_rect.grs_bg[1] = (int)user_pt[Y];
-	    gedp->dm_gvp->gv_rect.grs_bg[2] = (int)user_pt[Z];
+	    gedp->ged_gvp->gv_rect.grs_bg[0] = (int)user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_bg[1] = (int)user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_bg[2] = (int)user_pt[Z];
 
 	    return GED_OK;
 	}
@@ -418,14 +418,14 @@ ged_rect(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "color")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->dm_gvp->gv_rect.grs_color[X],
-			  gedp->dm_gvp->gv_rect.grs_color[Y],
-			  gedp->dm_gvp->gv_rect.grs_color[Z]);
+			  gedp->ged_gvp->gv_rect.grs_color[X],
+			  gedp->ged_gvp->gv_rect.grs_color[Y],
+			  gedp->ged_gvp->gv_rect.grs_color[Z]);
 	    return GED_OK;
 	} else if (argc == 3) {
-	    gedp->dm_gvp->gv_rect.grs_color[0] = (int)user_pt[X];
-	    gedp->dm_gvp->gv_rect.grs_color[1] = (int)user_pt[Y];
-	    gedp->dm_gvp->gv_rect.grs_color[2] = (int)user_pt[Z];
+	    gedp->ged_gvp->gv_rect.grs_color[0] = (int)user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_color[1] = (int)user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_color[2] = (int)user_pt[Z];
 
 	    return GED_OK;
 	}
@@ -436,15 +436,15 @@ ged_rect(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "lstyle")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->dm_gvp->gv_rect.grs_line_style);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_style);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i <= 0)
-		gedp->dm_gvp->gv_rect.grs_line_style = 0;
+		gedp->ged_gvp->gv_rect.grs_line_style = 0;
 	    else
-		gedp->dm_gvp->gv_rect.grs_line_style = 1;
+		gedp->ged_gvp->gv_rect.grs_line_style = 1;
 
 	    return GED_OK;
 	}
@@ -455,15 +455,15 @@ ged_rect(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "lwidth")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->dm_gvp->gv_rect.grs_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_width);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i <= 0)
-		gedp->dm_gvp->gv_rect.grs_line_width = 0;
+		gedp->ged_gvp->gv_rect.grs_line_width = 0;
 	    else
-		gedp->dm_gvp->gv_rect.grs_line_width = i;
+		gedp->ged_gvp->gv_rect.grs_line_width = i;
 
 	    return GED_OK;
 	}

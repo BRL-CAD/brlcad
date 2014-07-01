@@ -61,6 +61,8 @@ set(MGED_SOURCES
   dir.c
   ${MGED_DM_SOURCES}
   dm-generic.c
+  dm-plot.c
+  dm-ps.c
   dm-txt.c
   dodraw.c
   doevent.c

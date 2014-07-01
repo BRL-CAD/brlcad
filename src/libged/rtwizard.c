@@ -46,7 +46,7 @@
 
 
 struct _ged_rt_client_data {
-    struct dm_run_rt *rrtp;
+    struct ged_run_rt *rrtp;
     struct ged *gedp;
 };
 
@@ -67,7 +67,7 @@ _ged_run_rtwizard(struct ged *gedp)
     SECURITY_ATTRIBUTES sa = {0};
     struct bu_vls line = BU_VLS_INIT_ZERO;
 #endif
-    struct dm_run_rt *run_rtp;
+    struct ged_run_rt *run_rtp;
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
@@ -103,8 +103,8 @@ _ged_run_rtwizard(struct ged *gedp)
 	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
-	(void)execvp(gedp->dm_gdp->gd_rt_cmd[0], gedp->dm_gdp->gd_rt_cmd);
-	perror(gedp->dm_gdp->gd_rt_cmd[0]);
+	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
+	perror(gedp->ged_gdp->gd_rt_cmd[0]);
 	exit(16);
     }
 
@@ -117,9 +117,9 @@ _ged_run_rtwizard(struct ged *gedp)
     (void)fclose(fp_in);
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(run_rtp, struct dm_run_rt);
+    BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->dm_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
@@ -172,8 +172,8 @@ _ged_run_rtwizard(struct ged *gedp)
     si.hStdOutput  = pipe_err[1];
     si.hStdError   = pipe_err[1];
 
-    for (i = 0; i < gedp->dm_gdp->gd_rt_cmd_len; i++) {
-	bu_vls_printf(&line, "\"%s\" ", gedp->dm_gdp->gd_rt_cmd[i]);
+    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+	bu_vls_printf(&line, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
     }
 
     CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
@@ -190,9 +190,9 @@ _ged_run_rtwizard(struct ged *gedp)
     (void)fclose(fp_in);
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(run_rtp, struct dm_run_rt);
+    BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->dm_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_errDup;
     run_rtp->hProcess = pi.hProcess;
@@ -241,14 +241,14 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (gedp->dm_gvp->gv_perspective > 0)
+    if (gedp->ged_gvp->gv_perspective > 0)
 	/* btclsh rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
 	/* btclsh rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
-    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -260,13 +260,13 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     }
 
     _ged_rt_set_eye_model(gedp, eye_model);
-    quat_mat2quat(quat, gedp->dm_gvp->gv_rotation);
+    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 
-    bu_vls_printf(&size_vls, "%.15e", gedp->dm_gvp->gv_size);
+    bu_vls_printf(&size_vls, "%.15e", gedp->ged_gvp->gv_size);
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rt;
     *vp++ = rtscript;
     *vp++ = "--no-gui";
@@ -277,9 +277,9 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     *vp++ = "--eye_pt";
     *vp++ = bu_vls_addr(&eye_vls);
 
-    if (gedp->dm_gvp->gv_perspective > 0) {
+    if (gedp->ged_gvp->gv_perspective > 0) {
 	*vp++ = "--perspective";
-	(void)sprintf(pstring, "%g", gedp->dm_gvp->gv_perspective);
+	(void)sprintf(pstring, "%g", gedp->ged_gvp->gv_perspective);
 	*vp++ = pstring;
     }
 
@@ -294,15 +294,15 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     /*
      * Accumulate the command string.
      */
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     while (*vp)
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
+    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
     (void)_ged_run_rtwizard(gedp);
-    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->dm_gdp->gd_rt_cmd = NULL;
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     bu_vls_free(&perspective_vls);
     bu_vls_free(&size_vls);

@@ -77,8 +77,8 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    quat_quat2mat(gedp->dm_gvp->gv_rotation, quat);
-    dm_view_update(gedp->dm_gvp);
+    quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

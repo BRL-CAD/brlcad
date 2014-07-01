@@ -32,9 +32,12 @@ endif(MSVC)
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(plot3-X plot3-X.c "libdm;libbu")
   if(BRLCAD_ENABLE_TK)
+    BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libdm;libbu;${M_LIBRARY}")
     BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad;libbu")
   endif(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_X11)
+
+BRLCAD_ADDDATA(plot3-dm.c sample_applications)
 
 if(LIBPC_DIR)
   BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb;libpc" NO_INSTALL)

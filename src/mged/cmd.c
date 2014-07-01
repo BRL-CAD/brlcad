@@ -281,9 +281,9 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	return TCL_OK;
 
     args = argc + 2 + ged_count_tops(gedp);
-    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
 
     /* Grab command name and any options */
     *vp++ = (char *)argv[0];
@@ -308,25 +308,25 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (i < argc) {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
-	gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	*vp = 0;
-	vp = &gedp->dm_gdp->gd_rt_cmd[0];
+	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
 	bu_vls_printf(gedp->ged_result_str, "\n");
     } else {
-	gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
-	gedp->dm_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
-						       &gedp->dm_gdp->gd_rt_cmd[args]);
+						       &gedp->ged_gdp->gd_rt_cmd[args]);
     }
 
-    ret = (*ctp->ged_func)(gedp, gedp->dm_gdp->gd_rt_cmd_len, (const char **)gedp->dm_gdp->gd_rt_cmd);
+    ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
 
-    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->dm_gdp->gd_rt_cmd = NULL;
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -634,8 +634,8 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     if (gedp == GED_NULL)
 	return TCL_OK;
 
-    if (!gedp->dm_gvp)
-	gedp->dm_gvp = view_state->vs_gvp;
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
@@ -666,8 +666,8 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
     else
 	return TCL_OK;
 
-    if (!gedp->dm_gvp)
-	gedp->dm_gvp = view_state->vs_gvp;
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
     gedp->ged_dmp = (void *)curr_dm_list->dml_dmp;
     gedp->ged_dm_width = mged_dm_width(gedp);
     gedp->ged_dm_height = mged_dm_height(gedp);
@@ -895,7 +895,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	    curr_dm_list = curr_cmd_list->cl_tie;
 
 	    if (gedp != GED_NULL)
-		gedp->dm_gvp = view_state->vs_gvp;
+		gedp->ged_gvp = view_state->vs_gvp;
 	}
 
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
@@ -1618,7 +1618,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 	return TCL_OK;
 
     dml = curr_dm_list;
-    gedp->dm_gvp = view_state->vs_gvp;
+    gedp->ged_gvp = view_state->vs_gvp;
     status = mged_attach(&which_dm[DM_PS_INDEX], argc, argv);
     if (status == TCL_ERROR)
 	return TCL_ERROR;
@@ -1641,7 +1641,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     av[1] = NULL;
     status = f_release(clientData, interpreter, 1, av);
     curr_dm_list = dml;
-    gedp->dm_gvp = view_state->vs_gvp;
+    gedp->ged_gvp = view_state->vs_gvp;
 
     return status;
 }
@@ -1672,7 +1672,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 	return TCL_OK;
 
     dml = curr_dm_list;
-    gedp->dm_gvp = view_state->vs_gvp;
+    gedp->ged_gvp = view_state->vs_gvp;
     status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
     if (status == TCL_ERROR)
 	return TCL_ERROR;
@@ -1697,7 +1697,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     av[1] = NULL;
     status = f_release(clientData, interpreter, 1, av);
     curr_dm_list = dml;
-    gedp->dm_gvp = view_state->vs_gvp;
+    gedp->ged_gvp = view_state->vs_gvp;
 
     return status;
 }
@@ -1734,7 +1734,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 		curr_cmd_list = &head_cmd_list;
 
 	    if (gedp != GED_NULL)
-		gedp->dm_gvp = view_state->vs_gvp;
+		gedp->ged_gvp = view_state->vs_gvp;
 
 	    return TCL_OK;
 	}
@@ -2035,10 +2035,10 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    struct dm_view *gvp = NULL;
+    struct ged_view *gvp = NULL;
 
     if (gedp)
-	gvp = gedp->dm_gvp;
+	gvp = gedp->ged_gvp;
 
     if (gvp && dmp) {
 	gvp->gv_x_samples = dmp->dm_width;

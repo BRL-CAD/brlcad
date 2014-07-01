@@ -90,9 +90,9 @@ common_dm(int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[0], "idle")) {
 
 	/* redraw after scaling */
-	if (gedp && gedp->dm_gvp &&
-	    gedp->dm_gvp->gv_adaptive_plot &&
-	    gedp->dm_gvp->gv_redraw_on_zoom &&
+	if (gedp && gedp->ged_gvp &&
+	    gedp->ged_gvp->gv_adaptive_plot &&
+	    gedp->ged_gvp->gv_redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -142,8 +142,8 @@ common_dm(int argc, const char *argv[])
 
 	fx = dm_Xx2Normal(dmp, atoi(argv[1]));
 	fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
-	x = fx * DM_MAX;
-	y = fy * DM_MAX;
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
 
 	if (mged_variables->mv_faceplate &&
 	    mged_variables->mv_orig_gui) {
@@ -162,7 +162,7 @@ common_dm(int argc, const char *argv[])
 
 	mged_variables->mv_orig_gui = 0;
 	fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
-	y = fy * DM_MAX;
+	y = fy * GED_MAX;
 
     end:
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
@@ -352,8 +352,8 @@ common_dm(int argc, const char *argv[])
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(dmp, dml_omx) * DM_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(dmp, dml_omy, 1) * DM_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -362,8 +362,8 @@ common_dm(int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(dmp, dml_omx) * DM_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(dmp, dml_omy, 1) * DM_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -393,9 +393,9 @@ common_dm(int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(dmp, dml_omx) * DM_MAX -
+		fx = (dm_Xx2Normal(dmp, dml_omx) * GED_MAX -
 		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-		fy = (dm_Xy2Normal(dmp, dml_omy, 1) * DM_MAX -
+		fy = (dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX -
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);

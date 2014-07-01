@@ -46,7 +46,7 @@ ged_isize(struct ged *gedp, int argc, const char *argv[])
     /* get the isize (i.e. inverse view size) */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%g",
-		      gedp->dm_gvp->gv_isize * gedp->ged_wdbp->dbip->dbi_base2local);
+		      gedp->ged_gvp->gv_isize * gedp->ged_wdbp->dbip->dbi_base2local);
 	return GED_OK;
     }
 

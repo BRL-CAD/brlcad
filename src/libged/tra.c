@@ -57,7 +57,7 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
 	--argc;
 	++argv;
     } else
-	*coord = gedp->dm_gvp->gv_coord;
+	*coord = gedp->ged_gvp->gv_coord;
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

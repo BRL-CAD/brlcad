@@ -31,13 +31,32 @@
 #include "tcl.h"
 
 #include "bu.h"
-#include "bn.h"
 #include "vmath.h"
 #include "dm.h"
 
 #include "dm/dm-Null.h"
 
+extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
+
+#ifdef DM_X
+#  if defined(HAVE_TK)
+extern struct dm *X_open_dm();
+#  endif
+#endif /* DM_X */
+
+#ifdef DM_TK
+extern struct dm *tk_open_dm();
+#endif /* DM_TK */
+
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+extern struct dm *ogl_open();
+extern void ogl_fogHint();
+extern int ogl_share_dlist();
+#  endif
+#endif /* DM_OGL */
 
 #ifdef DM_OSG
 #  if defined(HAVE_TK)
@@ -46,6 +65,18 @@ extern void osg_fogHint();
 extern int osg_share_dlist();
 #  endif
 #endif /* DM_OSG*/
+
+#ifdef DM_RTGL
+extern struct dm *rtgl_open();
+extern void rtgl_fogHint();
+extern int rtgl_share_dlist();
+#endif /* DM_RTGL */
+
+#ifdef DM_WGL
+extern struct dm *wgl_open();
+extern void wgl_fogHint();
+extern int wgl_share_dlist();
+#endif /* DM_WGL */
 
 #ifdef DM_QT
 extern struct dm *qt_open();
@@ -76,11 +107,39 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	    return null_open(interp, argc, argv);
 	case DM_TYPE_TXT:
 	    return txt_open(interp, argc, argv);
+	case DM_TYPE_PLOT:
+	    return plot_open(interp, argc, argv);
+	case DM_TYPE_PS:
+	    return ps_open(interp, argc, argv);
+#ifdef DM_X
+#  if defined(HAVE_TK)
+	case DM_TYPE_X:
+	    return X_open_dm(interp, argc, argv);
+#  endif
+#endif
+#ifdef DM_TK
+	case DM_TYPE_TK:
+	    return tk_open_dm(interp, argc, argv);
+#endif
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+	case DM_TYPE_OGL:
+	    return ogl_open(interp, argc, argv);
+#  endif
+#endif
 #ifdef DM_OSG
 #  if defined(HAVE_TK)
 	case DM_TYPE_OSG:
 	    return osg_open(interp, argc, argv);
 #  endif
+#endif
+#ifdef DM_RTGL
+	case DM_TYPE_RTGL:
+	    return rtgl_open(interp, argc, argv);
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    return wgl_open(interp, argc, argv);
 #endif
 #ifdef DM_QT
 	case DM_TYPE_QT:
@@ -115,11 +174,25 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return TCL_ERROR;
 
     switch (dmp1->dm_type) {
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+	case DM_TYPE_OGL:
+	    return ogl_share_dlist(dmp1, dmp2);
+#  endif
+#endif
 #ifdef DM_OSG
 #  if defined(HAVE_TK)
 	case DM_TYPE_OSG:
 	    return osg_share_dlist(dmp1, dmp2);
 #  endif
+#endif
+#ifdef DM_RTGL
+	case DM_TYPE_RTGL:
+	    return rtgl_share_dlist(dmp1, dmp2);
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    return wgl_share_dlist(dmp1, dmp2);
 #endif
 	default:
 	    return TCL_ERROR;
@@ -165,6 +238,13 @@ dm_fogHint(struct dm *dmp, int fastfog)
     }
 
     switch (dmp->dm_type) {
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+	case DM_TYPE_OGL:
+	    ogl_fogHint(dmp, fastfog);
+	    return;
+#  endif
+#endif
 #ifdef DM_OSG
 #  if defined(HAVE_TK)
 	case DM_TYPE_OSG:
@@ -172,55 +252,20 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	    return;
 #  endif
 #endif
+#ifdef DM_RTGL
+	case DM_TYPE_RTGL:
+	    rtgl_fogHint(dmp, fastfog);
+	    return;
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    wgl_fogHint(dmp, fastfog);
+	    return;
+#endif
 	default:
 	    return;
     }
 }
-
-void
-dm_view_update(struct dm_view *gvp)
-{
-    vect_t work, work1;
-    vect_t temp, temp1;
-
-    if (!gvp)
-	return;
-
-    bn_mat_mul(gvp->gv_model2view,
-	       gvp->gv_rotation,
-	       gvp->gv_center);
-    gvp->gv_model2view[15] = gvp->gv_scale;
-    bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
-
-    /* Find current azimuth, elevation, and twist angles */
-    VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
-    MAT4X3VEC(temp, gvp->gv_view2model, work);
-    VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
-    MAT4X3VEC(temp1, gvp->gv_view2model, work1);
-
-    /* calculate angles using accuracy of 0.005, since display
-     * shows 2 digits right of decimal point */
-    bn_aet_vec(&gvp->gv_aet[0],
-	       &gvp->gv_aet[1],
-	       &gvp->gv_aet[2],
-	       temp, temp1, (fastf_t)0.005);
-
-    /* Force azimuth range to be [0, 360] */
-    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-	gvp->gv_aet[0] < 0 &&
-	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] += 360.0;
-    else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] = 0.0;
-
-    /* apply the perspective angle to model2view */
-    bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
-
-    if (gvp->gv_callback)
-	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
-}
-
 
 /*
  * Local Variables:

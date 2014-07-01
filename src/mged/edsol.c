@@ -2626,8 +2626,8 @@ init_sedit_vars(void)
 void
 replot_editing_solid(void)
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     mat_t mat;
     struct solid *sp;
     struct directory *illdp;
@@ -2638,9 +2638,9 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
@@ -7424,8 +7424,8 @@ void oedit_reject(void);
 static void
 oedit_apply(int continue_editing)
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
@@ -7473,9 +7473,9 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (sp->s_iflag == DOWN)
@@ -7495,8 +7495,8 @@ oedit_apply(int continue_editing)
 void
 oedit_accept(void)
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
 
     if (dbip == DBI_NULL)
@@ -7505,9 +7505,9 @@ oedit_accept(void)
     if (dbip->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		if (sp->s_iflag == DOWN)
@@ -7750,13 +7750,13 @@ sedit_reject(void)
 
     /* Restore the original solid everywhere */
     {
-	struct dm_display_list *gdlp;
-	struct dm_display_list *next_gdlp;
+	struct ged_display_list *gdlp;
+	struct ged_display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		if (LAST_SOLID(sp) == LAST_SOLID(illump))

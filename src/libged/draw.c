@@ -77,7 +77,7 @@ draw_check_leaf(struct db_tree_state *tsp,
     curtree->tr_op = OP_NOP;
 
     /*
-     * Use gedp->dm_gdp->gd_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
+     * Use gedp->ged_gdp->gd_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
      */
 
     switch (dgcdp->dmode) {
@@ -108,19 +108,19 @@ draw_check_leaf(struct db_tree_state *tsp,
 		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else {
 		/* save shaded mode states */
-		int save_shaded_mode = dgcdp->gedp->dm_gdp->gd_shaded_mode;
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
 		int save_shaded_mode_override = dgcdp->shaded_mode_override;
 		int save_dmode = dgcdp->dmode;
 
 		/* turn shaded mode off for this non-bot/non-poly object */
-		dgcdp->gedp->dm_gdp->gd_shaded_mode = 0;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
-		dgcdp->gedp->dm_gdp->gd_shaded_mode = save_shaded_mode;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
 		dgcdp->shaded_mode_override = save_shaded_mode_override;
 		dgcdp->dmode = save_dmode;
 	    }
@@ -154,19 +154,19 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
-		int save_shaded_mode = dgcdp->gedp->dm_gdp->gd_shaded_mode;
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
 		int save_shaded_mode_override = dgcdp->shaded_mode_override;
 		int save_dmode = dgcdp->dmode;
 
 		/* turn shaded mode off for this pipe object */
-		dgcdp->gedp->dm_gdp->gd_shaded_mode = 0;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
-		dgcdp->gedp->dm_gdp->gd_shaded_mode = save_shaded_mode;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
 		dgcdp->shaded_mode_override = save_shaded_mode_override;
 		dgcdp->dmode = save_dmode;
 	    }
@@ -577,7 +577,7 @@ append_solid_to_display_list(
 }
 
 static fastf_t
-view_avg_size(struct dm_view *gvp)
+view_avg_size(struct ged_view *gvp)
 {
     fastf_t view_aspect, x_size, y_size;
 
@@ -589,7 +589,7 @@ view_avg_size(struct dm_view *gvp)
 }
 
 static fastf_t
-view_avg_sample_spacing(struct dm_view *gvp)
+view_avg_sample_spacing(struct ged_view *gvp)
 {
     fastf_t avg_view_size, avg_view_samples;
 
@@ -600,7 +600,7 @@ view_avg_sample_spacing(struct dm_view *gvp)
 }
 
 static fastf_t
-solid_point_spacing(struct dm_view *gvp, fastf_t solid_width)
+solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point_t p1, p2;
@@ -673,7 +673,7 @@ static fastf_t
 solid_point_spacing_for_view(
 	struct solid *sp,
 	struct rt_db_internal *ip,
-	struct dm_view *gvp)
+	struct ged_view *gvp)
 {
     fastf_t point_spacing = 0.0;
 
@@ -727,7 +727,7 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 {
     int ret;
     struct bu_list vhead;
-    struct dm_view *gvp;
+    struct ged_view *gvp;
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
     struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
@@ -742,7 +742,7 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 	return -1;
     }
 
-    gvp = gedp->dm_gvp;
+    gvp = gedp->ged_gvp;
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	struct rt_view_info info;
 
@@ -1140,12 +1140,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
-	struct dm_view *gvp;
+	struct ged_view *gvp;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;
 
-	gvp = gedp->dm_gvp;
+	gvp = gedp->ged_gvp;
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
 	else
@@ -1281,8 +1281,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	switch (kind) {
 	    case 1:
-		if (gedp->dm_gdp->gd_shaded_mode && dgcdp.shaded_mode_override < 0) {
-		    dgcdp.dmode = gedp->dm_gdp->gd_shaded_mode;
+		if (gedp->ged_gdp->gd_shaded_mode && dgcdp.shaded_mode_override < 0) {
+		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
 		} else if (0 <= dgcdp.shaded_mode_override)
 		    dgcdp.dmode = dgcdp.shaded_mode_override;
 		else
@@ -1319,7 +1319,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    if (drawtrees_depth == 1)
 			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		    if (dgcdp.gdlp == DM_DISPLAY_LIST_NULL)
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
 
 		    av[0] = (char *)argv[i];
@@ -1334,12 +1334,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (void *)&dgcdp);
 		}
 	    } else {
-		struct dm_display_list **paths_to_draw;
-		struct dm_display_list *gdlp;
+		struct ged_display_list **paths_to_draw;
+		struct ged_display_list *gdlp;
 		struct solid *sp;
 
-		paths_to_draw = (struct dm_display_list **)
-		    bu_malloc(sizeof(struct dm_display_list *) * argc,
+		paths_to_draw = (struct ged_display_list **)
+		    bu_malloc(sizeof(struct ged_display_list *) * argc,
 		    "redraw paths");
 
 		/* create solids */
@@ -1349,7 +1349,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    /* store draw path */
 		    paths_to_draw[i] = dgcdp.gdlp;
 
-		    if (dgcdp.gdlp == DM_DISPLAY_LIST_NULL) {
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL) {
 			continue;
 		    }
 
@@ -1380,7 +1380,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		for (i = 0; i < argc; ++i) {
 		    gdlp = paths_to_draw[i];
 
-		    if (gdlp == DM_DISPLAY_LIST_NULL) {
+		    if (gdlp == GED_DISPLAY_LIST_NULL) {
 			continue;
 		    }
 
@@ -1419,7 +1419,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    if (drawtrees_depth == 1)
 			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		    if (dgcdp.gdlp == DM_DISPLAY_LIST_NULL)
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
 
 		    av[0] = (char *)argv[i];
@@ -1478,7 +1478,7 @@ _ged_invent_solid(struct ged *gedp,
 {
     struct directory *dp;
     struct solid *sp;
-    struct dm_display_list *gdlp;
+    struct ged_display_list *gdlp;
     unsigned char type='0';
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
@@ -1552,13 +1552,13 @@ _ged_invent_solid(struct ged *gedp,
 void
 ged_color_soltab(struct bu_list *hdlp)
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
 
-    gdlp = BU_LIST_NEXT(dm_display_list, hdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    _ged_color_soltab(sp);
@@ -1616,7 +1616,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    /* Done checking options. If our display is non-empty,
 	     * add -R to keep current view.
 	     */
-	    if (BU_LIST_NON_EMPTY(gedp->dm_gdp->gd_headDisplay)) {
+	    if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
 		bu_vls_strcat(&vls, " -R");
 	    }
 	    break;
@@ -1732,7 +1732,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 
 	empty_display = 1;
-	if (BU_LIST_NON_EMPTY(gedp->dm_gdp->gd_headDisplay)) {
+	if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
 	    empty_display = 0;
 	}
 
@@ -1802,12 +1802,12 @@ ged_ev(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-struct dm_display_list *
+struct ged_display_list *
 ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
     struct directory *dp = NULL;
-    struct dm_display_list *gdlp = NULL;
+    struct ged_display_list *gdlp = NULL;
     char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
@@ -1819,7 +1819,7 @@ ged_addToDisplay(struct ged *gedp,
 	++cp;
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	gdlp = DM_DISPLAY_LIST_NULL;
+	gdlp = GED_DISPLAY_LIST_NULL;
 	goto end;
     }
 
@@ -1827,8 +1827,8 @@ ged_addToDisplay(struct ged *gedp,
 	found_namepath = 1;
 
     /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
@@ -1845,12 +1845,12 @@ ged_addToDisplay(struct ged *gedp,
 	    }
 	}
 
-	gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
     }
 
-    BU_ALLOC(gdlp, struct dm_display_list);
+    BU_ALLOC(gdlp, struct ged_display_list);
     BU_LIST_INIT(&gdlp->l);
-    BU_LIST_INSERT(gedp->dm_gdp->gd_headDisplay, &gdlp->l);
+    BU_LIST_INSERT(gedp->ged_gdp->gd_headDisplay, &gdlp->l);
     BU_LIST_INIT(&gdlp->gdl_headSolid);
     gdlp->gdl_dp = dp;
     bu_vls_init(&gdlp->gdl_path);
@@ -1868,7 +1868,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     struct solid *sp;
-    struct dm_display_list *gdlp;
+    struct ged_display_list *gdlp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1879,7 +1879,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
 	{
 	    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
 		ret = redraw_solid(gedp, sp);
@@ -1905,7 +1905,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    found_path = 0;
-	    for (BU_LIST_FOR(gdlp, dm_display_list, gedp->dm_gdp->gd_headDisplay))
+	    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
 	    {
 		ret = db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
 			bu_vls_addr(&gdlp->gdl_path));

@@ -68,8 +68,8 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp,
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
-    struct dm_display_list *gdlp = NULL;
-    struct dm_display_list *next_gdlp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
     char **vp = NULL;
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
@@ -123,7 +123,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 20 + 2 + ged_count_tops(gedp);
-    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -137,7 +137,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 #endif
     }
 
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = nirt;
 
     /* swipe x, y, z off the end if present */
@@ -153,12 +153,12 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* Calculate point from which to fire ray */
     if (!use_input_orig) {
-	VSET(center_model, -gedp->dm_gvp->gv_center[MDX],
-	     -gedp->dm_gvp->gv_center[MDY], -gedp->dm_gvp->gv_center[MDZ]);
+	VSET(center_model, -gedp->ged_gvp->gv_center[MDX],
+	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
     }
 
     VSCALE(cml, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
-    VMOVEN(dir, gedp->dm_gvp->gv_rotation + 8, 3);
+    VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
 
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
@@ -167,7 +167,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		  dir[X], dir[Y], dir[Z]);
 
     i = 0;
-    if (DG_QRAY_GRAPHICS(gedp->dm_gdp)) {
+    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
@@ -188,12 +188,12 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	if (DG_QRAY_TEXT(gedp->dm_gdp)) {
+	if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	    char *cp;
 	    int count = 0;
 
 	    /* get 'r' format now; prepend its' format string with a newline */
-	    val = bu_vls_addr(&gedp->dm_gdp->gd_qray_fmts[0].fmt);
+	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
 
 	    /* find first '"' */
 	    while (*val != '"' && *val != '\0')
@@ -231,13 +231,13 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (DG_QRAY_TEXT(gedp->dm_gdp)) {
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 
 	/* load vp with formats for printing */
-	for (; gedp->dm_gdp->gd_qray_fmts[i].type != (char)0; ++i)
+	for (; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
 	    bu_vls_printf(&t_vls, "fmt %c %s; ",
-			  gedp->dm_gdp->gd_qray_fmts[i].type,
-			  bu_vls_addr(&gedp->dm_gdp->gd_qray_fmts[i].fmt));
+			  gedp->ged_gdp->gd_qray_fmts[i].type,
+			  bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
 
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&t_vls);
@@ -247,9 +247,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* include nirt script string */
-    if (bu_vls_strlen(&gedp->dm_gdp->gd_qray_script)) {
+    if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
 	*vp++ = "-e";
-	*vp++ = bu_vls_addr(&gedp->dm_gdp->gd_qray_script);
+	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
     }
 
     *vp++ = "-e";
@@ -259,14 +259,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    gedp->dm_gdp->gd_rt_cmd_len = vp - gedp->dm_gdp->gd_rt_cmd;
+    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->dm_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->dm_gdp->gd_rt_cmd[args]);
+    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
 
-    if (gedp->dm_gdp->gd_qray_cmd_echo) {
+    if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
-	vp = &gedp->dm_gdp->gd_rt_cmd[0];
+	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 
 	while (*vp)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
@@ -317,8 +317,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	for (i = 3; i < 20; i++)
 	    (void)close(i);
 	(void)signal(SIGINT, SIG_DFL);
-	(void)execvp(gedp->dm_gdp->gd_rt_cmd[0], gedp->dm_gdp->gd_rt_cmd);
-	perror (gedp->dm_gdp->gd_rt_cmd[0]);
+	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
+	perror (gedp->ged_gdp->gd_rt_cmd[0]);
 	exit(16);
     }
 
@@ -399,16 +399,16 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    bu_vls_strcat(&line1, gedp->dm_gdp->gd_rt_cmd[0]);
+    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[0]);
     bu_vls_strcat(&line1, " ");
 
-    for (i = 1; i < gedp->dm_gdp->gd_rt_cmd_len; i++) {
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (BU_STR_EQUAL(gedp->dm_gdp->gd_rt_cmd[i], "-e")) {
+	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
 	    ++i;
 	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
-	    bu_vls_printf(&line1, "\"%s\" ", gedp->dm_gdp->gd_rt_cmd[i]);
+	    bu_vls_printf(&line1, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
 	}
     }
 
@@ -421,9 +421,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "w");
 
     /* send commands down the pipe */
-    for (i = 1; i < gedp->dm_gdp->gd_rt_cmd_len - 2; i++)
-	if (strstr(gedp->dm_gdp->gd_rt_cmd[i], "-e") != NULL)
-	    fprintf(fp_in, "%s\n", gedp->dm_gdp->gd_rt_cmd[++i]);
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++)
+	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL)
+	    fprintf(fp_in, "%s\n", gedp->ged_gdp->gd_rt_cmd[++i]);
 
     /* use fp_out to read back the result */
     CloseHandle(pipe_out[1]);
@@ -440,9 +440,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 #endif
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
-    if (DG_QRAY_GRAPHICS(gedp->dm_gdp)) {
+    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 
-	if (DG_QRAY_TEXT(gedp->dm_gdp))
+	if (DG_QRAY_TEXT(gedp->ged_gdp))
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
 
 	BU_LIST_INIT(&HeadQRayData.l);
@@ -474,7 +474,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	vbp = rt_vlblock_init();
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
-	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->dm_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
 
 	/* handle overlaps */
@@ -504,11 +504,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	vbp = rt_vlblock_init();
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
-	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->dm_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
     }
 
-    if (DG_QRAY_TEXT(gedp->dm_gdp)) {
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	bu_vls_free(&t_vls);
 
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
@@ -544,9 +544,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&line1);
 #endif
 
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
 	    sp->s_wflag = DOWN;
@@ -554,8 +554,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	gdlp = next_gdlp;
     }
 
-    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->dm_gdp->gd_rt_cmd = NULL;
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }
@@ -614,7 +614,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, scan, sf);
-    MAT4X3PNT(center_model, gedp->dm_gvp->gv_view2model, view_ray_orig);
+    MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
     VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
 
     bu_vls_printf(&x_vls, "%lf", center_model[X]);

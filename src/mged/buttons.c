@@ -512,14 +512,14 @@ bv_35_25() {
 /* returns 0 if error, !0 if success */
 static int
 ill_common(void) {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
 	    is_empty = 0;
@@ -708,8 +708,8 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
     struct dm_list *dmlp;
 
@@ -722,9 +722,9 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
 		sp->s_iflag = DOWN;
@@ -732,7 +732,7 @@ be_accept()
 	    gdlp = next_gdlp;
 	}
 
-	illum_gdlp = DM_DISPLAY_LIST_NULL;
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
@@ -745,7 +745,7 @@ be_accept()
 
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	illum_gdlp = DM_DISPLAY_LIST_NULL;
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
@@ -773,8 +773,8 @@ be_accept()
 int
 be_reject()
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
     struct dm_list *dmlp;
 
@@ -813,13 +813,13 @@ be_reject()
     edsol = 0;
     edobj = 0;
     es_edflag = -1;
-    illum_gdlp = DM_DISPLAY_LIST_NULL;
+    illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
 	    sp->s_iflag = DOWN;

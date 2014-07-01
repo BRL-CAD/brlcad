@@ -40,7 +40,7 @@
 #include "./sedit.h"
 
 
-struct dm_display_list *illum_gdlp = DM_DISPLAY_LIST_NULL;
+struct ged_display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
 struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
 
@@ -52,8 +52,8 @@ int ipathpos = 0;	/* path index of illuminated element */
  */
 static void
 illuminate(int y) {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int count;
     struct solid *sp;
 
@@ -62,11 +62,11 @@ illuminate(int y) {
      * zones, and use the zone number as a sequential position among
      * solids which are drawn.
      */
-    count = ((fastf_t)y + DM_MAX) * curr_dm_list->dml_ndrawn / DM_RANGE;
+    count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    /* Only consider solids which are presently in view */
@@ -95,7 +95,7 @@ illuminate(int y) {
 int
 f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct dm_display_list *gdlp;
+    struct ged_display_list *gdlp;
     struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
@@ -133,10 +133,10 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 		else
-		    gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+		    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 
 		sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
@@ -145,10 +145,10 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(dm_display_list, gedp->dm_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 		else
-		    gdlp = BU_LIST_PLAST(dm_display_list, gdlp);
+		    gdlp = BU_LIST_PLAST(ged_display_list, gdlp);
 
 		sp = BU_LIST_PREV(solid, &gdlp->gdl_headSolid);
 	    } else
@@ -219,8 +219,8 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 int
 f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct dm_display_list *gdlp;
-    struct dm_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct solid *sp;
     char *cp;
     size_t j;
@@ -278,9 +278,9 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(dm_display_list, gedp->dm_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->dm_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(dm_display_list, gdlp);
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
@@ -450,7 +450,7 @@ f_mouse(
 	     */
 	    isave = ipathpos;
 	    ipathpos = illump->s_fullpath.fp_len-1 - (
-		(ypos+(int)DM_MAX) * (illump->s_fullpath.fp_len) / (int)DM_RANGE);
+		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;

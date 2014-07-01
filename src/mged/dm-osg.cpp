@@ -63,7 +63,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	   void *base,
 	   const char *value)
 {
-    fastf_t bounds[6] = { DM_MIN, DM_MAX, DM_MIN, DM_MAX, DM_MIN, DM_MAX };
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook(sdp, name, base, value);

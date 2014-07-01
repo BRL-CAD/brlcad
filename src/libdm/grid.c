@@ -31,10 +31,11 @@
 #include "bio.h"
 #include "bu.h"
 #include "vmath.h"
+#include "ged.h"
 #include "dm.h"
 
 void
-dm_draw_grid(struct dm *dmp, struct dm_grid_state *ggsp, struct dm_view *gvp, fastf_t base2local)
+dm_draw_grid(struct dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, fastf_t base2local)
 {
     int	i, j;
     int	nh, nv;

@@ -202,6 +202,26 @@ solid_node(
     return wrapper;
 }
 
+void
+create_solid_nodes(std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
+      	struct directory *dp, struct db_i *dbip)
+{
+    const char *solid_search = "! -type comb";
+    struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
+
+    for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
+	/* Get the vlist associated with this particular object */
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&solids, i);
+	if ((*osg_nodes).find(curr_dp) == (*osg_nodes).end()) {
+	    osg::ref_ptr<osg::Group> node = solid_node(osg_nodes, curr_dp, dbip);
+	    (*osg_nodes)[curr_dp] = node.get();
+	}
+    }
+    db_search_free(&solids);
+
+}
+
 osg::ref_ptr<osg::Group>
 bare_comb_node(
 	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,

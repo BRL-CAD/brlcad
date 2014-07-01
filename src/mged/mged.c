@@ -373,7 +373,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct dm_view *gvp,
+mged_view_callback(struct ged_view *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
@@ -396,7 +396,7 @@ mged_view_callback(struct dm_view *gvp,
 void
 new_mats(void)
 {
-    dm_view_update(view_state->vs_gvp);
+    ged_view_update(view_state->vs_gvp);
 }
 
 
@@ -1430,7 +1430,7 @@ main(int argc, char *argv[])
 
     if (dbip != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->dm_gdp->gd_rtCmdNotify = mged_notify;
+	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */

@@ -17,21 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/clip.c
+/** @file libged/clip.c
  *
- * Authors - clip() was started on 14 October 81, Based on the
- * clipping routine in "Principles of Computer Graphics" by Newman and
- * Sproull, 1973, McGraw/Hill.
+ * Functions -
+ * clip clip a 2-D integer line seg against the size of the display
+ * vclip clip a 3-D floating line segment against a bounding RPP.
+ *
+ * Authors -
+ * clip() was written by Doug Kingston, 14 October 81
+ * Based on the clipping routine in "Principles of Computer
+ * Graphics" by Newman and Sproull, 1973, McGraw/Hill.
+ *
+ * vclip() was adapted from RT by Mike Muuss, 17 January 1985.
  *
  */
 
 #include "common.h"
+
 #include "bio.h"
 
-#include <stdio.h>
-
 #include "vmath.h"
-#include "dm.h"
+
+#include "./ged_private.h"
+
 
 /* XXX need to test more thoroughly
    #define ANGLE_EPSILON 0.0001
@@ -41,8 +49,8 @@
 #define CLIP_DISTANCE 100000000.0
 
 
-HIDDEN int
-code(fastf_t x, fastf_t y)
+static int
+clip_code(fastf_t x, fastf_t y)
 {
     int cval;
 
@@ -61,20 +69,17 @@ code(fastf_t x, fastf_t y)
 }
 
 
-/**
- * clip a 2-D integer line seg against the size of the display
- */
 int
-clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
+ged_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 {
     char code1, code2;
 
-    code1 = code(*xp1, *yp1);
-    code2 = code(*xp2, *yp2);
+    code1 = clip_code(*xp1, *yp1);
+    code2 = clip_code(*xp2, *yp2);
 
     while (code1 || code2) {
 	if (code1 & code2)
-	    return -1;	/* No part is visible */
+	    return 1;	/* No part is visible */
 
 	/* SWAP codes, X's, and Y's */
 	if (code1 == 0) {
@@ -112,17 +117,17 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 	    *yp1 = GED_MAX;
 	}
 
-	code1 = code(*xp1, *yp1);
+	code1 = clip_code(*xp1, *yp1);
     }
 
     return 0;
 }
 
 
-/**
- * Clip a ray against a rectangular parallelepiped (RPP) that has faces
- * parallel to the coordinate planes (a clipping RPP).  The RPP is
- * defined by a minimum point and a maximum point.
+/*
+ * Clip a ray against a rectangular parallelepiped (RPP)
+ * that has faces parallel to the coordinate planes (a clipping RPP).
+ * The RPP is defined by a minimum point and a maximum point.
  *
  * Returns -
  * 0 if ray does not hit RPP,
@@ -132,7 +137,7 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
  * if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
 int
-vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
+ged_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 {
     static vect_t diff;
     static double sv;
@@ -146,7 +151,7 @@ vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     maxdist = CLIP_DISTANCE;
     VSUB2(diff, b, a);
 
-    for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
+    for (i = 0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -EPSILON) {
 	    if ((sv = (*min - *pt) / *dir) < 0.0)
 		return 0;	/* MISS */
@@ -164,8 +169,8 @@ vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 	} else {
 	    /*
 	     * If direction component along this axis is NEAR 0,
-	     * (i.e., this ray is aligned with this axis), merely
-	     * check against the boundaries.
+	     * (i.e., this ray is aligned with this axis),
+	     * merely check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
 		return 0;	/* MISS */;

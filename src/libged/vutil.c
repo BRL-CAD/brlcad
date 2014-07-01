@@ -30,13 +30,57 @@
 #include "./ged_private.h"
 
 
+void
+ged_view_update(struct ged_view *gvp)
+{
+    vect_t work, work1;
+    vect_t temp, temp1;
+
+    if (!gvp)
+	return;
+
+    bn_mat_mul(gvp->gv_model2view,
+	       gvp->gv_rotation,
+	       gvp->gv_center);
+    gvp->gv_model2view[15] = gvp->gv_scale;
+    bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
+
+    /* Find current azimuth, elevation, and twist angles */
+    VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
+    MAT4X3VEC(temp, gvp->gv_view2model, work);
+    VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
+    MAT4X3VEC(temp1, gvp->gv_view2model, work1);
+
+    /* calculate angles using accuracy of 0.005, since display
+     * shows 2 digits right of decimal point */
+    bn_aet_vec(&gvp->gv_aet[0],
+	       &gvp->gv_aet[1],
+	       &gvp->gv_aet[2],
+	       temp, temp1, (fastf_t)0.005);
+
+    /* Force azimuth range to be [0, 360] */
+    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
+	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
+	gvp->gv_aet[0] < 0 &&
+	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
+	gvp->gv_aet[0] += 360.0;
+    else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
+	gvp->gv_aet[0] = 0.0;
+
+    /* apply the perspective angle to model2view */
+    bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
+
+    if (gvp->gv_callback)
+	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
+}
+
 
 /**
  * FIXME: this routine is suspect and needs investigating.  if run
  * during view initialization, the shaders regression test fails.
  */
 void
-_ged_mat_aet(struct dm_view *gvp)
+_ged_mat_aet(struct ged_view *gvp)
 {
     mat_t tmat;
     fastf_t twist;
@@ -65,13 +109,13 @@ _ged_do_rot(struct ged *gedp,
     mat_t temp1, temp2;
 
     if (func != (int (*)())0)
-	return (*func)(gedp, coord, gedp->dm_gvp->gv_rotate_about, rmat);
+	return (*func)(gedp, coord, gedp->ged_gvp->gv_rotate_about, rmat);
 
     switch (coord) {
 	case 'm':
 	    /* transform model rotations into view rotations */
-	    bn_mat_inv(temp1, gedp->dm_gvp->gv_rotation);
-	    bn_mat_mul(temp2, gedp->dm_gvp->gv_rotation, rmat);
+	    bn_mat_inv(temp1, gedp->ged_gvp->gv_rotation);
+	    bn_mat_mul(temp2, gedp->ged_gvp->gv_rotation, rmat);
 	    bn_mat_mul(rmat, temp2, temp1);
 	    break;
 	case 'v':
@@ -80,24 +124,24 @@ _ged_do_rot(struct ged *gedp,
     }
 
     /* Calculate new view center */
-    if (gedp->dm_gvp->gv_rotate_about != 'v') {
+    if (gedp->ged_gvp->gv_rotate_about != 'v') {
 	point_t rot_pt;
 	point_t new_origin;
 	mat_t viewchg, viewchginv;
 	point_t new_cent_view;
 	point_t new_cent_model;
 
-	switch (gedp->dm_gvp->gv_rotate_about) {
+	switch (gedp->ged_gvp->gv_rotate_about) {
 	    case 'e':
 		VSET(rot_pt, 0.0, 0.0, 1.0);
 		break;
 	    case 'k':
-		MAT4X3PNT(rot_pt, gedp->dm_gvp->gv_model2view, gedp->dm_gvp->gv_keypoint);
+		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_keypoint);
 		break;
 	    case 'm':
 		/* rotate around model center (0, 0, 0) */
 		VSET(new_origin, 0.0, 0.0, 0.0);
-		MAT4X3PNT(rot_pt, gedp->dm_gvp->gv_model2view, new_origin);
+		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
 		break;
 	    default:
 		return GED_ERROR;
@@ -109,13 +153,13 @@ _ged_do_rot(struct ged *gedp,
 	/* Convert origin in new (viewchg) coords back to old view coords */
 	VSET(new_origin, 0.0, 0.0, 0.0);
 	MAT4X3PNT(new_cent_view, viewchginv, new_origin);
-	MAT4X3PNT(new_cent_model, gedp->dm_gvp->gv_view2model, new_cent_view);
-	MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, new_cent_model);
+	MAT4X3PNT(new_cent_model, gedp->ged_gvp->gv_view2model, new_cent_view);
+	MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent_model);
     }
 
     /* pure rotation */
-    bn_mat_mul2(rmat, gedp->dm_gvp->gv_rotation);
-    dm_view_update(gedp->dm_gvp);
+    bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -126,9 +170,9 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 {
     point_t model_center;
 
-    MAT4X3PNT(model_center, gedp->dm_gvp->gv_view2model, svec);
-    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, model_center);
-    dm_view_update(gedp->dm_gvp);
+    MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -150,20 +194,20 @@ _ged_do_tra(struct ged *gedp,
     switch (coord) {
 	case 'm':
 	    VSCALE(delta, tvec, -gedp->ged_wdbp->dbip->dbi_base2local);
-	    MAT_DELTAS_GET_NEG(vc, gedp->dm_gvp->gv_center);
+	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->dm_gvp->gv_isize);
-	    MAT4X3PNT(work, gedp->dm_gvp->gv_view2model, tvec);
-	    MAT_DELTAS_GET_NEG(vc, gedp->dm_gvp->gv_center);
+	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
+	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
+	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    VSUB2(delta, work, vc);
 	    break;
     }
 
     VSUB2(nvc, vc, delta);
-    MAT_DELTAS_VEC_NEG(gedp->dm_gvp->gv_center, nvc);
-    dm_view_update(gedp->dm_gvp);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

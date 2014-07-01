@@ -51,6 +51,7 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
+  clip.c
   clone.c
   coil.c
   color.c
@@ -311,7 +312,6 @@ set(GED_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${ANALYZE_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
@@ -332,7 +332,7 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libdm;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files

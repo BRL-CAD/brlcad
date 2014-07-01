@@ -50,19 +50,19 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 2 + ged_count_tops(gedp);
-    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
     _ged_current_gedp = gedp;
-    _ged_current_gedp->dm_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->dm_gdp->gd_rt_cmd[args]);
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
 
     (void)_ged_run_rt(gedp);
 
-    bu_free(gedp->dm_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }

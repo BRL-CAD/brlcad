@@ -109,8 +109,8 @@ static void
 adc_model_To_adc_view(void)
 {
     MAT4X3PNT(adc_state->adc_pos_view, view_state->vs_gvp->gv_model2view, adc_state->adc_pos_model);
-    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * DM_MAX;
-    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * DM_MAX;
+    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
+    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
 }
 
 
@@ -123,8 +123,8 @@ adc_grid_To_adc_view(void)
     VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VADD2(adc_state->adc_pos_view, view_pt, adc_state->adc_pos_grid);
-    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * DM_MAX;
-    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * DM_MAX;
+    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
+    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
 }
 
 
@@ -164,12 +164,12 @@ calc_adc_a1(void)
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a1);
-	dx = view_pt[X] * DM_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * DM_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
-	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * DM_MAX;
+	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
 	}
     }
 }
@@ -183,12 +183,12 @@ calc_adc_a2(void)
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a2);
-	dx = view_pt[X] * DM_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * DM_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
-	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * DM_MAX;
+	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
 	}
     }
 }
@@ -204,11 +204,11 @@ calc_adc_dst(void)
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_dst);
 
-	dx = view_pt[X] * DM_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * DM_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 	dist = sqrt(dx * dx + dy * dy);
 	adc_state->adc_dst = dist * INV_GED;
-	adc_state->adc_dv_dist = (dist / M_SQRT1_2) - DM_MAX;
+	adc_state->adc_dv_dist = (dist / M_SQRT1_2) - GED_MAX;
     } else
 	adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 }
@@ -228,7 +228,7 @@ draw_ticks(fastf_t angle)
      */
     /* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
     /* Tick distance */
-    c_tdist = ((fastf_t)(adc_state->adc_dv_dist) + DM_MAX) * M_SQRT1_2;
+    c_tdist = ((fastf_t)(adc_state->adc_dv_dist) + GED_MAX) * M_SQRT1_2;
 
     d1 = c_tdist * cos (angle);
     d2 = c_tdist * sin (angle);
@@ -307,13 +307,13 @@ adcursor(void)
 
     /* Horizontal */
     DM_DRAW_LINE_2D(dmp,
-		    GED2PM1(DM_MIN), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect,
-		    GED2PM1(DM_MAX), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect);
+		    GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect,
+		    GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect);
 
     /* Vertical */
     DM_DRAW_LINE_2D(dmp,
-		    GED2PM1(adc_state->adc_dv_x), GED2PM1(DM_MAX),
-		    GED2PM1(adc_state->adc_dv_x), GED2PM1(DM_MIN));
+		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MAX),
+		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MIN));
 
     angle1 = adc_state->adc_a1 * DEG2RAD;
     angle2 = adc_state->adc_a2 * DEG2RAD;
@@ -535,7 +535,7 @@ f_adc (
 		else
 		    adc_state->adc_a1 = user_pt[0];
 
-		adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * DM_MAX;
+		adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
 		adc_set_dirty_flag();
 	    }
 
@@ -560,7 +560,7 @@ f_adc (
 		else
 		    adc_state->adc_a2 = user_pt[0];
 
-		adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * DM_MAX;
+		adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
 		adc_set_dirty_flag();
 	    }
 
@@ -585,7 +585,7 @@ f_adc (
 		else
 		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
 
-		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * DM_MAX;
+		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * GED_MAX;
 
 		adc_set_dirty_flag();
 	    }

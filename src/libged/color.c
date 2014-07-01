@@ -238,8 +238,8 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
-    if (gedp->dm_gdp)
-	ged_color_soltab(gedp->dm_gdp->gd_headDisplay);
+    if (gedp->ged_gdp)
+	ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }

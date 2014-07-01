@@ -363,10 +363,10 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			}
 		    }
 		    /* convert to Qt window coordinates */
-		    linep->setLine ((short)DM_TO_Xx(dmp, lpnt[0]),
-			(short)DM_TO_Xy(dmp, lpnt[1]),
-			(short)DM_TO_Xx(dmp, pnt[0]),
-			(short)DM_TO_Xy(dmp, pnt[1])
+		    linep->setLine ((short)GED_TO_Xx(dmp, lpnt[0]),
+			(short)GED_TO_Xy(dmp, lpnt[1]),
+			(short)GED_TO_Xx(dmp, pnt[0]),
+			(short)GED_TO_Xy(dmp, pnt[1])
 			);
 
 		    nseg++;
@@ -407,12 +407,12 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    if (pointSize <= DM_QT_DEFAULT_POINT_SIZE) {
-			privars->painter->drawPoint(DM_TO_Xx(dmp, pnt[0]), DM_TO_Xy(dmp, pnt[1]));
+			privars->painter->drawPoint(GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
 		    } else {
 			int upperLeft[2];
 
-			upperLeft[X] = DM_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
-			upperLeft[Y] = DM_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
+			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
 
 			privars->painter->drawRect(upperLeft[X], upperLeft[Y], pointSize, pointSize);
 		    }
@@ -975,8 +975,8 @@ struct dm dm_qt = {
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {DM_MIN, DM_MIN, DM_MIN},	/* clipmin */
-    {DM_MAX, DM_MAX, DM_MAX},	/* clipmax */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */

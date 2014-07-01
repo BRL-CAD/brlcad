@@ -60,8 +60,8 @@ struct qray_dataList {
 
 
 /* defined in qray.c */
-extern void qray_init(struct dm_drawable *gdp);
-extern void qray_free(struct dm_drawable *gdp);
+extern void qray_init(struct ged_drawable *gdp);
+extern void qray_free(struct ged_drawable *gdp);
 extern void qray_data_to_vlist(struct ged *gdp, struct bn_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
 
 #endif

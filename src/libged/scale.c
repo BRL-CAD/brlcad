@@ -110,13 +110,13 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
 
     /* scale the view */
-    gedp->dm_gvp->gv_scale *= sf1;
+    gedp->ged_gvp->gv_scale *= sf1;
 
-    if (gedp->dm_gvp->gv_scale < RT_MINVIEWSIZE)
-	gedp->dm_gvp->gv_scale = RT_MINVIEWSIZE;
-    gedp->dm_gvp->gv_size = 2.0 * gedp->dm_gvp->gv_scale;
-    gedp->dm_gvp->gv_isize = 1.0 / gedp->dm_gvp->gv_size;
-    dm_view_update(gedp->dm_gvp);
+    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSIZE)
+	gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
+    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
+    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

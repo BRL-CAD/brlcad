@@ -55,7 +55,7 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
 
     VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, gedp->dm_gvp->gv_model2view, model_pt);
+    MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
 
     if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
 	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
@@ -63,9 +63,9 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
 
     VSCALE(model_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
-    MAT4X3PNT(view_pt, gedp->dm_gvp->gv_model2view, model_pt);
+    MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     VSUB2(diff, view_pt, mo_view_pt);
-    f = gedp->dm_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(diff, diff, f);
     bu_vls_printf(gedp->ged_result_str, "%.15e %.15e", diff[X], diff[Y]);
 

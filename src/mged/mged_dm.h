@@ -34,6 +34,7 @@
 
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
+#include "ged.h"
 
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
@@ -236,7 +237,7 @@ struct _view_state {
     int		vs_rc;
     int		vs_flag;
 
-    struct dm_view	*vs_gvp;
+    struct ged_view	*vs_gvp;
     fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;

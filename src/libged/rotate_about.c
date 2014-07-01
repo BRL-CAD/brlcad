@@ -47,7 +47,7 @@ ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
 
     /* get "rotate about" point */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%c", gedp->dm_gvp->gv_rotate_about);
+	bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gvp->gv_rotate_about);
 	return GED_OK;
     }
 
@@ -58,7 +58,7 @@ ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
 	    case 'k':
 	    case 'm':
 	    case 'v':
-		gedp->dm_gvp->gv_rotate_about = argv[1][0];
+		gedp->ged_gvp->gv_rotate_about = argv[1][0];
 		return GED_OK;
 	}
     }

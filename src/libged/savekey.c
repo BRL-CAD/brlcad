@@ -45,11 +45,11 @@ savekey_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
 {
     int i;
 
-    fprintf(fp, "%.9e\n", gedp->dm_gvp->gv_size);
+    fprintf(fp, "%.9e\n", gedp->ged_gvp->gv_size);
     fprintf(fp, "%.9e %.9e %.9e\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
     for (i = 0; i < 16; i++) {
-	fprintf(fp, "%.9e ", gedp->dm_gvp->gv_rotation[i]);
+	fprintf(fp, "%.9e ", gedp->ged_gvp->gv_rotation[i]);
 	if ((i%4) == 3)
 	    fprintf(fp, "\n");
     }
@@ -96,7 +96,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
      * Eye is in conventional place.
      */
     VSET(temp, 0.0, 0.0, 1.0);
-    MAT4X3PNT(eye_model, gedp->dm_gvp->gv_view2model, temp);
+    MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
     savekey_rt_oldwrite(gedp, fp, eye_model);
     (void)fclose(fp);
 

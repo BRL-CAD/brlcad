@@ -111,9 +111,9 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(_ged_current_gedp->dm_gvp->gv_rotation, _ged_viewrot);
-    MAT_DELTAS_VEC_NEG(_ged_current_gedp->dm_gvp->gv_center, _ged_eye_model);
-    dm_view_update(_ged_current_gedp->dm_gvp);
+    MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
+    MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
+    ged_view_update(_ged_current_gedp->ged_gvp);
 
     /*
      * Compute camera orientation notch to right (+X) and up (+Y)
@@ -121,8 +121,8 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
      */
     VSET(xv, 0.05, 0.0, 0.0);
     VSET(yv, 0.0, 0.05, 0.0);
-    MAT4X3PNT(xm, _ged_current_gedp->dm_gvp->gv_view2model, xv);
-    MAT4X3PNT(ym, _ged_current_gedp->dm_gvp->gv_view2model, yv);
+    MAT4X3PNT(xm, _ged_current_gedp->ged_gvp->gv_view2model, xv);
+    MAT4X3PNT(ym, _ged_current_gedp->ged_gvp->gv_view2model, yv);
     RT_ADD_VLIST(vhead, xm, BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
     RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
@@ -132,9 +132,9 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-    MAT4X3PNT(new_cent, _ged_current_gedp->dm_gvp->gv_view2model, xlate);
-    MAT_DELTAS_VEC_NEG(_ged_current_gedp->dm_gvp->gv_center, new_cent);
-    dm_view_update(_ged_current_gedp->dm_gvp);
+    MAT4X3PNT(new_cent, _ged_current_gedp->ged_gvp->gv_view2model, xlate);
+    MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, new_cent);
+    ged_view_update(_ged_current_gedp->ged_gvp);
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {
@@ -144,7 +144,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 	av[1] = NULL;
 
 	(void)ged_zap(_ged_current_gedp, 1, av);
-	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->dm_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->dm_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
+	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
     }
 
     if (_ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
@@ -192,11 +192,11 @@ ged_cm_tree(const int argc, const char **argv)
 
     for (i = 1;  i < argc && i < MAXARGS; i++) {
 	bu_strlcpy(cp, argv[i], MAXARGS*9);
-	_ged_current_gedp->dm_gdp->gd_rt_cmd[i] = cp;
+	_ged_current_gedp->ged_gdp->gd_rt_cmd[i] = cp;
 	cp += strlen(cp) + 1;
     }
-    _ged_current_gedp->dm_gdp->gd_rt_cmd[i] = (char *)0;
-    _ged_current_gedp->dm_gdp->gd_rt_cmd_len = i-1;
+    _ged_current_gedp->ged_gdp->gd_rt_cmd[i] = (char *)0;
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = i-1;
 
     preview_tree_walk_needed = 1;
 
@@ -366,14 +366,14 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
 
     args = argc + 2 + ged_count_tops(gedp);
-    gedp->dm_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
-    vp = &gedp->dm_gdp->gd_rt_cmd[0];
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = bu_strdup("tree");
 
-    /* Build list of top-level objects in view, in _ged_current_gedp->dm_gdp->gd_rt_cmd[] */
-    _ged_current_gedp->dm_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->dm_gdp->gd_rt_cmd[args]);
+    /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
     /* Print out the command we are about to run */
-    vp = &_ged_current_gedp->dm_gdp->gd_rt_cmd[0];
+    vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
     while ((vp != NULL) && (*vp))
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
@@ -388,9 +388,9 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
      * Initialize the view to the current one provided by the ged
      * structure in case a view specification is never given.
      */
-    MAT_COPY(_ged_viewrot, gedp->dm_gvp->gv_rotation);
+    MAT_COPY(_ged_viewrot, gedp->ged_gvp->gv_rotation);
     VSET(temp, 0.0, 0.0, 1.0);
-    MAT4X3PNT(_ged_eye_model, gedp->dm_gvp->gv_view2model, temp);
+    MAT4X3PNT(_ged_eye_model, gedp->ged_gvp->gv_view2model, temp);
 
     if (image_name) {
 	/* parse file name and possible extension */

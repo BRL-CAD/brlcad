@@ -649,9 +649,9 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     else
 	prevpp = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 
-    MAT4X3PNT(view_pp_coord, gedp->dm_gvp->gv_model2view, prevpp->pp_coord);
+    MAT4X3PNT(view_pp_coord, gedp->ged_gvp->gv_model2view, prevpp->pp_coord);
     view_ps_pt[Z] = view_pp_coord[Z];
-    MAT4X3PNT(ps_pt, gedp->dm_gvp->gv_view2model, view_ps_pt);
+    MAT4X3PNT(ps_pt, gedp->ged_gvp->gv_view2model, view_ps_pt);
 
     if ((*func)(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
 	rt_db_free_internal(&intern);
@@ -832,7 +832,7 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     nearest = find_pipept_nearest_pt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
-				     model_pt, gedp->dm_gvp->gv_view2model);
+				     model_pt, gedp->ged_gvp->gv_view2model);
     seg_i = _ged_get_pipe_i_seg((struct rt_pipe_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
 

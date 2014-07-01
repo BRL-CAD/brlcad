@@ -62,8 +62,8 @@ ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
 
 
     VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, gedp->dm_gvp->gv_model2view, model_pt);
-    f = gedp->dm_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
+    MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
+    f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VSUB2(diff, view_pt, mo_view_pt);
 
