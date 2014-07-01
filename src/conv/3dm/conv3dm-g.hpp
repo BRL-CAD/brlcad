@@ -55,7 +55,9 @@ namespace conv3dm
 class RhinoConverter
 {
 public:
-    RhinoConverter(const std::string &output_path);
+    RhinoConverter(const std::string &output_path,
+		   bool verbose_mode = false);
+
     ~RhinoConverter();
 
 
@@ -103,6 +105,7 @@ private:
 
 
 
+    const bool m_verbose_mode;
     bool m_use_uuidnames;
     bool m_random_colors;
     std::string m_output_dirname;

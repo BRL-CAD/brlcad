@@ -42,14 +42,14 @@ static const char * const USAGE = "USAGE: 3dm-g [-v vmode] [-r] [-u] -o output_f
 int
 main(int argc, char** argv)
 {
-    int verbose_mode = 0;
+    bool verbose_mode = false;
     bool random_colors = false;
     bool use_uuidnames = false;
     char* outputFileName = NULL;
     const char* inputFileName;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:dvt:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
@@ -61,7 +61,7 @@ main(int argc, char** argv)
 	    case 't':	/* tolerance */
 		break;
 	    case 'v':	/* verbose */
-		sscanf(bu_optarg, "%d", &verbose_mode);
+		verbose_mode = true;
 		break;
 	    case 'r':  /* randomize colors */
 		random_colors = true;
@@ -83,7 +83,7 @@ main(int argc, char** argv)
 	return 1;
     }
 
-    conv3dm::RhinoConverter converter(outputFileName);
+    conv3dm::RhinoConverter converter(outputFileName, verbose_mode);
     converter.write_model(inputFileName, use_uuidnames, random_colors);
 
     return 0;
