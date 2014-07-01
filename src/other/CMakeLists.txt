@@ -112,6 +112,28 @@ SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 
+# FreeType Libraries
+set(freetype_ALIASES ENABLE_FREETYPE)
+set(freetype_DESCRIPTION "
+Option for enabling and disabling compilation of the FreeType
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION
+  ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+if(BRLCAD_FREETYPE_BUILD)
+  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+  set(FREETYPE_INCLUDE_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+    ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
+    CACHE STRING "FreeType include dirs" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
+  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+endif(BRLCAD_FREETYPE_BUILD)
+
+
 # --------------------------------------------------------------------
 # Ignore the boost subdir - it's only used for the boost headers and
 # is not compiled
