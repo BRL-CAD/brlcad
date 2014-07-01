@@ -56,20 +56,6 @@ BRLCAD_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# convenience for computing a sum of a list of integers without
-# relying on wc or awk to behave consistently
-sum ( ) {
-    if test "x$2" = "x" ; then
-	echo $1
-    else
-	_total=0
-	for _num in $* ; do
-	    _total="`expr $_total \+ $_num`"
-	done
-    fi
-    echo $_total
-}
-
 
 # print the summary
 echo "*****************************************"
@@ -112,6 +98,7 @@ those_pattern="$other_pattern -or $trash_pattern"
 
 # prime a hierarchy cache, get a directory listing
 dir_list=`find $BASE -type d -not \( $those_pattern \)`
+
 
 echo "-----------------------------------------"
 echo "--       FILESYSTEM ORGANIZATION       --"
@@ -211,63 +198,62 @@ printf "\t%7d\t%s\n" "$uninstalled_apps_count" "Not Installed"
 
 printf "\n"
 
-exit # !!!
 
 echo "-----------------------------------------"
 echo "--          LINE COUNT TOTALS          --"
 echo "-----------------------------------------"
-echo "   w/ws+= means with whitespace lines"
-echo "-----------------------------------------"
+# echo "   w/ws+= means with whitespace lines"
+# echo "-----------------------------------------"
 
 # compute build infrastructure line counts
-bic=`find $BASE -type f \( -name configure -or -name CMakeLists.txt -or -regex '.*\.cmake$' -or -regex '.*\.cmake.in$' -or -regex '.*/CMake.*\.in$' -or -regex '.*/CMake.*\.sh$' -or -regex '.*/sh/.*\.sh$' \) -not \( $those_pattern \)`
+bic=`find $BASE -type f \( -name configure -or -name CMakeLists.txt -or -regex .*\.cmake$ -or -regex .*\.cmake.in$ -or -regex .*/CMake.*\.in$ -or -regex .*/CMake.*\.sh$ -or -regex .*/sh/.*\.sh$ \) -not \( $those_pattern \)`
 bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
-bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{print $1}'`"
-bic_lc_total="`sum $bic_lc_lines`"
-bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
-bic_lc_total="`expr $bic_lc_total - $bic_lc_blank`"
+bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+bic_lc_total="`expr $bic_lc_lines - $bic_lc_blank`"
 
 printf "%7d\t%s\n" "$bic_lc_total" "Build Infrastructure w/ws+=$bic_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $bic | while read line ; do printf "\t%s\n" $line ; done
 
 # compute documentation line counts
-dc=`find $BASE -type f \( -regex '.*/[A-Z]*$' -or -regex '.*/README.*' -or -regex '.*/TODO.*' -or -regex '.*/INSTALL.*' -or -name ChangeLog -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml -or -name \*.bib -or -name \*.tbl -or -name \*.mm -or -name \*csv \) -not -regex '.*/misc/.*' -not -regex '.*/legal/.*' -not -regex '.*CMakeLists.txt.*' -not -regex '.*CMake.*' -not -regex '.*LICENSE.*\..*' -not \( $those_pattern \)`
+dc=`find $BASE -type f \( -regex .*/[A-Z]*$ -or -regex .*/README.* -or -regex .*/TODO.* -or -regex .*/INSTALL.* -or -name ChangeLog -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml -or -name \*.bib -or -name \*.tbl -or -name \*.mm -or -name \*csv \) -not -regex .*/misc/.* -not -regex .*/legal/.* -not -regex .*CMakeLists.txt.* -not -regex .*CMake.* -not -regex .*LICENSE.*\..* -not \( $those_pattern \)`
 dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
-dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
-dc_lc_total="`sum $dc_lc_lines`"
-dc_lc_blank="`echo \"$dc_lc\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
-dc_lc_total="`expr $dc_lc_lines - dc_lc_blank`"
+dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+dc_lc_blank="`echo \"$dc\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+dc_lc_total="`expr $dc_lc_lines - $dc_lc_blank`"
 
 printf "%7d\t%s\n" "$dc_lc_total" "Documentation w/ws+=$dc_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $dc | while read line ; do printf "\t%s\n" $line ; done
 
 # compute script code line counts (intentionally not matching /misc/ due to src/external)
-scripts=`find $BASE -type f \( $script_pattern \) -not -regex '.*/sh/.*' -not -regex '.*misc.*' -not \( $those_pattern \)`
+scripts=`find $BASE -type f \( $script_pattern \) -not -regex .*/sh/.* -not -regex .*misc.* -not \( $those_pattern \)`
 scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
-scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{print $1}'`"
-scripts_lc_total="`sum $scripts_lc_lines`"
-scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
-scripts_lc_total="`expr $scripts_lc_total - $scripts_lc_blank`"
+scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+scripts_lc_total="`expr $scripts_lc_lines - $scripts_lc_blank`"
 
-printf "%7d\t%s\n" "$scripts_lc_total" "Scripts (Shell, Tcl/Tk) w/ws+=$scripts_lc_blank"
+printf "%7d\t%s\n" "$scripts_lc_total" "Scripts w/ws+=$scripts_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $scripts | while read line ; do printf "\t%s\n" $line ; done
 
 # compute application code line counts (intentionally not matching /misc/ due to src/external)
-sourcebin=`find $BASE -type f \( $source_pattern  \) -not -regex '.*/sh/.*' -not -regex '.*misc.*' -not -regex '.*lib.*' -not -regex '.*/include/.*' -not \( $those_pattern \)`
+sourcebin=`find $BASE -type f \( $source_pattern  \) -not -regex .*/sh/.* -not -regex .*misc.* -not -regex .*lib.* -not -regex .*/include/.* -not \( $those_pattern \)`
 sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
-sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
-sourcebin_lc_total="`sum $sourcebin_lc_lines`"
-sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
-sourcebin_lc_total="`expr $sourcebin_lc_total - $sourcebin_lc_blank`"
+sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+sourcebin_lc_total="`expr $sourcebin_lc_lines - $sourcebin_lc_blank`"
 
 printf "%7d\t%s\n" "$sourcebin_lc_total" "Application Sources w/ws+=$sourcebin_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $sourcebin | while read line ; do printf "\t%s\n" $line ; done
 
 # compute library code line counts (intentionally not matching /misc due to src/external)
-sourcelib=`find $BASE -type f -regex '.*/(lib|include).*' -and \( $source_pattern \) -not -regex '.*/sh/.*' -not -regex '.*misc.*' -not \( $those_pattern \)`
+sourcelib=`find $BASE -type f -and \( -regex .*/lib.* -or -regex .*/include/.* \) -and \( $source_pattern \) -not -regex .*/sh/.* -not -regex .*misc.* -not \( $those_pattern \)`
 sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
-sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
-sourcelib_lc_total="`sum $sourcelib_lc_lines`"
-sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
-sourcelib_lc_total="`expr $sourcelib_lc_total - $sourcelib_lc_blank`"
+sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+sourcelib_lc_total="`expr $sourcelib_lc_lines - $sourcelib_lc_blank`"
 
 printf "%7d\t%s\n" "$sourcelib_lc_total" "Library Sources w/ws+=$sourcelib_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $sourcelib | while read line ; do printf "\t%s\n" $line ; done
 
 echo "-----------------------------------------"
 
@@ -276,14 +262,14 @@ blank_lc_total="`echo \"$bic_lc_blank $dc_lc_blank $scripts_lc_blank $sourcebin_
 printf "%7d\t%s\n" "$blank_lc_total" "BRL-CAD Blank (ws) Lines "
 
 # compute 3rd party code line counts
-other=`find $BASE -type f -and \( $code_pattern \) -and \( $other_pattern \)'`
+other=`find $BASE -type f -and \( $code_pattern \) -and \( $other_pattern \)`
 other_lc="`echo \"$other\" | sort | xargs wc -l`"
-other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{print $1}'`"
-other_lc_total="`sum $other_lc_lines`"
-other_lc_blank="`echo \"$other_lc\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
+other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+other_lc_blank="`echo \"$other\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
 other_lc_total="`expr $other_lc_lines - $other_lc_blank`"
 
 printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code w/ws+=$other_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $other | while read line ; do printf "\t%s\n" $line ; done
 
 echo "-----------------------------------------"
 
