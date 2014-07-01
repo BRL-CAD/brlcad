@@ -335,7 +335,7 @@ RhinoConverter::RhinoConverter(const std::string &output_path) :
 {
     char *buf = bu_dirname(output_path.c_str());
     m_output_dirname = buf;
-    bu_free(buf, "dirname buffer");
+    bu_free(buf, "bu_dirname buffer");
 
     m_db = wdb_fopen(output_path.c_str());
     if (!m_db || mk_id(m_db, "3dm -> g conversion")) {
@@ -515,7 +515,7 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	}
 
 	m_log->Print("Extracting bitmap to '%s'\n", dest_path.c_str());
-	std::ofstream file(dest_path.c_str());
+	std::ofstream file(dest_path.c_str(), std::ofstream::binary);
 	file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 	file.write(static_cast<const char *>(bitmap->m_buffer), bitmap->m_sizeof_buffer);
 	file.close();
