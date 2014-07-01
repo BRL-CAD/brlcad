@@ -53,38 +53,6 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
-# For lower build levels, some of the third party components are not
-# needed.  define some variables we can use for testing.
-set(BRLCAD_LEVEL2 0)
-set(BRLCAD_LEVEL3 0)
-if(NOT BRLCAD_ENABLE_TARGETS)
-  set(BRLCAD_LEVEL2 1)
-  set(BRLCAD_LEVEL3 1)
-else(NOT BRLCAD_ENABLE_TARGETS)
-  if(${BRLCAD_ENABLE_TARGETS} GREATER 1)
-    set(BRLCAD_LEVEL2 1)
-  endif(${BRLCAD_ENABLE_TARGETS} GREATER 1)
-  if(${BRLCAD_ENABLE_TARGETS} GREATER 2)
-    set(BRLCAD_LEVEL3 1)
-  endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
-endif(NOT BRLCAD_ENABLE_TARGETS)
-
-# At the start, clear the src/other subdirs list so repeated
-# configures will correctly add the required directories
-set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-
-macro(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endmacro(SetTargetFolder)
-
-#-----------------------------------------------------------------------------
-# Load some CMake macros to handle the special case of third party libraries.
-include(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
-
-
 # libregex library -  often needed by tools, so do this one first.
 set(regex_ALIASES ENABLE_REGEX)
 set(regex_DESCRIPTION "
@@ -253,39 +221,6 @@ endif(NOT COMMAND PERPLEX_TARGET)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
 SetTargetFolder(perplex "Compilation Utilities")
 SetTargetFolder(perplex_template_cp "Compilation Utilities")
-
-# libxml and libxslt tools for DocBook processing.  We build just
-# enough library support to get these two tools working.
-set(xsltproc_ALIASES ENABLE_XSLTPROC)
-set(xsltproc_DESCRIPTION "
-Option for enabling and disabling compilation of the xsltproc XML
-transformation utility provided with BRL-CAD's source distribution.
-Used for DocBook documentation processing.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-Depends on BRLCAD_EXTRADOCS.
-")
-THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" xsltproc_ALIASES xsltproc_DESCRIPTION)
-SetTargetFolder(xsltproc "Compilation Utilities")
-
-# Used only when validating XML for schema compliance
-# (BRLCAD_EXTRADOCS_VALIDATE must be on to use this, although it is compiled
-# regardless if the xmltools subdirectory build is added.)
-set(xmllint_ALIASES ENABLE_XMLLINT)
-set(xmllint_DESCRIPTION "
-Option for enabling and disabling compilation of the xmllint XML
-validation utility provided with BRL-CAD's source distribution.  Used
-for DocBook documentation validation.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL3" xmllint_ALIASES xmllint_DESCRIPTION)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
-SetTargetFolder(xmllint "Compilation Utilities")
-
-SetTargetFolder(xml "Third Party Libraries")
-SetTargetFolder(xslt "Third Party Libraries")
-SetTargetFolder(exslt "Third Party Libraries")
 
 # --------------------------------------------------------------------
 # Third Party Sources
