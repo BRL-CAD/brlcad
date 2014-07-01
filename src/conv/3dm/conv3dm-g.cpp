@@ -509,7 +509,7 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	int counter = 0;
 	while (bu_file_exists(dest_path.c_str(), NULL)) {
 	    std::ostringstream ss;
-	    ss << m_output_dirname + BU_DIR_SEPARATOR + "3dm-g-" <<
+	    ss << m_output_dirname << BU_DIR_SEPARATOR << "3dm-g-" <<
 	       ++counter << '_' << base;
 	    dest_path = ss.str();
 	}
