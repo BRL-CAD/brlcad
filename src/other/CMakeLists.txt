@@ -826,10 +826,6 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
-# Eigen is used for advanced linear algebra functionality It consists
-# entirely of headers and does not need to be installed.
-CMAKEFILES(Eigen)
-
 # TCLAP is used for option parsing - consists entirely of headers
 # and does not need to be installed, but does need to generate a
 # config file
