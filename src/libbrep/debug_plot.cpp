@@ -121,12 +121,22 @@ DebugPlot::WriteLog()
     // write out surface-surface intersections
     for (size_t i = 0; i < intersecting_surfaces.size(); ++i) {
 	std::pair<int, int> pair = intersecting_surfaces[i];
+	int b1_isocurves = 0;
+	if (ssx_isocsx_brep1_curves.size() > i) {
+	    b1_isocurves = (int)ssx_isocsx_brep1_curves[i];
+	}
+	int intersecting_isocurves = 0;
+	if (ssx_isocsx_events.size() > i) {
+	    intersecting_isocurves = (int)ssx_isocsx_events[i].size();
+	}
 	// b1si b2si finalevents b1_isocurve_xs total_isocurve_xs isocsx0_event0 ...
 	fprintf(fp, "ssx %d %d %d %d %d", pair.first, pair.second,
-		ssx_events[i], (int)ssx_isocsx_brep1_curves[i],
-		(int)ssx_isocsx_events[i].size());
-	for (size_t j = 0; j < ssx_isocsx_events[i].size(); ++j) {
-	    fprintf(fp, " %d", ssx_isocsx_events[i][j]);
+		ssx_events[i], b1_isocurves, intersecting_isocurves);
+
+	if (ssx_isocsx_events.size() > i) {
+	    for (size_t j = 0; j < ssx_isocsx_events[i].size(); ++j) {
+		fprintf(fp, " %d", ssx_isocsx_events[i][j]);
+	    }
 	}
 	fprintf(fp, "\n");
     }

@@ -685,6 +685,14 @@ dplot_isocsx(
 	return GED_OK;
     }
 
+    if (info->fdata.ssx[info->ssx_idx].isocsx_events == NULL) {
+	bu_vls_printf(info->gedp->ged_result_str, "The isocurves of neither "
+		"surface intersected the opposing surface in surface-surface"
+		" intersection %d.\n", info->ssx_idx);
+	info->mode = DPLOT_INITIAL;
+	return GED_OK;
+    }
+
     dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
 	    info->brep1_surf_idx, "isocsx_b1");
     dplot_overlay(info->gedp, info->prefix, "_brep2_surface",

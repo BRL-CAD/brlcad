@@ -62,15 +62,7 @@ ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3) isocsx_event_
     ++data->ssx_count;
 }
 
-isocsx_event_counts ::= count(C). {
-    struct isocsx *isocsx;
-    BU_GET(isocsx, struct isocsx);
-
-    isocsx->events = C;
-    BU_LIST_INIT(&isocsx->l);
-
-    BU_LIST_PUSH(&data->isocsx_list, &isocsx->l);
-}
+isocsx_event_counts ::= /* empty */.
 
 isocsx_event_counts ::= isocsx_event_counts count(C). {
     struct isocsx *isocsx;
