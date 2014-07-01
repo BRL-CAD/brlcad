@@ -55,6 +55,7 @@ static const bool verbose_mode = false;
 
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 static const std::string DEFAULT_LAYER_NAME = "Default";
+static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
 /* UUID buffers must be >= 37 chars per openNURBS API */
@@ -196,7 +197,7 @@ CleanName(ON_wString name)
     if (name)
 	return w2string(name);
     else
-	return "noname";
+	return DEFAULT_NAME;
 }
 
 
@@ -469,7 +470,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_uuid, ".pix");
 	else {
 	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
-	    if (bitmap_name == "noname")
+	    if (bitmap_name == DEFAULT_NAME)
 		bitmap_name = CleanName(bitmap->m_bitmap_filename);
 
 	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_name, ".pix");
