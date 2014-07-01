@@ -56,6 +56,13 @@ public:
     // navigate the generated plot files
     void WriteLog();
 
+    // get the number of intersecting surface pairs recorded
+    int SurfacePairs();
+
+    // get the number of isocurves that intersect either surface in
+    // given surface pair
+    int IntersectingIsocurves(int ssx_idx);
+
 private:
     struct bu_list vlist_free_list;
     std::string prefix;

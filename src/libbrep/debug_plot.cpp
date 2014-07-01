@@ -52,6 +52,23 @@ DebugPlot::DebugPlot(const char *basename) :
     BU_LIST_INIT(&vlist_free_list);
 }
 
+int
+DebugPlot::SurfacePairs(void)
+{
+    return (int)intersecting_surfaces.size();
+}
+
+int
+DebugPlot::IntersectingIsocurves(int ssx_idx)
+{
+    int max_isocsx_idx = (int)ssx_isocsx_events.size() - 1;
+    if (ssx_idx < 0 || ssx_idx > max_isocsx_idx) {
+	std::cerr << "DebugPlot::IntersectingIsocurves passed invalid ssx index.\n";
+	return 0;
+    }
+    return (int)ssx_isocsx_events[ssx_idx].size();
+}
+
 HIDDEN void
 write_plot_to_file(
     const char *filename,
