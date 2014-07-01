@@ -624,6 +624,14 @@ dplot_ssx(
     return GED_OK;
 }
 
+void
+dplot_print_event_legend(struct dplot_info *info)
+{
+    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
+    bu_vls_printf(info->gedp->ged_result_str, "white  = tangent\n");
+    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
+}
+
 HIDDEN int
 dplot_ssx_events(
     struct dplot_info *info)
@@ -654,9 +662,7 @@ dplot_ssx_events(
 	    return ret;
 	}
 	if (info->event_idx == 0) {
-	    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
-	    bu_vls_printf(info->gedp->ged_result_str, "white  = tangent\n");
-	    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
+	    dplot_print_event_legend(info);
 	}
     }
     /* advance to next event, or return to initial state */
@@ -745,9 +751,7 @@ dplot_isocsx_events(struct dplot_info *info)
 	    return ret;
 	}
 	if (info->event_idx == 0) {
-	    bu_vls_printf(info->gedp->ged_result_str, "yellow = transverse\n");
-	    bu_vls_printf(info->gedp->ged_result_str, "red    = tangent\n");
-	    bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
+	    dplot_print_event_legend(info);
 	}
     }
     /* advance to next event, or return to initial state */
