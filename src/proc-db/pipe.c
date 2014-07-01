@@ -777,9 +777,9 @@ void
 Usage(void)
 {
     fprintf(stderr, "Usage: pipe [-tsmnc] tag filename\n");
-    fprintf(stderr, "   where 'tag' is the name of the piping run and is used by mged in object names\n");
+    fprintf(stderr, "   where 'tag' is the name of the piping run and is used by mged in object names;\n");
     fprintf(stderr, "   and 'filename' is the .g file (e.g., fuel.g)\n");
-    fprintf(stderr, "   -t -> use tori at the bends (default)\n");
+    fprintf(stderr, "   -t -> use tori at the bends\n");
     fprintf(stderr, "   -s -> use spheres at the corners\n");
     fprintf(stderr, "   -m -> mitre the corners\n");
     fprintf(stderr, "   -n -> nothing at the corners\n");
