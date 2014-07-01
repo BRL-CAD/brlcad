@@ -241,7 +241,7 @@
 #cmakedefine HAVE_VSPRINTF
 
 /* Define to 1 if you have the <zlib.h> header file. */
-#cmakedefine HAVE_ZLIB_H
+/*#define HAVE_ZLIB_H 1 */
 
 /* Define to 1 if you have the `_stat' function. */
 #cmakedefine HAVE__STAT 1

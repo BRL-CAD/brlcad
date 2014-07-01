@@ -400,7 +400,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     }
 
     /* Get the list of assembly objects */
-    const char *assembly_search = "-above -type region ! -type region";
+    const char *assembly_search = "-type comb ! -below -type region ! -type region";
     struct bu_ptbl *assemblies;
     BU_ALLOC(assemblies, struct bu_ptbl);
     (void)db_search(assemblies, assembly_search, 1, &dp, wdbp, DB_SEARCH_RETURN_UNIQ_DP);

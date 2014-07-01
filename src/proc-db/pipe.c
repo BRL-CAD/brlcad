@@ -669,10 +669,10 @@ main(int argc, char **argv)
     }
 
     MAT_IDN(identity);	/* Identity matrix for all objects */
-    pi = atan2(0.0, -1.0);	/* PI */
+    pi = M_PI;	/* PI */
 
     printf("FLUID & PIPING V%d.%d 10 Mar 89\n\n", VERSION, RELEASE);
-    printf("append %s to your target description using 'concat' in mged\n", argv[bu_optind]);
+    printf("Append %s to your target description using 'concat' in mged.\n", argv[bu_optind]);
 
 #define MM_TO_CM 10.0
 #define MM_TO_M  1000.0
@@ -777,7 +777,7 @@ void
 Usage(void)
 {
     fprintf(stderr, "Usage: pipe [-tsmnc] tag filename\n");
-    fprintf(stderr, "   where 'tag' is the name of the piping run and is used by mged in object names\n");
+    fprintf(stderr, "   where 'tag' is the name of the piping run and is used by mged in object names;\n");
     fprintf(stderr, "   and 'filename' is the .g file (e.g., fuel.g)\n");
     fprintf(stderr, "   -t -> use tori at the bends (default)\n");
     fprintf(stderr, "   -s -> use spheres at the corners\n");
