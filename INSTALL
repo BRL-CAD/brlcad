@@ -450,6 +450,37 @@ permissions).
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
 
+--- BRLCAD_LEMON ---
+
+Option for enabling and disabling compilation of the lemon parser
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_LEMON
+
+
+--- BRLCAD_RE2C ---
+
+Option for enabling and disabling compilation of the re2c scanner
+utility provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_RE2C
+
+
+--- BRLCAD_PERPLEX ---
+
+Option for enabling and disabling compilation of the perplex scanner
+generator provided with BRL-CAD's source distribution.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.  perplex requires a working re2c.
+
+Aliases:  ENABLE_PERPLEX
+
+
 --- BRLCAD_ASTYLE ---
 
 Option for enabling and disabling compilation of the Artistic Style
@@ -503,37 +534,6 @@ responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
-
-
---- BRLCAD_LEMON ---
-
-Option for enabling and disabling compilation of the lemon parser
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_LEMON
-
-
---- BRLCAD_RE2C ---
-
-Option for enabling and disabling compilation of the re2c scanner
-utility provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_RE2C
-
-
---- BRLCAD_PERPLEX ---
-
-Option for enabling and disabling compilation of the perplex scanner
-generator provided with BRL-CAD's source distribution.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.  perplex requires a working re2c.
-
-Aliases:  ENABLE_PERPLEX
 
 
 --- BRLCAD_TERMLIB ---
