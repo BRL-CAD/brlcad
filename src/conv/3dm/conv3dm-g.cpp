@@ -856,7 +856,7 @@ RhinoConverter::create_geometry(const ON_Geometry *pGeometry,
     } else if (const ON_Group *group = ON_Group::Cast(pGeometry)) {
 	m_log->Print("Skipping: Type: ON_Group\n");
 	if (verbose_mode) group->Dump(*m_log);
-    } else m_log->Print("Skipping unkown object type\n");
+    } else m_log->Print("Skipping unknown object type\n");
 
     if (verbose_mode) {
 	m_log->PopIndent();
