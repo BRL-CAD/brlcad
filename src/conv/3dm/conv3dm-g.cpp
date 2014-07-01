@@ -39,7 +39,6 @@
 #include <stdexcept>
 
 #include "bu/getopt.h"
-#include "icv.h"
 #include "vmath.h"
 #include "wdb.h"
 
@@ -107,7 +106,7 @@ is_toplevel(const ON_Layer &layer)
 
 
 
-std::string
+static std::string
 gen_bitmap_id(std::size_t index)
 {
     std::ostringstream ss;
@@ -328,11 +327,16 @@ RhinoConverter::Color::set_rgb(int red, int green, int blue)
 RhinoConverter::RhinoConverter(const std::string &output_path) :
     m_use_uuidnames(false),
     m_random_colors(false),
+    m_output_dirname(),
     m_obj_map(),
     m_log(new ON_TextLog),
     m_model(new ONX_Model),
     m_db(NULL)
 {
+    char *buf = bu_dirname(output_path.c_str());
+    m_output_dirname = buf;
+    bu_free(buf, "dirname buffer");
+
     m_db = wdb_fopen(output_path.c_str());
     if (!m_db || mk_id(m_db, "3dm -> g conversion")) {
 	wdb_close(m_db);
@@ -499,13 +503,22 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 {
     if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
 	const std::string path = w2string(bitmap->m_bitmap_filename);
-	char buf[BUFSIZ]; // BUFSIZ is currently required by libicv
-	ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
+	const std::string base = basename(path);
 
-	if (format == ICV_IMAGE_UNKNOWN) {
-	    m_log->Print("Skipping unsupported image format\n");
-	    return;
+	std::string dest_path = m_output_dirname + BU_DIR_SEPARATOR + base;
+	int counter = 0;
+	while (bu_file_exists(dest_path.c_str(), NULL)) {
+	    std::ostringstream ss;
+	    ss << m_output_dirname + BU_DIR_SEPARATOR + "3dm-g-" <<
+	       ++counter << '_' << base;
+	    dest_path = ss.str();
 	}
+
+	m_log->Print("Extracting bitmap to '%s'\n", dest_path.c_str());
+	std::ofstream file(dest_path.c_str());
+	file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+	file.write(static_cast<const char *>(bitmap->m_buffer), bitmap->m_sizeof_buffer);
+	file.close();
     } else
 	m_log->Print("Skipping non-embedded bitmap\n"); // FIXME
 }

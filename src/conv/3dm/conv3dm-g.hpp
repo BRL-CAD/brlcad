@@ -105,6 +105,7 @@ private:
 
     bool m_use_uuidnames;
     bool m_random_colors;
+    std::string m_output_dirname;
     std::map<std::string, ModelObject> m_obj_map;
     std::auto_ptr<ON_TextLog> m_log;
     std::auto_ptr<ONX_Model> m_model;
