@@ -4137,7 +4137,7 @@ xmlTextReaderRelaxNGSetSchema(xmlTextReaderPtr reader, xmlRelaxNGPtr schema) {
  *
  * Use XSD Schema to validate the document as it is processed.
  * Activation is only possible before the first Read().
- * if @schema is NULL, then Schema validation is desactivated.
+ * if @schema is NULL, then Schema validation is deactivated.
  @ The @schema should not be freed until the reader is deallocated
  * or its use has been deactivated.
  *
