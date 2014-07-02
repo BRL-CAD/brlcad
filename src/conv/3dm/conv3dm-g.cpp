@@ -45,6 +45,7 @@
 
 
 
+
 namespace
 {
 
@@ -172,7 +173,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
     while (bu_file_exists(path.c_str(), NULL)) {
 	std::ostringstream ss;
 	ss << dir_path << BU_DIR_SEPARATOR << "extracted_" <<
-	   ++counter << '_' << filename;
+	   ++counter << "_" << filename;
 
 	path = ss.str();
     }
@@ -445,9 +446,8 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     nest_all_layers();
     create_all_layers();
 
-    // create toplevel layer
-    ON_Layer root_layer;
-    create_layer(root_layer);
+    // create root layer
+    create_layer(ON_Layer());
 
     m_model->Destroy();
 
