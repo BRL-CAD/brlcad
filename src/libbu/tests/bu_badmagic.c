@@ -51,7 +51,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "Must specify a function number. [%s]\n", argv[0]);
     }
 
-    bu_bomb_add_hook((bu_hook_t)&bomb_callback, (genptr_t)expected_str);
+    bu_bomb_add_hook((bu_hook_t)&bomb_callback, (void *)expected_str);
 
     sscanf(argv[1], "%d", &testnum);
     switch (testnum) {

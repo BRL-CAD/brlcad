@@ -599,7 +599,7 @@ wrobj(char name[], int flags)
 		for (i=1; i<8; i++)
 		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-		intern.idb_ptr = (genptr_t)arb;
+		intern.idb_ptr = (void *)arb;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_ARB8;
 		intern.idb_meth = &OBJ[ID_ARB8];
@@ -620,7 +620,7 @@ wrobj(char name[], int flags)
 		VMOVE(tgc->c, &sol.s_values[12]);
 		VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
+		intern.idb_ptr = (void *)tgc;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_TGC;
 		intern.idb_meth = &OBJ[ID_TGC];
@@ -631,7 +631,7 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;

@@ -2116,7 +2116,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 				if (unique_vertex_cnt >= book_keeping_array_alloc_cnt) {
 				    book_keeping_array_alloc_cnt = unique_vertex_cnt;
 				    book_keeping_array_alloc_cnt += 10;
-				    book_keeping_array_tmp = (size_t *)bu_realloc((genptr_t)book_keeping_array,
+				    book_keeping_array_tmp = (size_t *)bu_realloc((void *)book_keeping_array,
 										  book_keeping_array_alloc_cnt * sizeof(size_t),
 										  "book_keeping_array realloc");
 				    book_keeping_array = book_keeping_array_tmp;

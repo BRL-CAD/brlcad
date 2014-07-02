@@ -1,4 +1,4 @@
-/*                     U T I L I T Y . C
+/*                      U T I L I T Y . C
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -20,39 +20,51 @@
 
 #include "./gdiff2.h"
 
-int
-attr_obj_diff(struct diff_result_container *result, const struct db_i *left, const struct db_i *right, const struct directory *dp_left, const struct directory *dp_right, const struct bn_tol *diff_tol) {
-    struct bu_external before_ext;
-    struct bu_external after_ext;
-    struct db5_raw_internal before_raw;
-    struct db5_raw_internal after_raw;
-    struct bu_attribute_value_set before_avs;
-    struct bu_attribute_value_set after_avs;
+void
+diff_state_init(struct diff_state *state)
+{
+    state->use_params = 1;
+    state->use_attrs = 1;
+    state->return_added = -1;
+    state->return_removed = -1;
+    state->return_changed = -1;
+    state->return_conflicts = 1;
+    state->return_unchanged = 0;
+    state->have_search_filter = 0;
+    state->verbosity = 2;
+    state->output_mode = 0;
+    state->merge = 0;
+    BU_GET(state->diff_tol, struct bn_tol);
+    state->diff_tol->dist = RT_LEN_TOL;
+    BU_GET(state->diff_log, struct bu_vls);
+    BU_GET(state->search_filter, struct bu_vls);
+    BU_GET(state->merge_file, struct bu_vls);
+    bu_vls_init(state->diff_log);
+    bu_vls_init(state->search_filter);
+    bu_vls_init(state->merge_file);
+}
 
-    if (!(dp_left->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp_right->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)) return -1;
+void
+diff_state_free(struct diff_state *state)
+{
+    bu_vls_free(state->diff_log);
+    bu_vls_free(state->search_filter);
+    bu_vls_free(state->merge_file);
+    BU_PUT(state->diff_tol, struct bn_tol);
+    BU_PUT(state->diff_log, struct bu_vls);
+    BU_PUT(state->search_filter, struct bu_vls);
+    BU_PUT(state->merge_file, struct bu_vls);
+}
 
-    BU_EXTERNAL_INIT(&before_ext);
-    BU_EXTERNAL_INIT(&after_ext);
-    if (db_get_external(&before_ext, dp_left, left) < 0 || db5_get_raw_internal_ptr(&before_raw, before_ext.ext_buf) == NULL) {return -1;}
-    if (db_get_external(&after_ext, dp_right, right) < 0 || db5_get_raw_internal_ptr(&after_raw, after_ext.ext_buf) == NULL) {return -1;}
-    /* Parse out the attributes */
-    if (db5_import_attributes(&before_avs, &before_raw.attributes) < 0 || db5_import_attributes(&after_avs, &after_raw.attributes) < 0) {
-	bu_free_external(&before_ext);
-	bu_free_external(&after_ext);
-	return -1;
+struct diff_avp *
+diff_ptbl_get(struct bu_ptbl *avp_array, const char *key)
+{
+    int i = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(avp_array); i++) {
+	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(avp_array, i);
+	if (BU_STR_EQUAL(avp->name, key)) return avp;
     }
-    result->internal_diff = 0;
-    result->attribute_diff = db_avs_diff(&(result->additional_new_only), &(result->additional_orig_only),
-	    &(result->additional_orig_diff), &(result->additional_new_diff), &(result->additional_shared),
-	    &before_avs, &after_avs, diff_tol);
-
-    bu_free_external(&before_ext);
-    bu_free_external(&after_ext);
-
-    bu_avs_free(&before_avs);
-    bu_avs_free(&after_avs);
-    return result->attribute_diff;
-
+    return NULL;
 }
 
 

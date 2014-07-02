@@ -466,7 +466,7 @@ typedef enum {
  * an empty binunif will be created.
  *
  */
-WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count);
+WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 
 
 /*----------------------------------------------------------------------*/

@@ -75,7 +75,7 @@ enum db_search_ntype {
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
-    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL
+    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
 };
 
 
@@ -113,6 +113,7 @@ struct db_plan_t {
 	char *_ci_data;			/* char pointer */
 	char *_path_data;		/* char pointer */
 	char *_attr_data;		/* char pointer */
+	char *_param_data;		/* char pointer */
 	char *_depth_data;		/* char pointer */
 	char *_node_data;		/* char pointer */
 	char *_type_data;
@@ -130,6 +131,7 @@ struct db_plan_t {
 #define path_data	p_un._path_data
 #define regexp_data 	p_un._regex_data
 #define attr_data	p_un._attr_data
+#define param_data	p_un._param_data
 #define depth_data	p_un._depth_data
 #define node_data	p_un._node_data
 #define fl_flags	p_un.fl._f_flags
@@ -162,6 +164,7 @@ extern int isdepth, isoutput;
 __BEGIN_DECLS
 
 static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
+static int c_objparam(char *, char ***, int, struct db_plan_t **, int *);
 static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
 static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *);
 static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *);

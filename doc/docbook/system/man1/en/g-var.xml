@@ -59,7 +59,7 @@ or to
 <para>Scale the output geometry by factor
 <emphasis remap='B'>scale</emphasis>
 . By default the scale factor is 0.001 (standard transformation
-from meters to millimeters.)</para>
+from meters to millimeters).</para>
   </listitem>
   </varlistentry>
   <varlistentry>

@@ -1128,7 +1128,7 @@ alarmhandler(int sig)
 #endif
 
 void
-IrradianceThread(int pid, genptr_t arg)
+IrradianceThread(int pid, void *arg)
 {
 #ifdef HAVE_ALARM
     starttime = time(NULL);

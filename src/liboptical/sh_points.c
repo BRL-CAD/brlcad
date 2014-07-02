@@ -61,10 +61,10 @@ struct bu_structparse points_parse[] = {
 };
 
 
-HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int points_render(struct application *ap, const struct partition *partp, struct shadework *swp, genptr_t dp);
-HIDDEN void points_print(register struct region *rp, genptr_t dp);
-HIDDEN void points_mfree(genptr_t cp);
+HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int points_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
+HIDDEN void points_print(register struct region *rp, void *dp);
+HIDDEN void points_mfree(void *cp);
 
 struct mfuncs points_mfuncs[] = {
     {MF_MAGIC,	"points",	0,		MFI_UV,		0,     points_setup,	points_render,	points_print,	points_mfree },
@@ -86,7 +86,7 @@ struct points {
  * >0 success
  */
 HIDDEN int
-points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -155,7 +155,7 @@ fail:
  * color of the "brightest" point (if any) within that region.
  */
 HIDDEN int
-points_render(struct application *ap, const struct partition *UNUSED(partp), struct shadework *swp, genptr_t dp)
+points_render(struct application *ap, const struct partition *UNUSED(partp), struct shadework *swp, void *dp)
 {
     register struct points_specific *ptp =
 	(struct points_specific *)dp;
@@ -217,7 +217,7 @@ points_render(struct application *ap, const struct partition *UNUSED(partp), str
 
 
 HIDDEN void
-points_print(register struct region *UNUSED(rp), genptr_t dp)
+points_print(register struct region *UNUSED(rp), void *dp)
 {
     bu_struct_print("points_setup", points_parse, (char *)dp);
     /* Should be more here */
@@ -225,7 +225,7 @@ points_print(register struct region *UNUSED(rp), genptr_t dp)
 
 
 HIDDEN void
-points_mfree(genptr_t cp)
+points_mfree(void *cp)
 {
     /* XXX - free linked lists in every bin! */
     bn_spm_free((bn_spm_map_t *)cp);

@@ -649,9 +649,9 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, GED_ERROR);
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 

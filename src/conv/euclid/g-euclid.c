@@ -42,7 +42,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static void
 usage(const char *argv0)
@@ -137,7 +137,7 @@ insert_id(int id)
 
 
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if (verbose)
 	bu_log("select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
@@ -150,7 +150,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp
 
 
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if (verbose)
 	bu_log("get_reg_id: Adding id %d to list\n", tsp->ts_regionid);
@@ -160,7 +160,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), 
 
 
 static union tree *
-region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n");
     return (union tree *)NULL; /* just to keep the compilers happy */
@@ -168,7 +168,7 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED
 
 
 static union tree *
-leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n");
     return (union tree *)NULL; /* just to keep the compilers happy */
@@ -557,7 +557,7 @@ main(int argc, char **argv)
 		       get_reg_id,			/* put id in table */
 		       region_stub,
 		       leaf_stub,
-		       (genptr_t)NULL);
+		       (void *)NULL);
 
     /* Process regions in ident order */
     curr_id = 0;
@@ -589,7 +589,7 @@ main(int argc, char **argv)
 			   select_region,
 			   do_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	nmg_km(the_model);
     }
@@ -665,7 +665,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list	vhead;

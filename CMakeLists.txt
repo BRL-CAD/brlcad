@@ -1210,10 +1210,6 @@ endif(BRLCAD_ENABLE_DTRACE)
 
 # Take advantage of parallel processors if available - highly recommended
 option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-if(WIN32 AND BRLCAD_ENABLE_SMP)
-  message("SMP Support is not ready on Windows - disabling")
-  set(BRLCAD_ENABLE_SMP OFF)
-endif(WIN32 AND BRLCAD_ENABLE_SMP)
 mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
@@ -2498,6 +2494,7 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
   # To make sure multiconfig_path runs in time for the source code builds it might impact, we will need to add the output file as a dependency
   # to the first target to run - the timestamp printing.
   add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
   add_dependencies(timestamp multiconfig_path)
 endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 

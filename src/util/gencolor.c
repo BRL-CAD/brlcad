@@ -47,7 +47,7 @@ void
 printusage(int i)
 {
     bu_log("%s\n", Usage);
-    bu_log("  (No whitespace immediately after -r and must redirect output)");
+    bu_log("  (No whitespace immediately after -r , and must redirect output)\n");
     bu_exit(i, NULL);
 }
 

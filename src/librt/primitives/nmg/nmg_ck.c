@@ -1508,7 +1508,7 @@ struct v_ck_state {
 
 
 HIDDEN void
-nmg_ck_v_in_fus(uint32_t *vp, genptr_t state, int UNUSED(unused))
+nmg_ck_v_in_fus(uint32_t *vp, void *state, int UNUSED(unused))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;
     register struct vertex *v = (struct vertex *)vp;
@@ -1567,7 +1567,7 @@ nmg_ck_vs_in_shell(const struct shell *s, const struct bn_tol *tol)
 
     (void)bu_ptbl_init(&tab, 64, " &tab");
 
-    nmg_visit(&s->magic, &handlers, (genptr_t)&st);
+    nmg_visit(&s->magic, &handlers, (void *)&st);
 
     bu_ptbl_free(&tab);
 

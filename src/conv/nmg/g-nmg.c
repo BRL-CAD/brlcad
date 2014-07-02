@@ -44,7 +44,7 @@
 #include "mater.h"
 
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
 
@@ -120,7 +120,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -218,7 +218,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	    sprintf(nmg_name, "nmg.%d", nmg_count);
 
 	    if (do_bots)
-		wdb_export(fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0);
+		wdb_export(fp_out, nmg_name, (void *)bot, ID_BOT, 1.0);
 	    else
 		mk_nmg(fp_out, nmg_name, r->m_p);
 	}
@@ -273,7 +273,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 }
 
 void
-csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
+csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -314,7 +314,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 			    0,
 			    do_region_end,
 			    nmg_booltree_leaf_tess,
-			    (genptr_t)NULL);
+			    (void *)NULL);
 
 	/* Release dynamic storage */
 	nmg_km(the_model);

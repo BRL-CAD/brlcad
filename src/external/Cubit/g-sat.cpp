@@ -94,9 +94,9 @@ int get_body_id( string body_name );
 
 void usage( char* s);
 int parse_args( int ac, char *av[]);
-int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, genptr_t client_data );
-tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, genptr_t client_data );
-tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, genptr_t client_data);
+int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, void *client_data );
+tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data );
+tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
 void describe_tree( tree *tree,  bu_vls *str);
 void output_triangles( nmgregion *r, model *m, shell *s);
 bool make_bot( nmgregion *r, model *m, shell *s);
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 	}
 
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
+		     &init_state ,region_start, region_end, primitive_func, (void *) &user_data);
     }
 
     // *************************************************************************************
@@ -409,7 +409,7 @@ int
 region_start ( db_tree_state *tsp,
 	       db_full_path *pathp,
 	       const  rt_comb_internal *combp,
-	       genptr_t client_data )
+	       void *client_data )
 {
     rt_comb_internal *comb;
     directory *dp;
@@ -464,7 +464,7 @@ tree *
 region_end ( db_tree_state *tsp,
 	     db_full_path *pathp,
 	     tree *curtree,
-	     genptr_t client_data )
+	     void *client_data )
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -565,7 +565,7 @@ tree *
 primitive_func( db_tree_state *tsp,
 		db_full_path *pathp,
 		rt_db_internal *ip,
-		genptr_t client_data)
+		void *client_data)
 {
     const double NEARZERO = 0.0001;
 

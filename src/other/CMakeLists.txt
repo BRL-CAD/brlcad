@@ -769,14 +769,6 @@ BRLCAD_ENABLE_TK is OFF.
 THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tkhtml3.0)
-#add_subdirectory(hv3)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
-#CMAKEFILES_IN_DIR(hv3_ignore_files hv3)
-#add_subdirectory(sqlite3)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.dist)
-#CMAKEFILES_IN_DIR(sqlite3_ignore_files sqlite3)
-CMAKEFILES(hv3)
-CMAKEFILES(sqlite3)
 SetTargetFolder(Tkhtml "Third Party Libraries")
 SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
 
@@ -921,10 +913,6 @@ else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
-# dom2dox - Doc-O-Matic to Doxygen C++ source converter
-include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
-CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
-
 # VDSlib - A View-Dependent Simplification and Rendering Library For
 # the moment, this is marked NOSYS - it's possible that some Debian
 # systems would have 0.9 of vdslib installed, but it's unmaintained
@@ -1015,18 +1003,8 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
-# The jama/tnt headers are installed by default - BRL-CAD requires the
-# altered headers to build (I think?)
-add_subdirectory(tnt)
-set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
-CMAKEFILES(tnt)
-mark_as_advanced(TNT_INCLUDE_DIR)
-
 # Eigen is used for advanced linear algebra functionality It consists
 # entirely of headers and does not need to be installed.
-#
-# TODO - replace jama/tnt with Eigen
-#
 CMAKEFILES(Eigen)
 
 # TCLAP is used for option parsing - consists entirely of headers

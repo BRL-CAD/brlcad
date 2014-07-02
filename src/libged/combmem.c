@@ -412,7 +412,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     }
 
     rt_db_free_internal(&intern);
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, &rt_uniresource);
     return GED_OK;
 }
@@ -477,7 +477,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     (_intern).idb_major_type = DB5_MAJORTYPE_BRLCAD; \
     (_intern).idb_type = ID_COMBINATION; \
 	     (_intern).idb_meth = &OBJ[ID_COMBINATION]; \
-		      (_intern).idb_ptr = (genptr_t)(_comb); \
+		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
 		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
@@ -485,7 +485,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
 			  if (_old_rt_tree_array) \
-			      bu_free((genptr_t)(_old_rt_tree_array), "rt_tree_array"); \
+			      bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
 			  db_free_tree((_old_ntp), &rt_uniresource); \
 			  \
 			  return GED_ERROR; \
@@ -493,7 +493,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      \
 		      rt_db_free_internal(&(_old_intern)); \
 		      if (_old_rt_tree_array) \
-			  bu_free((genptr_t)(_old_rt_tree_array), "rt_tree_array"); \
+			  bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
 		      db_free_tree((_old_ntp), &rt_uniresource);
 
 

@@ -42,7 +42,7 @@ static struct bu_hook_list log_hook_list = {
 	&log_hook_list.l
     },
     NULL,
-    GENPTR_NULL
+    ((void *)0)
 };
 
 static int log_first_time = 1;
@@ -66,20 +66,20 @@ bu_log_indent_vls(struct bu_vls *v)
 
 
 void
-bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_add_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_add(&log_hook_list, func, clientdata);
 }
 
 
 void
-bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_delete(&log_hook_list, func, clientdata);
 }
 
 HIDDEN void
-log_call_hooks(genptr_t buf)
+log_call_hooks(void *buf)
 {
 
     log_hooks_called = 1;

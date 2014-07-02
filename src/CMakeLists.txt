@@ -63,7 +63,6 @@ set(level_2_dirs
   libanalyze
   libged
   liboptical
-  liborle
   libcursor
   libdm
   libfft
@@ -89,7 +88,6 @@ set(level_3_dirs
   brlman
   burst
   bwish
-  canon
   conv
   fb
   fbed
@@ -105,7 +103,6 @@ set(level_3_dirs
   sig
   tab
   util
-  vfont
   ${non_win32_dirs}
   # tclscripts must come before applications like
   # mged and archer that need the scripts in place to

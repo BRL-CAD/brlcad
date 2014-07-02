@@ -221,7 +221,7 @@ List_assem( struct obj_info *assem )
 void
 Usage(void)
 {
-    bu_log( "Usage: %s [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] input_facets_file output_brlcad_file.g\n",progname);
+    bu_log( "Usage: %s [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] [-v] input_facets_file output_brlcad_file.g\n",progname);
 }
 
 void

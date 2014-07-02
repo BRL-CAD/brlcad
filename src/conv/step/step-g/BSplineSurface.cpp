@@ -78,6 +78,12 @@ BSplineSurface::~BSplineSurface()
 {
     // elements created through factory will be deleted there.
     if (control_points_list) {
+	LIST_OF_LIST_OF_POINTS::iterator i;
+	for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
+	    LIST_OF_POINTS *points = *i;
+	    points->clear();
+	    delete points;
+	}
 	control_points_list->clear();
 	delete control_points_list;
     }

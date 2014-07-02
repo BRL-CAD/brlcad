@@ -85,7 +85,7 @@ vls_col_eol(struct bu_vls *str)
  * on the respective names and return that value.
  */
 int
-cmpdirname(const genptr_t a, const genptr_t b)
+cmpdirname(const void *a, const void *b)
 {
     struct directory **dp1, **dp2;
 

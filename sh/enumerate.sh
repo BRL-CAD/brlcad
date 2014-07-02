@@ -43,11 +43,6 @@
 #
 #   ./enumerate.sh
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   BRL-CAD Open Source
 ###
 
 BASE="`dirname $0`/.."
@@ -61,20 +56,6 @@ BRLCAD_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# convenience for computing a sum of a list of integers without
-# relying on wc or awk to behave consistently
-sum ( ) {
-    if test "x$2" = "x" ; then
-	echo $1
-    else
-	_total=0
-	for _num in $* ; do
-	    _total="`expr $_total \+ $_num`"
-	done
-    fi
-    echo $_total
-}
-
 
 # print the summary
 echo "*****************************************"
@@ -87,181 +68,221 @@ echo "Included below are various project enumeration statistics for BRL-CAD."
 echo "The format/output of this script is subject to change without notice."
 echo "Please contact devs@brlcad.org if there are any questions or comments."
 echo ""
+if [ "x$DEBUG" != "x" ] ; then
+    echo "DEBUG flag is SET, writing out file listing per enumeration."
+    echo ""
+fi
 echo "Now processing, please wait..."
 echo ""
 
+# NOTE: disable shell globbing or we'll end up in a world of hurt
+# attempting to make all the following regular expressions work with
+# the find command while still matching or excluding properly.
+set -f
 
-# count number of installed libraries
-preinstalled_libs="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | grep -v '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
-installed_libs=`for lib in $preinstalled_libs ; do echo $lib ; done | sort | uniq`
-installed_libs_count="`echo \"$installed_libs\" | wc -l`"
+source_pattern="-name *.c -or -name *.cxx -or -name *.cpp -or -name *.h -or -name *.hxx -or -name *.hpp -or -name *.java -or -name *.f"
+script_pattern="-name *.sh -or -name *.tcl -or -name *.tk -or -name *.itcl -or -name *.itk -or -name *.pl -or -name *.php -or -name *.inc -or -name \*.mged"
+parser_pattern="-name *.y -or -name *.l -or -name *.yy"
+code_pattern="`echo $source_pattern -or $script_pattern -or $parser_pattern`"
 
-# count number of non-installed libraries
-preuninstalled_libs="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | grep -v '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep 'noinst' | sed 's/.*=//g'`"
-uninstalled_libs=`for lib in $preuninstalled_libs ; do echo $lib ; done | sort | uniq`
-uninstalled_libs_count="`echo \"$uninstalled_libs\" | wc -l`"
+# matches code that is not part of BRL-CAD, but is bundled within the
+# hierarchy for convenience and build infrastructure needs.
+other_pattern="-name other -or -regex .*/other/.* -or -name tools -or -regex .*/misc/tools/.*"
 
-# summarize number of libraries
-libs_count="`echo $installed_libs_count $uninstalled_libs_count + p | dc`"
+# pattern to match any build dirs and common temp/backup/trash files,
+# in case we're running from an active checkout directory.
+trash_pattern="-regex .*/\.[^\.].* -or -regex .*~ -or -regex .*/#.*"
 
-# count number of installed applications
-preinstalled_apps="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | grep -v '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
-installed_apps=`for app in $preinstalled_apps ; do echo $app ; done | sort | uniq`
-installed_apps_count="`echo \"$installed_apps\" | wc -l`"
+# pattern to match anything that is not ours
+those_pattern="$other_pattern -or $trash_pattern"
 
-# count number of non-installed applications
-preuninstalled_apps="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | grep -v '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep -v '^bin' | sed 's/.*=//g'`"
-uninstalled_apps=`for app in $preuninstalled_apps ; do echo $app ; done | sort | uniq`
-uninstalled_apps_count="`echo \"$uninstalled_apps\" | wc -l`"
+# prime a hierarchy cache, get a directory listing
+dir_list=`find $BASE -type d -not \( $those_pattern \)`
 
-# summarize number of applications
-apps_count="`echo $installed_apps_count $uninstalled_apps_count + p | dc`"
 
-# count installed 3rd party libraries
-preotherlibs="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
-premisclibs="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
-otherlibs=`for app in $preotherlibs $premisclibs ; do echo $app ; done | sort | uniq`
-otherlibs_count="`echo \"$otherlibs\" | wc -l`"
-
-# count 3rd party installed applications
-preotherapps="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
-premiscapps="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
-otherapps=`for app in $preotherapps $premiscapps ; do echo $app ; done | sort | uniq`
-otherapps_count="`echo \"$otherapps\" | wc -l`"
-
-# output summary of compilation products
-echo "-----------------------------------------"
-echo "--        COMPILATION PRODUCTS         --"
-echo "-----------------------------------------"
-printf "%7d\t%s\n" "$libs_count" "BRL-CAD Libraries"
-printf "\t%7d\t%s\n" "$installed_libs_count" "Installed"
-printf "\t%7d\t%s\n" "$uninstalled_libs_count" "Not Installed"
-printf "%7d\t%s\n" "$apps_count" "BRL-CAD Applications"
-printf "\t%7d\t%s\n" "$installed_apps_count" "Installed"
-printf "\t%7d\t%s\n" "$uninstalled_apps_count" "Not Installed"
-printf "%7d\t%s\n" "$otherlibs_count" "3rd Party Installed Libraries"
-printf "%7d\t%s\n" "$otherapps_count" "3rd Party Installed Applications"
-printf "\n"
-
-# count number of files
-dist_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DIST\" | sed 's/.*=//g' | wc -l`"
-data_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DATA\" | sed 's/.*=//g' | wc -l`"
-mans_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*MANS\" | sed 's/.*=//g' | wc -l`"
-srcs_count="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.cxx -or -name \*.cpp -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.f -or -name \*.java \) | grep -v '/other/' | wc -l`"
-am_count="`find \"$BASE\" -type f \( -name Makefile.am -or -name configure.ac \) | wc -l`"
-file_count="`echo $dist_count $data_count $mans_count $srcs_count $am_count ++++ p | dc`"
-
-# count number of directories
-dir_count="`find \"$BASE\" -type d -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' -or -regex '.*/other.*' \) | wc -l`"
-
-# count number of 3rd party files
-otherdist_count="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DIST\" | sed 's/.*=//g' | wc -l`"
-otherdata_count="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DATA\" | sed 's/.*=//g' | wc -l`"
-othermans_count="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*MANS\" | sed 's/.*=//g' | wc -l`"
-othersrcs_count="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.f -or -name \*.java \) | grep '/other/' | wc -l`"
-otherfile_count="`echo $otherdist_count $otherdata_count $othermans_count $othersrcs_count +++ p | dc`"
-
-# count number of 3rd party directories
-otherdir_count="`find \"$BASE\" -type d -regex '.*/other/.*' -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | wc -l`"
-
-# output summary of filesystem organization
 echo "-----------------------------------------"
 echo "--       FILESYSTEM ORGANIZATION       --"
 echo "-----------------------------------------"
-printf "%7d\t%s\n" "$file_count" "BRL-CAD Files"
+
+dir_count="`echo \"$dir_list\" | wc -l`"
+
 printf "%7d\t%s\n" "$dir_count" "BRL-CAD Directories"
-printf "%7d\t%s\n" "$otherfile_count" "3rd Party Files"
+[ "x$DEBUG" = "x" ] || echo $dir_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of files
+file_list=`find $BASE -type f -not \( $those_pattern \)`
+file_count="`echo \"$file_list\" | wc -l`"
+
+printf "%7d\t%s\n" "$file_count" "BRL-CAD Files"
+[ "x$DEBUG" = "x" ] || echo $file_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of data files
+data_list=`find $BASE -type f -not \( $code_pattern \) -not \( $those_pattern \)`
+data_count="`echo \"$data_list\" | wc -l`"
+
+printf "\t%7d\t%s\n" "$data_count" "BRL-CAD Data Files"
+[ "x$DEBUG" = "x" ] || echo $data_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of source files
+srcs_list=`find $BASE -type f -and \( $code_pattern \) -not \( $those_pattern \)`
+srcs_count="`echo \"$srcs_list\" | wc -l`"
+
+printf "\t%7d\t%s\n" "$srcs_count" "BRL-CAD Source Files"
+[ "x$DEBUG" = "x" ] || echo $srcs_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of 3rd party directories
+otherdir_list=`find $BASE -type d -and \( -name other -or -regex '.*/other/.*' \) -not \( $trash_pattern \)`
+otherdir_count="`echo \"$otherdir_list\" | wc -l`"
+
 printf "%7d\t%s\n" "$otherdir_count" "3rd Party Directories"
+[ "x$DEBUG" = "x" ] || echo $otherdir_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of 3rd party files
+otherfile_list=`find $BASE -type f -regex '.*/other/.*' -not \( $trash_pattern \)`
+otherfile_count="`echo \"$otherfile_list\" | wc -l`"
+
+printf "%7d\t%s\n" "$otherfile_count" "3rd Party Files"
+[ "x$DEBUG" = "x" ] || echo $otherfile_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of 3rd party data files
+otherdata_list=`find $BASE -type f -regex '.*/other/.*' -not \( $code_pattern \) -not \( $trash_pattern \)`
+otherdata_count="`echo \"$otherdata_list\" | wc -l`"
+
+printf "\t%7d\t%s\n" "$otherdata_count" "3rd Party Data Files"
+[ "x$DEBUG" = "x" ] || echo $otherdata_list | while read line ; do printf "\t%s\n" $line ; done
+
+# count number of 3rd party source files
+othersrcs_files=`find $BASE -type f -regex '.*/other/.*' -and \( $code_pattern \) -not \( $trash_pattern \)`
+othersrcs_count="`echo \"$othersrcs_files\" | wc -l`"
+
+printf "\t%7d\t%s\n" "$othersrcs_count" "3rd Party Source Files"
+[ "x$DEBUG" = "x" ] || echo $othersrcs_list | while read line ; do printf "\t%s\n" $line ; done
+
 printf "\n"
 
 
-# compute documentation line counts
-dc1="`find \"$BASE\" -type f \( -name \*.[123456789n] \) | grep -v '/other/'`"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: dc1 wc is `echo \"$dc1\" | wc`"
-dc2="`find \"$BASE\" -type f \( -name README\* -or -name AUTHORS -or -name BUGS -or -name COPYING -or -name ChangeLog -or -name HACKING -or -name INSTALL -or -name NEWS -or -name TODO -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml \) -not -regex '.*docbook/resources/standard.*' -not -name \*~ -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | grep -v '/other/' | grep -v legal | grep -v CMakeLists.txt`"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: dc2 wc is `echo \"$dc2\" | wc`"
-dc="$dc1
-$dc2"
-dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc is `echo \"$dc_lc\" | wc`"
-dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_lines is `echo \"$dc_lc_lines\" | wc`"
-dc_lc_total="`sum $dc_lc_lines`"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_total is $dc_lc_total"
-[ "x$DEBUG" = "x" ] || echo "DEBUG: sum 1 2 3 is `sum 1 2 3`"
+# prime our compilation product searching with a list of build files
+cmake_list=`find $BASE -type f -name CMakeLists.txt -not \( $those_pattern \)`
 
-# compute build infrastructure line counts
-bic1="`find \"$BASE\" -type f \( -name \*.am -or -name Makefile.defs -or -name configure.ac -or -name autogen.sh -or -name CMakeLists.txt \)`"
-bic2="`find \"$BASE/sh\" -type f \( -name \*.sh \)`"
-bic="$bic1
-$bic2"
-bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
-bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{print $1}'`"
-bic_lc_total="`sum $bic_lc_lines`"
-bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
-bic_lc_total="`expr $bic_lc_total - $bic_lc_blank`"
+echo "-----------------------------------------"
+echo "--        COMPILATION PRODUCTS         --"
+echo "-----------------------------------------"
 
-# compute header code line counts
-header="`find \"$BASE\" -type f \( -name \*.h -or -name \*.hxx -or -name \*.hpp \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
-header_lc="`echo \"$header\" | sort | xargs wc -l`"
-header_lc_lines="`echo \"$header_lc\" | grep -v 'total$' | awk '{print $1}'`"
-header_lc_total="`sum $header_lc_lines`"
-header_lc_blank="`echo \"$header\" | xargs awk ' /^[    ]*$/ { ++x } END { print x } '`"
-header_lc_total="`expr $header_lc_total - $header_lc_blank`"
+# count number of libraries
+libs_list="`echo \"$cmake_list\" | xargs grep BRLCAD_ADDLIB\\( | sed 's/#.*//g' | grep -v -e ':$' | cut -d\(  -f2 | awk '{print $1}' | sort | uniq`"
+libs_count="`echo \"$libs_list\" | wc -l`"
 
-# compute non-header library code line counts
-sourcelib="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep lib`"
-sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
-sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
-sourcelib_lc_total="`sum $sourcelib_lc_lines`"
-sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
-sourcelib_lc_total="`expr $sourcelib_lc_total - $sourcelib_lc_blank`"
+printf "%7d\t%s\n" "$libs_count" "BRL-CAD Libraries"
+[ "x$DEBUG" = "x" ] || echo $libs_list | while read line ; do printf "\t%s\n" $line ; done
 
-# compute non-header application code line counts
-sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep -v lib`"
-sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
-sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
-sourcebin_lc_total="`sum $sourcebin_lc_lines`"
-sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
-sourcebin_lc_total="`expr $sourcebin_lc_total - $sourcebin_lc_blank`"
+# count number of applications
+apps_list="`echo \"$cmake_list\" | xargs grep BRLCAD_ADDEXEC\\( | sed 's/\#.*//g' | grep -v -e ':$' | cut -d\(  -f2 | awk '{print $1}' | sort | uniq`"
+apps_count="`echo \"$apps_list\" | wc -l`"
 
-# compute script code line counts
-scripts="`find \"$BASE\" -type f \( -name \*.sh -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
-scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
-scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{print $1}'`"
-scripts_lc_total="`sum $scripts_lc_lines`"
-scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
-scripts_lc_total="`expr $scripts_lc_total - $scripts_lc_blank`"
+printf "%7d\t%s\n" "$apps_count" "BRL-CAD Applications"
+[ "x$DEBUG" = "x" ] || echo $apps_list | while read line ; do printf "\t%s\n" $line ; done
 
-# compute 3rd party code line counts
-other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.h -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh -or -name \*.f -or -name \*.java \) | grep '/other/'`"
-other_lc="`echo \"$other\" | sort | xargs wc -l`"
-other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{print $1}'`"
-other_lc_total="`sum $other_lc_lines`"
+# count number of installed applications
+installed_apps_list="`echo \"$cmake_list\" | xargs grep BRLCAD_ADDEXEC\\( | grep -v NO_INSTALL | sed 's/\#.*//g' | grep -v -e ':$' | cut -d\(  -f2 | awk '{print $1}' | sort | uniq`"
+installed_apps_count="`echo \"$installed_apps_list\" | wc -l`"
 
-# compute line count totals
-sc_lc_total="`echo \"$sourcelib_lc_total $sourcebin_lc_total $scripts_lc_total + + p\" | dc`"
-sch_lc_total="`echo \"$sc_lc_total $header_lc_total + p\" | dc`"
-blank_lc_total="`echo \"$bic_lc_blank $header_lc_blank $sourcelib_lc_blank $sourcebin_lc_blank $scripts_lc_blank ++++ p\" | dc`"
-total_code="`echo \"$bic_lc_total $sch_lc_total + p\" | dc`"
-total_noncode="`echo \"$dc_lc_total p\" | dc`"
-total="`echo \"$total_code $total_noncode + p\" | dc`"
+printf "\t%7d\t%s\n" "$installed_apps_count" "Installed"
+[ "x$DEBUG" = "x" ] || echo $installed_apps_list | while read line ; do printf "\t%s\n" $line ; done
 
-# output summary of line count totals
+# count number of non-installed applications
+uninstalled_apps_list="`echo \"$cmake_list\" | xargs grep BRLCAD_ADDEXEC\\( | grep NO_INSTALL | sed 's/\#.*//g' | grep -v -e ':$' | cut -d\(  -f2 | awk '{print $1}' | sort | uniq`"
+uninstalled_apps_count="`echo \"$uninstalled_apps_list\" | wc -l`"
+
+printf "\t%7d\t%s\n" "$uninstalled_apps_count" "Not Installed"
+[ "x$DEBUG" = "x" ] || echo $uninstalled_apps_list | while read line ; do printf "\t%s\n" $line ; done
+
+printf "\n"
+
+
 echo "-----------------------------------------"
 echo "--          LINE COUNT TOTALS          --"
 echo "-----------------------------------------"
-printf "%7d\t%s\n" "$total" "BRL-CAD Project Total"
-printf "\t%7d\t%s\n" "$dc_lc_total" "Documentation"
-printf "\t%7d\t%s\n" "$bic_lc_total" "Build Infrastructure"
-printf "\t%7d\t%s\n" "$sch_lc_total" "Source Code"
-printf "\t\t%7d\t%s\n" "$header_lc_total" "Header"
-printf "\t\t%7d\t%s\n" "$sc_lc_total" "Non-Header"
-printf "\t\t\t%7d\t%s\n" "$sourcelib_lc_total" "Library Code"
-printf "\t\t\t%7d\t%s\n" "$sourcebin_lc_total" "Application Code"
-printf "\t\t\t%7d\t%s\n" "$scripts_lc_total" "Scripts"
-printf "%7d\t%s\n" "$blank_lc_total" "Blank Lines (not counted above)"
-printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code (not counted above)"
+# echo "   w/ws+= means with whitespace lines"
+# echo "-----------------------------------------"
+
+# compute build infrastructure line counts
+bic=`find $BASE -type f \( -name configure -or -name CMakeLists.txt -or -regex .*\.cmake$ -or -regex .*\.cmake.in$ -or -regex .*/CMake.*\.in$ -or -regex .*/CMake.*\.sh$ -or -regex .*/sh/.*\.sh$ \) -not \( $those_pattern \)`
+bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
+bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+bic_lc_total="`expr $bic_lc_lines - $bic_lc_blank`"
+
+printf "%7d\t%s\n" "$bic_lc_total" "Build Infrastructure w/ws+=$bic_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $bic | while read line ; do printf "\t%s\n" $line ; done
+
+# compute documentation line counts
+dc=`find $BASE -type f \( -regex .*/[A-Z]*$ -or -regex .*/README.* -or -regex .*/TODO.* -or -regex .*/INSTALL.* -or -name ChangeLog -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml -or -name \*.bib -or -name \*.tbl -or -name \*.mm -or -name \*csv \) -not -regex .*/misc/.* -not -regex .*/legal/.* -not -regex .*CMakeLists.txt.* -not -regex .*CMake.* -not -regex .*LICENSE.*\..* -not \( $those_pattern \)`
+dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
+dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+dc_lc_blank="`echo \"$dc\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+dc_lc_total="`expr $dc_lc_lines - $dc_lc_blank`"
+
+printf "%7d\t%s\n" "$dc_lc_total" "Documentation w/ws+=$dc_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $dc | while read line ; do printf "\t%s\n" $line ; done
+
+# compute script code line counts (intentionally not matching /misc/ due to src/external)
+scripts=`find $BASE -type f \( $script_pattern \) -not -regex .*/sh/.* -not -regex .*misc.* -not \( $those_pattern \)`
+scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
+scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+scripts_lc_total="`expr $scripts_lc_lines - $scripts_lc_blank`"
+
+printf "%7d\t%s\n" "$scripts_lc_total" "Scripts w/ws+=$scripts_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $scripts | while read line ; do printf "\t%s\n" $line ; done
+
+# compute application code line counts (intentionally not matching /misc/ due to src/external)
+sourcebin=`find $BASE -type f \( $source_pattern  \) -not -regex .*/sh/.* -not -regex .*misc.* -not -regex .*lib.* -not -regex .*/include/.* -not \( $those_pattern \)`
+sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
+sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+sourcebin_lc_total="`expr $sourcebin_lc_lines - $sourcebin_lc_blank`"
+
+printf "%7d\t%s\n" "$sourcebin_lc_total" "Application Sources w/ws+=$sourcebin_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $sourcebin | while read line ; do printf "\t%s\n" $line ; done
+
+# compute library code line counts (intentionally not matching /misc due to src/external)
+sourcelib=`find $BASE -type f -and \( -regex .*/lib.* -or -regex .*/include/.* \) -and \( $source_pattern \) -not -regex .*/sh/.* -not -regex .*misc.* -not \( $those_pattern \)`
+sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
+sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+sourcelib_lc_total="`expr $sourcelib_lc_lines - $sourcelib_lc_blank`"
+
+printf "%7d\t%s\n" "$sourcelib_lc_total" "Library Sources w/ws+=$sourcelib_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $sourcelib | while read line ; do printf "\t%s\n" $line ; done
+
+echo "-----------------------------------------"
+
+blank_lc_total="`echo \"$bic_lc_blank $dc_lc_blank $scripts_lc_blank $sourcebin_lc_blank $sourcelib_lc_blank ++++ p\" | dc`"
+
+printf "%7d\t%s\n" "$blank_lc_total" "BRL-CAD Blank (ws) Lines "
+
+# compute 3rd party code line counts
+other=`find $BASE -type f -and \( $code_pattern \) -and \( $other_pattern \)`
+other_lc="`echo \"$other\" | sort | xargs wc -l`"
+other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{total += $1} END {print total}'`"
+other_lc_blank="`echo \"$other\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } ' | awk '{total += $1} END {print total}'`"
+other_lc_total="`expr $other_lc_lines - $other_lc_blank`"
+
+printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code w/ws+=$other_lc_blank"
+[ "x$DEBUG" = "x" ] || echo $other | while read line ; do printf "\t%s\n" $line ; done
+
+echo "-----------------------------------------"
+
+real_lc_total="`echo \"$bic_lc_total $dc_lc_total $scripts_lc_total $sourcebin_lc_total $sourcelib_lc_total ++++ p\" | dc`"
+repo_lc_total="`echo \"$real_lc_total $blank_lc_total $other_lc_total $other_lc_blank +++ p\" | dc`"
+
+printf "%7d\t%s\n" "$repo_lc_total" "BRL-CAD Repository Total"
+
+srcs_lc_total="`echo \"$real_lc_total $blank_lc_total + p\" | dc`"
+
+printf "%7d\t%s\n" "$srcs_lc_total" "BRL-CAD Sources w/ Spaces"
+printf "%7d\t%s\n" "$real_lc_total" "BRL-CAD Source Code Total"
+
 echo "========================================="
 
 

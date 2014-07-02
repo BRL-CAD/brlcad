@@ -79,8 +79,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_SHELL(s);
 
     s_tmp = nmg_dup_shell(s, &trans_tbl, &gedp->ged_wdbp->wdb_tol);
-    bu_free((genptr_t)trans_tbl, "trans_tbl");
-
+    bu_free((void *)trans_tbl, "trans_tbl");
     bu_vls_printf(&shell_name, "shell.%d", shell_count);
     while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
 	bu_vls_trunc(&shell_name, 0);
@@ -101,18 +100,26 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* make sure the geometry/bounding boxes are up to date */
-    nmg_rebound(s_tmp, &gedp->ged_wdbp->wdb_tol);
+	    new_intern.idb_ptr = (genptr_t)m_tmp;
+	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+	    if (new_dp == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
+		return GED_ERROR;
+	    }
 
-    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-	/* Free memory */
-	nmg_ks(s_tmp);
-	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
-	return GED_ERROR;
+	    /* make sure the geometry/bounding boxes are up to date */
+	    nmg_rebound(m_tmp, &gedp->ged_wdbp->wdb_tol);
+
+	    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+		/* Free memory */
+		nmg_km(m_tmp);
+		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
+		return GED_ERROR;
+	    }
+	    /* Internal representation has been freed by rt_db_put_internal */
+	    new_intern.idb_ptr = (void *)NULL;
+	}
     }
-
-    /* Internal representation has been freed by rt_db_put_internal */
-    new_intern.idb_ptr = (genptr_t)NULL;
     bu_vls_free(&shell_name);
 
     return GED_OK;

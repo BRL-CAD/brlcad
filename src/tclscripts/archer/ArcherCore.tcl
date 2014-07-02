@@ -249,7 +249,6 @@ namespace eval ArcherCore {
 	method l                   {args}
 	method ls                  {args}
 	method make		   {args}
-	method make_bb             {args}
 	method make_name           {args}
 	method make_pnts           {args}
 	method man                 {args}
@@ -582,7 +581,7 @@ namespace eval ArcherCore {
 	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
+	    killtree l ls make make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate pull push put \
@@ -2129,12 +2128,11 @@ namespace eval ArcherCore {
     package require cadwidgets::GeometryIO
 
     set typelist {
-	{"BRL-CAD Database" {".g"}}
+	{"BRL-CAD Database" {".g" ".asc"}}
 	{"3dm (Rhino)" {".3dm"}}
+	{"FASTGEN 4" {".bdf" ".fas" ".fg" ".fg4"}}
 	{"STEP" {".stp" ".step"}}
 	{"STL" {".stl"}}
-	{"All mesh files" {".stl"}}
-	{"All CAD files" {".g" ".stp" ".step"}}
 	{"All Files" {*}}
     }
 
@@ -5255,6 +5253,8 @@ namespace eval ArcherCore {
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::Load {target} {
+    global tcl_platform
+
     SetWaitCursor $this
     if {$mNeedSave} {
 	askToSave
@@ -5272,7 +5272,8 @@ namespace eval ArcherCore {
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
+	if {[file writable $mTarget] ||
+	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1
@@ -6579,10 +6580,6 @@ namespace eval ArcherCore {
 
     set oname [lindex $args 0]
     selectTreePath $oname
-}
-
-::itcl::body ArcherCore::make_bb {args} {
-    eval gedWrapper make_bb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::make_name {args} {

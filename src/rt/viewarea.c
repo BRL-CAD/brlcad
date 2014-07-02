@@ -1081,7 +1081,7 @@ view_end(struct application *ap)
 		}
 	    }
 	    bu_free(cell, "view_end area free");
-	    cell = (genptr_t)NULL;
+	    cell = (void *)NULL;
 	}
     }
 
@@ -1164,7 +1164,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	cell->group_presented_hit_z_sum = 0.0;
 
 	/* place new region-area record into current region record */
-	rp->reg_udata = (genptr_t)cell;
+	rp->reg_udata = (void *)cell;
     }
 
     bu_semaphore_release(RT_SEM_RESULTS);

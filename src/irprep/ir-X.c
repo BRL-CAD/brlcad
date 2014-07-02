@@ -64,7 +64,7 @@ struct colstr
 
 
 int
-main(void)
+main (int argc, char **argv)
 {
     /* Variables used for XWindow.  */
     Display *my_display;		/* Display unit.  */
@@ -112,8 +112,23 @@ main(void)
     char file_pix[MAXFIL];	/* Pix file name.  */
     unsigned char c;		/* Used to write pix file.  */
     int ret;
+    int ch;
 
     struct colstr *array = NULL;	/* Array for color information.  */
+
+    bu_opterr = 0;
+    while ((ch = bu_getopt(argc, argv, "h?")) != -1)
+    {	if (bu_optopt == '?') ch = 'h';
+	switch (ch) {
+	    case 'h':
+		fprintf(stderr,"ir-X is interactive; sample session in 'man' page\n");
+		bu_exit(1,NULL);
+	    default:
+		break;
+	}
+    }
+
+    fprintf(stderr,"   Program continues running:\n");
 
     array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 

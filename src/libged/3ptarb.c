@@ -238,7 +238,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	default:
-	    bu_free((genptr_t)internal.idb_ptr, "rt_arb_internal");
+	    bu_free((void *)internal.idb_ptr, "rt_arb_internal");
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
 	    return GED_ERROR;
     }
@@ -248,7 +248,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 

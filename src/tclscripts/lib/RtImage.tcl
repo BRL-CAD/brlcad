@@ -27,17 +27,17 @@ package provide cadwidgets::RtImage 1.0
 
 proc ::pid_wait { pid } {
     if {$::tcl_platform(platform) == "windows"} {
-       set task_cmd [auto_execok tasklist]
-       set task_args [list $task_cmd "/FI" "\"PID eq $pid\"" "/FI" "\"STATUS eq running\"" "/FO" "\"LIST\""]
-       set task_list "$pid"
-       while {[string matches "*$pid*"]} {
-        catch {exec {*}$task_args} task_list
-         after 50
-       }
+	set task_cmd [auto_execok tasklist]
+	set task_args [list $task_cmd /FI "PID eq $pid" /FI {STATUS eq running} "/NH"]
+	set task_list "$pid"
+	while {[string match "*$pid*" $task_list]} {
+	    catch {eval exec $task_args} task_list
+	    after 50
+	}
     } else {
-       while {![catch {exec kill -0 $pid} pid_results]} {
-         after 50
-       }
+	while {![catch {exec kill -0 $pid} pid_results]} {
+	    after 50
+	}
     }
 }
 

@@ -521,7 +521,7 @@ rr_render(register struct application *ap,
 	sub_ap.a_user = -1;	/* sanity */
 	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 	sub_ap.a_diverge = 0.0;
-	sub_ap.a_uptr = (genptr_t)(pp->pt_regionp);
+	sub_ap.a_uptr = (void *)(pp->pt_regionp);
 	VMOVE(sub_ap.a_ray.r_pt, swp->sw_hit.hit_point);
 	VMOVE(incident_dir, ap->a_ray.r_dir);
 

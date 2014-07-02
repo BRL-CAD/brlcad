@@ -701,7 +701,7 @@ nmg_pr_m_struct_counts(const struct shell *s, const char *str)
     NMG_CK_SHELL(s);
 
     tab = nmg_s_struct_count(&cnts, s);
-    bu_free((genptr_t)tab, "nmg_s_struct_count");
+    bu_free((void *)tab, "nmg_s_struct_count");
     nmg_pr_struct_counts(&cnts, str);
 }
 

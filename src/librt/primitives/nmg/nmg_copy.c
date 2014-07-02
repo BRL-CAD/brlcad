@@ -36,7 +36,7 @@
 
 
 static struct face_g_plane *
-nmg_construct_face_g_plane(const struct face_g_plane *original, genptr_t *structArray)
+nmg_construct_face_g_plane(const struct face_g_plane *original, void **structArray)
 {
     struct face_g_plane *ret;
 
@@ -55,7 +55,7 @@ nmg_construct_face_g_plane(const struct face_g_plane *original, genptr_t *struct
 
 
 static struct face_g_snurb *
-nmg_construct_face_g_snurb(const struct face_g_snurb *original, genptr_t *structArray)
+nmg_construct_face_g_snurb(const struct face_g_snurb *original, void **structArray)
 {
     struct face_g_snurb *ret;
 
@@ -99,7 +99,7 @@ nmg_construct_face_g_snurb(const struct face_g_snurb *original, genptr_t *struct
 
 
 static struct face *
-nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t *structArray)
+nmg_construct_face(struct faceuse *parent, const struct face *original, void **structArray)
 {
     struct face *ret;
 
@@ -140,7 +140,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 
 
 static struct vertex_g *
-nmg_construct_vertex_g(const struct vertex_g *original, genptr_t *structArray)
+nmg_construct_vertex_g(const struct vertex_g *original, void **structArray)
 {
     struct vertex_g *ret;
 
@@ -158,7 +158,7 @@ nmg_construct_vertex_g(const struct vertex_g *original, genptr_t *structArray)
 
 
 static struct vertex *
-nmg_construct_vertex(const struct vertex *original, genptr_t *structArray)
+nmg_construct_vertex(const struct vertex *original, void **structArray)
 {
     struct vertex *ret;
 
@@ -184,7 +184,7 @@ nmg_construct_vertex(const struct vertex *original, genptr_t *structArray)
 
 
 static struct vertexuse_a_plane *
-nmg_construct_vertexuse_a_plane(const struct vertexuse_a_plane *original, genptr_t *structArray)
+nmg_construct_vertexuse_a_plane(const struct vertexuse_a_plane *original, void **structArray)
 {
     struct vertexuse_a_plane *ret;
 
@@ -202,7 +202,7 @@ nmg_construct_vertexuse_a_plane(const struct vertexuse_a_plane *original, genptr
 
 
 static struct vertexuse_a_cnurb *
-nmg_construct_vertexuse_a_cnurb(const struct vertexuse_a_cnurb *original, genptr_t *structArray)
+nmg_construct_vertexuse_a_cnurb(const struct vertexuse_a_cnurb *original, void **structArray)
 {
     struct vertexuse_a_cnurb *ret;
 
@@ -220,7 +220,7 @@ nmg_construct_vertexuse_a_cnurb(const struct vertexuse_a_cnurb *original, genptr
 
 
 static struct vertexuse *
-nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t *structArray)
+nmg_construct_vertexuse(void *parent, const struct vertexuse *original, void **structArray)
 {
     struct vertexuse *ret;
 
@@ -265,7 +265,7 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
 
 
 static struct edge *
-nmg_construct_edge(struct edgeuse *parent, const struct edge *original, genptr_t *structArray)
+nmg_construct_edge(struct edgeuse *parent, const struct edge *original, void **structArray)
 {
     struct edge *ret;
 
@@ -282,7 +282,7 @@ nmg_construct_edge(struct edgeuse *parent, const struct edge *original, genptr_t
 
 
 static struct edge_g_lseg *
-nmg_construct_edge_g_lseg(const struct edge_g_lseg *original, genptr_t *structArray)
+nmg_construct_edge_g_lseg(const struct edge_g_lseg *original, void **structArray)
 {
     struct edge_g_lseg *ret;
 
@@ -303,7 +303,7 @@ nmg_construct_edge_g_lseg(const struct edge_g_lseg *original, genptr_t *structAr
 
 
 static struct edge_g_cnurb *
-nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, genptr_t *structArray)
+nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, void **structArray)
 {
     struct edge_g_cnurb *ret;
 
@@ -334,7 +334,7 @@ nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, genptr_t *struct
 
 
 static struct edgeuse *
-nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *structArray)
+nmg_construct_edgeuse(void *parent, const struct edgeuse *original, void **structArray)
 {
     struct edgeuse *ret;
 
@@ -414,7 +414,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
 
 
 static struct loop_g *
-nmg_construct_loop_g(const struct loop_g *original, genptr_t *structArray)
+nmg_construct_loop_g(const struct loop_g *original, void **structArray)
 {
     struct loop_g *ret;
 
@@ -433,7 +433,7 @@ nmg_construct_loop_g(const struct loop_g *original, genptr_t *structArray)
 
 
 static struct loop *
-nmg_construct_loop(struct loopuse *parent, const struct loop *original, genptr_t *structArray)
+nmg_construct_loop(struct loopuse *parent, const struct loop *original, void **structArray)
 {
     struct loop *ret;
 
@@ -457,7 +457,7 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, genptr_t
 
 
 static struct loopuse *
-nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *structArray)
+nmg_construct_loopuse(void *parent, const struct loopuse *original, void **structArray)
 {
     struct loopuse *ret;
 
@@ -522,7 +522,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
 
 
 static struct faceuse *
-nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, genptr_t *structArray)
+nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, void **structArray)
 {
     struct faceuse       *ret;
     const struct loopuse *originalLoopUse;
@@ -569,7 +569,7 @@ nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, genp
 
 
 static struct shell_a *
-nmg_construct_shell_a(const struct shell_a *original, genptr_t *structArray)
+nmg_construct_shell_a(const struct shell_a *original, void **structArray)
 {
     struct shell_a *ret;
 
@@ -591,7 +591,7 @@ static struct shell *
 nmg_construct_shell(const struct shell *original)
 {
     struct shell         *ret;
-    genptr_t             *structArray;
+    void             **structArray;
     const struct faceuse *originalFaceUse;
     const struct loopuse *originalLoopUse;
     const struct edgeuse *originalEdgeUse;

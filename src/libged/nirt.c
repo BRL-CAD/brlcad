@@ -637,7 +637,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "ged_vnirt: av");
+    bu_free((void *)av, "ged_vnirt: av");
     av = NULL;
 
     return status;

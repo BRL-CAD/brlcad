@@ -1816,7 +1816,7 @@ top:
     }
 
     /* Sort the vertexuse table into appropriate order */
-    bu_sort((genptr_t)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
+    bu_sort((void *)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
 	    nmg_face_vu_compare, NULL);
 
     if (RTG.NMG_debug&DEBUG_VU_SORT) {

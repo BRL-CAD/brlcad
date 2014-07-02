@@ -900,7 +900,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 
 
 HIDDEN void
-visitor(uint32_t *l_p, genptr_t tbl, int UNUSED(unused))
+visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
 }
@@ -932,7 +932,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-	    nmg_visit(l_p, &htab, (genptr_t)tbl);
+	    nmg_visit(l_p, &htab, (void *)tbl);
 	    break;
 	case NMG_EDGEUSE_MAGIC:
 	    eu = eu_p = (struct edgeuse *)l_p;

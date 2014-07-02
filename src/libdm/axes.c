@@ -106,7 +106,7 @@ dm_draw_data_axes(struct dm *dmp,
     }
 
     DM_DRAW_LINES_3D(dmp, npoints, points, 0);
-    bu_free((genptr_t)points, "data axes points");
+    bu_free((void *)points, "data axes points");
 
     /* Restore the line attributes */
     DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);

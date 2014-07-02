@@ -100,7 +100,7 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac: new_argv");
 	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
 	retval = ged_draw(gedp, new_argc, (const char **)new_argv);
-	bu_free((genptr_t)new_argv, "ged_eac: new_argv");
+	bu_free((void *)new_argv, "ged_eac: new_argv");
 	bu_vls_free(&v);
 	return retval;
     }

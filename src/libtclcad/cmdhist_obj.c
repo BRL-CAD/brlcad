@@ -79,7 +79,7 @@ cho_deleteProc(ClientData clientData)
 	bu_vls_free(&curr->h_command);
 
 	BU_LIST_DEQUEUE(&curr->l);
-	bu_free((genptr_t)curr, "cho_deleteProc: curr");
+	bu_free((void *)curr, "cho_deleteProc: curr");
 	curr = next;
     }
 

@@ -233,7 +233,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		if (rt_do_cmd((struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
 		}
-		bu_free((genptr_t)cmdBuffer, "loadview cmdBuffer");
+		bu_free((void *)cmdBuffer, "loadview cmdBuffer");
 	    }
 	    /* end iteration over rt commands */
 

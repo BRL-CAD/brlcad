@@ -1223,7 +1223,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     skt->curve.seg_count = seg_count;
     skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
-    skt->curve.segment = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "sketch segment pointers" );
+    skt->curve.segment = (void **)bu_calloc( seg_count, sizeof( void *), "sketch segment pointers" );
     skt->vert_count = 0;
     skt->verts = (point2d_t *)bu_calloc( VERT_ALLOC_BLOCK, sizeof( point2d_t ), "skt->verts" );
     verts_alloced = VERT_ALLOC_BLOCK;
@@ -1263,13 +1263,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->curve.segment[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (void *)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	    intern.idb_meth = &OBJ[ID_SKETCH];
-	    intern.idb_ptr = (genptr_t)skt;
+	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    UF_MODL_delete_list( &sketch_list );
@@ -1284,7 +1284,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		bu_log( "Line from (%g %g %g) to (%g %g %g)\n",
 			V3ARGS( line_data.start_point ), V3ARGS( line_data.end_point ) );
 		BU_ALLOC(lsg, struct line_seg);
-		skt->curve.segment[j] = (genptr_t)lsg;
+		skt->curve.segment[j] = (void *)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
 		VSCALE( pt, pt, units_conv );
@@ -1302,13 +1302,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->curve.segment[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (void *)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		    intern.idb_meth = &OBJ[ID_SKETCH];
-		    intern.idb_ptr = (genptr_t)skt;
+		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
@@ -1366,7 +1366,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    z2 = end[Z];
 		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		}
-		skt->curve.segment[j] = (genptr_t)csg;
+		skt->curve.segment[j] = (void *)csg;
 		if ( !NEAR_ZERO( fabs( z1 - z2 ), tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
@@ -1375,13 +1375,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->curve.segment[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (void *)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		    intern.idb_meth = &OBJ[ID_SKETCH];
-		    intern.idb_ptr = (genptr_t)skt;
+		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
@@ -1397,13 +1397,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		for ( i=j; i<num_curves; i++ ) {
 		    BU_ALLOC(lsg, struct line_seg);
 		    lsg->magic = CURVE_LSEG_MAGIC;
-		    skt->curve.segment[i] = (genptr_t)lsg;
+		    skt->curve.segment[i] = (void *)lsg;
 		}
 		intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		intern.idb_meth = &OBJ[ID_SKETCH];
-		intern.idb_ptr = (genptr_t)skt;
+		intern.idb_ptr = (void *)skt;
 		bu_avs_init_empty( &intern.idb_avs );
 		intern.idb_meth->ft_ifree( &intern, NULL );
 		UF_MODL_delete_list( &sketch_list );
@@ -1429,13 +1429,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->curve.segment[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (void *)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	    intern.idb_meth = &OBJ[ID_SKETCH];
-	    intern.idb_ptr = (genptr_t)skt;
+	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    return (char *)NULL;
@@ -1476,7 +1476,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	intern.idb_meth = &OBJ[ID_SKETCH];
-	intern.idb_ptr = (genptr_t)skt;
+	intern.idb_ptr = (void *)skt;
 	bu_avs_init_empty( &intern.idb_avs );
 	intern.idb_meth->ft_ifree( &intern, NULL );
 	return (char *)NULL;

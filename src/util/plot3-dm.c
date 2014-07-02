@@ -89,7 +89,7 @@ int dm_type = DM_TYPE_X;
  * Gets the output from bu_log and appends it to clientdata vls.
  */
 static int
-output_catch(genptr_t clientdata, genptr_t str)
+output_catch(void *clientdata, void *str)
 {
     struct bu_vls *vp = (struct bu_vls *)clientdata;
     int len;
@@ -110,7 +110,7 @@ output_catch(genptr_t clientdata, genptr_t str)
 void
 start_catching_output(struct bu_vls *vp)
 {
-    bu_log_add_hook(output_catch, (genptr_t)vp);
+    bu_log_add_hook(output_catch, (void *)vp);
 }
 
 
@@ -120,7 +120,7 @@ start_catching_output(struct bu_vls *vp)
 void
 stop_catching_output(struct bu_vls *vp)
 {
-    bu_log_delete_hook(output_catch, (genptr_t)vp);
+    bu_log_delete_hook(output_catch, (void *)vp);
 }
 
 
@@ -732,7 +732,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
 		rt_vlblock_free(plp->pl_vbp);
-		bu_free((genptr_t)plp, "cmd_closepl");
+		bu_free((void *)plp, "cmd_closepl");
 		break;
 	    }
 	}

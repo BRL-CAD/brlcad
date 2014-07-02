@@ -94,7 +94,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
 	bots[idx] = (struct rt_bot_internal *)intern.idb_ptr;
 
-	intern.idb_ptr = (genptr_t)0;
+	intern.idb_ptr = (void *)0;
 
 	RT_BOT_CK_MAGIC(bots[idx]);
 
@@ -194,9 +194,9 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
     intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (genptr_t)bots[0];
+    intern.idb_ptr = (void *)bots[0];
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     bu_free(bots, "bots");

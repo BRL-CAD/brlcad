@@ -295,7 +295,6 @@ package provide cadwidgets::Ged 1.0
 	method lt {args}
 	method m2v_point {args}
 	method make {args}
-	method make_bb {name args}
 	method make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
@@ -2062,11 +2061,6 @@ package provide cadwidgets::Ged 1.0
     set mRayNeedGettrees 1
     eval $mGed make $args
 }
-
-::itcl::body cadwidgets::Ged::make_bb {name args} {
-    eval $mGed make_bb $name $args
-}
-
 
 ::itcl::body cadwidgets::Ged::make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
     global tcl_platform
@@ -6225,7 +6219,6 @@ package provide cadwidgets::Ged 1.0
     $help add lt		{{object} {return first level tree as list of operator/member pairs}}
     $help add m2v_point		{{x y z} {convert xyz in model space to xyz in view space}}
     $help add make		{{-t | object type} {make an object/primitive of the specified type}}
-    $help add make_bb		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add make_name		{{template | -s [num]} {make a unique name}}
     $help add make_pnts		{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
     $help add match		{{exp} {returns all database objects matching the given expression}}

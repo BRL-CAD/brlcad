@@ -317,7 +317,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(ell, struct ell_specific);
-    stp->st_specific = (genptr_t)ell;
+    stp->st_specific = (void *)ell;
 
     VMOVE(ell->ell_V, eip->v);
 
@@ -1465,7 +1465,7 @@ rt_ell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "ell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

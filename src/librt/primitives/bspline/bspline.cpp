@@ -224,7 +224,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
 #else
@@ -258,7 +258,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nurbs = n;
     }
 
-    stp->st_specific = (genptr_t)nurbs;
+    stp->st_specific = (void *)nurbs;
 
     /* zero thickness will get missed by the raytracer */
     if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
@@ -711,7 +711,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_plot(vhead, &di, ttol, tol, NULL);
 #else
@@ -1230,10 +1230,10 @@ rt_nurb_ifree(struct rt_db_internal *ip)
     sip->magic = 0;
     sip->nsrf = 0;
     bu_free(sip->srfs, "nurb surfs[]");
-    sip->srfs = (struct face_g_snurb**)GENPTR_NULL;
+    sip->srfs = (struct face_g_snurb**)((void *)0);
 
     bu_free(ip->idb_ptr, "sip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

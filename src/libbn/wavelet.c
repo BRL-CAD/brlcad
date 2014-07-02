@@ -220,7 +220,7 @@
 	}								\
 									\
 	if (do_free)							\
-	    bu_free( (genptr_t)tbuffer, "1d wavelet buffer");		\
+	    bu_free( (void *)tbuffer, "1d wavelet buffer");		\
     }
 
 
@@ -293,7 +293,7 @@
 	}								\
 									\
 	if (do_free)							\
-	    bu_free( (genptr_t)tbuffer,					\
+	    bu_free( (void *)tbuffer,					\
 		     "1d wavelet reconstruct tmp buffer");		\
     }
 

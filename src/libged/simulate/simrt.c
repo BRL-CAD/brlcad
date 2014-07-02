@@ -547,7 +547,7 @@ traverse_xray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].insol->st_name));
+				 (void *)(overlap_list[i].insol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].in_normal)) {
 	    /* It does, so sum the in_normal */
 	    bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -566,7 +566,7 @@ traverse_xray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].outsol->st_name));
+				 (void *)(overlap_list[i].outsol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].out_normal)) {
 	    /* It does, so sum the in_normal */
 	    bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -633,7 +633,7 @@ traverse_yray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].insol->st_name));
+				 (void *)(overlap_list[i].insol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].in_normal)) {
 	    /* It does, so sum the in_normal */
 	    bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -652,7 +652,7 @@ traverse_yray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].outsol->st_name));
+				 (void *)(overlap_list[i].outsol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].out_normal)) {
 	    /* It does, so sum the out_normal */
 	    bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -719,7 +719,7 @@ traverse_zray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].insol->st_name));
+				 (void *)(overlap_list[i].insol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].in_normal)) {
 	    /* It does, so sum the in_normal */
 	    bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -738,7 +738,7 @@ traverse_zray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].outsol->st_name));
+				 (void *)(overlap_list[i].outsol->st_name));
 	if (rv == FOUND && !exists_normal(overlap_list[i].out_normal)) {
 	    /* It does, so sum the out_normal */
 	    bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -816,7 +816,7 @@ traverse_normalray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].insol->st_name));
+				 (void *)(overlap_list[i].insol->st_name));
 
 	if (rv == NOT_FOUND)
 	    continue;
@@ -827,7 +827,7 @@ traverse_normalray_lists(
 				 comb,
 				 comb->tree,
 				 find_solid,
-				 (genptr_t)(overlap_list[i].outsol->st_name));
+				 (void *)(overlap_list[i].outsol->st_name));
 
 	if (rv == NOT_FOUND)
 	    continue;

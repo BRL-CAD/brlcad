@@ -167,7 +167,7 @@ ged_polybinout(struct ged *gedp, int argc, const char *argv[])
 				bu_vls_printf(gedp->ged_result_str, "polygon with %d points discarded\n", ph.npts);
 				break;
 			    }
-			    if (bu_struct_export(&obuf, (genptr_t)&ph, polygon_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)&ph, polygon_desc) < 0) {
 				bu_vls_printf(gedp->ged_result_str, "header export error\n");
 				break;
 			    }
@@ -178,7 +178,7 @@ ged_polybinout(struct ged *gedp, int argc, const char *argv[])
 			    bu_free_external(&obuf);
 			    /* Now export the vertices */
 			    vertex_desc[0].sp_count = ph.npts * 3;
-			    if (bu_struct_export(&obuf, (genptr_t)verts, vertex_desc) < 0) {
+			    if (bu_struct_export(&obuf, (void *)verts, vertex_desc) < 0) {
 				bu_vls_printf(gedp->ged_result_str, "vertex export error\n");
 				break;
 			    }

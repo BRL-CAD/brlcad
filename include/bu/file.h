@@ -230,20 +230,6 @@ BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
  */
 
 /**
- * DEPRECATED: This routine is replaced by bu_argv0_full_path().
- *             Do not use.
- *
- * this routine is used by the brlcad-path-finding routines when
- * attempting to locate binaries, libraries, and resources.  This
- * routine will set argv0 if path is provided and should generally be
- * set early on by bu_setprogname().
- *
- * this routine will return "(BRL-CAD)" if argv[0] cannot be
- * identified but should never return NULL.
- */
-DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
-
-/**
  * DEPRECATED: This routine is replaced by bu_getcwd().
  *             Do not use.
  *

@@ -81,7 +81,7 @@ void
 free_pixel(struct pixel *pp)
 {
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
-    bu_free((genptr_t)pp, "pixel");
+    bu_free((void *)pp, "pixel");
 }
 
 
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 
 	++(pp->p_count);
     }
-    bu_free((genptr_t)buf, "pixel buffer");
+    bu_free((void *)buf, "pixel buffer");
 
     bu_rb_walk1(palette, (void (*)(void))print_pixel, BU_RB_WALK_INORDER);
 

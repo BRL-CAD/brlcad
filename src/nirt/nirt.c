@@ -300,7 +300,7 @@ free_script(struct script_rec *srp)
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
     bu_vls_free(&(srp->sr_script));
-    bu_free((genptr_t) srp, "script record");
+    bu_free((void *) srp, "script record");
 }
 
 
@@ -558,7 +558,7 @@ main(int argc, char *argv[])
     ap.a_rt_i = rtip;         /* rt_i pointer */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
-    ap.a_uptr = (genptr_t)a_tab.attrib;
+    ap.a_uptr = (void *)a_tab.attrib;
 
     /* initialize variables */
     azimuth() = 0.0;

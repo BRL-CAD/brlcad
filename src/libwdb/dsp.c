@@ -52,7 +52,7 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
     dsp->dsp_ycnt = ydim;
     MAT_COPY(dsp->dsp_stom, mat);
 
-    return wdb_export(fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm);
+    return wdb_export(fp, name, (void *)dsp, ID_DSP, mk_conv2mm);
 }
 
 

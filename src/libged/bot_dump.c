@@ -740,7 +740,7 @@ static union tree *
 bot_dump_leaf(struct db_tree_state *tsp,
 		  const struct db_full_path *pathp,
 		  struct rt_db_internal *ip,
-		  genptr_t client_data)
+		  void *client_data)
 {
     int ret;
     union tree *curtree;
@@ -1023,7 +1023,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 			       0,
 			       0,
 			       bot_dump_leaf,
-			       (genptr_t)&gbdcdp);
+			       (void *)&gbdcdp);
 	}
     }
 

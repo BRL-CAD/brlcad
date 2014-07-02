@@ -54,7 +54,7 @@ struct output {
 
 
 static void
-dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
+dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -142,7 +142,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 
 
 static void
-dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
+dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, void *out)
 {
     struct output *o = (struct output *)out;
     unsigned long hash;

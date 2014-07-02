@@ -97,7 +97,6 @@ option add *Mged.height 400 widgetDefault
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -543,10 +542,6 @@ option add *Mged.height 400 widgetDefault
 	    return [lindex $result 1]
 	}
     }
-}
-
-::itcl::body Mged::make_bb {name args} {
-    eval $db make_bb $name $args
 }
 
 ::itcl::body Mged::make_name {args} {

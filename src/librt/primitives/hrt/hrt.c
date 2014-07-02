@@ -289,7 +289,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Solid is OK, compute constant terms now  */
 
     BU_GET(hrt, struct hrt_specific);
-    stp->st_specific = (genptr_t)hrt;
+    stp->st_specific = (void *)hrt;
 
     hrt->hrt_d = hip->d;
 
@@ -975,7 +975,7 @@ rt_hrt_ifree(struct rt_db_internal *ip)
     RT_HRT_CK_MAGIC(hip);
 
     bu_free((char *)hip, "rt_hrt_");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

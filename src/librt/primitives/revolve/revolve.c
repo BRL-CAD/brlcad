@@ -71,7 +71,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_meth = ftp;
     BU_ALLOC(rev, struct rt_revolve_internal);
 
-    intern->idb_ptr = (genptr_t)rev;
+    intern->idb_ptr = (void *)rev;
     rev->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
     BU_VLS_INIT(&rev->sketch_name);
@@ -228,7 +228,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     stp->st_meth = &OBJ[ID_REVOLVE];
 
     BU_GET(rev, struct revolve_specific);
-    stp->st_specific = (genptr_t)rev;
+    stp->st_specific = (void *)rev;
 
     VMOVE(rev->v3d, rip->v3d);
     VMOVE(rev->zUnit, rip->axis3d);
@@ -1559,7 +1559,7 @@ rt_revolve_xform(
 	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
 	bu_vls_init(&rop->sketch_name);
 	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
-	op->idb_ptr = (genptr_t)rop;
+	op->idb_ptr = (void *)rop;
 	op->idb_meth = &OBJ[ID_REVOLVE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_REVOLVE;
@@ -1712,7 +1712,7 @@ rt_revolve_ifree(struct rt_db_internal *ip)
 	bu_log("Freeing bogus revolve, VLS string not initialized\n");
 
     bu_free((char *)revolve_ip, "revolve ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

@@ -55,10 +55,10 @@ HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const c
 HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *);
 HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *);
 
-HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void light_print(register struct region *rp, genptr_t dp);
-HIDDEN void light_free(genptr_t cp);
+HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void light_print(register struct region *rp, void *dp);
+HIDDEN void light_free(void *cp);
 
 
 /** callback registration table for this shader in optical_shader_init() */
@@ -256,7 +256,7 @@ light_pt_set(const struct bu_structparse *sdp,
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -507,7 +507,7 @@ light_gen_sample_pts(struct application *upap,
     ap.a_hit = light_gen_sample_pts_hit;
     ap.a_miss = light_gen_sample_pts_miss;
     ap.a_logoverlap = upap->a_logoverlap;
-    ap.a_uptr = (genptr_t)lsp;
+    ap.a_uptr = (void *)lsp;
 
     /* get the bounding box of the light source
      * Return if we can't get the bounding tree dimensions */
@@ -559,14 +559,14 @@ light_gen_sample_pts(struct application *upap,
 
 
 HIDDEN void
-light_print(register struct region *rp, genptr_t dp)
+light_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
 
 
 void
-light_free(genptr_t cp)
+light_free(void *cp)
 {
     register struct light_specific *lsp = (struct light_specific *)cp;
 
@@ -588,7 +588,7 @@ light_free(genptr_t cp)
  * Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+light_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -614,7 +614,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     lsp->lt_name = bu_strdup(rp->reg_name);
 
     if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
-	light_free((genptr_t)lsp);
+	light_free((void *)lsp);
 	return -1;
     }
 
@@ -848,7 +848,7 @@ light_cleanup(void)
 	}
 	zaplsp = lsp;
 	lsp = BU_LIST_PREV(light_specific, &(lsp->l));
-	light_free((genptr_t)zaplsp);
+	light_free((void *)zaplsp);
     }
 }
 
@@ -1546,7 +1546,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     sub_ap.a_miss = light_miss;
     sub_ap.a_logoverlap = los->ap->a_logoverlap;
     sub_ap.a_user = -1; /* sanity */
-    sub_ap.a_uptr = (genptr_t)los->lsp;	/* so we can tell.. */
+    sub_ap.a_uptr = (void *)los->lsp;	/* so we can tell.. */
     sub_ap.a_level = 0;
     /* Will need entry & exit pts, for filter glass ==> 2 */
     /* Continue going through air ==> negative */

@@ -9,6 +9,7 @@ set(FB_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${OPENNURBS_INCLUDE_DIR}
+  ${Qt5Widgets_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(fb FB_INCLUDE_DIRS "")
 
@@ -35,12 +36,23 @@ if(BRLCAD_ENABLE_TK)
   set(LINKLIBS ${LINKLIBS} ${TK_LIBRARY})
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_QT)
+  CHECK_CXX_FLAG(Wno-float-equal)
+
+  set(FBQTDEFS "-DIF_QT")
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+  set(LINKLIBS ${LINKLIBS} ${Qt5Widgets_LIBRARIES})
+  set(fbqt_srcs if_qt.cpp)
+endif(BRLCAD_ENABLE_QT)
 
 set(LIBFB_SOURCES
   ${fbX11_srcs}
   ${fbogl_srcs}
   ${fbwgl_srcs}
   ${fbtk_srcs}
+  ${fbqt_srcs}
   asize.c
   fb_generic.c
   fb_log.c
@@ -66,6 +78,7 @@ add_definitions(
   ${FBOGLDEFS}
   ${FBTKDEFS}
   ${XOPEN_DEFINE}
+  ${FBQTDEFS}
   )
 
 BRLCAD_ADDLIB(libfb "${LIBFB_SOURCES}" "libbu;libpkg;${LINKLIBS}")
@@ -80,8 +93,9 @@ set(libfb_ignore_files
   if_X.c
   if_X24.c
   if_ogl.c
-  if_wgl.c
+  if_qt.cpp
   if_tk.c
+  if_wgl.c
   )
 CMAKEFILES(${libfb_ignore_files})
 

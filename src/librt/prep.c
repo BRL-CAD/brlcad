@@ -172,7 +172,7 @@ rt_free_rti(struct rt_i *rtip)
 	BU_CK_PTBL(&resp->re_directory_blocks);
 	for (BU_PTBL_FOR(dpp, (struct directory **), &resp->re_directory_blocks)) {
 	    RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-	    bu_free((genptr_t)(*dpp), "struct directory block");
+	    bu_free((void *)(*dpp), "struct directory block");
 	}
 	bu_ptbl_free(&resp->re_directory_blocks);
     }
@@ -688,7 +688,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	BU_CK_PTBL(&resp->re_seg_blocks);
 	for (BU_PTBL_FOR(spp, (struct seg **), &resp->re_seg_blocks)) {
 	    RT_CK_SEG(*spp);	/* Head of block will be a valid seg */
-	    bu_free((genptr_t)(*spp), "struct seg block");
+	    bu_free((void *)(*spp), "struct seg block");
 	}
 	bu_ptbl_free(&resp->re_seg_blocks);
 	resp->re_seg_blocks.l.forw = BU_LIST_NULL;
@@ -700,7 +700,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	while (BU_LIST_WHILE(hitp, hitmiss, &resp->re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
-	    bu_free((genptr_t)hitp, "struct hitmiss");
+	    bu_free((void *)hitp, "struct hitmiss");
 	}
 	resp->re_nmgfree.forw = BU_LIST_NULL;
     }
@@ -712,7 +712,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    RT_CK_PT(pp);
 	    BU_LIST_DEQUEUE((struct bu_list *)pp);
 	    bu_ptbl_free(&pp->pt_seglist);
-	    bu_free((genptr_t)pp, "struct partition");
+	    bu_free((void *)pp, "struct partition");
 	}
 	resp->re_parthead.forw = BU_LIST_NULL;
     }
@@ -724,7 +724,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    BU_CK_BITV(bvp);
 	    BU_LIST_DEQUEUE(&bvp->l);
 	    bvp->nbits = 0;		/* sanity */
-	    bu_free((genptr_t)bvp, "struct bu_bitv");
+	    bu_free((void *)bvp, "struct bu_bitv");
 	}
 	resp->re_solid_bitv.forw = BU_LIST_NULL;
     }
@@ -736,7 +736,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    BU_CK_PTBL(tabp);
 	    BU_LIST_DEQUEUE(&tabp->l);
 	    bu_ptbl_free(tabp);
-	    bu_free((genptr_t)tabp, "struct bu_ptbl");
+	    bu_free((void *)tabp, "struct bu_ptbl");
 	}
 	resp->re_region_ptbl.forw = BU_LIST_NULL;
     }
@@ -755,7 +755,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 
     /* 're_boolstack' is a simple pointer */
     if (resp->re_boolstack) {
-	bu_free((genptr_t)resp->re_boolstack, "boolstack");
+	bu_free((void *)resp->re_boolstack, "boolstack");
 	resp->re_boolstack = NULL;
 	resp->re_boolslen = 0;
     }
@@ -786,7 +786,7 @@ rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
 	BU_CK_PTBL(&resp->re_directory_blocks);
 	for (BU_PTBL_FOR(dpp, (struct directory **), &resp->re_directory_blocks)) {
 	    RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-	    bu_free((genptr_t)(*dpp), "struct directory block");
+	    bu_free((void *)(*dpp), "struct directory block");
 	}
 	bu_ptbl_free(&resp->re_directory_blocks);
 	resp->re_directory_blocks.l.forw = BU_LIST_NULL;
@@ -898,14 +898,14 @@ rt_clean(register struct rt_i *rtip)
 	RT_CK_REGION(regp);
 	BU_LIST_DEQUEUE(&(regp->l));
 	db_free_tree(regp->reg_treetop, &rt_uniresource);
-	bu_free((genptr_t)regp->reg_name, "region name str");
+	bu_free((void *)regp->reg_name, "region name str");
 	regp->reg_name = (char *)0;
 	if (regp->reg_mater.ma_shader) {
-	    bu_free((genptr_t)regp->reg_mater.ma_shader, "ma_shader");
+	    bu_free((void *)regp->reg_mater.ma_shader, "ma_shader");
 	    regp->reg_mater.ma_shader = (char *)NULL;
 	}
 	bu_avs_free(&(regp->attr_values));
-	bu_free((genptr_t)regp, "struct region");
+	bu_free((void *)regp, "struct region");
     }
     rtip->nregions = 0;
 
@@ -1369,7 +1369,7 @@ HIDDEN int
 unprep_reg_start(struct db_tree_state *tsp,
 		 const struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
-		 genptr_t UNUSED(client_data))
+		 void *UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1393,7 +1393,7 @@ HIDDEN union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       union tree *tree,
-	       genptr_t UNUSED(client_data))
+	       void *UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1410,7 +1410,7 @@ HIDDEN union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
-	    genptr_t client_data)
+	    void *client_data)
 {
     register struct soltab *stp;
     struct directory *dp;
@@ -1588,7 +1588,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	if (db_walk_tree(rtip->rti_dbip, 1, (const char **)&obj_name, 1, tree_state,
 			 unprep_reg_start, unprep_reg_end, unprep_leaf,
-			 (genptr_t)objs)) {
+			 (void *)objs)) {
 	    bu_log("rt_unprep(): db_walk_tree failed!!!\n");
 	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		if (objs->tsp[k]) {
@@ -1617,14 +1617,14 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	rtip->Regions[rp->reg_bit] = (struct region *)NULL;
 
 	/* XXX db_free_tree(rp->reg_treetop, resp); */
-	bu_free((genptr_t)rp->reg_name, "region name str");
+	bu_free((void *)rp->reg_name, "region name str");
 	rp->reg_name = (char *)0;
 	if (rp->reg_mater.ma_shader) {
-	    bu_free((genptr_t)rp->reg_mater.ma_shader, "ma_shader");
+	    bu_free((void *)rp->reg_mater.ma_shader, "ma_shader");
 	    rp->reg_mater.ma_shader = (char *)NULL;
 	}
 	bu_avs_free(&(rp->attr_values));
-	bu_free((genptr_t)rp, "struct region");
+	bu_free((void *)rp, "struct region");
     }
 
     /* eliminate NULL region structures */

@@ -455,7 +455,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
  * to the db.
  */
 static void
-copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
+copy_solid(struct db_i *_dbip, struct directory *proto, void *state)
 {
     int idx;
 
@@ -631,7 +631,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_log("An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
@@ -667,7 +667,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
  * to the db.
  */
 static void
-copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
+copy_comb(struct db_i *_dbip, struct directory *proto, void *state)
 {
     int idx;
 
@@ -745,13 +745,13 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	    }
 
 	    /* copy this combination itself */
-	    copy_comb(_dbip, dp, (genptr_t)state);
+	    copy_comb(_dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
+	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
-	copy_solid(_dbip, dp, (genptr_t)state);
+	copy_solid(_dbip, dp, (void *)state);
     else {
 	Tcl_AppendResult(state->interp, "clone:  ", dp->d_namep, " is neither a combination or a primitive?\n", (char *)NULL);
 	goto done_copy_tree;

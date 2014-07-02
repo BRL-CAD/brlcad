@@ -66,7 +66,7 @@ enum seam_direction {
 
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
-#define PBC_SEAM_TOL 0.01
+#define PBC_SEAM_TOL 0.001
 
 extern enum seam_direction seam_direction(ON_2dPoint uv1, ON_2dPoint uv2);
 

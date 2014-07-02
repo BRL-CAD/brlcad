@@ -461,7 +461,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
-worker(int cpu, genptr_t UNUSED(arg))
+worker(int cpu, void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;

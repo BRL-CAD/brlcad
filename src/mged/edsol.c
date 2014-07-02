@@ -37,6 +37,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"
+#include "rt/arb_edit.h"
 #include "dg.h"
 #include "nurb.h"
 #include "wdb.h"
@@ -738,6 +739,11 @@ set_e_axes_pos(int both)
 {
     int i;
     struct dm_list *dmlp;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const int local_arb_faces[5][24] = rt_arb_faces;
 
     update_views = 1;
     switch (es_int.idb_type) {
@@ -788,19 +794,19 @@ set_e_axes_pos(int both)
 		    case ECMD_ARB_MOVE_FACE:
 			switch (es_type) {
 			    case ARB4:
-				i = rt_arb_faces[0][es_menu * 4];
+				i = local_arb_faces[0][es_menu * 4];
 				break;
 			    case ARB5:
-				i = rt_arb_faces[1][es_menu * 4];
+				i = local_arb_faces[1][es_menu * 4];
 				break;
 			    case ARB6:
-				i = rt_arb_faces[2][es_menu * 4];
+				i = local_arb_faces[2][es_menu * 4];
 				break;
 			    case ARB7:
-				i = rt_arb_faces[3][es_menu * 4];
+				i = local_arb_faces[3][es_menu * 4];
 				break;
 			    case ARB8:
-				i = rt_arb_faces[4][es_menu * 4];
+				i = local_arb_faces[4][es_menu * 4];
 				break;
 			    default:
 				i = 0;
@@ -1620,7 +1626,7 @@ nmg_ed(int arg)
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    rt_vlblock_free(vbp);
-		    bu_free((genptr_t)tab, "nmg_ed tab[]");
+		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;
 	    }
@@ -2515,7 +2521,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2608,7 +2614,7 @@ replot_editing_solid(void)
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		pathHmat(sp, mat, sp->s_fullpath.fp_len-2);
+		(void)db_full_path_transformation_matrix(mat, dbip, &sp->s_fullpath, sp->s_fullpath.fp_len-2);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -2782,7 +2788,7 @@ get_file_name(char *str)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
 	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
-	bu_free((genptr_t)dir, "get_file_name: directory string");
+	bu_free((void *)dir, "get_file_name: directory string");
     }
 
     bu_vls_printf(&cmd,
@@ -4511,7 +4517,7 @@ sedit(void)
 		    RT_DB_INTERNAL_INIT(&tmp_ip);
 		    tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    tmp_ip.idb_type = ID_SKETCH;
-		    tmp_ip.idb_ptr = (genptr_t)extr->skt;
+		    tmp_ip.idb_ptr = (void *)extr->skt;
 		    tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 		    rt_db_free_internal(&tmp_ip);
 		}
@@ -6032,8 +6038,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves++;
@@ -6074,8 +6080,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve++;
@@ -6120,8 +6126,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves--;
@@ -6176,8 +6182,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve--;
@@ -7321,7 +7327,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7411,7 +7417,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    pathHmat(illump, topm, ipathpos-2);
+	    (void)db_full_path_transformation_matrix(topm, dbip, &illump->s_fullpath, ipathpos-2);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -9082,7 +9088,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

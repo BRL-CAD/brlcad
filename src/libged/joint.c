@@ -339,15 +339,15 @@ free_arc(struct arc *ap)
     int i;
     if (!ap || ap->type == ARC_UNSET) return;
     for (i=0; i<=ap->arc_last; i++) {
-	bu_free((genptr_t)ap->arc[i], "arc entry");
+	bu_free((void *)ap->arc[i], "arc entry");
     }
-    bu_free((genptr_t)ap->arc, "arc table");
+    bu_free((void *)ap->arc, "arc table");
     ap->arc = (char **)0;
     if (ap->type & ARC_BOTH) {
 	for (i=0; i<=ap->arc_last; i++) {
-	    bu_free((genptr_t)ap->original[i], "arc entry");
+	    bu_free((void *)ap->original[i], "arc entry");
 	}
-	bu_free((genptr_t)ap->original, "arc table");
+	bu_free((void *)ap->original, "arc table");
     }
     ap->type=ARC_UNSET;
 }
@@ -357,7 +357,7 @@ free_joint(struct joint *jp)
 {
     free_arc(&jp->path);
     if (jp->name)
-	bu_free((genptr_t)jp->name, "joint name");
+	bu_free((void *)jp->name, "joint name");
     BU_PUT(jp, struct joint);
 }
 
@@ -384,8 +384,8 @@ free_hold(struct hold *hp)
 	BU_LIST_DEQUEUE(&jh->l);
 	BU_PUT(jh, struct jointH);
     }
-    if (hp->joint) bu_free((genptr_t)hp->joint, "hold joint name");
-    if (hp->name) bu_free((genptr_t)hp->name, "hold name");
+    if (hp->joint) bu_free((void *)hp->joint, "hold joint name");
+    if (hp->name) bu_free((void *)hp->name, "hold name");
     BU_PUT(hp, struct hold);
 }
 
@@ -2319,7 +2319,7 @@ joint_clear(void)
     struct stack_solve *ssp;
     BU_LIST_POP(stack_solve, &solve_head, ssp);
     while (ssp) {
-	bu_free((genptr_t)ssp, "struct stack_solve");
+	bu_free((void *)ssp, "struct stack_solve");
 	BU_LIST_POP(stack_solve, &solve_head, ssp);
     }
 }
@@ -2960,7 +2960,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
     for (count=0; count<myargc; count++) {
 	bu_free(myargv[count], "params");
     }
-    bu_free((genptr_t)myargv, "param pointers");
+    bu_free((void *)myargv, "param pointers");
 
     if (found >= 0) return GED_ERROR;
 
@@ -3409,7 +3409,7 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 }
 
 HIDDEN union tree *
-mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     static struct ged *gedp;
     struct rt_grip_internal *gip;
@@ -3469,7 +3469,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 
 
 HIDDEN union tree *
-mesh_end_region (struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
+mesh_end_region (struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *UNUSED(client_data))
 {
     return curtree;
 }
@@ -3568,7 +3568,7 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 		     0,			/* Begin region */
 		     mesh_end_region,	/* End region */
 		     mesh_leaf,		/* node */
-		     (genptr_t)NULL);
+		     (void *)NULL);
 
     /*
      * Now we draw the overlays.  We do this by building a
@@ -3603,10 +3603,10 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
     while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
 	while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
 	    BU_LIST_DEQUEUE(&gp->l);
-	    bu_free((genptr_t)gp, "artic_grip");
+	    bu_free((void *)gp, "artic_grip");
 	}
 	BU_LIST_DEQUEUE(&jp->l);
-	bu_free((genptr_t)jp, "Artic Joint");
+	bu_free((void *)jp, "Artic Joint");
     }
     return GED_OK;
 }

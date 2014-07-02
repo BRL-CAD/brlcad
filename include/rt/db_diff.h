@@ -23,65 +23,105 @@
  *
  */
 
+#ifndef RT_DB_DIFF_H
+#define RT_DB_DIFF_H
+
 /**
- * Compare two database instances.
- *
- * All objects in dbip_left are compared against the objects in
- * dbip_right.  Every object results in one of four callback functions
- * getting called.  Any objects in dbip_right but not in dbip_left
- * cause add_func() to get called.  Any objects in dbip_left but not
- * in dbip_right cause del_func() to get called.  Objects existing in
- * both (i.e., with the same name) but differing in some fashion
- * cause chgd_func() to get called. If the object exists in both
- * but is unchanged, unch_func() is called.  NULL may be
- * passed to skip any callback.
- *
- * The function returns 0 if there are no differences, or returns the
- * number of differences encountered.  Negative values indicate a
- * traversal failure.
+ * DIFF bit flags to select various types of results
  */
-RT_EXPORT extern int
-db_diff(const struct db_i *dbip_left,
-	const struct db_i *dbip_right,
-	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added, void *data),
-	int (*del_func)(const struct db_i *left, const struct db_i *right, const struct directory *removed, void *data),
-	int (*chgd_func)(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data),
-	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
-	void *client_data);
+#define DIFF_EMPTY	0
+#define DIFF_UNCHANGED	1
+#define DIFF_REMOVED	2
+#define DIFF_ADDED	4
+#define DIFF_CHANGED	8
+#define DIFF_CONFLICT	16
 
-/**
- * Compare three database instances.
- *
- * This does a "3-way" diff to identify changes in the left and
- * right databases relative to the ancestor database, and provides
- * functional hooks for the various cases.
- *
- * The function returns 0 if there are no differences, or returns the
- * number of differences encountered.  Negative values indicate a
- * traversal failure.
+/*
+ * Results for a diff between two objects are held in a set
+ * of avs-like structures.
  */
-RT_EXPORT extern int
-db_diff3(const struct db_i *dbip_left,
-	const struct db_i *dbip_ancestor,
-	const struct db_i *dbip_right,
-	int (*add_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*del_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*chgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	int (*unchgd_func)(const struct db_i *left_dbip, const struct db_i *ancestor_dbip, const struct db_i *right_dbip, const struct directory *left, const struct directory *ancestor, const struct directory *right, void *data),
-	void *client_data);
-
+struct diff_avp {
+    char *name;
+    int state;
+    char *left_value;
+    char *ancestor_value;
+    char *right_value;
+};
+RT_EXPORT extern void diff_init_avp(struct diff_avp *attr_result);
+RT_EXPORT extern void diff_free_avp(struct diff_avp *attr_result);
+struct diff_result {
+    char *obj_name;
+    struct bn_tol *diff_tol;
+    const struct directory *dp_left;
+    const struct directory *dp_ancestor;
+    const struct directory *dp_right;
+    int param_state;  /* results of diff for all parameters */
+    int attr_state;   /* results of diff for all attributes */
+    struct bu_ptbl *param_diffs;  /* ptbl of diff_avps of parameters */
+    struct bu_ptbl *attr_diffs;   /* ptbl of diff_avps of attributes */
+};
+RT_EXPORT extern void diff_init_result(struct diff_result *result, const struct bn_tol *curr_diff_tol, const char *object_name);
+RT_EXPORT extern void diff_free_result(struct diff_result *result);
 
 /**
- * The flags parameter is a bitfield is used with db_compare() to
- * specify whether to report internal object parameter differences
+ * The flags parameter is a bitfield is used to specify whether
+ * to process internal object parameter differences
  * (DB_COMPARE_PARAM), attribute differences (DB_COMPARE_ATTRS), or
- * everything (DB_COMPARE_ALL).
+ * both (DB_COMPARE_ALL).
  */
 typedef enum {
     DB_COMPARE_ALL=0x00,
     DB_COMPARE_PARAM=0x01,
     DB_COMPARE_ATTRS=0x02
 } db_compare_criteria_t;
+
+/**
+ * Compare two attribute sets.
+ *
+ * This function is useful for comparing the contents
+ * of two attribute/value sets. */
+RT_EXPORT extern int
+db_avs_diff(const struct bu_attribute_value_set *left_set,
+	    const struct bu_attribute_value_set *right_set,
+            const struct bn_tol *diff_tol,
+	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
+	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
+	    int (*unchgd_func)(const char *attr_name, const char *attr_val, void *data),
+	    void *client_data);
+
+/**
+ * Compare three attribute sets.
+ */
+RT_EXPORT extern int
+db_avs_diff3(const struct bu_attribute_value_set *left_set,
+	     const struct bu_attribute_value_set *ancestor_set,
+	     const struct bu_attribute_value_set *right_set,
+	     const struct bn_tol *diff_tol,
+	     int (*add_func)(const char *attr_name,
+		                const char *attr_val_left,
+			       	const char *attr_val_right,
+			       	void *data),
+	     int (*del_func)(const char *attr_name,
+			       	const char *attr_val_left,
+			       	const char *attr_val_ancestor,
+			       	const char *attr_val_right,
+			       	void *data),
+	     int (*chgd_func)(const char *attr_name,
+		                const char *attr_val_left,
+			       	const char *attr_val_ancestor,
+			       	const char *attr_val_right,
+			       	void *data),
+	     int (*conflict_func)(const char *attr_name,
+		                const char *attr_val_left,
+			       	const char *attr_val_ancestor,
+			       	const char *attr_val_right,
+			       	void *data),
+	     int (*unchgd_func)(const char *attr_name,
+			       	const char *attr_val_ancestor,
+			       	void *data),
+	     void *client_data);
+
 
 /**
  * Compare two database objects.
@@ -100,37 +140,19 @@ typedef enum {
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * This function returns 0 if there are no differences and non-0 if
- * there are differences.  Negative values indicate an internal error.
+ * Returns an int with bit flags set according to the above
+ * four diff categories.
+ *
+ * Negative returns indicate an error.
  */
 RT_EXPORT extern int
-db_compare(struct bu_attribute_value_set *added,
-	   struct bu_attribute_value_set *removed,
-	   struct bu_attribute_value_set *changed_left,
-	   struct bu_attribute_value_set *changed_right,
-	   struct bu_attribute_value_set *unchanged,
-	   const struct rt_db_internal *left_obj,
-	   const struct rt_db_internal *right_obj,
+db_diff_dp(const struct db_i *left_dbip,
+	   const struct db_i *right_dbip,
+	   const struct directory *left_dp,
+	   const struct directory *right_dp,
+	   const struct bn_tol *diff_tol,
 	   db_compare_criteria_t flags,
-	   const struct bn_tol *diff_tol);
-
-/**
- * Compare the attribute sets.
- *
- * This function is useful for comparing the contents
- * of two attribute/value sets. Used by db_compare, this
- * function is also directly avaiable for processing sets
- * and attribute only objects that don't have an internal
- * representation */
-RT_EXPORT extern int
-db_avs_diff(struct bu_attribute_value_set *added,
-            struct bu_attribute_value_set *removed,
-            struct bu_attribute_value_set *changed_left,
-            struct bu_attribute_value_set *changed_right,
-            struct bu_attribute_value_set *unchanged,
-	    const struct bu_attribute_value_set *left_set,
-	    const struct bu_attribute_value_set *right_set,
-            const struct bn_tol *diff_tol);
+	   struct diff_result *result);
 
 
 /**
@@ -144,50 +166,71 @@ db_avs_diff(struct bu_attribute_value_set *added,
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * This function returns:
+ * Returns an int with bit flags set according to the above
+ * diff3 categories.
  *
- * 0 if there are no differences
- * 1 if there are differences but no conflicts
- * 2 if there are conflicts
- * 3 if there are differences but they cannot be studied (tcl params not available)
- * 4 if there are conflicts but they cannot be studied (tcl params not available)
- *
- * Negative values indicate an internal error.
- *
- * The various attribute/value sets contain the categorized
- * parameters.  The "merged" set contains the combined attributes
- * of all objects, with conflicts encoded according to the templates:
- *
- * CONFLICT(ANCESTOR):<avs name> , avs_value_ancestor
- * CONFLICT(LEFT):<avs name> , avs_value_left
- * CONFLICT(RIGHT):<avs name> , avs_value_right
- *
- * For cases where a value didn't exist, avs_value_* is replaced with
- * REMOVED.
+ * Negative returns indicate an error.
  *
  */
+
 RT_EXPORT extern int
-db_compare3(struct bu_attribute_value_set *unchanged,
-	struct bu_attribute_value_set *removed_left_only,
-	struct bu_attribute_value_set *removed_right_only,
-	struct bu_attribute_value_set *removed_both,
-	struct bu_attribute_value_set *added_left_only,
-	struct bu_attribute_value_set *added_right_only,
-	struct bu_attribute_value_set *added_both,
-	struct bu_attribute_value_set *added_conflict_left,
-	struct bu_attribute_value_set *added_conflict_right,
-	struct bu_attribute_value_set *changed_left_only,
-	struct bu_attribute_value_set *changed_right_only,
-	struct bu_attribute_value_set *changed_both,
-	struct bu_attribute_value_set *changed_conflict_ancestor,
-	struct bu_attribute_value_set *changed_conflict_left,
-	struct bu_attribute_value_set *changed_conflict_right,
-	struct bu_attribute_value_set *merged,
-	const struct rt_db_internal *left,
-	const struct rt_db_internal *ancestor,
-	const struct rt_db_internal *right,
+db_diff3_dp(const struct db_i *left,
+	    const struct db_i *ancestor,
+	    const struct db_i *right,
+	    const struct directory *left_dp,
+	    const struct directory *ancestor_dp,
+	    const struct directory *right_dp,
+	    const struct bn_tol *diff_tol,
+	    db_compare_criteria_t flags,
+	    struct diff_result *result);
+
+/**
+ * Compare two database instances.
+ *
+ * All objects in dbip_left are compared against the objects in
+ * dbip_right.  Every object results in one of four callback functions
+ * getting called.  Any objects in dbip_right but not in dbip_left
+ * cause add_func() to get called.  Any objects in dbip_left but not
+ * in dbip_right cause del_func() to get called.  Objects existing in
+ * both (i.e., with the same name) but differing in some fashion
+ * cause chgd_func() to get called. If the object exists in both
+ * but is unchanged, unch_func() is called.  NULL may be
+ * passed to skip any callback.
+ *
+ * Returns an int with bit flags set according to the above
+ * four diff categories.
+ *
+ * Negative returns indicate an error.
+ */
+RT_EXPORT extern int
+db_diff(const struct db_i *dbip_left,
+	const struct db_i *dbip_right,
+	const struct bn_tol *diff_tol,
 	db_compare_criteria_t flags,
-	struct bn_tol *diff_tol);
+	struct bu_ptbl *diff_results);
+
+
+/**
+ * Compare three database instances.
+ *
+ * This does a "3-way" diff to identify changes in the left and
+ * right databases relative to the ancestor database, and provides
+ * functional hooks for the various cases.
+ *
+ * Returns an int with bit flags set according to the above
+ * diff3 categories.
+ *
+ * Negative returns indicate an error.
+ */
+RT_EXPORT extern int
+db_diff3(const struct db_i *dbip_left,
+	const struct db_i *dbip_ancestor,
+	const struct db_i *dbip_right,
+	const struct bn_tol *diff_tol,
+	db_compare_criteria_t flags,
+	struct bu_ptbl *diff3_results);
+
+#endif /*RT_DB_DIFF_H*/
 
 /*
  * Local Variables:

@@ -90,7 +90,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     if (ged_wmater(gedp, argc, av) == TCL_ERROR) {
 	bu_file_delete(tmpfil);
-	bu_free((genptr_t)av, "f_edmater: av");
+	bu_free((void *)av, "f_edmater: av");
 	return TCL_ERROR;
     }
 
@@ -103,7 +103,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_file_delete(tmpfil);
-    bu_free((genptr_t)av, "ged_edmater: av");
+    bu_free((void *)av, "ged_edmater: av");
 
     return status;
 }

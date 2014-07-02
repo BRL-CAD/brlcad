@@ -716,7 +716,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
     }
 
-    bu_free((genptr_t)buf, "rt_metaball_import5: buf");
+    bu_free((void *)buf, "rt_metaball_import5: buf");
     return 0;		/* OK */
 }
 
@@ -843,7 +843,7 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 	    BU_PUT(mbpt, struct wdb_metaballpt);
 	}
     bu_free(ip->idb_ptr, "metaball ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

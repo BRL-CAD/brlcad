@@ -4,6 +4,7 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
@@ -13,10 +14,8 @@ set(RT_INCLUDE_DIRS
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${TNT_INCLUDE_DIR}
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
-  ${BRLCAD_BOOST_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -75,6 +74,7 @@ set(LIBRT_SOURCES
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
+  primitives/arb8/arb_edit.c
   primitives/arbn/arbn.c
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c

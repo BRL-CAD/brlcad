@@ -188,7 +188,7 @@ process_point(point_line_t *plt) {
 	    printf("END OF BLOCK %d\n", code_state);
 
 	    /* finish up this batch */
-	    bu_free((genptr_t)plta, "end point_line_t group");
+	    bu_free((void *)plta, "end point_line_t group");
 	    plta = NULL;
 	}
 
@@ -399,7 +399,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    }
 
 	    if (process_group(&pltg, points+1)) {
-		bu_free((genptr_t)pltg, "end subgroup: point_line_t");
+		bu_free((void *)pltg, "end subgroup: point_line_t");
 		pltg = NULL;
 		prev_plt = NULL;
 		points = 0;
@@ -445,7 +445,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
        but we're at the end of this group */
     if (points > 0) {
 	if (process_group(&pltg, points+1)) {
-	    bu_free((genptr_t)pltg, "end point_line_t subgroup");
+	    bu_free((void *)pltg, "end point_line_t subgroup");
 	    pltg = NULL;
 	    prev_plt = NULL;
 	    points = 0;

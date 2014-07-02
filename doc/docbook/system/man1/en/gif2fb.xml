@@ -16,12 +16,10 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>gif2fb</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-v </arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-F <replaceable>"frame</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>buffer</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name"</replaceable></arg></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>"GIF</replaceable></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>file</replaceable></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>name"</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-F <replaceable>frame_buffer_name</replaceable></arg></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>GIF_file_name</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -43,22 +41,22 @@ The frame buffer size requested will be the same as
 the input GIF screen size.
 The actual size obtained depends on details of the specific frame buffer.
 The
-<option>-h</option>
+<option>-H</option>
 option prints the GIF screen size on stderr. The
 <option>-v</option>
-option printd additional information about the GIF file on stderr.
+option prints additional information about the GIF file on stderr.
 The
-<emphasis remap="I">GIF file name</emphasis>
-Specifies the GIF input file to be translated,
+<emphasis remap="I">GIF_file_name</emphasis>
+specifies the GIF input file to be translated,
 rather than reading the file from the standard input.</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para>“A Standard Defining a Mechanism for the Storage and Transmission of
-Raster-Based Graphics Information”,
+<para>A Standard Defining a Mechanism for the Storage and Transmission of
+Raster-Based Graphics Information,
 June 15, 1987 (CompuServe Incorporated).
 <!-- .br -->
-<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>,<citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry> , <citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>

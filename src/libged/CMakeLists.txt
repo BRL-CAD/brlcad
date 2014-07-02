@@ -146,7 +146,6 @@ set(LIBGED_SOURCES
   lt.c
   m2v_point.c
   make.c
-  make_bb.c
   make_name.c
   make_pnts.c
   match.c

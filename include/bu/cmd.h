@@ -35,11 +35,15 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h> /* for timeal */
+#endif
 #include <time.h>
 
 /* for timeval via windows.h */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
+#  include <winsock.h>
 #  include <windows.h>
 #  include <io.h>
 
