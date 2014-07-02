@@ -67,7 +67,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct shell *s)
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_NMG;
     new_intern.idb_meth = &OBJ[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)s;
+    new_intern.idb_ptr = (void *)s;
 
     if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */

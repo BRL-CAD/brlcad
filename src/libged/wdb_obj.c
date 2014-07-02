@@ -2683,9 +2683,9 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_NMG;
     new_intern.idb_meth = &OBJ[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)s_tmp;
+    new_intern.idb_ptr = (void *)s_tmp;
 
-    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
 	WDB_TCL_ALLOC_ERR_return;
     }
@@ -2709,17 +2709,15 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-
-	    if (rt_db_put_internal(new_dp, wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-		/* Free memory */
-		nmg_ks(s_tmp);
-		Tcl_AppendResult(wdbp->wdb_interp, "rt_db_put_internal() failure\n", (char *)NULL);
-		return TCL_ERROR;
-	    }
-	    /* Internal representation has been freed by rt_db_put_internal */
-	    new_intern.idb_ptr = (void *)NULL;
-	}
+    if (rt_db_put_internal(new_dp, wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	/* Free memory */
+	nmg_ks(s_tmp);
+	Tcl_AppendResult(wdbp->wdb_interp, "rt_db_put_internal() failure\n", (char *)NULL);
+	return TCL_ERROR;
     }
+
+    /* Internal representation has been freed by rt_db_put_internal */
+    new_intern.idb_ptr = (void *)NULL;
     bu_vls_free(&shell_name);
 
     return TCL_OK;

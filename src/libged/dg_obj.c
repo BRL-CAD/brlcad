@@ -3687,7 +3687,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+dgo_nmg_shell_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct shell *s;
     struct bu_list vhead;

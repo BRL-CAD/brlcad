@@ -569,7 +569,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_NMG;
 	internal.idb_meth = &OBJ[ID_NMG];
-	internal.idb_ptr = (genptr_t)s;
+	internal.idb_ptr = (void *)s;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pipe")) {
 	struct wdb_pipept *ps;
 

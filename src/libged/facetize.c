@@ -290,7 +290,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &OBJ[ID_NMG];
-	intern.idb_ptr = (genptr_t)nmg_tree->tr_d.td_s;
+	intern.idb_ptr = (void *)nmg_tree->tr_d.td_s;
     }
 
     dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);

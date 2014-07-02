@@ -92,34 +92,26 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_NMG;
     new_intern.idb_meth = &OBJ[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)s_tmp;
+    new_intern.idb_ptr = (void *)s_tmp;
 
-    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
 	return GED_ERROR;
     }
 
-	    new_intern.idb_ptr = (genptr_t)m_tmp;
-	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
-	    if (new_dp == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
-		return GED_ERROR;
-	    }
+    /* make sure the geometry/bounding boxes are up to date */
+    nmg_rebound(s_tmp, &gedp->ged_wdbp->wdb_tol);
 
-	    /* make sure the geometry/bounding boxes are up to date */
-	    nmg_rebound(m_tmp, &gedp->ged_wdbp->wdb_tol);
-
-	    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-		/* Free memory */
-		nmg_km(m_tmp);
-		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
-		return GED_ERROR;
-	    }
-	    /* Internal representation has been freed by rt_db_put_internal */
-	    new_intern.idb_ptr = (void *)NULL;
-	}
+    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+    /* Free memory */
+    nmg_ks(s_tmp);
+    bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
+    return GED_ERROR;
     }
+
+    /* Internal representation has been freed by rt_db_put_internal */
+    new_intern.idb_ptr = (void *)NULL;
     bu_vls_free(&shell_name);
 
     return GED_OK;
