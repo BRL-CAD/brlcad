@@ -347,7 +347,7 @@ tweaked using inplace configurations "\fBstate:abort\fP" and "\fBstate:nextlabel
 You can precede \*(rxs with a list of condition names when using the \fB-c\fP
 switch. In this case \*(re generates scanner blocks for each condition. Where each of the
 generated blocks has its own precondition. The precondition is given by the
-interface define \fBYYGETCONDITON\fP and must be of type \fBYYCONDTYPE\fP.
+interface define \fBYYGETCONDITION\fP and must be of type \fBYYCONDTYPE\fP.
 .LP
 There are two special rule types. First, the rules of the condition '*' are
 merged to all  conditions. And second the empty condition list allows to

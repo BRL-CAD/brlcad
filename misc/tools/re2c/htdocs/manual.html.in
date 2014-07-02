@@ -301,7 +301,7 @@ tweaked using inplace configurations "state:abort" and "state:nextlabel".</p>
 You can precede regular-expressions with a list of condition names when using the <b>-c</b>
 switch. In this case <b>re2c</b> generates scanner blocks for each condition. Where each of the
 generated scanners has its own precondition. The precondition is given by the
-interface define <b>YYGETCONDITON</b> and must be of type <b>YYCONDTYPE</b>.
+interface define <b>YYGETCONDITION</b> and must be of type <b>YYCONDTYPE</b>.
 </p><p>
 There are two special rule types. First, the rules of the condition '*' are
 merged to all  conditions. And second the empty condition list allows to
