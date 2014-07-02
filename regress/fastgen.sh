@@ -51,9 +51,9 @@ if test ! -f "$F4G" ; then
     echo "Unable to find fast4-g, aborting"
     exit 1
 fi
-G_DIFF="`ensearch g_diff`"
-if test ! -f "$G_DIFF" ; then
-    echo "Unable to find g_diff, aborting"
+GDIFF="`ensearch gdiff`"
+if test ! -f "$GDIFF" ; then
+    echo "Unable to find gdiff, aborting"
     exit 1
 fi
 
@@ -120,10 +120,10 @@ if test ! -f fastgen_dos.g ; then
 fi
 
 echo "Comparing geometry files from sources with DOS and UNIX line endings."
-echo "\$ $G_DIFF fastgen_unix.g fastgen_dos.g"
-$G_DIFF fastgen_unix.g fastgen_dos.g
+echo "\$ $GDIFF fastgen_unix.g fastgen_dos.g"
+$GDIFF fastgen_unix.g fastgen_dos.g
 if test "$?" -ne 0 ; then
-    echo "ERROR running $G_DIFF fastgen_unix.g fastgen_dos.g"
+    echo "ERROR running $GDIFF fastgen_unix.g fastgen_dos.g"
     exit 1
 fi
 
