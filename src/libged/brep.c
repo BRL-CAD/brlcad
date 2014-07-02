@@ -472,7 +472,8 @@ enum {
     DPLOT_SSX_EVENTS,
     DPLOT_ISOCSX_FIRST,
     DPLOT_ISOCSX,
-    DPLOT_ISOCSX_EVENTS
+    DPLOT_ISOCSX_EVENTS,
+    DPLOT_FACE_CURVES
 };
 
 struct dplot_info {
@@ -773,6 +774,55 @@ dplot_isocsx_events(struct dplot_info *info)
     return GED_OK;
 }
 
+HIDDEN int
+dplot_face_curves(struct dplot_info *info)
+{
+    int f1_curves, f2_curves;
+    if (info->mode != DPLOT_FACE_CURVES) {
+	return GED_OK;
+    }
+
+    f1_curves = info->fdata.ssx[info->ssx_idx].face1_clipped_curves;
+    f2_curves = info->fdata.ssx[info->ssx_idx].face2_clipped_curves;
+    info->event_count = f1_curves + f2_curves;
+
+    if (info->event_count == 0) {
+	bu_vls_printf(info->gedp->ged_result_str, "No clipped curves for ssx"
+		" pair %d.\n", info->ssx_idx);
+	return GED_OK;
+    }
+
+    if (info->event_idx < info->event_count) {
+	struct bu_vls prefix;
+
+	dplot_overlay(info->gedp, info->prefix, "_brep1_surface",
+		info->brep1_surf_idx, "face_b1");
+	dplot_overlay(info->gedp, info->prefix, "_brep2_surface",
+		info->brep2_surf_idx, "face_b2");
+
+	BU_VLS_INIT(&prefix);
+	bu_vls_printf(&prefix, "%s_ssx%d", info->prefix, info->ssx_idx);
+	if (info->event_idx < f1_curves) {
+	    bu_vls_printf(&prefix, "_brep1face_clipped_curve");
+	    dplot_overlay(info->gedp, bu_vls_cstr(&prefix), "",
+		    info->event_idx, "clipped_fcurve");
+	} else {
+	    bu_vls_printf(&prefix, "_brep2face_clipped_curve");
+	    dplot_overlay(info->gedp, bu_vls_cstr(&prefix), "",
+		    info->event_idx - f1_curves, "clipped_fcurve");
+	}
+	++info->event_idx;
+	if (info->event_idx < info->event_count) {
+	    bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show the"
+		    " next curve.");
+	    return GED_MORE;
+	}
+    }
+
+    info->mode = DPLOT_INITIAL;
+    return GED_OK;
+}
+
 HIDDEN void *
 dplot_malloc(size_t s) {
     return bu_malloc(s, "dplot_malloc");
@@ -865,6 +915,8 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 		"isocurve-surface pairs of ssx pair N)\n");
 	bu_vls_printf(gedp->ged_result_str, "\tisocsx N M\t(show "
 		"intersections of ssx pair N, isocsx pair M\n");
+	bu_vls_printf(gedp->ged_result_str, "\tfcurves N\t(show clipped face"
+		" curves of ssx pair N\n");
 	return GED_HELP;
     }
     filename = argv[1];
@@ -912,6 +964,16 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    info.mode = DPLOT_ISOCSX_EVENTS;
+	    info.event_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "fcurves") && argc == 4) {
+	    const char *idx_str = argv[3];
+	    ret = bu_sscanf(idx_str, "%d", &info.ssx_idx);
+	    if (ret != 1) {
+		bu_vls_printf(gedp->ged_result_str, "%s is not a valid "
+			"surface pair (must be a non-negative integer)\n", idx_str);
+		return GED_ERROR;
+	    }
+	    info.mode = DPLOT_FACE_CURVES;
 	    info.event_idx = 0;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a recognized "
@@ -987,6 +1049,13 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = dplot_isocsx_events(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = dplot_face_curves(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {

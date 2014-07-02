@@ -42,15 +42,17 @@ surface_counts ::= SURFACES count(C1) count(C2). {
     data->brep2_surface_count = C2;
 }
 
-ssx_info ::= SSX index(I1) index(I2) count(C1) count(C2) count(C3) isocsx_event_counts. {
+ssx_info ::= SSX index(SURF_IDX1) index(SURF_IDX2) count(EVENTS) count(CRV_COUNT1) count(CRV_COUNT2) count(B1_ISO) count(ISO) isocsx_event_counts. {
     struct ssx *ssx;
     BU_GET(ssx, struct ssx);
 
-    ssx->brep1_surface = I1;
-    ssx->brep2_surface = I2;
-    ssx->final_curve_events = C1;
-    ssx->intersecting_brep1_isocurves = C2;
-    ssx->intersecting_isocurves = C3;
+    ssx->brep1_surface = SURF_IDX1;
+    ssx->brep2_surface = SURF_IDX2;
+    ssx->final_curve_events = EVENTS;
+    ssx->face1_clipped_curves = CRV_COUNT1;
+    ssx->face2_clipped_curves = CRV_COUNT2;
+    ssx->intersecting_brep1_isocurves = B1_ISO;
+    ssx->intersecting_isocurves = ISO;
     BU_LIST_INIT(&ssx->isocsx_list);
 
     /* move the list of event counts from the tmp location to this ssx

@@ -21,6 +21,8 @@ struct ssx {
     int brep1_surface;
     int brep2_surface;
     int final_curve_events;
+    int face1_clipped_curves;
+    int face2_clipped_curves;
     int intersecting_brep1_isocurves;
     int intersecting_isocurves;
     struct bu_list isocsx_list; /* struct isocsx list */

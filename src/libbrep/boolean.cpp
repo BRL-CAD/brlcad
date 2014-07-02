@@ -1893,7 +1893,7 @@ get_face_intersection_curves(
 
 		dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
 
-		ON_SimpleArray<ON_Curve *> curve_uv, curve_st;
+		ON_SimpleArray<ON_Curve *> face1_curves, face2_curves;
 		for (int k = 0; k < events.Count(); k++) {
 		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent ||
 			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
@@ -1907,11 +1907,14 @@ get_face_intersection_curves(
 			c2.m_curve = events[k].m_curveB;
 			curves_array[i].Append(c1);
 			curves_array[face_count1 + j].Append(c2);
+			face1_curves.Append(events[k].m_curveA);
+			face2_curves.Append(events[k].m_curveB);
 			// Set m_curveA and m_curveB to NULL, in case that they are
 			// deleted by ~ON_SSX_EVENT().
 			events[k].m_curveA = events[k].m_curveB = NULL;
 		    }
 		}
+		dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
 
 		if (DEBUG_BREP_BOOLEAN) {
 		    // Look for coplanar faces

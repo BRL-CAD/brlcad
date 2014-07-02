@@ -129,8 +129,9 @@ DebugPlot::WriteLog()
 	if (ssx_isocsx_events.size() > i) {
 	    intersecting_isocurves = (int)ssx_isocsx_events[i].size();
 	}
-	// b1si b2si finalevents b1_isocurve_xs total_isocurve_xs isocsx0_event0 ...
-	fprintf(fp, "ssx %d %d %d %d %d", pair.first, pair.second,
+	// b1si b2si finalevents b1ccurves b2ccurves b1_isocurve_xs total_isocurve_xs isocsx0_event0 ...
+	fprintf(fp, "ssx %d %d %d %d %d %d %d", pair.first, pair.second,
+		ssx_clipped_curves[i].first, ssx_clipped_curves[i].second,
 		ssx_events[i], b1_isocurves, intersecting_isocurves);
 
 	if (ssx_isocsx_events.size() > i) {
@@ -581,6 +582,35 @@ DebugPlot::IsoCSX(
 	    ++ssx_isocsx_brep1_curves[ssx_idx];
 	}
     }
+}
+
+void
+DebugPlot::ClippedFaceCurves(
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    const ON_SimpleArray<ON_Curve *> &face1_curves,
+    const ON_SimpleArray<ON_Curve *> &face2_curves)
+{
+    // plot clipped tangent/transverse/overlap curves
+    size_t ssx_idx = intersecting_surfaces.size() - 1;
+    for (int i = 0; i < face1_curves.Count(); ++i) {
+	std::ostringstream filename;
+	filename << prefix << "_ssx" << ssx_idx << "_brep1face_clipped_curve" << i << ".plot3";
+	Plot3DCurveFrom2D(surf1, face1_curves[i], filename.str().c_str(),
+		surface1_highlight_color);
+    }
+    for (int i = 0; i < face2_curves.Count(); ++i) {
+	std::ostringstream filename;
+	filename << prefix << "_ssx" << ssx_idx << "_brep2face_clipped_curve" << i << ".plot3";
+	Plot3DCurveFrom2D(surf2, face2_curves[i], filename.str().c_str(),
+		surface2_highlight_color);
+    }
+
+    while (ssx_clipped_curves.size() < (ssx_idx + 1)) {
+	ssx_clipped_curves.push_back(std::pair<int, int>(0, 0));
+    }
+    std::pair<int, int> counts(face1_curves.Count(), face2_curves.Count());
+    ssx_clipped_curves[ssx_idx] = counts;
 }
 
 // Local Variables:

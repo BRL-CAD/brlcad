@@ -52,6 +52,13 @@ public:
 	const ON_Curve *isocurve,
 	bool is_brep1_iso);
 
+    // record clipped surface-surface intersection curves
+    void ClippedFaceCurves(
+	const ON_Surface *surf1,
+	const ON_Surface *surf2,
+	const ON_SimpleArray<ON_Curve *> &face1_curves,
+	const ON_SimpleArray<ON_Curve *> &face2_curves);
+
     // write out the log file that the dplot command references to
     // navigate the generated plot files
     void WriteLog();
@@ -73,6 +80,7 @@ private:
     std::vector<int> ssx_events; // num final events of each ssx
     std::vector< std::vector<int> > ssx_isocsx_events; // num events for each isocsx of each ssx
     std::vector<int> ssx_isocsx_brep1_curves; // num ssx isocsx events using brep1 isocurves
+    std::vector< std::pair<int, int> > ssx_clipped_curves; // num clipped intersection curves
 
     void PlotSurface(
 	const ON_Surface &surf,
