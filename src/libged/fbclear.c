@@ -72,6 +72,8 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
+	clearColor = (unsigned char *)bu_calloc(4, sizeof(unsigned char), "alloc clearColor array");
+
 	clearColor[RED] = FB_CONSTRAIN(r, 0, 255);
 	clearColor[GRN] = FB_CONSTRAIN(g, 0, 255);
 	clearColor[BLU] = FB_CONSTRAIN(b, 0, 255);
@@ -81,6 +83,8 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = fb_clear(gedp->ged_fbsp->fbs_fbp, clearColor);
+
+    bu_free(clearColor, "free clearColor");
 
     if (ret == BRLCAD_OK)
 	return GED_OK;
