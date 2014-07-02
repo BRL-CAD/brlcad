@@ -41,8 +41,6 @@
 #include "fb.h"
 #include "ged.h"
 
-static char usage[] = "\
-Usage: fbclear [rgb]";
 
 #define FB_CONSTRAIN(_v, _a, _b) \
     (((_v) > (_a)) ? ((_v) < (_b) ? (_v) : (_b)) : (_a))
@@ -50,8 +48,10 @@ Usage: fbclear [rgb]";
 int
 ged_fbclear(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char usage[] = "\nUsage: fbclear [rgb]";
+
     int ret;
-    unsigned char *clearColor;
+    unsigned char clearColor[3] = {0.0, 0.0 ,0.0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_FBSERV(gedp, GED_ERROR);
@@ -61,35 +61,29 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	clearColor = PIXEL_NULL;
-    } else if (argc == 2) {
+    if (argc == 2) {
 	int r, g, b;
 
 	if (sscanf(argv[1], "%d %d %d", &r, &g, &b) != 3) {
 	    bu_log("fb_clear: bad color spec - %s", argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
-
-	clearColor = (unsigned char *)bu_calloc(4, sizeof(unsigned char), "alloc clearColor array");
 
 	clearColor[RED] = FB_CONSTRAIN(r, 0, 255);
 	clearColor[GRN] = FB_CONSTRAIN(g, 0, 255);
 	clearColor[BLU] = FB_CONSTRAIN(b, 0, 255);
-    } else {
+
+    } else if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     ret = fb_clear(gedp->ged_fbsp->fbs_fbp, clearColor);
 
-    bu_free(clearColor, "free clearColor");
+    if (ret)
+	return GED_ERROR;
 
-    if (ret == BRLCAD_OK)
-	return GED_OK;
-
-    return GED_ERROR;
+    return GED_OK;
 }
 
 
