@@ -3,34 +3,34 @@
 
 - more complexity
   . Right now we strip out trailing white space and new lines after a comment
-    block. This can be a problem when the comment block was not preceeded by 
+    block. This can be a problem when the comment block was not preceded by
     a new line.
   . The solution is to use trailing contexts.
 
 -  trailing contexts
-  . Re2c allows to check for a portion of input and only recognize it when it 
+  . Re2c allows to check for a portion of input and only recognize it when it
     is followed by another portion. This is called a trailing context.
   . The trailing context is not part of the identified input. That means that
     it follows exactly at the cursor. A consequence is that the scanner has
-    already read more input and on the next run you need to restore begining
-    of input, in our case s.tok, from the cursor, here s.cur, rather then 
+    already read more input and on the next run you need to restore beginning
+    of input, in our case s.tok, from the cursor, here s.cur, rather then
     restoring to the beginning of the buffer. This way the scanner can reuse
     the portion it has already read.
   . The position of the trailing context is stored in YYCTXMARKER for which
     a pointer variable needs to be provided.
-  . As with YYMARKER the corrsponding variable needs to be corrected if we 
+  . As with YYMARKER the corresponding variable needs to be corrected if we
     shift in some buffer.
   . Still this is not all we need to solve the problem. What is left is that
-    the information whether we detected a trailing context was detected has to 
+    the information whether we detected a trailing context was detected has to
     be stored somewhere. This is done by the new variable nlcomment.
 
 - formatting
-  . Until now we only used single line expression code and we always had the 
+  . Until now we only used single line expression code and we always had the
     opening { on the same line as the rule itself. If we have multiline rule
-    code and care for formatting we can no longer rely on re2c. Now we have 
-    to indent the rule code ourself. Also we need to take care of the opening
-    {. If we keep it on the same line as the rule then re2c will indent it 
-    correctly and the emitted #line informations will be correct. If we place
+    code and care for formatting we can no longer rely on re2c. Now we have
+    to indent the rule code ourselves. Also we need to take care of the opening
+    {. If we keep it on the same line as the rule then re2c will indent it
+    correctly and the emitted #line information will be correct. If we place
     it on the next line then the #line directive will also point to that line
     and not to the rule.
 */
@@ -111,7 +111,7 @@ int scan(FILE *fp)
 	}
 
     s.fp = fp;
-	
+
 	fill(&s, 0);
 
 	for(;;)
@@ -119,7 +119,7 @@ int scan(FILE *fp)
 		s.tok = s.cur;
 /*!re2c
 	re2c:indent:top = 2;
-	
+
 	NL			= "\r"? "\n" ;
 	WS			= [\r\n\t ] ;
 	ANY			= [^] ;

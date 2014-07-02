@@ -2,26 +2,26 @@
 /*!ignore:re2c
 
 - complexity
-  . When a comment is preceeded by a new line and followed by whitespace and a 
+  . When a comment is preceded by a new line and followed by whitespace and a
     new line then we can drop the trailing whitespace and new line.
-  . Additional to what we strip out already what about two consequtive comment 
-    blocks? When two comments are only separated by whitespace we want to drop 
-    both. In other words when detecting the end of a comment block we need to 
+  . Additional to what we strip out already what about two consecutive comment
+    blocks? When two comments are only separated by whitespace we want to drop
+    both. In other words when detecting the end of a comment block we need to
     check whether it is followed by only whitespace and the a new comment in
-    which case we continure ignoring the input. If it is followed only by white
+    which case we continue ignoring the input. If it is followed only by white
     space and a new line we strip out the new white space and new line. In any
     other case we start outputting all that follows.
     But we cannot simply use the following two rules:
 	  "*" "/" WS* "/" "*" { continue; }
 	  "*" "/" WS* NL      { continue; }
-	The main problem is that WS* can get bigger then our buffer, so we need a 
+	The main problem is that WS* can get bigger then our buffer, so we need a
 	new scanner.
-  . Meanwhile our scanner gets a bit more complex and we have to add two more 
-    things. First the scanner code now uses a YYMARKER to store backtracking 
+  . Meanwhile our scanner gets a bit more complex and we have to add two more
+    things. First the scanner code now uses a YYMARKER to store backtracking
     information.
 
 - backtracking information
-  . When the scanner has two rules that can have the same beginning but a 
+  . When the scanner has two rules that can have the same beginning but a
     different ending then it needs to store the position that identifies the
     common part. This is called backtracking. As mentioned above re2c expects
     you to provide compiler define YYMARKER and a pointer variable.
@@ -103,7 +103,7 @@ int scan(FILE *fp)
 	}
 
     s.fp = fp;
-	
+
 	fill(&s, 0);
 
 	for(;;)
@@ -111,7 +111,7 @@ int scan(FILE *fp)
 		s.tok = s.cur;
 /*!re2c
 	re2c:indent:top = 2;
-	
+
 	NL			= "\r"? "\n" ;
 	WS			= [\r\n\t ] ;
 	ANY			= [^] ;
