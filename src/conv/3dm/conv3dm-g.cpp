@@ -52,7 +52,6 @@ namespace
 
 
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
-static const std::string DEFAULT_LAYER_NAME = "Default";
 static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
@@ -96,10 +95,13 @@ w2string(const ON_wString &source)
 
 
 
-static inline bool
+static bool
 is_toplevel(const ON_Layer &layer)
 {
-    return UUIDstr(layer.m_parent_layer_id) == ROOT_UUID;
+    const std::string layer_uuid = UUIDstr(layer.m_layer_id);
+    const std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
+
+    return (parent_uuid == ROOT_UUID) && (layer_uuid != ROOT_UUID);
 }
 
 
@@ -443,6 +445,10 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     nest_all_layers();
     create_all_layers();
 
+    // create toplevel layer
+    ON_Layer root_layer;
+    create_layer(root_layer);
+
     m_model->Destroy();
 
     m_log->Print("Done.\n");
@@ -455,7 +461,7 @@ void
 RhinoConverter::clean_model()
 {
     if (!m_model->IsValid(m_log.get())) {
-	m_log->Print("Model is NOT valid. Attempting repairs.\n");
+	m_log->Print("WARNING: Model is NOT valid. Attempting repairs.\n");
 
 	m_model->Polish(); // fill in defaults
 
@@ -463,14 +469,14 @@ RhinoConverter::clean_model()
 	ON_SimpleArray<int> warnings;
 	m_model->Audit(true, &repair_count, m_log.get(), &warnings); // repair
 
-	m_log->Print("%d objects were repaired.\n", repair_count);
+	m_log->Print("Repaired %d objects.\n", repair_count);
 	for (int warn_i = 0; warn_i < warnings.Count(); ++warn_i)
 	    m_log->Print("%s\n", warnings[warn_i]);
 
 	if (m_model->IsValid(m_log.get()))
 	    m_log->Print("Repair successful, model is now valid.\n");
 	else
-	    m_log->Print("Repair unsuccessful, model is still NOT valid.\n");
+	    m_log->Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
     }
 }
 
@@ -555,14 +561,10 @@ RhinoConverter::create_all_bitmaps()
 
     for (int i = 0; i < m_model->m_bitmap_table.Count(); ++i) {
 	const ON_Bitmap *bitmap = m_model->m_bitmap_table[i];
+	const std::string bitmap_uuid = gen_bitmap_id(i);
+	const std::string &bitmap_name = m_obj_map.at(bitmap_uuid).m_name;
 
-	if (m_verbose_mode) {
-	    const std::string bitmap_uuid = gen_bitmap_id(i);
-	    const std::string &bitmap_name = m_obj_map.at(bitmap_uuid).m_name;
-
-	    m_log->Print("Creating bitmap '%s'\n", bitmap_name.c_str());
-	}
-
+	m_log->Print("Creating bitmap '%s'\n", bitmap_name.c_str());
 	create_bitmap(bitmap);
     }
 }
@@ -625,14 +627,10 @@ RhinoConverter::create_all_layers()
 
     for (int i = 0; i < m_model->m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model->m_layer_table[i];
+	const std::string &layer_name =
+	    m_obj_map.at(UUIDstr(layer.m_layer_id)).m_name;
 
-	if (m_verbose_mode) {
-	    const std::string &layer_name =
-		m_obj_map.at(UUIDstr(layer.m_layer_id)).m_name;
-
-	    m_log->Print("Creating layer '%s'\n", layer_name.c_str());
-	}
-
+	m_log->Print("Creating layer '%s'\n", layer_name.c_str());
 	create_layer(layer);
     }
 }
@@ -644,17 +642,13 @@ void
 RhinoConverter::create_layer(const ON_Layer &layer)
 {
     const std::string layer_uuid = UUIDstr(layer.m_layer_id);
+    const std::string &layer_name = m_obj_map.at(layer_uuid).m_name;
     const std::vector<std::string> &child_vec = m_obj_map.at(layer_uuid).m_children;
     const bool is_region = !m_random_colors && is_toplevel(layer);
     const bool do_inherit = false;
     const std::pair<std::string, std::string> shader =
 	get_shader(layer.m_material_index);
 
-
-    std::string layer_name = m_obj_map.at(layer_uuid).m_name;
-    if (layer_name == DEFAULT_LAYER_NAME + ".c"
-	|| layer_name == DEFAULT_LAYER_NAME + ".r")
-	layer_name = m_obj_map.at(ROOT_UUID).m_name;
 
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -673,9 +667,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	color = layer.m_color;
 
     if (color == Color(0, 0, 0)) {
-	if (m_verbose_mode)
-	    m_log->Print("Object has no color; setting color to red\n");
-
+	m_log->Print("Object has no color; setting color to red\n");
 	color = Color(255, 0, 0);
     }
 
@@ -695,15 +687,11 @@ RhinoConverter::create_all_idefs()
 
     for (int i = 0; i < m_model->m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model->m_idef_table[i];
+	const std::string &idef_name =
+	    m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
 
-	if (m_verbose_mode) {
-	    const std::string &idef_name =
-		m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
-
-	    m_log->Print("Creating instance definition '%s'\n",
-			 idef_name.c_str());
-	}
-
+	m_log->Print("Creating instance definition '%s'\n",
+		     idef_name.c_str());
 	create_idef(idef);
     }
 }
@@ -719,14 +707,8 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 
     for (int i = 0; i < idef.m_object_uuid.Count(); ++i) {
 	const std::string member_uuid = UUIDstr(idef.m_object_uuid[i]);
+	const std::string &member_name = m_obj_map.at(member_uuid).m_name;
 
-	const int geom_index = m_model->ObjectIndex(idef.m_object_uuid[i]);
-	if (geom_index == -1) {
-	    m_log->Print("referenced uuid=%s does not exist\n", member_uuid.c_str());
-	    continue;
-	}
-
-	std::string &member_name = m_obj_map.at(member_uuid).m_name;
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
 	m_obj_map.at(member_uuid).is_in_idef = true;
     }
@@ -800,9 +782,7 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 
 
     if (color == Color(0, 0, 0)) {
-	if (m_verbose_mode)
-	    m_log->Print("Object has no color; setting color to red\n");
-
+	m_log->Print("Object has no color; setting color to red\n");
 	return Color(255, 0, 0);
     } else
 	return color;
@@ -875,7 +855,7 @@ RhinoConverter::create_all_geometry()
 	if (pGeometry)
 	    create_geometry(pGeometry, obj_attrs);
 	else
-	    m_log->Print("WARNING: Skipping non-Geometry entity: %s\n", obj_name.c_str());
+	    m_log->Print("WARNING: Skipping non-Geometry entity '%s'\n", obj_name.c_str());
     }
 }
 
