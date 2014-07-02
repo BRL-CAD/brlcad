@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>pix-fb</command>
-    <arg choice="opt" rep="norepeat">-ahicz1 </arg>
+    <arg choice="opt" rep="norepeat">-aicz1 </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-m <replaceable>#lines</replaceable></arg>
     <arg choice="opt" rep="norepeat">-s <replaceable>squarefilesize</replaceable></arg>
@@ -35,11 +35,11 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Pix-fb</emphasis>
+<para><command>pix-fb</command>
 reads a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file from the named file, or from
-standard in if no file is specified, and displays the
+standard input if no file is specified, and displays the
 image on the currently selected framebuffer.
 The environment variable FB_FILE specifies
 the current framebuffer, see
@@ -57,10 +57,7 @@ Specifying the
 flag causes the program to attempt to autosize.
 A table of common image sizes is consulted, and if any match
 the size of the input file, then the width and height values
-associated with that size will be used.
-Specifying the
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
+associated with that size will be used.</para>
 
 <para>If the
 <option>-i</option>
@@ -85,26 +82,26 @@ screens (such as the SGI 3D machines) may find this option of limited
 usefulness.</para>
 
 <para>The
-<option>-w </option><replaceable>file_width</replaceable>
+<option>-w </option><replaceable>file_width</replaceable>
 flag specifies the width of each scanline in the input file, in pixels.
-<option>-W </option><replaceable>scr_width</replaceable>
+<option>-W </option><replaceable>scr_width</replaceable>
 does the same for the display device.</para>
 
 <para>The
-<option>-n </option><replaceable>file_height</replaceable>
+<option>-n </option><replaceable>file_height</replaceable>
 and
-<option>-N </option><replaceable>scr_height</replaceable>
+<option>-N </option><replaceable>scr_height</replaceable>
 flags specifies the height in scanlines of the input file or display device
 respectively.</para>
 
-<para><option>-s </option><replaceable>squarefilesize</replaceable>
+<para><option>-s </option><replaceable>squarefilesize</replaceable>
 and
-<option>-S </option><replaceable>squarescrsize</replaceable>
+<option>-S </option><replaceable>squarescrsize</replaceable>
 set both the height and width to the size given.</para>
 
-<para><option>-x </option><replaceable>file_xoff </replaceable><option>-y </option><replaceable>file_yoff</replaceable>
+<para><option>-x </option><replaceable>file_xoff</replaceable> <option>-y </option><replaceable>file_yoff</replaceable>
 and
-<option>-X </option><replaceable>scr_xoff </replaceable><option>-Y </option><replaceable>scr_yoff</replaceable>
+<option>-X </option><replaceable>scr_xoff</replaceable> <option>-Y </option><replaceable>scr_yoff</replaceable>
 will offset into the file or onto the screen by the given amounts.
 The coordinate system for these offsets is first quadrant, with
 the origin at the lower left corner of the image.</para>
@@ -116,7 +113,7 @@ a time, using the
 <citerefentry><refentrytitle>fb_write</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 routine.  This is the default behavior.
 The
-<option>-m </option><replaceable>#lines</replaceable>
+<option>-m </option><replaceable>#lines</replaceable>
 flag can be used to specify the number of lines to be written to the
 framebuffer in rectangular blocks of scanlines, using the
 <citerefentry><refentrytitle>fb_writerect</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -143,7 +140,7 @@ The first pixel in a
 file is the lower left corner of the image.
 The pixels proceed from left-to-right across each scanline,
 with scanlines being written from the bottom to the top of the image.
-By convention
+By convention,
 <emphasis remap="I">pix</emphasis>
 images are usually square.</para>
 </refsection>

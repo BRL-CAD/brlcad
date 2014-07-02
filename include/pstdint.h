@@ -662,7 +662,7 @@ typedef uint_least32_t uint_fast32_t;
  *  (u)intptr_t types and limits.
  */
 
-#if defined (_MSC_VER) && defined (_UINTPTR_T_DEFINED)
+#if defined (_MSC_VER) && (_MSC_VER >= 1600) && defined (_UINTPTR_T_DEFINED)
 # define STDINT_H_UINTPTR_T_DEFINED
 #endif
 
@@ -708,8 +708,12 @@ typedef uint_least32_t uint_fast32_t;
 #  ifndef UINTPTR_C
 #    define UINTPTR_C(x)                stdint_intptr_glue3(UINT,stdint_intptr_bits,_C)(x)
 #  endif
-  typedef stdint_intptr_glue3(uint,stdint_intptr_bits,_t) uintptr_t;
-  typedef stdint_intptr_glue3( int,stdint_intptr_bits,_t)  intptr_t;
+#  ifndef _UINTPTR_T_DEFINED
+     typedef stdint_intptr_glue3(uint,stdint_intptr_bits,_t) uintptr_t;
+#  endif
+#  ifndef _INTPTR_T_DEFINED
+     typedef stdint_intptr_glue3( int,stdint_intptr_bits,_t)  intptr_t;
+#  endif
 # else
 /* TODO -- This following is likely wrong for some platforms, and does
    nothing for the definition of uintptr_t. */

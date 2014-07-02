@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef VFONT_VFONT_H
-#define VFONT_VFONT_H
+#ifndef LIBBU_VFONT_H
+#define LIBBU_VFONT_H
 
 #include "common.h"
 
@@ -86,7 +86,7 @@ struct vfont_file
 get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...));
 
 
-#endif /* VFONT_VFONT_H */
+#endif /* LIBBU_VFONT_H */
 
 /*
  * Local Variables:
