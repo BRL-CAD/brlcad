@@ -906,17 +906,17 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s logfile cmd\n",
 		argv[0]);
-	bu_vls_printf(gedp->ged_result_str, "\twhere cmd is one of:\n");
-	bu_vls_printf(gedp->ged_result_str, "\tssx\t(show intersecting "
-		"surface pairs)\n");
-	bu_vls_printf(gedp->ged_result_str, "\tssx N\t(show intersections of "
-		"ssx pair N)\n");
-	bu_vls_printf(gedp->ged_result_str, "\tisocsx N\t(show intersecting "
-		"isocurve-surface pairs of ssx pair N)\n");
-	bu_vls_printf(gedp->ged_result_str, "\tisocsx N M\t(show "
-		"intersections of ssx pair N, isocsx pair M\n");
-	bu_vls_printf(gedp->ged_result_str, "\tfcurves N\t(show clipped face"
-		" curves of ssx pair N\n");
+	bu_vls_printf(gedp->ged_result_str, "  where cmd is one of:\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"      ssx     (show intersecting surface pairs)\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"      ssx N   (show intersections of ssx pair N)\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"   isocsx N   (show intersecting isocurve-surface pairs of ssx pair N)\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"   isocsx N M (show intersections of ssx pair N, isocsx pair M)\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"  fcurves N   (show clipped face curves of ssx pair N\n");
 	return GED_HELP;
     }
     filename = argv[1];
