@@ -828,10 +828,38 @@ RhinoConverter::create_brep(const ON_Brep &brep,
 	m_log->Print("Creating BREP '%s'\n", brep_name.c_str());
 
     mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
-    const std::string parent_uuid =
-	UUIDstr(m_model->m_layer_table[brep_attrs.m_layer_index].m_layer_id);
 
-    m_obj_map.at(parent_uuid).m_children.push_back(brep_uuid);
+
+    const ON_Layer &parent_layer =
+	m_model->m_layer_table[brep_attrs.m_layer_index];
+
+    const std::string parent_uuid = UUIDstr(parent_layer.m_layer_id);
+
+    if (!m_obj_map.at(brep_uuid).is_in_idef && is_toplevel(parent_layer)) {
+	// stand-alone geometry at high levels of the hierarchy
+	// so create material information for it
+
+	if (m_verbose_mode)
+	    m_log->Print("Creating comb for high-level geometry\n");
+
+	const std::string comb_name = brep_name + ".c";
+	const std::string &comb_uuid = brep_name;
+	const std::pair<std::string, std::string> shader
+	    = get_shader(brep_attrs.m_material_index);
+
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	mk_addmember(brep_name.c_str(), &members.l, NULL, WMOP_UNION);
+
+	mk_comb(m_db, comb_name.c_str(), &members.l, false,
+		shader.first.c_str(), shader.second.c_str(),
+		get_color(brep_attrs).get_rgb(),
+		0, 0, 0, 0, false, false, false);
+
+	m_obj_map[comb_uuid].m_name = comb_name;
+	m_obj_map.at(parent_uuid).m_children.push_back(comb_uuid);
+    } else
+	m_obj_map.at(parent_uuid).m_children.push_back(brep_uuid);
 }
 
 
