@@ -218,8 +218,8 @@ main(int argc, char **argv)
 {
     int c;
     int x, y;
-    int vx1, vx2, vx3;		/* x zone widths */
-    int vy1, vy2, vy3;		/* y zone widths */
+    int x1, x2, x3;		/* x zone widths */
+    int y1, y2, y3;		/* y zone widths */
     int first_x;		/* x: first pixel to be output in pix[] */
     int first_y;		/* y: first pixel to be output in pix[] */
     size_t ret;
@@ -271,65 +271,65 @@ main(int argc, char **argv)
 
     /*
      * There are potentially 9 regions in the output file, only one
-     * will contain actual image.  vx1 is the width of the left border
-     * for each scanline, vx2 is the width of the image area,
-     * with the first pixel being first_x, and vx3 being the width
+     * will contain actual image.  x1 is the width of the left border
+     * for each scanline, x2 is the width of the image area,
+     * with the first pixel being first_x, and x3 being the width
      * of the right border.
      * Computations in y are similar.
      */
     first_y = file_yoff;		/* always >= 0 */
-    vy1 = scr_yoff;
-    if (vy1 < 0) {
-	vy1 = 0;
+    y1 = scr_yoff;
+    if (y1 < 0) {
+	y1 = 0;
 	first_y += -scr_yoff;
     }
-    vy2 = file_height - first_y;
-    if (vy1 + vy2 > scr_height)
-	vy2 = scr_height - vy1;
+    y2 = file_height - first_y;
+    if (y1 + y2 > scr_height)
+	y2 = scr_height - y1;
     if (first_y >= file_height)
-	vy2 = 0;
-    vy3 = scr_height - vy1 - vy2;
+	y2 = 0;
+    y3 = scr_height - y1 - y2;
 
     first_x = file_xoff;
-    vx1 = scr_xoff;
-    if (vx1 < 0) {
-	vx1 = 0;
+    x1 = scr_xoff;
+    if (x1 < 0) {
+	x1 = 0;
 	first_x += -scr_xoff;
     }
-    vx2 = file_width - first_x;
-    if (vx1 + vx2 > scr_width)
-	vx2 = scr_width - vx1;
+    x2 = file_width - first_x;
+    if (x1 + x2 > scr_width)
+	x2 = scr_width - x1;
     if (first_x >= file_width)
-	vx2 = 0;
-    vx3 = scr_width - vx1 - vx2;
+	x2 = 0;
+    x3 = scr_width - x1 - x2;
 
     if (bwflag) {
-	for (y = 0; y < vy1; y++) {
+	for (y = 0; y < y1; y++) {
 	    ret = fwrite(black, scr_width, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < vy2; y++) {
-	    ret = fwrite(black, vx1, 1, stdout);
+	for (y = 0; y < y2; y++) {
+	    ret = fwrite(black, x1, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
-	    ret = fwrite(&pix[(file_width*(y+first_y))+first_x], vx2, 1, stdout);
+	    ret = fwrite(&pix[(file_width*(y+first_y))+first_x], x2, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 
-	    ret = fwrite(black, vx3, 1, stdout);
+	    ret = fwrite(black, x3, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < vy3; y++) {
+	for (y = 0; y < y3; y++) {
 	    ret = fwrite(black, scr_width, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
@@ -337,23 +337,23 @@ main(int argc, char **argv)
 	    }
 	}
     } else {
-	for (y = 0; y < vy1; y++) {
+	for (y = 0; y < y1; y++) {
 	    ret = fwrite(black, scr_width, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < vy2; y++) {
+	for (y = 0; y < y2; y++) {
 	    unsigned char *cp;
 
-	    ret = fwrite(black, vx1, 3, stdout);
+	    ret = fwrite(black, x1, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	    cp = &pix[(file_width*(y+first_y))+first_x];
-	    for (x = 0; x < vx2; x++) {
+	    for (x = 0; x < x2; x++) {
 		if (*cp++)
 		    ret = fwrite(color, 3, 1, stdout);
 		else
@@ -364,13 +364,13 @@ main(int argc, char **argv)
 		    break;
 		}
 	    }
-	    ret = fwrite(black, vx3, 3, stdout);
+	    ret = fwrite(black, x3, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < vy3; y++) {
+	for (y = 0; y < y3; y++) {
 	    ret = fwrite(black, scr_width, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");

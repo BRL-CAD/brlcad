@@ -104,7 +104,7 @@ fill_buffer(int y)
 int
 main(int argc, char **argv)
 {
-    float m_x1, m_y1, x2, y2, x, y;
+    float x1, y1, x2, y2, x, y;
     size_t row, col;
     ssize_t yindex;
     char value;
@@ -256,16 +256,16 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
-	m_x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	m_y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
 	/* calculate right point of row */
 	x2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
 	y2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
 
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
-	    x = ((x2-m_x1)/(fastf_t)(xnum-1)) * (fastf_t)col + m_x1;
-	    y = ((y2-m_y1)/(fastf_t)(xnum-1)) * (fastf_t)col + m_y1;
+	    x = ((x2-x1)/(fastf_t)(xnum-1)) * (fastf_t)col + x1;
+	    y = ((y2-y1)/(fastf_t)(xnum-1)) * (fastf_t)col + y1;
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;

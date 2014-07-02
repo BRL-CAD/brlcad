@@ -94,12 +94,12 @@ static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
 
 
 bu_heap_func_t
-bu_heap_log(bu_heap_func_t hlog)
+bu_heap_log(bu_heap_func_t log)
 {
     static bu_heap_func_t heap_log = (bu_heap_func_t)&bu_log;
 
-    if (hlog)
-	heap_log = hlog;
+    if (log)
+	heap_log = log;
 
     return heap_log;
 }
@@ -117,7 +117,7 @@ heap_print(void)
     size_t total_pages = 0;
     size_t ncpu = bu_avail_cpus();
 
-    bu_heap_func_t hlog = bu_heap_log(NULL);
+    bu_heap_func_t log = bu_heap_log(NULL);
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -128,7 +128,7 @@ heap_print(void)
 	return;
     }
 
-    hlog("=======================\n"
+    log("=======================\n"
 	"Memory Heap Information\n"
 	"-----------------------\n", NULL);
 
@@ -142,7 +142,7 @@ heap_print(void)
 		/* last page is partial */
 		got -= (HEAP_PAGESIZE - per_cpu[h].heap[i].given)/(i+1);
 		bu_vls_sprintf(&str, "%04zu [%02zu] => %zu\n", i, per_cpu[h].heap[i].count, got);
-		hlog(bu_vls_addr(&str), NULL);
+		log(bu_vls_addr(&str), NULL);
 		allocs += got;
 	    }
 	    total_pages += per_cpu[h].heap[i].count;
@@ -162,7 +162,7 @@ heap_print(void)
 		   (double)(total_pages * HEAP_PAGESIZE) / (1024.0*1024.0),
 		   allocs,
 		   misses);
-    hlog(bu_vls_addr(&str), NULL);
+    log(bu_vls_addr(&str), NULL);
     bu_vls_free(&str);
 }
 

@@ -175,7 +175,7 @@ main(int argc, char **argv)
     int bit_depth;
     int color_type;
     png_color_16p input_backgrd;
-    double png_gamma=1.0;
+    double gamma=1.0;
     int file_width, file_height;
     unsigned char *image;
 
@@ -259,12 +259,12 @@ main(int argc, char **argv)
     } else
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
 
-    if (!png_get_gAMA(png_p, info_p, &png_gamma))
-	png_gamma = 0.5;
-    png_set_gamma(png_p, def_screen_gamma, png_gamma);
+    if (!png_get_gAMA(png_p, info_p, &gamma))
+	gamma = 0.5;
+    png_set_gamma(png_p, def_screen_gamma, gamma);
     if (verbose)
 	bu_log("file gamma: %f, additional screen gamma: %f\n",
-	       png_gamma, def_screen_gamma);
+	       gamma, def_screen_gamma);
 
     if (verbose) {
 	if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)
