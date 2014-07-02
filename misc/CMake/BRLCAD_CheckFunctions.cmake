@@ -36,6 +36,7 @@
 # Automate putting variables from tests into a config.h.in file,
 # and otherwise wrap check macros in extra logic as needed
 
+include(CMakeParseArguments)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -51,13 +52,87 @@ include(CheckCInline)
 # HAVE_* define to config header.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function var)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
-  CHECK_FUNCTION_EXISTS(${function} ${var})
-  if(CONFIG_H_FILE AND ${var})
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
-  endif(CONFIG_H_FILE AND ${var})
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
+  if("${var}" MATCHES "^${var}$")
+    set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS "")
+    if(${ARGC} GREATER 2)
+      # Parse extra arguments
+      CMAKE_PARSE_ARGUMENTS(${var} "" "" "COMPILE_TEST_SRCS;REQUIRED_LIBS;REQUIRED_DEFS;REQUIRED_FLAGS;REQUIRED_DIRS" ${ARGN})
+      if(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
+	set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+	set(CMAKE_REQUIRED_LIBRARIES ${${var}_REQUIRED_LIBS})
+      endif(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
+
+      if(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
+	set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
+	set(CMAKE_REQUIRED_FLAGS ${${var}_REQUIRED_FLAGS})
+      endif(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
+
+      if(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
+	set(CMAKE_REQUIRED_INCLUDES_BAK ${CMAKE_REQUIRED_INCLUDES})
+	set(CMAKE_REQUIRED_INCLUDES ${${var}_REQUIRED_DIRS})
+      endif(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
+
+      if(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
+	set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
+	set(CMAKE_REQUIRED_DEFINITIONS ${${var}_REQUIRED_DEFS})
+      endif(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
+    endif(${ARGC} GREATER 2)
+
+    CHECK_FUNCTION_EXISTS(${function} ${var}_EXISTS)
+
+    # Restore required vars - this is done before any possible compilation tests,
+    # since the presumption is that the function must succeed in the parent
+    # compilation environment, not just in isolated testing.  (In particular,
+    # if -Werror is active that needs to be a failure.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
+
+    if(${var}_EXISTS) 
+      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	set(${var}_COMPILE 1)
+	foreach(test_src ${${var}_COMPILE_TEST_SRCS})
+	  check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	  if(NOT ${var}_${test_src}_COMPILE)
+	    set(${var}_COMPILE 0)
+	  endif(NOT ${var}_${test_src}_COMPILE)
+	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
+	if(${var}_COMPILE)
+	  CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
+	  set(${var} 1 CACHE INTERNAL "Have function ${function}")
+	else(${var}_COMPILE)
+	  set(${var} "" CACHE INTERNAL "Function ${function} found but did not build.")
+	endif(${var}_COMPILE)
+      else(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	set(${var} 1 CACHE INTERNAL "Have function ${function}")
+      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+    else(${var}_EXISTS) 
+      set(${var} "" CACHE INTERNAL "Have function ${function}")
+    endif(${var}_EXISTS) 
+
+    if(CONFIG_H_FILE AND ${var})
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
+    endif(CONFIG_H_FILE AND ${var})
+
+    if(${ARGC} GREATER 2)
+      if (${${var}_REQUIRED_LIBS})
+	set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+      endif (${${var}_REQUIRED_LIBS})
+
+      if (${${var}_REQUIRED_FLAGS})
+	set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
+      endif (${${var}_REQUIRED_FLAGS})
+
+      if (${${var}_REQUIRED_INCLUDES})
+	set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BAK})
+      endif (${${var}_REQUIRED_INCLUDES})
+    endif(${ARGC} GREATER 2)
+
+    # We used this variable for CHECK_FUNCTION_EXISTS to allow
+    # the additional specific src compile test as an option - ${var}
+    # is where the final result is cached.
+    unset(${var}_EXISTS CACHE)
+
+  endif("${var}" MATCHES "^${var}$")
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
 
