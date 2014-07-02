@@ -130,6 +130,25 @@ basename(const std::string &path)
 
 
 
+std::string
+unique_name(std::map<std::string, int> &count_map,
+	    const std::string &prefix,
+	    const std::string &suffix)
+{
+    std::string name = prefix + suffix;
+    int count = count_map[name]++;
+
+    if (count) {
+	std::ostringstream ss;
+	ss << prefix << count << suffix;
+	return ss.str();
+    } else
+	return name;
+}
+
+
+
+
 static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
@@ -461,6 +480,8 @@ RhinoConverter::clean_model()
 void
 RhinoConverter::map_uuid_names()
 {
+    std::map<std::string, int> count_map;
+
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
 	const ON_Object *object = m_model->m_object_table[i].m_object;
 	const ON_3dmObjectAttributes &myAttributes =
@@ -472,10 +493,10 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = unique_name(obj_uuid, suffix);
+	    m_obj_map[obj_uuid].m_name = unique_name(count_map, obj_uuid, suffix);
 	else
 	    m_obj_map[obj_uuid].m_name =
-		unique_name(CleanName(myAttributes.m_name), suffix);
+		unique_name(count_map, CleanName(myAttributes.m_name), suffix);
 
     }
 
@@ -485,10 +506,10 @@ RhinoConverter::map_uuid_names()
 	const std::string idef_uuid = UUIDstr(idef.m_uuid);
 
 	if (m_use_uuidnames)
-	    m_obj_map[idef_uuid].m_name = unique_name(idef_uuid, ".c");
+	    m_obj_map[idef_uuid].m_name = unique_name(count_map, idef_uuid, ".c");
 	else
 	    m_obj_map[idef_uuid].m_name =
-		unique_name(CleanName(idef.Name()), ".c");
+		unique_name(count_map, CleanName(idef.Name()), ".c");
     }
 
 
@@ -501,10 +522,10 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".r";
 
 	if (m_use_uuidnames)
-	    m_obj_map[layer_uuid].m_name = unique_name(layer_uuid, suffix);
+	    m_obj_map[layer_uuid].m_name = unique_name(count_map, layer_uuid, suffix);
 	else
 	    m_obj_map[layer_uuid].m_name =
-		unique_name(CleanName(layer.m_name), suffix);
+		unique_name(count_map, CleanName(layer.m_name), suffix);
     }
 
 
@@ -513,13 +534,13 @@ RhinoConverter::map_uuid_names()
 	const std::string bitmap_uuid = gen_bitmap_id(i);
 
 	if (m_use_uuidnames)
-	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_uuid, ".pix");
+	    m_obj_map[bitmap_uuid].m_name = unique_name(count_map, bitmap_uuid, ".pix");
 	else {
 	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
 	    if (bitmap_name == DEFAULT_NAME)
 		bitmap_name = CleanName(bitmap->m_bitmap_filename);
 
-	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_name, ".pix");
+	    m_obj_map[bitmap_uuid].m_name = unique_name(count_map, bitmap_name, ".pix");
 	}
     }
 }
@@ -746,39 +767,6 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     const std::string parent_uuid =
 	UUIDstr(m_model->m_layer_table[iref_attrs.m_layer_index].m_layer_id);
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
-}
-
-
-
-
-bool
-RhinoConverter::is_name_taken(const std::string &name) const
-{
-    for (std::map<std::string, ModelObject>::const_iterator it = m_obj_map.begin();
-	 it != m_obj_map.end(); ++it)
-	if (name == it->second.m_name)
-	    return true;
-
-
-    return false;
-}
-
-
-
-
-std::string
-RhinoConverter::unique_name(const std::string &name,
-			    const std::string &suffix) const
-{
-    std::string new_name = name + suffix;
-    int counter = 0;
-    while (is_name_taken(new_name)) {
-	std::ostringstream s;
-	s << ++counter;
-	new_name = name + s.str() + suffix;
-    }
-
-    return new_name;
 }
 
 
