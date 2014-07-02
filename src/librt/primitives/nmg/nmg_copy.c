@@ -596,7 +596,7 @@ nmg_construct_shell(const struct shell *original)
     const struct loopuse *originalLoopUse;
     const struct edgeuse *originalEdgeUse;
 
-    structArray = (genptr_t*)bu_calloc(original->maxindex, sizeof(genptr_t), "nmg_clone_shell() structArray");
+    structArray = (void **)bu_calloc(original->maxindex, sizeof(void *), "nmg_clone_shell() structArray");
     ret = nmg_ms();
 
     ret->magic = NMG_SHELL_MAGIC;

@@ -189,7 +189,7 @@ struct rt_db_internal {
     int			idb_major_type;
     int			idb_minor_type;		/**< @brief ID_xxx */
     const struct rt_functab *idb_meth;	/**< @brief for ft_ifree(), etc. */
-    genptr_t		idb_ptr;
+    void		*idb_ptr;
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
@@ -197,39 +197,13 @@ struct rt_db_internal {
 	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_major_type = -1; \
 	(_p)->idb_minor_type = -1; \
-	(_p)->idb_meth = (const struct rt_functab *) GENPTR_NULL; \
-	(_p)->idb_ptr = GENPTR_NULL; \
+	(_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
+	(_p)->idb_ptr = ((void *)0); \
 	bu_avs_init_empty(&(_p)->idb_avs); \
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
-/**
- * For collecting paths through the database tree.
- * The fp_bool array can optionally hold a boolean flag
- * associated with each corresponding dp in fp_names.  This
- * array must be manually maintained by the client code in
- * order for it to have valid data - many functions using
- * full paths (for example, conversion from strings) don't
- * have knowledge of a specific boolean tree.
- */
-struct db_full_path {
-    uint32_t		magic;
-    size_t		fp_len;
-    size_t		fp_maxlen;
-    struct directory **	fp_names;	/**< @brief array of dir pointers */
-    int	              * fp_bool;	/**< @brief array of boolean flags */
-};
-#define DB_FULL_PATH_POP(_pp) { \
-	(_pp)->fp_len--; \
-    }
-#define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
-#define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
-#define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
-#define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
-#define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
-#define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
-#define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
-#define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+#include "rt/db_fullpath.h"
 
 /**
  * All necessary information about a ray.
@@ -275,7 +249,7 @@ struct hit {
     point_t		hit_point;	/**< @brief DEPRECATED: Intersection point, use VJOIN1 hit_dist */
     vect_t		hit_normal;	/**< @brief DEPRECATED: Surface Normal at hit_point, use RT_HIT_NORMAL */
     vect_t		hit_vpriv;	/**< @brief PRIVATE vector for xxx_*() */
-    genptr_t		hit_private;	/**< @brief PRIVATE handle for xxx_shot() */
+    void *		hit_private;	/**< @brief PRIVATE handle for xxx_shot() */
     int			hit_surfno;	/**< @brief solid-specific surface indicator */
     struct xray	*	hit_rayp;	/**< @brief pointer to defining ray */
 };
@@ -454,7 +428,7 @@ struct soltab {
     point_t			st_center;	/**< @brief Centroid of solid */
     fastf_t			st_aradius;	/**< @brief Radius of APPROXIMATING sphere */
     fastf_t			st_bradius;	/**< @brief Radius of BOUNDING sphere */
-    genptr_t			st_specific;	/**< @brief -> ID-specific (private) struct */
+    void *			st_specific;	/**< @brief -> ID-specific (private) struct */
     const struct directory *	st_dp;		/**< @brief Directory entry of solid */
     point_t			st_min;		/**< @brief min X, Y, Z of bounding RPP */
     point_t			st_max;		/**< @brief max X, Y, Z of bounding RPP */
@@ -549,7 +523,8 @@ struct mater_info {
     char	*ma_shader;	/**< @brief shader name & parms */
 };
 #define RT_MATER_INFO_INIT_ZERO { VINIT_ZERO, 0.0, 0, 0, 0, NULL }
-
+/* From MGED initial tree state */
+#define RT_MATER_INFO_INIT_IDN { {1.0, 0.0, 0.0} , -1.0, 0, 0, 0, NULL }
 
 /**
  * The region structure.
@@ -564,8 +539,8 @@ struct region {
     int			reg_gmater;	/**< @brief GIFT Material code */
     int			reg_los;	/**< @brief approximate line-of-sight thickness equivalence */
     struct mater_info	reg_mater;	/**< @brief Real material information */
-    genptr_t		reg_mfuncs;	/**< @brief User appl. funcs for material */
-    genptr_t		reg_udata;	/**< @brief User appl. data for material */
+    void *		reg_mfuncs;	/**< @brief User appl. funcs for material */
+    void *		reg_udata;	/**< @brief User appl. data for material */
     int			reg_transmit;	/**< @brief flag:  material transmits light */
     long		reg_instnum;	/**< @brief instance number, from d_uses */
     short		reg_all_unions;	/**< @brief 1=boolean tree is all unions */
@@ -642,7 +617,7 @@ struct partition {
 #define FREE_PT(p, res) { \
 	BU_LIST_APPEND(&(res->re_parthead), (struct bu_list *)(p)); \
 	if ((p)->pt_overlap_reg) { \
-	    bu_free((genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg");\
+	    bu_free((void *)((p)->pt_overlap_reg), "pt_overlap_reg");\
 	    (p)->pt_overlap_reg = NULL; \
 	} \
 	res->re_partfree++; }
@@ -677,7 +652,7 @@ struct partition_list {
     struct application	*ap;
     struct partition PartHeadp;
     struct seg segHeadp;
-    genptr_t		userptr;
+    void *		userptr;
 };
 
 
@@ -834,7 +809,7 @@ struct db_i {
     size_t dbi_nrec;			/**< @brief PRIVATE: # records after db_scan() */
     int dbi_uses;			/**< @brief PRIVATE: # of uses of this struct */
     struct mem_map * dbi_freep;		/**< @brief PRIVATE: map of free granules */
-    genptr_t dbi_inmem;			/**< @brief PRIVATE: ptr to in-memory copy */
+    void * dbi_inmem;			/**< @brief PRIVATE: ptr to in-memory copy */
     struct animate * dbi_anroot;	/**< @brief PRIVATE: heads list of anim at root lvl */
     struct bu_mapped_file * dbi_mf;	/**< @brief PRIVATE: Only in read-only mode */
     struct bu_ptbl dbi_clients;		/**< @brief PRIVATE: List of rtip's using this db_i */
@@ -876,7 +851,7 @@ struct directory {
     char * d_namep;		/**< @brief pointer to name string */
     union {
 	off_t file_offset;	/**< @brief disk address in obj file */
-	genptr_t ptr;		/**< @brief ptr to in-memory-only obj */
+	void * ptr;		/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory * d_forw;	/**< @brief link to next dir entry */
     struct animate * d_animate;	/**< @brief link to animation */
@@ -904,16 +879,6 @@ struct directory {
 #define RT_DIR_NON_GEOM 0x10  /**< @brief object is not geometry (e.g. binary object) */
 #define RT_DIR_USED     0x80  /**< @brief One bit, used similar to d_nref */
 #define RT_DIR_INMEM    0x100 /**< @brief object is in memory (only) */
-
-
-#define DIR_NULL     RT_DIR_NULL     /* DEPRECATED */
-#define DIR_SOLID    RT_DIR_SOLID    /* DEPRECATED */
-#define DIR_COMB     RT_DIR_COMB     /* DEPRECATED */
-#define DIR_REGION   RT_DIR_REGION   /* DEPRECATED */
-#define DIR_HIDDEN   RT_DIR_HIDDEN   /* DEPRECATED */
-#define DIR_NON_GEOM RT_DIR_NON_GEOM /* DEPRECATED */
-#define DIR_USED     RT_DIR_USED     /* DEPRECATED */
-
 
 /**< @brief Args to db_lookup() */
 #define LOOKUP_NOISY	1
@@ -1082,17 +1047,17 @@ struct db_tree_state {
     int			(*ts_region_start_func)(struct db_tree_state *tsp,
 						const struct db_full_path *pathp,
 						const struct rt_comb_internal *comb,
-						genptr_t client_data
+						void * client_data
 	); /**< @brief callback during DAG downward traversal called on region nodes */
     union tree *	(*ts_region_end_func)(struct db_tree_state *tsp,
 					      const struct db_full_path *pathp,
 					      union tree *curtree,
-					      genptr_t client_data
+					      void * client_data
 	); /**< @brief callback during DAG upward traversal called on region nodes */
     union tree *	(*ts_leaf_func)(struct db_tree_state *tsp,
 					const struct db_full_path *pathp,
 					struct rt_db_internal *ip,
-					genptr_t client_data
+					void * client_data
 	); /**< @brief callback during DAG traversal called on leaf primitive nodes */
     const struct rt_tess_tol *	ts_ttol;	/**< @brief  Tessellation tolerance */
     const struct bn_tol	*	ts_tol;		/**< @brief  Math tolerance */
@@ -1101,6 +1066,8 @@ struct db_tree_state {
     struct resource *		ts_resp;	/**< @brief  Per-CPU data */
 };
 #define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+/* from mged_initial_tree_state */
+#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 #define TS_SOFAR_MINUS	1	/**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */
@@ -1118,17 +1085,17 @@ struct db_traverse
     void (*comb_enter_func) (
 	struct db_i *,
 	struct directory *,
-	genptr_t);
+	void *);
     void (*comb_exit_func) (
 	struct db_i *,
 	struct directory *,
-	genptr_t);
+	void *);
     void (*leaf_func) (
 	struct db_i *,
 	struct directory *,
-	genptr_t);
+	void *);
     struct resource *resp;
-    genptr_t client_data;
+    void * client_data;
 };
 #define RT_DB_TRAVERSE_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC;   \
 	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
@@ -1638,7 +1605,7 @@ struct application {
     /* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
     /* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
     int			a_user;		/**< @brief  application-specific value */
-    genptr_t		a_uptr;		/**< @brief  application-specific pointer */
+    void *		a_uptr;		/**< @brief  application-specific pointer */
     struct bn_tabdata *	a_spectrum;	/**< @brief  application-specific bn_tabdata pointer */
     fastf_t		a_color[3];	/**< @brief  application-specific color */
     fastf_t		a_dist;		/**< @brief  application-specific distance */
@@ -1673,7 +1640,7 @@ struct application {
  *  b_hit()/b_miss() function called, as well as placing it in
  *  b_return.
  *
- *  An integer field b_user and a genptr_t field b_uptr are
+ *  An integer field b_user and a void * field b_uptr are
  *  provided in the structure for custom user data.
  *
  */
@@ -1686,7 +1653,7 @@ struct application_bundle
     int (*b_hit)(struct application_bundle *, struct partition_bundle *); /**< @brief  called when bundle hits model */
     int (*b_miss)(struct application_bundle *); /**< @brief  called when entire bundle misses */
     int b_user; /**< @brief  application_bundle-specific value */
-    genptr_t b_uptr; /**< @brief  application_bundle-specific pointer */
+    void * b_uptr; /**< @brief  application_bundle-specific pointer */
     int b_return;
 };
 
@@ -1799,7 +1766,7 @@ struct rt_i {
     int			needprep;	/**< @brief  needs rt_prep */
     struct region **	Regions;	/**< @brief  ptrs to regions [reg_bit] */
     struct bu_list	HeadRegion;	/**< @brief  ptr of list of regions in model */
-    genptr_t		Orca_hash_tbl;	/**< @brief  Hash table in matrices for ORCA */
+    void *		Orca_hash_tbl;	/**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl	delete_regs;	/**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
     size_t		nregions;	/**< @brief  total # of regions participating */
@@ -3035,37 +3002,6 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  */
 RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
 
-/* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a, b, 0.001)) */
-
-/**
- * Compares two floating point numbers.  If they are within "epsilon"
- * of each other, they are considered the same.
- *
- * NOTE: This is a "fuzzy" difference.  It is important NOT to use the
- * results of this function in compound comparisons, because a return
- * of 0 makes no statement about the PRECISE relationships between the
- * two numbers.  E.g., * if (rt_fdiff(a, b) <= 0) is poison!
- *
- * Returns -
- * -1 if a < b
- *  0 if a ~= b
- * +1 if a > b
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
-DEPRECATED RT_EXPORT extern int rt_fdiff(double a, double b);
-/* DEPRECATED: Relative Difference (use EQUAL(a, b)) */
-
-/**
- * Compute the relative difference of two floating point numbers.
- *
- * Returns 0.0 if exactly the same, otherwise ratio of difference,
- * relative to the larger of the two (range 0.0-1.0)
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
-DEPRECATED RT_EXPORT extern double rt_reldiff(double a, double b);
-
 /* Print a soltab */
 RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
 /* Print a region */
@@ -3397,7 +3333,7 @@ RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
  */
 RT_EXPORT extern int wdb_export(struct rt_wdb *wdbp,
 				const char *name,
-				genptr_t gp,
+				void * gp,
 				int id,
 				double local2mm);
 RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
@@ -3534,140 +3470,6 @@ RT_EXPORT extern void db_free_1anim(struct animate *anp);
  * string, before calling again.
  */
 RT_EXPORT extern const char *db_normalize(const char *path);
-
-
-/* db_fullpath.c */
-RT_EXPORT extern void db_full_path_init(struct db_full_path *pathp);
-
-RT_EXPORT extern void db_add_node_to_full_path(struct db_full_path *pp,
-					       struct directory *dp);
-
-RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
-				       const struct db_full_path *oldp);
-
-/**
- * Extend "pathp" so that it can grow from current fp_len by incr more names.
- *
- * This is intended primarily as an internal method.
- */
-RT_EXPORT extern void db_extend_full_path(struct db_full_path *pathp,
-					  size_t incr);
-
-RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
-					  const struct db_full_path *src);
-
-/**
- * Dup old path from starting index to end.
- */
-RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
-				       const struct db_full_path *oldp,
-				       off_t start);
-
-
-/**
- * Unlike rt_path_str(), this version can be used in parallel.
- * Caller is responsible for freeing the returned buffer.
- */
-RT_EXPORT extern char *db_path_to_string(const struct db_full_path *pp);
-
-/**
- * Append a string representation of the path onto the vls.  Must have
- * exactly the same formatting conventions as db_path_to_string().
- */
-RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
-				     const struct db_full_path *pp);
-
-/**
- * Append a string representation of the path onto the vls, with
- * options to decorate nodes with additional information.
- */
-#define DB_FP_PRINT_BOOL         0x1    /* print boolean operations */
-#define DB_FP_PRINT_TYPE         0x2    /* print object types */
-RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
-	                                 const struct db_full_path *full_path,
-					 const struct db_i *dbip,  /* needed for type determination */
-					 int fp_flags);
-
-
-RT_EXPORT extern void db_pr_full_path(const char *msg,
-				      const struct db_full_path *pathp);
-
-
-/**
- * Reverse the effects of db_path_to_string().
- *
- * The db_full_path structure will be initialized.  If it was already
- * in use, user should call db_free_full_path() first.
- *
- * Returns -
- * -1 One or more components of path did not exist in the directory.
- * 0 OK
- */
-RT_EXPORT extern int db_string_to_path(struct db_full_path *pp,
-				       const struct db_i *dbip,
-				       const char *str);
-
-
-/**
- * Treat elements from argv[0] to argv[argc-1] as a path specification.
- *
- * The path structure will be fully initialized.  If it was already in
- * use, user should call db_free_full_path() first.
- *
- * Returns -
- * -1 One or more components of path did not exist in the directory.
- * 0 OK
- */
-RT_EXPORT extern int db_argv_to_path(struct db_full_path	*pp,
-				     struct db_i			*dbip,
-				     int				argc,
-				     const char			*const*argv);
-
-
-/**
- * Free the contents of the db_full_path structure, but not the
- * structure itself, which might be automatic.
- */
-RT_EXPORT extern void db_free_full_path(struct db_full_path *pp);
-
-
-/**
- * Returns -
- * 1 match
- * 0 different
- */
-RT_EXPORT extern int db_identical_full_paths(const struct db_full_path *a,
-					     const struct db_full_path *b);
-
-
-/**
- * Returns -
- * 1 if 'b' is a proper subset of 'a'
- * 0 if not.
- */
-RT_EXPORT extern int db_full_path_subset(const struct db_full_path	*a,
-					 const struct db_full_path	*b,
-					 const int			skip_first);
-
-
-/**
- * Returns -
- * 1 if 'a' matches the top part of 'b'
- * 0 if not.
- *
- * For example, /a/b matches both the top part of /a/b/c and /a/b.
- */
-RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
-					    const struct db_full_path	*b);
-
-
-/**
- * Returns -
- * 1 'dp' is found on this path
- * 0 not found
- */
-RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
-					 const struct directory *dp);
 
 
 /* search.c */
@@ -4288,7 +4090,7 @@ RT_EXPORT extern int rt_poly_roots(bn_poly_t *eqn,
 /** @} */
 /* db_io.c */
 RT_EXPORT extern int db_write(struct db_i	*dbip,
-			      const genptr_t	addr,
+			      const void *	addr,
 			      size_t		count,
 			      off_t		offset);
 
@@ -4409,9 +4211,9 @@ RT_EXPORT extern int db_scan(struct db_i *,
 					    off_t addr,
 					    size_t nrec,
 					    int flags,
-					    genptr_t client_data),
+					    void * client_data),
 			     int do_old_matter,
-			     genptr_t client_data);
+			     void * client_data);
 /* update db unit conversions */
 #define db_ident(a, b, c)		+++error+++
 
@@ -4500,7 +4302,7 @@ RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
 					      off_t laddr,
-					      genptr_t client_data);
+					      void * client_data);
 
 /**
  * Scan a v5 database, sending each object off to a handler.
@@ -4513,8 +4315,8 @@ RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,
 					      off_t addr,
-					      genptr_t client_data),
-			      genptr_t client_data);
+					      void * client_data),
+			      void * client_data);
 
 /**
  * obtain the database version for a given database instance.
@@ -4706,7 +4508,7 @@ RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     off_t laddr,
 					     size_t len,
 					     int flags,
-					     genptr_t ptr);
+					     void * ptr);
 RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      const char *name,
 					      off_t				laddr,
@@ -5022,10 +4824,10 @@ RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       union tree		*comb_tree,
                                        void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
                                                          void *, void *, void *, void *),
-				       genptr_t		user_ptr1,
-				       genptr_t		user_ptr2,
-				       genptr_t		user_ptr3,
-				       genptr_t		user_ptr4);
+				       void *		user_ptr1,
+				       void *		user_ptr2,
+				       void *		user_ptr3,
+				       void *		user_ptr4);
 
 /**
  * Starting with possible prior partial path and corresponding
@@ -5076,7 +4878,7 @@ RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
 RT_EXPORT extern union tree *db_recurse(struct db_tree_state	*tsp,
 					struct db_full_path *pathp,
 					struct combined_tree_state **region_start_statepp,
-					genptr_t client_data);
+					void * client_data);
 RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
 					    struct resource *resp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
@@ -5190,16 +4992,16 @@ RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 				  int (*reg_start_func) (struct db_tree_state * /*tsp*/,
 							 const struct db_full_path * /*pathp*/,
 							 const struct rt_comb_internal * /* combp */,
-							 genptr_t client_data),
+							 void * client_data),
 				  union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
 							       const struct db_full_path * /*pathp*/,
 							       union tree * /*curtree*/,
-							       genptr_t client_data),
+							       void * client_data),
 				  union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
 							    const struct db_full_path * /*pathp*/,
 							    struct rt_db_internal * /*ip*/,
-							    genptr_t client_data),
-				  genptr_t client_data);
+							    void * client_data),
+				  void * client_data);
 
 /**
  * Returns -
@@ -5378,12 +5180,12 @@ RT_EXPORT extern void db_functree(struct db_i *dbip,
 				  struct directory *dp,
 				  void (*comb_func)(struct db_i *,
 						    struct directory *,
-						    genptr_t),
+						    void *),
 				  void (*leaf_func)(struct db_i *,
 						    struct directory *,
-						    genptr_t),
+						    void *),
 				  struct resource *resp,
-				  genptr_t client_data);
+				  void * client_data);
 
 /* mirror.c */
 RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
@@ -5439,19 +5241,6 @@ RT_EXPORT extern int rt_arb_edit(struct bu_vls		*error_msg_ret,
 				 plane_t			planes[6],
 				 const struct bn_tol	*tol);
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
-
-RT_EXPORT extern const int rt_arb_faces[5][24];
-RT_EXPORT extern short earb8[12][18];
-RT_EXPORT extern short earb7[12][18];
-RT_EXPORT extern short earb6[10][18];
-RT_EXPORT extern short earb5[9][18];
-RT_EXPORT extern short earb4[5][18];
-
-RT_EXPORT extern short arb8_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb7_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb6_edge_vertex_mapping[10][2];
-RT_EXPORT extern short arb5_edge_vertex_mapping[9][2];
-RT_EXPORT extern short arb4_edge_vertex_mapping[5][2];
 
 /* epa.c */
 RT_EXPORT extern void rt_ell(fastf_t *ov,
@@ -7117,11 +6906,11 @@ RT_EXPORT extern int nmg_two_shell_vertex_fuse(struct shell *s1,
 RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
 						    const struct db_full_path *pathp,
 						    struct rt_db_internal *ip,
-						    genptr_t client_data);
+						    void * client_data);
 RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 						     const struct db_full_path *pathp,
 						     struct rt_db_internal *ip,
-						     genptr_t client_data);
+						     void * client_data);
 RT_EXPORT extern int nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */
 RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
 						   const struct bn_tol *tol,
@@ -7654,34 +7443,34 @@ RT_EXPORT extern struct edge_g_lseg	*nmg_pick_best_edge_g(struct edgeuse *eu1,
 /* nmg_visit.c */
 RT_EXPORT extern void nmg_visit_vertex(struct vertex			*v,
 				       const struct nmg_visit_handlers	*htab,
-				       genptr_t			state);
+				       void *			state);
 RT_EXPORT extern void nmg_visit_vertexuse(struct vertexuse		*vu,
 					  const struct nmg_visit_handlers	*htab,
-					  genptr_t			state);
+					  void *			state);
 RT_EXPORT extern void nmg_visit_edge(struct edge			*e,
 				     const struct nmg_visit_handlers	*htab,
-				     genptr_t			state);
+				     void *			state);
 RT_EXPORT extern void nmg_visit_edgeuse(struct edgeuse			*eu,
 					const struct nmg_visit_handlers	*htab,
-					genptr_t			state);
+					void *			state);
 RT_EXPORT extern void nmg_visit_loop(struct loop			*l,
 				     const struct nmg_visit_handlers	*htab,
-				     genptr_t			state);
+				     void *			state);
 RT_EXPORT extern void nmg_visit_loopuse(struct loopuse			*lu,
 					const struct nmg_visit_handlers	*htab,
-					genptr_t			state);
+					void *			state);
 RT_EXPORT extern void nmg_visit_face(struct face			*f,
 				     const struct nmg_visit_handlers	*htab,
-				     genptr_t			state);
+				     void *			state);
 RT_EXPORT extern void nmg_visit_faceuse(struct faceuse			*fu,
 					const struct nmg_visit_handlers	*htab,
-					genptr_t			state);
+					void *			state);
 RT_EXPORT extern void nmg_visit_shell(struct shell			*s,
 				      const struct nmg_visit_handlers	*htab,
-				      genptr_t			state);
+				      void *			state);
 RT_EXPORT extern void nmg_visit(const uint32_t		*magicp,
 				const struct nmg_visit_handlers	*htab,
-				genptr_t			state);
+				void *			state);
 
 /* db5_types.c */
 RT_EXPORT extern int db5_type_tag_from_major(char	**tag,
