@@ -313,7 +313,7 @@ have these rules: but sometimes it is helpful to have a dedicated uninitialized
 condition state.
 </p><p>
 Non empty rules allow to specify the new condition, which makes them
-transition rules. Besides generating calls for the define <b>YYSETCONDTITION</b>
+transition rules. Besides generating calls for the define <b>YYSETCONDITION</b>
 no other special code is generated.
 </p>
 <p>
@@ -355,7 +355,7 @@ sets the new condition state but also continues execution with the new state. A
 shortcut rule should not be used in a loop where there is code between the start
 of the loop and the <b>re2c</b> block unless <i>re2c:cond:goto</i> is changed
 to '<i>continue;</i>'. If code is necessary before all rule (though not simple
-jumps) you can doso by using &lt;! pseudo-rules.
+jumps) you can do so by using &lt;! pseudo-rules.
 </p>
 <dl compact="compact">
 <dd>&lt;<i>condition-list</i>&gt; <i>regular-expression</i> { <i>C/C++ code</i> }</dd>

@@ -359,7 +359,7 @@ have these rules: but sometimes it is helpful to have a dedicated uninitialized
 condition state.
 .LP
 Non empty rules allow to specify the new condition, which makes them
-transition rules. Besides generating calls for the define \fBYYSETCONDTITION\fP
+transition rules. Besides generating calls for the define \fBYYSETCONDITION\fP
 no other special code is generated.
 .LP
 There is another kind of special rules that allow to prepend code to any code
@@ -401,7 +401,7 @@ sets the new condition state but also continues execution with the new state. A
 shortcut rule should not be used in a loop where there is code between the start
 of the loop and the \*(re block unless \fIre2c:cond:goto\fP is changed
 to '\fIcontinue;\fP'. If code is necessary before all rule (though not simple
-jumps) you can doso by using <! pseudo-rules.
+jumps) you can do so by using <! pseudo-rules.
 .P
 .RS
 \fC<\fP\fIcondition-list\fP\fC>\fP \fI\*(rx\fP \fC{\fP \fIC/C++ code\fP \fC}\fP
