@@ -75,9 +75,9 @@ yy7:
 <br />
 <br />
 <p>You can place one /*!max:re2c */ comment that will output a "#define YYMAXFILL
-&lt;n&gt;" line that holds the maximum number of characters 
+&lt;n&gt;" line that holds the maximum number of characters
 required to parse the input. That is the maximum value YYFILL(n)
-will receive. If -1 is in effect then YYMAXFILL can be triggered once 
+will receive. If -1 is in effect then YYMAXFILL can be triggered once
 after the last /*!re2c */.</p>
 <p>You can also use /*!ignore:re2c */ blocks that allows to document the
 scanner code and will not be part of the output.</p>
@@ -110,19 +110,19 @@ may crash dot.<br /><br /></dd>
 <dd>Generate a scanner with support for storable state. For details see below
 at <b>SCANNER WITH STORABLE STATES</b>.<br /><br /></dd>
 <dt><b>-F</b><dt>
-<dd>Partial support for flex syntax. When this flag is active then named 
+<dd>Partial support for flex syntax. When this flag is active then named
 definitions must be surrounded by curly braces and can be defined without an
 equal sign and the terminating semi colon. Instead names are treated as direct
 double quoted strings.<br /><br /></dd>
 <dt><b>-g</b></dt>
 <dd>Generate a scanner that utilizes GCC's computed goto feature. That is re2c
-generates jump tables whenever a decision is of a certain complexity (e.g. a 
-lot of if conditions are otherwise necessary). This is only useable with GCC 
+generates jump tables whenever a decision is of a certain complexity (e.g. a
+lot of if conditions are otherwise necessary). This is only useable with GCC
 and produces output that cannot be compiled with any other compiler. Note that
 this implies -b and that the complexity threshold can be configured using the
 inplace configuration "cgoto:threshold".</dd>
 <dt><b>-i</b></dt>
-<dd>Do not output #line information. This is usefull when you want use a CMS
+<dd>Do not output #line information. This is useful when you want use a CMS
 tool with the re2c output which you might want if you do not require your users
 to have re2c themselves when building from your source. <b>-o output</b>
 Specify the output file.<br /><br /></dd>
@@ -144,7 +144,7 @@ generate better code.<br /><br /></dd>
 <dd>Create a header file that contains types for the (f)lex-like condition support.
 This can only be activated when <b>-c</b> is in use.<br /><br /></dd>
 <dt><b>-u</b></dt>
-<dd>Generate a parser that supports Unicode chars (UTF-32). This means the 
+<dd>Generate a parser that supports Unicode chars (UTF-32). This means the
 generated code can deal with any valid Unicode character up to 0x10FFFF. When
 UTF-8 or UTF-16 needs to be supported you need to convert the incoming stream
 to UTF-32 upon input yourself.<br /><br /></dd>
@@ -156,7 +156,7 @@ to UTF-32 upon input yourself.<br /><br /></dd>
 <dd>Create a parser that supports wide chars (UCS-2). This implies <b>-s</b>
 and cannot be used together with <b>-e</b> switch.<br /><br /></dd>
 <dt><b>-1</b></dt>
-<dd>Force single pass generation, this cannot be combined with -f and disables 
+<dd>Force single pass generation, this cannot be combined with -f and disables
 YYMAXFILL generation prior to last re2c block.<br /><br /></dd>
 <dt><b>--no-generation-date</b></dt>
 <dd>Suppress date output in the generated output so that it only shows the re2c
@@ -175,17 +175,17 @@ double quotes are case insensitive.<br /><br /></dd>
 <h2>INTERFACE CODE</h2>
 <p>Unlike other scanner generators, <b>re2c</b> does not generate complete
 scanners: the user must supply some interface code. In particular, the user
-must define the following macros or use the 
+must define the following macros or use the
 corresponding inplace configurations:</p>
 <dl compact="compact">
 <dt>YYCONDTYPE</dt>
-<dd>In <b>-c</b> mode you can use <b>-t</b> to generate a file that contains the 
+<dd>In <b>-c</b> mode you can use <b>-t</b> to generate a file that contains the
 enumeration used as conditions. Each of the values refers to a condition of
 a rule set.</dd>
 <dt>YYCTXMARKER</dt>
-<dd><i>l</i>-expression of type *YYCTYPE. The generated code saves context 
-backtracking information in YYCTXMARKER. The user only  needs to define this 
-macro if a scanner specification uses trailing context in one or more of its 
+<dd><i>l</i>-expression of type *YYCTYPE. The generated code saves context
+backtracking information in YYCTXMARKER. The user only  needs to define this
+macro if a scanner specification uses trailing context in one or more of its
 regular expressions.<br /><br /></dd>
 <dt>YYCTYPE</dt>
 <dd>Type used to hold an input symbol. Usually char or unsigned char.<br /><br /></dd>
@@ -203,15 +203,15 @@ second parameter receives the input at the current cursor.<br /><br /></dd>
 <dt>YYFILL(<i>n</i>)</dt>
 <dd>The generated code "calls" YYFILL(n) when the buffer needs (re)filling: at
 least <i>n</i> additional characters should be provided. YYFILL(n) should adjust
-YYCURSOR, YYLIMIT, YYMARKER and YYCTXMARKER as needed. Note that for typical 
-programming languages <i>n</i> will be the length of the longest keyword plus 
-one. The user can place a comment of the form /*!max:re2c */ once to insert 
-a YYMAXFILL definition that is set to the maximum length value. If -1 
-switch is used then YYMAXFILL can be triggered only once after the 
+YYCURSOR, YYLIMIT, YYMARKER and YYCTXMARKER as needed. Note that for typical
+programming languages <i>n</i> will be the length of the longest keyword plus
+one. The user can place a comment of the form /*!max:re2c */ once to insert
+a YYMAXFILL definition that is set to the maximum length value. If -1
+switch is used then YYMAXFILL can be triggered only once after the
 last /*!re2c */ block.<br /><br /></dd>
 <dt>YYGETCONDITION()</dt>
 <dd>This define is used to get the condition prior to entering the scanner code
-when using <b>-c</b> switch. The value must be initialized with a value from 
+when using <b>-c</b> switch. The value must be initialized with a value from
 the enumeration YYCONDTYPE type.</dd>
 <dt>YYGETSTATE()</dt>
 <dd>The user only needs to define this macro if the <b>-f</b> flag was
@@ -240,9 +240,9 @@ specified. In that case, the generated code "calls" YYSETSTATE just before
 calling YYFILL(n). The parameter to YYSETSTATE(s) is a signed integer that uniquely
 identifies the specific instance of YYFILL(n) that is about to be called. Should
 the user wish to save the state of the scanner and have YYFILL(n) return to the
-caller, all he has to do is store that unique identifer in a variable. Later,
+caller, all he has to do is store that unique identifier in a variable. Later,
 when the scanner is called again, it will call YYGETSTATE() and resume
-execution right where it left off. The generated code will contain 
+execution right where it left off. The generated code will contain
 both YYSETSTATE(s) and YYGETSTATE() even if YYFILL(n) is being
 disabled.<br /><br /></dd>
 </dl>
@@ -265,7 +265,7 @@ scanners that work in a "push" model, i.e. where data is fed to the scanner
 chunk by chunk. When the scanner runs out of data to consume, it just stores
 its state, and return to the caller. When more input data is fed to the
 scanner, it resumes operations exactly where it left off.</p>
-<p>When using the -f option re2c does not accept stdin because it has to do the 
+<p>When using the -f option re2c does not accept stdin because it has to do the
 full generation process twice which means it has to read the input twice. That
 means re2c would fail in case it cannot open the input twice or reading the
 input for the first time influences the second read attempt.</p>
@@ -287,10 +287,10 @@ variable by YYSETSTATE(state).</p>
 the function calling it) if more input is needed.</p>
 <p>4. Modify caller to recognise "more input is needed" and respond
 appropriately.</p>
-<p>5.The generated code will contain a switch block that is used to restores 
-the last state by jumping behind the corrspoding YYFILL(n) call. This code is
-automatically generated in the epilog of the first "/*!re2c */" block. 
-It is possible to trigger generation of the YYGETSTATE() block earlier by 
+<p>5.The generated code will contain a switch block that is used to restores
+the last state by jumping behind the corresponding YYFILL(n) call. This code is
+automatically generated in the epilog of the first "/*!re2c */" block.
+It is possible to trigger generation of the YYGETSTATE() block earlier by
 placing a "/*!getstate:re2c */" comment. This is especially useful when
 the scanner code should be wrapped inside a loop.</p>
 <p>Please see examples/push.re for push-model scanner. The generated code can be
@@ -298,15 +298,15 @@ tweaked using inplace configurations "state:abort" and "state:nextlabel".</p>
 <a name="lbAH" id="lbAH">&nbsp;</a>
 <h2>SCANNER WITH CONDITION SUPPORT</h2>
 <p>
-You can preceed regular-expressions with a list of condition names when using the <b>-c</b>
-switch. In this case <b>re2c</b> generates scanner blocks for each conditon. Where each of the
-generated scanners has its own precondition. The precondition is given by the 
+You can precede regular-expressions with a list of condition names when using the <b>-c</b>
+switch. In this case <b>re2c</b> generates scanner blocks for each condition. Where each of the
+generated scanners has its own precondition. The precondition is given by the
 interface define <b>YYGETCONDITON</b> and must be of type <b>YYCONDTYPE</b>.
 </p><p>
-There are two special rule types. First, the rules of the condition '*' are 
-merged to all  conditions. And second the empty condition list allows to 
-provide a code block that does not have a scanner part. Meaning it does not 
-allow any regular expression. The condition value referring to this special 
+There are two special rule types. First, the rules of the condition '*' are
+merged to all  conditions. And second the empty condition list allows to
+provide a code block that does not have a scanner part. Meaning it does not
+allow any regular expression. The condition value referring to this special
 block is always the one with the enumeration value 0. This way the code of this
 special rule can be used to initialize a scanner. It is in no way necessary to
 have these rules: but sometimes it is helpful to have a dedicated uninitialized
@@ -343,12 +343,12 @@ looking for code at the first line that does not begin with whitespace.</p>
 <dd><i>regular-expression</i> := <i>C/C++ code</i></dd>
 </dl>
 <p>
-If <b>-c</b> is active then each regular expression is preceeded by a list of 
-comma separated condition names. Besides normal naming rules there are two 
-special cases. A rule may contain the single condition name '*' and no contition 
-name at all. In the latter case the rule cannot have a regular expression. Non 
+If <b>-c</b> is active then each regular expression is preceded by a list of
+comma separated condition names. Besides normal naming rules there are two
+special cases. A rule may contain the single condition name '*' and no condition
+name at all. In the latter case the rule cannot have a regular expression. Non
 empty rules may further more specify the new condition. In that case re2c will
-generated the necessary code to chnage the condition automatically. Just as above
+generated the necessary code to change the condition automatically. Just as above
 code can be started with a curly brace of the sequence '<b>:=</b>'. Further more
 rules can use ':=>' as a shortcut to automatically generate code that not only
 sets the new condition state but also continues execution with the new state. A
@@ -427,7 +427,7 @@ regular expressions which can be expressed as character classes.</dd>
 <dd>either an <i>r</i> or an <i>s</i></dd>
 <dt><i>r</i>/<i>s</i></dt>
 <dd>an <i>r</i> but only if it is followed by an <i>s</i>. The <i>s</i> is not part of
-the matched text. This type of regular expression is called "trailing context". A trailing 
+the matched text. This type of regular expression is called "trailing context". A trailing
 context can only be the end of a rule and not part of a named definition.</dd>
 <dt><i>r</i>{<i>n</i>}</dt>
 <dd>matches <i>r</i> exactly <i>n</i> times.</dd>
@@ -444,7 +444,7 @@ in double quotes and matches the string <i>def</i>.</dd>
 </dl>
 <br />
 <br />
-<p>Character classes and string literals may contain octoal or hexadecimal
+<p>Character classes and string literals may contain octal or hexadecimal
 character definitions and the following set of escape sequences
 (<b>\n</b>,<br />
  <b>\t</b>, <b>\v</b>, <b>\b</b>, <b>\r</b>, <b>\f</b>, <b>\a</b>, <b>\\</b>).
@@ -454,8 +454,8 @@ and its two hexadecimal digits or a backslash, an upper cased <b>X</b> and its
 four hexadecimal digits.</p>
 <p>re2c further more supports the c/c++ unicode notation. That is a backslash
 followed by either a lowercased <b>u</b> and its four hexadecimal digits or an
-uppercased <b>U</b> and its eight hexadecimal digits. However only in \fB-u\fP 
-mode the generated code can deal with any valid Unicode character up to 
+uppercased <b>U</b> and its eight hexadecimal digits. However only in \fB-u\fP
+mode the generated code can deal with any valid Unicode character up to
 0x10FFFF.</p>
 <p>Since characters greater <b>\X00FF</b> are not allowed in non unicode mode,
 the only portable "<b>any</b>" rules are <b>(.|"\n")</b> and <b>[^]</b>.</p>
@@ -468,37 +468,37 @@ together have equal precedence.</p>
 following lists the available configurations:</p>
 <dl compact="compact">
 <dt><i>re2c:cond:divider</i> <b>=</b> "/* *********************************** */" <b>;</b></dt>
-<dd>Allows to customize the devider for condition blocks. You can use '@@' to 
-put the name of the condition or ustomize the plaeholder
+<dd>Allows customizing of the divider for condition blocks. You can use '@@' to
+put the name of the condition or customize the placeholder
 using <i>re2c:cond:divider@cond</i>.</dd>
 <dt><i>re2c:cond:divider@cond</i> <b>=</b> @@ <b>;</b></dt>
 <dd>Specify the placeholder that will be replaced with the condition name
 in <i>re2c:cond:divider\fP</i>.</dd>
 <dt><i>re2c:cond:goto</i> <b>=</b> "goto @@;" <b>;</b></dt>
-<dd>Allows to customize the condition goto statements used with ':=>' style rules.
-You can use '@@' to put the name of the condition or ustomize the plaeholder
+<dd>Allows customizing of the conditional goto statements used with ':=>' style rules.
+You can use '@@' to put the name of the condition or customize the placeholder
 using <i>re2c:cond:goto@cond</i>. You can also change this to 'continue;',
 which would allow you to continue with the next loop cycle including any code
 between loop start and re2c block.</dd>
 <dt><i>re2c:cond:goto@cond</i> <b>=</b> @@ <b>;</b></dt>
-<dd>Spcifies the placeholder that will be replaced with the condition label
+<dd>Specifies the placeholder that will be replaced with the condition label
 in <i>re2c:cond:goto</i>.</dd>
 <dt><i>re2c:indent:top</i> <b>=</b> 0 <b>;</b></dt>
-<dd>Specifies the minimum number of indendation to use. Requires a numeric
+<dd>Specifies the minimum number of indentation to use. Requires a numeric
 value greater than or equal zero.</dd>
 <dt><i>re2c:condprefix</i> <b>=</b> yyc_ <b>;</b></dt>
-<dd>Allows to specify the prefix used for condition labels. That is this text is 
+<dd>Allows to specify the prefix used for condition labels. That is this text is
 prepended to any condition label in the generated output file.</dd>
 <dt><i>re2c:condenumprefix</i> <b>=</b> yyc <b>;</b></dt>
-<dd>Allows to specify the prefix used for condition values. That is this text is 
+<dd>Allows to specify the prefix used for condition values. That is this text is
 prepended to any condition enum value in the generated output file.</dd>
 <dt><i>re2c:indent:string</i> <b>=</b> "\t" <b>;</b></dt>
-<dd>Specifies the string to use for indendation. Requires a string that should
+<dd>Specifies the string to use for indentation. Requires a string that should
 contain only whitespace unless you need this for external tools. The easiest
-way to specify spaces is to enclude them in single or double quotes. If you do
-not want any indendation at all you can simply set this to <b>""</b>.</dd>
+way to specify spaces is to include them in single or double quotes. If you do
+not want any indentation at all you can simply set this to <b>""</b>.</dd>
 <dt><i>re2c:yych:conversion</i> <b>=</b> 0 <b>;</b></dt>
-<dd>When this setting is non zero, then \*(re automatically generates conversion 
+<dd>When this setting is non zero, then \*(re automatically generates conversion
 code whenever yych gets read. In this case the type must be defined using
 <b>re2c:define:YYCTYPE</b>.</dd>
 <dt><i>re2c:yych:emit</i> <b>=</b> 1 <b>;</b></dt>
@@ -512,13 +512,13 @@ to verify that the generated scanner does not read behind input. Allowing
 this behavior might introduce sever security issues to you programs.</dd>
 <dt><i>re2c:yyfill:check</i> <b>=</b> 1 </b>;</b></dt>
 <dd>This can be set 0 to suppress output of the pre condition using YYCURSOR and
-YYLIMIT which becomes usefull when YYLIMIT + max(YYFILL) is always accessible.</dd>
+YYLIMIT which becomes useful when YYLIMIT + max(YYFILL) is always accessible.</dd>
 <dt><i>re2c:yyfill:parameter</i> <b>=</b> 1 <b>;</b></dt>
-<dd>Allows to suppress parameter passing to <b>YYFILL</b> calls. If set to zero 
+<dd>Allows to suppress parameter passing to <b>YYFILL</b> calls. If set to zero
 then no parameter is passed to <b>YYFILL</b>. However <b>define:YYFILL@LEN</b>
 allows to specify a replacement string for the actual length value. If set to
-a non zero value then <b>YYFILL</b> usage will be followed by the number of 
-requested characters in braces unless <b>re2c:define:YYFILL:naked</b> is set. 
+a non zero value then <b>YYFILL</b> usage will be followed by the number of
+requested characters in braces unless <b>re2c:define:YYFILL:naked</b> is set.
 Also look at <b>re2c:define:YYFILL:naked</b> and <b>re2c:define:YYFILL@LEN</b>.</dd>
 <dt><i>re2c:startlabel</i> <b>=</b> 0 <b>;</b></dt>
 <dd>If set to a non zero integer then the start label of the next scanner
@@ -531,19 +531,19 @@ reset to <b>0</b> after a start label has been generated.</dd>
 <dd>Allows to change the prefix of numbered labels. The default is \fByy\fP and
 can be set any string that is a valid label.</dd>
 <dt><i>re2c:state:abort</i> <b>=</b> 0 <b>;</b></dt>
-<dd>When not zero and switch -f is active then the YYGETSTATE block will 
+<dd>When not zero and switch -f is active then the YYGETSTATE block will
 contain a default case that aborts and a -1 case is used for initialization.</dd>
 <dt><i>re2c:state:nextlabel</i> <b>=</b> 0 <b>;</b></dt>
-<dd>Used when -f is active to control whether the YYGETSTATE block is 
-followed by a yyNext: label line. Instead of using yyNext you can 
+<dd>Used when -f is active to control whether the YYGETSTATE block is
+followed by a yyNext: label line. Instead of using yyNext you can
 usually also use configuration <i>startlabel</i> to force a specific start label
-or default to yy0 as start label. Instead of using a dedicated label it 
+or default to yy0 as start label. Instead of using a dedicated label it
 is often better to separate the YYGETSTATE code from the actual scanner code by
 placing a "/*!getstate:re2c */" comment.</dd>
 <dt><i>re2c:cgoto:threshold</i> <b>=</b> 9 <b>;</b></dt>
 <dd>When -g is active this value specifies the complexity threshold that triggers
 generation of jump tables rather than using nested if's and decision bitfields.
-The threshold is compared against a calculated estimation of if-s needed where 
+The threshold is compared against a calculated estimation of if-s needed where
 every used bitmap divides the threshold by 2.</dd>
 <dt><i>re2c:yych:conversion</i> <b>=</b> 0 <b>;</b></dt>
 <dd>When the input uses signed characters and <b>-s</b> or <b>-b</b> switches are
@@ -577,7 +577,7 @@ value to the actual code needed.</dd>
 <dd>When set to 1 neither braces, parameter nor semicolon gets emitted.</dd>
 <dt><i>re2c:define:YYFILL@LEN</i> <b>=</b> @@ <b>;</b></dt>
 <dd>When using <b>re2c:define:YYFILL</b> and <b>re2c:yyfill:parameter</b> is 0 then
-any occurence of this text inside <b>YYFILL</b> will be replaced with the actual
+any occurrence of this text inside <b>YYFILL</b> will be replaced with the actual
 length value.</dd>
 <dt><i>re2c:define:YYGETCONDITION</i> <b>=</b> YYGETCONDITION <b>;</b></dt>
 <dd>Allows to overwrite the define <b>YYGETCONDITION</b>.</dd>
@@ -597,7 +597,7 @@ value to the actual code needed.</dd>
 <dt><i>re2c:define:YYSETCONDITION</i> <b>=</b> YYSETCONDITION <b>;</b></dt>
 <dd>Allows to overwrite the define <b>YYSETCONDITION</b>.</dd>
 <dt><i>re2c:define:YYSETCONDITION@cond</i> <b>=</b> @@ <b>;</b></dt>
-<dd>When using <b>re2c:define:YYSETCONDITION</b> then any occurence of this text 
+<dd>When using <b>re2c:define:YYSETCONDITION</b> then any occurrence of this text
 inside <b>YYSETCONDITION</b> will be replaced with the actual new condition value.</dd>
 <dt><i>re2c:define:YYSETSTATE</i> <b>=</b> YYSETSTATE <b>;</b></dt>
 <dd>Allows to overwrite the define <b>YYSETSTATE</b> and thus avoiding it by setting the
@@ -605,7 +605,7 @@ value to the actual code needed.</dd>
 <dt><i>re2c:define:YYSETSTATE:naked</i> <b>=</b> 0 <b>;</b></dt>
 <dt>When set to 1 neither braces, parameter nor semicolon gets emitted.</dt>
 <dt><i>re2c:define:YYSETSTATE@state</i> <b>=</b> @@ <b>;</b></dt>
-<dd>When using <b>re2c:define:YYSETSTATE</b> then any occurence of this text 
+<dd>When using <b>re2c:define:YYSETSTATE</b> then any occurrence of this text
 inside <b>YYSETSTATE</b> will be replaced with the actual new state value.</dd>
 <dt><i>re2c:label:yyFillLabel</i> <b>=</b> yyFillLabel <b>;</b></dt>
 <dd>Allows to overwrite the name of the label yyFillLabel.</dd>
@@ -618,10 +618,10 @@ inside <b>YYSETSTATE</b> will be replaced with the actual new state value.</dd>
 <dt><i>re2c:variable:yych</i> <b>=</b> yych <b>;</b></dt>
 <dd>Allows to overwrite the name of the variable yych.</dd>
 <dt><i>re2c:variable:yyctable</i> <b>=</b> yyctable <b>;</b></dt>
-<dd>When both <b>-c</b> and <b>-g</b> are active then <b>re2c</b> uses this variable to 
+<dd>When both <b>-c</b> and <b>-g</b> are active then <b>re2c</b> uses this variable to
 generate a static jump table for YYGETCONDITION.</dd>
 <dt><i>re2c:variable:yystable</i> <b>=</b> yystable <b>;</b></dt>
-<dd>When both <b>-f</b> and <b>-g</b> are active then <b>re2c</b> uses this variable to 
+<dd>When both <b>-f</b> and <b>-g</b> are active then <b>re2c</b> uses this variable to
 generate a static jump table for YYGETSTATE.</dd>
 <dt><i>re2c:variable:yytarget</i> <b>=</b> yytarget <b>;</b></dt>
 <dd>Allows to overwrite the name of the variable yytarget.</dd>
@@ -641,8 +641,8 @@ example above.</p>
 (and provide a rule for matching it): <b>re2c</b> does not provide an
 &lt;&lt;EOF&gt;&gt; expression. If the source is from a null-byte terminated
 string, a rule matching a null character will suffice. If the source is from a
-file then you could pad the input with a newline (or some other character that 
-cannot appear within another token); upon recognizing such a character check 
+file then you could pad the input with a newline (or some other character that
+cannot appear within another token); upon recognizing such a character check
 to see if it is the sentinel and act accordingly. And you can also use YYFILL(n)
 to end the scanner in case not enough characters are available which is nothing
 else then e detection of end of data/file.</p>
