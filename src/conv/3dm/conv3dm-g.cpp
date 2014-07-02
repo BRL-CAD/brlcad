@@ -130,7 +130,7 @@ basename(const std::string &path)
 
 
 
-std::string
+static std::string
 unique_name(std::map<std::string, int> &count_map,
 	    const std::string &prefix,
 	    const std::string &suffix)
