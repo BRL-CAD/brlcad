@@ -133,10 +133,10 @@ struct _xmlTextReader {
     xmlNodePtr			node;	/* current node */
     xmlNodePtr			curnode;/* current attribute node */
     int				depth;  /* depth of the current node */
-    xmlNodePtr			faketext;/* fake xmlNs chld */
+    xmlNodePtr			faketext;/* fake xmlNs child */
     int				preserve;/* preserve the resulting document */
     xmlBufferPtr		buffer; /* used to return const xmlChar * */
-    xmlDictPtr			dict;	/* the context dictionnary */
+    xmlDictPtr			dict;	/* the context dictionary */
 
     /* entity stack when traversing entities content */
     xmlNodePtr         ent;          /* Current Entity Ref Node */
@@ -203,7 +203,7 @@ static int xmlTextReaderNextTree(xmlTextReaderPtr reader);
  * DICT_FREE:
  * @str:  a string
  *
- * Free a string if it is not owned by the "dict" dictionnary in the
+ * Free a string if it is not owned by the "dict" dictionary in the
  * current scope
  */
 #define DICT_FREE(str)						\
@@ -968,7 +968,7 @@ printf("Expand failed !\n");
  * xmlTextReaderValidateCData:
  * @reader:  the xmlTextReaderPtr used
  * @data:  pointer to the CData
- * @len:  lenght of the CData block in bytes.
+ * @len:  length of the CData block in bytes.
  *
  * Push some CData for validation
  */
@@ -1061,7 +1061,7 @@ xmlTextReaderValidateEntity(xmlTextReaderPtr reader) {
     do {
 	if (node->type == XML_ENTITY_REF_NODE) {
 	    /*
-	     * Case where the underlying tree is not availble, lookup the entity
+	     * Case where the underlying tree is not available, lookup the entity
 	     * and walk it.
 	     */
 	    if ((node->children == NULL) && (ctxt->sax != NULL) &&
@@ -1322,7 +1322,7 @@ get_next_node:
 
     /*
      * If we are not backtracking on ancestors or examined nodes,
-     * that the parser didn't finished or that we arent at the end
+     * that the parser didn't finished or that we aren't at the end
      * of stream, continue processing.
      */
     while ((reader->node != NULL) && (reader->node->next == NULL) &&
@@ -1515,7 +1515,7 @@ node_found:
 	(reader->node->type == XML_ENTITY_REF_NODE) &&
 	(reader->ctxt != NULL) && (reader->ctxt->replaceEntities == 1)) {
 	/*
-	 * Case where the underlying tree is not availble, lookup the entity
+	 * Case where the underlying tree is not available, lookup the entity
 	 * and walk it.
 	 */
 	if ((reader->node->children == NULL) && (reader->ctxt->sax != NULL) &&
@@ -1709,8 +1709,8 @@ xmlTextReaderReadInnerXml(xmlTextReaderPtr reader ATTRIBUTE_UNUSED)
  *
  * Reads the contents of the current node, including child nodes and markup.
  *
- * Returns a string containing the node and any XML content, or NULL if the 
- *         current node cannot be serialized. The string must be deallocated 
+ * Returns a string containing the node and any XML content, or NULL if the
+ *         current node cannot be serialized. The string must be deallocated
  *         by the caller.
  */
 xmlChar *
@@ -2125,7 +2125,7 @@ xmlNewTextReader(xmlParserInputBufferPtr input, const char *URI) {
     ret->ctxt->dictNames = 1;
     ret->allocs = XML_TEXTREADER_CTXT;
     /*
-     * use the parser dictionnary to allocate all elements and attributes names
+     * use the parser dictionary to allocate all elements and attributes names
      */
     ret->ctxt->docdict = 1;
     ret->dict = ret->ctxt->dict;
@@ -2462,7 +2462,7 @@ xmlTextReaderGetAttributeNs(xmlTextReaderPtr reader, const xmlChar *localName,
  * parser, set its state to End Of File and return the input stream with
  * what is left that the parser did not use.
  *
- * The implementation is not good, the parser certainly procgressed past
+ * The implementation is not good, the parser certainly progressed past
  * what's left in reader->input, and there is an allocation problem. Best
  * would be to rewrite it differently.
  *
@@ -2844,8 +2844,8 @@ xmlTextReaderMoveToElement(xmlTextReaderPtr reader) {
  *
  * Parses an attribute value into one or more Text and EntityReference nodes.
  *
- * Returns 1 in case of success, 0 if the reader was not positionned on an
- *         ttribute node or all the attribute values have been read, or -1
+ * Returns 1 in case of success, 0 if the reader was not positioned on an
+ *         attribute node or all the attribute values have been read, or -1
  *         in case of error.
  */
 int
@@ -2912,7 +2912,7 @@ xmlTextReaderConstEncoding(xmlTextReaderPtr reader) {
 
 /************************************************************************
  *									*
- *			Acces API to the current node			*
+ *			Access API to the current node			*
  *									*
  ************************************************************************/
 /**
@@ -3714,7 +3714,7 @@ xmlTextReaderConstString(xmlTextReaderPtr reader, const xmlChar *str) {
  *
  * The value indicating whether to normalize white space and attribute values.
  * Since attribute value and end of line normalizations are a MUST in the XML
- * specification only the value true is accepted. The broken bahaviour of
+ * specification only the value true is accepted. The broken behaviour of
  * accepting out of range character entities like &#0; is of course not
  * supported either.
  *
@@ -3869,7 +3869,7 @@ xmlTextReaderGetParserColumnNumber(xmlTextReaderPtr reader)
  * xmlTextReaderCurrentNode:
  * @reader:  the xmlTextReaderPtr used
  *
- * Hacking interface allowing to get the xmlNodePtr correponding to the
+ * Hacking interface allowing to get the xmlNodePtr corresponding to the
  * current node being accessed by the xmlTextReader. This is dangerous
  * because the underlying node may be destroyed on the next Reads.
  *
@@ -3981,7 +3981,7 @@ xmlTextReaderPreservePattern(xmlTextReaderPtr reader, const xmlChar *pattern,
  * xmlTextReaderCurrentDoc:
  * @reader:  the xmlTextReaderPtr used
  *
- * Hacking interface allowing to get the xmlDocPtr correponding to the
+ * Hacking interface allowing to get the xmlDocPtr corresponding to the
  * current document being accessed by the xmlTextReader.
  * NOTE: as a result of this call, the reader will not destroy the
  *       associated XML document and calling xmlFreeDoc() on the result
@@ -4078,7 +4078,7 @@ xmlTextReaderValidityStructuredRelay(void *userData, xmlErrorPtr error)
  *
  * Use RelaxNG to validate the document as it is processed.
  * Activation is only possible before the first Read().
- * if @schema is NULL, then RelaxNG validation is desactivated.
+ * if @schema is NULL, then RelaxNG validation is deactivated.
  @ The @schema should not be freed until the reader is deallocated
  * or its use has been deactivated.
  *
@@ -5072,7 +5072,7 @@ xmlTextReaderSetup(xmlTextReaderPtr reader,
     reader->ctxt->linenumbers = 1;
     reader->ctxt->dictNames = 1;
     /*
-     * use the parser dictionnary to allocate all elements and attributes names
+     * use the parser dictionary to allocate all elements and attributes names
      */
     reader->ctxt->docdict = 1;
     reader->ctxt->parseMode = XML_PARSE_READER;
