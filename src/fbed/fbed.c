@@ -1906,13 +1906,13 @@ fb_Wind(void)
 
 
 HIDDEN void
-fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
+fb_Paint(int fb_x0, int fb_y0, int fb_x1, int fb_y1, RGBpixel (*color))
 {
     Rect2D clipped_rect;
-    clipped_rect.r_origin.p_x = x0;
-    clipped_rect.r_corner.p_x = x1;
-    clipped_rect.r_origin.p_y = y0;
-    clipped_rect.r_corner.p_y = y1;
+    clipped_rect.r_origin.p_x = fb_x0;
+    clipped_rect.r_corner.p_x = fb_x1;
+    clipped_rect.r_origin.p_y = fb_y0;
+    clipped_rect.r_corner.p_y = fb_y1;
     clip_Rect2D(&clipped_rect);
     fillRect2D(&clipped_rect, color);
     return;

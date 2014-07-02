@@ -235,10 +235,10 @@ im_header(void)
 void
 im_write(int y)
 {
-    size_t y1;
+    size_t im_y1;
 
     /* Process one 32-bit high output swath */
-    for (y1 = 0; y1 < 32; y1 += im_mag) {
+    for (im_y1 = 0; im_y1 < 32; im_y1 += im_mag) {
 	size_t x;
 
 	/* Obtain a single line of 8-bit pixels */
@@ -252,11 +252,11 @@ im_write(int y)
 
 	    for (my = 0; my < im_mag; ++my) {
 		long b = 0L;	/* image bits */
-		int x1;
+		int im_x1;
 
-		for (x1 = 0; x1 < 32; x1 += im_mag) {
+		for (im_x1 = 0; im_x1 < 32; im_x1 += im_mag) {
 		    int level =
-			line[width-1-((x + x1) / im_mag)];
+			line[width-1-((x + im_x1) / im_mag)];
 		    int mx;
 
 		    if (im_mag <= 1) {
@@ -270,8 +270,8 @@ im_write(int y)
 			b <<= 1;
 
 			/* Compute Dither */
-			pgx = x + x1 + mx;
-			pgy = y + y1 + my;
+			pgx = x + im_x1 + mx;
+			pgy = y + im_y1 + my;
 			/* ameliorate grid regularity */
 			if (pattern == halftone &&
 			    (pgy % 16) >= 8)
@@ -281,7 +281,7 @@ im_write(int y)
 			    b |= 1L;
 		    }
 		}
-		swath[y1 + my][x / 32] = b;
+		swath[im_y1 + my][x / 32] = b;
 	    }
 	}
     }

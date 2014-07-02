@@ -63,6 +63,17 @@
 #    define HAVE_LRINT 1
 #  endif
 
+/* The following hack seems to be necessary on certain systems when
+ * gnu99 is used.  Do this *only* when we have no choice - if a better
+ * solution can be found it should be used, but in testing any definition
+ * of lrint that preceeds math.h inclusion fails to build. */
+#  if defined(NEED_LRINT_MACRO_HACK)
+#    include <math.h>
+#    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
+#    define HAVE_LRINT 1
+#  endif
+
+
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */
