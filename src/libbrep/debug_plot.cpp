@@ -131,8 +131,8 @@ DebugPlot::WriteLog()
 	}
 	// b1si b2si finalevents b1ccurves b2ccurves b1_isocurve_xs total_isocurve_xs isocsx0_event0 ...
 	fprintf(fp, "ssx %d %d %d %d %d %d %d", pair.first, pair.second,
-		ssx_clipped_curves[i].first, ssx_clipped_curves[i].second,
-		ssx_events[i], b1_isocurves, intersecting_isocurves);
+		ssx_events[i], ssx_clipped_curves[i].first,
+		ssx_clipped_curves[i].second, b1_isocurves, intersecting_isocurves);
 
 	if (ssx_isocsx_events.size() > i) {
 	    for (size_t j = 0; j < ssx_isocsx_events[i].size(); ++j) {
