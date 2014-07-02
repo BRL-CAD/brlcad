@@ -112,11 +112,17 @@ get_args(int argc, char **argv)
 	    case 'n':
 		file_height = atoi(bu_optarg);
 		break;
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 	    case 'x':
 		file_xoff = atoi(bu_optarg);
 		break;
 	    case 'X':
 		scr_xoff += atoi(bu_optarg);
+		break;
+	    case 'y':
+		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'Y':
 		scr_yoff += atoi(bu_optarg);
@@ -126,12 +132,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'W':
 		scr_width = atoi(bu_optarg);
-		break;
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case 'y':
-		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'C':
 		{
