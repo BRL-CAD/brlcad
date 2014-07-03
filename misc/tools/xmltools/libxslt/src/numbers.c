@@ -193,7 +193,7 @@ xsltNumberFormatDecimal(xmlBufferPtr buffer,
 	    pointer -= groupingCharacterLen;
 	    xmlCopyCharMultiByte(pointer, groupingCharacter);
 	}
-	
+
 	val = digit_zero + (int)fmod(number, 10.0);
 	if (val < 0x80) {			/* shortcut if ASCII */
 	    if (pointer <= temp_string) {	/* Check enough room */
@@ -203,7 +203,7 @@ xsltNumberFormatDecimal(xmlBufferPtr buffer,
 	    *(--pointer) = val;
 	}
 	else {
-	/* 
+	/*
 	 * Here we have a multibyte character.  It's a little messy,
 	 * because until we generate the char we don't know how long
 	 * it is.  So, we generate it into the buffer temp_char, then
@@ -241,7 +241,7 @@ xsltNumberFormatAlpha(xmlBufferPtr buffer,
     pointer = &temp_string[sizeof(temp_string)];
     *(--pointer) = 0;
     alpha_list = (is_upper) ? alpha_upper_list : alpha_lower_list;
-    
+
     for (i = 1; i < (int)sizeof(temp_string); i++) {
 	number--;
 	*(--pointer) = alpha_list[((int)fmod(number, alpha_size))];
@@ -406,7 +406,7 @@ xsltNumberFormatTokenize(const xmlChar *format,
 	}
 
 	/*
-	 * Insert temporary non-alphanumeric final tooken.
+	 * Insert temporary non-alphanumeric final token.
 	 */
 	j = ix;
 	while (! (IS_LETTER(val) || IS_DIGIT(val))) {
@@ -632,11 +632,11 @@ xsltNumberFormatGetMultipleLevel(xsltTransformContextPtr context,
 	for (ancestor = node;
 	     (ancestor != NULL) && (ancestor->type != XML_DOCUMENT_NODE);
 	     ancestor = xmlXPathNextAncestor(parser, ancestor)) {
-	    
+
 	    if ((fromPat != NULL) &&
 		xsltTestCompMatchList(context, ancestor, fromPat))
 		break; /* for */
-	    
+
 	    if ((countPat == NULL && node->type == ancestor->type &&
 		xmlStrEqual(node->name, ancestor->name)) ||
 		xsltTestCompMatchList(context, ancestor, countPat)) {
@@ -644,7 +644,7 @@ xsltNumberFormatGetMultipleLevel(xsltTransformContextPtr context,
 		cnt = 0;
 		for (preceding = ancestor;
 		     preceding != NULL;
-		     preceding = 
+		     preceding =
 		        xmlXPathNextPrecedingSibling(parser, preceding)) {
 		    if (countPat == NULL) {
 			if ((preceding->type == ancestor->type) &&
@@ -681,7 +681,7 @@ xsltNumberFormatGetValue(xmlXPathContextPtr context,
     int amount = 0;
     xmlBufferPtr pattern;
     xmlXPathObjectPtr obj;
-    
+
     pattern = xmlBufferCreate();
     if (pattern != NULL) {
 	xmlBufferCCat(pattern, "number(");
@@ -703,7 +703,7 @@ xsltNumberFormatGetValue(xmlXPathContextPtr context,
 /**
  * xsltNumberFormat:
  * @ctxt: the XSLT transformation context
- * @data: the formatting informations
+ * @data: the formatting information
  * @node: the data to format
  *
  * Convert one number.
@@ -750,9 +750,9 @@ xsltNumberFormat(xsltTransformContextPtr ctxt,
 					  &tokens,
 					  output);
 	}
-	
+
     } else if (data->level) {
-	
+
 	if (xmlStrEqual(data->level, (const xmlChar *) "single")) {
 	    amount = xsltNumberFormatGetMultipleLevel(ctxt,
 						      node,
@@ -792,7 +792,7 @@ xsltNumberFormat(xsltTransformContextPtr ctxt,
 						 node,
 						 data->countPat,
 						 data->fromPat,
-						 &number, 
+						 &number,
 						 data->doc,
 						 data->node);
 	    if (amount > 0) {
@@ -815,7 +815,7 @@ xsltNumberFormat(xsltTransformContextPtr ctxt,
 	if (tokens.tokens[i].separator != NULL)
 	    xmlFree(tokens.tokens[i].separator);
     }
-    
+
 XSLT_NUMBER_FORMAT_END:
     if (tempformat == 1) {
 	/* The format need to be recomputed each time */
@@ -832,9 +832,9 @@ xsltFormatNumberPreSuffix(xsltDecimalFormatPtr self, xmlChar **format, xsltForma
     int len;
 
     while (1) {
-	/* 
-	 * prefix / suffix ends at end of string or at 
-	 * first 'special' character 
+	/*
+	 * prefix / suffix ends at end of string or at
+	 * first 'special' character
 	 */
 	if (**format == 0)
 	    return count;
@@ -847,12 +847,12 @@ xsltFormatNumberPreSuffix(xsltDecimalFormatPtr self, xmlChar **format, xsltForma
 	    return count;
 	/*
 	 * else treat percent/per-mille as special cases,
-	 * depending on whether +ve or -ve 
+	 * depending on whether +ve or -ve
 	 */
 	else {
 	    /*
-	     * for +ve prefix/suffix, allow only a 
-	     * single occurence of either 
+	     * for +ve prefix/suffix, allow only a
+	     * single occurrence of either
 	     */
 	    if (xsltUTF8Charcmp(*format, self->percent) == 0) {
 		if (info->is_multiplier_set)
@@ -866,20 +866,20 @@ xsltFormatNumberPreSuffix(xsltDecimalFormatPtr self, xmlChar **format, xsltForma
 		info->is_multiplier_set = TRUE;
 	    }
 	}
-	
+
 	if ((len=xsltUTF8Size(*format)) < 1)
 	    return -1;
 	count += len;
 	*format += len;
     }
 }
-	    
+
 /**
  * xsltFormatNumberConversion:
  * @self: the decimal format
  * @format: the format requested
  * @number: the value to format
- * @result: the place to ouput the result
+ * @result: the place to output the result
  *
  * format-number() uses the JDK 1.1 DecimalFormat class:
  *
@@ -932,9 +932,9 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
     int	    j, len;
     int     self_grouping_len;
     xsltFormatNumberInfo format_info;
-    /* 
+    /*
      * delayed_multiplier allows a 'trailing' percent or
-     * permille to be treated as suffix 
+     * permille to be treated as suffix
      */
     int		delayed_multiplier = 0;
     /* flag to show no -ve format present for -ve number */
@@ -990,7 +990,7 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 
     /*
      * First we process the +ve pattern to get percent / permille,
-     * as well as main format 
+     * as well as main format
      */
     prefix = the_format;
     prefix_length = xsltFormatNumberPreSuffix(self, &the_format, &format_info);
@@ -999,18 +999,18 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	goto OUTPUT_NUMBER;
     }
 
-    /* 
-     * Here we process the "number" part of the format.  It gets 
+    /*
+     * Here we process the "number" part of the format.  It gets
      * a little messy because of the percent/per-mille - if that
-     * appears at the end, it may be part of the suffix instead 
-     * of part of the number, so the variable delayed_multiplier 
-     * is used to handle it 
+     * appears at the end, it may be part of the suffix instead
+     * of part of the number, so the variable delayed_multiplier
+     * is used to handle it
      */
     self_grouping_len = xmlStrlen(self->grouping);
     while ((*the_format != 0) &&
 	   (xsltUTF8Charcmp(the_format, self->decimalPoint) != 0) &&
 	   (xsltUTF8Charcmp(the_format, self->patternSeparator) != 0)) {
-	
+
 	if (delayed_multiplier != 0) {
 	    format_info.multiplier = delayed_multiplier;
 	    format_info.is_multiplier_set = TRUE;
@@ -1048,7 +1048,7 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	    delayed_multiplier = 1000;
 	} else
 	    break; /* while */
-	
+
 	if ((len=xsltUTF8Size(the_format)) < 1) {
 	    found_error = 1;
 	    goto OUTPUT_NUMBER;
@@ -1062,9 +1062,9 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
         format_info.add_decimal = TRUE;
 	the_format += xsltUTF8Size(the_format);	/* Skip over the decimal */
     }
-    
+
     while (*the_format != 0) {
-	
+
 	if (xsltUTF8Charcmp(the_format, self->zeroDigit) == 0) {
 	    if (format_info.frac_hash != 0) {
 		found_error = 1;
@@ -1112,9 +1112,9 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	}
     }
 
-    /* 
-     * If delayed_multiplier is set after processing the 
-     * "number" part, should be in suffix 
+    /*
+     * If delayed_multiplier is set after processing the
+     * "number" part, should be in suffix
      */
     if (delayed_multiplier != 0) {
 	the_format -= len;
@@ -1124,7 +1124,7 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
     suffix = the_format;
     suffix_length = xsltFormatNumberPreSuffix(self, &the_format, &format_info);
     if ( (suffix_length < 0) ||
-	 ((*the_format != 0) && 
+	 ((*the_format != 0) &&
 	  (xsltUTF8Charcmp(the_format, self->patternSeparator) != 0)) ) {
 	found_error = 1;
 	goto OUTPUT_NUMBER;
@@ -1147,16 +1147,16 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	else {
 	    /* Skip over pattern separator (accounting for UTF8) */
 	    the_format = (xmlChar *)xmlUTF8Strpos(format, j + 1);
-	    /* 
-	     * Flag changes interpretation of percent/permille 
-	     * in -ve pattern 
+	    /*
+	     * Flag changes interpretation of percent/permille
+	     * in -ve pattern
 	     */
 	    format_info.is_negative_pattern = TRUE;
 	    format_info.is_multiplier_set = FALSE;
 
 	    /* First do the -ve prefix */
 	    nprefix = the_format;
-	    nprefix_length = xsltFormatNumberPreSuffix(self, 
+	    nprefix_length = xsltFormatNumberPreSuffix(self,
 	    				&the_format, &format_info);
 	    if (nprefix_length<0) {
 		found_error = 1;
@@ -1191,7 +1191,7 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	    /* Finally do the -ve suffix */
 	    if (*the_format != 0) {
 		nsuffix = the_format;
-		nsuffix_length = xsltFormatNumberPreSuffix(self, 
+		nsuffix_length = xsltFormatNumberPreSuffix(self,
 					&the_format, &format_info);
 		if (nsuffix_length < 0) {
 		    found_error = 1;
@@ -1210,9 +1210,9 @@ xsltFormatNumberConversion(xsltDecimalFormatPtr self,
 	     */
 	    if ((nprefix_length != prefix_length) ||
 	    	(nsuffix_length != suffix_length) ||
-		((nprefix_length > 0) && 
+		((nprefix_length > 0) &&
 		 (xmlStrncmp(nprefix, prefix, prefix_length) !=0 )) ||
-		((nsuffix_length > 0) && 
+		((nsuffix_length > 0) &&
 		 (xmlStrncmp(nsuffix, suffix, suffix_length) !=0 ))) {
 	 	prefix = nprefix;
 		prefix_length = nprefix_length;
@@ -1260,9 +1260,9 @@ OUTPUT_NUMBER:
     number = fabs(number) * (double)format_info.multiplier;
     scale = pow(10.0, (double)(format_info.frac_digits + format_info.frac_hash));
     number = floor((scale * number + 0.5)) / scale;
-    if ((self->grouping != NULL) && 
+    if ((self->grouping != NULL) &&
         (self->grouping[0] != 0)) {
-	
+
 	len = xmlStrlen(self->grouping);
 	pchar = xsltGetUTF8Char(self->grouping, &len);
 	xsltNumberFormatDecimal(buffer, floor(number), self->zeroDigit[0],
@@ -1291,7 +1291,7 @@ OUTPUT_NUMBER:
     /* Next the fractional part, if required */
     if (format_info.frac_digits + format_info.frac_hash == 0) {
         if (format_info.add_decimal)
-	    xmlBufferAdd(buffer, self->decimalPoint, 
+	    xmlBufferAdd(buffer, self->decimalPoint,
 	    		 xsltUTF8Size(self->decimalPoint));
     }
     else {

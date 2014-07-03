@@ -29,6 +29,7 @@
     <arg choice="opt" rep="norepeat">-y <replaceable>file_yoff</replaceable></arg>
     <arg choice="opt" rep="norepeat">-X <replaceable>scr_xoff</replaceable></arg>
     <arg choice="opt" rep="norepeat">-Y <replaceable>scr_yoff</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-p <replaceable>seconds</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -127,6 +128,13 @@ and
 are specified,
 <option>-1</option>
 wins.</para>
+
+<para>The
+<option>-p</option>
+flag specifies the (integer) number of
+<emphasis remap="I">seconds</emphasis>
+to pause before the frame-buffer is closed.
+</para>
 </refsection>
 
 <refsection xml:id="format"><title>FORMAT</title>

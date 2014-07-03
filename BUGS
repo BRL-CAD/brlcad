@@ -525,6 +525,13 @@ Recent Bugs
   line (infinite loop).  also gives infinite areas when presented with
   an empty .density file.
 
+* rtweight/rtarea give incorrect volume/mass info when using -H
+  hypersample flag
+
+* rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
+
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.
 

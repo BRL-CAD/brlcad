@@ -1,5 +1,5 @@
 /**
- * uri.c: set of generic URI related routines 
+ * uri.c: set of generic URI related routines
  *
  * Reference: RFCs 3986, 2732 and 2373
  *
@@ -314,7 +314,7 @@ xmlParse3986Port(xmlURIPtr uri, const char **str)
  * @uri:  pointer to an URI structure
  * @str:  the string to analyze
  *
- * Parse an user informations part and fills in the appropriate fields
+ * Parse a user information part and fill in the appropriate fields
  * of the @uri structure
  *
  * userinfo      = *( unreserved / pct-encoded / sub-delims / ":" )
@@ -404,7 +404,7 @@ xmlParse3986Host(xmlURIPtr uri, const char **str)
 
     host = cur;
     /*
-     * IPv6 and future adressing scheme are enclosed between brackets
+     * IPv6 and future addressing scheme are enclosed between brackets
      */
     if (*cur == '[') {
         cur++;
@@ -1077,7 +1077,7 @@ xmlSaveUri(xmlURIPtr uri) {
 		if (temp == NULL) {
 		    xmlGenericError(xmlGenericErrorContext,
 			    "xmlSaveUri: out of memory\n");
-                  xmlFree(ret);  
+                  xmlFree(ret);
 		    return(NULL);
 		}
 		ret = temp;
@@ -1327,7 +1327,7 @@ xmlSaveUri(xmlURIPtr uri) {
 		    }
 		    ret = temp;
 		}
-		if ((IS_UNRESERVED(*(p))) || (IS_RESERVED(*(p)))) 
+		if ((IS_UNRESERVED(*(p))) || (IS_RESERVED(*(p))))
 		    ret[len++] = *p++;
 		else {
 		    int val = *(unsigned char *)p++;
@@ -1367,7 +1367,7 @@ xmlSaveUri(xmlURIPtr uri) {
 		    }
 		    ret = temp;
 	    }
-	    if ((IS_UNRESERVED(*(p))) || (IS_RESERVED(*(p)))) 
+	    if ((IS_UNRESERVED(*(p))) || (IS_RESERVED(*(p))))
 		ret[len++] = *p++;
 	    else {
 		int val = *(unsigned char *)p++;
@@ -1703,14 +1703,14 @@ xmlURIUnescapeString(const char *str, int len, char *target) {
     while(len > 0) {
 	if ((len > 2) && (*in == '%') && (is_hex(in[1])) && (is_hex(in[2]))) {
 	    in++;
-	    if ((*in >= '0') && (*in <= '9')) 
+	    if ((*in >= '0') && (*in <= '9'))
 	        *out = (*in - '0');
 	    else if ((*in >= 'a') && (*in <= 'f'))
 	        *out = (*in - 'a') + 10;
 	    else if ((*in >= 'A') && (*in <= 'F'))
 	        *out = (*in - 'A') + 10;
 	    in++;
-	    if ((*in >= '0') && (*in <= '9')) 
+	    if ((*in >= '0') && (*in <= '9'))
 	        *out = *out * 16 + (*in - '0');
 	    else if ((*in >= 'a') && (*in <= 'f'))
 	        *out = *out * 16 + (*in - 'a') + 10;
@@ -1869,7 +1869,7 @@ xmlURIEscape(const xmlChar * str)
     if (uri->user) {
         segment = xmlURIEscapeStr(BAD_CAST uri->user, BAD_CAST ";:&=+$,");
         NULLCHK(segment)
-		ret = xmlStrcat(ret,BAD_CAST "//");	
+		ret = xmlStrcat(ret,BAD_CAST "//");
         ret = xmlStrcat(ret, segment);
         ret = xmlStrcat(ret, BAD_CAST "@");
         xmlFree(segment);
@@ -1947,7 +1947,7 @@ xmlURIEscape(const xmlChar * str)
  *
  * Computes he final URI of the reference done by checking that
  * the given URI is valid, and building the final URI using the
- * base URI. This is processed according to section 5.2 of the 
+ * base URI. This is processed according to section 5.2 of the
  * RFC 2396
  *
  * 5.2. Resolving Relative References to Absolute Form
@@ -1971,7 +1971,7 @@ xmlBuildURI(const xmlChar *URI, const xmlChar *base) {
      *    as a reference to "." rather than as a synonym for the current
      *    URI.  Should we do that here?
      */
-    if (URI == NULL) 
+    if (URI == NULL)
 	ret = -1;
     else {
 	if (*URI) {
@@ -2042,7 +2042,7 @@ xmlBuildURI(const xmlChar *URI, const xmlChar *base) {
 	    res->server = xmlMemStrdup(bas->server);
 	    if (bas->user != NULL)
 		res->user = xmlMemStrdup(bas->user);
-	    res->port = bas->port;		
+	    res->port = bas->port;
 	}
 	if (bas->path != NULL)
 	    res->path = xmlMemStrdup(bas->path);
@@ -2071,7 +2071,7 @@ xmlBuildURI(const xmlChar *URI, const xmlChar *base) {
     }
     if (bas->scheme != NULL)
 	res->scheme = xmlMemStrdup(bas->scheme);
- 
+
     if (ref->query_raw != NULL)
 	res->query_raw = xmlMemStrdup(ref->query_raw);
     else if (ref->query != NULL)
@@ -2093,7 +2093,7 @@ xmlBuildURI(const xmlChar *URI, const xmlChar *base) {
 	    res->server = xmlMemStrdup(ref->server);
 	    if (ref->user != NULL)
 		res->user = xmlMemStrdup(ref->user);
-            res->port = ref->port;		
+            res->port = ref->port;
 	}
 	if (ref->path != NULL)
 	    res->path = xmlMemStrdup(ref->path);
@@ -2105,7 +2105,7 @@ xmlBuildURI(const xmlChar *URI, const xmlChar *base) {
 	res->server = xmlMemStrdup(bas->server);
 	if (bas->user != NULL)
 	    res->user = xmlMemStrdup(bas->user);
-	res->port = bas->port;		
+	res->port = bas->port;
     }
 
     /*
@@ -2226,7 +2226,7 @@ done:
  *     http://site1.com/docs/pic1.gif   http://site1.com/docs/pic1.gif
  *
  *
- * Note: if the URI reference is really wierd or complicated, it may be
+ * Note: if the URI reference is really weird or complicated, it may be
  *       worthwhile to first convert it into a "nice" one by calling
  *       xmlBuildURI (using 'base') before calling this routine,
  *       since this routine (for reasonable efficiency) assumes URI has
@@ -2380,7 +2380,7 @@ xmlBuildRelativeURI (const xmlChar * URI, const xmlChar * base)
 	}
 	len = xmlStrlen (uptr) + 1;
     }
-    
+
     if (nbslash == 0) {
 	if (uptr != NULL)
 	    /* exception characters from xmlSaveUri */
@@ -2448,11 +2448,11 @@ done:
  * xmlCanonicPath:
  * @path:  the resource locator in a filesystem notation
  *
- * Constructs a canonic path from the specified path. 
+ * Constructs a canonic path from the specified path.
  *
- * Returns a new canonic path, or a duplicate of the path parameter if the 
+ * Returns a new canonic path, or a duplicate of the path parameter if the
  * construction fails. The caller is responsible for freeing the memory occupied
- * by the returned string. If there is insufficient memory available, or the 
+ * by the returned string. If there is insufficient memory available, or the
  * argument is NULL, the function returns NULL.
  */
 #define IS_WINDOWS_PATH(p) 					\
@@ -2467,7 +2467,7 @@ xmlCanonicPath(const xmlChar *path)
  * For Windows implementations, additional work needs to be done to
  * replace backslashes in pathnames with "forward slashes"
  */
-#if defined(_WIN32) && !defined(__CYGWIN__)    
+#if defined(_WIN32) && !defined(__CYGWIN__)
     int len = 0;
     int i = 0;
     xmlChar *p = NULL;
@@ -2526,7 +2526,7 @@ xmlCanonicPath(const xmlChar *path)
 
 path_processing:
 /* For Windows implementations, replace backslashes with 'forward slashes' */
-#if defined(_WIN32) && !defined(__CYGWIN__)    
+#if defined(_WIN32) && !defined(__CYGWIN__)
     /*
      * Create a URI structure
      */
@@ -2542,7 +2542,7 @@ path_processing:
 	/* allocate space for leading '/' + path + string terminator */
 	uri->path = xmlMallocAtomic(len + 2);
 	if (uri->path == NULL) {
-	    xmlFreeURI(uri);	/* Guard agains 'out of memory' */
+	    xmlFreeURI(uri);	/* Guard against 'out of memory' */
 	    return(NULL);
 	}
 	/* Put in leading '/' plus path */
@@ -2557,7 +2557,7 @@ path_processing:
 	}
 	p = uri->path;
     }
-    /* Now change all occurences of '\' to '/' */
+    /* Now change all occurrences of '\' to '/' */
     while (*p != '\0') {
 	if (*p == '\\')
 	    *p = '/';
@@ -2583,7 +2583,7 @@ path_processing:
  *
  * Constructs an URI expressing the existing path
  *
- * Returns a new URI, or a duplicate of the path parameter if the 
+ * Returns a new URI, or a duplicate of the path parameter if the
  * construction fails. The caller is responsible for freeing the memory
  * occupied by the returned string. If there is insufficient memory available,
  * or the argument is NULL, the function returns NULL.
@@ -2606,8 +2606,8 @@ xmlPathToURI(const xmlChar *path)
     if (cal == NULL)
         return(NULL);
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    /* xmlCanonicPath can return an URI on Windows (is that the intended behaviour?) 
-       If 'cal' is a valid URI allready then we are done here, as continuing would make
+    /* xmlCanonicPath can return an URI on Windows (is that the intended behaviour?)
+       If 'cal' is a valid URI already then we are done here, as continuing would make
        it invalid. */
     if ((uri = xmlParseURI((const char *) cal)) != NULL) {
 	xmlFreeURI(uri);
